@@ -171,6 +171,7 @@ import {
 import { usePanelSound } from "./usePanelSound";
 import { useDeliveryZones } from "./useDeliveryZones";
 import { useOrderLocations } from "./useOrderLocations";
+import { usePaymentProofs, useOpenAccounts } from "./usePanelData";
 
 export default function PedidosPage() {
   const [adminPassword, setAdminPassword] = useState("");
@@ -253,14 +254,6 @@ export default function PedidosPage() {
   const [businessConfig, setBusinessConfig] = useState<BusinessConfig>(
     DEFAULT_BUSINESS_CONFIG,
   );
-  const [paymentProofs, setPaymentProofs] = useState<PaymentProof[]>([]);
-  const [paymentProofsMessage, setPaymentProofsMessage] = useState<
-    string | null
-  >(null);
-  const [openAccounts, setOpenAccounts] = useState<OpenAccount[]>([]);
-  const [openAccountsMessage, setOpenAccountsMessage] = useState<string | null>(
-    null,
-  );
   const [isLoadingBusinessConfig, setIsLoadingBusinessConfig] = useState(false);
   const [localAccessRole, setLocalAccessRole] =
     useState<LocalAccessRole | null>(null);
@@ -322,6 +315,22 @@ export default function PedidosPage() {
     removeOrderLocation,
     restoreDefaultOrderLocations,
   } = useOrderLocations({ adminPassword, businessConfigRef, setBusinessConfig });
+
+  const {
+    paymentProofs,
+    setPaymentProofs,
+    paymentProofsMessage,
+    setPaymentProofsMessage,
+    loadPaymentProofs,
+  } = usePaymentProofs({ adminPassword, businessConfigRef });
+
+  const {
+    openAccounts,
+    setOpenAccounts,
+    openAccountsMessage,
+    setOpenAccountsMessage,
+    loadOpenAccounts,
+  } = useOpenAccounts({ adminPassword, businessConfigRef });
 
   async function loadBusinessConfig(password = adminPassword, silent = false) {
     if (!password) return undefined;
@@ -401,100 +410,6 @@ export default function PedidosPage() {
     } finally {
       if (!silent) {
         setIsLoadingBusinessConfig(false);
-      }
-    }
-  }
-
-  async function loadPaymentProofs(password = adminPassword, silent = false) {
-    if (!password) return;
-
-    if (
-      !isBusinessModuleEffective(businessConfigRef.current, "paymentProofs")
-    ) {
-      setPaymentProofs([]);
-      setPaymentProofsMessage(null);
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/payment-proofs", {
-        headers: {
-          "x-admin-password": password,
-        },
-        cache: "no-store",
-      });
-
-      const data = await readApiResponse(response);
-
-      if (!response.ok) {
-        if (response.status === 403) {
-          setPaymentProofs([]);
-          setPaymentProofsMessage(null);
-          return;
-        }
-
-        throw new Error(data.error || "No se pudieron cargar los comprobantes");
-      }
-
-      setPaymentProofs(
-        Array.isArray(data.paymentProofs) ? data.paymentProofs : [],
-      );
-      setPaymentProofsMessage(null);
-    } catch (error) {
-      if (!silent) {
-        setPaymentProofsMessage(
-          error instanceof Error
-            ? error.message
-            : "No se pudieron cargar los comprobantes",
-        );
-      }
-    }
-  }
-
-  async function loadOpenAccounts(password = adminPassword, silent = true) {
-    if (!password) return;
-
-    if (!isBusinessModuleEffective(businessConfigRef.current, "openAccounts")) {
-      setOpenAccounts([]);
-      setOpenAccountsMessage(null);
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/open-accounts?status=all", {
-        headers: {
-          "x-admin-password": password,
-        },
-        cache: "no-store",
-      });
-
-      const data = (await readApiResponse(response)) as OpenAccountsApiResponse;
-
-      if (!response.ok) {
-        if (response.status === 403) {
-          setOpenAccounts([]);
-          setOpenAccountsMessage(null);
-          return;
-        }
-
-        throw new Error(
-          data.error || "No se pudieron cargar las cuentas abiertas",
-        );
-      }
-
-      setOpenAccounts(
-        Array.isArray(data.openAccounts) ? data.openAccounts : [],
-      );
-      setOpenAccountsMessage(null);
-    } catch (error) {
-      setOpenAccounts([]);
-
-      if (!silent) {
-        setOpenAccountsMessage(
-          error instanceof Error
-            ? error.message
-            : "No se pudieron cargar las cuentas abiertas",
-        );
       }
     }
   }
