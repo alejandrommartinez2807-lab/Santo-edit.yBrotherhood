@@ -172,6 +172,7 @@ import { usePanelSound } from "./usePanelSound";
 import { useDeliveryZones } from "./useDeliveryZones";
 import { useOrderLocations } from "./useOrderLocations";
 import { usePaymentProofs, useOpenAccounts } from "./usePanelData";
+import { useOrderNotes } from "./useOrderNotes";
 
 export default function PedidosPage() {
   const [adminPassword, setAdminPassword] = useState("");
@@ -202,11 +203,6 @@ export default function PedidosPage() {
   const [isResettingDay, setIsResettingDay] = useState(false);
   const [selectedPaymentOrder, setSelectedPaymentOrder] =
     useState<LocalOrder | null>(null);
-  const [selectedNotesOrder, setSelectedNotesOrder] =
-    useState<LocalOrder | null>(null);
-  const [orderNoteDraft, setOrderNoteDraft] = useState("");
-  const [orderNoteMessage, setOrderNoteMessage] = useState<string | null>(null);
-  const [isSavingOrderNote, setIsSavingOrderNote] = useState(false);
   const [paymentForm, setPaymentForm] =
     useState<PaymentForm>(EMPTY_PAYMENT_FORM);
   const [paymentMessage, setPaymentMessage] = useState<string | null>(null);
@@ -331,6 +327,24 @@ export default function PedidosPage() {
     setOpenAccountsMessage,
     loadOpenAccounts,
   } = useOpenAccounts({ adminPassword, businessConfigRef });
+
+  const {
+    selectedNotesOrder,
+    setSelectedNotesOrder,
+    orderNoteDraft,
+    setOrderNoteDraft,
+    orderNoteMessage,
+    setOrderNoteMessage,
+    isSavingOrderNote,
+    openOrderNotesModal,
+    saveOrderNote,
+  } = useOrderNotes({
+    adminPassword,
+    businessConfig,
+    setErrorMessage,
+    setOrders,
+    loadOrders,
+  });
 
   async function loadBusinessConfig(password = adminPassword, silent = false) {
     if (!password) return undefined;
@@ -2196,77 +2210,6 @@ export default function PedidosPage() {
     setSelectedPaymentOrder(order);
     setPaymentForm(createPaymentFormFromOrder(order));
     setPaymentMessage(null);
-  }
-
-  function openOrderNotesModal(order: LocalOrder) {
-    if (!businessConfig.internalAllowEditOrderNotes) {
-      setErrorMessage(
-        "Editar notas está desactivado por el dueño en Configuración > Complejidad y permisos.",
-      );
-      return;
-    }
-
-    setSelectedNotesOrder(order);
-    setOrderNoteDraft(order.customerNote || "");
-    setOrderNoteMessage(null);
-  }
-
-  async function saveOrderNote() {
-    if (!adminPassword || !selectedNotesOrder) return;
-
-    if (!businessConfig.internalAllowEditOrderNotes) {
-      setOrderNoteMessage(
-        "Editar notas está desactivado por el dueño en Configuración > Complejidad y permisos.",
-      );
-      return;
-    }
-
-    try {
-      setIsSavingOrderNote(true);
-      setOrderNoteMessage(null);
-      setErrorMessage(null);
-
-      const response = await fetch(`/api/orders/${selectedNotesOrder.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-password": adminPassword,
-        },
-        body: JSON.stringify({
-          action: "updateNotes",
-          customerNote: orderNoteDraft,
-        }),
-      });
-
-      const data = await readApiResponse(response);
-
-      if (!response.ok) {
-        throw new Error(data.error || "No se pudo actualizar la nota");
-      }
-
-      const updatedOrder = data.order as LocalOrder;
-
-      setOrders((currentOrders) =>
-        currentOrders.map((order) =>
-          order.id === updatedOrder.id ? updatedOrder : order,
-        ),
-      );
-      setSelectedNotesOrder(updatedOrder);
-      setOrderNoteDraft(updatedOrder.customerNote || "");
-      setOrderNoteMessage("Nota actualizada correctamente.");
-
-      window.setTimeout(() => {
-        loadOrders(adminPassword, true);
-      }, 600);
-    } catch (error) {
-      setOrderNoteMessage(
-        error instanceof Error
-          ? error.message
-          : "No se pudo actualizar la nota",
-      );
-    } finally {
-      setIsSavingOrderNote(false);
-    }
   }
 
   function updatePaymentForm<K extends keyof PaymentForm>(
