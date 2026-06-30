@@ -1,38 +1,32 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server"
 import {
   confirmOrderStaffItems,
   deleteOrder,
   resetOrderStaffItems,
   getBusinessConfig,
   updateOrderDeliveryReport,
-  updateOrderNotes,
   updateOrderStatus,
   type OrderStatus,
-  normalizeBusinessComplexitySettings,
-} from "@/lib/orders";
-import {
-  getRequestAccess,
-  type LocalModuleKey,
-  type LocalRole,
-} from "@/lib/localAccess";
-import { getModulePlanAccess } from "@/lib/localPlans";
-import { resolveBranchId } from "@/lib/branch";
-import { writeAuditLog } from "@/lib/audit";
-import { enforceApiMutationGuards } from "@/lib/apiMutationGuards";
+} from "@/lib/orders"
+import { canLocalAccessUseModule, getRequestAccess, type LocalModuleKey, type LocalRole } from "@/lib/localAccess"
+import { getModulePlanAccess } from "@/lib/localPlans"
+import { resolveBranchId } from "@/lib/branch"
+import { writeAuditLog } from "@/lib/audit"
+import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 function getRequestPassword(request: NextRequest) {
   return (
     request.headers.get("x-local-password") ||
     request.headers.get("x-admin-password") ||
     ""
-  );
+  )
 }
 
 function getAccess(request: NextRequest) {
-  return getRequestAccess(request, getRequestPassword(request));
+  return getRequestAccess(request, getRequestPassword(request))
 }
 
 function unauthorizedResponse() {
@@ -42,32 +36,30 @@ function unauthorizedResponse() {
     },
     {
       status: 401,
-    },
-  );
+    }
+  )
 }
 
-function forbiddenResponse(
-  message = "Esta clave no tiene permiso para esta acción",
-) {
+function forbiddenResponse(message = "Esta clave no tiene permiso para esta acción") {
   return NextResponse.json(
     {
       error: message,
     },
     {
       status: 403,
-    },
-  );
+    }
+  )
 }
 
 function checkRole(request: NextRequest, allowedRoles: LocalRole[]) {
-  const access = getAccess(request);
+  const access = getAccess(request)
 
   if (!access.ok) {
     return {
       ok: false as const,
       response: unauthorizedResponse(),
       role: null,
-    };
+    }
   }
 
   if (!allowedRoles.includes(access.role)) {
@@ -75,62 +67,53 @@ function checkRole(request: NextRequest, allowedRoles: LocalRole[]) {
       ok: false as const,
       response: forbiddenResponse(),
       role: access.role,
-    };
+    }
   }
 
   return {
     ok: true as const,
     response: null,
     role: access.role,
-  };
+    access,
+  }
 }
 
-function getModuleUnavailableMessage(
-  moduleLabel: string,
-  reason: "plan" | "owner",
-) {
+function getModuleUnavailableMessage(moduleLabel: string, reason: "plan" | "owner") {
   if (reason === "plan") {
-    return `${moduleLabel} no está incluido en el plan activo. Solicita activación o sube el plan para usar esta función.`;
+    return `${moduleLabel} no está incluido en el plan activo. Solicita activación o sube el plan para usar esta función.`
   }
 
-  return `${moduleLabel} está desactivado desde Configuración del negocio.`;
+  return `${moduleLabel} está desactivado desde Configuración del negocio.`
 }
 
-async function checkModuleAvailability(
-  moduleKey: LocalModuleKey,
-  moduleLabel: string,
-) {
-  const businessConfig = await getBusinessConfig();
+async function checkModuleAvailability(moduleKey: LocalModuleKey, moduleLabel: string) {
+  const businessConfig = await getBusinessConfig()
   const moduleAccess = getModulePlanAccess(
     businessConfig as unknown as Record<string, unknown>,
-    moduleKey,
-  );
+    moduleKey
+  )
 
   if (!moduleAccess.includedInPlan) {
     return {
       ok: false as const,
-      response: forbiddenResponse(
-        getModuleUnavailableMessage(moduleLabel, "plan"),
-      ),
+      response: forbiddenResponse(getModuleUnavailableMessage(moduleLabel, "plan")),
       moduleAccess,
-    };
+    }
   }
 
   if (!moduleAccess.effectiveEnabled) {
     return {
       ok: false as const,
-      response: forbiddenResponse(
-        getModuleUnavailableMessage(moduleLabel, "owner"),
-      ),
+      response: forbiddenResponse(getModuleUnavailableMessage(moduleLabel, "owner")),
       moduleAccess,
-    };
+    }
   }
 
   return {
     ok: true as const,
     response: null,
     moduleAccess,
-  };
+  }
 }
 
 function isValidStatus(value: unknown): value is OrderStatus {
@@ -140,12 +123,12 @@ function isValidStatus(value: unknown): value is OrderStatus {
     value === "Listo" ||
     value === "Entregado" ||
     value === "Cancelado"
-  );
+  )
 }
 
 function canRoleUpdateStatus(role: LocalRole, status: OrderStatus) {
   if (role === "owner" || role === "manager") {
-    return true;
+    return true
   }
 
   if (role === "cashier") {
@@ -154,66 +137,48 @@ function canRoleUpdateStatus(role: LocalRole, status: OrderStatus) {
       status === "Preparando" ||
       status === "Entregado" ||
       status === "Cancelado"
-    );
+    )
   }
 
   if (role === "kitchen") {
-    return status === "Preparando" || status === "Listo";
+    return status === "Preparando" || status === "Listo"
   }
 
-  return false;
+  return false
 }
 
 function getStatusModuleForRole(role: LocalRole): LocalModuleKey {
-  if (role === "cashier") return "cashier";
-  if (role === "kitchen") return "kitchen";
+  if (role === "cashier") return "cashier"
+  if (role === "kitchen") return "kitchen"
 
-  return "mainPanel";
+  return "mainPanel"
 }
 
 function canRoleConfirmStaffItems(role: LocalRole) {
-  return (
-    role === "owner" ||
-    role === "manager" ||
-    role === "cashier" ||
-    role === "waiter"
-  );
-}
-
-function canRoleEditNotes(role: LocalRole) {
-  return (
-    role === "owner" ||
-    role === "manager" ||
-    role === "cashier" ||
-    role === "waiter"
-  );
+  return role === "owner" || role === "manager" || role === "cashier" || role === "waiter"
 }
 
 function getStaffConfirmationModuleForRole(role: LocalRole): LocalModuleKey {
-  if (role === "cashier") return "cashier";
-  if (role === "waiter") return "openAccounts";
+  if (role === "cashier") return "cashier"
+  if (role === "waiter") return "openAccounts"
 
-  return "mainPanel";
+  return "mainPanel"
 }
 
 function getRoleLabel(role: LocalRole) {
-  if (role === "owner") return "Dueño";
-  if (role === "manager") return "Encargado";
-  if (role === "cashier") return "Caja";
-  if (role === "waiter") return "Mesonero";
-  if (role === "kitchen") return "Cocina";
-  if (role === "delivery") return "Delivery";
+  if (role === "owner") return "Dueño"
+  if (role === "manager") return "Encargado"
+  if (role === "cashier") return "Caja"
+  if (role === "waiter") return "Mesonero"
+  if (role === "kitchen") return "Cocina"
+  if (role === "delivery") return "Delivery"
 
-  return "Personal";
-}
-
-async function getBusinessComplexityPermissions() {
-  return normalizeBusinessComplexitySettings(await getBusinessConfig());
+  return "Personal"
 }
 
 export async function PATCH(
   request: NextRequest,
-  context: { params: Promise<{ orderId: string }> },
+  context: { params: Promise<{ orderId: string }> }
 ) {
   const guardResponse = enforceApiMutationGuards(request, {
     id: "api-order-detail-patch",
@@ -223,56 +188,50 @@ export async function PATCH(
     maxBytes: 64_000,
     minBytes: 16_000,
     hardMaxBytes: 256_000,
-    rateLimitMessage:
-      "Demasiadas actualizaciones de pedidos. Espera unos segundos e intenta nuevamente.",
-  });
+    rateLimitMessage: "Demasiadas actualizaciones de pedidos. Espera unos segundos e intenta nuevamente.",
+  })
 
-  if (guardResponse) return guardResponse;
+  if (guardResponse) return guardResponse
 
   try {
-    const access = getAccess(request);
+    const access = getAccess(request)
 
     if (!access.ok) {
-      return unauthorizedResponse();
+      return unauthorizedResponse()
     }
 
-    const { orderId } = await context.params;
-    const branchId = await resolveBranchId(request);
-    const body = await request.json();
+    const { orderId } = await context.params
+    const branchId = await resolveBranchId(request)
+    const body = await request.json()
+
 
     if (body.action === "confirmStaffItems") {
       if (!canRoleConfirmStaffItems(access.role)) {
-        return forbiddenResponse(
-          "Esta clave no puede confirmar productos del pedido",
-        );
+        return forbiddenResponse("Esta clave no puede confirmar productos del pedido")
       }
 
-      const moduleKey = getStaffConfirmationModuleForRole(access.role);
+      const moduleKey = getStaffConfirmationModuleForRole(access.role)
       const moduleCheck = await checkModuleAvailability(
         moduleKey,
         moduleKey === "cashier"
           ? "Caja"
           : moduleKey === "openAccounts"
             ? "Mesonero"
-            : "El panel de pedidos",
-      );
+            : "El panel de pedidos"
+      )
 
       if (!moduleCheck.ok) {
-        return moduleCheck.response;
+        return moduleCheck.response
       }
 
-      const order = await confirmOrderStaffItems(
-        orderId,
-        {
-          confirmedBy: String(
-            body.confirmedBy || getRoleLabel(access.role),
-          ).trim(),
-          confirmedRole: String(
-            body.confirmedRole || getRoleLabel(access.role),
-          ).trim(),
-        },
-        branchId,
-      );
+      if (!canLocalAccessUseModule(access, moduleKey)) {
+        return forbiddenResponse("Este usuario no tiene permiso para este módulo")
+      }
+
+      const order = await confirmOrderStaffItems(orderId, {
+        confirmedBy: String(body.confirmedBy || getRoleLabel(access.role)).trim(),
+        confirmedRole: String(body.confirmedRole || getRoleLabel(access.role)).trim(),
+      }, branchId)
 
       await writeAuditLog({
         action: "order.staff.confirmed",
@@ -281,7 +240,7 @@ export async function PATCH(
         entityId: orderId,
         actor: { role: access.role, label: getRoleLabel(access.role) },
         request,
-      });
+      })
 
       return NextResponse.json({
         order,
@@ -289,38 +248,36 @@ export async function PATCH(
           role: access.role,
           moduleKey,
         },
-      });
+      })
     }
 
     if (body.action === "resetStaffItems") {
       if (!canRoleConfirmStaffItems(access.role)) {
-        return forbiddenResponse(
-          "Esta clave no puede reabrir la revisión del pedido",
-        );
+        return forbiddenResponse("Esta clave no puede reabrir la revisión del pedido")
       }
 
-      const moduleKey = getStaffConfirmationModuleForRole(access.role);
+      const moduleKey = getStaffConfirmationModuleForRole(access.role)
       const moduleCheck = await checkModuleAvailability(
         moduleKey,
         moduleKey === "cashier"
           ? "Caja"
           : moduleKey === "openAccounts"
             ? "Mesonero"
-            : "El panel de pedidos",
-      );
+            : "El panel de pedidos"
+      )
 
       if (!moduleCheck.ok) {
-        return moduleCheck.response;
+        return moduleCheck.response
       }
 
-      const order = await resetOrderStaffItems(
-        orderId,
-        {
-          resetBy: String(body.resetBy || getRoleLabel(access.role)).trim(),
-          resetRole: String(body.resetRole || getRoleLabel(access.role)).trim(),
-        },
-        branchId,
-      );
+      if (!canLocalAccessUseModule(access, moduleKey)) {
+        return forbiddenResponse("Este usuario no tiene permiso para este módulo")
+      }
+
+      const order = await resetOrderStaffItems(orderId, {
+        resetBy: String(body.resetBy || getRoleLabel(access.role)).trim(),
+        resetRole: String(body.resetRole || getRoleLabel(access.role)).trim(),
+      }, branchId)
 
       await writeAuditLog({
         action: "order.staff.reset",
@@ -329,7 +286,7 @@ export async function PATCH(
         entityId: orderId,
         actor: { role: access.role, label: getRoleLabel(access.role) },
         request,
-      });
+      })
 
       return NextResponse.json({
         order,
@@ -337,78 +294,25 @@ export async function PATCH(
           role: access.role,
           moduleKey,
         },
-      });
-    }
-
-    if (body.action === "updateNotes") {
-      if (!canRoleEditNotes(access.role)) {
-        return forbiddenResponse("Esta clave no puede editar notas del pedido");
-      }
-
-      const permissions = await getBusinessComplexityPermissions();
-
-      if (!permissions.internalAllowEditOrderNotes) {
-        return forbiddenResponse(
-          "Editar notas de pedidos está desactivado por el dueño en Complejidad y permisos.",
-        );
-      }
-
-      const moduleKey = getStaffConfirmationModuleForRole(access.role);
-      const moduleCheck = await checkModuleAvailability(
-        moduleKey,
-        moduleKey === "cashier"
-          ? "Caja"
-          : moduleKey === "openAccounts"
-            ? "Mesonero"
-            : "El panel de pedidos",
-      );
-
-      if (!moduleCheck.ok) {
-        return moduleCheck.response;
-      }
-
-      const order = await updateOrderNotes(
-        orderId,
-        {
-          customerNote: String(body.customerNote || "")
-            .trim()
-            .slice(0, 1000),
-        },
-        branchId,
-      );
-
-      await writeAuditLog({
-        action: "order.notes.updated",
-        branchId,
-        entityType: "order",
-        entityId: orderId,
-        actor: { role: access.role, label: getRoleLabel(access.role) },
-        request,
-      });
-
-      return NextResponse.json({
-        order,
-        access: {
-          role: access.role,
-          moduleKey,
-        },
-      });
+      })
     }
 
     if (body.action === "reportDelivery") {
       if (!["owner", "manager", "delivery"].includes(access.role)) {
-        return forbiddenResponse(
-          "Esta clave no puede reportar entregas de delivery",
-        );
+        return forbiddenResponse("Esta clave no puede reportar entregas de delivery")
       }
 
-      const moduleCheck = await checkModuleAvailability("delivery", "Delivery");
+      const moduleCheck = await checkModuleAvailability("delivery", "Delivery")
 
       if (!moduleCheck.ok) {
-        return moduleCheck.response;
+        return moduleCheck.response
       }
 
-      const order = await updateOrderDeliveryReport(orderId, branchId);
+      if (!canLocalAccessUseModule(access, "delivery")) {
+        return forbiddenResponse("Este usuario no tiene permiso para este módulo")
+      }
+
+      const order = await updateOrderDeliveryReport(orderId, branchId)
 
       await writeAuditLog({
         action: "order.delivery.reported",
@@ -417,7 +321,7 @@ export async function PATCH(
         entityId: orderId,
         actor: { role: access.role, label: getRoleLabel(access.role) },
         request,
-      });
+      })
 
       return NextResponse.json({
         order,
@@ -425,10 +329,10 @@ export async function PATCH(
           role: access.role,
           moduleKey: "delivery",
         },
-      });
+      })
     }
 
-    const status = body.status;
+    const status = body.status
 
     if (!isValidStatus(status)) {
       return NextResponse.json(
@@ -437,41 +341,33 @@ export async function PATCH(
         },
         {
           status: 400,
-        },
-      );
+        }
+      )
     }
 
     if (!canRoleUpdateStatus(access.role, status)) {
-      return forbiddenResponse(
-        "Esta clave no puede cambiar el pedido a ese estado",
-      );
+      return forbiddenResponse("Esta clave no puede cambiar el pedido a ese estado")
     }
 
-    if (status === "Cancelado") {
-      const permissions = await getBusinessComplexityPermissions();
-
-      if (!permissions.internalAllowCancelOrders) {
-        return forbiddenResponse(
-          "Cancelar pedidos está desactivado por el dueño en Complejidad y permisos.",
-        );
-      }
-    }
-
-    const moduleKey = getStatusModuleForRole(access.role);
+    const moduleKey = getStatusModuleForRole(access.role)
     const moduleCheck = await checkModuleAvailability(
       moduleKey,
       moduleKey === "cashier"
         ? "Caja"
         : moduleKey === "kitchen"
           ? "Cocina"
-          : "El panel de pedidos",
-    );
+          : "El panel de pedidos"
+    )
 
     if (!moduleCheck.ok) {
-      return moduleCheck.response;
+      return moduleCheck.response
     }
 
-    const order = await updateOrderStatus(orderId, status, branchId);
+    if (!canLocalAccessUseModule(access, moduleKey)) {
+      return forbiddenResponse("Este usuario no tiene permiso para este módulo")
+    }
+
+    const order = await updateOrderStatus(orderId, status, branchId)
 
     await writeAuditLog({
       action: "order.status.updated",
@@ -481,7 +377,7 @@ export async function PATCH(
       actor: { role: access.role, label: getRoleLabel(access.role) },
       request,
       metadata: { status },
-    });
+    })
 
     return NextResponse.json({
       order,
@@ -489,7 +385,7 @@ export async function PATCH(
         role: access.role,
         moduleKey,
       },
-    });
+    })
   } catch (error) {
     return NextResponse.json(
       {
@@ -500,46 +396,45 @@ export async function PATCH(
       },
       {
         status: 500,
-      },
-    );
+      }
+    )
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: Promise<{ orderId: string }> },
+  context: { params: Promise<{ orderId: string }> }
 ) {
   const guardResponse = enforceApiMutationGuards(request, {
     id: "api-order-detail-delete",
     limit: 20,
     windowMs: 60_000,
     maxBytes: 32_000,
-    rateLimitMessage:
-      "Demasiados intentos de eliminar pedidos. Espera unos segundos e intenta nuevamente.",
-  });
+    rateLimitMessage: "Demasiados intentos de eliminar pedidos. Espera unos segundos e intenta nuevamente.",
+  })
 
-  if (guardResponse) return guardResponse;
+  if (guardResponse) return guardResponse
 
   try {
-    const access = checkRole(request, ["owner"]);
+    const access = checkRole(request, ["owner"])
 
     if (!access.ok) {
-      return access.response;
+      return access.response
     }
 
     const moduleCheck = await checkModuleAvailability(
       "mainPanel",
-      "El panel de pedidos",
-    );
+      "El panel de pedidos"
+    )
 
     if (!moduleCheck.ok) {
-      return moduleCheck.response;
+      return moduleCheck.response
     }
 
-    const { orderId } = await context.params;
-    const branchId = await resolveBranchId(request);
+    const { orderId } = await context.params
+    const branchId = await resolveBranchId(request)
 
-    await deleteOrder(orderId, branchId);
+    await deleteOrder(orderId, branchId)
 
     await writeAuditLog({
       action: "order.deleted",
@@ -548,14 +443,14 @@ export async function DELETE(
       entityId: orderId,
       actor: { role: access.role, label: access.role || "Dueño" },
       request,
-    });
+    })
 
     return NextResponse.json({
       ok: true,
       access: {
         role: access.role,
       },
-    });
+    })
   } catch (error) {
     return NextResponse.json(
       {
@@ -566,7 +461,7 @@ export async function DELETE(
       },
       {
         status: 500,
-      },
-    );
+      }
+    )
   }
 }

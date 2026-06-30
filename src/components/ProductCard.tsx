@@ -32,11 +32,6 @@ import {
 type ProductCardPublicLabels = {
   customizeAction?: string;
   customizerTitle?: string;
-  /**
-   * Compatibilidad con FeaturedProducts de la fase 2g: permite apagar
-   * ingredientes/adicionales desde configuración sin ensuciar el carrito.
-   */
-  customizationEnabled?: boolean;
 };
 
 type ProductCardProps = Product & {
@@ -44,7 +39,6 @@ type ProductCardProps = Product & {
   index?: number;
   onAddToCart: (product: ProductToAdd) => void;
   publicLabels?: ProductCardPublicLabels;
-  allowCustomization?: boolean;
   isFavorite?: boolean;
   onToggleFavorite?: (productId: number) => void;
 };
@@ -211,7 +205,6 @@ export default function ProductCard({
   requiresWaiterConfirmation,
   ivaRate,
   publicLabels,
-  allowCustomization = true,
   isFavorite = false,
   onToggleFavorite,
 }: ProductCardProps) {
@@ -235,8 +228,6 @@ export default function ProductCard({
     publicLabels?.customizerTitle,
     customizeActionLabel,
   );
-  const customizationAllowed =
-    allowCustomization && publicLabels?.customizationEnabled !== false;
   const productType = getProductType(productTypeValue, category);
   const normalizedChannels = getSalesChannels(salesChannels);
   const ruleSettings = useMemo(
@@ -310,10 +301,9 @@ export default function ProductCard({
     ? Math.max(0, maxAddons - selectedAddonUnitCount)
     : 0;
   const hasSelectableOptions =
-    customizationAllowed &&
-    (selectableVariations.length > 0 ||
-      selectableAddons.length > 0 ||
-      selectableRemovableIngredients.length > 0);
+    selectableVariations.length > 0 ||
+    selectableAddons.length > 0 ||
+    selectableRemovableIngredients.length > 0;
 
   function resetMessage() {
     if (formMessage) setFormMessage("");
@@ -448,7 +438,6 @@ export default function ProductCard({
 
   function handleAddToCart() {
     if (
-      customizationAllowed &&
       variationRequired &&
       selectableVariations.length > 0 &&
       !selectedVariation
@@ -457,11 +446,7 @@ export default function ProductCard({
       return;
     }
 
-    if (
-      customizationAllowed &&
-      minAddons > 0 &&
-      selectedAddonUnitCount < minAddons
-    ) {
+    if (minAddons > 0 && selectedAddonUnitCount < minAddons) {
       setFormMessage(
         `Escoge al menos ${minAddons} adicionales para este producto.`,
       );
@@ -478,10 +463,10 @@ export default function ProductCard({
       image,
       paymentMode: isCombo ? "divisa" : paymentMode || "mixto",
       productType,
-      selectedVariation: customizationAllowed ? selectedVariation : null,
-      selectedAddons: customizationAllowed ? selectedAddons : [],
-      removedIngredients: customizationAllowed ? removedIngredientsForCart : [],
-      selectionSummary: customizationAllowed ? buildSelectionSummary() : "",
+      selectedVariation,
+      selectedAddons,
+      removedIngredients: removedIngredientsForCart,
+      selectionSummary: buildSelectionSummary(),
       requiresWaiterConfirmation: Boolean(
         requiresWaiterConfirmation || ruleSettings.requiresStaffReview,
       ),
@@ -622,6 +607,8 @@ export default function ProductCard({
               {isFavorite ? "Favorito guardado" : "Guardar favorito"}
             </button>
           ) : null}
+
+
 
           {isCombo && (
             <div className="mt-4 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3">

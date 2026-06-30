@@ -32,7 +32,6 @@ const SCOPED_TABLES = [
   "tables",
   "suppliers",
   "supplier_purchases",
-  "supplier_purchase_payments",
 ]
 
 // Archivos donde viven queries directas a estas tablas.
@@ -60,7 +59,6 @@ function isScopedSafely(windowText: string): boolean {
     /\.eq\("item_id",/.test(windowText) ||
     /\.in\("item_id",/.test(windowText) ||
     /\.eq\("open_account_id",/.test(windowText) || // hijos de una cuenta (ya scopeada)
-    /\.eq\("purchase_id",/.test(windowText) || // hijos de una compra (ya scopeada)
     /branch-exempt/.test(windowText) // excepción anotada a propósito
   )
 }

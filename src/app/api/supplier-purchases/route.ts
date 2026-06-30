@@ -25,19 +25,13 @@ function normalizeDate(value: unknown) {
   return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : new Date().toISOString().slice(0, 10)
 }
 
-function normalizeOptionalDate(value: unknown) {
-  const text = cleanText(value)
-  return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : ""
-}
-
 export async function GET(request: NextRequest) {
   try {
     const access = await checkSuppliersAccess(request, ["owner", "support"])
     if (!access.ok) return access.response
 
     const supplierId = request.nextUrl.searchParams.get("supplierId") || null
-    const paymentStatus = request.nextUrl.searchParams.get("paymentStatus") || null
-    const purchases = await getSupplierPurchases(await resolveBranchId(request), supplierId, { paymentStatus })
+    const purchases = await getSupplierPurchases(await resolveBranchId(request), supplierId)
 
     return NextResponse.json({ ok: true, purchases })
   } catch (error) {
@@ -118,16 +112,10 @@ export async function POST(request: NextRequest) {
         supplierId,
         supplierName: supplier.name,
         purchaseDate: normalizeDate(body.purchaseDate),
-        dueDate: normalizeOptionalDate(body.dueDate),
         documentNumber: cleanText(body.documentNumber),
         totalUSD: normalizeAmount(body.totalUSD),
         totalVES: normalizeAmount(body.totalVES),
         note: cleanText(body.note),
-        paymentMethod: cleanText(body.paymentMethod),
-        paymentReference: cleanText(body.paymentReference),
-        paymentNote: cleanText(body.paymentNote),
-        initialPaidUSD: normalizeAmount(body.initialPaidUSD),
-        initialPaidVES: normalizeAmount(body.initialPaidVES),
         inventoryItemId: inventoryItemId || null,
         inventoryItemName,
         inventoryQuantity,

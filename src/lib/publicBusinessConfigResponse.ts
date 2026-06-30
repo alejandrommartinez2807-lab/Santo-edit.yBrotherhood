@@ -11,91 +11,6 @@ import {
 
 type MembershipPlan = "menuDigital" | "basic" | "operational" | "pro" | "complete"
 type MembershipPlanMode = "fixed" | "custom"
-type PublicComplexityProfile = "simple" | "standard" | "advanced" | "custom"
-
-type PublicComplexityDefaults = {
-  publicOrdersEnabled: boolean
-  publicLocalOrdersEnabled: boolean
-  publicTakeawayOrdersEnabled: boolean
-  publicDeliveryOrdersEnabled: boolean
-  publicOpenAccountEnabled: boolean
-  publicPaymentProofsEnabled: boolean
-  publicIngredientCustomizationEnabled: boolean
-  publicAddonsEnabled: boolean
-  publicNotesEnabled: boolean
-  publicCustomerNotesEnabled: boolean
-  publicAttachmentsEnabled: boolean
-  publicCustomerAttachmentsEnabled: boolean
-  publicCustomerImageAttachmentEnabled: boolean
-  publicPhoneRequired: boolean
-}
-
-const PUBLIC_COMPLEXITY_PROFILE_DEFAULTS: Record<PublicComplexityProfile, PublicComplexityDefaults> = {
-  simple: {
-    publicOrdersEnabled: true,
-    publicLocalOrdersEnabled: false,
-    publicTakeawayOrdersEnabled: true,
-    publicDeliveryOrdersEnabled: false,
-    publicOpenAccountEnabled: false,
-    publicPaymentProofsEnabled: false,
-    publicIngredientCustomizationEnabled: false,
-    publicAddonsEnabled: false,
-    publicNotesEnabled: false,
-    publicCustomerNotesEnabled: false,
-    publicAttachmentsEnabled: false,
-    publicCustomerAttachmentsEnabled: false,
-    publicCustomerImageAttachmentEnabled: false,
-    publicPhoneRequired: false,
-  },
-  standard: {
-    publicOrdersEnabled: true,
-    publicLocalOrdersEnabled: true,
-    publicTakeawayOrdersEnabled: true,
-    publicDeliveryOrdersEnabled: true,
-    publicOpenAccountEnabled: true,
-    publicPaymentProofsEnabled: true,
-    publicIngredientCustomizationEnabled: true,
-    publicAddonsEnabled: true,
-    publicNotesEnabled: true,
-    publicCustomerNotesEnabled: true,
-    publicAttachmentsEnabled: true,
-    publicCustomerAttachmentsEnabled: true,
-    publicCustomerImageAttachmentEnabled: true,
-    publicPhoneRequired: false,
-  },
-  advanced: {
-    publicOrdersEnabled: true,
-    publicLocalOrdersEnabled: true,
-    publicTakeawayOrdersEnabled: true,
-    publicDeliveryOrdersEnabled: true,
-    publicOpenAccountEnabled: true,
-    publicPaymentProofsEnabled: true,
-    publicIngredientCustomizationEnabled: true,
-    publicAddonsEnabled: true,
-    publicNotesEnabled: true,
-    publicCustomerNotesEnabled: true,
-    publicAttachmentsEnabled: true,
-    publicCustomerAttachmentsEnabled: true,
-    publicCustomerImageAttachmentEnabled: true,
-    publicPhoneRequired: false,
-  },
-  custom: {
-    publicOrdersEnabled: true,
-    publicLocalOrdersEnabled: true,
-    publicTakeawayOrdersEnabled: true,
-    publicDeliveryOrdersEnabled: true,
-    publicOpenAccountEnabled: true,
-    publicPaymentProofsEnabled: true,
-    publicIngredientCustomizationEnabled: true,
-    publicAddonsEnabled: true,
-    publicNotesEnabled: true,
-    publicCustomerNotesEnabled: true,
-    publicAttachmentsEnabled: true,
-    publicCustomerAttachmentsEnabled: true,
-    publicCustomerImageAttachmentEnabled: true,
-    publicPhoneRequired: false,
-  },
-}
 
 type PublicBusinessConfigSource = Record<string, unknown>
 
@@ -202,60 +117,6 @@ export function normalizeMembershipPlanMode(value: unknown): MembershipPlanMode 
   }
 
   return "fixed"
-}
-
-export function normalizeBusinessComplexityProfile(value: unknown): PublicComplexityProfile {
-  const normalized = normalizeText(value)
-
-  if (
-    normalized === "simple" ||
-    normalized === "sencillo" ||
-    normalized === "basico" ||
-    normalized === "básico"
-  ) {
-    return "simple"
-  }
-
-  if (
-    normalized === "standard" ||
-    normalized === "estandar" ||
-    normalized === "estándar" ||
-    normalized === "normal"
-  ) {
-    return "standard"
-  }
-
-  if (
-    normalized === "custom" ||
-    normalized === "personalizado" ||
-    normalized === "personalizada"
-  ) {
-    return "custom"
-  }
-
-  return "advanced"
-}
-
-function readPublicControlBoolean(
-  config: PublicBusinessConfigSource,
-  key: keyof PublicComplexityDefaults,
-  fallback: boolean
-) {
-  return Object.prototype.hasOwnProperty.call(config, key)
-    ? normalizeBoolean(config[key], fallback)
-    : fallback
-}
-
-function readPublicControlBooleanAliases(
-  config: PublicBusinessConfigSource,
-  keys: Array<keyof PublicComplexityDefaults | string>,
-  fallback: boolean
-) {
-  const matchedKey = keys.find((key) =>
-    Object.prototype.hasOwnProperty.call(config, key)
-  )
-
-  return matchedKey ? normalizeBoolean(config[matchedKey], fallback) : fallback
 }
 
 export function normalizeBoolean(value: unknown, fallback = true) {
@@ -378,83 +239,6 @@ export function buildPublicBusinessConfigResponse(
   const config = businessConfig as PublicBusinessConfigSource
   const membershipPlan = normalizeMembershipPlan(config.membershipPlan)
   const membershipPlanMode = normalizeMembershipPlanMode(config.membershipPlanMode)
-  const businessComplexityProfile = normalizeBusinessComplexityProfile(
-    config.businessComplexityProfile ||
-      config.publicBusinessComplexityProfile ||
-      config.businessComplexity ||
-      config.businessComplexityLevel ||
-      config.businessComplexityMode ||
-      config.publicComplexityProfile ||
-      config.publicComplexityMode
-  )
-  const publicComplexityDefaults = PUBLIC_COMPLEXITY_PROFILE_DEFAULTS[businessComplexityProfile]
-  const publicOrdersEnabled = readPublicControlBoolean(
-    config,
-    "publicOrdersEnabled",
-    publicComplexityDefaults.publicOrdersEnabled
-  )
-  const publicLocalOrdersEnabled =
-    publicOrdersEnabled &&
-    readPublicControlBoolean(
-      config,
-      "publicLocalOrdersEnabled",
-      publicComplexityDefaults.publicLocalOrdersEnabled
-    )
-  const publicTakeawayOrdersEnabled =
-    publicOrdersEnabled &&
-    readPublicControlBoolean(
-      config,
-      "publicTakeawayOrdersEnabled",
-      publicComplexityDefaults.publicTakeawayOrdersEnabled
-    )
-  const publicDeliveryOrdersEnabled =
-    publicOrdersEnabled &&
-    readPublicControlBoolean(
-      config,
-      "publicDeliveryOrdersEnabled",
-      publicComplexityDefaults.publicDeliveryOrdersEnabled
-    )
-  const publicOpenAccountEnabled =
-    publicOrdersEnabled &&
-    readPublicControlBoolean(
-      config,
-      "publicOpenAccountEnabled",
-      publicComplexityDefaults.publicOpenAccountEnabled
-    )
-  const publicPaymentProofsEnabled = readPublicControlBooleanAliases(
-    config,
-    ["publicPaymentProofsEnabled", "publicPaymentProofUploadEnabled"],
-    publicComplexityDefaults.publicPaymentProofsEnabled
-  )
-  const publicIngredientCustomizationEnabled = readPublicControlBoolean(
-    config,
-    "publicIngredientCustomizationEnabled",
-    publicComplexityDefaults.publicIngredientCustomizationEnabled
-  )
-  const publicAddonsEnabled = readPublicControlBoolean(
-    config,
-    "publicAddonsEnabled",
-    publicComplexityDefaults.publicAddonsEnabled
-  )
-  const publicNotesEnabled = readPublicControlBooleanAliases(
-    config,
-    ["publicNotesEnabled", "publicCustomerNotesEnabled"],
-    publicComplexityDefaults.publicNotesEnabled
-  )
-  const publicAttachmentsEnabled = readPublicControlBooleanAliases(
-    config,
-    [
-      "publicAttachmentsEnabled",
-      "publicCustomerAttachmentsEnabled",
-      "publicCustomerImageAttachmentEnabled",
-    ],
-    publicComplexityDefaults.publicAttachmentsEnabled
-  )
-  const publicPhoneRequired = readPublicControlBoolean(
-    config,
-    "publicPhoneRequired",
-    publicComplexityDefaults.publicPhoneRequired
-  )
   const deliveryEnabled = normalizeBoolean(config.deliveryEnabled, true)
   const deliveryModuleEnabled = normalizeBoolean(config.deliveryModuleEnabled, true)
   const promotionAccess = getModulePlanAccess(config, "promotions")
@@ -550,38 +334,13 @@ export function buildPublicBusinessConfigResponse(
     manualExchangeRate: normalizeNumber(config.manualExchangeRate),
     membershipPlan,
     membershipPlanMode,
-    businessComplexityProfile,
-    publicOrdersEnabled,
-    publicLocalOrdersEnabled,
-    publicTakeawayOrdersEnabled,
-    publicDeliveryOrdersEnabled,
-    publicOpenAccountEnabled,
-    publicPaymentProofsEnabled,
-    publicPaymentProofUploadEnabled: publicPaymentProofsEnabled,
-    publicIngredientCustomizationEnabled,
-    publicAddonsEnabled,
-    publicNotesEnabled,
-    publicCustomerNotesEnabled: publicNotesEnabled,
-    publicAttachmentsEnabled,
-    publicCustomerAttachmentsEnabled: publicAttachmentsEnabled,
-    publicCustomerImageAttachmentEnabled: publicAttachmentsEnabled,
-    publicPhoneRequired,
-    localOrdersEnabled:
-      planAllowsLocalOrders(membershipPlan) &&
-      publicOrdersEnabled &&
-      (publicLocalOrdersEnabled || publicTakeawayOrdersEnabled),
-    deliveryEnabled:
-      deliveryEnabled &&
-      planAllowsDelivery(membershipPlan) &&
-      publicOrdersEnabled &&
-      publicDeliveryOrdersEnabled,
+    localOrdersEnabled: planAllowsLocalOrders(membershipPlan),
+    deliveryEnabled: deliveryEnabled && planAllowsDelivery(membershipPlan),
     deliveryModuleEnabled:
       deliveryModuleEnabled && planAllowsDelivery(membershipPlan),
-    paymentProofsEnabled:
-      paymentProofsAccess.effectiveEnabled && publicPaymentProofsEnabled,
+    paymentProofsEnabled: paymentProofsAccess.effectiveEnabled,
     paymentProofsModuleEnabled: paymentProofsAccess.effectiveEnabled,
-    openAccountsEnabled:
-      openAccountsAccess.effectiveEnabled && publicOpenAccountEnabled,
+    openAccountsEnabled: openAccountsAccess.effectiveEnabled,
     localTables: normalizePublicLocalTables(config.localTables),
     promotionActive: promotionCanShow,
     promotionTitle: promotionCanShow ? promotionTitle : "",

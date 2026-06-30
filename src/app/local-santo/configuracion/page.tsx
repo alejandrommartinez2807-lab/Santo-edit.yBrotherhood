@@ -17,7 +17,6 @@ import {
   BarChart3,
   Building2,
   CheckCircle2,
-  ClipboardList,
   ChevronDown,
   ChevronUp,
   DollarSign,
@@ -55,15 +54,6 @@ import {
   type LocalPlanKey,
   type LocalPlanMode,
 } from "@/lib/localPlans";
-import {
-  BUSINESS_COMPLEXITY_PROFILE_DEFINITIONS,
-  DEFAULT_BUSINESS_COMPLEXITY_SETTINGS,
-  getBusinessComplexityProfilePatch,
-  normalizeBusinessComplexitySettings,
-  type BusinessComplexityBooleanKey,
-  type BusinessComplexityProfile,
-  type BusinessComplexitySettings,
-} from "@/lib/orders";
 import { products as fallbackProducts, type Product } from "@/data/products";
 import {
   DEFAULT_PUBLIC_CATEGORY_ORDER,
@@ -90,7 +80,7 @@ type BusinessViewMode = "simple" | "negocio" | "avanzado";
 type ExchangeRateMode = "automatic" | "manual";
 type ConfigAccessRole = "owner" | "support";
 
-type BusinessConfig = BusinessComplexitySettings & {
+type BusinessConfig = {
   businessName: string;
   businessShortDescription: string;
   businessType: string;
@@ -345,7 +335,6 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   filtersOpenByDefault: false,
   allowCloseWithPendingOrders: true,
   allowCloseWithPendingPayments: true,
-  ...DEFAULT_BUSINESS_COMPLEXITY_SETTINGS,
 };
 
 const AVAILABLE_MODULES_PATCH: Partial<BusinessConfig> = {
@@ -1015,8 +1004,7 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.featuredProductIds,
       DEFAULT_BUSINESS_CONFIG.featuredProductIds,
     ),
-    publicCategoryOrder: normalizePublicCategoryList(source.publicCategoryOrder)
-      .length
+    publicCategoryOrder: normalizePublicCategoryList(source.publicCategoryOrder).length
       ? normalizePublicCategoryList(source.publicCategoryOrder)
       : DEFAULT_BUSINESS_CONFIG.publicCategoryOrder,
     publicHiddenCategories: normalizePublicHiddenCategoryList(
@@ -1140,7 +1128,6 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.allowCloseWithPendingPayments,
       DEFAULT_BUSINESS_CONFIG.allowCloseWithPendingPayments,
     ),
-    ...normalizeBusinessComplexitySettings(source),
     updatedAt: source.updatedAt ? String(source.updatedAt) : undefined,
   };
 }
@@ -1336,18 +1323,15 @@ export default function BusinessConfigPage() {
   const publicCategoryOptions = useMemo(() => {
     const productCategories = availableProducts
       .map((product) => String(product.category || "").trim())
-      .filter(Boolean);
+      .filter(Boolean)
     return normalizePublicCategoryList([
       ...businessConfig.publicCategoryOrder,
       ...productCategories,
       ...DEFAULT_PUBLIC_CATEGORY_ORDER,
-    ]);
+    ])
   }, [availableProducts, businessConfig.publicCategoryOrder]);
   const hiddenPublicCategoryKeys = useMemo(
-    () =>
-      new Set(
-        businessConfig.publicHiddenCategories.map(normalizeComparableText),
-      ),
+    () => new Set(businessConfig.publicHiddenCategories.map(normalizeComparableText)),
     [businessConfig.publicHiddenCategories],
   );
   const cardTextContrastRatio = useMemo(
@@ -1386,35 +1370,14 @@ export default function BusinessConfigPage() {
     setSuccessMessage(null);
   }
 
-  function applyBusinessComplexityProfile(profile: BusinessComplexityProfile) {
-    setBusinessConfig((current) => ({
-      ...current,
-      ...getBusinessComplexityProfilePatch(profile, current),
-    }));
-    setSuccessMessage(null);
-  }
-
-  function updateBusinessComplexityPermission(
-    key: BusinessComplexityBooleanKey,
-    value: boolean,
-  ) {
-    setBusinessConfig((current) => ({
-      ...current,
-      businessComplexityProfile: "custom",
-      [key]: value,
-    }));
-    setSuccessMessage(null);
-  }
-
   function updatePublicNavButton(
     index: number,
     patch: Partial<PublicNavButton>,
   ) {
     setBusinessConfig((current) => {
-      const nextButtons = normalizePublicNavButtons(
-        current.publicNavButtons,
-      ).map((button, buttonIndex) =>
-        buttonIndex === index ? { ...button, ...patch } : button,
+      const nextButtons = normalizePublicNavButtons(current.publicNavButtons).map(
+        (button, buttonIndex) =>
+          buttonIndex === index ? { ...button, ...patch } : button,
       );
 
       return {
@@ -1429,10 +1392,7 @@ export default function BusinessConfigPage() {
     updateConfig("publicNavButtons", DEFAULT_PUBLIC_NAV_BUTTONS);
   }
 
-  function togglePublicCategoryVisibility(
-    category: string,
-    isVisible: boolean,
-  ) {
+  function togglePublicCategoryVisibility(category: string, isVisible: boolean) {
     const cleanCategory = String(category || "").trim();
     if (!cleanCategory) return;
 
@@ -1442,9 +1402,7 @@ export default function BusinessConfigPage() {
       );
       const nextHidden = isVisible
         ? currentHidden.filter(
-            (item) =>
-              normalizeComparableText(item) !==
-              normalizeComparableText(cleanCategory),
+            (item) => normalizeComparableText(item) !== normalizeComparableText(cleanCategory),
           )
         : normalizePublicHiddenCategoryList([...currentHidden, cleanCategory]);
 
@@ -1466,9 +1424,7 @@ export default function BusinessConfigPage() {
         ...publicCategoryOptions,
       ]);
       const withoutCategory = categories.filter(
-        (item) =>
-          normalizeComparableText(item) !==
-          normalizeComparableText(cleanCategory),
+        (item) => normalizeComparableText(item) !== normalizeComparableText(cleanCategory),
       );
       const nextIndex = Math.min(
         withoutCategory.length,
@@ -1969,19 +1925,12 @@ export default function BusinessConfigPage() {
 
       // Respeta el plan activo: si un módulo no está incluido, no se fuerza.
       getVisibleOwnerSettingModules().forEach((moduleDefinition) => {
-        const moduleAccess = getModulePlanAccess(
-          nextConfig,
-          moduleDefinition.key,
-        );
+        const moduleAccess = getModulePlanAccess(nextConfig, moduleDefinition.key);
 
         if (!moduleAccess.ownerConfigKey || moduleAccess.comingSoon) return;
 
-        if (
-          !moduleAccess.includedInPlan &&
-          isBusinessConfigKey(moduleAccess.ownerConfigKey)
-        ) {
-          (nextConfig as Record<string, unknown>)[moduleAccess.ownerConfigKey] =
-            false;
+        if (!moduleAccess.includedInPlan && isBusinessConfigKey(moduleAccess.ownerConfigKey)) {
+          (nextConfig as Record<string, unknown>)[moduleAccess.ownerConfigKey] = false;
         }
       });
 
@@ -2969,9 +2918,8 @@ export default function BusinessConfigPage() {
                         Paletas rápidas
                       </p>
                       <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
-                        Aplica una base completa y luego ajusta colores y
-                        textos. La vista previa de la derecha cambia antes de
-                        guardar.
+                        Aplica una base completa y luego ajusta colores y textos.
+                        La vista previa de la derecha cambia antes de guardar.
                       </p>
                     </div>
                     <span className="w-fit rounded-full border-2 border-[var(--brand-primary)]/20 bg-white px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
@@ -3014,10 +2962,9 @@ export default function BusinessConfigPage() {
                     Contenido conectado
                   </p>
                   <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
-                    Los textos, títulos, descripciones, botones y categorías se
-                    editan abajo en Información pública avanzada. Esta vista
-                    previa usa esos mismos valores en vivo para que no existan
-                    textos fijos duplicados.
+                    Los textos, títulos, descripciones, botones y categorías se editan
+                    abajo en Información pública avanzada. Esta vista previa usa esos
+                    mismos valores en vivo para que no existan textos fijos duplicados.
                   </p>
                   <div className="mt-4 grid gap-2 sm:grid-cols-2">
                     <a
@@ -3040,8 +2987,7 @@ export default function BusinessConfigPage() {
                     Colores principales
                   </p>
                   <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
-                    Controlan la marca pública: bordes, botones, fondos y
-                    acentos.
+                    Controlan la marca pública: bordes, botones, fondos y acentos.
                   </p>
                   <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-2">
                     {(
@@ -3066,9 +3012,8 @@ export default function BusinessConfigPage() {
                     Colores de productos
                   </p>
                   <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
-                    Cambian las tarjetas reales del menú público. La vista
-                    previa ya no usa una tarjeta inventada para evitar
-                    confusión.
+                    Cambian las tarjetas reales del menú público. La vista previa
+                    ya no usa una tarjeta inventada para evitar confusión.
                   </p>
                   <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-2">
                     {(
@@ -3090,9 +3035,7 @@ export default function BusinessConfigPage() {
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-2">
-                  <div
-                    className={`rounded-[1.2rem] border-2 p-3 ${cardTextContrastStatus.className}`}
-                  >
+                  <div className={`rounded-[1.2rem] border-2 p-3 ${cardTextContrastStatus.className}`}>
                     <p className="text-[0.68rem] font-black uppercase tracking-[0.14em]">
                       Legibilidad de tarjetas
                     </p>
@@ -3100,13 +3043,10 @@ export default function BusinessConfigPage() {
                       {cardTextContrastStatus.label}
                     </p>
                     <p className="mt-1 text-[0.7rem] font-bold leading-4 opacity-80">
-                      Ratio {cardTextContrastRatio.toFixed(1)}:1 ·{" "}
-                      {cardTextContrastStatus.description}
+                      Ratio {cardTextContrastRatio.toFixed(1)}:1 · {cardTextContrastStatus.description}
                     </p>
                   </div>
-                  <div
-                    className={`rounded-[1.2rem] border-2 p-3 ${cardButtonContrastStatus.className}`}
-                  >
+                  <div className={`rounded-[1.2rem] border-2 p-3 ${cardButtonContrastStatus.className}`}>
                     <p className="text-[0.68rem] font-black uppercase tracking-[0.14em]">
                       Legibilidad de botones
                     </p>
@@ -3114,8 +3054,7 @@ export default function BusinessConfigPage() {
                       {cardButtonContrastStatus.label}
                     </p>
                     <p className="mt-1 text-[0.7rem] font-bold leading-4 opacity-80">
-                      Ratio {cardButtonContrastRatio.toFixed(1)}:1 ·{" "}
-                      {cardButtonContrastStatus.description}
+                      Ratio {cardButtonContrastRatio.toFixed(1)}:1 · {cardButtonContrastStatus.description}
                     </p>
                   </div>
                 </div>
@@ -3147,9 +3086,7 @@ export default function BusinessConfigPage() {
                 >
                   <div
                     className="border-b-2 bg-white px-4 py-4"
-                    style={{
-                      borderColor: `${businessConfig.themePrimaryColor}22`,
-                    }}
+                    style={{ borderColor: `${businessConfig.themePrimaryColor}22` }}
                   >
                     <div className="flex items-center gap-3">
                       <div
@@ -3176,9 +3113,7 @@ export default function BusinessConfigPage() {
                     </div>
 
                     <div className="mt-4 flex overflow-hidden rounded-[1.2rem] border-2 bg-white">
-                      {normalizePublicNavButtons(
-                        businessConfig.publicNavButtons,
-                      )
+                      {normalizePublicNavButtons(businessConfig.publicNavButtons)
                         .filter((button) => button.isVisible !== false)
                         .slice(0, 5)
                         .map((button) => (
@@ -3190,9 +3125,7 @@ export default function BusinessConfigPage() {
                               color: businessConfig.themePrimaryColor,
                             }}
                           >
-                            <span className="block truncate">
-                              {button.label}
-                            </span>
+                            <span className="block truncate">{button.label}</span>
                           </span>
                         ))}
                     </div>
@@ -3202,8 +3135,7 @@ export default function BusinessConfigPage() {
                     <div
                       className="rounded-[1.35rem] border-2 p-4"
                       style={{
-                        backgroundColor:
-                          businessConfig.productCardBackgroundColor,
+                        backgroundColor: businessConfig.productCardBackgroundColor,
                         borderColor: businessConfig.themePrimaryColor,
                         color: businessConfig.productCardTextColor,
                       }}
@@ -3227,16 +3159,13 @@ export default function BusinessConfigPage() {
                         {businessConfig.publicMenuTitle || "Elige tu pedido"}
                       </h3>
                       <p className="mt-2 text-xs font-bold leading-5 opacity-80">
-                        {businessConfig.publicMenuText ||
-                          businessConfig.businessShortDescription}
+                        {businessConfig.publicMenuText || businessConfig.businessShortDescription}
                       </p>
                     </div>
 
                     <div
                       className="rounded-[1.2rem] border-2 bg-white p-3"
-                      style={{
-                        borderColor: `${businessConfig.themePrimaryColor}22`,
-                      }}
+                      style={{ borderColor: `${businessConfig.themePrimaryColor}22` }}
                     >
                       <div
                         className="rounded-full border-2 px-4 py-3 text-xs font-bold opacity-70"
@@ -3252,9 +3181,7 @@ export default function BusinessConfigPage() {
 
                     <div
                       className="rounded-[1.2rem] border-2 bg-white p-3"
-                      style={{
-                        borderColor: `${businessConfig.themePrimaryColor}22`,
-                      }}
+                      style={{ borderColor: `${businessConfig.themePrimaryColor}22` }}
                     >
                       <p
                         className="text-[0.62rem] font-black uppercase tracking-[0.16em]"
@@ -3302,8 +3229,7 @@ export default function BusinessConfigPage() {
                     <div
                       className="rounded-[1.2rem] border-2 p-3"
                       style={{
-                        backgroundColor:
-                          businessConfig.productCardBackgroundColor,
+                        backgroundColor: businessConfig.productCardBackgroundColor,
                         borderColor: `${businessConfig.productCardBorderColor}66`,
                         color: businessConfig.productCardTextColor,
                       }}
@@ -3316,10 +3242,7 @@ export default function BusinessConfigPage() {
                       </p>
                       <div className="mt-2 space-y-2 text-xs font-bold leading-5 opacity-85">
                         <p>
-                          <span className="font-black">
-                            {businessConfig.publicComboTitle ||
-                              "Combos disponibles"}
-                          </span>
+                          <span className="font-black">{businessConfig.publicComboTitle || "Combos disponibles"}</span>
                           {" · "}
                           {businessConfig.publicComboButtonText || "Ver combos"}
                         </p>
@@ -3328,10 +3251,7 @@ export default function BusinessConfigPage() {
                             "Los combos se manejan en divisas para mantener precios claros."}
                         </p>
                         <p>
-                          <span className="font-black">
-                            {businessConfig.publicInfoTitle ||
-                              "Información final"}
-                          </span>
+                          <span className="font-black">{businessConfig.publicInfoTitle || "Información final"}</span>
                           {" · "}
                           {businessConfig.scheduleTitle || "Horario"}
                         </p>
@@ -4046,9 +3966,8 @@ export default function BusinessConfigPage() {
                     Activación rápida
                   </p>
                   <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-                    Activa de una vez todos los módulos reales disponibles en el
-                    plan actual. Los módulos futuros siguen ocultos hasta que
-                    tengan pantalla lista.
+                    Activa de una vez todos los módulos reales disponibles en el plan actual.
+                    Los módulos futuros siguen ocultos hasta que tengan pantalla lista.
                   </p>
                 </div>
                 <button
@@ -4119,10 +4038,7 @@ export default function BusinessConfigPage() {
           </SectionCard>
         </section>
 
-        <section
-          id="informacion-publica-avanzada"
-          className="mt-4 scroll-mt-24"
-        >
+        <section id="informacion-publica-avanzada" className="mt-4 scroll-mt-24">
           <SectionCard
             icon={<Store size={22} />}
             title="Información pública avanzada"
@@ -4270,8 +4186,7 @@ export default function BusinessConfigPage() {
                       Barra superior pública
                     </p>
                     <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
-                      Elige qué botones aparecen arriba, el texto y a dónde
-                      llevan. El carrito sigue siendo independiente.
+                      Elige qué botones aparecen arriba, el texto y a dónde llevan. El carrito sigue siendo independiente.
                     </p>
                   </div>
 
@@ -4286,102 +4201,101 @@ export default function BusinessConfigPage() {
                 </div>
 
                 <div className="mt-4 grid gap-3">
-                  {normalizePublicNavButtons(
-                    businessConfig.publicNavButtons,
-                  ).map((button, index) => (
-                    <div
-                      key={button.id}
-                      className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/15 bg-white p-3"
-                    >
-                      <div className="grid gap-3 lg:grid-cols-[auto_1fr_170px_1.2fr_90px] lg:items-end">
-                        <label className="flex items-center gap-3 rounded-2xl bg-[var(--brand-cream)] px-3 py-3">
-                          <input
-                            type="checkbox"
-                            checked={button.isVisible !== false}
-                            disabled={!canEditAdvancedPublic}
-                            onChange={(event) =>
-                              updatePublicNavButton(index, {
-                                isVisible: event.target.checked,
-                              })
-                            }
-                            className="h-5 w-5 accent-[var(--brand-primary)] disabled:cursor-not-allowed"
-                          />
-                          <span className="text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-                            Visible
-                          </span>
-                        </label>
-
-                        <TextInput
-                          label="Texto"
-                          value={button.label}
-                          onChange={(value) =>
-                            updatePublicNavButton(index, { label: value })
-                          }
-                          placeholder="Ej: Ver cuenta"
-                          disabled={!canEditAdvancedPublic}
-                        />
-
-                        <div>
-                          <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                            Tipo
+                  {normalizePublicNavButtons(businessConfig.publicNavButtons).map(
+                    (button, index) => (
+                      <div
+                        key={button.id}
+                        className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/15 bg-white p-3"
+                      >
+                        <div className="grid gap-3 lg:grid-cols-[auto_1fr_170px_1.2fr_90px] lg:items-end">
+                          <label className="flex items-center gap-3 rounded-2xl bg-[var(--brand-cream)] px-3 py-3">
+                            <input
+                              type="checkbox"
+                              checked={button.isVisible !== false}
+                              disabled={!canEditAdvancedPublic}
+                              onChange={(event) =>
+                                updatePublicNavButton(index, {
+                                  isVisible: event.target.checked,
+                                })
+                              }
+                              className="h-5 w-5 accent-[var(--brand-primary)] disabled:cursor-not-allowed"
+                            />
+                            <span className="text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                              Visible
+                            </span>
                           </label>
-                          <select
-                            value={button.kind}
+
+                          <TextInput
+                            label="Texto"
+                            value={button.label}
+                            onChange={(value) =>
+                              updatePublicNavButton(index, { label: value })
+                            }
+                            placeholder="Ej: Ver cuenta"
                             disabled={!canEditAdvancedPublic}
-                            onChange={(event) =>
+                          />
+
+                          <div>
+                            <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                              Tipo
+                            </label>
+                            <select
+                              value={button.kind}
+                              disabled={!canEditAdvancedPublic}
+                              onChange={(event) =>
+                                updatePublicNavButton(index, {
+                                  kind: event.target.value as PublicNavButtonKind,
+                                })
+                              }
+                              className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-[#f3ead7] disabled:text-[var(--brand-ink)]/50"
+                            >
+                              <option value="section">Sección interna</option>
+                              <option value="whatsapp">WhatsApp</option>
+                              <option value="instagram">Instagram</option>
+                              <option value="url">URL personalizada</option>
+                            </select>
+                          </div>
+
+                          <TextInput
+                            label="Destino"
+                            value={button.target}
+                            onChange={(value) =>
+                              updatePublicNavButton(index, { target: value })
+                            }
+                            placeholder="#menu, #abrir-cuenta o https://..."
+                            helper={
+                              button.kind === "whatsapp"
+                                ? "Usa el WhatsApp configurado del negocio."
+                                : button.kind === "instagram"
+                                  ? "Usa el Instagram configurado del negocio."
+                                  : "Ejemplos: #inicio, #menu, #abrir-cuenta, /ruta o https://..."
+                            }
+                            disabled={
+                              !canEditAdvancedPublic ||
+                              button.kind === "whatsapp" ||
+                              button.kind === "instagram"
+                            }
+                          />
+
+                          <TextInput
+                            label="Orden"
+                            type="number"
+                            value={button.sortOrder}
+                            onChange={(value) =>
                               updatePublicNavButton(index, {
-                                kind: event.target.value as PublicNavButtonKind,
+                                sortOrder:
+                                  Number.isFinite(Number(value)) && Number(value) > 0
+                                    ? Math.round(Number(value))
+                                    : index + 1,
                               })
                             }
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-[#f3ead7] disabled:text-[var(--brand-ink)]/50"
-                          >
-                            <option value="section">Sección interna</option>
-                            <option value="whatsapp">WhatsApp</option>
-                            <option value="instagram">Instagram</option>
-                            <option value="url">URL personalizada</option>
-                          </select>
+                            placeholder="1"
+                            disabled={!canEditAdvancedPublic}
+                          />
                         </div>
-
-                        <TextInput
-                          label="Destino"
-                          value={button.target}
-                          onChange={(value) =>
-                            updatePublicNavButton(index, { target: value })
-                          }
-                          placeholder="#menu, #abrir-cuenta o https://..."
-                          helper={
-                            button.kind === "whatsapp"
-                              ? "Usa el WhatsApp configurado del negocio."
-                              : button.kind === "instagram"
-                                ? "Usa el Instagram configurado del negocio."
-                                : "Ejemplos: #inicio, #menu, #abrir-cuenta, /ruta o https://..."
-                          }
-                          disabled={
-                            !canEditAdvancedPublic ||
-                            button.kind === "whatsapp" ||
-                            button.kind === "instagram"
-                          }
-                        />
-
-                        <TextInput
-                          label="Orden"
-                          type="number"
-                          value={button.sortOrder}
-                          onChange={(value) =>
-                            updatePublicNavButton(index, {
-                              sortOrder:
-                                Number.isFinite(Number(value)) &&
-                                Number(value) > 0
-                                  ? Math.round(Number(value))
-                                  : index + 1,
-                            })
-                          }
-                          placeholder="1"
-                          disabled={!canEditAdvancedPublic}
-                        />
                       </div>
-                    </div>
-                  ))}
+                    ),
+                  )}
                 </div>
               </div>
 
@@ -4392,8 +4306,7 @@ export default function BusinessConfigPage() {
                       Orden de categorías públicas
                     </p>
                     <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
-                      Todos y Favoritos siempre se quedan primero. Aquí
-                      controlas lo que aparece después.
+                      Todos y Favoritos siempre se quedan primero. Aquí controlas lo que aparece después.
                     </p>
                   </div>
 
@@ -4427,7 +4340,7 @@ export default function BusinessConfigPage() {
                   {publicCategoryOptions.map((category, index) => {
                     const isVisible = !hiddenPublicCategoryKeys.has(
                       normalizeComparableText(category),
-                    );
+                    )
 
                     return (
                       <div
@@ -4439,8 +4352,7 @@ export default function BusinessConfigPage() {
                             {category}
                           </p>
                           <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/55">
-                            Aparece después de Todos y Favoritos en la página
-                            pública.
+                            Aparece después de Todos y Favoritos en la página pública.
                           </p>
                         </div>
 
@@ -4469,8 +4381,7 @@ export default function BusinessConfigPage() {
                           onChange={(value) =>
                             updatePublicCategoryOrder(
                               category,
-                              Number.isFinite(Number(value)) &&
-                                Number(value) > 0
+                              Number.isFinite(Number(value)) && Number(value) > 0
                                 ? Number(value)
                                 : index + 1,
                             )
@@ -4479,7 +4390,7 @@ export default function BusinessConfigPage() {
                           disabled={!canEditAdvancedPublic}
                         />
                       </div>
-                    );
+                    )
                   })}
                 </div>
               </div>
@@ -4992,232 +4903,6 @@ export default function BusinessConfigPage() {
                 }
                 placeholder="Ej: 645.68"
                 helper="Solo se usa si el modo de tasa está en Manual."
-              />
-            </div>
-          </SectionCard>
-
-          <SectionCard
-            icon={<ShieldCheck size={22} />}
-            title="Complejidad y permisos"
-            description="El dueño decide qué puede hacer el cliente en la página pública y qué acciones delicadas puede ejecutar el personal."
-          >
-            <div className="grid gap-3 lg:grid-cols-4">
-              {BUSINESS_COMPLEXITY_PROFILE_DEFINITIONS.map((profile) => (
-                <ModeButton
-                  key={profile.value}
-                  label={profile.label}
-                  description={profile.description}
-                  active={
-                    businessConfig.businessComplexityProfile === profile.value
-                  }
-                  onClick={() => applyBusinessComplexityProfile(profile.value)}
-                />
-              ))}
-            </div>
-
-            <div className="mt-4 rounded-[1.2rem] border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3">
-              <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-                Perfil actual
-              </p>
-              <p className="mt-1 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
-                {businessConfig.businessComplexityProfile === "custom"
-                  ? "Personalizado: el dueño ajustó permisos manualmente."
-                  : "El perfil aplica valores recomendados. Cambiar un permiso manual lo pasa a Personalizado."}
-              </p>
-            </div>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <ToggleRow
-                label="Cliente puede pedir"
-                description="Permite registrar pedidos desde la página pública."
-                checked={businessConfig.publicAllowOrdering}
-                onChange={(value) =>
-                  updateBusinessComplexityPermission(
-                    "publicAllowOrdering",
-                    value,
-                  )
-                }
-                icon={<ClipboardList size={18} />}
-              />
-              <ToggleRow
-                label="Comer aquí"
-                description="Muestra la opción de mesa o ubicación en el carrito público."
-                checked={businessConfig.publicAllowEatHere}
-                onChange={(value) =>
-                  updateBusinessComplexityPermission(
-                    "publicAllowEatHere",
-                    value,
-                  )
-                }
-                icon={<Table2 size={18} />}
-              />
-              <ToggleRow
-                label="Para llevar"
-                description="Muestra la opción de retiro/para llevar en el carrito público."
-                checked={businessConfig.publicAllowTakeaway}
-                onChange={(value) =>
-                  updateBusinessComplexityPermission(
-                    "publicAllowTakeaway",
-                    value,
-                  )
-                }
-                icon={<Store size={18} />}
-              />
-              <ToggleRow
-                label="Delivery público"
-                description="Permite que el cliente elija delivery si el módulo también está activo."
-                checked={businessConfig.publicAllowDelivery}
-                onChange={(value) =>
-                  updateBusinessComplexityPermission(
-                    "publicAllowDelivery",
-                    value,
-                  )
-                }
-                icon={<Truck size={18} />}
-              />
-              <ToggleRow
-                label="Cuentas de mesa"
-                description="Permite abrir o usar cuentas por mesa desde QR público."
-                checked={businessConfig.publicAllowOpenAccounts}
-                onChange={(value) =>
-                  updateBusinessComplexityPermission(
-                    "publicAllowOpenAccounts",
-                    value,
-                  )
-                }
-                icon={<Receipt size={18} />}
-              />
-              <ToggleRow
-                label="Comprobantes públicos"
-                description="Permite que el cliente suba captura para revisión de Caja."
-                checked={businessConfig.publicAllowPaymentProofs}
-                onChange={(value) =>
-                  updateBusinessComplexityPermission(
-                    "publicAllowPaymentProofs",
-                    value,
-                  )
-                }
-                icon={<UploadCloud size={18} />}
-              />
-              <ToggleRow
-                label="Notas del cliente"
-                description="Permite escribir notas generales o por producto en el pedido."
-                checked={businessConfig.publicAllowCustomerNotes}
-                onChange={(value) =>
-                  updateBusinessComplexityPermission(
-                    "publicAllowCustomerNotes",
-                    value,
-                  )
-                }
-                icon={<Settings2 size={18} />}
-              />
-              <ToggleRow
-                label="Adjuntar imagen"
-                description="Permite enviar foto o captura junto al pedido público."
-                checked={businessConfig.publicAllowAttachments}
-                onChange={(value) =>
-                  updateBusinessComplexityPermission(
-                    "publicAllowAttachments",
-                    value,
-                  )
-                }
-                icon={<ImageIcon size={18} />}
-              />
-              <ToggleRow
-                label="Teléfono obligatorio"
-                description="Exige teléfono también para pedidos que no son delivery."
-                checked={businessConfig.publicRequireCustomerPhone}
-                onChange={(value) =>
-                  updateBusinessComplexityPermission(
-                    "publicRequireCustomerPhone",
-                    value,
-                  )
-                }
-                icon={<Phone size={18} />}
-              />
-              <ToggleRow
-                label="Personalizar productos"
-                description="Control preparado para limitar ingredientes/adicionales públicos."
-                checked={businessConfig.publicAllowProductCustomization}
-                onChange={(value) =>
-                  updateBusinessComplexityPermission(
-                    "publicAllowProductCustomization",
-                    value,
-                  )
-                }
-                icon={<Grid2X2 size={18} />}
-              />
-            </div>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <ToggleRow
-                label="Cancelar pedidos"
-                description="Permite que Caja/Pedidos cambien un pedido a Cancelado."
-                checked={businessConfig.internalAllowCancelOrders}
-                onChange={(value) =>
-                  updateBusinessComplexityPermission(
-                    "internalAllowCancelOrders",
-                    value,
-                  )
-                }
-                icon={<XCircle size={18} />}
-              />
-              <ToggleRow
-                label="Editar notas internas"
-                description="Permite corregir la nota del pedido desde pantallas privadas."
-                checked={businessConfig.internalAllowEditOrderNotes}
-                onChange={(value) =>
-                  updateBusinessComplexityPermission(
-                    "internalAllowEditOrderNotes",
-                    value,
-                  )
-                }
-                icon={<Settings2 size={18} />}
-              />
-              <ToggleRow
-                label="Reabrir pagos"
-                description="Permite volver un cobro pagado/parcial a un estado inferior."
-                checked={businessConfig.internalAllowReopenPayments}
-                onChange={(value) =>
-                  updateBusinessComplexityPermission(
-                    "internalAllowReopenPayments",
-                    value,
-                  )
-                }
-                icon={<DollarSign size={18} />}
-              />
-              <ToggleRow
-                label="Revisión obligatoria del cierre"
-                description="Exige marcar revisión final antes de guardar un cierre."
-                checked={businessConfig.internalRequireCloseReview}
-                onChange={(value) =>
-                  updateBusinessComplexityPermission(
-                    "internalRequireCloseReview",
-                    value,
-                  )
-                }
-                icon={<CheckCircle2 size={18} />}
-              />
-              <ToggleRow
-                label="Reportes avanzados"
-                description="Muestra comparativas, métodos, delivery, horas y productos top."
-                checked={businessConfig.internalShowAdvancedReports}
-                onChange={(value) =>
-                  updateBusinessComplexityPermission(
-                    "internalShowAdvancedReports",
-                    value,
-                  )
-                }
-                icon={<BarChart3 size={18} />}
-              />
-              <ToggleRow
-                label="Inventario automático preparado"
-                description="Interruptor listo para fase posterior; no descuenta stock todavía."
-                checked={businessConfig.inventoryAutoDeductEnabled}
-                onChange={() => {}}
-                icon={<Store size={18} />}
-                disabled
-                lockedText="Modo seguro 2g: queda documentado y en base de datos, pero no se activa descuento automático hasta validarlo con E2E propio."
               />
             </div>
           </SectionCard>

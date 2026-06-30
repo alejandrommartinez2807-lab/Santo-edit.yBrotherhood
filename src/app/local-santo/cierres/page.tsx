@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState, type ReactNode } from "react"
 import {
   AlertTriangle,
   ArrowLeft,
-  BarChart3,
   CalendarDays,
   CheckCircle2,
   Clipboard,
@@ -18,12 +17,10 @@ import {
   Printer,
   RefreshCw,
   Search,
-  Store,
   X,
 } from "lucide-react"
 import { formatUSD, formatVES } from "@/utils/formatCurrency"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
-import { DonutChart, HBarChart, VBarChart } from "@/components/charts"
 import {
   PAYMENT_FILTERS,
   REPORT_VIEW_MODES,
@@ -35,7 +32,6 @@ import {
   getClosePaymentState,
   getCloseTitle,
   getDateInputValueDaysAgo,
-  getBranchCloseSummary,
   getDayCloseTotals,
   getInventoryExpenseTotals,
   getRangeAlerts,
@@ -47,7 +43,6 @@ import {
   matchesPaymentFilter,
   normalizeDayCloses,
   readApiResponse,
-  type BranchCloseSummary,
   type DayCloseExpense,
   type LoginBoxProps,
   type PaymentFilter,
@@ -61,39 +56,6 @@ import { downloadExcelFriendlyCsv, downloadTextFile } from "./downloads"
 
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
 const VIEW_MODE_STORAGE_KEY = "santo_perrito_closes_view_mode"
-const BRANCH_SCOPE_STORAGE_KEY = "santo_perrito_closes_branch_scope"
-const CHART_TYPE_STORAGE_KEY = "santo_perrito_closes_chart_type"
-
-type BranchReportScope = "selected" | "all"
-type CloseChartType = "barras" | "columnas" | "dona" | "mixto"
-
-const BRANCH_REPORT_SCOPE_OPTIONS: { value: BranchReportScope; label: string; description: string }[] = [
-  {
-    value: "selected",
-    label: "Sucursal actual",
-    description: "Usa la sede elegida en el selector del sistema.",
-  },
-  {
-    value: "all",
-    label: "Total general",
-    description: "Suma cierres de todas las sedes para visión de dueño.",
-  },
-]
-
-const CLOSE_CHART_TYPES: { value: CloseChartType; label: string }[] = [
-  { value: "barras", label: "Barras" },
-  { value: "columnas", label: "Columnas" },
-  { value: "dona", label: "Dona" },
-  { value: "mixto", label: "Mixto" },
-]
-
-function isBranchReportScope(value: unknown): value is BranchReportScope {
-  return value === "selected" || value === "all"
-}
-
-function isCloseChartType(value: unknown): value is CloseChartType {
-  return value === "barras" || value === "columnas" || value === "dona" || value === "mixto"
-}
 
 function downloadDayClosesCsv(dayCloses: SavedDayClose[], fileNameBase: string) {
   const csv = buildDayClosesCsv(dayCloses)
@@ -106,7 +68,7 @@ function downloadCloseSummary(close: SavedDayClose) {
   const title = createSafeFileName(`${close.id}-${getCloseTitle(close)}`)
 
   downloadTextFile(
-    `${title}.html`,
+    `${title}.txt`,
     close.summaryText || "Sin resumen guardado.",
     "text/plain;charset=utf-8"
   )
@@ -173,10 +135,16 @@ function printCloseSummary(close: SavedDayClose) {
     }
   </style>
 </head>
-<body onload="window.focus(); window.print();">
+<body>
   <h1>${escapeHtml(title)}</h1>
   <p>ID: ${escapeHtml(close.id)} · Guardado: ${escapeHtml(formatDate(close.createdAt))}</p>
   <pre>${escapeHtml(summary)}</pre>
+  <script>
+    window.onload = function () {
+      window.focus();
+      window.print();
+    };
+  </script>
 </body>
 </html>`)
   printWindow.document.close()
@@ -210,32 +178,23 @@ function DayClosesPageContent() {
   const [isGuideOpen, setIsGuideOpen] = useState(false)
   const [reportViewMode, setReportViewMode] =
     useState<ReportViewMode>("Simple")
-  const [branchReportScope, setBranchReportScope] =
-    useState<BranchReportScope>("selected")
-  const [chartType, setChartType] = useState<CloseChartType>("mixto")
 
   const isLoggedIn = adminPassword.length > 0
 
-  async function loadDayCloses(
-    password = adminPassword,
-    requestedBranchScope: BranchReportScope = branchReportScope
-  ) {
+  async function loadDayCloses(password = adminPassword) {
     if (!password) return
 
     try {
       setIsLoading(true)
       setErrorMessage(null)
 
-      const response = await fetch(
-        `/api/day-closes?scope=${encodeURIComponent(requestedBranchScope)}`,
-        {
-          method: "GET",
-          headers: {
-            "x-admin-password": password,
-          },
-          cache: "no-store",
-        }
-      )
+      const response = await fetch("/api/day-closes", {
+        method: "GET",
+        headers: {
+          "x-admin-password": password,
+        },
+        cache: "no-store",
+      })
 
       const data = await readApiResponse(response)
 
@@ -323,37 +282,24 @@ function DayClosesPageContent() {
   }
 
   useEffect(() => {
-    let savedBranchScope: BranchReportScope = "selected"
-
-    try {
-      const savedMode = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY)
-      const savedScope = window.localStorage.getItem(BRANCH_SCOPE_STORAGE_KEY)
-      const savedChartType = window.localStorage.getItem(CHART_TYPE_STORAGE_KEY)
-
-      if (isReportViewMode(savedMode)) {
-        setReportViewMode(savedMode)
-      }
-
-      if (isBranchReportScope(savedScope)) {
-        savedBranchScope = savedScope
-        setBranchReportScope(savedScope)
-      }
-
-      if (isCloseChartType(savedChartType)) {
-        setChartType(savedChartType)
-      }
-    } catch {
-      setReportViewMode("Simple")
-      setBranchReportScope("selected")
-      setChartType("mixto")
-    }
-
     const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
 
     if (savedPassword) {
       setAdminPassword(savedPassword)
       setPasswordInput(savedPassword)
-      loadDayCloses(savedPassword, savedBranchScope)
+      loadDayCloses(savedPassword)
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      const savedMode = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY)
+
+      if (isReportViewMode(savedMode)) {
+        setReportViewMode(savedMode)
+      }
+    } catch {
+      setReportViewMode("Simple")
     }
   }, [])
 
@@ -371,7 +317,6 @@ function DayClosesPageContent() {
         close.createdAt,
         close.dateLabel,
         close.summaryText,
-        close.branchName,
         getClosePaymentState(close).label,
       ]
         .join(" ")
@@ -388,10 +333,6 @@ function DayClosesPageContent() {
   )
   const rangeReport = useMemo(
     () => getRangeReport(filteredDayCloses),
-    [filteredDayCloses]
-  )
-  const branchCloseSummary = useMemo(
-    () => getBranchCloseSummary(filteredDayCloses),
     [filteredDayCloses]
   )
 
@@ -438,28 +379,6 @@ function DayClosesPageContent() {
       window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode)
     } catch {
       // Si el navegador bloquea localStorage, el modo funciona solo durante la sesión.
-    }
-  }
-
-  function changeBranchReportScope(scope: BranchReportScope) {
-    setBranchReportScope(scope)
-
-    try {
-      window.localStorage.setItem(BRANCH_SCOPE_STORAGE_KEY, scope)
-    } catch {
-      // La vista sigue funcionando durante la sesión.
-    }
-
-    loadDayCloses(adminPassword, scope)
-  }
-
-  function changeChartType(type: CloseChartType) {
-    setChartType(type)
-
-    try {
-      window.localStorage.setItem(CHART_TYPE_STORAGE_KEY, type)
-    } catch {
-      // La preferencia sigue funcionando durante la sesión.
     }
   }
 
@@ -533,7 +452,7 @@ function DayClosesPageContent() {
                       setClearHistoryConfirmation("")
                       setIsClearHistoryModalOpen(true)
                     }}
-                    disabled={branchReportScope === "all" || !dayCloses.length || isLoading || isClearingHistory}
+                    disabled={!dayCloses.length || isLoading || isClearingHistory}
                     className="inline-flex items-center gap-2 rounded-full border-2 border-red-600 bg-red-50 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-red-700 transition hover:bg-red-100 disabled:opacity-50"
                   >
                     <AlertTriangle size={16} />
@@ -550,7 +469,7 @@ function DayClosesPageContent() {
                 </h1>
 
                 <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-                  Consulta los cierres guardados del local. Cada cierre conserva su resumen completo, cobros reales, pendientes, delivery y productos vendidos.
+                  Consulta los cierres guardados del local sin abrir hojas de cálculo externas. Cada cierre conserva su resumen completo, cobros reales, pendientes, delivery y productos vendidos.
                 </p>
               </div>
 
@@ -692,16 +611,6 @@ function DayClosesPageContent() {
                 </div>
               </div>
 
-              <BranchScopeSelector
-                value={branchReportScope}
-                onChange={changeBranchReportScope}
-              />
-
-              <ChartTypeSelector
-                value={chartType}
-                onChange={changeChartType}
-              />
-
               <ModeSelector
                 value={reportViewMode}
                 onChange={changeReportViewMode}
@@ -762,9 +671,6 @@ function DayClosesPageContent() {
             startDate={startDate}
             endDate={endDate}
             viewMode={reportViewMode}
-            branchReportScope={branchReportScope}
-            branchCloseSummary={branchCloseSummary}
-            chartType={chartType}
           />
         )}
 
@@ -1044,7 +950,7 @@ function CloseCard({
               {getCloseTitle(close)}
             </h2>
             <p className="mt-2 text-xs font-bold text-[var(--brand-ink-2)]/60">
-              ID: {close.id}{close.branchName ? ` · ${close.branchName}` : ""}
+              ID: {close.id}
             </p>
           </div>
 
@@ -1194,7 +1100,7 @@ function CloseDetailModal({
                 {getCloseTitle(close)}
               </h3>
               <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/65">
-                Guardado: {formatDate(close.createdAt)}{close.branchName ? ` · ${close.branchName}` : ""}
+                Guardado: {formatDate(close.createdAt)}
               </p>
             </div>
 
@@ -1607,100 +1513,6 @@ function SmartAlertCard({ alert }: { alert: SmartAlert }) {
   )
 }
 
-function BranchScopeSelector({
-  value,
-  onChange,
-}: {
-  value: BranchReportScope
-  onChange: (value: BranchReportScope) => void
-}) {
-  const activeScope =
-    BRANCH_REPORT_SCOPE_OPTIONS.find((item) => item.value === value) ||
-    BRANCH_REPORT_SCOPE_OPTIONS[0]
-
-  return (
-    <div className="mt-3 rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-white p-3">
-      <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <p className="inline-flex items-center gap-2 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
-            <Store size={14} />
-            Alcance por sede
-          </p>
-          <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
-            {activeScope.description} En modo total general no se permite borrar historial para evitar limpiar varias sedes por accidente.
-          </p>
-        </div>
-
-        <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {BRANCH_REPORT_SCOPE_OPTIONS.map((item) => {
-            const isActive = value === item.value
-
-            return (
-              <button
-                key={item.value}
-                type="button"
-                onClick={() => onChange(item.value)}
-                className={`shrink-0 rounded-full border-2 px-4 py-3 text-[0.68rem] font-black uppercase tracking-[0.1em] transition ${
-                  isActive
-                    ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[var(--brand-accent-200)]"
-                    : "border-[var(--brand-primary)]/35 bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
-                }`}
-              >
-                {item.label}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ChartTypeSelector({
-  value,
-  onChange,
-}: {
-  value: CloseChartType
-  onChange: (value: CloseChartType) => void
-}) {
-  return (
-    <div className="mt-3 rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-white p-3">
-      <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <p className="inline-flex items-center gap-2 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
-            <BarChart3 size={14} />
-            Tipo de gráfica
-          </p>
-          <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
-            El dueño puede cambiar cómo quiere visualizar el mismo rango: barras, columnas, dona o una mezcla administrativa.
-          </p>
-        </div>
-
-        <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {CLOSE_CHART_TYPES.map((item) => {
-            const isActive = value === item.value
-
-            return (
-              <button
-                key={item.value}
-                type="button"
-                onClick={() => onChange(item.value)}
-                className={`shrink-0 rounded-full border-2 px-4 py-3 text-[0.68rem] font-black uppercase tracking-[0.1em] transition ${
-                  isActive
-                    ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[var(--brand-accent-200)]"
-                    : "border-[var(--brand-primary)]/35 bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
-                }`}
-              >
-                {item.label}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function ModeSelector({
   value,
   onChange,
@@ -1929,9 +1741,6 @@ function RangeReport({
   startDate,
   endDate,
   viewMode,
-  branchReportScope,
-  branchCloseSummary,
-  chartType,
 }: {
   dayCloses: SavedDayClose[]
   totals: ReturnType<typeof getDayCloseTotals>
@@ -1939,9 +1748,6 @@ function RangeReport({
   startDate: string
   endDate: string
   viewMode: ReportViewMode
-  branchReportScope: BranchReportScope
-  branchCloseSummary: BranchCloseSummary[]
-  chartType: CloseChartType
 }) {
   const rangeLabel =
     startDate || endDate
@@ -1974,7 +1780,7 @@ function RangeReport({
               Resumen del negocio
             </h2>
             <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-              {rangeLabel}. Vista {viewMode}. Alcance: {branchReportScope === "all" ? "total general de todas las sedes" : "sucursal seleccionada"}. Este reporte se calcula solo con los cierres que estás viendo en pantalla.
+              {rangeLabel}. Vista {viewMode}. Este reporte se calcula solo con los cierres que estás viendo en pantalla.
             </p>
           </div>
 
@@ -2094,13 +1900,6 @@ function RangeReport({
           />
         </div>
 
-        {branchReportScope === "all" && branchCloseSummary.length > 0 && (
-          <BranchComparisonReport
-            branches={branchCloseSummary}
-            chartType={chartType}
-          />
-        )}
-
         {showBusinessSections && (
           <>
             <SmartAlerts
@@ -2109,7 +1908,7 @@ function RangeReport({
               alerts={smartAlerts}
             />
 
-            <RangeCharts dayCloses={dayCloses} totals={totals} report={report} chartType={chartType} />
+            <RangeCharts dayCloses={dayCloses} totals={totals} report={report} />
           </>
         )}
 
@@ -2176,103 +1975,6 @@ function RangeReport({
   )
 }
 
-function BranchComparisonReport({
-  branches,
-  chartType,
-}: {
-  branches: BranchCloseSummary[]
-  chartType: CloseChartType
-}) {
-  const topBranches = branches.slice(0, 8)
-  const collectedData: AdminChartData[] = topBranches.map((branch) => ({
-    label: branch.branchName,
-    value: branch.realCollectedUSD,
-    detail: `${branch.closes} cierre(s) · Pendiente ${formatUSD(branch.realPendingUSD)} · Neto ${formatUSD(branch.netEstimatedUSD)}`,
-    displayValue: formatUSD(branch.realCollectedUSD),
-  }))
-  const pendingData: AdminChartData[] = topBranches.map((branch) => ({
-    label: branch.branchName,
-    value: branch.realPendingUSD,
-    detail: `${branch.closes} cierre(s) · Cobrado ${formatUSD(branch.realCollectedUSD)}`,
-    displayValue: formatUSD(branch.realPendingUSD),
-  }))
-
-  return (
-    <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/30 bg-[var(--brand-cream)] p-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-            Comparativo por sede
-          </p>
-          <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-            Cuando eliges Total general, el dueño ve qué sede vendió más, dónde quedó pendiente y cómo se comporta el neto por cierre.
-          </p>
-        </div>
-        <span className="w-fit rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-          {branches.length} sede(s)
-        </span>
-      </div>
-
-      <div className="mt-4 grid gap-4 xl:grid-cols-2">
-        <ChartPanel
-          title="Cobrado por sede"
-          description="Ranking de sedes por cobro real dentro de los filtros activos."
-        >
-          <AdminChartRenderer
-            data={collectedData}
-            chartType={chartType}
-            kind="distribution"
-            emptyText="Sin cobros por sede para graficar."
-          />
-        </ChartPanel>
-
-        <ChartPanel
-          title="Pendiente por sede"
-          description="Permite ver qué local necesita revisión de caja antes de cerrar el rango."
-        >
-          <AdminChartRenderer
-            data={pendingData}
-            chartType={chartType}
-            kind="money"
-            emptyText="Sin pendientes por sede."
-          />
-        </ChartPanel>
-      </div>
-
-      <div className="mt-4 overflow-x-auto rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-white">
-        <table className="min-w-[780px] w-full text-left text-xs font-bold">
-          <thead className="bg-[var(--brand-primary)] text-white">
-            <tr>
-              <th className="px-3 py-3">Sede</th>
-              <th className="px-3 py-3">Cierres</th>
-              <th className="px-3 py-3">Cobrado</th>
-              <th className="px-3 py-3">Pendiente</th>
-              <th className="px-3 py-3">Gastos</th>
-              <th className="px-3 py-3">Neto</th>
-              <th className="px-3 py-3">Último cierre</th>
-            </tr>
-          </thead>
-          <tbody>
-            {branches.map((branch) => (
-              <tr key={branch.branchId} className="border-t border-[var(--brand-primary)]/15">
-                <td className="px-3 py-3 font-black uppercase text-[var(--brand-ink-3)]">
-                  {branch.branchName}
-                </td>
-                <td className="px-3 py-3">{branch.closes}</td>
-                <td className="px-3 py-3 text-green-700">{formatUSD(branch.realCollectedUSD)}</td>
-                <td className="px-3 py-3 text-[var(--brand-amber)]">{formatUSD(branch.realPendingUSD)}</td>
-                <td className="px-3 py-3 text-red-700">{formatUSD(branch.expensesTotalUSD)}</td>
-                <td className="px-3 py-3 font-black text-[var(--brand-primary)]">{formatUSD(branch.netEstimatedUSD)}</td>
-                <td className="px-3 py-3">{formatDate(branch.lastCloseAt)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
 function getChartPercent(value: number, maxValue: number) {
   if (!Number.isFinite(value) || !Number.isFinite(maxValue) || maxValue <= 0) {
     return "0%"
@@ -2283,25 +1985,14 @@ function getChartPercent(value: number, maxValue: number) {
   return `${percent}%`
 }
 
-type AdminChartKind = "money" | "quantity" | "ves" | "timeline" | "distribution"
-
-type AdminChartData = {
-  label: string
-  value: number
-  detail?: string
-  displayValue?: string
-}
-
 function RangeCharts({
   dayCloses,
   totals,
   report,
-  chartType,
 }: {
   dayCloses: SavedDayClose[]
   totals: ReturnType<typeof getDayCloseTotals>
   report: ReturnType<typeof getRangeReport>
-  chartType: CloseChartType
 }) {
   const chronologicalCloses = [...dayCloses]
     .sort((a, b) => {
@@ -2310,81 +2001,45 @@ function RangeCharts({
 
       return dateA - dateB
     })
-    .slice(-12)
+    .slice(-8)
 
-  const moneySummaryData: AdminChartData[] = [
-    { label: "Total vendido", value: totals.totalSoldUSD },
-    { label: "Total cobrado", value: totals.realCollectedUSD },
-    { label: "Pendiente", value: totals.realPendingUSD },
-    { label: "Divisas", value: totals.realCashUSD },
-    { label: "Bs equiv. USD", value: totals.realVESEquivalentUSD },
-    { label: "Delivery", value: totals.deliveryCollectedUSD },
-  ]
+  const maxCloseValue = Math.max(
+    1,
+    ...chronologicalCloses.map((close) =>
+      Math.max(close.realCollectedUSD, close.realPendingUSD, close.totalSoldUSD)
+    )
+  )
 
-  const closeEvolutionData: AdminChartData[] = chronologicalCloses.map((close) => ({
-    label: getCloseTitle(close),
-    value: close.realCollectedUSD,
-    detail: `Pendiente ${formatUSD(close.realPendingUSD)} · Vendido ${formatUSD(close.totalSoldUSD)}`,
-    displayValue: formatUSD(close.realCollectedUSD),
-  }))
+  const topProducts = report.allProducts.slice(0, 6)
+  const topZones = report.deliveryByZone.slice(0, 6)
+  const topUSDMethods = report.paymentByUSDMethod.slice(0, 6)
+  const topVESMethods = report.paymentByVESMethod.slice(0, 6)
 
-  const topProductData: AdminChartData[] = report.allProducts.slice(0, 8).map((product) => ({
-    label: product.name,
-    value: product.quantity,
-    detail: `${formatUSD(product.totalUSD)}${
-      product.onlyCurrency ? " · Solo divisas" : ` · Bs ${formatVES(product.totalVES)}`
-    }`,
-    displayValue: `${product.quantity} unidad(es)`,
-  }))
-
-  const topZoneData: AdminChartData[] = report.deliveryByZone.slice(0, 8).map((item) => ({
-    label: item.label,
-    value: item.totalUSD,
-    detail: `${item.count} registro(s) · Delivery ${formatUSD(item.deliveryCostUSD || 0)}`,
-    displayValue: formatUSD(item.totalUSD),
-  }))
-
-  const topUSDMethodData: AdminChartData[] = report.paymentByUSDMethod.slice(0, 8).map((item) => ({
-    label: item.label,
-    value: item.totalUSD,
-    detail: `${item.count} pago(s)`,
-    displayValue: formatUSD(item.totalUSD),
-  }))
-
-  const topVESMethodData: AdminChartData[] = report.paymentByVESMethod.slice(0, 8).map((item) => ({
-    label: item.label,
-    value: item.totalUSD,
-    detail: `${item.count} pago(s) · Bs ${formatVES(item.totalVES || 0)}`,
-    displayValue: `Bs ${formatVES(item.totalVES || 0)}`,
-  }))
-
-  const expensesByCategoryData: AdminChartData[] = report.expensesByCategory.slice(0, 8).map((item) => ({
-    label: item.label,
-    value: item.totalUSD,
-    detail: `${item.count} gasto(s) · Bs ${formatVES(item.totalVES || 0)}`,
-    displayValue: formatUSD(item.totalUSD),
-  }))
-
-  const expensesByMethodData: AdminChartData[] = report.expensesByMethod.slice(0, 8).map((item) => ({
-    label: item.label,
-    value: item.totalUSD,
-    detail: `${item.count} gasto(s) · Bs ${formatVES(item.totalVES || 0)}`,
-    displayValue: formatUSD(item.totalUSD),
-  }))
-
-  const expensesByProviderData: AdminChartData[] = report.expensesByProvider.slice(0, 8).map((item) => ({
-    label: item.label,
-    value: item.totalUSD,
-    detail: `${item.count} gasto(s) · Bs ${formatVES(item.totalVES || 0)}`,
-    displayValue: formatUSD(item.totalUSD),
-  }))
-
-  const expensesByTypeData: AdminChartData[] = report.expensesByType.slice(0, 8).map((item) => ({
-    label: item.label,
-    value: item.totalUSD,
-    detail: `${item.count} gasto(s) · Bs ${formatVES(item.totalVES || 0)}`,
-    displayValue: formatUSD(item.totalUSD),
-  }))
+  const maxProductQuantity = Math.max(
+    1,
+    ...topProducts.map((product) => product.quantity)
+  )
+  const maxZoneValue = Math.max(
+    1,
+    ...topZones.map((item) => Math.max(item.totalUSD, item.deliveryCostUSD || 0))
+  )
+  const maxUSDMethodValue = Math.max(
+    1,
+    ...topUSDMethods.map((item) => item.totalUSD)
+  )
+  const maxVESMethodValue = Math.max(
+    1,
+    ...topVESMethods.map((item) => Math.max(item.totalVES || 0, item.totalUSD))
+  )
+  const maxMoneySummaryValue = Math.max(
+    1,
+    totals.totalSoldUSD,
+    totals.realCollectedUSD,
+    totals.realPendingUSD,
+    totals.realCashUSD,
+    totals.realVESEquivalentUSD,
+    totals.deliveryCollectedUSD
+  )
 
   return (
     <div className="grid gap-4 xl:grid-cols-2">
@@ -2392,11 +2047,35 @@ function RangeCharts({
         title="Cobro contra pendiente"
         description="Compara lo vendido, lo cobrado y lo pendiente dentro del rango filtrado."
       >
-        <AdminChartRenderer
-          data={moneySummaryData}
-          chartType={chartType}
-          kind="money"
-          emptyText="Sin montos para graficar."
+        <MoneyChartBar
+          label="Total vendido"
+          value={totals.totalSoldUSD}
+          maxValue={maxMoneySummaryValue}
+        />
+        <MoneyChartBar
+          label="Total cobrado"
+          value={totals.realCollectedUSD}
+          maxValue={maxMoneySummaryValue}
+        />
+        <MoneyChartBar
+          label="Pendiente"
+          value={totals.realPendingUSD}
+          maxValue={maxMoneySummaryValue}
+        />
+        <MoneyChartBar
+          label="Divisas"
+          value={totals.realCashUSD}
+          maxValue={maxMoneySummaryValue}
+        />
+        <MoneyChartBar
+          label="Bs equiv. USD"
+          value={totals.realVESEquivalentUSD}
+          maxValue={maxMoneySummaryValue}
+        />
+        <MoneyChartBar
+          label="Delivery"
+          value={totals.deliveryCollectedUSD}
+          maxValue={maxMoneySummaryValue}
         />
       </ChartPanel>
 
@@ -2404,186 +2083,176 @@ function RangeCharts({
         title="Evolución por cierre"
         description="Últimos cierres del rango, ordenados del más antiguo al más reciente."
       >
-        <AdminChartRenderer
-          data={closeEvolutionData}
-          chartType={chartType}
-          kind="timeline"
-          emptyText="Sin cierres para graficar."
-        />
+        {chronologicalCloses.length === 0 ? (
+          <EmptyChartText text="Sin cierres para graficar." />
+        ) : (
+          chronologicalCloses.map((close) => (
+            <MoneyChartBar
+              key={close.id}
+              label={getCloseTitle(close)}
+              value={close.realCollectedUSD}
+              maxValue={maxCloseValue}
+              detail={`Pendiente ${formatUSD(close.realPendingUSD)} · Vendido ${formatUSD(close.totalSoldUSD)}`}
+            />
+          ))
+        )}
       </ChartPanel>
 
       <ChartPanel
         title="Productos más vendidos"
         description="Ranking por unidades vendidas dentro de los cierres entregados."
       >
-        <AdminChartRenderer
-          data={topProductData}
-          chartType={chartType}
-          kind="quantity"
-          emptyText="Sin productos vendidos en este rango."
-        />
+        {topProducts.length === 0 ? (
+          <EmptyChartText text="Sin productos vendidos en este rango." />
+        ) : (
+          topProducts.map((product) => (
+            <QuantityChartBar
+              key={product.name}
+              label={product.name}
+              quantity={product.quantity}
+              maxQuantity={maxProductQuantity}
+              detail={`${formatUSD(product.totalUSD)}${
+                product.onlyCurrency ? " · Solo divisas" : ` · Bs ${formatVES(product.totalVES)}`
+              }`}
+            />
+          ))
+        )}
       </ChartPanel>
 
       <ChartPanel
         title="Delivery por zona"
         description="Zonas con más movimiento dentro del rango filtrado."
       >
-        <AdminChartRenderer
-          data={topZoneData}
-          chartType={chartType}
-          kind="distribution"
-          emptyText="Sin zonas delivery en este rango."
-        />
+        {topZones.length === 0 ? (
+          <EmptyChartText text="Sin zonas delivery en este rango." />
+        ) : (
+          topZones.map((item) => (
+            <MoneyChartBar
+              key={item.label}
+              label={item.label}
+              value={item.totalUSD}
+              maxValue={maxZoneValue}
+              detail={`${item.count} registro(s) · Delivery ${formatUSD(item.deliveryCostUSD || 0)}`}
+            />
+          ))
+        )}
       </ChartPanel>
 
       <ChartPanel
         title="Métodos en divisas"
         description="Distribución de cobros reales recibidos en divisas."
       >
-        <AdminChartRenderer
-          data={topUSDMethodData}
-          chartType={chartType}
-          kind="distribution"
-          emptyText="Sin cobros en divisas."
-        />
+        {topUSDMethods.length === 0 ? (
+          <EmptyChartText text="Sin cobros en divisas." />
+        ) : (
+          topUSDMethods.map((item) => (
+            <MoneyChartBar
+              key={item.label}
+              label={item.label}
+              value={item.totalUSD}
+              maxValue={maxUSDMethodValue}
+              detail={`${item.count} pago(s)`}
+            />
+          ))
+        )}
       </ChartPanel>
 
       <ChartPanel
         title="Métodos en bolívares"
         description="Distribución de cobros reales recibidos en bolívares."
       >
-        <AdminChartRenderer
-          data={topVESMethodData}
-          chartType={chartType}
-          kind="ves"
-          emptyText="Sin cobros en bolívares."
-        />
+        {topVESMethods.length === 0 ? (
+          <EmptyChartText text="Sin cobros en bolívares." />
+        ) : (
+          topVESMethods.map((item) => (
+            <VESChartBar
+              key={item.label}
+              label={item.label}
+              valueVES={item.totalVES || 0}
+              valueUSD={item.totalUSD}
+              maxValue={maxVESMethodValue}
+              detail={`${item.count} pago(s) · Equiv. ${formatUSD(item.totalUSD)}`}
+            />
+          ))
+        )}
       </ChartPanel>
 
       <ChartPanel
         title="Gastos por categoría"
         description="Salidas de caja agrupadas por categoría dentro del rango filtrado."
       >
-        <AdminChartRenderer
-          data={expensesByCategoryData}
-          chartType={chartType}
-          kind="distribution"
-          emptyText="Sin gastos por categoría en este rango."
-        />
+        {report.expensesByCategory.length === 0 ? (
+          <EmptyChartText text="Sin gastos por categoría en este rango." />
+        ) : (
+          report.expensesByCategory.slice(0, 6).map((item) => (
+            <MoneyChartBar
+              key={item.label}
+              label={item.label}
+              value={item.totalUSD}
+              maxValue={Math.max(1, ...report.expensesByCategory.map((expense) => expense.totalUSD))}
+              detail={`${item.count} gasto(s) · Bs ${formatVES(item.totalVES || 0)}`}
+            />
+          ))
+        )}
       </ChartPanel>
 
       <ChartPanel
         title="Gastos por método"
         description="Cómo salieron los gastos: divisas, bolívares, Binance/USDT, Zelle u otros métodos."
       >
-        <AdminChartRenderer
-          data={expensesByMethodData}
-          chartType={chartType}
-          kind="distribution"
-          emptyText="Sin gastos por método en este rango."
-        />
+        {report.expensesByMethod.length === 0 ? (
+          <EmptyChartText text="Sin gastos por método en este rango." />
+        ) : (
+          report.expensesByMethod.slice(0, 6).map((item) => (
+            <MoneyChartBar
+              key={item.label}
+              label={item.label}
+              value={item.totalUSD}
+              maxValue={Math.max(1, ...report.expensesByMethod.map((expense) => expense.totalUSD))}
+              detail={`${item.count} gasto(s) · Bs ${formatVES(item.totalVES || 0)}`}
+            />
+          ))
+        )}
       </ChartPanel>
 
       <ChartPanel
         title="Gastos por proveedor"
         description="Proveedores o comercios que más peso tienen en las compras y gastos."
       >
-        <AdminChartRenderer
-          data={expensesByProviderData}
-          chartType={chartType}
-          kind="distribution"
-          emptyText="Sin proveedores guardados en este rango."
-        />
+        {report.expensesByProvider.length === 0 ? (
+          <EmptyChartText text="Sin proveedores guardados en este rango." />
+        ) : (
+          report.expensesByProvider.slice(0, 6).map((item) => (
+            <MoneyChartBar
+              key={item.label}
+              label={item.label}
+              value={item.totalUSD}
+              maxValue={Math.max(1, ...report.expensesByProvider.map((expense) => expense.totalUSD))}
+              detail={`${item.count} gasto(s) · Bs ${formatVES(item.totalVES || 0)}`}
+            />
+          ))
+        )}
       </ChartPanel>
 
       <ChartPanel
         title="Gastos por tipo"
         description="Diferencia compras de inventario, pagos, servicios, mantenimiento y otros gastos."
       >
-        <AdminChartRenderer
-          data={expensesByTypeData}
-          chartType={chartType}
-          kind="distribution"
-          emptyText="Sin tipos de gasto guardados en este rango."
-        />
+        {report.expensesByType.length === 0 ? (
+          <EmptyChartText text="Sin tipos de gasto guardados en este rango." />
+        ) : (
+          report.expensesByType.slice(0, 6).map((item) => (
+            <MoneyChartBar
+              key={item.label}
+              label={item.label}
+              value={item.totalUSD}
+              maxValue={Math.max(1, ...report.expensesByType.map((expense) => expense.totalUSD))}
+              detail={`${item.count} gasto(s) · Bs ${formatVES(item.totalVES || 0)}`}
+            />
+          ))
+        )}
       </ChartPanel>
     </div>
-  )
-}
-
-function getEffectiveChartType(chartType: CloseChartType, kind: AdminChartKind) {
-  if (chartType !== "mixto") return chartType
-  if (kind === "timeline") return "columnas"
-  if (kind === "distribution" || kind === "ves") return "dona"
-  return "barras"
-}
-
-function AdminChartRenderer({
-  data,
-  chartType,
-  kind,
-  emptyText,
-}: {
-  data: AdminChartData[]
-  chartType: CloseChartType
-  kind: AdminChartKind
-  emptyText: string
-}) {
-  const cleanData = data.filter((item) => Number.isFinite(item.value) && item.value > 0)
-  const effectiveChartType = getEffectiveChartType(chartType, kind)
-  const maxValue = Math.max(1, ...cleanData.map((item) => item.value))
-
-  if (!cleanData.length) {
-    return <EmptyChartText text={emptyText} />
-  }
-
-  if (effectiveChartType === "columnas") {
-    return (
-      <VBarChart
-        data={cleanData.map((item) => ({
-          label: item.label.length > 10 ? item.label.slice(0, 10) : item.label,
-          value: item.value,
-          tip: `${item.label}: ${item.displayValue || formatUSD(item.value)}${item.detail ? ` · ${item.detail}` : ""}`,
-        }))}
-        height={170}
-        highlightEvery={cleanData.length > 8 ? 2 : 1}
-      />
-    )
-  }
-
-  if (effectiveChartType === "dona") {
-    return (
-      <DonutChart
-        data={cleanData.map((item) => ({ label: item.label, value: item.value }))}
-        unit={kind === "quantity" || kind === "ves" ? "" : "$"}
-      />
-    )
-  }
-
-  if (kind === "quantity") {
-    return (
-      <HBarChart
-        data={cleanData.map((item) => ({
-          label: item.label,
-          value: item.value,
-          suffix: item.displayValue || `${item.value} unidad(es)`,
-        }))}
-      />
-    )
-  }
-
-  return (
-    <>
-      {cleanData.map((item) => (
-        <ChartBar
-          key={item.label}
-          label={item.label}
-          value={item.displayValue || formatUSD(item.value)}
-          percent={getChartPercent(item.value, maxValue)}
-          detail={item.detail}
-        />
-      ))}
-    </>
   )
 }
 

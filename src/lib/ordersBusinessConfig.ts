@@ -17,11 +17,6 @@ import {
   type LocalPlanKey,
   type LocalPlanMode,
 } from "./localPlans"
-import {
-  DEFAULT_BUSINESS_COMPLEXITY_SETTINGS,
-  normalizeBusinessComplexitySettings,
-  type BusinessComplexitySettings,
-} from "./businessComplexity"
 
 export type BusinessViewMode = "simple" | "negocio" | "avanzado"
 
@@ -45,7 +40,7 @@ export const DEFAULT_LOCAL_TABLES: LocalTable[] = [
   { id: "afuera", name: "Afuera", area: "Exterior", sortOrder: 6, isActive: true },
 ]
 
-export type BusinessConfig = BusinessComplexitySettings & {
+export type BusinessConfig = {
   businessName: string
   businessShortDescription: string
   businessType: string
@@ -126,6 +121,7 @@ export type BusinessConfig = BusinessComplexitySettings & {
   publicNavButtons: PublicNavButton[]
   customersModuleEnabled: boolean
   inventoryModuleEnabled: boolean
+  inventoryAlertsModuleEnabled: boolean
   advancedMenuModuleEnabled: boolean
   productVariationsModuleEnabled: boolean
   productAddonsModuleEnabled: boolean
@@ -144,11 +140,13 @@ export type BusinessConfig = BusinessComplexitySettings & {
   splitBillModuleEnabled: boolean
   serviceChargeTipsModuleEnabled: boolean
   suppliersModuleEnabled: boolean
+  supplierPurchasesModuleEnabled: boolean
   accountsPayableModuleEnabled: boolean
   subrecipesModuleEnabled: boolean
   auditLogModuleEnabled: boolean
   visualEditorModuleEnabled: boolean
   trainingModeModuleEnabled: boolean
+  branchesModuleEnabled: boolean
   defaultViewMode: BusinessViewMode
   soundEnabled: boolean
   filtersOpenByDefault: boolean
@@ -157,7 +155,7 @@ export type BusinessConfig = BusinessComplexitySettings & {
   updatedAt?: string
 }
 
-export type SaveBusinessConfigInput = Partial<BusinessConfig> & Record<string, unknown>
+export type SaveBusinessConfigInput = Partial<BusinessConfig>
 
 export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   businessName: BRAND.name,
@@ -205,7 +203,6 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   deliveryWhatsapp: "",
   exchangeRateMode: "automatic",
   manualExchangeRate: 0,
-  ...DEFAULT_BUSINESS_COMPLEXITY_SETTINGS,
   deliveryEnabled: true,
   membershipPlan: "complete",
   membershipPlanMode: "plan",
@@ -239,6 +236,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicNavButtons: DEFAULT_PUBLIC_NAV_BUTTONS,
   customersModuleEnabled: true,
   inventoryModuleEnabled: true,
+  inventoryAlertsModuleEnabled: true,
   advancedMenuModuleEnabled: true,
   productVariationsModuleEnabled: true,
   productAddonsModuleEnabled: true,
@@ -257,11 +255,13 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   splitBillModuleEnabled: false,
   serviceChargeTipsModuleEnabled: false,
   suppliersModuleEnabled: false,
+  supplierPurchasesModuleEnabled: false,
   accountsPayableModuleEnabled: false,
   subrecipesModuleEnabled: false,
   auditLogModuleEnabled: true,
   visualEditorModuleEnabled: true,
   trainingModeModuleEnabled: false,
+  branchesModuleEnabled: true,
   defaultViewMode: "negocio",
   soundEnabled: true,
   filtersOpenByDefault: false,
@@ -636,6 +636,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.inventoryModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.inventoryModuleEnabled
     ),
+    inventoryAlertsModuleEnabled: normalizeBooleanConfig(
+      source.inventoryAlertsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.inventoryAlertsModuleEnabled
+    ),
     advancedMenuModuleEnabled: normalizeBooleanConfig(
       source.advancedMenuModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.advancedMenuModuleEnabled
@@ -708,6 +712,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.suppliersModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.suppliersModuleEnabled
     ),
+    supplierPurchasesModuleEnabled: normalizeBooleanConfig(
+      source.supplierPurchasesModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.supplierPurchasesModuleEnabled
+    ),
     accountsPayableModuleEnabled: normalizeBooleanConfig(
       source.accountsPayableModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.accountsPayableModuleEnabled
@@ -728,6 +736,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.trainingModeModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.trainingModeModuleEnabled
     ),
+    branchesModuleEnabled: normalizeBooleanConfig(
+      source.branchesModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.branchesModuleEnabled
+    ),
     defaultViewMode: normalizeViewMode(source.defaultViewMode),
     soundEnabled: normalizeBooleanConfig(
       source.soundEnabled,
@@ -745,7 +757,6 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.allowCloseWithPendingPayments,
       DEFAULT_BUSINESS_CONFIG.allowCloseWithPendingPayments
     ),
-    ...normalizeBusinessComplexitySettings(source),
     updatedAt: source.updatedAt ? String(source.updatedAt) : undefined,
   }
 }
@@ -762,6 +773,7 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
   const featuredProductsAccess = getModulePlanAccess(config, "featuredProducts")
   const customersAccess = getModulePlanAccess(config, "customers")
   const inventoryAccess = getModulePlanAccess(config, "inventory")
+  const inventoryAlertsAccess = getModulePlanAccess(config, "inventoryAlerts")
   const advancedMenuAccess = getModulePlanAccess(config, "advancedMenu")
   const productVariationsAccess = getModulePlanAccess(config, "productVariations")
   const productAddonsAccess = getModulePlanAccess(config, "productAddons")
@@ -779,11 +791,13 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
   const splitBillAccess = getModulePlanAccess(config, "splitBill")
   const serviceChargeTipsAccess = getModulePlanAccess(config, "serviceChargeTips")
   const suppliersAccess = getModulePlanAccess(config, "suppliers")
+  const supplierPurchasesAccess = getModulePlanAccess(config, "supplierPurchases")
   const accountsPayableAccess = getModulePlanAccess(config, "accountsPayable")
   const subrecipesAccess = getModulePlanAccess(config, "subrecipes")
   const auditLogAccess = getModulePlanAccess(config, "auditLog")
   const visualEditorAccess = getModulePlanAccess(config, "visualEditor")
   const trainingModeAccess = getModulePlanAccess(config, "trainingMode")
+  const branchesAccess = getModulePlanAccess(config, "branches")
   const soundsAccess = getModulePlanAccess(config, "sounds")
 
   return {
@@ -827,6 +841,9 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
       : false,
     inventoryModuleEnabled: inventoryAccess.includedInPlan
       ? config.inventoryModuleEnabled
+      : false,
+    inventoryAlertsModuleEnabled: inventoryAlertsAccess.includedInPlan
+      ? config.inventoryAlertsModuleEnabled
       : false,
     advancedMenuModuleEnabled: advancedMenuAccess.includedInPlan
       ? config.advancedMenuModuleEnabled
@@ -879,6 +896,9 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
     suppliersModuleEnabled: suppliersAccess.includedInPlan
       ? config.suppliersModuleEnabled
       : false,
+    supplierPurchasesModuleEnabled: supplierPurchasesAccess.includedInPlan
+      ? config.supplierPurchasesModuleEnabled
+      : false,
     accountsPayableModuleEnabled: accountsPayableAccess.includedInPlan
       ? config.accountsPayableModuleEnabled
       : false,
@@ -893,6 +913,9 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
       : false,
     trainingModeModuleEnabled: trainingModeAccess.includedInPlan
       ? config.trainingModeModuleEnabled
+      : false,
+    branchesModuleEnabled: branchesAccess.includedInPlan
+      ? config.branchesModuleEnabled
       : false,
     soundEnabled: soundsAccess.includedInPlan ? config.soundEnabled : false,
   }

@@ -199,26 +199,14 @@ export type Supplier = {
   sortOrder: number
 }
 
-export type SupplierPaymentStatus = "Pendiente" | "Parcial" | "Pagado"
-
 export type SupplierPurchase = {
   id: string
   supplierId: string | null
   supplierName: string
   purchaseDate: string // YYYY-MM-DD
-  dueDate: string
   documentNumber: string
   totalUSD: number
   totalVES: number
-  paidUSD: number
-  paidVES: number
-  pendingUSD: number
-  pendingVES: number
-  paymentStatus: SupplierPaymentStatus
-  paymentMethod: string
-  paymentReference: string
-  paymentNote: string
-  lastPaymentAt: string
   note: string
   createdAt: string
   // Relación opcional con inventario (Fase 2b). Si la compra sumó stock a un
@@ -228,20 +216,6 @@ export type SupplierPurchase = {
   inventoryQuantity: number
   inventoryUnit: string
   inventoryMovementId: string
-}
-
-export type SupplierPurchasePayment = {
-  id: string
-  purchaseId: string
-  supplierId: string | null
-  supplierName: string
-  paymentDate: string // YYYY-MM-DD
-  amountUSD: number
-  amountVES: number
-  method: string
-  reference: string
-  note: string
-  createdAt: string
 }
 
 export type PaymentProofStatus =

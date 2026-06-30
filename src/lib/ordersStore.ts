@@ -1,14 +1,8 @@
-import { cleanText } from "@/lib/localOrderHelpers"
-import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import type {
   LocalOrder,
   OrderStatus,
 } from "@/types/localOrders"
-import type {
-  CreateOrderInput,
-  UpdateOrderNotesInput,
-  UpdateOrderPaymentInput,
-} from "./ordersCoreTypes"
+import type { CreateOrderInput, UpdateOrderPaymentInput } from "./ordersCoreTypes"
 import { createOrderInStore } from "./ordersStoreCreate"
 import {
   confirmOrderStaffItemsInStore,
@@ -25,8 +19,8 @@ import {
 
 // ============================================================
 // Backend de pedidos y pagos sobre Supabase.
-// Centraliza las operaciones del núcleo de pedidos sobre Supabase
-// del POS. La lógica de negocio que antes estaba en otro backend (numeración,
+// Reemplaza las llamadas al backend externo heredado para el núcleo
+// del POS. La lógica de negocio que antes corría en el script (numeración,
 // estado de pago y confirmación de personal) vive aquí.
 // ============================================================
 // PEDIDOS
@@ -93,34 +87,4 @@ export async function clearOrders(
   branchId?: string | null,
 ): Promise<{ ok: boolean; deleted: number; message: string }> {
   return clearOrdersInStore(branchId)
-}
-
-
-export async function updateOrderNotes(
-  orderId: string,
-  input: UpdateOrderNotesInput = {},
-  branchId?: string | null,
-): Promise<LocalOrder> {
-  const supabase = getSupabaseAdmin()
-  const patch: Record<string, unknown> = {}
-
-  if (input.customerNote !== undefined || input.note !== undefined) {
-    patch.customer_note = cleanText(input.customerNote ?? input.note)
-  }
-
-  if (input.attachmentImageUrl !== undefined) {
-    patch.attachment_image_url = cleanText(input.attachmentImageUrl) || null
-  }
-
-  if (Object.keys(patch).length === 0) {
-    return loadOrderWithItems(orderId, branchId)
-  }
-
-  let query = supabase.from("orders").update(patch).eq("id", orderId)
-  if (branchId) query = query.eq("branch_id", branchId)
-
-  const { error } = await query
-  if (error) throw new Error(error.message)
-
-  return loadOrderWithItems(orderId, branchId)
 }

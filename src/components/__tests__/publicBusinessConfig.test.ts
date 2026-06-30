@@ -61,31 +61,4 @@ describe("normalizePublicBusinessConfig", () => {
     expect(config.publicCustomizerTitle).toBe("Elige tus opciones")
     expect(config.publicMenuTitle).toBe("Menú principal")
   })
-
-  it("mantiene defaults compatibles para permisos públicos", () => {
-    const config = normalizePublicBusinessConfig({ businessConfig: {} })
-
-    expect(config.publicOrdersEnabled).toBe(true)
-    expect(config.publicLocalOrdersEnabled).toBe(true)
-    expect(config.publicTakeawayOrdersEnabled).toBe(true)
-    expect(config.publicIngredientCustomizationEnabled).toBe(true)
-    expect(config.publicPaymentProofUploadEnabled).toBe(true)
-  })
-
-  it("apaga permisos públicos cuando el dueño lo configura", () => {
-    const config = normalizePublicBusinessConfig({
-      businessConfig: {
-        publicOrdersEnabled: false,
-        publicLocalOrdersEnabled: false,
-        publicCustomerNotesEnabled: false,
-        publicAttachmentsEnabled: false,
-      },
-    })
-
-    expect(config.publicOrdersEnabled).toBe(false)
-    expect(config.publicLocalOrdersEnabled).toBe(false)
-    expect(config.publicCustomerNotesEnabled).toBe(false)
-    expect(config.publicAttachmentsEnabled).toBe(false)
-  })
-
 })

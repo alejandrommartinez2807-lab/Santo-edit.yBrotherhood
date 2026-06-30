@@ -93,22 +93,6 @@ export type PublicBusinessConfig = {
   deliveryEnabled: boolean;
   deliveryModuleEnabled: boolean;
   paymentProofsEnabled: boolean;
-  businessComplexityProfile?: "simple" | "standard" | "advanced" | "custom";
-  publicOrdersEnabled?: boolean;
-  publicLocalOrdersEnabled?: boolean;
-  publicTakeawayOrdersEnabled?: boolean;
-  publicDeliveryOrdersEnabled?: boolean;
-  publicOpenAccountEnabled?: boolean;
-  publicPaymentProofsEnabled?: boolean;
-  publicPaymentProofUploadEnabled?: boolean;
-  publicIngredientCustomizationEnabled?: boolean;
-  publicAddonsEnabled?: boolean;
-  publicNotesEnabled?: boolean;
-  publicCustomerNotesEnabled?: boolean;
-  publicAttachmentsEnabled?: boolean;
-  publicCustomerAttachmentsEnabled?: boolean;
-  publicCustomerImageAttachmentEnabled?: boolean;
-  publicPhoneRequired?: boolean;
   membershipPlan: MembershipPlan;
   localTables: PublicLocalTable[];
   locationLabel: string;
@@ -118,6 +102,20 @@ export type PublicBusinessConfig = {
   pricesIncludeIva: boolean;
   igtfEnabled: boolean;
   igtfRate: number;
+};
+
+export type PublicBranch = {
+  id: string;
+  name: string;
+  isActive?: boolean;
+  sortOrder?: number;
+  publicName?: string;
+  address?: string;
+  zone?: string;
+  estimatedTimeText?: string;
+  mainWhatsapp?: string;
+  config?: Record<string, unknown>;
+  branchConfig?: Record<string, unknown>;
 };
 
 export type RequestedLocalTableContext = {

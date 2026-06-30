@@ -298,12 +298,18 @@ export async function saveInventoryRecipe(input: SaveInventoryRecipeInput, branc
   }
 }
 
-export async function deleteInventoryRecipe(recipeId: string) {
+export async function deleteInventoryRecipe(recipeId: string, branchId?: string | null) {
   const supabase = getSupabaseAdmin()
-  const { error } = await supabase
+  let query = supabase
     .from("inventory_recipes")
     .delete()
     .eq("id", cleanText(recipeId))
+
+  if (branchId) {
+    query = query.eq("branch_id", branchId)
+  }
+
+  const { error } = await query
 
   if (error) {
     throw new Error(error.message || "No se pudo eliminar la receta de inventario")
@@ -394,12 +400,18 @@ export async function saveInventoryItem(input: SaveInventoryItemInput, branchId?
   }
 }
 
-export async function deleteInventoryItem(itemId: string) {
+export async function deleteInventoryItem(itemId: string, branchId?: string | null) {
   const supabase = getSupabaseAdmin()
-  const { error } = await supabase
+  let query = supabase
     .from("inventory_items")
     .delete()
     .eq("id", cleanText(itemId))
+
+  if (branchId) {
+    query = query.eq("branch_id", branchId)
+  }
+
+  const { error } = await query
 
   if (error) {
     throw new Error(error.message || "No se pudo eliminar el producto de inventario")

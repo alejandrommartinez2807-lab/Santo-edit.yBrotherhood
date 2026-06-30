@@ -42,7 +42,7 @@ Guía completa para montar un cliente nuevo: **[CHECKLIST-CLIENTE-NUEVO.md](./CH
 | `npm test` | Tests (Vitest) |
 | `node scripts/rebrand-colors.mjs` | Re-marca los colores (edita `brand-colors.json`) |
 | `node scripts/seed-demo.mjs` | Carga menú/mesas demo |
-| `node scripts/create-staff.mjs <email> <clave> <rol> ["Nombre"]` | Crea un usuario del personal |
+| `/local-santo/usuarios` | Crea usuarios internos por nombre de usuario, clave, rol, sedes y módulos |
 | `npm run e2e:reports-2e` | Verifica que `/api/reports` entregue ventas, proveedores, márgenes y alertas |
 | `npm run e2e:business-complexity` | Verifica perfiles Simple/Avanzado y permisos públicos del carrito |
 | `npm run e2e:purchase-inventory` | Prueba real Compra → Inventario contra Supabase local/dev |
@@ -58,10 +58,9 @@ Guía completa para montar un cliente nuevo: **[CHECKLIST-CLIENTE-NUEVO.md](./CH
 
 Dos modos (compatibles entre sí):
 
-- **Supabase Auth** (recomendado): usuarios reales por rol. Login en `/acceso`.
-  Crea usuarios con `scripts/create-staff.mjs`. El token se adjunta automáticamente
-  a las llamadas del panel.
-- **Contraseñas por rol** en `.env.local` (`ORDERS_*_PASSWORD`): modo simple/compatible.
+- **Usuarios internos por nombre de usuario** (recomendado): el dueño administra el personal en `/local-santo/usuarios` con usuario, clave, nombre visible, rol, sedes permitidas y módulos permitidos. La pantalla `/acceso` acepta usuario simple (`maria`) y también conserva compatibilidad con correos existentes.
+- **Supabase Auth** sigue funcionando por debajo cuando existe; para usuarios sin correo visible se usa un correo interno técnico tipo `maria@santo.local`.
+- **Contraseñas por rol** en `.env.local` (`ORDERS_*_PASSWORD`): modo simple/compatible mientras se migra.
 
 ## Base de datos
 

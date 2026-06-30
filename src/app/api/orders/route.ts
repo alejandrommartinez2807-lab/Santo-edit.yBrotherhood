@@ -16,7 +16,7 @@ import {
   isValidOrderType,
   normalizeItems,
 } from "@/lib/localOrderHelpers"
-import { getRequestAccess, type LocalRole } from "@/lib/localAccess"
+import { canLocalAccessUseModule, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess, type LocalModuleKey } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import { enforceRateLimit } from "@/lib/rateLimit"
@@ -100,6 +100,7 @@ function checkRole(request: NextRequest, allowedRoles: LocalRole[]) {
     ok: true as const,
     response: null,
     role: access.role,
+    access,
   }
 }
 
@@ -181,6 +182,10 @@ export async function GET(request: NextRequest) {
 
     if (!moduleCheck.ok) {
       return moduleCheck.response
+    }
+
+    if (!canLocalAccessUseModule(access.access, moduleKey)) {
+      return forbiddenResponse("Este usuario no tiene permiso para este módulo")
     }
 
     const orders = await getOrders(await resolveBranchId(request))

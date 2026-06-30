@@ -670,7 +670,7 @@ async function readApiResponse(response: Response) {
   try {
     return JSON.parse(text)
   } catch {
-    throw new Error("El servidor no devolvió datos válidos. Revisa la API de inventario y vuelve a intentar.")
+    throw new Error("El servidor no devolvió datos válidos. Revisa la conexión con Supabase y vuelve a intentar.")
   }
 }
 

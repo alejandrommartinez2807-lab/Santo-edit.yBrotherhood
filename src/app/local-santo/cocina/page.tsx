@@ -251,34 +251,14 @@ function formatDate(value: string) {
 }
 
 
-function getElapsedSeconds(value: string, now: number) {
+function getElapsedMinutes(value: string) {
   const createdAt = new Date(value).getTime()
 
   if (!Number.isFinite(createdAt)) return 0
 
-  const seconds = Math.floor((now - createdAt) / 1000)
+  const minutes = Math.floor((Date.now() - createdAt) / 60000)
 
-  return seconds > 0 ? seconds : 0
-}
-
-function getElapsedMinutesFromSeconds(seconds: number) {
-  return Math.floor(seconds / 60)
-}
-
-function formatElapsedDuration(seconds: number) {
-  if (seconds < 60) return `00:${String(seconds).padStart(2, "0")}`
-
-  const totalMinutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
-
-  if (totalMinutes < 60) {
-    return `${String(totalMinutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`
-  }
-
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = totalMinutes % 60
-
-  return `${hours}h ${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`
+  return minutes > 0 ? minutes : 0
 }
 
 function formatElapsedMinutes(minutes: number) {
@@ -390,7 +370,7 @@ function readApiResponse(response: Response) {
       return JSON.parse(text)
     } catch {
       throw new Error(
-        "El servidor respondió con una página HTML en vez de datos. Revisa que la API de pedidos esté respondiendo correctamente."
+        "El servidor respondió con una página HTML en vez de datos. Revisa que la API de pedidos y Supabase estén funcionando correctamente."
       )
     }
   })
@@ -507,7 +487,6 @@ export default function CocinaPage() {
   const [passwordInput, setPasswordInput] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [orders, setOrders] = useState<LocalOrder[]>([])
-  const [clockNow, setClockNow] = useState(() => Date.now())
   const [activeFilter, setActiveFilter] = useState<KitchenFilter>("En cocina")
   const [searchText, setSearchText] = useState("")
   const [areFiltersVisible, setAreFiltersVisible] = useState(true)
@@ -674,16 +653,6 @@ export default function CocinaPage() {
       window.clearInterval(interval)
     }
   }, [adminPassword])
-
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      setClockNow(Date.now())
-    }, 1000)
-
-    return () => {
-      window.clearInterval(interval)
-    }
-  }, [])
 
   const preparingOrders = orders.filter(shouldShowAsPreparing)
   const readyOrders = orders.filter(shouldShowAsReady)
@@ -1006,8 +975,7 @@ export default function CocinaPage() {
                 const regularItems = order.items.filter((item) => !isComboItem(item))
                 const isDelivery = isDeliveryOrder(order)
                 const displayTableNumber = getDisplayTableNumber(order)
-                const elapsedSeconds = getElapsedSeconds(order.createdAt, clockNow)
-                const elapsedMinutes = getElapsedMinutesFromSeconds(elapsedSeconds)
+                const elapsedMinutes = getElapsedMinutes(order.createdAt)
                 const hasProductsToConfirm = hasStaffConfirmationItems(order)
                 const hasConfirmedProducts = hasConfirmedStaffConfirmationItems(order)
                 const productsToConfirmText = buildStaffConfirmationText(order)
@@ -1066,7 +1034,7 @@ export default function CocinaPage() {
                             Tiempo
                           </p>
                           <p className="mt-1 text-2xl font-black leading-none">
-                            {formatElapsedDuration(elapsedSeconds)}
+                            {formatElapsedMinutes(elapsedMinutes)}
                           </p>
                           <p className="mt-1 text-[0.62rem] font-black uppercase tracking-[0.14em]">
                             {getElapsedPriorityLabel(elapsedMinutes)}
@@ -1083,7 +1051,7 @@ export default function CocinaPage() {
                           value={displayTableNumber}
                         />
                         <InfoBox label="Tipo" value={isDelivery ? "Delivery" : order.orderType} />
-                        <InfoBox label="Tiempo corriendo" value={formatElapsedDuration(elapsedSeconds)} />
+                        <InfoBox label="Tiempo" value={formatElapsedMinutes(elapsedMinutes)} />
                       </div>
 
                       {isDelivery && (

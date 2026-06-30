@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation"
 import { LogIn, LogOut, Loader2, ShieldCheck } from "lucide-react"
 import { getSupabaseBrowser } from "@/lib/supabaseBrowser"
 import { BRAND } from "@/lib/brand"
+import { resolveStaffLoginEmail } from "@/lib/staffIdentity"
 
 export default function AccesoPage() {
   const router = useRouter()
-  const [email, setEmail] = useState("")
+  const [loginUser, setLoginUser] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -34,11 +35,11 @@ export default function AccesoPage() {
     try {
       const supabase = getSupabaseBrowser()
       const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: resolveStaffLoginEmail(loginUser),
         password,
       })
       if (error) {
-        setError("Correo o contraseña incorrectos.")
+        setError("Usuario o contraseña incorrectos.")
         return
       }
       router.push("/local-santo")
@@ -114,14 +115,15 @@ export default function AccesoPage() {
           <form onSubmit={handleLogin} className="mt-6 space-y-4">
             <div>
               <label className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-                Correo
+                Usuario
               </label>
               <input
-                type="email"
+                type="text"
                 autoComplete="username"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={loginUser}
+                onChange={(e) => setLoginUser(e.target.value)}
                 required
+                placeholder="maria, jose o correo existente"
                 className="mt-1 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
               />
             </div>
@@ -159,7 +161,7 @@ export default function AccesoPage() {
         )}
 
         <p className="mt-6 text-center text-[0.7rem] font-bold text-[var(--brand-ink-2)]/55">
-          ¿Olvidaste tu clave? Pídele al dueño que la restablezca.
+          Entra con usuario simple (ej. maria) o con correo existente. ¿Olvidaste tu clave? Pídele al dueño que la restablezca.
         </p>
       </section>
     </main>

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getBusinessConfig } from "@/lib/orders"
 import {
-  canLocalRoleAccessModule,
+  canLocalAccessUseModule,
   getRequestAccess,
   isKnownLocalModuleKey,
   type LocalModuleKey,
@@ -10,6 +10,7 @@ import { getModulePlanAccess } from "@/lib/localPlans"
 import { captureError } from "@/lib/monitoring"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { enforceSameOriginRequest } from "@/lib/requestGuards"
+import { touchStaffLastAccess } from "@/lib/staffUsers"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -93,8 +94,12 @@ async function handleLocalAuth(request: NextRequest) {
     const includedInPlan = planAccess.includedInPlan
     const moduleEnabled = planAccess.enabledByOwner
     const effectiveEnabled = planAccess.effectiveEnabled
-    const canAccessRole = canLocalRoleAccessModule(localAccess.role, moduleKey)
+    const canAccessRole = canLocalAccessUseModule(localAccess, moduleKey)
     const allowed = effectiveEnabled && canAccessRole
+
+    if (allowed && localAccess.staffId) {
+      await touchStaffLastAccess(localAccess.staffId)
+    }
 
     return localAuthResponse(
       {
@@ -109,6 +114,13 @@ async function handleLocalAuth(request: NextRequest) {
         access: {
           role: localAccess.role,
           roleLabel: localAccess.roleLabel,
+          staffId: localAccess.staffId || null,
+          username: localAccess.username || "",
+          displayName: localAccess.displayName || "",
+          permissionsMode: localAccess.permissionsMode || "role",
+          allowedModules: localAccess.allowedModules || [],
+          allBranches: localAccess.allBranches !== false,
+          allowedBranchIds: localAccess.allowedBranchIds || [],
           moduleKey,
           canAccessRole,
           moduleEnabled,

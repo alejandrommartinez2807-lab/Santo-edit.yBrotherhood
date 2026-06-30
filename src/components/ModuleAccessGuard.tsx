@@ -28,6 +28,7 @@ type ModuleKey =
   | "menuProducts"
   | "customers"
   | "inventory"
+  | "inventoryAlerts"
   | "advancedMenu"
   | "productVariations"
   | "productAddons"
@@ -45,6 +46,7 @@ type ModuleKey =
   | "splitBill"
   | "serviceChargeTips"
   | "suppliers"
+  | "supplierPurchases"
   | "accountsPayable"
   | "subrecipes"
   | "auditLog"
@@ -52,6 +54,7 @@ type ModuleKey =
   | "trainingMode"
   | "advancedReports"
   | "futureModules"
+  | "branches"
   | "support"
 
 type GuardState =

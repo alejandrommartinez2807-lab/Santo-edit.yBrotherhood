@@ -284,7 +284,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    const result = await deleteInventoryRecipe(recipeId)
+    const result = await deleteInventoryRecipe(recipeId, await resolveBranchId(request))
 
     return NextResponse.json({
       ok: true,

@@ -7,7 +7,7 @@ import {
   saveInventoryItem,
   type SaveInventoryItemInput,
 } from "@/lib/orders"
-import { getRequestAccess, type LocalRole } from "@/lib/localAccess"
+import { canLocalAccessUseModule, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 
@@ -106,7 +106,7 @@ async function checkInventoryAccess(request: NextRequest, allowedRoles: LocalRol
     }
   }
 
-  if (!allowedRoles.includes(access.role)) {
+  if (!allowedRoles.includes(access.role) || !canLocalAccessUseModule(access, "inventory")) {
     return {
       ok: false as const,
       response: forbiddenResponse(),
@@ -268,7 +268,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    const result = await deleteInventoryItem(itemId)
+    const result = await deleteInventoryItem(itemId, await resolveBranchId(request))
 
     return NextResponse.json({
       ok: true,

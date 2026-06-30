@@ -15,12 +15,21 @@ export type LocalRole =
   | "delivery"
   | "support"
 
+export type StaffPermissionsMode = "role" | "custom"
+
 export type LocalAccessResult =
   | {
       ok: true
       role: LocalRole
       roleLabel: string
       passwordSource: string
+      staffId?: string
+      username?: string
+      displayName?: string
+      permissionsMode?: StaffPermissionsMode
+      allowedModules?: LocalModuleKey[]
+      allBranches?: boolean
+      allowedBranchIds?: string[]
     }
   | {
       ok: false
@@ -39,9 +48,7 @@ const ROLE_LABELS: Record<LocalRole, string> = {
   support: "Soporte",
 }
 
-const OWNER_ALLOWED_MODULES = LOCAL_MODULE_KEYS.filter(
-  (moduleKey) => moduleKey !== "support"
-)
+const OWNER_ALLOWED_MODULES = LOCAL_MODULE_KEYS
 
 const ROLE_ACCESS: Record<LocalRole, LocalModuleKey[]> = {
   owner: OWNER_ALLOWED_MODULES,
@@ -56,23 +63,31 @@ const ROLE_ACCESS: Record<LocalRole, LocalModuleKey[]> = {
     "paymentProofs",
     "openAccounts",
     "tables",
+    "qrTables",
     "waiterConfirmation",
     "kitchenItems",
     "tickets",
+    "customers",
+    "inventory",
+    "inventoryAlerts",
+    "suppliers",
+    "supplierPurchases",
+    "accountsPayable",
     "sounds",
   ],
-  cashier: ["cashier", "paymentProofs", "openAccounts", "tickets"],
+  cashier: ["mainPanel", "cashier", "paymentProofs", "openAccounts", "tickets"],
   waiter: [
     "mainPanel",
     "openAccounts",
     "tables",
+    "qrTables",
     "waiterConfirmation",
     "kitchenItems",
     "tickets",
   ],
   kitchen: ["kitchen", "kitchenItems", "tickets"],
   delivery: ["delivery"],
-  support: ["support"],
+  support: OWNER_ALLOWED_MODULES,
 }
 
 function cleanPassword(value: unknown) {
@@ -234,6 +249,45 @@ function isLocalRole(value: unknown): value is LocalRole {
 
 type RequestHeaders = { headers: { get(name: string): string | null } }
 
+function readForwardedList(request: RequestHeaders, name: string): string[] {
+  const value = request.headers.get(name) || ""
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+function readForwardedModules(request: RequestHeaders): LocalModuleKey[] {
+  return readForwardedList(request, "x-staff-modules").filter(isKnownLocalModuleKey)
+}
+
+function decodeForwardedText(value: string | null) {
+  if (!value) return ""
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+
+export function canLocalAccessUseModule(
+  access: LocalAccessResult,
+  moduleKey: LocalModuleKey,
+) {
+  if (!access.ok) return false
+  if (access.allowedModules) return access.allowedModules.includes(moduleKey)
+  return canLocalRoleAccessModule(access.role, moduleKey)
+}
+
+export function canLocalAccessUseBranch(
+  access: LocalAccessResult,
+  branchId: string | null | undefined,
+) {
+  if (!access.ok || !branchId) return true
+  if (access.allBranches !== false) return true
+  return (access.allowedBranchIds || []).includes(branchId)
+}
+
 // Acceso unificado para las rutas API. Confía en el rol reenviado por el
 // middleware (header x-staff-role, YA verificado contra Supabase Auth y que el
 // middleware limpia de cualquier valor enviado por el cliente). Si no hay token
@@ -249,6 +303,14 @@ export function getRequestAccess(
       role: forwardedRole,
       roleLabel: ROLE_LABELS[forwardedRole],
       passwordSource: request.headers.get("x-staff-source") || "supabase-auth",
+      staffId: request.headers.get("x-staff-id") || undefined,
+      username: request.headers.get("x-staff-username") || undefined,
+      displayName: decodeForwardedText(request.headers.get("x-staff-display-name")) || undefined,
+      permissionsMode:
+        request.headers.get("x-staff-permissions-mode") === "custom" ? "custom" : "role",
+      allowedModules: readForwardedModules(request),
+      allBranches: request.headers.get("x-staff-all-branches") !== "false",
+      allowedBranchIds: readForwardedList(request, "x-staff-branch-ids"),
     }
   }
   return getLocalAccessFromPassword(password)

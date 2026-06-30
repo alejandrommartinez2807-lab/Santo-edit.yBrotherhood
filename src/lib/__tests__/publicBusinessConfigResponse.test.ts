@@ -266,43 +266,4 @@ describe("publicBusinessConfigResponse", () => {
   })
 
 
-  it("respeta controles públicos de complejidad del dueño", () => {
-    const simple = buildPublicBusinessConfigResponse({
-      membershipPlan: "complete",
-      deliveryEnabled: true,
-      deliveryModuleEnabled: true,
-      paymentProofsModuleEnabled: true,
-      openAccountsModuleEnabled: true,
-      publicDeliveryOrdersEnabled: false,
-      publicOpenAccountEnabled: false,
-      publicPaymentProofUploadEnabled: false,
-      publicIngredientCustomizationEnabled: false,
-      publicCustomerNotesEnabled: false,
-    })
-
-    expect(simple.publicDeliveryOrdersEnabled).toBe(false)
-    expect(simple.publicOpenAccountEnabled).toBe(false)
-    expect(simple.openAccountsEnabled).toBe(false)
-    expect(simple.publicPaymentProofUploadEnabled).toBe(false)
-    expect(simple.paymentProofsEnabled).toBe(false)
-    expect(simple.publicIngredientCustomizationEnabled).toBe(false)
-    expect(simple.publicCustomerNotesEnabled).toBe(false)
-
-    const advanced = buildPublicBusinessConfigResponse({
-      membershipPlan: "complete",
-      deliveryEnabled: true,
-      deliveryModuleEnabled: true,
-      paymentProofsModuleEnabled: true,
-      openAccountsModuleEnabled: true,
-      publicDeliveryOrdersEnabled: true,
-      publicOpenAccountEnabled: true,
-      publicPaymentProofUploadEnabled: true,
-    })
-
-    expect(advanced.publicDeliveryOrdersEnabled).toBe(true)
-    expect(advanced.openAccountsEnabled).toBe(true)
-    expect(advanced.paymentProofsEnabled).toBe(true)
-  })
-
-
 })

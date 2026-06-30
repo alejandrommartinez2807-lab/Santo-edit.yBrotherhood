@@ -22,6 +22,13 @@ export async function proxy(request: NextRequest) {
   headers.delete("x-staff-role")
   headers.delete("x-staff-label")
   headers.delete("x-staff-source")
+  headers.delete("x-staff-id")
+  headers.delete("x-staff-username")
+  headers.delete("x-staff-display-name")
+  headers.delete("x-staff-permissions-mode")
+  headers.delete("x-staff-modules")
+  headers.delete("x-staff-all-branches")
+  headers.delete("x-staff-branch-ids")
 
   const authorization = request.headers.get("authorization") || ""
   if (authorization.startsWith("Bearer ")) {
@@ -31,6 +38,15 @@ export async function proxy(request: NextRequest) {
         headers.set("x-staff-role", access.role)
         headers.set("x-staff-label", access.roleLabel)
         headers.set("x-staff-source", "supabase-auth")
+        if (access.staffId) headers.set("x-staff-id", access.staffId)
+        if (access.username) headers.set("x-staff-username", access.username)
+        if (access.displayName) {
+          headers.set("x-staff-display-name", encodeURIComponent(access.displayName))
+        }
+        headers.set("x-staff-permissions-mode", access.permissionsMode || "role")
+        headers.set("x-staff-modules", (access.allowedModules || []).join(","))
+        headers.set("x-staff-all-branches", access.allBranches === false ? "false" : "true")
+        headers.set("x-staff-branch-ids", (access.allowedBranchIds || []).join(","))
       }
     } catch {
       // Si la verificación falla, no se reenvía rol; la ruta caerá a la

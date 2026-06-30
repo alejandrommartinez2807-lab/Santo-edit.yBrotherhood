@@ -10,8 +10,6 @@ import {
   CreditCard,
   Link2,
   Loader2,
-  Maximize2,
-  Minimize2,
   Plus,
   RefreshCw,
   Store,
@@ -62,8 +60,6 @@ type AccountPaymentForm = {
 };
 
 type AccountViewMode = "open" | "all";
-
-const OPEN_ACCOUNTS_COMPACT_STORAGE_KEY = "santo_open_accounts_compact_view";
 
 const EMPTY_CREATE_FORM: CreateAccountForm = {
   tableNumber: "",
@@ -428,34 +424,6 @@ export function OpenAccountsPanel({
     useState<AccountPaymentForm>(EMPTY_ACCOUNT_PAYMENT_FORM);
   const [closeAfterAccountPayment, setCloseAfterAccountPayment] =
     useState(false);
-  const [isAccountViewOnly, setIsAccountViewOnly] = useState(false);
-
-  useEffect(() => {
-    try {
-      setIsAccountViewOnly(
-        window.localStorage.getItem(OPEN_ACCOUNTS_COMPACT_STORAGE_KEY) === "true",
-      );
-    } catch {
-      setIsAccountViewOnly(false);
-    }
-  }, []);
-
-  function toggleAccountViewOnly() {
-    setIsAccountViewOnly((current) => {
-      const next = !current;
-
-      try {
-        window.localStorage.setItem(
-          OPEN_ACCOUNTS_COMPACT_STORAGE_KEY,
-          next ? "true" : "false",
-        );
-      } catch {
-        // La preferencia sigue funcionando durante la sesión aunque el navegador bloquee storage.
-      }
-
-      return next;
-    });
-  }
 
   const activeAccounts = useMemo(
     () => openAccounts.filter((account) => account.status === "Abierta"),
@@ -948,16 +916,9 @@ export function OpenAccountsPanel({
           <h2 className="mt-1 text-2xl font-black uppercase text-[var(--brand-ink-2)]">
             Consumo local por cuenta
           </h2>
-          {!isAccountViewOnly && (
-            <p className="mt-2 max-w-3xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-              {description}
-            </p>
-          )}
-          {isAccountViewOnly && (
-            <p className="mt-2 max-w-2xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-              Vista compacta: se ocultan los controles de creación y resumen para dejar solo las cuentas y sus pedidos.
-            </p>
-          )}
+          <p className="mt-2 max-w-3xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
+            {description}
+          </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -977,15 +938,6 @@ export function OpenAccountsPanel({
           >
             Historial
           </button>
-          <button
-            type="button"
-            onClick={toggleAccountViewOnly}
-            className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-yellow-50"
-          >
-            {isAccountViewOnly ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
-            {isAccountViewOnly ? "Modo completo" : "Solo cuentas"}
-          </button>
-
           <button
             type="button"
             onClick={() => loadOpenAccounts()}
@@ -1008,7 +960,7 @@ export function OpenAccountsPanel({
         </div>
       )}
 
-      {!isAccountViewOnly && canManage && cleanPreferredTableName && (
+      {canManage && cleanPreferredTableName && (
         <div className="mt-4 flex flex-col gap-2 rounded-[1.2rem] border-2 border-yellow-400 bg-yellow-50 p-3 text-xs font-bold text-[var(--brand-ink)] sm:flex-row sm:items-center sm:justify-between">
           <span>
             Mesa seleccionada en el mapa:{" "}
@@ -1025,7 +977,7 @@ export function OpenAccountsPanel({
         </div>
       )}
 
-      {!isAccountViewOnly && canManage && (
+      {canManage && (
         <div className="mt-4 grid gap-3 rounded-[1.2rem] border-2 border-[var(--brand-primary)]/30 bg-[var(--brand-cream)] p-3 lg:grid-cols-[1fr_1fr_1fr_1.3fr_auto]">
           <div className="space-y-1">
             <input
@@ -1094,7 +1046,7 @@ export function OpenAccountsPanel({
         </div>
       )}
 
-      {!isAccountViewOnly && canManage && knownTableOptions.length > 0 && (
+      {canManage && knownTableOptions.length > 0 && (
         <div className="mt-3 rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-white p-3">
           <p className="text-[0.66rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]/75">
             Mesas configuradas
@@ -1120,9 +1072,8 @@ export function OpenAccountsPanel({
         </div>
       )}
 
-      {!isAccountViewOnly && (
-        <div className="mt-4 grid gap-3 lg:grid-cols-5">
-          <MiniStat label="Abiertas" value={activeAccounts.length} />
+      <div className="mt-4 grid gap-3 lg:grid-cols-5">
+        <MiniStat label="Abiertas" value={activeAccounts.length} />
         <MiniStat label="Pedidos en cuenta" value={activeTotals.ordersCount} />
         <MiniStat
           label="Total estimado"
@@ -1133,26 +1084,23 @@ export function OpenAccountsPanel({
           value={formatUSD(activeTotals.totalCollectedUSD)}
           tone="success"
         />
-          <MiniStat
-            label="Pendiente total"
-            value={formatUSD(activeTotals.pendingUSD)}
-            tone={activeTotals.pendingUSD > 0 ? "warning" : "success"}
-          />
-        </div>
-      )}
+        <MiniStat
+          label="Pendiente total"
+          value={formatUSD(activeTotals.pendingUSD)}
+          tone={activeTotals.pendingUSD > 0 ? "warning" : "success"}
+        />
+      </div>
 
-      {!isAccountViewOnly && (
-        <div className="mt-3 rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-white p-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/75">
+      <div className="mt-3 rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-white p-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/75">
         Cuentas abiertas organizan pedidos por mesa.{" "}
         <strong>
           Cerrar una cuenta no cobra, no marca pedidos como pagados y no cambia
           el cierre del día.
         </strong>{" "}
         Caja sigue registrando cada cobro real desde el pedido correspondiente.
-        </div>
-      )}
+      </div>
 
-      {!isAccountViewOnly && unlinkedEligibleOrders.length > 0 && canManage && (
+      {unlinkedEligibleOrders.length > 0 && canManage && (
         <div className="mt-4 rounded-[1.2rem] border-2 border-yellow-400 bg-yellow-50 p-3 text-xs font-bold text-[var(--brand-ink)]">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="inline-flex items-center gap-2">
@@ -1168,7 +1116,7 @@ export function OpenAccountsPanel({
         </div>
       )}
 
-      <div className={`mt-4 grid gap-4 ${isAccountViewOnly ? "xl:grid-cols-2 2xl:grid-cols-3" : "xl:grid-cols-2"}`}>
+      <div className="mt-4 grid gap-4 xl:grid-cols-2">
         {visibleAccounts.length === 0 ? (
           <div className="rounded-[1.2rem] border-2 border-dashed border-[var(--brand-primary)]/35 bg-white p-5 text-sm font-bold text-[var(--brand-ink-2)]/70 xl:col-span-2">
             {viewMode === "all"
@@ -1203,7 +1151,7 @@ export function OpenAccountsPanel({
             return (
               <article
                 key={account.id}
-                className={`rounded-[1.3rem] border-2 bg-white ${isAccountViewOnly ? "p-4" : "p-4"} shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.10)] ${
+                className={`rounded-[1.3rem] border-2 bg-white p-4 shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.10)] ${
                   isClosed
                     ? "border-zinc-300 opacity-85"
                     : "border-[var(--brand-primary)]"
@@ -1243,7 +1191,7 @@ export function OpenAccountsPanel({
                     )}
                   </div>
 
-                  <div className={`grid grid-cols-2 gap-2 text-center ${isAccountViewOnly ? "sm:min-w-[240px]" : "sm:min-w-[320px]"}`}>
+                  <div className="grid grid-cols-2 gap-2 text-center sm:min-w-[320px]">
                     <MiniStat
                       label="Pedidos"
                       value={accountOrders.length}
@@ -1278,26 +1226,24 @@ export function OpenAccountsPanel({
                   </div>
                 </div>
 
-                {!isAccountViewOnly && (
-                  <div className="mt-4 grid gap-2 lg:grid-cols-2">
-                    <div
-                      className={`rounded-2xl border-2 px-3 py-2 text-xs font-bold leading-5 ${operationalTone.className}`}
-                    >
+                <div className="mt-4 grid gap-2 lg:grid-cols-2">
+                  <div
+                    className={`rounded-2xl border-2 px-3 py-2 text-xs font-bold leading-5 ${operationalTone.className}`}
+                  >
                     <p className="font-black uppercase tracking-[0.12em]">
                       {operationalTone.label}
                     </p>
                     <p className="mt-1">{operationalTone.text}</p>
                   </div>
-                    <div
-                      className={`rounded-2xl border-2 px-3 py-2 text-xs font-bold leading-5 ${deliveryTone.className}`}
-                    >
-                      <p className="font-black uppercase tracking-[0.12em]">
-                        {deliveryTone.label}
-                      </p>
-                      <p className="mt-1">{deliveryTone.text}</p>
-                    </div>
+                  <div
+                    className={`rounded-2xl border-2 px-3 py-2 text-xs font-bold leading-5 ${deliveryTone.className}`}
+                  >
+                    <p className="font-black uppercase tracking-[0.12em]">
+                      {deliveryTone.label}
+                    </p>
+                    <p className="mt-1">{deliveryTone.text}</p>
                   </div>
-                )}
+                </div>
 
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
                   <button

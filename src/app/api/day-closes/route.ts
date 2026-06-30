@@ -36,12 +36,6 @@ function unauthorizedResponse() {
   )
 }
 
-function getRequestedBranchScope(request: NextRequest) {
-  const scope = (request.nextUrl.searchParams.get("scope") || "selected").trim()
-
-  return scope === "all" ? "all" : "selected"
-}
-
 function forbiddenResponse(message = "Esta clave no tiene permiso para esta acción") {
   return NextResponse.json(
     {
@@ -136,14 +130,10 @@ export async function GET(request: NextRequest) {
       return historyModule.response
     }
 
-    const branchScope = getRequestedBranchScope(request)
-    const branchId = branchScope === "all" ? null : await resolveBranchId(request)
-    const dayCloses = await getDayCloses(branchId)
+    const dayCloses = await getDayCloses(await resolveBranchId(request))
 
     return NextResponse.json({
       dayCloses,
-      branchScope,
-      branchId,
       access: {
         role: access.role,
       },

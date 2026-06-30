@@ -86,14 +86,14 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         paymentDate: normalizeDate(body.paymentDate),
         amountUSD,
         amountVES,
-        method: cleanText(body.method),
+        paymentMethod: cleanText(body.method),
         reference: cleanText(body.reference),
         note: cleanText(body.note),
       },
-      await resolveBranchId(request),
+      (await resolveBranchId(request)) ?? undefined,
     )
 
-    return NextResponse.json({ ok: true, payment: result.payment, purchase: result.purchase }, { status: 201 })
+    return NextResponse.json({ ok: true, payment: result }, { status: 201 })
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo registrar el pago"
     const status = /no encontrada|mayor a cero|supera|ya está pagada/i.test(message) ? 400 : 500

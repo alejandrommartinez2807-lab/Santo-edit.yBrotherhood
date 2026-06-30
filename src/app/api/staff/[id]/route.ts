@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { getRequestAccess, type LocalRole } from "@/lib/localAccess"
-
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
+import {
+  createStaffAccessConfig,
+  getDisplayName,
+  getDisplayUsername,
+  getEffectiveStaffBranchAccess,
+  getEffectiveStaffModules,
+  getEmailForUsername,
+  getStaffUserAccessConfig,
+  saveStaffUserAccessConfig,
+} from "@/lib/staffUsers"
+import { normalizeStaffUsername } from "@/lib/staffIdentity"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -25,22 +35,32 @@ function getRequestPassword(request: NextRequest) {
   )
 }
 
-function requireOwner(request: NextRequest) {
+function requireStaffAdmin(request: NextRequest) {
   const access = getRequestAccess(request, getRequestPassword(request))
-  if (!access.ok) {
-    return { ok: false as const, response: NextResponse.json({ error: "No autorizado" }, { status: 401 }) }
+  if (!access.ok) return { ok: false as const, response: NextResponse.json({ error: "No autorizado" }, { status: 401 }), access }
+  if (access.role !== "owner" && access.role !== "support") {
+    return { ok: false as const, response: NextResponse.json({ error: "Solo dueño o soporte pueden gestionar usuarios" }, { status: 403 }), access }
   }
-  if (access.role !== "owner") {
-    return {
-      ok: false as const,
-      response: NextResponse.json({ error: "Solo el dueño puede gestionar usuarios" }, { status: 403 }),
-    }
-  }
-  return { ok: true as const, response: null }
+  return { ok: true as const, response: null, access }
 }
 
 function cleanText(value: unknown) {
   return String(value || "").trim()
+}
+
+function readRole(value: unknown): LocalRole | null {
+  const role = cleanText(value) as LocalRole
+  return ASSIGNABLE_ROLES.includes(role) ? role : null
+}
+
+async function getStaffRow(id: string) {
+  const supabase = getSupabaseAdmin()
+  const { data } = await supabase
+    .from("staff_users")
+    .select("id, email, full_name, role, is_active")
+    .eq("id", id)
+    .maybeSingle()
+  return data as { id: string; email: string; full_name: string; role: LocalRole; is_active: boolean } | null
 }
 
 // Evita dejar el negocio sin ningún dueño activo.
@@ -70,15 +90,23 @@ export async function PATCH(
 
   if (guardResponse) return guardResponse
 
-
-  const auth = requireOwner(request)
+  const auth = requireStaffAdmin(request)
   if (!auth.ok) return auth.response
 
   const { id } = await context.params
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
   const supabase = getSupabaseAdmin()
+  const current = await getStaffRow(id)
 
-  // Restablecer contraseña (el dueño fija una nueva para el usuario).
+  if (!current) {
+    return NextResponse.json({ error: "Usuario no encontrado" }, { status: 404 })
+  }
+
+  // Un empleado no puede autoconcederse más permisos, aunque su rol quede mal configurado.
+  if (auth.access.ok && auth.access.staffId === id && auth.access.role !== "owner") {
+    return NextResponse.json({ error: "No puedes editar tus propios permisos" }, { status: 403 })
+  }
+
   if (body.password !== undefined) {
     const newPassword = cleanText(body.password)
     if (newPassword.length < 6) {
@@ -91,16 +119,19 @@ export async function PATCH(
   }
 
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  let nextRole = current.role
+  let nextFullName = current.full_name
+  let nextEmail = current.email
+  const existingConfig = await getStaffUserAccessConfig(id)
 
   if (body.role !== undefined) {
-    const role = cleanText(body.role) as LocalRole
-    if (!ASSIGNABLE_ROLES.includes(role)) {
-      return NextResponse.json({ error: "Rol inválido" }, { status: 400 })
-    }
+    const role = readRole(body.role)
+    if (!role) return NextResponse.json({ error: "Rol inválido" }, { status: 400 })
     if (role !== "owner" && (await wouldRemoveLastOwner(id))) {
       return NextResponse.json({ error: "No puedes quitar al último dueño activo" }, { status: 400 })
     }
     patch.role = role
+    nextRole = role
   }
 
   if (body.is_active !== undefined) {
@@ -111,8 +142,23 @@ export async function PATCH(
     patch.is_active = isActive
   }
 
-  if (body.full_name !== undefined) {
-    patch.full_name = cleanText(body.full_name)
+  if (body.fullName !== undefined || body.full_name !== undefined || body.displayName !== undefined) {
+    nextFullName = cleanText(body.fullName || body.full_name || body.displayName)
+    patch.full_name = nextFullName
+  }
+
+  if (body.username !== undefined || body.user !== undefined) {
+    const username = normalizeStaffUsername(body.username || body.user)
+    if (!username) return NextResponse.json({ error: "Usuario inválido" }, { status: 400 })
+    nextEmail = getEmailForUsername(username)
+    const authUpdate = await supabase.auth.admin.updateUserById(id, {
+      email: nextEmail,
+      email_confirm: true,
+    })
+    if (authUpdate.error) {
+      return NextResponse.json({ error: authUpdate.error.message }, { status: 400 })
+    }
+    patch.email = nextEmail
   }
 
   const { data, error } = await supabase
@@ -125,7 +171,53 @@ export async function PATCH(
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
-  return NextResponse.json({ ok: true, staff: data })
+
+  const saved = data as { id: string; email: string; full_name: string; role: LocalRole; is_active: boolean }
+  const shouldUpdateAccessConfig = [
+    "username",
+    "user",
+    "fullName",
+    "full_name",
+    "displayName",
+    "role",
+    "permissionsMode",
+    "allowedModules",
+    "allBranches",
+    "allowedBranchIds",
+  ].some((key) => Object.prototype.hasOwnProperty.call(body, key))
+
+  let staffConfig = existingConfig
+  if (shouldUpdateAccessConfig) {
+    staffConfig = createStaffAccessConfig({
+      id,
+      email: saved.email,
+      username: body.username ?? body.user ?? existingConfig?.username ?? getDisplayUsername(saved.email, existingConfig),
+      displayName: body.fullName ?? body.full_name ?? body.displayName ?? existingConfig?.displayName ?? saved.full_name,
+      role: nextRole,
+      permissionsMode: body.permissionsMode ?? existingConfig?.permissionsMode ?? "role",
+      allowedModules: body.allowedModules ?? existingConfig?.allowedModules ?? [],
+      allBranches: body.allBranches ?? existingConfig?.allBranches ?? false,
+      allowedBranchIds: body.allowedBranchIds ?? existingConfig?.allowedBranchIds ?? [],
+    })
+    await saveStaffUserAccessConfig(staffConfig)
+  }
+
+  const branchAccess = getEffectiveStaffBranchAccess(saved.role, staffConfig)
+
+  return NextResponse.json({
+    ok: true,
+    staff: {
+      ...saved,
+      username: getDisplayUsername(saved.email, staffConfig),
+      displayName: getDisplayName(saved.full_name, staffConfig),
+      full_name: getDisplayName(saved.full_name, staffConfig),
+      permissionsMode: staffConfig?.permissionsMode || "role",
+      allowedModules: getEffectiveStaffModules(saved.role, staffConfig),
+      allBranches: branchAccess.allBranches,
+      allowedBranchIds: branchAccess.allowedBranchIds,
+      lastAccessAt: staffConfig?.lastAccessAt || "",
+    },
+  })
 }
 
 export async function DELETE(
@@ -143,23 +235,23 @@ export async function DELETE(
 
   if (guardResponse) return guardResponse
 
-
-  const auth = requireOwner(request)
+  const auth = requireStaffAdmin(request)
   if (!auth.ok) return auth.response
 
   const { id } = await context.params
 
   if (await wouldRemoveLastOwner(id)) {
-    return NextResponse.json({ error: "No puedes eliminar al último dueño activo" }, { status: 400 })
+    return NextResponse.json({ error: "No puedes desactivar al último dueño activo" }, { status: 400 })
   }
 
+  // Por seguridad operativa no borramos usuarios con posible historial: se desactivan.
   const supabase = getSupabaseAdmin()
-  // Borra la fila de rol y el usuario de Auth (cascade también limpiaría la fila).
-  await supabase.from("staff_users").delete().eq("id", id)
-  const del = await supabase.auth.admin.deleteUser(id)
-  if (del.error) {
-    return NextResponse.json({ error: del.error.message }, { status: 500 })
-  }
+  const { error } = await supabase
+    .from("staff_users")
+    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .eq("id", id)
 
-  return NextResponse.json({ ok: true })
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  return NextResponse.json({ ok: true, deactivated: true })
 }

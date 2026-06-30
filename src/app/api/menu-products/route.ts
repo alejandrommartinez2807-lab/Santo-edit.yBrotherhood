@@ -253,7 +253,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    const result = await deleteMenuProduct(productId)
+    const result = await deleteMenuProduct(productId, await resolveBranchId(request))
 
     try {
       await syncFeaturedProductIdInConfig(Math.round(productId), false)

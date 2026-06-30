@@ -5,7 +5,6 @@ type HeaderBag = { headers: { get(name: string): string | null } };
 export type AuditAction =
   | "order.payment.updated"
   | "order.status.updated"
-  | "order.notes.updated"
   | "order.delivery.reported"
   | "order.staff.confirmed"
   | "order.staff.reset"

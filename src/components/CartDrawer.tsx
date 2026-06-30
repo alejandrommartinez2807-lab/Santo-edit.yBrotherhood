@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type ChangeEvent, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, type ChangeEvent, useEffect, useState } from "react";
 import { BRAND } from "@/lib/brand";
 import {
   CreditCard,
@@ -337,44 +337,14 @@ export default function CartDrawer({
     readCachedPublicBusinessConfig(),
   );
 
-  const isPublicOrderingEnabled = publicConfig.publicOrdersEnabled !== false;
-  const isPublicLocalOrderAvailable =
-    isPublicOrderingEnabled && publicConfig.publicLocalOrdersEnabled !== false;
-  const isPublicTakeawayOrderAvailable =
-    isPublicOrderingEnabled && publicConfig.publicTakeawayOrdersEnabled !== false;
+  const canRegisterOrdersInPanel = doesPlanAllowLocalOrders(
+    publicConfig.membershipPlan,
+  );
   const isPublicDeliveryAvailable =
-    isPublicOrderingEnabled &&
-    publicConfig.publicDeliveryOrdersEnabled !== false &&
     publicConfig.deliveryEnabled &&
     publicConfig.deliveryModuleEnabled &&
     doesPlanAllowDelivery(publicConfig.membershipPlan);
-  const orderTypes = useMemo<OrderType[]>(
-    () => [
-      ...(isPublicLocalOrderAvailable ? (["Comer aquí"] as OrderType[]) : []),
-      ...(isPublicTakeawayOrderAvailable ? (["Para llevar"] as OrderType[]) : []),
-      ...(isPublicDeliveryAvailable ? (["Delivery"] as OrderType[]) : []),
-    ],
-    [
-      isPublicDeliveryAvailable,
-      isPublicLocalOrderAvailable,
-      isPublicTakeawayOrderAvailable,
-    ],
-  );
-  const firstAvailableOrderType = orderTypes[0] || "Comer aquí";
-  const canRegisterOrdersInPanel =
-    doesPlanAllowLocalOrders(publicConfig.membershipPlan) &&
-    isPublicOrderingEnabled &&
-    orderTypes.length > 0;
-  const isPaymentProofPublicAvailable =
-    publicConfig.paymentProofsEnabled &&
-    (publicConfig.publicPaymentProofsEnabled ??
-      publicConfig.publicPaymentProofUploadEnabled) !== false;
-  const isOrderNotesPublicAvailable =
-    (publicConfig.publicNotesEnabled ?? publicConfig.publicCustomerNotesEnabled) !== false;
-  const isOrderAttachmentsPublicAvailable =
-    (publicConfig.publicAttachmentsEnabled ??
-      publicConfig.publicCustomerAttachmentsEnabled ??
-      publicConfig.publicCustomerImageAttachmentEnabled) !== false;
+  const isPaymentProofPublicAvailable = publicConfig.paymentProofsEnabled;
 
   useEffect(() => {
     let ignore = false;
@@ -608,18 +578,18 @@ export default function CartDrawer({
   }, [canRegisterOrdersInPanel, isOrderModalOpen]);
 
   useEffect(() => {
-    if (orderTypes.includes(orderType)) return;
-
-    setOrderType(firstAvailableOrderType);
-    setTableNumber(firstAvailableOrderType === "Para llevar" ? "Para llevar" : "");
-    setAttachToTableOpenAccount(false);
-    setDeliveryAddress("");
-    setDeliveryReference("");
-    setDeliveryZone("");
-    setPaymentMethod("");
-    setIsZonePickerOpen(false);
-    setIsPaymentPickerOpen(false);
-  }, [firstAvailableOrderType, orderType, orderTypes]);
+    if (!isPublicDeliveryAvailable && orderType === "Delivery") {
+      setOrderType("Comer aquí");
+      setTableNumber("");
+      setAttachToTableOpenAccount(false);
+      setDeliveryAddress("");
+      setDeliveryReference("");
+      setDeliveryZone("");
+      setPaymentMethod("");
+      setIsZonePickerOpen(false);
+      setIsPaymentPickerOpen(false);
+    }
+  }, [isPublicDeliveryAvailable, orderType]);
 
   useEffect(() => {
     if (publicConfig.localTables.length > 0) return;
@@ -1106,8 +1076,8 @@ export default function CartDrawer({
         unitOptionsPrice: Number(item.unitOptionsPrice || 0),
         image: item.image,
         quantity: item.quantity,
-        note: isOrderNotesPublicAvailable ? item.note || "" : "",
-        noteEnabled: isOrderNotesPublicAvailable && Boolean(item.noteEnabled),
+        note: item.note || "",
+        noteEnabled: Boolean(item.noteEnabled),
         paymentMode: getItemPaymentMode(item),
         productType: item.productType || "normal",
         selectedVariation: cleanSelectionOption(item.selectedVariation),
@@ -1120,7 +1090,7 @@ export default function CartDrawer({
       }));
 
       const finalCustomerNote = cleanCustomerNoteWithStaffConfirmation(
-        isOrderNotesPublicAvailable ? customerNote : "",
+        customerNote,
         staffConfirmationProductNames,
       );
 
@@ -1148,15 +1118,9 @@ export default function CartDrawer({
         totalRegularVES: regularTotalVES,
         attachToOpenAccountByTable:
           canAttachToTableOpenAccount && attachToTableOpenAccount,
-        attachmentDataUrl: isOrderAttachmentsPublicAvailable
-          ? orderAttachmentDataUrl
-          : "",
-        attachmentFileName: isOrderAttachmentsPublicAvailable
-          ? orderAttachmentFileName
-          : "",
-        attachmentMimeType: isOrderAttachmentsPublicAvailable
-          ? orderAttachmentMimeType
-          : "",
+        attachmentDataUrl: orderAttachmentDataUrl,
+        attachmentFileName: orderAttachmentFileName,
+        attachmentMimeType: orderAttachmentMimeType,
       };
       pendingPayload = orderPayload;
 
@@ -1313,7 +1277,7 @@ export default function CartDrawer({
   }
 
   function selectOrderType(type: OrderType) {
-    if (!orderTypes.includes(type)) return;
+    if (type === "Delivery" && !isPublicDeliveryAvailable) return;
 
     setOrderType(type);
     setIsZonePickerOpen(false);
@@ -1351,6 +1315,9 @@ export default function CartDrawer({
     : whatsappHref
       ? "Enviar por WhatsApp"
       : "WhatsApp no configurado";
+  const orderTypes: OrderType[] = isPublicDeliveryAvailable
+    ? ["Comer aquí", "Para llevar", "Delivery"]
+    : ["Comer aquí", "Para llevar"];
   const lastOrderAttachedToOpenAccount = Boolean(
     lastCreatedOrder?.attachedToOpenAccount,
   );
@@ -2183,26 +2150,23 @@ export default function CartDrawer({
                   </div>
                 </div>
 
-                {isOrderNotesPublicAvailable && (
-                  <div>
-                    <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                      Nota general opcional
-                    </label>
+                <div>
+                  <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    Nota general opcional
+                  </label>
 
-                    <textarea
-                      value={customerNote}
-                      onChange={(event) => setCustomerNote(event.target.value)}
-                      placeholder="Ejemplo: cliente espera afuera, entregar rápido..."
-                      className="mt-2 min-h-20 w-full resize-none rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
-                    />
-                  </div>
-                )}
+                  <textarea
+                    value={customerNote}
+                    onChange={(event) => setCustomerNote(event.target.value)}
+                    placeholder="Ejemplo: cliente espera afuera, entregar rápido..."
+                    className="mt-2 min-h-20 w-full resize-none rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                  />
+                </div>
 
-                {isOrderAttachmentsPublicAvailable && (
-                  <div>
-                    <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                      Adjuntar imagen (opcional)
-                    </label>
+                <div>
+                  <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    Adjuntar imagen (opcional)
+                  </label>
                   <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink)]/55">
                     Sube una foto o captura (comprobante, referencia). Llegará a
                     Caja y al panel de Pedidos junto a tu pedido.
@@ -2240,13 +2204,12 @@ export default function CartDrawer({
                     </label>
                   )}
 
-                    {orderAttachmentError ? (
-                      <p className="mt-2 text-[0.7rem] font-bold text-red-700">
-                        {orderAttachmentError}
-                      </p>
-                    ) : null}
-                  </div>
-                )}
+                  {orderAttachmentError ? (
+                    <p className="mt-2 text-[0.7rem] font-bold text-red-700">
+                      {orderAttachmentError}
+                    </p>
+                  ) : null}
+                </div>
 
                 {hasUnavailableItemsForOrderType && (
                   <div className="rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">

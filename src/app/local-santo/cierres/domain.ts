@@ -50,8 +50,6 @@ export type DayCloseExpense = {
 export type SavedDayClose = {
   id: string
   createdAt: string
-  branchId?: string
-  branchName?: string
   dateLabel: string
   summaryText: string
 
@@ -183,7 +181,7 @@ export function readApiResponse(response: Response) {
       return JSON.parse(text)
     } catch {
       throw new Error(
-        "El servidor respondió con una página HTML en vez de datos. Revisa que la API de cierres esté respondiendo correctamente."
+        "El servidor respondió con una página HTML en vez de datos. Revisa que la API de cierres y Supabase estén funcionando correctamente."
       )
     }
   })
@@ -342,8 +340,6 @@ export function normalizeDayClose(value: unknown): SavedDayClose | null {
   return {
     id,
     createdAt: toText(close.createdAt),
-    branchId: toText(close.branchId || close.branch_id).trim() || undefined,
-    branchName: toText(close.branchName || close.branch_name).trim() || undefined,
     dateLabel: toText(close.dateLabel),
     summaryText: toText(close.summaryText),
 
@@ -782,86 +778,6 @@ export function getInventoryExpenseTotals(expenses: DayCloseExpense[]) {
   )
 }
 
-export type BranchCloseSummary = {
-  branchId: string
-  branchName: string
-  closes: number
-  ordersRegistered: number
-  deliveredOrders: number
-  activeOrders: number
-  canceledOrders: number
-  totalSoldUSD: number
-  realCollectedUSD: number
-  realPendingUSD: number
-  expensesTotalUSD: number
-  netEstimatedUSD: number
-  lastCloseAt: string
-}
-
-export function getBranchCloseSummary(dayCloses: SavedDayClose[]) {
-  const summaryMap = new Map<string, BranchCloseSummary>()
-
-  dayCloses.forEach((close) => {
-    const branchId = close.branchId || "sin-sucursal"
-    const branchName = close.branchName || "Sin sucursal"
-    const current = summaryMap.get(branchId) || {
-      branchId,
-      branchName,
-      closes: 0,
-      ordersRegistered: 0,
-      deliveredOrders: 0,
-      activeOrders: 0,
-      canceledOrders: 0,
-      totalSoldUSD: 0,
-      realCollectedUSD: 0,
-      realPendingUSD: 0,
-      expensesTotalUSD: 0,
-      netEstimatedUSD: 0,
-      lastCloseAt: "",
-    }
-
-    current.branchName = branchName
-    current.closes += 1
-    current.ordersRegistered += close.ordersRegistered
-    current.deliveredOrders += close.deliveredOrders
-    current.activeOrders += close.activeOrders
-    current.canceledOrders += close.canceledOrders
-    current.totalSoldUSD += close.totalSoldUSD
-    current.realCollectedUSD += close.realCollectedUSD
-    current.realPendingUSD += close.realPendingUSD
-    current.expensesTotalUSD += close.expensesTotalUSD
-    current.netEstimatedUSD += getCloseNetEstimatedUSD(close)
-
-    const currentTime = new Date(current.lastCloseAt).getTime()
-    const closeTime = new Date(close.createdAt).getTime()
-    if (!current.lastCloseAt || Number.isNaN(currentTime) || closeTime > currentTime) {
-      current.lastCloseAt = close.createdAt
-    }
-
-    summaryMap.set(branchId, current)
-  })
-
-  return Array.from(summaryMap.values())
-    .map((summary) => ({
-      ...summary,
-      closes: toNumber(summary.closes),
-      ordersRegistered: toNumber(summary.ordersRegistered),
-      deliveredOrders: toNumber(summary.deliveredOrders),
-      activeOrders: toNumber(summary.activeOrders),
-      canceledOrders: toNumber(summary.canceledOrders),
-      totalSoldUSD: toNumber(summary.totalSoldUSD),
-      realCollectedUSD: toNumber(summary.realCollectedUSD),
-      realPendingUSD: toNumber(summary.realPendingUSD),
-      expensesTotalUSD: toNumber(summary.expensesTotalUSD),
-      netEstimatedUSD: toNumber(summary.netEstimatedUSD),
-    }))
-    .sort((a, b) => {
-      if (b.realCollectedUSD !== a.realCollectedUSD) return b.realCollectedUSD - a.realCollectedUSD
-      if (b.totalSoldUSD !== a.totalSoldUSD) return b.totalSoldUSD - a.totalSoldUSD
-      return a.branchName.localeCompare(b.branchName)
-    })
-}
-
 export function getRangeReport(dayCloses: SavedDayClose[]) {
   const allProducts = combineProductsSold(
     dayCloses.flatMap((close) => close.productsSold)
@@ -1221,7 +1137,6 @@ export function escapeCsvValue(value: unknown) {
 export function buildDayClosesCsv(dayCloses: SavedDayClose[]) {
   const headers = [
     "ID cierre",
-    "Sucursal",
     "Fecha guardado",
     "Fecha cierre",
     "Estado visual",
@@ -1264,7 +1179,6 @@ export function buildDayClosesCsv(dayCloses: SavedDayClose[]) {
 
     return [
     close.id,
-    close.branchName || "",
     formatDate(close.createdAt),
     getCloseTitle(close),
     getClosePaymentState(close).label,

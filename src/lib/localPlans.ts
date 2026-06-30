@@ -29,6 +29,7 @@ export type LocalModuleKey =
   | "menuProducts"
   | "customers"
   | "inventory"
+  | "inventoryAlerts"
   | "advancedMenu"
   | "productVariations"
   | "productAddons"
@@ -46,6 +47,7 @@ export type LocalModuleKey =
   | "splitBill"
   | "serviceChargeTips"
   | "suppliers"
+  | "supplierPurchases"
   | "accountsPayable"
   | "subrecipes"
   | "auditLog"
@@ -53,6 +55,7 @@ export type LocalModuleKey =
   | "trainingMode"
   | "advancedReports"
   | "futureModules"
+  | "branches"
   | "support"
 
 export type LocalPlanDefinition = {
@@ -103,6 +106,7 @@ export type LocalPlanConfigLike = {
   menuProductsModuleEnabled?: unknown
   customersModuleEnabled?: unknown
   inventoryModuleEnabled?: unknown
+  inventoryAlertsModuleEnabled?: unknown
   advancedMenuModuleEnabled?: unknown
   productVariationsModuleEnabled?: unknown
   productAddonsModuleEnabled?: unknown
@@ -120,11 +124,13 @@ export type LocalPlanConfigLike = {
   splitBillModuleEnabled?: unknown
   serviceChargeTipsModuleEnabled?: unknown
   suppliersModuleEnabled?: unknown
+  supplierPurchasesModuleEnabled?: unknown
   accountsPayableModuleEnabled?: unknown
   subrecipesModuleEnabled?: unknown
   auditLogModuleEnabled?: unknown
   visualEditorModuleEnabled?: unknown
   trainingModeModuleEnabled?: unknown
+  branchesModuleEnabled?: unknown
   soundEnabled?: unknown
 }
 
@@ -180,6 +186,7 @@ export const LOCAL_MODULE_KEYS: LocalModuleKey[] = [
   "menuProducts",
   "customers",
   "inventory",
+  "inventoryAlerts",
   "advancedMenu",
   "productVariations",
   "productAddons",
@@ -197,6 +204,7 @@ export const LOCAL_MODULE_KEYS: LocalModuleKey[] = [
   "splitBill",
   "serviceChargeTips",
   "suppliers",
+  "supplierPurchases",
   "accountsPayable",
   "subrecipes",
   "auditLog",
@@ -204,6 +212,7 @@ export const LOCAL_MODULE_KEYS: LocalModuleKey[] = [
   "trainingMode",
   "advancedReports",
   "futureModules",
+  "branches",
   "support",
 ]
 
@@ -340,6 +349,7 @@ export const LOCAL_PLAN_DEFINITIONS: LocalPlanDefinition[] = [
       "menuProducts",
       "customers",
       "inventory",
+      "inventoryAlerts",
       "advancedMenu",
       "productVariations",
       "productAddons",
@@ -357,12 +367,14 @@ export const LOCAL_PLAN_DEFINITIONS: LocalPlanDefinition[] = [
       "splitBill",
       "serviceChargeTips",
       "suppliers",
+      "supplierPurchases",
       "accountsPayable",
       "subrecipes",
       "auditLog",
       "visualEditor",
       "trainingMode",
       "advancedReports",
+      "branches",
       "futureModules",
     ],
   },
@@ -583,6 +595,18 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     routePath: "/local-santo/inventario",
   },
   {
+    key: "inventoryAlerts",
+    label: "Inventario alertas",
+    description: "Vista rápida de stock bajo, alertas de reposición e insumos críticos por sucursal.",
+    category: "management",
+    minimumPlan: "complete",
+    ownerConfigKey: "inventoryAlertsModuleEnabled",
+    visibleForOwnerSettings: true,
+    visibleForSupport: true,
+    routePath: "/local-santo/inventario-alertas",
+    comingSoon: false,
+  },
+  {
     key: "advancedMenu",
     label: "Menú avanzado",
     description: "Base para productos normales, variaciones, productos armables, adicionales, combos y reglas especiales sin rehacer el menú actual.",
@@ -781,6 +805,18 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     comingSoon: false,
   },
   {
+    key: "supplierPurchases",
+    label: "Compras",
+    description: "Registro de compras a proveedores, pagos iniciales, vencimientos y relación con inventario.",
+    category: "money",
+    minimumPlan: "complete",
+    ownerConfigKey: "supplierPurchasesModuleEnabled",
+    visibleForOwnerSettings: true,
+    visibleForSupport: true,
+    routePath: "/local-santo/compras",
+    comingSoon: false,
+  },
+  {
     key: "accountsPayable",
     label: "Cuentas por pagar",
     description: "Base para compras a crédito, pagos parciales, deudas por proveedor y vencimientos.",
@@ -854,6 +890,18 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     comingSoon: true,
+  },
+  {
+    key: "branches",
+    label: "Sucursales",
+    description: "Administración de sedes, configuración por sucursal y separación operativa multi-sede.",
+    category: "management",
+    minimumPlan: "complete",
+    ownerConfigKey: "branchesModuleEnabled",
+    visibleForOwnerSettings: true,
+    visibleForSupport: true,
+    routePath: "/local-santo/sucursales",
+    comingSoon: false,
   },
   {
     key: "support",
@@ -1041,6 +1089,10 @@ export function getModuleEnabledByOwner(
     return normalizeBoolean(config.inventoryModuleEnabled, true)
   }
 
+  if (moduleKey === "inventoryAlerts") {
+    return normalizeBoolean(config.inventoryAlertsModuleEnabled, true)
+  }
+
   if (moduleKey === "advancedMenu") {
     return normalizeBoolean(config.advancedMenuModuleEnabled, false)
   }
@@ -1109,6 +1161,10 @@ export function getModuleEnabledByOwner(
     return normalizeBoolean(config.suppliersModuleEnabled, false)
   }
 
+  if (moduleKey === "supplierPurchases") {
+    return normalizeBoolean(config.supplierPurchasesModuleEnabled, false)
+  }
+
   if (moduleKey === "accountsPayable") {
     return normalizeBoolean(config.accountsPayableModuleEnabled, false)
   }
@@ -1127,6 +1183,10 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "trainingMode") {
     return normalizeBoolean(config.trainingModeModuleEnabled, false)
+  }
+
+  if (moduleKey === "branches") {
+    return normalizeBoolean(config.branchesModuleEnabled, true)
   }
 
   if (moduleKey === "sounds") {

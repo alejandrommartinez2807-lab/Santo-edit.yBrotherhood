@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getBusinessConfig } from "@/lib/orders"
-import { getRequestAccess, type LocalRole } from "@/lib/localAccess"
+import { canLocalAccessUseModule, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 
 // Guard compartido por las rutas de proveedores: valida rol + el módulo
@@ -29,7 +29,7 @@ export async function checkSuppliersAccess(request: NextRequest, allowedRoles: L
     return { ok: false as const, response: unauthorizedResponse(), role: null }
   }
 
-  if (!allowedRoles.includes(access.role)) {
+  if (!allowedRoles.includes(access.role) || !canLocalAccessUseModule(access, "suppliers")) {
     return { ok: false as const, response: forbiddenResponse(), role: access.role }
   }
 

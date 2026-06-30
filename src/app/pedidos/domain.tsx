@@ -292,7 +292,7 @@ export type PanelSoundKind =
   | "success"
   | "warning"
 
-export type LocalAccessRole = "owner" | "manager" | "cashier" | "kitchen" | "delivery"
+export type LocalAccessRole = "owner" | "manager" | "cashier" | "waiter" | "kitchen" | "delivery" | "support"
 
 export type LocalAccessData = {
   ok?: boolean
@@ -348,20 +348,24 @@ export const LOCAL_ROLE_HOME_PATHS: Record<LocalAccessRole, string> = {
   owner: "/local-santo",
   manager: "/local-santo",
   cashier: "/local-santo/caja",
+  waiter: "/local-santo/mesonero",
   kitchen: "/local-santo/cocina",
   delivery: "/local-santo/delivery",
+  support: "/local-santo/soporte",
 }
 
 export const LOCAL_ROLE_LABELS: Record<LocalAccessRole, string> = {
   owner: "Dueño",
   manager: "Encargado",
   cashier: "Caja",
+  waiter: "Mesonero",
   kitchen: "Cocina",
   delivery: "Delivery",
+  support: "Soporte",
 }
 
 export function isWorkerOnlyRole(role: LocalAccessRole | null) {
-  return role === "cashier" || role === "kitchen" || role === "delivery"
+  return role === "cashier" || role === "waiter" || role === "kitchen" || role === "delivery" || role === "support"
 }
 
 export type BusinessConfig = {
@@ -396,9 +400,6 @@ export type BusinessConfig = {
   filtersOpenByDefault: boolean
   allowCloseWithPendingOrders: boolean
   allowCloseWithPendingPayments: boolean
-  internalRequireCloseReview: boolean
-  internalAllowCancelOrders: boolean
-  internalAllowEditOrderNotes: boolean
   updatedAt?: string
 }
 
@@ -451,9 +452,6 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   filtersOpenByDefault: false,
   allowCloseWithPendingOrders: true,
   allowCloseWithPendingPayments: true,
-  internalRequireCloseReview: false,
-  internalAllowCancelOrders: true,
-  internalAllowEditOrderNotes: true,
 }
 
 export const DEFAULT_DELIVERY_ZONES: DeliveryZone[] = [
@@ -2315,18 +2313,6 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     allowCloseWithPendingPayments: normalizeBooleanConfig(
       source.allowCloseWithPendingPayments,
       DEFAULT_BUSINESS_CONFIG.allowCloseWithPendingPayments
-    ),
-    internalRequireCloseReview: normalizeBooleanConfig(
-      source.internalRequireCloseReview,
-      DEFAULT_BUSINESS_CONFIG.internalRequireCloseReview
-    ),
-    internalAllowCancelOrders: normalizeBooleanConfig(
-      source.internalAllowCancelOrders,
-      DEFAULT_BUSINESS_CONFIG.internalAllowCancelOrders
-    ),
-    internalAllowEditOrderNotes: normalizeBooleanConfig(
-      source.internalAllowEditOrderNotes,
-      DEFAULT_BUSINESS_CONFIG.internalAllowEditOrderNotes
     ),
     updatedAt: String(source.updatedAt || ""),
   }

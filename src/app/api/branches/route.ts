@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { getRequestAccess } from "@/lib/localAccess"
+import { filterBranchesForAccess } from "@/lib/branch"
 
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
     .order("sort_order", { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true, branches: data ?? [] })
+  return NextResponse.json({ ok: true, branches: filterBranchesForAccess(data ?? [], access) })
 }
 
 // Crear sucursal: solo dueño.

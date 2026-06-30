@@ -5,6 +5,13 @@ import {
   type LocalAccessResult,
   type LocalRole,
 } from "@/lib/localAccess"
+import {
+  getDisplayName,
+  getDisplayUsername,
+  getEffectiveStaffBranchAccess,
+  getEffectiveStaffModules,
+  getStaffUserAccessConfig,
+} from "@/lib/staffUsers"
 
 // ============================================================
 // Autenticación unificada (Fase A de "auth real").
@@ -60,7 +67,7 @@ export async function getStaffAccessFromToken(
 
   const { data: staff } = await supabase
     .from("staff_users")
-    .select("role, is_active")
+    .select("id, email, full_name, role, is_active")
     .eq("id", userData.user.id)
     .maybeSingle()
 
@@ -69,11 +76,26 @@ export async function getStaffAccessFromToken(
   const role = (staff as { role?: unknown }).role
   if (!isValidRole(role)) return FAIL
 
+  const staffRecord = staff as {
+    id?: string
+    email?: string
+    full_name?: string
+  }
+  const staffConfig = await getStaffUserAccessConfig(userData.user.id)
+  const branchAccess = getEffectiveStaffBranchAccess(role, staffConfig)
+
   return {
     ok: true,
     role,
     roleLabel: ROLE_LABELS[role] || role,
     passwordSource: "supabase-auth",
+    staffId: userData.user.id,
+    username: getDisplayUsername(staffRecord.email, staffConfig),
+    displayName: getDisplayName(staffRecord.full_name, staffConfig),
+    permissionsMode: staffConfig?.permissionsMode || "role",
+    allowedModules: getEffectiveStaffModules(role, staffConfig),
+    allBranches: branchAccess.allBranches,
+    allowedBranchIds: branchAccess.allowedBranchIds,
   }
 }
 

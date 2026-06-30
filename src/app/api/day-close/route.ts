@@ -1,35 +1,34 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server"
 import {
   getBusinessConfig,
-  normalizeBusinessComplexitySettings,
   saveDayClose,
   type SaveDayCloseInput,
-} from "@/lib/orders";
-import { getRequestAccess, type LocalRole } from "@/lib/localAccess";
-import { getModulePlanAccess } from "@/lib/localPlans";
-import { resolveBranchId } from "@/lib/branch";
-import { writeAuditLog } from "@/lib/audit";
-import { enforceApiMutationGuards } from "@/lib/apiMutationGuards";
+} from "@/lib/orders"
+import { getRequestAccess, type LocalRole } from "@/lib/localAccess"
+import { getModulePlanAccess } from "@/lib/localPlans"
+import { resolveBranchId } from "@/lib/branch"
+import { writeAuditLog } from "@/lib/audit"
+import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
 
 type SaveDayCloseInputWithDeliveryAudit = SaveDayCloseInput & {
-  deliveryTotalRegisteredUSD?: number;
-  deliveryWithPaymentMethodUSD?: number;
-  deliveryWithoutPaymentMethodUSD?: number;
-};
+  deliveryTotalRegisteredUSD?: number
+  deliveryWithPaymentMethodUSD?: number
+  deliveryWithoutPaymentMethodUSD?: number
+}
 
 function getRequestPassword(request: NextRequest) {
   return (
     request.headers.get("x-local-password") ||
     request.headers.get("x-admin-password") ||
     ""
-  );
+  )
 }
 
 function getAccess(request: NextRequest) {
-  return getRequestAccess(request, getRequestPassword(request));
+  return getRequestAccess(request, getRequestPassword(request))
 }
 
 function unauthorizedResponse() {
@@ -39,32 +38,30 @@ function unauthorizedResponse() {
     },
     {
       status: 401,
-    },
-  );
+    }
+  )
 }
 
-function forbiddenResponse(
-  message = "Esta clave no tiene permiso para guardar el cierre del día",
-) {
+function forbiddenResponse(message = "Esta clave no tiene permiso para guardar el cierre del día") {
   return NextResponse.json(
     {
       error: message,
     },
     {
       status: 403,
-    },
-  );
+    }
+  )
 }
 
 function checkRole(request: NextRequest, allowedRoles: LocalRole[]) {
-  const access = getAccess(request);
+  const access = getAccess(request)
 
   if (!access.ok) {
     return {
       ok: false as const,
       response: unauthorizedResponse(),
       role: null,
-    };
+    }
   }
 
   if (!allowedRoles.includes(access.role)) {
@@ -72,23 +69,23 @@ function checkRole(request: NextRequest, allowedRoles: LocalRole[]) {
       ok: false as const,
       response: forbiddenResponse(),
       role: access.role,
-    };
+    }
   }
 
   return {
     ok: true as const,
     response: null,
     role: access.role,
-  };
+  }
 }
 
 function toNumber(value: unknown) {
-  const numberValue = Number(value || 0);
-  return Number.isFinite(numberValue) ? numberValue : 0;
+  const numberValue = Number(value || 0)
+  return Number.isFinite(numberValue) ? numberValue : 0
 }
 
 function normalizeSummaryItems(value: unknown) {
-  if (!Array.isArray(value)) return [];
+  if (!Array.isArray(value)) return []
 
   return value.map((item) => ({
     label: String(item?.label || "").trim() || "Sin nombre",
@@ -99,21 +96,21 @@ function normalizeSummaryItems(value: unknown) {
     totalRegularUSD: toNumber(item?.totalRegularUSD),
     totalRegularVES: toNumber(item?.totalRegularVES),
     deliveryCostUSD: toNumber(item?.deliveryCostUSD),
-  }));
+  }))
 }
 
 function normalizeFiscalIvaByRate(value: unknown) {
-  if (!Array.isArray(value)) return [];
+  if (!Array.isArray(value)) return []
 
   return value.map((item) => ({
     rate: toNumber(item?.rate),
     baseUSD: toNumber(item?.baseUSD),
     ivaUSD: toNumber(item?.ivaUSD),
-  }));
+  }))
 }
 
 function normalizeProductsSold(value: unknown) {
-  if (!Array.isArray(value)) return [];
+  if (!Array.isArray(value)) return []
 
   return value.map((item) => ({
     name: String(item?.name || "").trim() || "Producto",
@@ -121,11 +118,11 @@ function normalizeProductsSold(value: unknown) {
     totalUSD: toNumber(item?.totalUSD),
     totalVES: toNumber(item?.totalVES),
     onlyCurrency: Boolean(item?.onlyCurrency),
-  }));
+  }))
 }
 
 function normalizeExpenses(value: unknown) {
-  if (!Array.isArray(value)) return [];
+  if (!Array.isArray(value)) return []
 
   return value.map((item) => ({
     id: String(item?.id || "").trim(),
@@ -139,19 +136,7 @@ function normalizeExpenses(value: unknown) {
     method: String(item?.method || "Sin registrar").trim() || "Sin registrar",
     note: String(item?.note || "").trim(),
     createdAt: String(item?.createdAt || "").trim(),
-  }));
-}
-
-function isCloseReviewConfirmed(
-  body: Record<string, unknown>,
-  rawDayClose: Record<string, unknown>,
-) {
-  return (
-    rawDayClose.reviewConfirmed === true ||
-    rawDayClose.closeReviewConfirmed === true ||
-    body.reviewConfirmed === true ||
-    body.closeReviewConfirmed === true
-  );
+  }))
 }
 
 export async function POST(request: NextRequest) {
@@ -163,77 +148,49 @@ export async function POST(request: NextRequest) {
     maxBytes: 2_000_000,
     minBytes: 128_000,
     hardMaxBytes: 5_000_000,
-    rateLimitMessage:
-      "Demasiados intentos de guardar cierres. Espera unos segundos e intenta nuevamente.",
-    sizeLimitMessage:
-      "El cierre es demasiado grande. Reduce el detalle exportado e intenta nuevamente.",
-  });
+    rateLimitMessage: "Demasiados intentos de guardar cierres. Espera unos segundos e intenta nuevamente.",
+    sizeLimitMessage: "El cierre es demasiado grande. Reduce el detalle exportado e intenta nuevamente.",
+  })
 
-  if (guardResponse) return guardResponse;
+  if (guardResponse) return guardResponse
 
   try {
-    const access = checkRole(request, ["owner", "manager"]);
+    const access = checkRole(request, ["owner", "manager"])
 
     if (!access.ok) {
-      return access.response;
+      return access.response
     }
 
-    const businessConfig = await getBusinessConfig();
-    const businessConfigRecord = businessConfig as unknown as Record<
-      string,
-      unknown
-    >;
+    const businessConfig = await getBusinessConfig()
+    const businessConfigRecord =
+      businessConfig as unknown as Record<string, unknown>
 
-    const historyAccess = getModulePlanAccess(businessConfigRecord, "history");
+    const historyAccess = getModulePlanAccess(businessConfigRecord, "history")
 
     if (!historyAccess.includedInPlan) {
       return forbiddenResponse(
-        "Historial de cierres no está incluido en el plan activo. Solicita activación o sube el plan para guardar cierres.",
-      );
+        "Historial de cierres no está incluido en el plan activo. Solicita activación o sube el plan para guardar cierres."
+      )
     }
 
     if (!historyAccess.effectiveEnabled) {
       return forbiddenResponse(
-        "Historial de cierres está desactivado desde Configuración del negocio.",
-      );
+        "Historial de cierres está desactivado desde Configuración del negocio."
+      )
     }
 
-    const cashierAccess = getModulePlanAccess(businessConfigRecord, "cashier");
-    const deliveryAccess = getModulePlanAccess(
-      businessConfigRecord,
-      "delivery",
-    );
-    const expensesAccess = getModulePlanAccess(
-      businessConfigRecord,
-      "expenses",
-    );
+    const cashierAccess = getModulePlanAccess(businessConfigRecord, "cashier")
+    const deliveryAccess = getModulePlanAccess(businessConfigRecord, "delivery")
+    const expensesAccess = getModulePlanAccess(businessConfigRecord, "expenses")
 
-    const canIncludeCashierAudit = cashierAccess.effectiveEnabled;
-    const canIncludeDeliveryAudit = deliveryAccess.effectiveEnabled;
-    const canIncludeExpensesAudit = expensesAccess.effectiveEnabled;
+    const canIncludeCashierAudit = cashierAccess.effectiveEnabled
+    const canIncludeDeliveryAudit = deliveryAccess.effectiveEnabled
+    const canIncludeExpensesAudit = expensesAccess.effectiveEnabled
 
-    const body = await request.json();
-    const rawDayClose = (body.dayClose || body.closeSummary || body) as Record<
-      string,
-      unknown
-    >;
-    const complexityPermissions =
-      normalizeBusinessComplexitySettings(businessConfig);
+    const body = await request.json()
+    const rawDayClose = body.dayClose || body.closeSummary || body
 
-    if (
-      complexityPermissions.internalRequireCloseReview &&
-      !isCloseReviewConfirmed(body as Record<string, unknown>, rawDayClose)
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "El dueño exige revisar el cierre antes de guardarlo. Marca la revisión final e intenta nuevamente.",
-        },
-        { status: 409 },
-      );
-    }
-
-    const summaryText = String(rawDayClose.summaryText || "").trim();
+    const summaryText = String(rawDayClose.summaryText || "").trim()
 
     if (!summaryText) {
       return NextResponse.json(
@@ -242,8 +199,8 @@ export async function POST(request: NextRequest) {
         },
         {
           status: 400,
-        },
-      );
+        }
+      )
     }
 
     const dayClose: SaveDayCloseInputWithDeliveryAudit = {
@@ -292,14 +249,18 @@ export async function POST(request: NextRequest) {
       realCashUSD: canIncludeCashierAudit
         ? toNumber(rawDayClose.realCashUSD)
         : 0,
-      realVES: canIncludeCashierAudit ? toNumber(rawDayClose.realVES) : 0,
+      realVES: canIncludeCashierAudit
+        ? toNumber(rawDayClose.realVES)
+        : 0,
       realVESEquivalentUSD: canIncludeCashierAudit
         ? toNumber(rawDayClose.realVESEquivalentUSD)
         : 0,
       realPendingUSD: canIncludeCashierAudit
         ? toNumber(rawDayClose.realPendingUSD)
         : 0,
-      paidOrders: canIncludeCashierAudit ? toNumber(rawDayClose.paidOrders) : 0,
+      paidOrders: canIncludeCashierAudit
+        ? toNumber(rawDayClose.paidOrders)
+        : 0,
       partialPaymentOrders: canIncludeCashierAudit
         ? toNumber(rawDayClose.partialPaymentOrders)
         : 0,
@@ -329,27 +290,13 @@ export async function POST(request: NextRequest) {
         ? toNumber(rawDayClose.deliveryPaidMixedUSD)
         : 0,
 
-      fiscalOrders: canIncludeCashierAudit
-        ? toNumber(rawDayClose.fiscalOrders)
-        : 0,
-      fiscalSubtotalUSD: canIncludeCashierAudit
-        ? toNumber(rawDayClose.fiscalSubtotalUSD)
-        : 0,
-      fiscalIvaTotalUSD: canIncludeCashierAudit
-        ? toNumber(rawDayClose.fiscalIvaTotalUSD)
-        : 0,
-      fiscalIgtfBaseUSD: canIncludeCashierAudit
-        ? toNumber(rawDayClose.fiscalIgtfBaseUSD)
-        : 0,
-      fiscalIgtfUSD: canIncludeCashierAudit
-        ? toNumber(rawDayClose.fiscalIgtfUSD)
-        : 0,
-      fiscalTotalUSD: canIncludeCashierAudit
-        ? toNumber(rawDayClose.fiscalTotalUSD)
-        : 0,
-      fiscalIvaByRate: canIncludeCashierAudit
-        ? normalizeFiscalIvaByRate(rawDayClose.fiscalIvaByRate)
-        : [],
+      fiscalOrders: canIncludeCashierAudit ? toNumber(rawDayClose.fiscalOrders) : 0,
+      fiscalSubtotalUSD: canIncludeCashierAudit ? toNumber(rawDayClose.fiscalSubtotalUSD) : 0,
+      fiscalIvaTotalUSD: canIncludeCashierAudit ? toNumber(rawDayClose.fiscalIvaTotalUSD) : 0,
+      fiscalIgtfBaseUSD: canIncludeCashierAudit ? toNumber(rawDayClose.fiscalIgtfBaseUSD) : 0,
+      fiscalIgtfUSD: canIncludeCashierAudit ? toNumber(rawDayClose.fiscalIgtfUSD) : 0,
+      fiscalTotalUSD: canIncludeCashierAudit ? toNumber(rawDayClose.fiscalTotalUSD) : 0,
+      fiscalIvaByRate: canIncludeCashierAudit ? normalizeFiscalIvaByRate(rawDayClose.fiscalIvaByRate) : [],
 
       expensesCount: canIncludeExpensesAudit
         ? toNumber(rawDayClose.expensesCount)
@@ -395,10 +342,10 @@ export async function POST(request: NextRequest) {
         ? normalizeSummaryItems(rawDayClose.deliveryByPaymentIn)
         : [],
       productsSold: normalizeProductsSold(rawDayClose.productsSold),
-    };
+    }
 
-    const branchId = await resolveBranchId(request);
-    const savedDayClose = await saveDayClose(dayClose, branchId);
+    const branchId = await resolveBranchId(request)
+    const savedDayClose = await saveDayClose(dayClose, branchId)
 
     await writeAuditLog({
       action: "day_close.saved",
@@ -412,9 +359,8 @@ export async function POST(request: NextRequest) {
         fiscalIvaTotalUSD: dayClose.fiscalIvaTotalUSD,
         fiscalIgtfUSD: dayClose.fiscalIgtfUSD,
         expensesTotalUSD: dayClose.expensesTotalUSD,
-        closeReviewRequired: complexityPermissions.internalRequireCloseReview,
       },
-    });
+    })
 
     return NextResponse.json({
       ok: true,
@@ -429,7 +375,7 @@ export async function POST(request: NextRequest) {
         deliveryAuditIncluded: canIncludeDeliveryAudit,
         expensesAuditIncluded: canIncludeExpensesAudit,
       },
-    });
+    })
   } catch (error) {
     return NextResponse.json(
       {
@@ -440,7 +386,7 @@ export async function POST(request: NextRequest) {
       },
       {
         status: 500,
-      },
-    );
+      }
+    )
   }
 }

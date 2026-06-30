@@ -34,22 +34,6 @@ export type {
   SaveBusinessConfigInput,
 } from "./ordersBusinessConfig"
 
-export type {
-  BusinessComplexityBooleanKey,
-  BusinessComplexityProfile,
-  BusinessComplexitySettings,
-} from "./businessComplexity"
-
-export {
-  BUSINESS_COMPLEXITY_BOOLEAN_KEYS,
-  BUSINESS_COMPLEXITY_PROFILE_DEFINITIONS,
-  DEFAULT_BUSINESS_COMPLEXITY_SETTINGS,
-  getBusinessComplexityProfilePatch,
-  isInventoryAutoDeductActuallyEnabled,
-  normalizeBusinessComplexityProfile,
-  normalizeBusinessComplexitySettings,
-} from "./businessComplexity"
-
 export {
   DEFAULT_BUSINESS_CONFIG,
   DEFAULT_LOCAL_TABLES,
@@ -93,12 +77,7 @@ export type {
 
 export type { Supplier, SupplierPurchase } from "@/types/localOrders"
 export type { SaveSupplierInput } from "./ordersSuppliers"
-export type {
-  SaveSupplierPurchaseInput,
-  UpdateSupplierPurchaseInput,
-  SaveSupplierPurchasePaymentInput,
-  SupplierPurchasePayment,
-} from "./ordersSupplierPurchases"
+export type { SaveSupplierPurchaseInput, UpdateSupplierPurchaseInput, SaveSupplierPurchasePaymentInput, SupplierPurchasePayment } from "./ordersSupplierPurchases"
 
 export type {
   CreatePaymentProofInput,
@@ -123,10 +102,9 @@ export type {
   CreateOrderInput,
   ResetStaffItemsInput,
   UpdateOrderPaymentInput,
-  UpdateOrderNotesInput,
 } from "./ordersCore"
 
-// Migración a Supabase completa para el flujo de pedidos.
+// Migración a Supabase COMPLETA: ya no se usan servicios externos heredados.
 // (Se eliminaron los helpers getWebAppUrl/getSecret/readJsonResponse.)
 
 export {
@@ -137,7 +115,6 @@ export {
   getOrders,
   resetOrderStaffItems,
   updateOrderDeliveryReport,
-  updateOrderNotes,
   updateOrderPayment,
   updateOrderStatus,
 } from "./ordersCore"
@@ -156,10 +133,10 @@ export {
 export {
   deleteSupplierPurchase,
   getSupplierPurchases,
-  getSupplierPurchasePayments,
   saveSupplierPurchase,
-  saveSupplierPurchasePayment,
   updateSupplierPurchase,
+  getSupplierPurchasePayments,
+  saveSupplierPurchasePayment,
 } from "./ordersSupplierPurchases"
 
 export {

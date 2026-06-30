@@ -3,7 +3,6 @@ import type {
   ConfirmStaffItemsInput,
   CreateOrderInput,
   ResetStaffItemsInput,
-  UpdateOrderNotesInput,
   UpdateOrderPaymentInput,
 } from "./ordersCoreTypes"
 
@@ -13,7 +12,6 @@ export type {
   ConfirmStaffItemsInput,
   CreateOrderInput,
   ResetStaffItemsInput,
-  UpdateOrderNotesInput,
   UpdateOrderPaymentInput,
 } from "./ordersCoreTypes"
 
@@ -70,13 +68,4 @@ export async function deleteOrder(orderId: string, branchId?: string | null) {
 
 export async function clearOrders(branchId?: string | null) {
   return ordersStore.clearOrders(branchId)
-}
-
-
-export async function updateOrderNotes(
-  orderId: string,
-  input: UpdateOrderNotesInput = {},
-  branchId?: string | null,
-) {
-  return ordersStore.updateOrderNotes(orderId, input, branchId)
 }

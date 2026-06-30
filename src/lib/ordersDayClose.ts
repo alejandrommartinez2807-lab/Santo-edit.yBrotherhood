@@ -131,8 +131,6 @@ export type SaveDayCloseInput = {
 export type SavedDayClose = SaveDayCloseInput & {
   id: string
   createdAt: string
-  branchId?: string
-  branchName?: string
 }
 
 export type DayExpense = {
@@ -223,44 +221,13 @@ export async function getDayCloses(branchId?: string | null) {
     throw new Error(error.message || "No se pudieron cargar los cierres guardados")
   }
 
-  const rows = data ?? []
-  const branchIds = Array.from(
-    new Set(
-      rows
-        .map((raw) => cleanText((raw as Record<string, unknown>).branch_id))
-        .filter(Boolean),
-    ),
-  )
-  const branchNames = new Map<string, string>()
-
-  if (branchIds.length > 0) {
-    const { data: branches } = await supabase
-      .from("branches")
-      .select("id, name")
-      .in("id", branchIds)
-
-    ;(branches ?? []).forEach((branch) => {
-      const branchRow = branch as Record<string, unknown>
-      const id = cleanText(branchRow.id)
-      const name = cleanText(branchRow.name)
-      if (id) branchNames.set(id, name || "Sucursal sin nombre")
-    })
-  }
-
-  return rows.map((raw) => {
+  return (data ?? []).map((raw) => {
     const row = raw as Record<string, unknown>
     const payload = (row.data && typeof row.data === "object" ? row.data : {}) as Record<string, unknown>
-    const closeBranchId = cleanText(row.branch_id)
-    const closeBranchName = closeBranchId
-      ? branchNames.get(closeBranchId) || "Sucursal sin nombre"
-      : "Sin sucursal"
-
     return {
       ...payload,
       id: cleanText(row.id),
       createdAt: cleanText(payload.createdAt) || cleanText(row.created_at),
-      branchId: closeBranchId || undefined,
-      branchName: closeBranchName,
     } as SavedDayClose
   })
 }

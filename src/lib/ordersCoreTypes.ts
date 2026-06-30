@@ -53,9 +53,3 @@ export type ResetStaffItemsInput = {
   resetBy?: string
   resetRole?: string
 }
-
-export type UpdateOrderNotesInput = {
-  customerNote?: string
-  note?: string
-  attachmentImageUrl?: string
-}

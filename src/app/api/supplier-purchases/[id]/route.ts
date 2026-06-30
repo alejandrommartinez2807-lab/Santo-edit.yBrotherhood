@@ -18,13 +18,6 @@ function normalizeAmount(value: unknown) {
   return Math.round((n + Number.EPSILON) * 100) / 100
 }
 
-function normalizeOptionalDate(value: unknown) {
-  const text = cleanText(value)
-  if (!text) return ""
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null
-  return text
-}
-
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const guardResponse = enforceApiMutationGuards(request, {
     id: "api-supplier-purchases-patch",
@@ -52,13 +45,6 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
         return NextResponse.json({ error: "Fecha inválida" }, { status: 400 })
       }
       patch.purchaseDate = date
-    }
-    if (body.dueDate !== undefined) {
-      const dueDate = normalizeOptionalDate(body.dueDate)
-      if (dueDate === null) {
-        return NextResponse.json({ error: "Vencimiento inválido" }, { status: 400 })
-      }
-      patch.dueDate = dueDate
     }
     if (body.documentNumber !== undefined) patch.documentNumber = cleanText(body.documentNumber)
     if (body.totalUSD !== undefined) patch.totalUSD = normalizeAmount(body.totalUSD)

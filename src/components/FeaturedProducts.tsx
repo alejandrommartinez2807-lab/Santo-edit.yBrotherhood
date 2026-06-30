@@ -24,7 +24,6 @@ type PublicBusinessConfig = {
   featuredProductIds?: number[]
   publicCustomizeButtonText?: string
   publicCustomizerTitle?: string
-  publicIngredientCustomizationEnabled?: boolean
   productCardBackgroundColor?: string
   productCardTextColor?: string
   productCardBorderColor?: string
@@ -80,8 +79,6 @@ export default function FeaturedProducts({
             publicCustomizerTitle: String(
               businessConfig.publicCustomizerTitle || ""
             ).trim(),
-            publicIngredientCustomizationEnabled:
-              businessConfig.publicIngredientCustomizationEnabled !== false,
             productCardBackgroundColor: String(
               businessConfig.productCardBackgroundColor || "#ffffff"
             ).trim(),
@@ -207,8 +204,6 @@ export default function FeaturedProducts({
                     config.publicCustomizerTitle ||
                     config.publicCustomizeButtonText ||
                     "Elige tus ingredientes",
-                  customizationEnabled:
-                    config.publicIngredientCustomizationEnabled !== false,
                 }}
               />
             ))}
