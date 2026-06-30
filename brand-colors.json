@@ -1,0 +1,15 @@
+{
+  "_comment": "Paleta del cliente. Cambia los valores 'nuevo' y corre: node scripts/rebrand-colors.mjs  (luego revisa con npm run dev). Cada clave reemplaza TODAS las ocurrencias del color actual en src/.",
+
+  "primary":     { "actual": "#a00000", "nuevo": "#a00000", "nota": "Color principal (rojo de marca). Cambia tambien sus sombras rgba." },
+  "primaryDark": { "actual": "#7a0000", "nuevo": "#7a0000", "nota": "Variante oscura del principal (hover)." },
+  "ink":         { "actual": "#4a0000", "nuevo": "#4a0000", "nota": "Texto oscuro 1." },
+  "ink2":        { "actual": "#3a0000", "nuevo": "#3a0000", "nota": "Texto oscuro 2." },
+  "ink3":        { "actual": "#220000", "nuevo": "#220000", "nota": "Texto oscuro 3 (titulos)." },
+  "cream":       { "actual": "#fff7e8", "nuevo": "#fff7e8", "nota": "Fondo crema." },
+  "amber":       { "actual": "#8a5a00", "nuevo": "#8a5a00", "nota": "Texto ambar (avisos)." },
+
+  "accent300":   { "actual": "yellow-300", "nuevo": "yellow-300", "nota": "Acento (amarillo). Pon un hex como #ffd23c o deja la clase de Tailwind." },
+  "accent200":   { "actual": "yellow-200", "nuevo": "yellow-200", "nota": "Acento claro (hover)." },
+  "accent100":   { "actual": "yellow-100", "nuevo": "yellow-100", "nota": "Acento muy claro (fondos suaves)." }
+}

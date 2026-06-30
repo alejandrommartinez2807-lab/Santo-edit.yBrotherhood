@@ -1,0 +1,12 @@
+{
+  "name": "POS & Menú",
+  "short_name": "POS",
+  "description": "Sistema de pedidos y punto de venta",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fff7e8",
+  "theme_color": "#a00000",
+  "icons": [
+    { "src": "/icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

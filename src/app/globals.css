@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+:root {
+  --bambucha-black: #050101;
+  --bambucha-black-soft: #120404;
+  --bambucha-red: #dc1717;
+  --bambucha-red-dark: #740909;
+  --bambucha-orange: #ff7a00;
+  --bambucha-yellow: #ffd23c;
+  --bambucha-cream: #fff1cf;
+  --bambucha-muted: #c9a875;
+
+  /* ===== TEMA DE MARCA (white-label) =====
+     El dueño puede sobrescribir estos colores desde el panel de Personalización
+     (se inyectan en runtime desde business_config). Aquí están los valores por
+     defecto. Para cambiarlos por código, edita solo estos valores. */
+  --brand-primary: #a00000;
+  --brand-primary-dark: #7a0000;
+  --brand-primary-rgb: 160, 0, 0;
+  --brand-cream: #fff7e8;
+  --brand-ink: #4a0000;
+  --brand-ink-2: #3a0000;
+  --brand-ink-3: #220000;
+  --brand-amber: #8a5a00;
+  --brand-accent: #ffd23c;
+  --brand-accent-200: #ffe07a;
+  --brand-accent-100: #fff3c4;
+  --brand-accent-rgb: 255, 211, 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top, rgba(255, 122, 0, 0.18), transparent 35%),
+    linear-gradient(180deg, #120404 0%, #050101 45%, #000000 100%);
+  color: white;
+}
+
+::selection {
+  background: var(--bambucha-orange);
+  color: black;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050101;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    var(--bambucha-red),
+    var(--bambucha-orange)
+  );
+  border-radius: 999px;
+}
