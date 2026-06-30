@@ -6,6 +6,7 @@ import {
 import { resolveBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 import { enforceApiReadGuards } from "@/lib/apiReadGuards"
+import { writeAuditLog } from "@/lib/audit"
 
 import { checkSuppliersAccess } from "../../../suppliers/guard"
 
@@ -80,6 +81,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       return NextResponse.json({ error: "Indica un monto pagado mayor a cero" }, { status: 400 })
     }
 
+    const branchId = (await resolveBranchId(request)) ?? undefined
     const result = await saveSupplierPurchasePayment(
       id,
       {
@@ -90,13 +92,34 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         reference: cleanText(body.reference),
         note: cleanText(body.note),
       },
-      (await resolveBranchId(request)) ?? undefined,
+      branchId,
     )
 
-    return NextResponse.json({ ok: true, payment: result }, { status: 201 })
+    await writeAuditLog({
+      action: "supplier_purchase.payment.created",
+      branchId,
+      entityType: "supplier_purchase",
+      entityId: id,
+      actor: { role: access.role, label: access.role || "Dueño" },
+      request,
+      metadata: {
+        amountUSD,
+        amountVES,
+        method: cleanText(body.method),
+        paymentStatus: result.purchase.paymentStatus,
+        pendingUSD: result.purchase.pendingUSD,
+      },
+    })
+
+    return NextResponse.json(
+      { ok: true, payment: result.payment, purchase: result.purchase },
+      { status: 201 },
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo registrar el pago"
-    const status = /no encontrada|mayor a cero|supera|ya está pagada/i.test(message) ? 400 : 500
+    const status = /no encontrada|mayor a cero|supera|ya está pagada|no tiene monto/i.test(message)
+      ? 400
+      : 500
     return NextResponse.json({ error: message }, { status })
   }
 }

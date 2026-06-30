@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { deleteSupplierPurchase, updateSupplierPurchase } from "@/lib/orders"
 import { resolveBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
+import { writeAuditLog } from "@/lib/audit"
 
 import { checkSuppliersAccess } from "../../suppliers/guard"
 
@@ -46,15 +47,33 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       }
       patch.purchaseDate = date
     }
+    if (body.dueDate !== undefined) {
+      const due = cleanText(body.dueDate)
+      if (due && !/^\d{4}-\d{2}-\d{2}$/.test(due)) {
+        return NextResponse.json({ error: "Fecha de vencimiento inválida" }, { status: 400 })
+      }
+      patch.dueDate = due
+    }
     if (body.documentNumber !== undefined) patch.documentNumber = cleanText(body.documentNumber)
     if (body.totalUSD !== undefined) patch.totalUSD = normalizeAmount(body.totalUSD)
     if (body.totalVES !== undefined) patch.totalVES = normalizeAmount(body.totalVES)
     if (body.note !== undefined) patch.note = cleanText(body.note)
 
-    const updated = await updateSupplierPurchase(id, patch, await resolveBranchId(request))
+    const branchId = await resolveBranchId(request)
+    const updated = await updateSupplierPurchase(id, patch, branchId)
     if (!updated) {
       return NextResponse.json({ error: "Compra no encontrada" }, { status: 404 })
     }
+
+    await writeAuditLog({
+      action: "supplier_purchase.updated",
+      branchId,
+      entityType: "supplier_purchase",
+      entityId: updated.id,
+      actor: { role: access.role, label: access.role || "Dueño" },
+      request,
+      metadata: { changes: patch, totalUSD: updated.totalUSD, totalVES: updated.totalVES },
+    })
 
     return NextResponse.json({ ok: true, purchase: updated })
   } catch (error) {
@@ -84,7 +103,17 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
     if (!access.ok) return access.response
 
     const { id } = await context.params
-    await deleteSupplierPurchase(id, await resolveBranchId(request))
+    const branchId = await resolveBranchId(request)
+    await deleteSupplierPurchase(id, branchId)
+
+    await writeAuditLog({
+      action: "supplier_purchase.deleted",
+      branchId,
+      entityType: "supplier_purchase",
+      entityId: id,
+      actor: { role: access.role, label: access.role || "Dueño" },
+      request,
+    })
 
     return NextResponse.json({ ok: true })
   } catch (error) {

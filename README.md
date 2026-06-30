@@ -42,6 +42,8 @@ Guía completa para montar un cliente nuevo: **[CHECKLIST-CLIENTE-NUEVO.md](./CH
 | `npm test` | Tests (Vitest) |
 | `node scripts/rebrand-colors.mjs` | Re-marca los colores (edita `brand-colors.json`) |
 | `node scripts/seed-demo.mjs` | Carga menú/mesas demo |
+| `npm run backup` | Respalda todas las tablas a `backups/santo-backup-<fecha>.json` (solo lectura) |
+| `npm run restore -- --file backups/<archivo>.json` | Restaura un respaldo (dry-run; agrega `--confirm` para aplicar) |
 | `/local-santo/usuarios` | Crea usuarios internos por nombre de usuario, clave, rol, sedes y módulos |
 | `npm run e2e:reports-2e` | Verifica que `/api/reports` entregue ventas, proveedores, márgenes y alertas |
 | `npm run e2e:business-complexity` | Verifica perfiles Simple/Avanzado y permisos públicos del carrito |
@@ -67,6 +69,27 @@ Dos modos (compatibles entre sí):
 Las migraciones SQL están en `supabase/migrations/` (numeradas). Aplícalas en orden
 en el **SQL Editor** de Supabase. Buckets de Storage públicos necesarios:
 `menu-images`, `payment-proofs`, `order-attachments`.
+
+## Backups y recuperación
+
+`npm run backup` exporta **todas** las tablas a `backups/santo-backup-<fecha>.json`
+(solo lectura, no toca la base). La carpeta `backups/` está en `.gitignore`: los
+respaldos contienen datos reales del cliente y **no** se versionan.
+
+Programar a diario:
+
+- **Windows (Task Scheduler):** crea una tarea básica diaria con acción
+  `node` y argumento `scripts\backup.mjs`, "Iniciar en" la carpeta del proyecto.
+- **Linux/Mac (cron):** `0 3 * * * cd /ruta/proyecto && /usr/bin/node scripts/backup.mjs`
+- **GitHub Actions:** un workflow `schedule` que corra `npm run backup` y suba el
+  JSON como artifact o a un bucket. Guarda las claves como secrets, no en el repo.
+
+Recuperar (solo en emergencia): `npm run restore -- --file backups/<archivo>.json`
+muestra qué haría (dry-run); agrega `--confirm` para aplicar el upsert por `id`, o
+`--wipe` para vaciar cada tabla antes de reinsertar (⚠️ destructivo).
+
+> Esto complementa, no reemplaza, los backups automáticos de Supabase (plan Pro:
+> respaldos diarios + PITR). Para un negocio real conviene tener ambos.
 
 ## Despliegue
 

@@ -17,6 +17,7 @@ import {
   createInternalStaffEmail,
   normalizeStaffUsername,
 } from "@/lib/staffIdentity"
+import { writeAuditLog } from "@/lib/audit"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -192,6 +193,15 @@ export async function POST(request: NextRequest) {
     allowedBranchIds: body.allowedBranchIds,
   })
   await saveStaffUserAccessConfig(staffConfig)
+
+  await writeAuditLog({
+    action: "staff.created",
+    entityType: "staff_user",
+    entityId: created.data.user.id,
+    actor: { role: auth.access.role, label: auth.access.role || "Dueño" },
+    request,
+    metadata: { username, role, fullName },
+  })
 
   return NextResponse.json(
     {

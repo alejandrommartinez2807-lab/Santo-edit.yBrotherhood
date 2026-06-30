@@ -843,6 +843,7 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     label: "Auditoría de acciones",
     description: "Registro operativo básico para cambios sensibles, edición de inventario, cierres y acciones administrativas.",
     category: "management",
+    routePath: "/local-santo/auditoria",
     minimumPlan: "complete",
     ownerConfigKey: "auditLogModuleEnabled",
     visibleForOwnerSettings: true,

@@ -3,6 +3,7 @@ import { getInventory, getSupplierPurchases, getSuppliers, saveSupplierPurchase 
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
+import { writeAuditLog } from "@/lib/audit"
 
 import { checkSuppliersAccess } from "../suppliers/guard"
 
@@ -23,6 +24,12 @@ function normalizeAmount(value: unknown) {
 function normalizeDate(value: unknown) {
   const text = cleanText(value)
   return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : new Date().toISOString().slice(0, 10)
+}
+
+// Fecha opcional (vencimiento): YYYY-MM-DD o vacío si no aplica.
+function optionalDate(value: unknown) {
+  const text = cleanText(value)
+  return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : ""
 }
 
 export async function GET(request: NextRequest) {
@@ -112,6 +119,7 @@ export async function POST(request: NextRequest) {
         supplierId,
         supplierName: supplier.name,
         purchaseDate: normalizeDate(body.purchaseDate),
+        dueDate: optionalDate(body.dueDate),
         documentNumber: cleanText(body.documentNumber),
         totalUSD: normalizeAmount(body.totalUSD),
         totalVES: normalizeAmount(body.totalVES),
@@ -123,6 +131,21 @@ export async function POST(request: NextRequest) {
       },
       branchId,
     )
+
+    await writeAuditLog({
+      action: "supplier_purchase.created",
+      branchId,
+      entityType: "supplier_purchase",
+      entityId: purchase.id,
+      actor: { role: access.role, label: access.role || "Dueño" },
+      request,
+      metadata: {
+        supplierName: purchase.supplierName,
+        totalUSD: purchase.totalUSD,
+        totalVES: purchase.totalVES,
+        documentNumber: purchase.documentNumber,
+      },
+    })
 
     return NextResponse.json({ ok: true, purchase }, { status: 201 })
   } catch (error) {

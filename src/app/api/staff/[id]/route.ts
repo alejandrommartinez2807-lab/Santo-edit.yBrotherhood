@@ -13,6 +13,7 @@ import {
   saveStaffUserAccessConfig,
 } from "@/lib/staffUsers"
 import { normalizeStaffUsername } from "@/lib/staffIdentity"
+import { writeAuditLog } from "@/lib/audit"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -204,6 +205,15 @@ export async function PATCH(
 
   const branchAccess = getEffectiveStaffBranchAccess(saved.role, staffConfig)
 
+  await writeAuditLog({
+    action: "staff.updated",
+    entityType: "staff_user",
+    entityId: id,
+    actor: { role: auth.access.role, label: auth.access.role || "Dueño" },
+    request,
+    metadata: { changedKeys: Object.keys(body), role: saved.role, isActive: saved.is_active },
+  })
+
   return NextResponse.json({
     ok: true,
     staff: {
@@ -252,6 +262,15 @@ export async function DELETE(
     .eq("id", id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  await writeAuditLog({
+    action: "staff.deleted",
+    entityType: "staff_user",
+    entityId: id,
+    actor: { role: auth.access.role, label: auth.access.role || "Dueño" },
+    request,
+    metadata: { deactivated: true },
+  })
 
   return NextResponse.json({ ok: true, deactivated: true })
 }

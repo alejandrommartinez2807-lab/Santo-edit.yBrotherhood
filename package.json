@@ -10,6 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke": "node scripts/smoke.mjs",
+    "backup": "node scripts/backup.mjs",
+    "restore": "node scripts/restore.mjs",
     "e2e:purchase-inventory": "node scripts/purchase-inventory-e2e.mjs",
     "e2e:supplier-payables": "node scripts/supplier-payables-e2e.mjs",
     "e2e:reports-2e": "node scripts/reports-2e-e2e.mjs",

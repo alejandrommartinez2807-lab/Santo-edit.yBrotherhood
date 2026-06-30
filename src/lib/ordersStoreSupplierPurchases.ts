@@ -1,8 +1,73 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { cleanText } from "@/lib/localOrderHelpers"
 import type { SupplierPurchase } from "@/types/localOrders"
+import {
+  calculateSupplierPayableTotals,
+  isSupplierPurchaseOverdue,
+} from "@/lib/supplierPayables"
 
 import { num, type Row } from "./ordersStoreMappers"
+
+type SupabaseClient = ReturnType<typeof getSupabaseAdmin>
+
+// Aplica el cómputo de cuentas por pagar (pagado/pendiente/estado/vencido) a
+// una compra, a partir de la suma de sus abonos. Fuente canónica:
+// calculateSupplierPayableTotals (supplierPayables.ts).
+function enrichPurchaseWithPayments(
+  purchase: SupplierPurchase,
+  paid: { usd: number; ves: number },
+): SupplierPurchase {
+  const totals = calculateSupplierPayableTotals({
+    totalUSD: purchase.totalUSD,
+    totalVES: purchase.totalVES,
+    paidUSD: paid.usd,
+    paidVES: paid.ves,
+  })
+
+  return {
+    ...purchase,
+    paidUSD: totals.paidUSD,
+    paidVES: totals.paidVES,
+    pendingUSD: totals.pendingUSD,
+    pendingVES: totals.pendingVES,
+    paymentStatus: totals.status,
+    isOverdue: isSupplierPurchaseOverdue({
+      dueDate: purchase.dueDate,
+      paymentStatus: totals.status,
+    }),
+  }
+}
+
+// Suma los abonos (USD/VES) agrupados por compra, en una sola query.
+async function getPaymentTotalsByPurchase(
+  supabase: SupabaseClient,
+  purchaseIds: string[],
+  branchId?: string | null,
+): Promise<Map<string, { usd: number; ves: number }>> {
+  const totals = new Map<string, { usd: number; ves: number }>()
+  const ids = purchaseIds.filter(Boolean)
+  if (ids.length === 0) return totals
+
+  let query = supabase
+    .from("supplier_purchase_payments")
+    .select("purchase_id, amount_usd, amount_ves")
+    .in("purchase_id", ids)
+  if (branchId) query = query.eq("branch_id", branchId)
+
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+
+  for (const raw of (data ?? []) as Row[]) {
+    const id = String(raw.purchase_id || "")
+    if (!id) continue
+    const previous = totals.get(id) || { usd: 0, ves: 0 }
+    previous.usd += num(raw.amount_usd)
+    previous.ves += num(raw.amount_ves)
+    totals.set(id, previous)
+  }
+
+  return totals
+}
 
 // ============================================================
 // COMPRAS A PROVEEDORES SOBRE SUPABASE (Proveedores Fase 2a)
@@ -15,6 +80,7 @@ export type SaveSupplierPurchaseInput = {
   supplierId: string | null
   supplierName: string
   purchaseDate: string
+  dueDate?: string
   documentNumber?: string
   totalUSD?: number
   totalVES?: number
@@ -31,6 +97,7 @@ export type SaveSupplierPurchaseInput = {
 // solo los datos de la compra. Campos omitidos se conservan.
 export type UpdateSupplierPurchaseInput = {
   purchaseDate?: string
+  dueDate?: string
   documentNumber?: string
   totalUSD?: number
   totalVES?: number
@@ -42,14 +109,22 @@ function randomSuffix() {
 }
 
 function mapPurchase(raw: Row): SupplierPurchase {
+  const totalUSD = num(raw.total_usd)
+  const totalVES = num(raw.total_ves)
+  // Sin abonos todavía: el estado base es "Pendiente" y todo queda pendiente.
+  // getSupplierPurchases / enrichPurchaseWithPayments lo recalculan con el
+  // historial real. due_date es opcional (columna añadida en migración aparte).
+  const base = calculateSupplierPayableTotals({ totalUSD, totalVES, paidUSD: 0, paidVES: 0 })
+  const dueDate = String(raw.due_date || "").slice(0, 10)
+
   return {
     id: String(raw.id || ""),
     supplierId: raw.supplier_id ? String(raw.supplier_id) : null,
     supplierName: cleanText(raw.supplier_name),
     purchaseDate: String(raw.purchase_date || "").slice(0, 10),
     documentNumber: cleanText(raw.document_number),
-    totalUSD: num(raw.total_usd),
-    totalVES: num(raw.total_ves),
+    totalUSD,
+    totalVES,
     note: cleanText(raw.note),
     createdAt: String(raw.created_at || ""),
     inventoryItemId: raw.inventory_item_id ? String(raw.inventory_item_id) : null,
@@ -57,6 +132,13 @@ function mapPurchase(raw: Row): SupplierPurchase {
     inventoryQuantity: num(raw.inventory_quantity),
     inventoryUnit: cleanText(raw.inventory_unit),
     inventoryMovementId: cleanText(raw.inventory_movement_id),
+    dueDate,
+    paidUSD: base.paidUSD,
+    paidVES: base.paidVES,
+    pendingUSD: base.pendingUSD,
+    pendingVES: base.pendingVES,
+    paymentStatus: base.status,
+    isOverdue: isSupplierPurchaseOverdue({ dueDate, paymentStatus: base.status }),
   }
 }
 
@@ -131,7 +213,37 @@ export async function getSupplierPurchases(
 
   if (error) throw new Error(error.message)
 
-  return (data ?? []).map((raw) => mapPurchase(raw as Row))
+  const purchases = (data ?? []).map((raw) => mapPurchase(raw as Row))
+  const paymentTotals = await getPaymentTotalsByPurchase(
+    supabase,
+    purchases.map((purchase) => purchase.id),
+    branchId,
+  )
+
+  return purchases.map((purchase) =>
+    enrichPurchaseWithPayments(purchase, paymentTotals.get(purchase.id) || { usd: 0, ves: 0 }),
+  )
+}
+
+// Compra individual (acotada a la sucursal) ya enriquecida con sus abonos.
+export async function getSupplierPurchaseById(
+  id: string,
+  branchId?: string | null,
+): Promise<SupplierPurchase | null> {
+  const cleanId = cleanText(id)
+  if (!cleanId) return null
+
+  const supabase = getSupabaseAdmin()
+  let query = supabase.from("supplier_purchases").select("*").eq("id", cleanId)
+  if (branchId) query = query.eq("branch_id", branchId)
+  const { data, error } = await query.maybeSingle()
+
+  if (error) throw new Error(error.message)
+  if (!data) return null
+
+  const purchase = mapPurchase(data as Row)
+  const paymentTotals = await getPaymentTotalsByPurchase(supabase, [purchase.id], branchId)
+  return enrichPurchaseWithPayments(purchase, paymentTotals.get(purchase.id) || { usd: 0, ves: 0 })
 }
 
 export async function saveSupplierPurchase(
@@ -165,6 +277,7 @@ export async function saveSupplierPurchase(
       supplier_id: input.supplierId || null,
       supplier_name: cleanText(input.supplierName),
       purchase_date: input.purchaseDate,
+      due_date: cleanText(input.dueDate) || null,
       document_number: cleanText(input.documentNumber),
       total_usd: num(input.totalUSD),
       total_ves: num(input.totalVES),
@@ -191,6 +304,7 @@ export async function updateSupplierPurchase(
 
   const patch: Record<string, unknown> = {}
   if (input.purchaseDate !== undefined) patch.purchase_date = input.purchaseDate
+  if (input.dueDate !== undefined) patch.due_date = cleanText(input.dueDate) || null
   if (input.documentNumber !== undefined) patch.document_number = cleanText(input.documentNumber)
   if (input.totalUSD !== undefined) patch.total_usd = num(input.totalUSD)
   if (input.totalVES !== undefined) patch.total_ves = num(input.totalVES)
@@ -202,7 +316,11 @@ export async function updateSupplierPurchase(
   const { data, error } = await query.select("*").maybeSingle()
 
   if (error) throw new Error(error.message)
-  return data ? mapPurchase(data as Row) : null
+  if (!data) return null
+
+  const purchase = mapPurchase(data as Row)
+  const paymentTotals = await getPaymentTotalsByPurchase(supabase, [purchase.id], branchId)
+  return enrichPurchaseWithPayments(purchase, paymentTotals.get(purchase.id) || { usd: 0, ves: 0 })
 }
 
 export async function deleteSupplierPurchase(

@@ -26,6 +26,7 @@ import {
   normalizePublicHiddenCategoryList,
   normalizePublicNavButtons,
 } from "@/lib/publicPageConfig"
+import { writeAuditLog } from "@/lib/audit"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -545,6 +546,14 @@ export async function POST(request: NextRequest) {
       access.role
     )
     const businessConfig = await saveBusinessConfig(businessConfigInput)
+
+    await writeAuditLog({
+      action: "business_config.updated",
+      entityType: "business_config",
+      actor: { role: access.role, label: access.role || "Dueño" },
+      request,
+      metadata: { changedKeys: Object.keys(businessConfigInput) },
+    })
 
     return NextResponse.json({
       ok: true,

@@ -1,3 +1,5 @@
+import type { SupplierPaymentStatus } from "@/lib/supplierPayables"
+
 export type ProductPaymentMode = "divisa" | "mixto"
 
 export type OrderStatus =
@@ -216,6 +218,15 @@ export type SupplierPurchase = {
   inventoryQuantity: number
   inventoryUnit: string
   inventoryMovementId: string
+  // Cuentas por pagar (Fase 2b): vencimiento + estado de pago calculado a
+  // partir de los abonos registrados. paid/pending derivan del historial.
+  dueDate: string
+  paidUSD: number
+  paidVES: number
+  pendingUSD: number
+  pendingVES: number
+  paymentStatus: SupplierPaymentStatus
+  isOverdue: boolean
 }
 
 export type PaymentProofStatus =

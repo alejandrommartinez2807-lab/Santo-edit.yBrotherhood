@@ -18,6 +18,13 @@ export async function getSupplierPurchases(
   return purchaseStore.getSupplierPurchases(branchId, supplierId)
 }
 
+export async function getSupplierPurchaseById(
+  id: string,
+  branchId?: string | null,
+): Promise<SupplierPurchase | null> {
+  return purchaseStore.getSupplierPurchaseById(id, branchId)
+}
+
 export async function saveSupplierPurchase(
   input: SaveSupplierPurchaseInput,
   branchId?: string | null,
@@ -72,7 +79,7 @@ function mapSupplierPurchasePayment(raw: PaymentRow): SupplierPurchasePayment {
     paymentDate: String(raw.payment_date || raw.created_at || "").slice(0, 10),
     amountUSD: num(raw.amount_usd),
     amountVES: num(raw.amount_ves),
-    paymentMethod: cleanText(raw.payment_method),
+    paymentMethod: cleanText(raw.method || raw.payment_method),
     reference: cleanText(raw.reference || raw.payment_reference),
     note: cleanText(raw.note),
     createdAt: String(raw.created_at || ""),
@@ -111,7 +118,7 @@ export async function getSupplierPurchasePayments(
   let query = supabase
     .from("supplier_purchase_payments")
     .select("*")
-    .eq("supplier_purchase_id", cleanPurchaseId)
+    .eq("purchase_id", cleanPurchaseId)
     .order("payment_date", { ascending: false })
     .order("created_at", { ascending: false })
 
@@ -123,20 +130,57 @@ export async function getSupplierPurchasePayments(
   return (data ?? []).map((raw) => mapSupplierPurchasePayment(raw as PaymentRow))
 }
 
+// Tolerancia de centavos para comparar montos (evita rechazos por redondeo).
+const PAYMENT_OVERPAY_TOLERANCE = 0.01
+
 export async function saveSupplierPurchasePayment(
   ...args: [string, SaveSupplierPurchasePaymentInput, string?] | [SaveSupplierPurchasePaymentInput, string?]
-): Promise<SupplierPurchasePayment> {
+): Promise<{ payment: SupplierPurchasePayment; purchase: SupplierPurchase }> {
   const { purchaseId, input, branchId } = buildSupplierPurchasePaymentArgs(args)
   if (!purchaseId) throw new Error("Compra de proveedor inválida")
 
+  const amountUSD = num(input.amountUSD)
+  const amountVES = num(input.amountVES)
+  if (amountUSD <= 0 && amountVES <= 0) {
+    throw new Error("Indica un monto pagado mayor a cero")
+  }
+
+  // Validación de cuentas por pagar: el abono no puede superar lo pendiente.
+  // Se valida por moneda (la compra define cuánto se debe en USD y en VES) y se
+  // exige pagar en la moneda de la compra, así no se sobrepaga vía conversión.
+  const purchase = await purchaseStore.getSupplierPurchaseById(purchaseId, branchId)
+  if (!purchase) throw new Error("Compra de proveedor no encontrada")
+
+  if (amountUSD > 0 && purchase.totalUSD <= 0) {
+    throw new Error("Esta compra no tiene monto en dólares; registra el pago en bolívares.")
+  }
+  if (amountVES > 0 && purchase.totalVES <= 0) {
+    throw new Error("Esta compra no tiene monto en bolívares; registra el pago en dólares.")
+  }
+  if (amountUSD > purchase.pendingUSD + PAYMENT_OVERPAY_TOLERANCE) {
+    throw new Error(
+      `El pago en dólares supera lo pendiente (quedan $${purchase.pendingUSD.toFixed(2)}).`,
+    )
+  }
+  if (amountVES > purchase.pendingVES + PAYMENT_OVERPAY_TOLERANCE) {
+    throw new Error(
+      `El pago en bolívares supera lo pendiente (quedan Bs ${purchase.pendingVES.toFixed(2)}).`,
+    )
+  }
+
   const supabase = getSupabaseAdmin()
+  // La PK `id` no tiene default en la tabla: se genera aquí. Las columnas reales
+  // son purchase_id y method (no supplier_purchase_id / payment_method).
   const payload = {
+    id: `pay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     branch_id: branchId || null,
-    supplier_purchase_id: purchaseId,
+    purchase_id: purchaseId,
+    supplier_id: purchase.supplierId,
+    supplier_name: purchase.supplierName,
     payment_date: input.paymentDate || new Date().toISOString().slice(0, 10),
-    amount_usd: num(input.amountUSD),
-    amount_ves: num(input.amountVES),
-    payment_method: cleanText(input.paymentMethod),
+    amount_usd: amountUSD,
+    amount_ves: amountVES,
+    method: cleanText(input.paymentMethod),
     reference: cleanText(input.reference),
     note: cleanText(input.note),
   }
@@ -148,5 +192,10 @@ export async function saveSupplierPurchasePayment(
     .single()
 
   if (error) throw new Error(error.message)
-  return mapSupplierPurchasePayment(data as PaymentRow)
+
+  const payment = mapSupplierPurchasePayment(data as PaymentRow)
+  // Devolvemos la compra recalculada (pagado/pendiente/estado) tras el abono.
+  const updatedPurchase = (await purchaseStore.getSupplierPurchaseById(purchaseId, branchId)) ?? purchase
+
+  return { payment, purchase: updatedPurchase }
 }

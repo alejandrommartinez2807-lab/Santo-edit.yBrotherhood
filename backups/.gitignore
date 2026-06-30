@@ -1,0 +1,3 @@
+# Los respaldos (datos reales del cliente) NO se versionan.
+*
+!.gitignore

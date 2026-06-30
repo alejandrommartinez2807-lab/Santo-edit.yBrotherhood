@@ -2,17 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Loader2, Plus, Trash2, ShoppingCart, Truck, Pencil, Check, X } from "lucide-react"
+import { ArrowLeft, Loader2, Plus, Trash2, ShoppingCart, Truck, Pencil, Check, X, Wallet } from "lucide-react"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
 
 type Supplier = { id: string; name: string; isActive: boolean }
 type InventoryItem = { id: string; name: string; unit: string; isActive: boolean }
+type SupplierPaymentStatus = "Pendiente" | "Parcial" | "Pagado"
 type Purchase = {
   id: string
   supplierId: string | null
   supplierName: string
   purchaseDate: string
+  dueDate: string
   documentNumber: string
   totalUSD: number
   totalVES: number
@@ -22,6 +24,27 @@ type Purchase = {
   inventoryItemName: string
   inventoryQuantity: number
   inventoryUnit: string
+  paidUSD: number
+  paidVES: number
+  pendingUSD: number
+  pendingVES: number
+  paymentStatus: SupplierPaymentStatus
+  isOverdue: boolean
+}
+type SupplierPayment = {
+  id: string
+  paymentDate: string
+  amountUSD: number
+  amountVES: number
+  paymentMethod: string
+  reference: string
+  note: string
+}
+
+const STATUS_STYLES: Record<SupplierPaymentStatus, string> = {
+  Pendiente: "bg-red-100 text-red-700",
+  Parcial: "bg-amber-100 text-amber-700",
+  Pagado: "bg-emerald-100 text-emerald-700",
 }
 
 function authHeaders(): HeadersInit {
@@ -53,6 +76,7 @@ export default function ComprasPage() {
   // Formulario de nueva compra.
   const [supplierId, setSupplierId] = useState("")
   const [date, setDate] = useState(todayISO())
+  const [dueDate, setDueDate] = useState("")
   const [documentNumber, setDocumentNumber] = useState("")
   const [totalUSD, setTotalUSD] = useState("")
   const [totalVES, setTotalVES] = useState("")
@@ -63,9 +87,20 @@ export default function ComprasPage() {
   const [invItemId, setInvItemId] = useState("")
   const [invQty, setInvQty] = useState("")
 
+  // Panel de abonos (cuentas por pagar) de una compra.
+  const [payingId, setPayingId] = useState<string | null>(null)
+  const [payments, setPayments] = useState<SupplierPayment[]>([])
+  const [paymentsLoading, setPaymentsLoading] = useState(false)
+  const [payUSD, setPayUSD] = useState("")
+  const [payVES, setPayVES] = useState("")
+  const [payMethod, setPayMethod] = useState("")
+  const [payReference, setPayReference] = useState("")
+  const [payDate, setPayDate] = useState(todayISO())
+
   // Edición inline de una compra ya registrada (no cambia el proveedor).
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editDate, setEditDate] = useState("")
+  const [editDue, setEditDue] = useState("")
   const [editDocument, setEditDocument] = useState("")
   const [editUSD, setEditUSD] = useState("")
   const [editVES, setEditVES] = useState("")
@@ -147,6 +182,7 @@ export default function ComprasPage() {
         body: JSON.stringify({
           supplierId,
           purchaseDate: date || todayISO(),
+          dueDate,
           documentNumber: documentNumber.trim(),
           totalUSD: Number(totalUSD) || 0,
           totalVES: Number(totalVES) || 0,
@@ -164,6 +200,7 @@ export default function ComprasPage() {
       setTotalVES("")
       setNote("")
       setDate(todayISO())
+      setDueDate("")
       setLinkInventory(false)
       setInvItemId("")
       setInvQty("")
@@ -178,6 +215,7 @@ export default function ComprasPage() {
   function startEdit(p: Purchase) {
     setEditingId(p.id)
     setEditDate(p.purchaseDate || todayISO())
+    setEditDue(p.dueDate || "")
     setEditDocument(p.documentNumber)
     setEditUSD(p.totalUSD ? String(p.totalUSD) : "")
     setEditVES(p.totalVES ? String(p.totalVES) : "")
@@ -198,6 +236,7 @@ export default function ComprasPage() {
         headers: authHeaders(),
         body: JSON.stringify({
           purchaseDate: editDate || todayISO(),
+          dueDate: editDue,
           documentNumber: editDocument.trim(),
           totalUSD: Number(editUSD) || 0,
           totalVES: Number(editVES) || 0,
@@ -208,6 +247,71 @@ export default function ComprasPage() {
       if (!res.ok) throw new Error(data.error || "No se pudo actualizar")
       setEditingId(null)
       await loadPurchases(filterSupplier)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error")
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const loadPayments = useCallback(async (purchaseId: string) => {
+    setPaymentsLoading(true)
+    try {
+      const res = await fetch(`/api/supplier-purchases/${purchaseId}/payments`, {
+        headers: authHeaders(),
+        cache: "no-store",
+      })
+      const data = await res.json()
+      setPayments(res.ok ? data.payments || [] : [])
+    } catch {
+      setPayments([])
+    } finally {
+      setPaymentsLoading(false)
+    }
+  }, [])
+
+  function openPayments(p: Purchase) {
+    setPayingId(p.id)
+    setPayUSD("")
+    setPayVES("")
+    setPayMethod("")
+    setPayReference("")
+    setPayDate(todayISO())
+    setError("")
+    loadPayments(p.id)
+  }
+
+  function closePayments() {
+    setPayingId(null)
+    setPayments([])
+  }
+
+  async function registerPayment(id: string) {
+    if (!(Number(payUSD) > 0) && !(Number(payVES) > 0)) {
+      setError("Indica un monto pagado mayor a cero (USD o Bs).")
+      return
+    }
+    setBusy(true)
+    setError("")
+    try {
+      const res = await fetch(`/api/supplier-purchases/${id}/payments`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          paymentDate: payDate || todayISO(),
+          amountUSD: Number(payUSD) || 0,
+          amountVES: Number(payVES) || 0,
+          method: payMethod.trim(),
+          reference: payReference.trim(),
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "No se pudo registrar el pago")
+      setPayUSD("")
+      setPayVES("")
+      setPayMethod("")
+      setPayReference("")
+      await Promise.all([loadPayments(id), loadPurchases(filterSupplier)])
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
     } finally {
@@ -321,6 +425,16 @@ export default function ComprasPage() {
                   value={documentNumber}
                   onChange={(e) => setDocumentNumber(e.target.value)}
                   placeholder="Opcional"
+                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                />
+              </label>
+
+              <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] sm:col-span-2">
+                Vencimiento (opcional)
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
                   className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
                 />
               </label>
@@ -475,6 +589,13 @@ export default function ComprasPage() {
                           className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
                         />
                         <input
+                          type="date"
+                          value={editDue}
+                          onChange={(e) => setEditDue(e.target.value)}
+                          title="Vencimiento"
+                          className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)] sm:col-span-2"
+                        />
+                        <input
                           type="number"
                           min="0"
                           step="0.01"
@@ -519,13 +640,25 @@ export default function ComprasPage() {
                   ) : (
                     <li
                       key={p.id}
-                      className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4"
+                      className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4"
                     >
+                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="text-lg font-black text-[var(--brand-ink-3)]">{p.supplierName || "—"}</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-lg font-black text-[var(--brand-ink-3)]">{p.supplierName || "—"}</p>
+                          <span className={`rounded-full px-2 py-0.5 text-[0.62rem] font-black uppercase tracking-[0.08em] ${STATUS_STYLES[p.paymentStatus]}`}>
+                            {p.paymentStatus}
+                          </span>
+                          {p.isOverdue && (
+                            <span className="rounded-full bg-red-600 px-2 py-0.5 text-[0.62rem] font-black uppercase tracking-[0.08em] text-white">
+                              Vencida
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs font-bold text-[var(--brand-ink-2)]/60">
                           {p.purchaseDate}
                           {p.documentNumber ? ` · Doc. ${p.documentNumber}` : ""}
+                          {p.dueDate ? ` · Vence ${p.dueDate}` : ""}
                         </p>
                         {p.note && <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/80">{p.note}</p>}
                         {p.inventoryItemName && p.inventoryQuantity > 0 && (
@@ -540,7 +673,21 @@ export default function ComprasPage() {
                           {p.totalVES > 0 && (
                             <p className="text-xs font-bold text-[var(--brand-ink-2)]/55">Bs {p.totalVES.toFixed(2)}</p>
                           )}
+                          {p.paymentStatus !== "Pagado" && (p.pendingUSD > 0 || p.pendingVES > 0) && (
+                            <p className="text-[0.68rem] font-black uppercase tracking-[0.06em] text-red-600">
+                              Pendiente {usd(p.pendingUSD)}
+                              {p.pendingVES > 0 ? ` · Bs ${p.pendingVES.toFixed(2)}` : ""}
+                            </p>
+                          )}
                         </div>
+                        <button
+                          onClick={() => (payingId === p.id ? closePayments() : openPayments(p))}
+                          disabled={busy}
+                          title="Abonos / cuentas por pagar"
+                          className="inline-flex items-center justify-center rounded-full border-2 border-emerald-300 bg-white p-2 text-emerald-700 disabled:opacity-50"
+                        >
+                          <Wallet size={16} />
+                        </button>
                         <button
                           onClick={() => startEdit(p)}
                           disabled={busy}
@@ -558,6 +705,95 @@ export default function ComprasPage() {
                           <Trash2 size={16} />
                         </button>
                       </div>
+                     </div>
+
+                      {payingId === p.id && (
+                        <div className="mt-4 rounded-xl border-2 border-emerald-200 bg-emerald-50/40 p-3">
+                          <p className="text-xs font-black uppercase tracking-[0.1em] text-emerald-800">
+                            Abonos · pagado {usd(p.paidUSD)}
+                            {p.paidVES > 0 ? ` · Bs ${p.paidVES.toFixed(2)}` : ""}
+                          </p>
+
+                          {p.paymentStatus !== "Pagado" && (
+                            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                              <input
+                                type="date"
+                                value={payDate}
+                                max={todayISO()}
+                                onChange={(e) => setPayDate(e.target.value)}
+                                className="rounded-xl border-2 border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                              />
+                              <input
+                                value={payMethod}
+                                onChange={(e) => setPayMethod(e.target.value)}
+                                placeholder="Método (transferencia, efectivo…)"
+                                className="rounded-xl border-2 border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                              />
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={payUSD}
+                                onChange={(e) => setPayUSD(e.target.value)}
+                                placeholder="Abono USD"
+                                className="rounded-xl border-2 border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                              />
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={payVES}
+                                onChange={(e) => setPayVES(e.target.value)}
+                                placeholder="Abono Bs"
+                                className="rounded-xl border-2 border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                              />
+                              <input
+                                value={payReference}
+                                onChange={(e) => setPayReference(e.target.value)}
+                                placeholder="Referencia (opcional)"
+                                className="rounded-xl border-2 border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500 sm:col-span-2"
+                              />
+                              <button
+                                onClick={() => registerPayment(p.id)}
+                                disabled={busy}
+                                className="inline-flex items-center justify-center gap-1 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black uppercase text-white disabled:opacity-50 sm:col-span-2"
+                              >
+                                <Plus size={14} /> Registrar abono
+                              </button>
+                            </div>
+                          )}
+
+                          <div className="mt-3">
+                            {paymentsLoading ? (
+                              <p className="inline-flex items-center gap-2 text-xs font-bold text-emerald-800">
+                                <Loader2 className="animate-spin" size={14} /> Cargando abonos…
+                              </p>
+                            ) : payments.length === 0 ? (
+                              <p className="text-xs font-bold text-emerald-800/60">Sin abonos registrados.</p>
+                            ) : (
+                              <ul className="space-y-1">
+                                {payments.map((pay) => (
+                                  <li
+                                    key={pay.id}
+                                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-[var(--brand-ink-2)]"
+                                  >
+                                    <span>
+                                      {pay.paymentDate}
+                                      {pay.paymentMethod ? ` · ${pay.paymentMethod}` : ""}
+                                      {pay.reference ? ` · Ref. ${pay.reference}` : ""}
+                                    </span>
+                                    <span className="font-black text-emerald-700">
+                                      {pay.amountUSD > 0 ? usd(pay.amountUSD) : ""}
+                                      {pay.amountUSD > 0 && pay.amountVES > 0 ? " · " : ""}
+                                      {pay.amountVES > 0 ? `Bs ${pay.amountVES.toFixed(2)}` : ""}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </li>
                   )
                 )}
