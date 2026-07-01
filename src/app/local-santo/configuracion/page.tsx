@@ -177,6 +177,7 @@ type BusinessConfig = {
   splitBillModuleEnabled: boolean;
   serviceChargeTipsModuleEnabled: boolean;
   suppliersModuleEnabled: boolean;
+  supplierPurchasesModuleEnabled: boolean;
   accountsPayableModuleEnabled: boolean;
   subrecipesModuleEnabled: boolean;
   auditLogModuleEnabled: boolean;
@@ -325,6 +326,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   splitBillModuleEnabled: false,
   serviceChargeTipsModuleEnabled: false,
   suppliersModuleEnabled: false,
+  supplierPurchasesModuleEnabled: false,
   accountsPayableModuleEnabled: false,
   subrecipesModuleEnabled: false,
   auditLogModuleEnabled: true,
@@ -364,6 +366,8 @@ const AVAILABLE_MODULES_PATCH: Partial<BusinessConfig> = {
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
   ticketsModuleEnabled: true,
+  suppliersModuleEnabled: true,
+  supplierPurchasesModuleEnabled: true,
   auditLogModuleEnabled: true,
   visualEditorModuleEnabled: true,
   soundEnabled: true,
@@ -1090,6 +1094,10 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     suppliersModuleEnabled: normalizeBoolean(
       source.suppliersModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.suppliersModuleEnabled,
+    ),
+    supplierPurchasesModuleEnabled: normalizeBoolean(
+      source.supplierPurchasesModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.supplierPurchasesModuleEnabled,
     ),
     accountsPayableModuleEnabled: normalizeBoolean(
       source.accountsPayableModuleEnabled,

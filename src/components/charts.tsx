@@ -119,11 +119,11 @@ export function VBarChart({
   const max = Math.max(1, ...data.map((d) => d.value))
   return (
     <div>
-      <div className="flex items-end gap-1" style={{ height }}>
+      <div className="flex items-stretch gap-1" style={{ height }}>
         {data.map((d, i) => (
           <div
             key={i}
-            className="group flex flex-1 flex-col items-center justify-end gap-1"
+            className="group flex h-full flex-1 flex-col items-center justify-end gap-1"
             title={d.tip || `${d.label}: ${fmtUSD(d.value)}`}
           >
             <span className="text-[0.55rem] font-black text-[var(--brand-primary)] opacity-0 group-hover:opacity-100">

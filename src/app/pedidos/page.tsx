@@ -170,6 +170,7 @@ import {
   CloseReviewPanel,
   ModalShell
 } from "./components"
+import CurrentBranchBanner from "@/components/local/CurrentBranchBanner"
 
 export default function PedidosPage() {
   const [adminPassword, setAdminPassword] = useState("")
@@ -3433,6 +3434,8 @@ export default function PedidosPage() {
                     {soundMessage}
                   </p>
                 )}
+
+                <CurrentBranchBanner />
               </div>
 
               <div className="grid w-full min-w-0 grid-cols-2 gap-2 sm:grid-cols-5 2xl:max-w-[880px]">
@@ -3448,7 +3451,7 @@ export default function PedidosPage() {
 
 
 
-        <section className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-12">
+        <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {isOwnerDashboardModuleVisible && (
             <ModuleAccessCard
               href="/local-santo/dueno"

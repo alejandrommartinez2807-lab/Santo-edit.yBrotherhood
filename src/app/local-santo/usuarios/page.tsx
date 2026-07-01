@@ -635,7 +635,17 @@ function UsuariosContent() {
                         <td className="px-4 py-3 align-top font-black text-[var(--brand-ink-3)]">{u.displayName || u.full_name || u.username}</td>
                         <td className="px-4 py-3 align-top font-bold text-[var(--brand-ink-2)]/75">{u.username}</td>
                         <td className="px-4 py-3 align-top font-bold">{ROLE_LABEL[u.role] || u.role}</td>
-                        <td className="max-w-[220px] px-4 py-3 align-top font-bold text-[var(--brand-ink-2)]/75">{summarizeBranches(u, branches)}</td>
+                        <td className="max-w-[220px] px-4 py-3 align-top">
+                          <span className={`inline-block rounded-full px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.06em] ${
+                            u.allBranches
+                              ? "bg-amber-100 text-amber-800"
+                              : u.allowedBranchIds.length
+                                ? "bg-sky-100 text-sky-800"
+                                : "bg-red-100 text-red-800"
+                          }`}>
+                            {summarizeBranches(u, branches)}
+                          </span>
+                        </td>
                         <td className="max-w-[320px] px-4 py-3 align-top">
                           <p className="font-bold text-[var(--brand-ink-2)]/75">{summarizeModules(u.allowedModules || [])}</p>
                           <p className="mt-1 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]">
