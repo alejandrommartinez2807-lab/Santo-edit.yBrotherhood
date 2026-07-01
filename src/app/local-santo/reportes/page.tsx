@@ -5,6 +5,7 @@ import Link from "next/link"
 import { ArrowLeft, Loader2, BarChart3, TrendingUp, TrendingDown, Clock, PieChart, Download, Printer, CreditCard, Truck, Percent, Boxes, Wallet } from "lucide-react"
 import { DonutChart, HBarChart, VBarChart } from "@/components/charts"
 import { buildCsvSections, downloadCsv } from "@/lib/csv"
+import ModuleAccessGuard from "@/components/ModuleAccessGuard"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -100,6 +101,14 @@ function Card({ title, icon, children }: { title: string; icon: React.ReactNode;
 }
 
 export default function ReportesPage() {
+  return (
+    <ModuleAccessGuard moduleKey="reports" moduleName="Reportes">
+      <ReportesPageContent />
+    </ModuleAccessGuard>
+  )
+}
+
+function ReportesPageContent() {
   const [period, setPeriod] = useState("today")
   const [fromDate, setFromDate] = useState("")
   const [toDate, setToDate] = useState("")

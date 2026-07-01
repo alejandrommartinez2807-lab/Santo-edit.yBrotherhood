@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Loader2, Plus, Trash2, Truck, Phone, User, ShoppingCart } from "lucide-react"
+import ModuleAccessGuard from "@/components/ModuleAccessGuard"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -24,6 +25,14 @@ function authHeaders(): HeadersInit {
 }
 
 export default function ProveedoresPage() {
+  return (
+    <ModuleAccessGuard moduleKey="suppliers" moduleName="Proveedores">
+      <ProveedoresPageContent />
+    </ModuleAccessGuard>
+  )
+}
+
+function ProveedoresPageContent() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [loading, setLoading] = useState(true)
   const [denied, setDenied] = useState(false)

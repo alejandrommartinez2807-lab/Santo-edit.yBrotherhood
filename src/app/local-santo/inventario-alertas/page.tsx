@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import ModuleAccessGuard from "@/components/ModuleAccessGuard";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -540,6 +541,14 @@ function LoginScreen({
 }
 
 export default function InventoryAlertsPage() {
+  return (
+    <ModuleAccessGuard moduleKey="inventoryAlerts" moduleName="Inventario alertas">
+      <InventoryAlertsPageContent />
+    </ModuleAccessGuard>
+  );
+}
+
+function InventoryAlertsPageContent() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);

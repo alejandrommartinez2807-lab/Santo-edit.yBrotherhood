@@ -1,5 +1,6 @@
 "use client"
 
+import ModuleAccessGuard from "@/components/ModuleAccessGuard"
 import { BRAND } from "@/lib/brand"
 import { useEffect, useMemo, useState } from "react"
 import {
@@ -361,6 +362,14 @@ function buildWhatsAppUrl(customer: CustomerSummary) {
 }
 
 export default function FrequentCustomersPage() {
+  return (
+    <ModuleAccessGuard moduleKey="customers" moduleName="Clientes">
+      <FrequentCustomersPageContent />
+    </ModuleAccessGuard>
+  )
+}
+
+function FrequentCustomersPageContent() {
   const [adminPassword, setAdminPassword] = useState("")
   const [passwordInput, setPasswordInput] = useState("")
   const [businessConfig, setBusinessConfig] = useState<BusinessConfig>(

@@ -1,5 +1,6 @@
 "use client"
 
+import ModuleAccessGuard from "@/components/ModuleAccessGuard"
 import { BRAND } from "@/lib/brand"
 import { useEffect, useMemo, useState } from "react"
 import {
@@ -675,6 +676,14 @@ async function readApiResponse(response: Response) {
 }
 
 export default function InventoryPage() {
+  return (
+    <ModuleAccessGuard moduleKey="inventory" moduleName="Inventario">
+      <InventoryPageContent />
+    </ModuleAccessGuard>
+  )
+}
+
+function InventoryPageContent() {
   const [adminPassword, setAdminPassword] = useState("")
   const [passwordInput, setPasswordInput] = useState("")
   const [showPassword, setShowPassword] = useState(false)

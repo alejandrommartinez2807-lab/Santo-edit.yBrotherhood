@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Loader2, Plus, Trash2, ShoppingCart, Truck, Pencil, Check, X, Wallet } from "lucide-react"
+import ModuleAccessGuard from "@/components/ModuleAccessGuard"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -62,6 +63,14 @@ function todayISO() {
 }
 
 export default function ComprasPage() {
+  return (
+    <ModuleAccessGuard moduleKey="supplierPurchases" moduleName="Compras">
+      <ComprasPageContent />
+    </ModuleAccessGuard>
+  )
+}
+
+function ComprasPageContent() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([])
   const [purchases, setPurchases] = useState<Purchase[]>([])

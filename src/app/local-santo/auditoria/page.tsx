@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Loader2, ShieldCheck, RefreshCw } from "lucide-react"
 import { AUDIT_ACTION_LABELS, type AuditAction } from "@/lib/auditActions"
+import ModuleAccessGuard from "@/components/ModuleAccessGuard"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -54,6 +55,14 @@ function summarizeMetadata(metadata: Record<string, unknown>) {
 const ACTION_OPTIONS = Object.entries(AUDIT_ACTION_LABELS) as [AuditAction, string][]
 
 export default function AuditoriaPage() {
+  return (
+    <ModuleAccessGuard moduleKey="auditLog" moduleName="Auditoría">
+      <AuditoriaPageContent />
+    </ModuleAccessGuard>
+  )
+}
+
+function AuditoriaPageContent() {
   const [logs, setLogs] = useState<AuditLogEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [denied, setDenied] = useState(false)
