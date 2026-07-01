@@ -159,6 +159,7 @@ type BusinessConfig = {
   publicNavButtons: PublicNavButton[];
   customersModuleEnabled: boolean;
   inventoryModuleEnabled: boolean;
+  inventoryAlertsModuleEnabled: boolean;
   advancedMenuModuleEnabled: boolean;
   productVariationsModuleEnabled: boolean;
   productAddonsModuleEnabled: boolean;
@@ -183,6 +184,7 @@ type BusinessConfig = {
   auditLogModuleEnabled: boolean;
   visualEditorModuleEnabled: boolean;
   trainingModeModuleEnabled: boolean;
+  branchesModuleEnabled: boolean;
   defaultViewMode: BusinessViewMode;
   soundEnabled: boolean;
   filtersOpenByDefault: boolean;
@@ -308,6 +310,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicNavButtons: DEFAULT_PUBLIC_NAV_BUTTONS,
   customersModuleEnabled: true,
   inventoryModuleEnabled: true,
+  inventoryAlertsModuleEnabled: true,
   advancedMenuModuleEnabled: true,
   productVariationsModuleEnabled: true,
   productAddonsModuleEnabled: true,
@@ -332,6 +335,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   auditLogModuleEnabled: true,
   visualEditorModuleEnabled: true,
   trainingModeModuleEnabled: false,
+  branchesModuleEnabled: true,
   defaultViewMode: "negocio",
   soundEnabled: true,
   filtersOpenByDefault: false,
@@ -352,6 +356,7 @@ const AVAILABLE_MODULES_PATCH: Partial<BusinessConfig> = {
   featuredProductsModuleEnabled: true,
   customersModuleEnabled: true,
   inventoryModuleEnabled: true,
+  inventoryAlertsModuleEnabled: true,
   advancedMenuModuleEnabled: true,
   productVariationsModuleEnabled: true,
   productAddonsModuleEnabled: true,
@@ -368,6 +373,7 @@ const AVAILABLE_MODULES_PATCH: Partial<BusinessConfig> = {
   ticketsModuleEnabled: true,
   suppliersModuleEnabled: true,
   supplierPurchasesModuleEnabled: true,
+  branchesModuleEnabled: true,
   auditLogModuleEnabled: true,
   visualEditorModuleEnabled: true,
   soundEnabled: true,
@@ -1023,6 +1029,10 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.inventoryModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.inventoryModuleEnabled,
     ),
+    inventoryAlertsModuleEnabled: normalizeBoolean(
+      source.inventoryAlertsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.inventoryAlertsModuleEnabled,
+    ),
     advancedMenuModuleEnabled: normalizeBoolean(
       source.advancedMenuModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.advancedMenuModuleEnabled,
@@ -1118,6 +1128,10 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     trainingModeModuleEnabled: normalizeBoolean(
       source.trainingModeModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.trainingModeModuleEnabled,
+    ),
+    branchesModuleEnabled: normalizeBoolean(
+      source.branchesModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.branchesModuleEnabled,
     ),
     defaultViewMode: normalizeViewMode(source.defaultViewMode),
     soundEnabled: normalizeBoolean(
