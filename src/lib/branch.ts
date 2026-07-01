@@ -154,8 +154,25 @@ export async function getDefaultBranchId(): Promise<string | null> {
 }
 
 export async function resolveBranchId(request: HeaderBag): Promise<string | null> {
-  const fromHeader = getExplicitBranchIdFromRequest(request)
-  if (fromHeader) return fromHeader
+  // Acceso por sede del staff (null en modo contraseña/.env = sin restricción).
+  const staffAccess = getStaffBranchAccessFromRequest(request)
+  const requested = getExplicitBranchIdFromRequest(request)
+
+  if (requested) {
+    // Un usuario restringido que pida una sede que NO es suya se "clampa" a su
+    // primera sede permitida: nunca opera ni lee datos de otra sucursal, aunque
+    // manipule el header x-branch-id. owner/support (unrestricted) pasan igual.
+    if (isBranchAllowedForStaffAccess(requested, staffAccess)) return requested
+    if (staffAccess && !staffAccess.unrestricted && staffAccess.branchIds.length) {
+      return staffAccess.branchIds[0]
+    }
+    return requested
+  }
+
+  // Sin sede explícita: el staff restringido cae a su primera sede asignada.
+  if (staffAccess && !staffAccess.unrestricted && staffAccess.branchIds.length) {
+    return staffAccess.branchIds[0]
+  }
   return getDefaultBranchId()
 }
 

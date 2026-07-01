@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Loader2, BarChart3, TrendingUp, TrendingDown, Clock, PieChart, Download, Printer, CreditCard, Truck } from "lucide-react"
+import { ArrowLeft, Loader2, BarChart3, TrendingUp, TrendingDown, Clock, PieChart, Download, Printer, CreditCard, Truck, Percent, Boxes, Wallet } from "lucide-react"
 import { DonutChart, HBarChart, VBarChart } from "@/components/charts"
 import { buildCsvSections, downloadCsv } from "@/lib/csv"
 
@@ -22,7 +22,24 @@ type Report = {
   byHour: { hour: number; totalUSD: number }[]
   byDay: { date: string; orders: number; totalUSD: number }[]
   topProducts: { name: string; quantity: number; totalUSD: number }[]
+  managerAlerts?: { level: "danger" | "warning" | "info"; title: string; detail: string; action: string }[]
+  productMargins?: {
+    summary: { menuProducts: number; productsWithRecipe: number; recipeCoveragePct: number; avgMarginPct: number | null; lowMarginCount: number; estimatedGrossProfitUSD: number }
+    lowMargin: { productName: string; marginPct: number | null; salePriceUSD: number; costUSD: number }[]
+    noRecipeTopProducts: { name: string }[]
+  } | null
+  inventoryHealth?: {
+    lowStockCount: number
+    lowStockItems: { name: string; quantity: number; minimumStock: number; unit: string }[]
+    activeRecipes: number
+  } | null
+  supplierPayables?: {
+    summary: { pendingUSD: number; overdueCount: number; overdueUSD: number; dueSoonCount: number; dueSoonUSD: number }
+    bySupplier: { supplierName: string; pendingUSD: number }[]
+  } | null
 }
+
+type BranchSummary = { id: string; name: string; orders: number; totalUSD: number; pendingUSD: number }
 
 const PERIODS = [
   { value: "today", label: "Hoy" },
@@ -91,15 +108,20 @@ export default function ReportesPage() {
   const [denied, setDenied] = useState(false)
   const [error, setError] = useState("")
   const [consolidated, setConsolidated] = useState(false)
-  const [multiBranch, setMultiBranch] = useState(false)
+  const [branches, setBranches] = useState<{ id: string; name: string }[]>([])
+  const [byBranch, setByBranch] = useState<BranchSummary[]>([])
+  const multiBranch = branches.length > 1
 
-  // ¿Hay más de una sucursal? Solo entonces mostramos el toggle "Consolidado".
+  // Lista de sucursales activas: habilita el toggle "Consolidado" y la
+  // comparación por sede. (Un usuario restringido solo verá las suyas.)
   useEffect(() => {
     fetch("/api/branches", { headers: authHeaders(), cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
-        const active = (j?.branches || []).filter((b: { is_active?: boolean }) => b.is_active !== false)
-        setMultiBranch(active.length > 1)
+        const active = (j?.branches || [])
+          .filter((b: { is_active?: boolean }) => b.is_active !== false)
+          .map((b: { id: string; name: string }) => ({ id: b.id, name: b.name }))
+        setBranches(active)
       })
       .catch(() => {})
   }, [])
@@ -147,6 +169,60 @@ export default function ReportesPage() {
   useEffect(() => {
     load(period, consolidated, fromDate, toDate)
   }, [period, consolidated, fromDate, toDate, load])
+
+  // Comparación por sucursal: pide el resumen de cada sede para el mismo período.
+  useEffect(() => {
+    let cancelled = false
+
+    const loadByBranch = async () => {
+      if (!multiBranch) {
+        if (!cancelled) setByBranch([])
+        return
+      }
+
+      let query: string
+      if (period === "custom") {
+        if (!fromDate || !toDate || fromDate > toDate) {
+          if (!cancelled) setByBranch([])
+          return
+        }
+        query = `from=${encodeURIComponent(dayStartISO(fromDate))}&to=${encodeURIComponent(dayEndISO(toDate))}`
+      } else {
+        query = `period=${period}`
+      }
+
+      const rows = await Promise.all(
+        branches.map(async (b) => {
+          try {
+            const res = await fetch(`/api/reports?${query}`, {
+              headers: { ...authHeaders(), "x-branch-id": b.id },
+              cache: "no-store",
+            })
+            if (!res.ok) return null
+            const data = await res.json()
+            return {
+              id: b.id,
+              name: b.name,
+              orders: data.summary?.orders ?? 0,
+              totalUSD: data.summary?.totalUSD ?? 0,
+              pendingUSD: data.summary?.pendingUSD ?? 0,
+            } as BranchSummary
+          } catch {
+            return null
+          }
+        }),
+      )
+
+      if (!cancelled) {
+        setByBranch(rows.filter((r): r is BranchSummary => r !== null).sort((a, b) => b.totalUSD - a.totalUSD))
+      }
+    }
+
+    loadByBranch()
+    return () => {
+      cancelled = true
+    }
+  }, [period, fromDate, toDate, branches, multiBranch])
 
   function exportCsv() {
     if (!report) return
@@ -346,6 +422,68 @@ export default function ReportesPage() {
               </p>
             ) : null}
 
+            {/* Alertas del dueño (vencimientos, márgenes bajos, bajo stock) */}
+            {report.managerAlerts && report.managerAlerts.length > 0 ? (
+              <div className="space-y-2">
+                {report.managerAlerts.map((alert, i) => {
+                  const tone =
+                    alert.level === "danger"
+                      ? "border-red-300 bg-red-50 text-red-800"
+                      : alert.level === "warning"
+                        ? "border-yellow-300 bg-yellow-50 text-yellow-900"
+                        : "border-[var(--brand-primary)]/20 bg-white text-[var(--brand-ink-2)]"
+                  return (
+                    <div key={i} className={`rounded-2xl border-2 p-4 ${tone}`}>
+                      <p className="text-sm font-black">{alert.title}</p>
+                      <p className="mt-1 text-xs font-bold opacity-80">{alert.detail}</p>
+                      <p className="mt-1 text-[0.68rem] font-bold opacity-70">→ {alert.action}</p>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : null}
+
+            {/* Comparación por sucursal (todas las sedes en el mismo período) */}
+            {byBranch.length > 1 ? (
+              <Card title="Comparación por sucursal" icon={<BarChart3 size={16} />}>
+                <VBarChart
+                  height={170}
+                  data={byBranch.map((b) => ({
+                    label: b.name,
+                    value: b.totalUSD,
+                    tip: `${b.name}: ${usd(b.totalUSD)} · ${b.orders} pedidos`,
+                  }))}
+                />
+                <div className="mt-4 overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]/70">
+                        <th className="pb-2">Sucursal</th>
+                        <th className="pb-2 text-right">Pedidos</th>
+                        <th className="pb-2 text-right">Total</th>
+                        <th className="pb-2 text-right">Pendiente</th>
+                        <th className="pb-2 text-right">% del total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        const grand = byBranch.reduce((s, b) => s + b.totalUSD, 0) || 1
+                        return byBranch.map((b) => (
+                          <tr key={b.id} className="border-t border-[var(--brand-primary)]/10">
+                            <td className="py-2 font-bold text-[var(--brand-ink-3)]">{b.name}</td>
+                            <td className="py-2 text-right font-bold">{b.orders}</td>
+                            <td className="py-2 text-right font-black text-[var(--brand-ink-3)]">{usd(b.totalUSD)}</td>
+                            <td className="py-2 text-right font-bold text-red-700">{usd(b.pendingUSD)}</td>
+                            <td className="py-2 text-right font-bold">{((b.totalUSD / grand) * 100).toFixed(0)}%</td>
+                          </tr>
+                        ))
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            ) : null}
+
             {/* Tendencia diaria (semana/mes) */}
             {showDaily ? (
               <Card title="Ventas por día" icon={<TrendingUp size={16} />}>
@@ -423,6 +561,98 @@ export default function ReportesPage() {
                       </div>
                     ))}
                   </div>
+                </Card>
+              ) : null}
+            </div>
+
+            {/* Rentabilidad por recetas (márgenes) */}
+            {report.productMargins ? (
+              <Card title="Rentabilidad y márgenes" icon={<Percent size={16} />}>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {[
+                    ["Cobertura recetas", `${report.productMargins.summary.recipeCoveragePct}%`],
+                    ["Margen promedio", report.productMargins.summary.avgMarginPct === null ? "—" : `${report.productMargins.summary.avgMarginPct}%`],
+                    ["Ganancia estimada", usd(report.productMargins.summary.estimatedGrossProfitUSD)],
+                    ["Productos margen bajo", String(report.productMargins.summary.lowMarginCount)],
+                  ].map(([label, value]) => (
+                    <div key={label} className="rounded-xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3">
+                      <p className="text-[0.6rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">{label}</p>
+                      <p className="mt-1 text-lg font-black text-[var(--brand-ink-3)]">{value}</p>
+                    </div>
+                  ))}
+                </div>
+                {report.productMargins.lowMargin.length > 0 ? (
+                  <div className="mt-4">
+                    <p className="text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]/70">Productos con menor margen</p>
+                    <div className="mt-2 space-y-1">
+                      {report.productMargins.lowMargin.map((p, i) => (
+                        <div key={i} className="flex items-center justify-between rounded-lg border border-[var(--brand-primary)]/10 bg-white px-3 py-1.5 text-sm">
+                          <span className="font-bold text-[var(--brand-ink-3)]">{p.productName}</span>
+                          <span className="font-black text-red-700">{p.marginPct === null ? "—" : `${p.marginPct}%`} <span className="font-bold text-[var(--brand-ink-2)]/55">({usd(p.costUSD)}/{usd(p.salePriceUSD)})</span></span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                {report.productMargins.noRecipeTopProducts.length > 0 ? (
+                  <p className="mt-3 text-xs font-bold text-[var(--brand-ink-2)]/60">
+                    Sin receta (no se puede estimar margen): {report.productMargins.noRecipeTopProducts.map((p) => p.name).join(", ")}
+                  </p>
+                ) : null}
+              </Card>
+            ) : null}
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Salud de inventario */}
+              {report.inventoryHealth ? (
+                <Card title="Salud de inventario" icon={<Boxes size={16} />}>
+                  <div className="flex items-center gap-4">
+                    <div className="rounded-xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3 text-center">
+                      <p className="text-3xl font-black text-red-700">{report.inventoryHealth.lowStockCount}</p>
+                      <p className="text-[0.58rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]/70">Insumos bajo mínimo</p>
+                    </div>
+                    <p className="text-xs font-bold text-[var(--brand-ink-2)]/60">{report.inventoryHealth.activeRecipes} recetas activas.</p>
+                  </div>
+                  {report.inventoryHealth.lowStockItems.length > 0 ? (
+                    <div className="mt-3 space-y-1">
+                      {report.inventoryHealth.lowStockItems.map((it, i) => (
+                        <div key={i} className="flex items-center justify-between rounded-lg border border-[var(--brand-primary)]/10 bg-white px-3 py-1.5 text-sm">
+                          <span className="font-bold text-[var(--brand-ink-3)]">{it.name}</span>
+                          <span className="font-black text-red-700">{it.quantity}/{it.minimumStock} {it.unit}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-xs font-bold text-green-700">Todo el inventario está por encima del mínimo.</p>
+                  )}
+                </Card>
+              ) : null}
+
+              {/* Cuentas por pagar a proveedores */}
+              {report.supplierPayables ? (
+                <Card title="Cuentas por pagar" icon={<Wallet size={16} />}>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      ["Pendiente", usd(report.supplierPayables.summary.pendingUSD), "text-[var(--brand-ink-3)]"],
+                      ["Vencido", usd(report.supplierPayables.summary.overdueUSD), "text-red-700"],
+                      ["Vence pronto", usd(report.supplierPayables.summary.dueSoonUSD), "text-yellow-700"],
+                    ].map(([label, value, tone]) => (
+                      <div key={label} className="rounded-xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3">
+                        <p className="text-[0.56rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]/70">{label}</p>
+                        <p className={`mt-1 text-base font-black ${tone}`}>{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {report.supplierPayables.bySupplier.length > 0 ? (
+                    <div className="mt-3 space-y-1">
+                      {report.supplierPayables.bySupplier.slice(0, 6).map((s, i) => (
+                        <div key={i} className="flex items-center justify-between rounded-lg border border-[var(--brand-primary)]/10 bg-white px-3 py-1.5 text-sm">
+                          <span className="font-bold text-[var(--brand-ink-3)]">{s.supplierName}</span>
+                          <span className="font-black text-[var(--brand-ink-3)]">{usd(s.pendingUSD)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                 </Card>
               ) : null}
             </div>

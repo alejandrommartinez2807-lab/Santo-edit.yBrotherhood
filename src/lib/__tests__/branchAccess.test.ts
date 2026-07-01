@@ -3,6 +3,7 @@ import {
   filterBranchesForStaffAccess,
   getStaffBranchAccessFromRequest,
   isBranchAllowedForStaffAccess,
+  resolveBranchId,
   type BranchRecord,
 } from "@/lib/branch"
 
@@ -54,5 +55,35 @@ describe("branch access for staff", () => {
       "este",
       "norte",
     ])
+  })
+})
+
+describe("resolveBranchId · enforcement de sede en operaciones", () => {
+  it("staff restringido conserva la sede pedida si es suya", async () => {
+    const branch = await resolveBranchId(
+      requestWith({ "x-staff-role": "cashier", "x-staff-branch-ids": "centro,este", "x-branch-id": "este" }),
+    )
+    expect(branch).toBe("este")
+  })
+
+  it("staff restringido que pide otra sede se clampa a la suya (no fuga de datos)", async () => {
+    const branch = await resolveBranchId(
+      requestWith({ "x-staff-role": "cashier", "x-staff-branch-ids": "centro,este", "x-branch-id": "norte" }),
+    )
+    expect(branch).toBe("centro")
+  })
+
+  it("staff restringido sin sede explícita cae a su primera sede asignada", async () => {
+    const branch = await resolveBranchId(
+      requestWith({ "x-staff-role": "cashier", "x-staff-branch-ids": "este,centro" }),
+    )
+    expect(branch).toBe("este")
+  })
+
+  it("owner (no restringido) puede pedir cualquier sede", async () => {
+    const branch = await resolveBranchId(
+      requestWith({ "x-staff-role": "owner", "x-branch-id": "norte" }),
+    )
+    expect(branch).toBe("norte")
   })
 })
