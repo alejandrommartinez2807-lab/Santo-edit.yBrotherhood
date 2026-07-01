@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { readFileSync } from "node:fs"
+import { readFileSync, readdirSync } from "node:fs"
 import { resolve } from "node:path"
 
 // ============================================================
@@ -34,18 +34,33 @@ const SCOPED_TABLES = [
   "supplier_purchases",
 ]
 
-// Archivos donde viven queries directas a estas tablas.
-const FILES = [
-  "lib/ordersStore.ts",
-  "lib/orders.ts",
-  "lib/ordersStoreSuppliers.ts",
-  "lib/ordersStoreSupplierPurchases.ts",
-  "app/api/reports/route.ts",
-  "app/api/payments/checkout/route.ts",
-  "app/api/payments/webhook/route.ts",
-]
-
 const SRC = resolve(__dirname, "..", "..")
+
+// Escanea recursivamente toda la capa de datos (lib + rutas de API). Antes se
+// usaba una lista fija que quedó desactualizada cuando el store monolítico se
+// dividió en ordersInventory/ordersMenu/ordersStoreQueries/etc.; así una query
+// nueva en cualquier archivo queda cubierta automáticamente.
+function collectDataLayerFiles(): string[] {
+  const roots = [resolve(SRC, "lib"), resolve(SRC, "app", "api")]
+  const found: string[] = []
+
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = resolve(dir, entry.name)
+      if (entry.isDirectory()) {
+        if (entry.name === "__tests__" || entry.name === "node_modules") continue
+        walk(full)
+      } else if (entry.name.endsWith(".ts") && !entry.name.endsWith(".test.ts")) {
+        found.push(full)
+      }
+    }
+  }
+
+  for (const root of roots) walk(root)
+  return found
+}
+
+const FILES = collectDataLayerFiles()
 const WINDOW = 16 // líneas del encadenamiento de la query a revisar
 
 const fromRegex = new RegExp(`\\.from\\("(${SCOPED_TABLES.join("|")})"\\)`)
@@ -64,11 +79,17 @@ function isScopedSafely(windowText: string): boolean {
 }
 
 describe("Aislamiento multi-sucursal · fitness function", () => {
+  it("escanea realmente la capa de datos (no una lista vacía)", () => {
+    // Blindaje: si el walker deja de encontrar archivos, el test no debe pasar
+    // en falso. La capa de datos tiene decenas de módulos.
+    expect(FILES.length).toBeGreaterThan(20)
+  })
+
   it("toda query a una tabla con branch_id está scopeada (o anotada)", () => {
     const violations: string[] = []
 
-    for (const file of FILES) {
-      const path = resolve(SRC, file)
+    for (const path of FILES) {
+      const rel = path.slice(SRC.length + 1).replace(/\\/g, "/")
       const lines = readFileSync(path, "utf8").split(/\r?\n/)
 
       lines.forEach((line, i) => {
@@ -78,7 +99,7 @@ describe("Aislamiento multi-sucursal · fitness function", () => {
         // resto de la query hacia adelante.
         const windowText = lines.slice(Math.max(0, i - 3), i + WINDOW).join("\n")
         if (!isScopedSafely(windowText)) {
-          violations.push(`${file}:${i + 1} → .from("${table}") sin filtro de sucursal`)
+          violations.push(`${rel}:${i + 1} → .from("${table}") sin filtro de sucursal`)
         }
       })
     }
