@@ -9,7 +9,11 @@ import {
   resetOrderStaffItemsInStore,
 } from "./ordersStoreStaff"
 import { updateOrderPaymentInStore } from "./ordersStorePayments"
-import { getOrdersFromStore, loadOrderWithItems } from "./ordersStoreQueries"
+import {
+  findOrderByClientOrderId as findOrderByClientOrderIdInStore,
+  getOrdersFromStore,
+  loadOrderWithItems,
+} from "./ordersStoreQueries"
 import {
   clearOrdersInStore,
   deleteOrderInStore,
@@ -28,6 +32,13 @@ import {
 
 export async function getOrders(branchId?: string | null): Promise<LocalOrder[]> {
   return getOrdersFromStore(branchId)
+}
+
+export async function findOrderByClientOrderId(
+  clientOrderId: string,
+  branchId?: string | null,
+): Promise<LocalOrder | null> {
+  return findOrderByClientOrderIdInStore(clientOrderId, branchId)
 }
 
 export async function createOrder(

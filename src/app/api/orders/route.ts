@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import {
   clearOrders,
   createOrder,
+  findOrderByClientOrderId,
   getBusinessConfig,
   getDeliveryZones,
   getOpenAccounts,
@@ -239,6 +240,20 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
+
+    // Idempotencia (sync offline): si el cliente envía una clave y ya existe un
+    // pedido con ella, devolvemos el existente sin reprocesar (evita duplicados
+    // al reenviar la cola tras reconectar). Ver 0018_order_idempotency.
+    const clientOrderId = cleanText(body.clientOrderId)
+    if (clientOrderId) {
+      const existing = await findOrderByClientOrderId(
+        clientOrderId,
+        await resolveBranchId(request),
+      )
+      if (existing) {
+        return NextResponse.json({ order: existing, idempotent: true })
+      }
+    }
 
     const rawOrderType = cleanText(body.orderType)
     const rawTableNumber = cleanText(body.tableNumber)
@@ -509,6 +524,7 @@ export async function POST(request: NextRequest) {
     const totals = calculateOrderTotalsFromItems(items, exchangeRate, deliveryCostUSD)
 
     const orderPayload = {
+      clientOrderId,
       customerName,
       customerPhone,
       tableNumber,

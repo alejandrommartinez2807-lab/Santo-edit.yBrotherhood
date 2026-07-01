@@ -12,6 +12,10 @@ export type CreateOrderInput = {
   customerNote?: string
   openAccountId?: string
 
+  // Clave de idempotencia generada por el cliente (uuid). Permite reenviar un
+  // pedido encolado offline sin crear duplicados. Ver 0018_order_idempotency.
+  clientOrderId?: string
+
   deliveryAddress?: string
   deliveryReference?: string
   deliveryZone?: string

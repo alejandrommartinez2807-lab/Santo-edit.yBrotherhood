@@ -112,6 +112,7 @@ export {
   confirmOrderStaffItems,
   createOrder,
   deleteOrder,
+  findOrderByClientOrderId,
   getOrders,
   resetOrderStaffItems,
   updateOrderDeliveryReport,

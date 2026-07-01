@@ -15,7 +15,8 @@
     "e2e:purchase-inventory": "node scripts/purchase-inventory-e2e.mjs",
     "e2e:supplier-payables": "node scripts/supplier-payables-e2e.mjs",
     "e2e:reports-2e": "node scripts/reports-2e-e2e.mjs",
-    "e2e:business-complexity": "node scripts/business-complexity-e2e.mjs"
+    "e2e:business-complexity": "node scripts/business-complexity-e2e.mjs",
+    "e2e:order-idempotency": "node scripts/order-idempotency-e2e.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

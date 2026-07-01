@@ -5,58 +5,52 @@ import {
   removeFromQueue,
   queueSize,
   flushQueue,
+  createMemoryOfflineStore,
+  type OfflineStore,
 } from "@/lib/offlineQueue"
 
-function fakeStore() {
-  const m = new Map<string, string>()
-  return {
-    getItem: (k: string) => m.get(k) ?? null,
-    setItem: (k: string, v: string) => void m.set(k, v),
-  }
-}
-
 describe("cola offline", () => {
-  let store: ReturnType<typeof fakeStore>
+  let store: OfflineStore
   beforeEach(() => {
-    store = fakeStore()
+    store = createMemoryOfflineStore()
   })
 
-  it("encola, lee y quita pedidos", () => {
-    expect(queueSize(store)).toBe(0)
-    const a = enqueueOrder({ customerName: "A" }, store)
-    enqueueOrder({ customerName: "B" }, store)
-    expect(queueSize(store)).toBe(2)
-    expect(readQueue(store)[0].payload).toEqual({ customerName: "A" })
-    removeFromQueue(a.id, store)
-    expect(queueSize(store)).toBe(1)
+  it("encola, lee y quita pedidos", async () => {
+    expect(await queueSize(store)).toBe(0)
+    const a = await enqueueOrder({ customerName: "A" }, store)
+    await enqueueOrder({ customerName: "B" }, store)
+    expect(await queueSize(store)).toBe(2)
+    expect((await readQueue(store))[0].payload).toEqual({ customerName: "A" })
+    await removeFromQueue(a.id, store)
+    expect(await queueSize(store)).toBe(1)
   })
 
   it("flush envía los aceptados y vacía la cola", async () => {
-    enqueueOrder({ n: 1 }, store)
-    enqueueOrder({ n: 2 }, store)
+    await enqueueOrder({ n: 1 }, store)
+    await enqueueOrder({ n: 2 }, store)
     const r = await flushQueue(async () => ({ ok: true, status: 200 }), store)
     expect(r.sent).toBe(2)
     expect(r.remaining).toBe(0)
   })
 
   it("flush descarta rechazos 4xx (validación) sin reintentar", async () => {
-    enqueueOrder({ bad: true }, store)
+    await enqueueOrder({ bad: true }, store)
     const r = await flushQueue(async () => ({ ok: false, status: 400 }), store)
     expect(r.dropped).toBe(1)
     expect(r.remaining).toBe(0)
   })
 
   it("flush conserva en 5xx (reintento) e incrementa tries", async () => {
-    enqueueOrder({ n: 1 }, store)
+    await enqueueOrder({ n: 1 }, store)
     const r = await flushQueue(async () => ({ ok: false, status: 503 }), store)
     expect(r.sent).toBe(0)
     expect(r.remaining).toBe(1)
-    expect(readQueue(store)[0].tries).toBe(1)
+    expect((await readQueue(store))[0].tries).toBe(1)
   })
 
   it("flush se detiene y conserva todo si no hay red (submit lanza)", async () => {
-    enqueueOrder({ n: 1 }, store)
-    enqueueOrder({ n: 2 }, store)
+    await enqueueOrder({ n: 1 }, store)
+    await enqueueOrder({ n: 2 }, store)
     const r = await flushQueue(async () => {
       throw new Error("network")
     }, store)

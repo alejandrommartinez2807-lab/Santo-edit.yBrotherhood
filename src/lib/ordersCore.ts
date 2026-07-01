@@ -19,6 +19,13 @@ export async function getOrders(branchId?: string | null) {
   return ordersStore.getOrders(branchId)
 }
 
+export async function findOrderByClientOrderId(
+  clientOrderId: string,
+  branchId?: string | null,
+) {
+  return ordersStore.findOrderByClientOrderId(clientOrderId, branchId)
+}
+
 export async function createOrder(input: CreateOrderInput, branchId?: string | null) {
   return ordersStore.createOrder(input, branchId)
 }

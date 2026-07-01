@@ -16,6 +16,7 @@ import {
 import { attachOrderToOpenAccount } from "./ordersStoreOpenAccounts"
 import { uploadOrderAttachmentImage } from "./ordersStoreAttachments"
 import { buildOrderFiscalSnapshot } from "./ordersStoreFiscal"
+import { findOrderByClientOrderId } from "./ordersStoreQueries"
 
 type LoadOrderWithItems = (
   orderId: string,
@@ -34,6 +35,15 @@ export async function createOrderInStore(
   loadOrderWithItems: LoadOrderWithItems,
 ): Promise<LocalOrder> {
   const supabase = getSupabaseAdmin()
+  const clientOrderId = cleanText(input.clientOrderId)
+
+  // Idempotencia: si este pedido (mismo client_order_id) ya se creó en un
+  // intento previo, devolvemos el existente sin duplicar. Ver 0018.
+  if (clientOrderId) {
+    const existing = await findOrderByClientOrderId(clientOrderId, branchId)
+    if (existing) return existing
+  }
+
   const items = normalizeItems(input.items)
   const exchangeRate = num(input.exchangeRate)
   const deliveryCostUSD = num(input.deliveryCostUSD)
@@ -48,6 +58,7 @@ export async function createOrderInStore(
   const orderRow: Row = {
     id: orderId,
     branch_id: branchId ?? null,
+    client_order_id: clientOrderId || null,
     customer_name: input.customerName,
     customer_phone: cleanText(input.customerPhone) || null,
     table_number: input.tableNumber,
@@ -90,7 +101,15 @@ export async function createOrderInStore(
 
   // branch-exempt: orderRow incluye branch_id (asignado arriba).
   const { error: insertError } = await supabase.from("orders").insert(orderRow)
-  if (insertError) throw new Error(insertError.message)
+  if (insertError) {
+    // Carrera de idempotencia: otro reintento concurrente ganó la inserción
+    // (viola el índice único de client_order_id). Devolvemos el ya creado.
+    if (clientOrderId && insertError.code === "23505") {
+      const existing = await findOrderByClientOrderId(clientOrderId, branchId)
+      if (existing) return existing
+    }
+    throw new Error(insertError.message)
+  }
 
   if (items.length) {
     const itemRows = items.map((item, index) => orderItemToRow(item, orderId, index))

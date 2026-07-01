@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sin conexión · POS</title>
+    <style>
+      :root { color-scheme: light; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: #fff7e8;
+        color: #a00000;
+        text-align: center;
+        padding: 24px;
+      }
+      .card { max-width: 420px; }
+      h1 { font-size: 1.4rem; font-weight: 800; margin: 0 0 8px; }
+      p { color: #5b4a3a; line-height: 1.5; margin: 0 0 20px; }
+      button {
+        border: 2px solid #a00000;
+        background: #a00000;
+        color: #fff;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 0.8rem;
+        padding: 12px 22px;
+        border-radius: 999px;
+        cursor: pointer;
+      }
+      .hint { margin-top: 16px; font-size: 0.78rem; color: #8a7a68; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Sin conexión</h1>
+      <p>
+        No hay internet en este momento. Esta pantalla aún no se había cargado,
+        por eso no podemos mostrarla sin conexión. Los pedidos que registres se
+        guardan y se envían solos al reconectar.
+      </p>
+      <button onclick="location.reload()">Reintentar</button>
+      <div class="hint">La app se reconecta automáticamente.</div>
+    </div>
+  </body>
+</html>

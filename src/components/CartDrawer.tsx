@@ -60,7 +60,7 @@ import {
   EmptyCartState,
   OptionPicker,
 } from "@/components/cartDrawerParts";
-import { enqueueOrder } from "@/lib/offlineQueue";
+import { enqueueOrder, newClientOrderId } from "@/lib/offlineQueue";
 import {
   doesPlanAllowLocalOrders,
   doesPlanAllowDelivery,
@@ -1095,6 +1095,9 @@ export default function CartDrawer({
       );
 
       const orderPayload = {
+        // Clave de idempotencia: si el envío se reintenta (cola offline), el
+        // servidor reconoce este id y no duplica el pedido. Ver 0018.
+        clientOrderId: newClientOrderId(),
         customerName: customerName.trim() || "Cliente",
         customerPhone: customerPhone.trim(),
         tableNumber: isDeliveryOrder
@@ -1202,7 +1205,7 @@ export default function CartDrawer({
       if (isNetwork && pendingPayload) {
         // Sin conexión: guardamos el pedido localmente; OfflineSync lo enviará
         // al reconectar. No perdemos la venta.
-        enqueueOrder(pendingPayload);
+        await enqueueOrder(pendingPayload);
         items.forEach((item) => removeItem(getCartLineId(item)));
         setLastCreatedOrder({
           id: "Guardado sin conexión",

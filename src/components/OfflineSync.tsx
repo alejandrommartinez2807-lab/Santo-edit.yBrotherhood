@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { CloudOff, RefreshCw } from "lucide-react"
-import { flushQueue, queueSize } from "@/lib/offlineQueue"
+import { flushQueue, migrateLegacyQueue, queueSize } from "@/lib/offlineQueue"
 
 // Indicador de conexión + sincronización de la cola de pedidos offline.
 // Cuando vuelve la conexión (o cada cierto tiempo), reenvía los pedidos
@@ -24,18 +24,22 @@ export default function OfflineSync() {
 
   useEffect(() => {
     setOnline(navigator.onLine)
-    setPending(queueSize())
 
     let cancelled = false
 
+    async function refreshPending() {
+      const size = await queueSize()
+      if (!cancelled) setPending(size)
+    }
+
     async function sync() {
-      if (cancelled || !navigator.onLine || queueSize() === 0) return
+      if (cancelled || !navigator.onLine || (await queueSize()) === 0) return
       setSyncing(true)
       try {
         await flushQueue(submitOrder)
       } finally {
         if (!cancelled) {
-          setPending(queueSize())
+          await refreshPending()
           setSyncing(false)
         }
       }
@@ -55,12 +59,15 @@ export default function OfflineSync() {
     // Reintento periódico + refresco del contador.
     const interval = window.setInterval(() => {
       setOnline(navigator.onLine)
-      setPending(queueSize())
+      refreshPending()
       sync()
     }, 15000)
 
-    // Intento inicial por si quedaron pedidos de una sesión anterior.
-    sync()
+    // Migra pedidos de la cola vieja (localStorage) e intenta enviar lo que
+    // quedó de una sesión anterior.
+    migrateLegacyQueue()
+      .then(refreshPending)
+      .then(sync)
 
     return () => {
       cancelled = true

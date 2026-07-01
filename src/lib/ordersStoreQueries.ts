@@ -32,6 +32,26 @@ export async function loadOrderWithItems(
   return orderRowToLocalOrder(orderRow as Row, items)
 }
 
+// Busca un pedido por su clave de idempotencia (client_order_id). Devuelve el
+// pedido si ya existe (reintento de un envío offline ya procesado) o null.
+export async function findOrderByClientOrderId(
+  clientOrderId: string,
+  branchId?: string | null,
+): Promise<LocalOrder | null> {
+  if (!clientOrderId) return null
+  const supabase = getSupabaseAdmin()
+  let query = supabase
+    .from("orders")
+    .select("id")
+    .eq("client_order_id", clientOrderId)
+    .limit(1)
+  if (branchId) query = query.eq("branch_id", branchId)
+  const { data, error } = await query.maybeSingle()
+
+  if (error || !data) return null
+  return loadOrderWithItems((data as Row).id as string, branchId)
+}
+
 export async function getOrdersFromStore(
   branchId?: string | null,
 ): Promise<LocalOrder[]> {
