@@ -47,6 +47,10 @@ export type MenuProductIngredient = {
   removable?: boolean
   extraPrice?: number
   sortOrder?: number
+  // Vínculo opcional con un insumo del inventario para descuento de stock real.
+  inventoryItemId?: string | null
+  inventoryQuantity?: number
+  inventoryUnit?: string
 }
 
 export type MenuProductSelectionRules = Record<string, unknown>

@@ -8,6 +8,7 @@ import {
   type PublicNavButton,
 } from "./publicPageConfig"
 import { getSupabaseAdmin } from "./supabaseServer"
+import { normalizeBusinessComplexitySettings } from "./businessComplexity"
 import {
   normalizeLocalModuleList,
   normalizeLocalPlanKey,
@@ -949,7 +950,12 @@ export async function getRawBusinessConfig(): Promise<Record<string, unknown>> {
 
 export async function getBusinessConfig() {
   const raw = await readRawBusinessConfig()
-  return applyPlanLocksToBusinessConfig(normalizeBusinessConfig(raw))
+  const normalized = applyPlanLocksToBusinessConfig(normalizeBusinessConfig(raw))
+  // Los ajustes de complejidad (permisos públicos/internos, inventario auto) se
+  // guardan en el mismo blob raw pero fuera del tipo BusinessConfig base. Los
+  // leemos aquí para que los endpoints (privado y público) los expongan con sus
+  // defaults cuando el dueño aún no los ha tocado.
+  return { ...normalized, ...normalizeBusinessComplexitySettings(raw) }
 }
 
 export async function saveBusinessConfig(input: SaveBusinessConfigInput) {

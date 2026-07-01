@@ -7,6 +7,12 @@ import type {
 } from "./ordersCoreTypes"
 
 import * as ordersStore from "./ordersStore"
+import { getBusinessConfig } from "./ordersBusinessConfig"
+import { isInventoryAutoDeductActuallyEnabled } from "./businessComplexity"
+import { applyInventoryConsumption, getInventoryRecipes } from "./ordersInventory"
+import { getMenuProducts } from "./ordersMenu"
+import { computeInventoryConsumption } from "./inventoryConsumption"
+import { captureError } from "./monitoring"
 
 export type {
   ConfirmStaffItemsInput,
@@ -27,7 +33,52 @@ export async function findOrderByClientOrderId(
 }
 
 export async function createOrder(input: CreateOrderInput, branchId?: string | null) {
-  return ordersStore.createOrder(input, branchId)
+  const order = await ordersStore.createOrder(input, branchId)
+
+  // Cierre del lazo de inventario: descuenta stock según recetas (o vínculos de
+  // ingredientes del producto) cuando el dueño activó el descuento automático.
+  // Es "mejor esfuerzo": cualquier fallo se registra pero NUNCA tumba el pedido
+  // ya creado ni la respuesta al cliente.
+  await deductInventoryForOrder(order, branchId).catch((error) => {
+    captureError(error, { route: "ordersCore.createOrder", action: "deductInventory" })
+  })
+
+  return order
+}
+
+async function deductInventoryForOrder(
+  order: Awaited<ReturnType<typeof ordersStore.createOrder>>,
+  branchId?: string | null,
+) {
+  const items = order?.items ?? []
+  if (!items.length) return
+
+  const config = await getBusinessConfig()
+  // Sin módulo de inventario o sin el interruptor global no se hace nada.
+  if (!config.inventoryModuleEnabled || !config.inventoryAutoDeductEnabled) return
+
+  // isInventoryAutoDeductActuallyEnabled = activado Y sin modo de prueba.
+  // En modo de prueba (dry-run) se calcula el consumo pero no se toca el stock.
+  const dryRun = !isInventoryAutoDeductActuallyEnabled(config)
+
+  const [recipes, products] = await Promise.all([
+    getInventoryRecipes(branchId),
+    getMenuProducts({ includeInactive: true }, branchId),
+  ])
+
+  const lines = computeInventoryConsumption({
+    items: items.map((item) => ({ id: item.id, name: item.name, quantity: item.quantity })),
+    recipes,
+    products: products.map((product) => ({
+      id: product.id,
+      inventoryDiscountEnabled: product.inventoryDiscountEnabled,
+      includedIngredients: product.includedIngredients,
+    })),
+  })
+
+  if (!lines.length) return
+
+  await applyInventoryConsumption(lines, branchId, { dryRun })
 }
 
 export async function confirmOrderStaffItems(

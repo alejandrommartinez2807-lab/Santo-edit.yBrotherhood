@@ -3,6 +3,19 @@ import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { canLocalAccessUseModule, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { resolveBranchId } from "@/lib/branch"
 import { enforceApiReadGuards } from "@/lib/apiReadGuards"
+import {
+  getBusinessConfig,
+  getInventory,
+  getInventoryRecipes,
+  getMenuProducts,
+  getSupplierPurchases,
+} from "@/lib/orders"
+import {
+  buildInventoryHealthReport,
+  buildManagerAlerts,
+  buildProductMarginsReport,
+  buildSupplierPayablesReport,
+} from "@/lib/reportAnalytics"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -242,9 +255,58 @@ export async function GET(request: NextRequest) {
     },
   }
 
+  // --- Secciones "2e" (proveedores / márgenes / inventario / alertas) ---
+  // Cada bloque se arma solo si su módulo está activo; si no, queda en null.
+  // managerAlerts siempre se devuelve (usa reportes vacíos como base cuando el
+  // módulo está apagado) para que el panel del dueño tenga algo que mostrar.
+  const config = await getBusinessConfig()
+  const suppliersOn = config.supplierPurchasesModuleEnabled || config.accountsPayableModuleEnabled
+  const inventoryOn = config.inventoryModuleEnabled
+
+  let supplierPayables: ReturnType<typeof buildSupplierPayablesReport> | null = null
+  let supplierPurchases: {
+    summary: { purchases: number; totalUSD: number; totalVES: number }
+    bySupplier: ReturnType<typeof buildSupplierPayablesReport>["bySupplier"]
+  } | null = null
+  if (suppliersOn) {
+    const purchases = await getSupplierPurchases(branchId)
+    supplierPayables = buildSupplierPayablesReport(purchases)
+    supplierPurchases = {
+      summary: {
+        purchases: supplierPayables.summary.purchases,
+        totalUSD: supplierPayables.summary.totalUSD,
+        totalVES: supplierPayables.summary.totalVES,
+      },
+      bySupplier: supplierPayables.bySupplier,
+    }
+  }
+
+  let productMargins: ReturnType<typeof buildProductMarginsReport> | null = null
+  let inventoryHealth: ReturnType<typeof buildInventoryHealthReport> | null = null
+  if (inventoryOn) {
+    const [inventoryItems, recipes, products] = await Promise.all([
+      getInventory(branchId),
+      getInventoryRecipes(branchId),
+      getMenuProducts({}, branchId),
+    ])
+    productMargins = buildProductMarginsReport({ products, recipes, inventoryItems, topProducts })
+    inventoryHealth = buildInventoryHealthReport({ inventoryItems, recipes })
+  }
+
+  const managerAlerts = buildManagerAlerts({
+    payables: supplierPayables ?? buildSupplierPayablesReport([]),
+    margins: productMargins ?? buildProductMarginsReport({ products: [], recipes: [], inventoryItems: [] }),
+    inventory: inventoryHealth ?? buildInventoryHealthReport({ inventoryItems: [], recipes: [] }),
+  })
+
   return NextResponse.json({
     ok: true,
     scope: consolidated ? "all" : "branch",
+    supplierPayables,
+    supplierPurchases,
+    productMargins,
+    inventoryHealth,
+    managerAlerts,
     range: { from: fromISO, to: toISO ?? new Date().toISOString(), label },
     comparison,
     delivery: {

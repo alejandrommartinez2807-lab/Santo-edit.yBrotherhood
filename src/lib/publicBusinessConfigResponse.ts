@@ -1,4 +1,5 @@
 import { BRAND } from "@/lib/brand"
+import { normalizeBusinessComplexitySettings } from "@/lib/businessComplexity"
 import { normalizeProductIds } from "@/lib/productIdList"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { isOnlinePaymentsEnabled } from "@/lib/stripe"
@@ -237,6 +238,9 @@ export function buildPublicBusinessConfigResponse(
   businessConfig: unknown
 ) {
   const config = businessConfig as PublicBusinessConfigSource
+  // Controles de complejidad visibles para el cliente (qué puede hacer al pedir).
+  // Solo se exponen las claves públicas; los permisos internos quedan fuera.
+  const complexity = normalizeBusinessComplexitySettings(config)
   const membershipPlan = normalizeMembershipPlan(config.membershipPlan)
   const membershipPlanMode = normalizeMembershipPlanMode(config.membershipPlanMode)
   const deliveryEnabled = normalizeBoolean(config.deliveryEnabled, true)
@@ -369,6 +373,16 @@ export function buildPublicBusinessConfigResponse(
       : DEFAULT_PUBLIC_CATEGORY_ORDER,
     publicHiddenCategories: normalizePublicHiddenCategoryList(config.publicHiddenCategories),
     publicNavButtons: normalizePublicNavButtons(config.publicNavButtons),
+    publicAllowOrdering: complexity.publicAllowOrdering,
+    publicAllowEatHere: complexity.publicAllowEatHere,
+    publicAllowTakeaway: complexity.publicAllowTakeaway,
+    publicAllowDelivery: complexity.publicAllowDelivery,
+    publicAllowOpenAccounts: complexity.publicAllowOpenAccounts,
+    publicAllowPaymentProofs: complexity.publicAllowPaymentProofs,
+    publicAllowProductCustomization: complexity.publicAllowProductCustomization,
+    publicAllowCustomerNotes: complexity.publicAllowCustomerNotes,
+    publicAllowAttachments: complexity.publicAllowAttachments,
+    publicRequireCustomerPhone: complexity.publicRequireCustomerPhone,
     updatedAt: cleanText(config.updatedAt),
   }
 }

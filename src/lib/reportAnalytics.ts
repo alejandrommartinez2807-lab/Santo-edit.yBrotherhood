@@ -70,6 +70,12 @@ export type ProductMarginInput = {
   category?: string
   price?: unknown
   isActive?: boolean
+  // Respaldo de costo cuando el producto no tiene receta formal: ingredientes
+  // incluidos vinculados a un insumo del inventario (con cantidad por unidad).
+  includedIngredients?: {
+    inventoryItemId?: string | null
+    inventoryQuantity?: unknown
+  }[]
 }
 
 export type InventoryCostInput = {
@@ -340,6 +346,12 @@ export function buildProductMarginsReport(input: {
       const recipe = recipeByProductId.get(Number(product.id))
       const missingIngredients: string[] = []
       let costUSD = 0
+      // Respaldo: si no hay receta, usa los ingredientes incluidos que estén
+      // vinculados a un insumo del inventario (mismo cálculo de costo).
+      const linkedIngredients = recipe
+        ? []
+        : (product.includedIngredients || []).filter((ingredient) => String(ingredient.inventoryItemId || "").trim())
+      const hasCostSource = Boolean(recipe) || linkedIngredients.length > 0
       if (recipe) {
         for (const ingredient of recipe.ingredients || []) {
           const item = itemMap.get(String(ingredient.itemId))
@@ -348,6 +360,14 @@ export function buildProductMarginsReport(input: {
             missingIngredients.push(String(ingredient.itemName || ingredient.itemId || "Insumo sin nombre"))
             continue
           }
+          const unitCost = money(item.equivalentCostUSD) || money(item.costUSD)
+          costUSD += unitCost * qty
+        }
+      } else {
+        for (const ingredient of linkedIngredients) {
+          const item = itemMap.get(String(ingredient.inventoryItemId))
+          const qty = money(ingredient.inventoryQuantity) || 1
+          if (!item) continue
           const unitCost = money(item.equivalentCostUSD) || money(item.costUSD)
           costUSD += unitCost * qty
         }
@@ -368,7 +388,7 @@ export function buildProductMarginsReport(input: {
         costUSD: money(costUSD),
         marginUSD,
         marginPct,
-        hasRecipe: !!recipe,
+        hasRecipe: hasCostSource,
         missingIngredients,
         unitsSold,
         revenueUSD,

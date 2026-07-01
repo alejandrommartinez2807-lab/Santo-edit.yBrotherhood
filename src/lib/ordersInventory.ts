@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "./supabaseServer"
+import type { ConsumptionLine } from "./inventoryConsumption"
 
 export type InventoryItem = {
   id: string
@@ -252,6 +253,81 @@ export async function getInventoryMovements(branchId?: string | null) {
   return (data ?? [])
     .map((row) => inventoryMovementRowToMovement(row as Record<string, unknown>))
     .filter((movement: InventoryMovement) => movement.id && movement.itemId)
+}
+
+// Aplica el consumo calculado de un pedido: descuenta stock y registra un
+// movimiento por cada insumo. En modo simulación (dryRun) no toca la base;
+// devuelve el plan para poder auditarlo/loguear. Es idempotente-friendly solo a
+// nivel de "mejor esfuerzo": el llamador debe envolverlo para que un fallo aquí
+// nunca tumbe el pedido ya creado.
+export async function applyInventoryConsumption(
+  lines: ConsumptionLine[],
+  branchId?: string | null,
+  options: { dryRun?: boolean; reason?: string } = {},
+): Promise<{ dryRun: boolean; applied: ConsumptionLine[] }> {
+  const dryRun = options.dryRun !== false
+  const applied: ConsumptionLine[] = []
+
+  if (!lines.length) return { dryRun, applied }
+
+  const supabase = getSupabaseAdmin()
+
+  // Stock actual de los insumos afectados (una sola consulta).
+  const itemIds = [...new Set(lines.map((line) => line.itemId))]
+  let query = supabase.from("inventory_items").select("id, name, quantity, unit").in("id", itemIds)
+  if (branchId) query = query.eq("branch_id", branchId)
+  const { data: rows } = await query
+
+  const stockById = new Map<string, { name: string; quantity: number; unit: string }>()
+  for (const raw of rows ?? []) {
+    const row = raw as Record<string, unknown>
+    stockById.set(String(row.id), {
+      name: String(row.name || ""),
+      quantity: Number(row.quantity ?? 0) || 0,
+      unit: String(row.unit || ""),
+    })
+  }
+
+  const reason = options.reason || "Consumo automático por pedido"
+  const dateLabel = new Date().toLocaleString("es-VE", { timeZone: "America/Caracas" })
+
+  for (const line of lines) {
+    const stock = stockById.get(line.itemId)
+    if (!stock) continue // el insumo no existe en esta sucursal: se ignora.
+
+    const previousQuantity = stock.quantity
+    // No dejamos stock negativo: se descuenta hasta 0 como máximo.
+    const moved = Math.min(previousQuantity, line.quantity)
+    const finalQuantity = Math.round((previousQuantity - moved + Number.EPSILON) * 10000) / 10000
+
+    if (!dryRun && moved > 0) {
+      await supabase
+        .from("inventory_items")
+        .update({ quantity: finalQuantity, updated_at: new Date().toISOString() })
+        .eq("id", line.itemId)
+
+      await supabase.from("inventory_movements").insert({
+        id: `mov-${Date.now()}-${randomSuffix()}`,
+        branch_id: branchId ?? null,
+        date_label: dateLabel,
+        item_id: line.itemId,
+        item_name: stock.name || line.itemName,
+        movement_type: "Consumo",
+        previous_quantity: previousQuantity,
+        quantity_moved: -moved,
+        final_quantity: finalQuantity,
+        unit: stock.unit || line.unit,
+        reason,
+        related_expense: false,
+        expense_id: "",
+        note: "",
+      })
+    }
+
+    applied.push({ ...line, quantity: moved })
+  }
+
+  return { dryRun, applied }
 }
 
 export async function getInventoryRecipes(branchId?: string | null) {

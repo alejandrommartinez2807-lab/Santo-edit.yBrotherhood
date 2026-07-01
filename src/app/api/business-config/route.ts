@@ -20,6 +20,10 @@ import {
   type LocalModuleKey,
 } from "@/lib/localPlans"
 
+import {
+  BUSINESS_COMPLEXITY_CONFIG_KEYS,
+  normalizeBusinessComplexityProfile,
+} from "@/lib/businessComplexity"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 import {
   normalizePublicCategoryList,
@@ -473,6 +477,18 @@ function normalizeBusinessConfigPayload(
 
   if (hasOwn(source, "defaultViewMode")) {
     config.defaultViewMode = readViewMode(source, "defaultViewMode")
+  }
+
+  // Ajustes de complejidad del negocio (permisos públicos/internos e inventario
+  // automático). Se guardan en el mismo blob; getBusinessConfig los relee con
+  // normalizeBusinessComplexitySettings. Sólo se tocan las claves presentes en
+  // el payload, para no reiniciar el resto en un guardado parcial.
+  for (const key of BUSINESS_COMPLEXITY_CONFIG_KEYS) {
+    if (!hasOwn(source, key)) continue
+    ;(config as Record<string, unknown>)[key] =
+      key === "businessComplexityProfile"
+        ? normalizeBusinessComplexityProfile(source[key])
+        : readBoolean(source, key)
   }
 
   return config

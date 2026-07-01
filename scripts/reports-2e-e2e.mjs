@@ -1,5 +1,7 @@
 // E2E ligero de Reportes 2e contra dev server + Supabase real.
-// No escribe datos: valida que el endpoint responda y traiga las nuevas secciones.
+// Autosuficiente: prende los módulos que alimentan las secciones nuevas
+// (proveedores/compras/cuentas por pagar/inventario) y los restaura al final,
+// igual que smoke hace con lo fiscal. No borra datos del negocio.
 import { readFileSync } from "node:fs"
 
 const BASE = process.env.BASE || "http://localhost:3000"
@@ -14,20 +16,47 @@ let pass = 0
 let fail = 0
 const check = (n, c) => { console.log((c ? "✓" : "✗ FALLA") + " " + n); c ? pass++ : fail++ }
 
-async function main() {
-  const res = await fetch(`${BASE}/api/reports?period=month`, {
-    headers: { "x-admin-password": pwd },
-    cache: "no-store",
-  })
-  const body = await res.json().catch(() => ({}))
+const auth = { "x-admin-password": pwd, "Content-Type": "application/json" }
+const getConfig = () =>
+  fetch(`${BASE}/api/business-config`, { headers: auth, cache: "no-store" })
+    .then((r) => r.json())
+    .then((j) => j.businessConfig || {})
+const saveConfig = (businessConfig) =>
+  fetch(`${BASE}/api/business-config`, { method: "POST", headers: auth, body: JSON.stringify({ businessConfig }) })
 
-  check("endpoint /api/reports responde 200", res.status === 200)
-  check("trae resumen de ventas", typeof body.summary?.totalUSD === "number")
-  check("trae cuentas por pagar", typeof body.supplierPayables?.summary?.pendingUSD === "number")
-  check("trae compras por proveedor", Array.isArray(body.supplierPurchases?.bySupplier))
-  check("trae margen por recetas", typeof body.productMargins?.summary?.recipeCoveragePct === "number")
-  check("trae salud de inventario", typeof body.inventoryHealth?.lowStockCount === "number")
-  check("trae alertas del dueño", Array.isArray(body.managerAlerts))
+// Flags que alimentan las secciones 2e del endpoint de reportes.
+const MODULE_FLAGS = [
+  "suppliersModuleEnabled",
+  "supplierPurchasesModuleEnabled",
+  "accountsPayableModuleEnabled",
+  "inventoryModuleEnabled",
+  "inventoryAlertsModuleEnabled",
+]
+
+async function main() {
+  // Snapshot de los flags para restaurarlos exactamente como estaban.
+  const cur = await getConfig()
+  const original = Object.fromEntries(MODULE_FLAGS.map((k) => [k, cur[k]]))
+
+  try {
+    await saveConfig(Object.fromEntries(MODULE_FLAGS.map((k) => [k, true])))
+
+    const res = await fetch(`${BASE}/api/reports?period=month`, {
+      headers: { "x-admin-password": pwd },
+      cache: "no-store",
+    })
+    const body = await res.json().catch(() => ({}))
+
+    check("endpoint /api/reports responde 200", res.status === 200)
+    check("trae resumen de ventas", typeof body.summary?.totalUSD === "number")
+    check("trae cuentas por pagar", typeof body.supplierPayables?.summary?.pendingUSD === "number")
+    check("trae compras por proveedor", Array.isArray(body.supplierPurchases?.bySupplier))
+    check("trae margen por recetas", typeof body.productMargins?.summary?.recipeCoveragePct === "number")
+    check("trae salud de inventario", typeof body.inventoryHealth?.lowStockCount === "number")
+    check("trae alertas del dueño", Array.isArray(body.managerAlerts))
+  } finally {
+    await saveConfig(original)
+  }
 
   console.log(`\n==== ${pass} OK, ${fail} fallas ====`)
   process.exit(fail ? 1 : 0)

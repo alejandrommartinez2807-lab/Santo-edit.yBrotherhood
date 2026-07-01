@@ -1,19 +1,23 @@
 "use client"
 
 import { BRAND } from "@/lib/brand"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
 import {
   ArrowLeft,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Eye,
   EyeOff,
   Loader2,
   LogIn,
   PackageCheck,
+  Plus,
   RefreshCw,
   Save,
   Search,
   SlidersHorizontal,
+  Trash2,
   XCircle,
 } from "lucide-react"
 import {
@@ -75,9 +79,20 @@ type OptionValue = {
   isActive?: boolean
   sortOrder?: number
   maxQuantity?: number
+  category?: string
   included?: boolean
   removable?: boolean
   extraPrice?: number
+  // Vínculo opcional con un insumo del inventario (para descuento de stock real).
+  inventoryItemId?: string | null
+  inventoryUnit?: string
+  inventoryQuantity?: number
+}
+
+type InventoryOption = {
+  id: string
+  name: string
+  unit: string
 }
 
 type VariationGroup = {
@@ -109,10 +124,10 @@ type MenuProduct = Product & {
 type AdvancedForm = {
   productType: ProductType
   salesChannels: ProductSalesChannel[]
-  variationsText: string
-  addonsText: string
-  includedIngredientsText: string
-  removableIngredientsText: string
+  variations: VariationGroup[]
+  addons: OptionValue[]
+  includedIngredients: OptionValue[]
+  removableIngredients: OptionValue[]
   preparationMinutes: string
   requiresWaiterConfirmation: boolean
   inventoryDiscountEnabled: boolean
@@ -137,15 +152,19 @@ type ApiResponse = {
 const EMPTY_FORM: AdvancedForm = {
   productType: "normal",
   salesChannels: ["local", "takeaway", "delivery"],
-  variationsText: "",
-  addonsText: "",
-  includedIngredientsText: "",
-  removableIngredientsText: "",
+  variations: [],
+  addons: [],
+  includedIngredients: [],
+  removableIngredients: [],
   preparationMinutes: "",
   requiresWaiterConfirmation: false,
   inventoryDiscountEnabled: true,
   maxAddons: "",
   internalRulesNote: "",
+}
+
+function randomRowId(prefix: string) {
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
 }
 
 function normalizeNumber(value: unknown) {
@@ -265,20 +284,6 @@ function normalizeMenuProducts(value: unknown): MenuProduct[] {
     })
 }
 
-function splitCleanLines(value: string) {
-  return value
-    .split(/\n/g)
-    .map((line) => line.trim())
-    .filter(Boolean)
-}
-
-function normalizeLineParts(line: string) {
-  return line
-    .split("|")
-    .map((part) => part.trim())
-    .filter((part, index) => index === 0 || part.length > 0)
-}
-
 function normalizeTextName(value: unknown) {
   return String(value || "").trim()
 }
@@ -293,167 +298,126 @@ function optionId(prefix: string, index: number, name: string) {
     .slice(0, 28)}`
 }
 
-function parseVariationGroupsFromText(value: string): VariationGroup[] {
-  const groups: VariationGroup[] = []
-  let currentGroup: VariationGroup | null = null
+// --- Normalizadores estructurados (reemplazan el antiguo parseo por texto) ---
+// Leen lo guardado (arrays en la columna `config`) hacia el estado del editor,
+// tolerando datos viejos con campos faltantes y aplicando defaults sensatos.
 
-  splitCleanLines(value).forEach((line) => {
-    const groupMatch = line.match(/^\[(.+)]$/)
-
-    if (groupMatch) {
-      const groupName = groupMatch[1].trim()
-
-      if (!groupName) return
-
-      currentGroup = {
-        id: optionId("grupo", groups.length, groupName),
-        name: groupName,
-        type: "single",
-        required: false,
-        minSelections: 0,
-        maxSelections: 1,
-        values: [],
-        sortOrder: groups.length + 1,
-      }
-      groups.push(currentGroup)
-      return
-    }
-
-    const [rawName, rawPriceDelta] = normalizeLineParts(line)
-    const name = normalizeTextName(rawName)
-
-    if (!name) return
-
-    if (!currentGroup) {
-      currentGroup = {
-        id: "grupo-opciones-producto",
-        name: "Opciones del producto",
-        type: "single",
-        required: false,
-        minSelections: 0,
-        maxSelections: 1,
-        values: [],
-        sortOrder: groups.length + 1,
-      }
-      groups.push(currentGroup)
-    }
-
-    currentGroup.values.push({
-      id: optionId("opcion", currentGroup.values.length, name),
-      name,
-      priceDelta: normalizeNumber(rawPriceDelta),
-      isActive: true,
-      sortOrder: currentGroup.values.length + 1,
-    })
-  })
-
-  return groups.filter((group) => group.values.length > 0)
-}
-
-function parseAddonsFromText(value: string): OptionValue[] {
-  return splitCleanLines(value).map((line, index) => {
-    const [rawName, rawPrice, rawMaxQuantity] = normalizeLineParts(line)
-    const name = normalizeTextName(rawName)
-    const maxQuantity = normalizePositiveInteger(rawMaxQuantity) || 1
-
-    return {
-      id: optionId("adicional", index, name),
-      name,
-      price: normalizeNumber(rawPrice),
-      isActive: true,
-      maxQuantity,
-      sortOrder: index + 1,
-    }
-  }).filter((item) => item.name)
-}
-
-function parseIngredientsFromText(value: string, mode: "included" | "removable"): OptionValue[] {
-  return splitCleanLines(value).map((line, index) => {
-    const [rawName, rawExtraPrice] = normalizeLineParts(line)
-    const name = normalizeTextName(rawName)
-
-    return {
-      id: optionId(mode === "included" ? "incluido" : "removible", index, name),
-      name,
-      included: mode === "included",
-      removable: mode === "removable",
-      extraPrice: normalizeNumber(rawExtraPrice),
-      isActive: true,
-      sortOrder: index + 1,
-    }
-  }).filter((item) => item.name)
-}
-
-function variationGroupsToText(value: unknown) {
-  const lines: string[] = []
-
-  normalizeUnknownArray(value).forEach((group) => {
-    if (!group || typeof group !== "object") return
-
-    const source = group as { name?: unknown; values?: unknown[] }
-    const groupName = normalizeTextName(source.name)
-
-    if (groupName) lines.push(`[${groupName}]`)
-
-    if (Array.isArray(source.values)) {
-      source.values.forEach((option) => {
-        if (!option || typeof option !== "object") return
-
-        const child = option as { name?: unknown; priceDelta?: unknown }
-        const name = normalizeTextName(child.name)
-        const priceDelta = normalizeNumber(child.priceDelta)
-
-        if (name) lines.push(`${name} | ${priceDelta}`)
-      })
-      return
-    }
-
-    const direct = group as { name?: unknown; priceDelta?: unknown }
-    const name = normalizeTextName(direct.name)
-
-    if (name && name !== groupName) {
-      lines.push(`${name} | ${normalizeNumber(direct.priceDelta)}`)
-    }
-  })
-
-  return lines.join("\n")
-}
-
-function addonsToText(value: unknown) {
+function normalizeVariationGroups(value: unknown): VariationGroup[] {
   return normalizeUnknownArray(value)
-    .map((item) => {
-      if (!item || typeof item !== "object") return ""
+    .map((raw, groupIndex): VariationGroup | null => {
+      if (!raw || typeof raw !== "object") return null
 
-      const source = item as { name?: unknown; price?: unknown; priceDelta?: unknown; maxQuantity?: unknown }
+      const source = raw as Partial<VariationGroup> & { values?: unknown }
+      const name = normalizeTextName(source.name)
+      const type: "single" | "multiple" = source.type === "multiple" ? "multiple" : "single"
+
+      const values = normalizeUnknownArray(source.values)
+        .map((rawValue, valueIndex): OptionValue | null => {
+          if (!rawValue || typeof rawValue !== "object") return null
+
+          const child = rawValue as Partial<OptionValue>
+          const valueName = normalizeTextName(child.name)
+
+          if (!valueName) return null
+
+          return {
+            id: normalizeTextName(child.id) || optionId("opcion", valueIndex, valueName),
+            name: valueName,
+            priceDelta: normalizeNumber(child.priceDelta),
+            isActive: child.isActive !== false,
+            sortOrder: valueIndex + 1,
+          }
+        })
+        .filter((item): item is OptionValue => Boolean(item))
+
+      const maxSelections = normalizePositiveInteger(source.maxSelections)
+      const minSelections = normalizePositiveInteger(source.minSelections)
+
+      return {
+        id: normalizeTextName(source.id) || optionId("grupo", groupIndex, name || "grupo"),
+        name,
+        type,
+        required: source.required === true,
+        minSelections,
+        maxSelections: type === "single" ? 1 : maxSelections || 0,
+        values,
+        sortOrder: groupIndex + 1,
+      }
+    })
+    .filter((group): group is VariationGroup => Boolean(group))
+}
+
+function normalizeAddonRows(value: unknown): OptionValue[] {
+  return normalizeUnknownArray(value)
+    .map((raw, index): OptionValue | null => {
+      if (!raw || typeof raw !== "object") return null
+
+      const source = raw as Partial<OptionValue>
       const name = normalizeTextName(source.name)
 
-      if (!name) return ""
-
-      const price = normalizeNumber(source.price ?? source.priceDelta)
-      const maxQuantity = normalizePositiveInteger(source.maxQuantity) || 1
-
-      return `${name} | ${price} | ${maxQuantity}`
+      return {
+        id: normalizeTextName(source.id) || optionId("adicional", index, name || "adicional"),
+        name,
+        price: normalizeNumber(source.price ?? source.priceDelta),
+        category: normalizeTextName(source.category),
+        maxQuantity: normalizePositiveInteger(source.maxQuantity) || 1,
+        isActive: source.isActive !== false,
+        sortOrder: index + 1,
+      }
     })
-    .filter(Boolean)
-    .join("\n")
+    .filter((item): item is OptionValue => Boolean(item))
 }
 
-function ingredientsToText(value: unknown) {
+function normalizeIngredientRows(value: unknown, mode: "included" | "removable"): OptionValue[] {
   return normalizeUnknownArray(value)
-    .map((item) => {
-      if (!item || typeof item !== "object") return ""
+    .map((raw, index): OptionValue | null => {
+      if (!raw || typeof raw !== "object") return null
 
-      const source = item as { name?: unknown; extraPrice?: unknown }
+      const source = raw as Partial<OptionValue>
       const name = normalizeTextName(source.name)
+      const inventoryItemId = normalizeTextName(source.inventoryItemId)
 
-      if (!name) return ""
-
-      const extraPrice = normalizeNumber(source.extraPrice)
-
-      return extraPrice > 0 ? `${name} | ${extraPrice}` : name
+      return {
+        id: normalizeTextName(source.id) || optionId(mode === "included" ? "incluido" : "removible", index, name || "ingrediente"),
+        name,
+        included: mode === "included",
+        removable: mode === "removable",
+        extraPrice: normalizeNumber(source.extraPrice),
+        inventoryItemId: inventoryItemId || null,
+        inventoryUnit: normalizeTextName(source.inventoryUnit),
+        inventoryQuantity: normalizeNumber(source.inventoryQuantity),
+        isActive: source.isActive !== false,
+        sortOrder: index + 1,
+      }
     })
-    .filter(Boolean)
-    .join("\n")
+    .filter((item): item is OptionValue => Boolean(item))
+}
+
+// Limpia el estado del editor antes de guardar: descarta filas sin nombre y
+// mantiene min \u2264 m\u00e1x coherente por grupo.
+function cleanVariationGroupsForSave(groups: VariationGroup[]): VariationGroup[] {
+  return groups
+    .map((group) => {
+      const values = group.values.filter((value) => normalizeTextName(value.name))
+      const maxSelections = group.type === "single" ? 1 : normalizePositiveInteger(group.maxSelections)
+      const minSelections = Math.min(
+        normalizePositiveInteger(group.minSelections),
+        maxSelections || values.length,
+      )
+
+      return {
+        ...group,
+        name: normalizeTextName(group.name),
+        values,
+        maxSelections,
+        minSelections: group.required ? Math.max(1, minSelections) : minSelections,
+      }
+    })
+    .filter((group) => group.name && group.values.length > 0)
+}
+
+function cleanRowsForSave(rows: OptionValue[]): OptionValue[] {
+  return rows.filter((row) => normalizeTextName(row.name))
 }
 
 function buildPremiumSummary(input: {
@@ -489,10 +453,10 @@ function buildFormFromProduct(product: MenuProduct): AdvancedForm {
   return {
     productType: normalizeProductType(product.productType),
     salesChannels: normalizeSalesChannels(product.salesChannels),
-    variationsText: variationGroupsToText(product.variations),
-    addonsText: addonsToText(product.addons),
-    includedIngredientsText: ingredientsToText(product.includedIngredients),
-    removableIngredientsText: ingredientsToText(product.removableIngredients),
+    variations: normalizeVariationGroups(product.variations),
+    addons: normalizeAddonRows(product.addons),
+    includedIngredients: normalizeIngredientRows(product.includedIngredients, "included"),
+    removableIngredients: normalizeIngredientRows(product.removableIngredients, "removable"),
     preparationMinutes: product.preparationMinutes ? String(product.preparationMinutes) : "",
     requiresWaiterConfirmation: product.requiresWaiterConfirmation === true,
     inventoryDiscountEnabled: product.inventoryDiscountEnabled !== false,
@@ -544,6 +508,7 @@ export default function AdvancedMenuPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [showPreview, setShowPreview] = useState(false)
+  const [inventoryOptions, setInventoryOptions] = useState<InventoryOption[]>([])
 
   const isLoggedIn = adminPassword.length > 0
 
@@ -564,19 +529,10 @@ export default function AdvancedMenuPage() {
     })
   }, [products, searchText])
 
-  const parsedVariations = useMemo(
-    () => parseVariationGroupsFromText(form.variationsText),
-    [form.variationsText]
-  )
-  const parsedAddons = useMemo(() => parseAddonsFromText(form.addonsText), [form.addonsText])
-  const parsedIncludedIngredients = useMemo(
-    () => parseIngredientsFromText(form.includedIngredientsText, "included"),
-    [form.includedIngredientsText]
-  )
-  const parsedRemovableIngredients = useMemo(
-    () => parseIngredientsFromText(form.removableIngredientsText, "removable"),
-    [form.removableIngredientsText]
-  )
+  const parsedVariations = form.variations
+  const parsedAddons = form.addons
+  const parsedIncludedIngredients = form.includedIngredients
+  const parsedRemovableIngredients = form.removableIngredients
   const preparationMinutes = normalizePositiveInteger(form.preparationMinutes)
   const maxAddons = normalizePositiveInteger(form.maxAddons)
   const premiumSummary = buildPremiumSummary({
@@ -627,6 +583,144 @@ export default function AdvancedMenuPage() {
       : [...currentChannels, channel]
 
     updateForm("salesChannels", nextChannels.length ? nextChannels : [channel])
+  }
+
+  // --- Variaciones (grupos + valores) ---
+  function addVariationGroup() {
+    updateForm("variations", [
+      ...form.variations,
+      {
+        id: randomRowId("grupo"),
+        name: "",
+        type: "single",
+        required: false,
+        minSelections: 0,
+        maxSelections: 1,
+        values: [],
+        sortOrder: form.variations.length + 1,
+      },
+    ])
+  }
+
+  function updateVariationGroup(index: number, patch: Partial<VariationGroup>) {
+    updateForm(
+      "variations",
+      form.variations.map((group, groupIndex) => {
+        if (groupIndex !== index) return group
+        const next = { ...group, ...patch }
+        if (next.type === "single") next.maxSelections = 1
+        return next
+      }),
+    )
+  }
+
+  function removeVariationGroup(index: number) {
+    updateForm("variations", form.variations.filter((_, groupIndex) => groupIndex !== index))
+  }
+
+  function moveVariationGroup(index: number, direction: -1 | 1) {
+    const target = index + direction
+    if (target < 0 || target >= form.variations.length) return
+    const next = [...form.variations]
+    ;[next[index], next[target]] = [next[target], next[index]]
+    updateForm("variations", next)
+  }
+
+  function addVariationValue(groupIndex: number) {
+    updateForm(
+      "variations",
+      form.variations.map((group, index) =>
+        index === groupIndex
+          ? {
+              ...group,
+              values: [
+                ...group.values,
+                { id: randomRowId("opcion"), name: "", priceDelta: 0, isActive: true },
+              ],
+            }
+          : group,
+      ),
+    )
+  }
+
+  function updateVariationValue(groupIndex: number, valueIndex: number, patch: Partial<OptionValue>) {
+    updateForm(
+      "variations",
+      form.variations.map((group, index) =>
+        index === groupIndex
+          ? {
+              ...group,
+              values: group.values.map((value, vIndex) =>
+                vIndex === valueIndex ? { ...value, ...patch } : value,
+              ),
+            }
+          : group,
+      ),
+    )
+  }
+
+  function removeVariationValue(groupIndex: number, valueIndex: number) {
+    updateForm(
+      "variations",
+      form.variations.map((group, index) =>
+        index === groupIndex
+          ? { ...group, values: group.values.filter((_, vIndex) => vIndex !== valueIndex) }
+          : group,
+      ),
+    )
+  }
+
+  // --- Adicionales ---
+  function addAddon() {
+    updateForm("addons", [
+      ...form.addons,
+      { id: randomRowId("adicional"), name: "", price: 0, category: "", maxQuantity: 1, isActive: true },
+    ])
+  }
+
+  function updateAddon(index: number, patch: Partial<OptionValue>) {
+    updateForm(
+      "addons",
+      form.addons.map((addon, addonIndex) => (addonIndex === index ? { ...addon, ...patch } : addon)),
+    )
+  }
+
+  function removeAddon(index: number) {
+    updateForm("addons", form.addons.filter((_, addonIndex) => addonIndex !== index))
+  }
+
+  // --- Ingredientes (incluidos / removibles) ---
+  function addIngredient(field: "includedIngredients" | "removableIngredients") {
+    const mode = field === "includedIngredients" ? "included" : "removable"
+    updateForm(field, [
+      ...form[field],
+      {
+        id: randomRowId(mode),
+        name: "",
+        included: mode === "included",
+        removable: mode === "removable",
+        extraPrice: 0,
+        inventoryItemId: null,
+        inventoryUnit: "",
+        inventoryQuantity: 0,
+        isActive: true,
+      },
+    ])
+  }
+
+  function updateIngredient(
+    field: "includedIngredients" | "removableIngredients",
+    index: number,
+    patch: Partial<OptionValue>,
+  ) {
+    updateForm(
+      field,
+      form[field].map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
+    )
+  }
+
+  function removeIngredient(field: "includedIngredients" | "removableIngredients", index: number) {
+    updateForm(field, form[field].filter((_, itemIndex) => itemIndex !== index))
   }
 
   function selectProduct(product: MenuProduct) {
@@ -685,12 +779,48 @@ export default function AdvancedMenuPage() {
           setForm(buildFormFromProduct(updatedSelectedProduct))
         }
       }
+
+      await loadInventoryOptions(password)
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "No se pudo cargar el menú editable"
       )
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // Insumos para vincular ingredientes al inventario. Es opcional: si el módulo
+  // de inventario está apagado o falla, el editor sigue funcionando sin vínculo.
+  async function loadInventoryOptions(password = adminPassword) {
+    if (!password) return
+
+    try {
+      const response = await fetch("/api/inventory", {
+        headers: { "x-admin-password": password },
+        cache: "no-store",
+      })
+
+      if (!response.ok) {
+        setInventoryOptions([])
+        return
+      }
+
+      const data = (await response.json().catch(() => ({}))) as {
+        inventory?: Array<{ id?: unknown; name?: unknown; unit?: unknown }>
+      }
+
+      setInventoryOptions(
+        (data.inventory || [])
+          .map((item) => ({
+            id: String(item.id || "").trim(),
+            name: String(item.name || "").trim(),
+            unit: String(item.unit || "").trim(),
+          }))
+          .filter((item) => item.id && item.name),
+      )
+    } catch {
+      setInventoryOptions([])
     }
   }
 
@@ -792,10 +922,10 @@ export default function AdvancedMenuPage() {
           ...selectedProduct,
           productType: form.productType,
           salesChannels: normalizeSalesChannels(form.salesChannels),
-          variations: parsedVariations,
-          addons: parsedAddons,
-          includedIngredients: parsedIncludedIngredients,
-          removableIngredients: parsedRemovableIngredients,
+          variations: cleanVariationGroupsForSave(parsedVariations),
+          addons: cleanRowsForSave(parsedAddons),
+          includedIngredients: cleanRowsForSave(parsedIncludedIngredients),
+          removableIngredients: cleanRowsForSave(parsedRemovableIngredients),
           selectionRules,
           preparationMinutes,
           requiresWaiterConfirmation: form.requiresWaiterConfirmation,
@@ -1174,37 +1304,53 @@ export default function AdvancedMenuPage() {
                     </div>
                   </div>
 
-                  <AdvancedTextArea
-                    label="Variaciones"
-                    value={form.variationsText}
-                    onChange={(value) => updateForm("variationsText", value)}
-                    placeholder={"[Tamaño]\nNormal | 0\nGrande | 1\n[Proteína]\nPolaca | 0.5"}
-                    helper="Usa un grupo entre corchetes y luego una opción por línea. Formato: Nombre | ajuste en USD."
-                  />
+                  <div className="xl:col-span-2">
+                    <VariationsBuilder
+                      groups={form.variations}
+                      onAddGroup={addVariationGroup}
+                      onUpdateGroup={updateVariationGroup}
+                      onRemoveGroup={removeVariationGroup}
+                      onMoveGroup={moveVariationGroup}
+                      onAddValue={addVariationValue}
+                      onUpdateValue={updateVariationValue}
+                      onRemoveValue={removeVariationValue}
+                    />
+                  </div>
 
-                  <AdvancedTextArea
-                    label="Adicionales"
-                    value={form.addonsText}
-                    onChange={(value) => updateForm("addonsText", value)}
-                    placeholder={"Tocineta | 1 | 2\nQueso extra | 0.5 | 3\nSalsa especial | 0.5 | 1"}
-                    helper="Formato: Nombre | precio USD | cantidad máxima."
-                  />
+                  <div className="xl:col-span-2">
+                    <AddonsBuilder
+                      addons={form.addons}
+                      onAdd={addAddon}
+                      onUpdate={updateAddon}
+                      onRemove={removeAddon}
+                    />
+                  </div>
 
-                  <AdvancedTextArea
-                    label="Ingredientes incluidos"
-                    value={form.includedIngredientsText}
-                    onChange={(value) => updateForm("includedIngredientsText", value)}
-                    placeholder={"Papas\nCebolla\nEnsalada\nSalsa de la casa"}
-                    helper="Ingredientes base del producto. Una línea por ingrediente."
-                  />
+                  <div className="xl:col-span-2">
+                    <IngredientsBuilder
+                      title="Ingredientes incluidos"
+                      helper="Ingredientes base del producto. Vincúlalos a un insumo para descontar stock."
+                      rows={form.includedIngredients}
+                      inventoryOptions={inventoryOptions}
+                      showExtraPrice={false}
+                      onAdd={() => addIngredient("includedIngredients")}
+                      onUpdate={(index, patch) => updateIngredient("includedIngredients", index, patch)}
+                      onRemove={(index) => removeIngredient("includedIngredients", index)}
+                    />
+                  </div>
 
-                  <AdvancedTextArea
-                    label="Ingredientes removibles"
-                    value={form.removableIngredientsText}
-                    onChange={(value) => updateForm("removableIngredientsText", value)}
-                    placeholder={"Sin cebolla\nSin ensalada\nSin salsa"}
-                    helper="Opciones que el personal puede retirar cuando el cliente lo pida."
-                  />
+                  <div className="xl:col-span-2">
+                    <IngredientsBuilder
+                      title="Ingredientes removibles / extras"
+                      helper="Lo que el cliente puede quitar o agregar. Usa precio extra si cobrar el añadido."
+                      rows={form.removableIngredients}
+                      inventoryOptions={inventoryOptions}
+                      showExtraPrice
+                      onAdd={() => addIngredient("removableIngredients")}
+                      onUpdate={(index, patch) => updateIngredient("removableIngredients", index, patch)}
+                      onRemove={(index) => removeIngredient("removableIngredients", index)}
+                    />
+                  </div>
 
                   <InputField
                     label="Tiempo preparación minutos"
@@ -1444,5 +1590,396 @@ function ToggleCard({
         {checked ? activeLabel : inactiveLabel}
       </span>
     </button>
+  )
+}
+
+const ROW_INPUT_CLASS =
+  "w-full rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]"
+
+const SECTION_CLASS =
+  "rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4"
+
+function numberFromInput(value: string) {
+  const parsed = Number(String(value || "").replace(",", "."))
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+function SectionHeader({
+  title,
+  helper,
+  onAdd,
+  addLabel,
+}: {
+  title: string
+  helper?: string
+  onAdd: () => void
+  addLabel: string
+}) {
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-2">
+      <div>
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+          {title}
+        </p>
+        {helper && (
+          <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/58">{helper}</p>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={onAdd}
+        className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink)]"
+      >
+        <Plus size={14} />
+        {addLabel}
+      </button>
+    </div>
+  )
+}
+
+function IconButton({
+  onClick,
+  label,
+  disabled,
+  children,
+}: {
+  onClick: () => void
+  label: string
+  disabled?: boolean
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      title={label}
+      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[var(--brand-primary)]/30 bg-white text-[var(--brand-primary)] disabled:opacity-35"
+    >
+      {children}
+    </button>
+  )
+}
+
+function VariationsBuilder({
+  groups,
+  onAddGroup,
+  onUpdateGroup,
+  onRemoveGroup,
+  onMoveGroup,
+  onAddValue,
+  onUpdateValue,
+  onRemoveValue,
+}: {
+  groups: VariationGroup[]
+  onAddGroup: () => void
+  onUpdateGroup: (index: number, patch: Partial<VariationGroup>) => void
+  onRemoveGroup: (index: number) => void
+  onMoveGroup: (index: number, direction: -1 | 1) => void
+  onAddValue: (groupIndex: number) => void
+  onUpdateValue: (groupIndex: number, valueIndex: number, patch: Partial<OptionValue>) => void
+  onRemoveValue: (groupIndex: number, valueIndex: number) => void
+}) {
+  return (
+    <div className={SECTION_CLASS}>
+      <SectionHeader
+        title="Variaciones"
+        helper="Grupos de opciones (tamaño, proteína…). Define si es de selección única o múltiple, si es obligatorio y su ajuste de precio."
+        onAdd={onAddGroup}
+        addLabel="Agregar grupo"
+      />
+
+      {groups.length === 0 && (
+        <p className="mt-3 text-sm font-bold text-[var(--brand-ink-2)]/55">
+          Sin grupos de variación. Agrega uno para ofrecer opciones al cliente.
+        </p>
+      )}
+
+      <div className="mt-3 space-y-4">
+        {groups.map((group, groupIndex) => (
+          <div key={group.id || groupIndex} className="rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                value={group.name}
+                onChange={(event) => onUpdateGroup(groupIndex, { name: event.target.value })}
+                placeholder="Nombre del grupo (ej: Tamaño)"
+                className={`${ROW_INPUT_CLASS} flex-1 min-w-[160px]`}
+              />
+              <IconButton onClick={() => onMoveGroup(groupIndex, -1)} label="Subir grupo" disabled={groupIndex === 0}>
+                <ChevronUp size={16} />
+              </IconButton>
+              <IconButton onClick={() => onMoveGroup(groupIndex, 1)} label="Bajar grupo" disabled={groupIndex === groups.length - 1}>
+                <ChevronDown size={16} />
+              </IconButton>
+              <IconButton onClick={() => onRemoveGroup(groupIndex)} label="Eliminar grupo">
+                <Trash2 size={16} />
+              </IconButton>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <div className="inline-flex overflow-hidden rounded-xl border-2 border-[var(--brand-primary)]/25">
+                {(["single", "multiple"] as const).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => onUpdateGroup(groupIndex, { type })}
+                    className={`px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] ${
+                      group.type === type
+                        ? "bg-[var(--brand-accent)] text-[var(--brand-ink)]"
+                        : "bg-white text-[var(--brand-primary)]"
+                    }`}
+                  >
+                    {type === "single" ? "Única" : "Múltiple"}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => onUpdateGroup(groupIndex, { required: !group.required })}
+                className={`rounded-xl border-2 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] ${
+                  group.required
+                    ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
+                    : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-primary)]"
+                }`}
+              >
+                {group.required ? "Obligatorio" : "Opcional"}
+              </button>
+
+              {group.type === "multiple" && (
+                <label className="inline-flex items-center gap-1 text-[0.62rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]">
+                  Máx
+                  <input
+                    value={group.maxSelections ? String(group.maxSelections) : ""}
+                    onChange={(event) =>
+                      onUpdateGroup(groupIndex, { maxSelections: Math.round(numberFromInput(event.target.value)) })
+                    }
+                    inputMode="numeric"
+                    placeholder="0"
+                    className={`${ROW_INPUT_CLASS} w-16`}
+                  />
+                </label>
+              )}
+            </div>
+
+            <div className="mt-3 space-y-2">
+              {group.values.map((value, valueIndex) => (
+                <div key={value.id || valueIndex} className="flex flex-wrap items-center gap-2">
+                  <input
+                    value={value.name}
+                    onChange={(event) => onUpdateValue(groupIndex, valueIndex, { name: event.target.value })}
+                    placeholder="Opción (ej: Grande)"
+                    className={`${ROW_INPUT_CLASS} flex-1 min-w-[140px]`}
+                  />
+                  <label className="inline-flex items-center gap-1 text-[0.62rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]">
+                    ± USD
+                    <input
+                      value={value.priceDelta ? String(value.priceDelta) : ""}
+                      onChange={(event) =>
+                        onUpdateValue(groupIndex, valueIndex, { priceDelta: numberFromInput(event.target.value) })
+                      }
+                      inputMode="decimal"
+                      placeholder="0"
+                      className={`${ROW_INPUT_CLASS} w-20`}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => onUpdateValue(groupIndex, valueIndex, { isActive: value.isActive === false })}
+                    className={`rounded-lg border-2 px-2 py-1.5 text-[0.55rem] font-black uppercase tracking-[0.08em] ${
+                      value.isActive === false
+                        ? "border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] text-[var(--brand-primary)]/55"
+                        : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)]"
+                    }`}
+                  >
+                    {value.isActive === false ? "Pausada" : "Activa"}
+                  </button>
+                  <IconButton onClick={() => onRemoveValue(groupIndex, valueIndex)} label="Eliminar opción">
+                    <Trash2 size={15} />
+                  </IconButton>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => onAddValue(groupIndex)}
+                className="inline-flex items-center gap-1 rounded-full border-2 border-dashed border-[var(--brand-primary)]/40 bg-white px-3 py-1.5 text-[0.6rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]"
+              >
+                <Plus size={13} />
+                Agregar opción
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function AddonsBuilder({
+  addons,
+  onAdd,
+  onUpdate,
+  onRemove,
+}: {
+  addons: OptionValue[]
+  onAdd: () => void
+  onUpdate: (index: number, patch: Partial<OptionValue>) => void
+  onRemove: (index: number) => void
+}) {
+  return (
+    <div className={SECTION_CLASS}>
+      <SectionHeader
+        title="Adicionales"
+        helper="Extras que el cliente puede sumar (con precio, categoría y cantidad máxima)."
+        onAdd={onAdd}
+        addLabel="Agregar adicional"
+      />
+
+      {addons.length === 0 && (
+        <p className="mt-3 text-sm font-bold text-[var(--brand-ink-2)]/55">
+          Sin adicionales. Agrega uno para permitir extras pagados.
+        </p>
+      )}
+
+      <div className="mt-3 space-y-2">
+        {addons.map((addon, index) => (
+          <div key={addon.id || index} className="flex flex-wrap items-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white p-2">
+            <input
+              value={addon.name}
+              onChange={(event) => onUpdate(index, { name: event.target.value })}
+              placeholder="Nombre (ej: Tocineta)"
+              className={`${ROW_INPUT_CLASS} flex-1 min-w-[150px]`}
+            />
+            <input
+              value={addon.category || ""}
+              onChange={(event) => onUpdate(index, { category: event.target.value })}
+              placeholder="Categoría"
+              className={`${ROW_INPUT_CLASS} w-28`}
+            />
+            <label className="inline-flex items-center gap-1 text-[0.62rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]">
+              USD
+              <input
+                value={addon.price ? String(addon.price) : ""}
+                onChange={(event) => onUpdate(index, { price: numberFromInput(event.target.value) })}
+                inputMode="decimal"
+                placeholder="0"
+                className={`${ROW_INPUT_CLASS} w-20`}
+              />
+            </label>
+            <label className="inline-flex items-center gap-1 text-[0.62rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]">
+              Máx
+              <input
+                value={addon.maxQuantity ? String(addon.maxQuantity) : ""}
+                onChange={(event) => onUpdate(index, { maxQuantity: Math.round(numberFromInput(event.target.value)) })}
+                inputMode="numeric"
+                placeholder="1"
+                className={`${ROW_INPUT_CLASS} w-16`}
+              />
+            </label>
+            <IconButton onClick={() => onRemove(index)} label="Eliminar adicional">
+              <Trash2 size={15} />
+            </IconButton>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function IngredientsBuilder({
+  title,
+  helper,
+  rows,
+  inventoryOptions,
+  showExtraPrice,
+  onAdd,
+  onUpdate,
+  onRemove,
+}: {
+  title: string
+  helper?: string
+  rows: OptionValue[]
+  inventoryOptions: InventoryOption[]
+  showExtraPrice: boolean
+  onAdd: () => void
+  onUpdate: (index: number, patch: Partial<OptionValue>) => void
+  onRemove: (index: number) => void
+}) {
+  return (
+    <div className={SECTION_CLASS}>
+      <SectionHeader title={title} helper={helper} onAdd={onAdd} addLabel="Agregar ingrediente" />
+
+      {rows.length === 0 && (
+        <p className="mt-3 text-sm font-bold text-[var(--brand-ink-2)]/55">Sin ingredientes registrados.</p>
+      )}
+
+      <div className="mt-3 space-y-2">
+        {rows.map((row, index) => (
+          <div key={row.id || index} className="flex flex-wrap items-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white p-2">
+            <input
+              value={row.name}
+              onChange={(event) => onUpdate(index, { name: event.target.value })}
+              placeholder="Ingrediente"
+              className={`${ROW_INPUT_CLASS} flex-1 min-w-[150px]`}
+            />
+
+            {inventoryOptions.length > 0 && (
+              <select
+                value={row.inventoryItemId || ""}
+                onChange={(event) => {
+                  const item = inventoryOptions.find((option) => option.id === event.target.value)
+                  onUpdate(index, {
+                    inventoryItemId: item ? item.id : null,
+                    inventoryUnit: item ? item.unit : "",
+                  })
+                }}
+                className={`${ROW_INPUT_CLASS} w-44`}
+              >
+                <option value="">Sin vínculo de inventario</option>
+                {inventoryOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.name}
+                    {option.unit ? ` (${option.unit})` : ""}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {inventoryOptions.length > 0 && row.inventoryItemId && (
+              <label className="inline-flex items-center gap-1 text-[0.62rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]">
+                Cant.
+                <input
+                  value={row.inventoryQuantity ? String(row.inventoryQuantity) : ""}
+                  onChange={(event) => onUpdate(index, { inventoryQuantity: numberFromInput(event.target.value) })}
+                  inputMode="decimal"
+                  placeholder="1"
+                  title={`Cantidad de insumo por unidad vendida${row.inventoryUnit ? ` (${row.inventoryUnit})` : ""}`}
+                  className={`${ROW_INPUT_CLASS} w-16`}
+                />
+              </label>
+            )}
+
+            {showExtraPrice && (
+              <label className="inline-flex items-center gap-1 text-[0.62rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]">
+                Extra USD
+                <input
+                  value={row.extraPrice ? String(row.extraPrice) : ""}
+                  onChange={(event) => onUpdate(index, { extraPrice: numberFromInput(event.target.value) })}
+                  inputMode="decimal"
+                  placeholder="0"
+                  className={`${ROW_INPUT_CLASS} w-20`}
+                />
+              </label>
+            )}
+
+            <IconButton onClick={() => onRemove(index)} label="Eliminar ingrediente">
+              <Trash2 size={15} />
+            </IconButton>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
