@@ -23,9 +23,13 @@ export default function OfflineSync() {
   const [syncing, setSyncing] = useState(false)
 
   useEffect(() => {
-    setOnline(navigator.onLine)
-
     let cancelled = false
+
+    // Difiere el setState inicial un tick para no hacerlo síncrono dentro
+    // del efecto (react-hooks/set-state-in-effect).
+    const onlineTimer = setTimeout(() => {
+      if (!cancelled) setOnline(navigator.onLine)
+    }, 0)
 
     async function refreshPending() {
       const size = await queueSize()
@@ -71,6 +75,7 @@ export default function OfflineSync() {
 
     return () => {
       cancelled = true
+      clearTimeout(onlineTimer)
       window.removeEventListener("online", handleOnline)
       window.removeEventListener("offline", handleOffline)
       window.clearInterval(interval)

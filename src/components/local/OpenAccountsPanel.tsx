@@ -502,7 +502,12 @@ export function OpenAccountsPanel({
   useEffect(() => {
     if (!canManage || !cleanPreferredTableName) return;
 
-    setForm((current) => {
+    // Difiere el setState un tick para no hacerlo síncrono en el efecto.
+    const timer = setTimeout(() => syncFormWithPreferredTable(), 0);
+    return () => clearTimeout(timer);
+
+    function syncFormWithPreferredTable() {
+      setForm((current) => {
       if (
         getNormalizedTable(current.tableNumber) ===
         getNormalizedTable(cleanPreferredTableName)
@@ -510,12 +515,13 @@ export function OpenAccountsPanel({
         return current;
       }
 
-      return {
-        ...current,
-        tableNumber: cleanPreferredTableName,
-        customerName: current.customerName.trim() || cleanPreferredTableName,
-      };
-    });
+        return {
+          ...current,
+          tableNumber: cleanPreferredTableName,
+          customerName: current.customerName.trim() || cleanPreferredTableName,
+        };
+      });
+    }
   }, [canManage, cleanPreferredTableName]);
 
   async function loadOpenAccounts(
@@ -893,7 +899,8 @@ export function OpenAccountsPanel({
 
   useEffect(() => {
     if (!adminPassword) return;
-    loadOpenAccounts(true);
+    const timer = setTimeout(() => loadOpenAccounts(true), 0);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminPassword, orders.length]);
 

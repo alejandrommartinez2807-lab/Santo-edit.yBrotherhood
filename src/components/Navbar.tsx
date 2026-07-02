@@ -169,11 +169,15 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
   useEffect(() => {
     let isMounted = true
 
-    const cachedConfig = readCachedPublicConfig()
+    // Difiere el setState un tick para no hacerlo síncrono dentro del
+    // efecto (react-hooks/set-state-in-effect).
+    const cacheTimer = setTimeout(() => {
+      const cachedConfig = readCachedPublicConfig()
 
-    if (cachedConfig && isMounted) {
-      setBusinessConfig(cachedConfig)
-    }
+      if (cachedConfig && isMounted) {
+        setBusinessConfig(cachedConfig)
+      }
+    }, 0)
 
     async function loadPublicConfig() {
       try {
@@ -204,6 +208,7 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
 
     return () => {
       isMounted = false
+      clearTimeout(cacheTimer)
     }
   }, [])
 

@@ -138,7 +138,9 @@ export default function PublicPromotion() {
   }, [])
 
   useEffect(() => {
-    setImageFailed(false)
+    // Difiere el reset un tick para no hacer setState síncrono en el efecto.
+    const timer = setTimeout(() => setImageFailed(false), 0)
+    return () => clearTimeout(timer)
   }, [promotionConfig?.promotionImage])
 
   const canShowPromotion = useMemo(() => {

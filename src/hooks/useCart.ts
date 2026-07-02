@@ -243,15 +243,27 @@ export function useCart() {
   const [items, setItems] = useState<CartItem[]>([])
 
   useEffect(() => {
-    try {
-      const savedCart = localStorage.getItem(CART_STORAGE_KEY)
+    // Lee el storage de forma síncrona (antes de que el efecto de guardado
+    // pise el carrito con el estado inicial vacío) y difiere solo el
+    // setState un tick (react-hooks/set-state-in-effect).
+    let savedCart: string | null = null
 
-      if (savedCart) {
-        setItems(normalizeCartItems(JSON.parse(savedCart)))
-      }
+    try {
+      savedCart = localStorage.getItem(CART_STORAGE_KEY)
     } catch {
-      setItems([])
+      savedCart = null
     }
+
+    if (!savedCart) return
+
+    const timer = setTimeout(() => {
+      try {
+        setItems(normalizeCartItems(JSON.parse(String(savedCart))))
+      } catch {
+        setItems([])
+      }
+    }, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {

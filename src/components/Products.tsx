@@ -258,22 +258,27 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
       }
     }
 
-    try {
-      const rawFavorites = window.localStorage.getItem(
-        PUBLIC_MENU_FAVORITES_STORAGE_KEY,
-      )
-      const parsedFavorites = rawFavorites ? JSON.parse(rawFavorites) : []
+    // Difiere la lectura de favoritos un tick para no hacer setState
+    // síncrono dentro del efecto (react-hooks/set-state-in-effect).
+    const favoritesTimer = setTimeout(() => {
+      try {
+        const rawFavorites = window.localStorage.getItem(
+          PUBLIC_MENU_FAVORITES_STORAGE_KEY,
+        )
+        const parsedFavorites = rawFavorites ? JSON.parse(rawFavorites) : []
 
-      if (Array.isArray(parsedFavorites)) {
-        applyFavoriteIds(parsedFavorites.map((item) => Number(item)))
+        if (Array.isArray(parsedFavorites)) {
+          applyFavoriteIds(parsedFavorites.map((item) => Number(item)))
+        }
+      } catch {
+        setFavoriteProductIds([])
       }
-    } catch {
-      setFavoriteProductIds([])
-    }
+    }, 0)
 
     window.addEventListener("santo:favorites-changed", handleFavoritesChanged)
 
     return () => {
+      clearTimeout(favoritesTimer)
       window.removeEventListener(
         "santo:favorites-changed",
         handleFavoritesChanged,
@@ -389,7 +394,8 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
 
   useEffect(() => {
     if (!visibleMenuCategories.includes(selectedCategory)) {
-      setSelectedCategory("Todos")
+      const timer = setTimeout(() => setSelectedCategory("Todos"), 0)
+      return () => clearTimeout(timer)
     }
   }, [selectedCategory, visibleMenuCategories])
 

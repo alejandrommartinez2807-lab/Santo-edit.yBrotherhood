@@ -124,7 +124,9 @@ export function LocalTableQrLinksPanel({
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    setBrowserBaseUrl(window.location.origin);
+    // Difiere el setState un tick para no hacerlo síncrono en el efecto.
+    const timer = setTimeout(() => setBrowserBaseUrl(window.location.origin), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const activeTables = useMemo(

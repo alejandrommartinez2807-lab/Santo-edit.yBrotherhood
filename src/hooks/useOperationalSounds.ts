@@ -289,11 +289,15 @@ export function useOperationalSounds({
   const [businessAllowsSound, setBusinessAllowsSound] = useState(true)
 
   useEffect(() => {
-    try {
-      setUserWantsSound(window.localStorage.getItem(storageKey) === "true")
-    } catch {
-      setUserWantsSound(false)
-    }
+    // Difiere la lectura un tick para no hacer setState síncrono en el efecto.
+    const timer = setTimeout(() => {
+      try {
+        setUserWantsSound(window.localStorage.getItem(storageKey) === "true")
+      } catch {
+        setUserWantsSound(false)
+      }
+    }, 0)
+    return () => clearTimeout(timer)
   }, [storageKey])
 
   useEffect(() => {

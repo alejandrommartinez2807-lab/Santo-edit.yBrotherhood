@@ -414,55 +414,65 @@ export default function CartDrawer({
   }, [branchSelection.selectedBranchId]);
 
   useEffect(() => {
-    const nextQuickPlaces = getActivePublicLocalTableNames(
-      publicConfig.localTables,
-    );
+    // Difiere los setState un tick para no hacerlos síncronos dentro del
+    // efecto (react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => {
+      const nextQuickPlaces = getActivePublicLocalTableNames(
+        publicConfig.localTables,
+      );
 
-    setQuickPlaces(nextQuickPlaces);
+      setQuickPlaces(nextQuickPlaces);
+    }, 0);
+    return () => clearTimeout(timer);
   }, [publicConfig.localTables]);
 
   useEffect(() => {
-    const requestedTableContext = getRequestedLocalTableContextFromUrl();
-    const resolvedTable = resolveRequestedLocalTableName(
-      requestedTableContext.requestedTable,
-      publicConfig.localTables,
-    );
+    const timer = setTimeout(() => {
+      const requestedTableContext = getRequestedLocalTableContextFromUrl();
+      const resolvedTable = resolveRequestedLocalTableName(
+        requestedTableContext.requestedTable,
+        publicConfig.localTables,
+      );
 
-    if (!requestedTableContext.requestedTable) {
-      setQrTableNotice(null);
-      return;
-    }
+      if (!requestedTableContext.requestedTable) {
+        setQrTableNotice(null);
+        return;
+      }
 
-    if (resolvedTable) {
-      setOrderType("Comer aquí");
-      setTableNumber(resolvedTable);
-      setQrTableNotice({
-        requestedTable: requestedTableContext.requestedTable,
-        tableName: resolvedTable,
-        isQrLink: requestedTableContext.isQrLink,
-        status: "valid",
-      });
-      return;
-    }
+      if (resolvedTable) {
+        setOrderType("Comer aquí");
+        setTableNumber(resolvedTable);
+        setQrTableNotice({
+          requestedTable: requestedTableContext.requestedTable,
+          tableName: resolvedTable,
+          isQrLink: requestedTableContext.isQrLink,
+          status: "valid",
+        });
+        return;
+      }
 
-    if (publicConfig.localTables.length > 0) {
-      setQrTableNotice({
-        requestedTable: requestedTableContext.requestedTable,
-        tableName: "",
-        isQrLink: requestedTableContext.isQrLink,
-        status: "invalid",
-      });
-    }
+      if (publicConfig.localTables.length > 0) {
+        setQrTableNotice({
+          requestedTable: requestedTableContext.requestedTable,
+          tableName: "",
+          isQrLink: requestedTableContext.isQrLink,
+          status: "invalid",
+        });
+      }
+    }, 0);
+    return () => clearTimeout(timer);
   }, [publicConfig.localTables]);
 
   useEffect(() => {
     const cleanTable = tableNumber.trim();
 
     if (orderType !== "Comer aquí" || !cleanTable) {
-      setTableAccountNotice(null);
-      setAttachToTableOpenAccount(false);
-      setIsLoadingTableAccountNotice(false);
-      return;
+      const resetTimer = setTimeout(() => {
+        setTableAccountNotice(null);
+        setAttachToTableOpenAccount(false);
+        setIsLoadingTableAccountNotice(false);
+      }, 0);
+      return () => clearTimeout(resetTimer);
     }
 
     let ignore = false;
@@ -607,64 +617,74 @@ export default function CartDrawer({
 
   useEffect(() => {
     if (!canRegisterOrdersInPanel && isOrderModalOpen) {
-      closeOrderModal();
+      const timer = setTimeout(closeOrderModal, 0);
+      return () => clearTimeout(timer);
     }
   }, [canRegisterOrdersInPanel, isOrderModalOpen]);
 
   useEffect(() => {
     if (!isPublicDeliveryAvailable && orderType === "Delivery") {
-      setOrderType("Comer aquí");
-      setTableNumber("");
-      setAttachToTableOpenAccount(false);
-      setDeliveryAddress("");
-      setDeliveryReference("");
-      setDeliveryZone("");
-      setPaymentMethod("");
-      setIsZonePickerOpen(false);
-      setIsPaymentPickerOpen(false);
+      const timer = setTimeout(() => {
+        setOrderType("Comer aquí");
+        setTableNumber("");
+        setAttachToTableOpenAccount(false);
+        setDeliveryAddress("");
+        setDeliveryReference("");
+        setDeliveryZone("");
+        setPaymentMethod("");
+        setIsZonePickerOpen(false);
+        setIsPaymentPickerOpen(false);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [isPublicDeliveryAvailable, orderType]);
 
   useEffect(() => {
     if (publicConfig.localTables.length > 0) return;
 
-    try {
-      const storedLocations = window.localStorage.getItem(
-        LOCATIONS_STORAGE_KEY,
-      );
+    const timer = setTimeout(() => {
+      try {
+        const storedLocations = window.localStorage.getItem(
+          LOCATIONS_STORAGE_KEY,
+        );
 
-      if (!storedLocations) return;
+        if (!storedLocations) return;
 
-      const parsedLocations = JSON.parse(storedLocations);
+        const parsedLocations = JSON.parse(storedLocations);
 
-      if (!Array.isArray(parsedLocations)) return;
+        if (!Array.isArray(parsedLocations)) return;
 
-      const cleanLocations = parsedLocations
-        .map((location) => String(location || "").trim())
-        .filter(Boolean);
+        const cleanLocations = parsedLocations
+          .map((location) => String(location || "").trim())
+          .filter(Boolean);
 
-      if (cleanLocations.length > 0) {
-        setQuickPlaces(cleanLocations);
+        if (cleanLocations.length > 0) {
+          setQuickPlaces(cleanLocations);
+        }
+      } catch {
+        setQuickPlaces(DEFAULT_QUICK_PLACES);
       }
-    } catch {
-      setQuickPlaces(DEFAULT_QUICK_PLACES);
-    }
+    }, 0);
+    return () => clearTimeout(timer);
   }, [publicConfig.localTables.length]);
 
   useEffect(() => {
     if (!isOpen) return;
 
     if (!isPublicDeliveryAvailable) {
-      setDeliveryZones([]);
-      setDeliveryZonesError(null);
-      setIsLoadingDeliveryZones(false);
-      return;
+      const resetTimer = setTimeout(() => {
+        setDeliveryZones([]);
+        setDeliveryZonesError(null);
+        setIsLoadingDeliveryZones(false);
+      }, 0);
+      return () => clearTimeout(resetTimer);
     }
 
     let ignore = false;
 
     async function loadDeliveryZones() {
       try {
+        if (ignore) return;
         setIsLoadingDeliveryZones(true);
         setDeliveryZonesError(null);
 
@@ -701,10 +721,11 @@ export default function CartDrawer({
       }
     }
 
-    loadDeliveryZones();
+    const timer = setTimeout(loadDeliveryZones, 0);
 
     return () => {
       ignore = true;
+      clearTimeout(timer);
     };
   }, [isOpen, isPublicDeliveryAvailable]);
 
