@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import Image from "next/image"
 import {
   Flame,
   MapPin,
@@ -253,9 +254,12 @@ export default function Hero() {
 
       <div className="relative mx-auto grid max-w-7xl items-center gap-10 md:grid-cols-[1fr_0.9fr]">
         <div className="text-center md:text-left">
-          <img
-            src={BRAND.logoUrl || (BRAND.logoUrl || "/logoremovebg.png")}
+          <Image
+            src={BRAND.logoUrl || "/logoremovebg.png"}
             alt={businessConfig.businessName}
+            width={384}
+            height={384}
+            unoptimized
             className="mx-auto mb-7 h-72 w-72 object-contain drop-shadow-[0_14px_24px_rgba(var(--brand-primary-rgb),0.18)] sm:h-96 sm:w-96 md:hidden"
           />
 
@@ -323,9 +327,12 @@ export default function Hero() {
           <div className="absolute h-[24rem] w-[24rem] rounded-full border-[18px] border-[var(--brand-primary)]/10" />
 
           <div className="relative rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white p-8 shadow-[0_18px_0_rgba(var(--brand-primary-rgb),0.14)]">
-            <img
-              src={BRAND.logoUrl || (BRAND.logoUrl || "/logoremovebg.png")}
+            <Image
+              src={BRAND.logoUrl || "/logoremovebg.png"}
               alt={businessConfig.businessName}
+              width={512}
+              height={512}
+              unoptimized
               className="relative w-full max-w-md object-contain drop-shadow-[0_16px_18px_rgba(var(--brand-primary-rgb),0.16)] lg:max-w-lg"
             />
           </div>

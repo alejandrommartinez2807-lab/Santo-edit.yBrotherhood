@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { BRAND } from "@/lib/brand"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import {
@@ -979,9 +980,12 @@ export default function AdvancedMenuPage() {
               Volver
             </a>
 
-            <img
-              src={BRAND.logoUrl || (BRAND.logoUrl || "/logoremovebg.png")}
+            <Image
+              src={BRAND.logoUrl || "/logoremovebg.png"}
               alt={BRAND.name}
+              width={112}
+              height={112}
+              unoptimized
               className="mx-auto mt-6 h-28 w-28 object-contain"
             />
 
@@ -1182,9 +1186,12 @@ export default function AdvancedMenuPage() {
                       <div className="flex items-start gap-3">
                         <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 border-[var(--brand-primary)]/20 bg-white">
                           {product.image ? (
-                            <img
+                            <Image
                               src={product.image}
                               alt={product.name}
+                              width={64}
+                              height={64}
+                              unoptimized
                               className="h-full w-full object-contain p-1"
                             />
                           ) : (

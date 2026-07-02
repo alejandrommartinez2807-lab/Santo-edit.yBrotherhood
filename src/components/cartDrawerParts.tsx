@@ -1,3 +1,4 @@
+import Image from "next/image";
 import {
   AlertTriangle,
   BadgeCheck,
@@ -141,9 +142,12 @@ type EmptyCartStateProps = {
 export function EmptyCartState({ businessName, onClose }: EmptyCartStateProps) {
   return (
     <div className="flex min-h-[calc(100vh-210px)] flex-col items-center justify-center rounded-[2rem] border-2 border-[var(--brand-primary)] bg-white px-6 py-12 text-center shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
-      <img
-        src={BRAND.logoUrl || (BRAND.logoUrl || "/logoremovebg.png")}
+      <Image
+        src={BRAND.logoUrl || "/logoremovebg.png"}
         alt={businessName}
+        width={208}
+        height={208}
+        unoptimized
         className="mb-6 h-44 w-44 object-contain drop-shadow-[0_16px_18px_rgba(var(--brand-primary-rgb),0.16)] sm:h-52 sm:w-52"
       />
 
@@ -198,9 +202,12 @@ export function CartLineItem({
     <article className="overflow-hidden rounded-[1.6rem] border-2 border-[var(--product-card-border)] bg-[var(--product-card-bg)] text-[var(--product-card-text)] shadow-[0_7px_0_rgba(var(--brand-primary-rgb),0.12)]">
       <div className="grid grid-cols-[96px_1fr] gap-4 p-4">
         <div className="h-24 w-24 overflow-hidden rounded-[1.2rem] border-2 border-[var(--product-card-border)]/35 bg-[var(--brand-cream)]">
-          <img
+          <Image
             src={item.image || (BRAND.logoUrl || "/logoremovebg.png")}
             alt={item.name}
+            width={96}
+            height={96}
+            unoptimized
             className="h-full w-full object-cover"
             onError={(event) => {
               event.currentTarget.src = "/logoremovebg.png";

@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { BRAND } from "@/lib/brand"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import {
@@ -2170,9 +2171,12 @@ function LoginBox({
             Volver
           </a>
 
-          <img
-            src={BRAND.logoUrl || (BRAND.logoUrl || "/logoremovebg.png")}
+          <Image
+            src={BRAND.logoUrl || "/logoremovebg.png"}
             alt={BRAND.name}
+            width={112}
+            height={112}
+            unoptimized
             className="mx-auto mt-6 h-28 w-28 object-contain"
           />
 

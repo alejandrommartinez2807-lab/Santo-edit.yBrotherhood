@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react"
+import Image from "next/image"
 import { Sparkles } from "lucide-react"
 import { BRAND } from "@/lib/brand"
 
@@ -221,9 +222,12 @@ export default function PublicPromotion() {
 
             {imageUrl && !imageFailed && (
               <div className="overflow-hidden rounded-[1.6rem] border-2 border-[var(--promo-card-border)] bg-[var(--brand-cream)]">
-                <img
+                <Image
                   src={imageUrl}
                   alt={title}
+                  width={640}
+                  height={360}
+                  unoptimized
                   onError={() => setImageFailed(true)}
                   className="h-[240px] w-full object-cover object-center sm:h-[320px] lg:h-[360px]"
                 />

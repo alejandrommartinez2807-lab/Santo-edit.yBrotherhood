@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import Image from "next/image"
 import { BRAND } from "@/lib/brand"
 import {
   ArrowLeft,
@@ -464,7 +465,7 @@ export function LoginShell({ title, subtitle, passwordInput, setPasswordInput, s
         <div className="h-6 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
         <div className="px-6 py-6">
           <a href="/local-santo" className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"><ArrowLeft size={16} />Volver</a>
-          <img src={BRAND.logoUrl || (BRAND.logoUrl || "/logoremovebg.png")} alt={BRAND.name} className="mx-auto mt-6 h-28 w-28 object-contain" />
+          <Image src={BRAND.logoUrl || "/logoremovebg.png"} alt={BRAND.name} width={112} height={112} unoptimized className="mx-auto mt-6 h-28 w-28 object-contain" />
           <p className="mt-5 text-center text-xs font-black uppercase tracking-[0.28em] text-[var(--brand-primary)]">Acceso privado</p>
           <h1 className="mt-2 text-center text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">{title}</h1>
           <p className="mt-3 text-center text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">{subtitle}</p>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { BRAND } from "@/lib/brand";
 import {
   CheckCircle2,
@@ -270,9 +271,12 @@ export function LocalTableQrLinksPanel({
 
                 {showQrImages && (
                   <div className="mt-4 flex justify-center rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-white p-3">
-                    <img
+                    <Image
                       src={buildQrImageUrl(tableLink || tablePath)}
                       alt={`QR de ${table.name}`}
+                      width={176}
+                      height={176}
+                      unoptimized
                       className="h-44 w-44 rounded-xl object-contain"
                       loading="lazy"
                     />

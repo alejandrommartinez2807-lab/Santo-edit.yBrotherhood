@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { motion } from "motion/react";
 import { BRAND } from "@/lib/brand";
 import {
@@ -672,9 +673,12 @@ export default function ProductCard({
             <div className="grid overflow-y-auto lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
               <div className="border-b-2 border-[var(--product-card-border)]/15 bg-[var(--product-card-bg)] p-5 lg:border-b-0 lg:border-r-2 sm:p-6">
                 <div className="overflow-hidden rounded-[1.5rem] border-2 border-[var(--product-card-border)]/15 bg-[var(--brand-cream)]">
-                  <img
+                  <Image
                     src={image || BRAND.logoUrl || "/logoremovebg.png"}
                     alt={name}
+                    width={640}
+                    height={288}
+                    unoptimized
                     className="h-56 w-full object-cover sm:h-72"
                     onError={(event) => {
                       event.currentTarget.src = "/logoremovebg.png";

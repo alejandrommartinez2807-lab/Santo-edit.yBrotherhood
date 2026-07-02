@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { BRAND } from "@/lib/brand"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import {
@@ -691,9 +692,12 @@ function DayClosesPageContent() {
           </section>
         ) : filteredDayCloses.length === 0 ? (
           <section className="mt-5 rounded-[2rem] border-2 border-[var(--brand-primary)] bg-white px-6 py-14 text-center shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]">
-            <img
-              src={BRAND.logoUrl || (BRAND.logoUrl || "/logoremovebg.png")}
+            <Image
+              src={BRAND.logoUrl || "/logoremovebg.png"}
               alt={BRAND.name}
+              width={112}
+              height={112}
+              unoptimized
               className="mx-auto h-28 w-28 object-contain"
             />
 
@@ -856,9 +860,12 @@ function LoginBox({
             Volver
           </a>
 
-          <img
-            src={BRAND.logoUrl || (BRAND.logoUrl || "/logoremovebg.png")}
+          <Image
+            src={BRAND.logoUrl || "/logoremovebg.png"}
             alt={BRAND.name}
+            width={112}
+            height={112}
+            unoptimized
             className="mx-auto mt-6 h-28 w-28 object-contain"
           />
 

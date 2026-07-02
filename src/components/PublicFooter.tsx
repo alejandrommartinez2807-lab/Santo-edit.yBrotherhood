@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import Image from "next/image"
 import { Camera, Clock, MapPin, MessageCircle, ShoppingCart } from "lucide-react"
 import { BRAND } from "@/lib/brand"
 
@@ -142,9 +143,12 @@ export default function PublicFooter() {
         <div className="grid gap-6 p-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:p-8">
           <div className="flex items-start gap-4">
             <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary)] ring-4 ring-[var(--brand-accent)]">
-              <img
+              <Image
                 src={BRAND.logoUrl || "/logoremovebg.png"}
                 alt={config.businessName || BRAND.name}
+                width={64}
+                height={64}
+                unoptimized
                 className="h-16 w-16 object-contain"
               />
             </div>

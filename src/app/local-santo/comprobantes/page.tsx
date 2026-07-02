@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import Image from "next/image"
 import {
   ArrowLeft,
   CheckCircle2,
@@ -386,9 +387,12 @@ export default function PaymentProofsPage() {
                       <div className="border-b-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4 lg:border-b-0 lg:border-r-2">
                         {proof.proofImageUrl ? (
                           <a href={proof.proofImageUrl} target="_blank" rel="noreferrer" className="group block">
-                            <img
+                            <Image
                               src={proof.proofImageUrl}
                               alt={`Comprobante ${proof.id}`}
+                              width={640}
+                              height={288}
+                              unoptimized
                               className="h-72 w-full rounded-[1.25rem] border-2 border-[var(--brand-primary)]/25 object-cover transition group-hover:scale-[1.01]"
                             />
                             <span className="mt-3 inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase text-[var(--brand-primary)]">

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import Image from "next/image"
 import { BRAND } from "@/lib/brand"
 import {
   ArrowLeft,
@@ -1052,9 +1053,12 @@ export default function LocalMenuPage() {
               Volver
             </a>
 
-            <img
-              src={BRAND.logoUrl || (BRAND.logoUrl || "/logoremovebg.png")}
+            <Image
+              src={BRAND.logoUrl || "/logoremovebg.png"}
               alt={BRAND.name}
+              width={112}
+              height={112}
+              unoptimized
               className="mx-auto mt-6 h-28 w-28 object-contain"
             />
 
@@ -1479,9 +1483,12 @@ export default function LocalMenuPage() {
 
                   <div className="overflow-hidden rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white">
                     {form.image ? (
-                      <img
+                      <Image
                         src={form.image}
                         alt="Vista previa del producto"
+                        width={640}
+                        height={144}
+                        unoptimized
                         className="h-36 w-full object-cover"
                       />
                     ) : (
@@ -1691,9 +1698,12 @@ export default function LocalMenuPage() {
                     <div className="grid gap-3 sm:grid-cols-[110px_1fr]">
                       <div className="flex h-28 w-full items-center justify-center overflow-hidden rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)]">
                         {product.image ? (
-                          <img
+                          <Image
                             src={product.image}
                             alt={product.name}
+                            width={64}
+                            height={64}
+                            unoptimized
                             className="h-full w-full object-contain p-2"
                           />
                         ) : (

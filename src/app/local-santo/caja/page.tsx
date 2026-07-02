@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import Image from "next/image"
 import { BRAND } from "@/lib/brand"
 import {
   ArrowLeft,
@@ -980,7 +981,7 @@ function CajaPageContent() {
 
         {filteredOrders.length === 0 ? (
           <section className="mt-5 rounded-[2rem] border-2 border-[var(--brand-primary)] bg-white px-6 py-14 text-center shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]">
-            <img src={BRAND.logoUrl || (BRAND.logoUrl || "/logoremovebg.png")} alt={BRAND.name} className="mx-auto h-28 w-28 object-contain" />
+            <Image src={BRAND.logoUrl || "/logoremovebg.png"} alt={BRAND.name} width={112} height={112} unoptimized className="mx-auto h-28 w-28 object-contain" />
             <h2 className="mt-5 text-3xl font-black uppercase text-[var(--brand-primary)]">Sin pedidos para caja</h2>
             <p className="mx-auto mt-3 max-w-md text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">Cambia el filtro o espera nuevos pedidos.</p>
           </section>

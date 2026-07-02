@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import Image from "next/image"
 import { MapPin, MessageCircle, ShoppingCart } from "lucide-react"
 import { BRAND } from "@/lib/brand"
 import {
@@ -293,9 +294,12 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6 lg:px-8">
         <a href="#inicio" className="flex min-w-0 items-center gap-3">
           <div className="flex h-[56px] w-[56px] shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary)] shadow-[0_10px_24px_rgba(var(--brand-primary-rgb),0.22)] ring-4 ring-[var(--brand-accent)] sm:h-[70px] sm:w-[70px]">
-            <img
+            <Image
               src={BRAND.logoUrl || "/logoremovebg.png"}
               alt={businessName}
+              width={58}
+              height={58}
+              unoptimized
               className="h-[47px] w-[47px] object-contain sm:h-[58px] sm:w-[58px]"
             />
           </div>
