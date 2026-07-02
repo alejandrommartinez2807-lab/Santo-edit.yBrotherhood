@@ -1355,7 +1355,7 @@ export default function PedidosPage() {
   const isSuppliersModuleVisible =
     isOwnerAccess && suppliersAccess.effectiveEnabled
   const isReservationsModuleVisible =
-    isOwnerAccess && reservationsAccess.effectiveEnabled
+    canUseOperationalPanel && reservationsAccess.effectiveEnabled
   const isBranchesModuleVisible = isOwnerAccess
   const activeOpenAccounts = openAccounts.filter(isOpenAccountActive)
   const pendingOpenAccountsCount = activeOpenAccounts.filter(

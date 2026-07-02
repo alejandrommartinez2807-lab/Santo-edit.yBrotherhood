@@ -32,34 +32,35 @@ export function DonutChart({
   const cx = size / 2
   const cy = size / 2
   const circ = 2 * Math.PI * r
-  let offset = 0
 
   if (total <= 0) {
     return <p className="text-sm font-bold text-[var(--brand-ink-2)]/55">Sin datos en el período.</p>
   }
 
+  // Cada segmento arranca donde termina el anterior (offset acumulado).
+  const arcs: { dash: number; offset: number }[] = []
+  for (const d of segments) {
+    const dash = (d.value / total) * circ
+    const prev = arcs[arcs.length - 1]
+    arcs.push({ dash, offset: prev ? prev.offset + prev.dash : 0 })
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-5">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-        {segments.map((d, i) => {
-          const frac = d.value / total
-          const dash = frac * circ
-          const seg = (
-            <circle
-              key={d.label}
-              cx={cx}
-              cy={cy}
-              r={r}
-              fill="none"
-              stroke={PALETTE[i % PALETTE.length]}
-              strokeWidth={22}
-              strokeDasharray={`${dash} ${circ - dash}`}
-              strokeDashoffset={-offset}
-            />
-          )
-          offset += dash
-          return seg
-        })}
+        {segments.map((d, i) => (
+          <circle
+            key={d.label}
+            cx={cx}
+            cy={cy}
+            r={r}
+            fill="none"
+            stroke={PALETTE[i % PALETTE.length]}
+            strokeWidth={22}
+            strokeDasharray={`${arcs[i].dash} ${circ - arcs[i].dash}`}
+            strokeDashoffset={-arcs[i].offset}
+          />
+        ))}
         <circle cx={cx} cy={cy} r={r - 11} fill="white" />
       </svg>
       <div className="space-y-1.5">

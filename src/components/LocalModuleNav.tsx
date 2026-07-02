@@ -24,6 +24,7 @@ const NAV_ENTRIES: NavEntry[] = [
   { key: "kitchen", label: "Cocina", href: "/local-santo/cocina" },
   { key: "openAccounts", label: "Mesonero", href: "/local-santo/mesonero" },
   { key: "tables", label: "Mesas y QR", href: "/local-santo/mesas" },
+  { key: "reservations", label: "Reservas", href: "/local-santo/reservas" },
   { key: "delivery", label: "Delivery", href: "/local-santo/delivery" },
   { key: "paymentProofs", label: "Comprobantes", href: "/local-santo/comprobantes" },
   { key: "tickets", label: "Tickets", href: "/local-santo/tickets" },

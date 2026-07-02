@@ -484,7 +484,7 @@ export async function PATCH(
         );
       }
 
-      let refreshedAccounts = await getOpenAccounts(
+      const refreshedAccounts = await getOpenAccounts(
         { status: "all" },
         branchId,
       );
