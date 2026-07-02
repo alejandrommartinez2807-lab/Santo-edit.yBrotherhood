@@ -21,6 +21,7 @@ import {
   Search,
   Store,
   Trash2,
+  CalendarClock,
   Truck,
   Volume2,
   VolumeX,
@@ -1311,6 +1312,7 @@ export default function PedidosPage() {
   const reportsAccess = getModulePlanAccess(businessConfig, "reports")
   const rolesAccess = getModulePlanAccess(businessConfig, "roles")
   const suppliersAccess = getModulePlanAccess(businessConfig, "suppliers")
+  const reservationsAccess = getModulePlanAccess(businessConfig, "reservations")
   const soundsAccess = getModulePlanAccess(businessConfig, "sounds")
 
   const canEditDeliveryZones = isOwnerAccess && deliveryAccess.effectiveEnabled
@@ -1352,6 +1354,8 @@ export default function PedidosPage() {
     isOwnerAccess && rolesAccess.effectiveEnabled
   const isSuppliersModuleVisible =
     isOwnerAccess && suppliersAccess.effectiveEnabled
+  const isReservationsModuleVisible =
+    isOwnerAccess && reservationsAccess.effectiveEnabled
   const isBranchesModuleVisible = isOwnerAccess
   const activeOpenAccounts = openAccounts.filter(isOpenAccountActive)
   const pendingOpenAccountsCount = activeOpenAccounts.filter(
@@ -1379,6 +1383,7 @@ export default function PedidosPage() {
     isReportsModuleVisible,
     isRolesModuleVisible,
     isSuppliersModuleVisible,
+    isReservationsModuleVisible,
     isBranchesModuleVisible,
   ].filter(Boolean).length
   const visibleOperationalModulesLimit = isOwnerAccess ? 20 : 10
@@ -3654,6 +3659,18 @@ export default function PedidosPage() {
               title="Proveedores"
               description="Lista de proveedores del local con contacto y teléfono para tus compras."
               metric="Contactos"
+            />
+          )}
+
+
+          {isReservationsModuleVisible && (
+            <ModuleAccessCard
+              href="/local-santo/reservas"
+              icon={<CalendarClock size={24} />}
+              eyebrow="Reservas"
+              title="Reservas"
+              description="Reservas por mesa y franja horaria, con bloqueo de la mesa en el pedido del cliente."
+              metric="Mesas"
             />
           )}
 

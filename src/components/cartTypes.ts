@@ -173,4 +173,8 @@ export type PublicTableAccountNotice = {
   openAccountsAvailable: boolean;
   status: "open" | "free" | "unavailable";
   openAccount?: PublicOpenAccountSummary | null;
+  // Reserva vigente ahora para esta mesa (módulo Reservas): solo la franja.
+  reservedNow?: boolean;
+  reservationStart?: string;
+  reservationEnd?: string;
 } | null;

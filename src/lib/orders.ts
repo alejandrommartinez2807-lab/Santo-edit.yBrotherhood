@@ -75,7 +75,8 @@ export type {
   SaveInventoryRecipeInput,
 } from "./ordersInventory"
 
-export type { Supplier, SupplierPurchase } from "@/types/localOrders"
+export type { Reservation, ReservationStatus, Supplier, SupplierPurchase } from "@/types/localOrders"
+export type { GetReservationsFilters, SaveReservationInput } from "./ordersReservations"
 export type { SaveSupplierInput } from "./ordersSuppliers"
 export type { SaveSupplierPurchaseInput, UpdateSupplierPurchaseInput, SaveSupplierPurchasePaymentInput, SupplierPurchasePayment } from "./ordersSupplierPurchases"
 
@@ -124,6 +125,13 @@ export {
   getDeliveryZones,
   saveDeliveryZones,
 } from "./ordersDeliveryZones"
+
+export {
+  deleteReservation,
+  getReservations,
+  saveReservation,
+  updateReservationStatus,
+} from "./ordersReservations"
 
 export {
   deleteSupplier,

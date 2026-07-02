@@ -777,6 +777,12 @@ export default function CartDrawer({
   const hasInvalidQrTableNotice = qrTableNotice?.status === "invalid";
   const hasOpenAccountTableNotice = tableAccountNotice?.status === "open";
   const hasFreeTableNotice = tableAccountNotice?.status === "free";
+  // Mesa reservada en su franja: se bloquea el registro, salvo que ya tenga
+  // cuenta abierta (esa cuenta ES la de la reserva sentada).
+  const isTableReservedNow =
+    orderType === "Comer aquí" &&
+    tableAccountNotice?.reservedNow === true &&
+    !hasOpenAccountTableNotice;
   const canAttachToTableOpenAccount =
     orderType === "Comer aquí" && hasOpenAccountTableNotice;
   const tableOpenAccount = hasOpenAccountTableNotice
@@ -798,7 +804,7 @@ export default function CartDrawer({
         deliveryReference.trim().length > 0 &&
         deliveryZone.trim().length > 0 &&
         paymentMethod.trim().length > 0
-      : tableNumber.trim().length > 0);
+      : tableNumber.trim().length > 0 && !isTableReservedNow);
   const paymentProofReportedUSD = normalizeFormMoney(paymentProofAmountUSD);
   const paymentProofReportedVES = normalizeFormMoney(paymentProofAmountVES);
   const canSubmitPaymentProof = Boolean(
@@ -1996,7 +2002,23 @@ export default function CartDrawer({
                       </div>
                     ) : null}
 
-                    {!isLoadingTableAccountNotice && hasFreeTableNotice ? (
+                    {!isLoadingTableAccountNotice && isTableReservedNow ? (
+                      <div className="mt-3 rounded-2xl border-2 border-red-300 bg-red-50 px-4 py-3">
+                        <p className="inline-flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-red-700">
+                          <Table2 size={15} />
+                          Mesa reservada
+                        </p>
+                        <p className="mt-1 text-sm font-bold leading-5 text-red-900/75">
+                          Esta mesa tiene una reserva
+                          {tableAccountNotice?.reservationStart
+                            ? ` de ${tableAccountNotice.reservationStart} a ${tableAccountNotice.reservationEnd}`
+                            : ""}
+                          . Elige otra mesa o pregunta al personal.
+                        </p>
+                      </div>
+                    ) : null}
+
+                    {!isLoadingTableAccountNotice && hasFreeTableNotice && !isTableReservedNow ? (
                       <div className="mt-3 rounded-2xl border-2 border-emerald-600/20 bg-emerald-50 px-4 py-3">
                         <p className="inline-flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-emerald-800">
                           <CheckCircle2 size={15} />

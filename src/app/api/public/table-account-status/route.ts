@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from "next/server"
 import {
   getBusinessConfig,
   getOpenAccounts,
+  getReservations,
   normalizeLocalTablesConfig,
 } from "@/lib/orders"
 import { getModulePlanAccess } from "@/lib/localPlans"
+import {
+  findBlockingReservationForTable,
+  getReservationNow,
+} from "@/lib/reservationConflicts"
 import { resolveBranchId } from "@/lib/branch"
 import {
   cleanPublicTableText,
@@ -80,6 +85,30 @@ export async function GET(request: NextRequest) {
 
     const tableName = resolvedTable?.name || requestedTable
     const tableId = resolvedTable?.id || ""
+    const branchId = await resolveBranchId(request)
+
+    // Reserva vigente "ahora" para esta mesa (módulo Reservas): el flujo del
+    // cliente la muestra como ocupada durante su franja. Sin datos del cliente
+    // que reservó — solo la franja.
+    const reservationsAccess = getModulePlanAccess(config, "reservations")
+    let reservedNow = false
+    let reservationStart = ""
+    let reservationEnd = ""
+
+    if (reservationsAccess.effectiveEnabled && tableId) {
+      const now = getReservationNow()
+      const reservations = await getReservations(
+        { date: now.date, status: "activa" },
+        branchId
+      )
+      const blocking = findBlockingReservationForTable(reservations, tableId, now)
+
+      if (blocking) {
+        reservedNow = true
+        reservationStart = blocking.startTime
+        reservationEnd = blocking.endTime
+      }
+    }
 
     if (!openAccountsAccess.effectiveEnabled) {
       return noStoreResponse({
@@ -89,12 +118,15 @@ export async function GET(request: NextRequest) {
         tableName,
         hasOpenAccount: false,
         openAccountsAvailable: false,
+        reservedNow,
+        reservationStart,
+        reservationEnd,
       })
     }
 
     const openAccounts = await getOpenAccounts(
       { status: "Abierta" },
-      await resolveBranchId(request)
+      branchId
     )
     const openAccount = findOpenAccountForPublicTable(openAccounts, tableName)
     const hasOpenAccount = Boolean(openAccount)
@@ -106,6 +138,9 @@ export async function GET(request: NextRequest) {
       tableName,
       hasOpenAccount,
       openAccountsAvailable: true,
+      reservedNow,
+      reservationStart,
+      reservationEnd,
       openAccount: openAccount
         ? {
             id: openAccount.id,

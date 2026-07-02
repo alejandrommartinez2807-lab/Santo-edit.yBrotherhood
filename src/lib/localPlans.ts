@@ -41,6 +41,7 @@ export type LocalModuleKey =
   | "openAccounts"
   | "tables"
   | "qrTables"
+  | "reservations"
   | "waiterConfirmation"
   | "kitchenItems"
   | "tickets"
@@ -118,6 +119,7 @@ export type LocalPlanConfigLike = {
   openAccountsModuleEnabled?: unknown
   tablesModuleEnabled?: unknown
   qrTablesModuleEnabled?: unknown
+  reservationsModuleEnabled?: unknown
   waiterConfirmationModuleEnabled?: unknown
   kitchenItemsModuleEnabled?: unknown
   ticketsModuleEnabled?: unknown
@@ -198,6 +200,7 @@ export const LOCAL_MODULE_KEYS: LocalModuleKey[] = [
   "openAccounts",
   "tables",
   "qrTables",
+  "reservations",
   "waiterConfirmation",
   "kitchenItems",
   "tickets",
@@ -361,6 +364,7 @@ export const LOCAL_PLAN_DEFINITIONS: LocalPlanDefinition[] = [
       "openAccounts",
       "tables",
       "qrTables",
+      "reservations",
       "waiterConfirmation",
       "kitchenItems",
       "tickets",
@@ -734,6 +738,18 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/mesas",
+    comingSoon: false,
+  },
+  {
+    key: "reservations",
+    label: "Reservas",
+    description: "Reservas por sede, mesa y franja horaria, con bloqueo de la mesa reservada en el flujo del cliente.",
+    category: "operation",
+    minimumPlan: "complete",
+    ownerConfigKey: "reservationsModuleEnabled",
+    visibleForOwnerSettings: true,
+    visibleForSupport: true,
+    routePath: "/local-santo/reservas",
     comingSoon: false,
   },
   {
@@ -1136,6 +1152,10 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "qrTables") {
     return normalizeBoolean(config.qrTablesModuleEnabled, false)
+  }
+
+  if (moduleKey === "reservations") {
+    return normalizeBoolean(config.reservationsModuleEnabled, false)
   }
 
   if (moduleKey === "waiterConfirmation") {

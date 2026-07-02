@@ -207,6 +207,19 @@ function normalizeLookupResponse(value: unknown): AccountLookupState {
   }
 
   if (!hasOpenAccount || !accountSource) {
+    // Mesa con reserva vigente: avisar antes de que el cliente se siente.
+    if (source.reservedNow === true) {
+      const start = cleanText(source.reservationStart);
+      const end = cleanText(source.reservationEnd);
+
+      return {
+        status: "free",
+        tableName,
+        account: null,
+        message: `${tableName || "Esta mesa"} está reservada${start ? ` de ${start} a ${end}` : ""}. Pregunta al personal antes de sentarte.`,
+      };
+    }
+
     return {
       status: "free",
       tableName,

@@ -50,6 +50,7 @@ type ModuleKey =
   | "openAccounts"
   | "tables"
   | "qrTables"
+  | "reservations"
   | "waiterConfirmation"
   | "kitchenItems"
   | "tickets"

@@ -32,6 +32,7 @@ const SCOPED_TABLES = [
   "tables",
   "suppliers",
   "supplier_purchases",
+  "reservations",
 ]
 
 const SRC = resolve(__dirname, "..", "..")

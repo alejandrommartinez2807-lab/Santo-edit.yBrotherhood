@@ -190,6 +190,24 @@ export type DeliveryZone = {
   isActive?: boolean
 }
 
+export type ReservationStatus = "activa" | "completada" | "cancelada" | "no_show"
+
+export type Reservation = {
+  id: string
+  tableId: string
+  tableName: string
+  customerName: string
+  customerPhone: string
+  partySize: number
+  reservationDate: string // YYYY-MM-DD
+  startTime: string // HH:MM (24h)
+  endTime: string // HH:MM (24h)
+  status: ReservationStatus
+  note: string
+  createdAt: string
+  updatedAt: string
+}
+
 export type Supplier = {
   id: string
   name: string

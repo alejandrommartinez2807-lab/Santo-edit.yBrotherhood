@@ -19,7 +19,7 @@ import {
 } from "@/lib/branchClient"
 import LocalModuleNav from "@/components/LocalModuleNav"
 
-// Módulos cuyos datos son de UNA sede: exigen sede elegida antes de operar.
+//// Módulos cuyos datos son de UNA sede: exigen sede elegida antes de operar.
 // Los administrativos (reportes, usuarios, configuración…) no bloquean.
 const BRANCH_SCOPED_MODULES = new Set([
   "cashier",
@@ -28,6 +28,7 @@ const BRANCH_SCOPED_MODULES = new Set([
   "openAccounts",
   "tables",
   "qrTables",
+  "reservations",
   "delivery",
   "paymentProofs",
   "tickets",

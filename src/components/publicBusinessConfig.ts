@@ -384,6 +384,9 @@ export function normalizePublicTableAccountNotice(
         : "free"
       : "unavailable",
     openAccount: normalizePublicOpenAccount(source.openAccount),
+    reservedNow: normalizePublicBoolean(source.reservedNow, false),
+    reservationStart: cleanText(source.reservationStart),
+    reservationEnd: cleanText(source.reservationEnd),
   };
 }
 

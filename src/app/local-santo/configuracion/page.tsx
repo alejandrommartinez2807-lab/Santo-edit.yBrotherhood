@@ -172,6 +172,7 @@ type BusinessConfig = {
   tablesModuleEnabled: boolean;
   localTables: LocalTableMapItem[];
   qrTablesModuleEnabled: boolean;
+  reservationsModuleEnabled: boolean;
   waiterConfirmationModuleEnabled: boolean;
   kitchenItemsModuleEnabled: boolean;
   ticketsModuleEnabled: boolean;
@@ -323,6 +324,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   tablesModuleEnabled: true,
   localTables: DEFAULT_CONFIG_LOCAL_TABLES,
   qrTablesModuleEnabled: true,
+  reservationsModuleEnabled: false,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
   ticketsModuleEnabled: true,
@@ -368,6 +370,7 @@ const AVAILABLE_MODULES_PATCH: Partial<BusinessConfig> = {
   openAccountsModuleEnabled: true,
   tablesModuleEnabled: true,
   qrTablesModuleEnabled: true,
+  reservationsModuleEnabled: true,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
   ticketsModuleEnabled: true,
@@ -1080,6 +1083,10 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     qrTablesModuleEnabled: normalizeBoolean(
       source.qrTablesModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.qrTablesModuleEnabled,
+    ),
+    reservationsModuleEnabled: normalizeBoolean(
+      source.reservationsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.reservationsModuleEnabled,
     ),
     waiterConfirmationModuleEnabled: normalizeBoolean(
       source.waiterConfirmationModuleEnabled,

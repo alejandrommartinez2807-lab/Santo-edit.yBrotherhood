@@ -60,6 +60,7 @@ const MODULE_KEY_BY_CONFIG_KEY: Record<string, LocalModuleKey> = {
   openAccountsModuleEnabled: "openAccounts",
   tablesModuleEnabled: "tables",
   qrTablesModuleEnabled: "qrTables",
+  reservationsModuleEnabled: "reservations",
   waiterConfirmationModuleEnabled: "waiterConfirmation",
   kitchenItemsModuleEnabled: "kitchenItems",
   ticketsModuleEnabled: "tickets",
@@ -449,6 +450,7 @@ function normalizeBusinessConfigPayload(
   setBooleanConfig(config, source, "openAccountsModuleEnabled", currentBusinessConfig, role)
   setBooleanConfig(config, source, "tablesModuleEnabled", currentBusinessConfig, role)
   setBooleanConfig(config, source, "qrTablesModuleEnabled", currentBusinessConfig, role)
+  setBooleanConfig(config, source, "reservationsModuleEnabled", currentBusinessConfig, role)
   setBooleanConfig(config, source, "waiterConfirmationModuleEnabled", currentBusinessConfig, role)
   setBooleanConfig(config, source, "kitchenItemsModuleEnabled", currentBusinessConfig, role)
   setBooleanConfig(config, source, "ticketsModuleEnabled", currentBusinessConfig, role)
