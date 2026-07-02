@@ -443,12 +443,17 @@ function UsuariosContent() {
   }, [])
 
   useEffect(() => {
-    load()
+    // Difiere la carga un tick para no hacer setState síncrono en el efecto.
+    const timer = setTimeout(load, 0)
+    return () => clearTimeout(timer)
   }, [load])
 
   useEffect(() => {
     if (form.allowedBranchIds.length === 0 && activeBranches.length === 1 && !form.allBranches) {
-      setForm((current) => ({ ...current, allowedBranchIds: [activeBranches[0].id] }))
+      const timer = setTimeout(() => {
+        setForm((current) => ({ ...current, allowedBranchIds: [activeBranches[0].id] }))
+      }, 0)
+      return () => clearTimeout(timer)
     }
   }, [activeBranches, form.allowedBranchIds.length, form.allBranches])
 

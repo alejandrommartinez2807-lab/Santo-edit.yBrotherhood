@@ -190,7 +190,9 @@ export default function PaymentProofsPage() {
   }
 
   useEffect(() => {
-    loadProofs()
+    // Difiere la carga un tick para no hacer setState síncrono en el efecto.
+    const timer = setTimeout(loadProofs, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   const filteredProofs = useMemo(() => {

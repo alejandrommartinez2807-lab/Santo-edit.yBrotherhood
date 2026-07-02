@@ -509,7 +509,12 @@ function KitchenItemsPageContent() {
   const [updatingOrderId, setUpdatingOrderId] = useState("");
 
   useEffect(() => {
-    setAdminPassword(getStoredPassword());
+    // Difiere la restauración de sesión un tick para no hacer setState
+    // síncrono dentro del efecto (react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => {
+      setAdminPassword(getStoredPassword());
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   async function loadOrders(showSuccessMessage = false) {
@@ -593,9 +598,11 @@ function KitchenItemsPageContent() {
   }
 
   useEffect(() => {
-    if (adminPassword.trim()) {
+    if (!adminPassword.trim()) return;
+    const timer = setTimeout(() => {
       loadOrders(false);
-    }
+    }, 0);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminPassword]);
 

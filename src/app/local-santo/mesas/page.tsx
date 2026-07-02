@@ -219,7 +219,9 @@ function MesasContent() {
   }
 
   useEffect(() => {
-    loadTablesAndOrders();
+    // Difiere la carga un tick para no hacer setState síncrono en el efecto.
+    const timer = setTimeout(loadTablesAndOrders, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   function handlePrint() {

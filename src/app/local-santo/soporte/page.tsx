@@ -384,11 +384,16 @@ export default function SupportPage() {
   }
 
   useEffect(() => {
-    const savedPassword = window.sessionStorage.getItem(SUPPORT_STORAGE_KEY)
+    // Difiere la restauración de sesión un tick para no hacer setState
+    // síncrono dentro del efecto (react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => {
+      const savedPassword = window.sessionStorage.getItem(SUPPORT_STORAGE_KEY)
 
-    if (savedPassword) {
-      validateSupportAccess(savedPassword)
-    }
+      if (savedPassword) {
+        validateSupportAccess(savedPassword)
+      }
+    }, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   const checksOk = useMemo(() => {

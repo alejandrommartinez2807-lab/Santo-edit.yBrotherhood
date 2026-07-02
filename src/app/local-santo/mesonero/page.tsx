@@ -456,16 +456,21 @@ function MesoneroContent() {
   }
 
   useEffect(() => {
-    const storedPassword = getStoredPassword();
+    // Difiere la restauración de sesión un tick para no hacer setState
+    // síncrono dentro del efecto (react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => {
+      const storedPassword = getStoredPassword();
 
-    setAdminPassword(storedPassword);
+      setAdminPassword(storedPassword);
 
-    loadLocalTables();
+      loadLocalTables();
 
-    if (storedPassword) {
-      loadOrders(storedPassword);
-      loadOpenAccounts(storedPassword, true);
-    }
+      if (storedPassword) {
+        loadOrders(storedPassword);
+        loadOpenAccounts(storedPassword, true);
+      }
+    }, 0);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

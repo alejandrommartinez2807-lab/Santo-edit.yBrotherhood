@@ -164,12 +164,17 @@ function ComprasPageContent() {
   }, [])
 
   useEffect(() => {
-    loadSuppliers()
-    loadInventory()
+    // Difiere la carga un tick para no hacer setState síncrono en el efecto.
+    const timer = setTimeout(() => {
+      loadSuppliers()
+      loadInventory()
+    }, 0)
+    return () => clearTimeout(timer)
   }, [loadSuppliers, loadInventory])
 
   useEffect(() => {
-    loadPurchases(filterSupplier)
+    const timer = setTimeout(() => loadPurchases(filterSupplier), 0)
+    return () => clearTimeout(timer)
   }, [filterSupplier, loadPurchases])
 
   async function create() {

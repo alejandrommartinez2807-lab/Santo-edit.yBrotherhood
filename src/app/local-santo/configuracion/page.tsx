@@ -2474,17 +2474,23 @@ export default function BusinessConfigPage() {
   }
 
   useEffect(() => {
-    const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY);
+    // Difiere la restauración de sesión un tick para no hacer setState
+    // síncrono dentro del efecto (react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => {
+      const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY);
 
-    if (savedPassword) {
-      loadBusinessConfig(savedPassword, true);
-    }
+      if (savedPassword) {
+        loadBusinessConfig(savedPassword, true);
+      }
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    loadAvailableProducts(true);
+    const timer = setTimeout(() => loadAvailableProducts(true), 0);
+    return () => clearTimeout(timer);
   }, [isAuthenticated]);
 
   useEffect(() => {
@@ -2496,21 +2502,24 @@ export default function BusinessConfigPage() {
 
     if (!productFeaturedIds.length) return;
 
-    setBusinessConfig((current) => {
-      const currentIds = Array.isArray(current.featuredProductIds)
-        ? current.featuredProductIds
-        : [];
-      const mergedIds = mergeNumberLists(currentIds, productFeaturedIds);
+    const timer = setTimeout(() => {
+      setBusinessConfig((current) => {
+        const currentIds = Array.isArray(current.featuredProductIds)
+          ? current.featuredProductIds
+          : [];
+        const mergedIds = mergeNumberLists(currentIds, productFeaturedIds);
 
-      if (areNumberListsEqual(currentIds, mergedIds)) {
-        return current;
-      }
+        if (areNumberListsEqual(currentIds, mergedIds)) {
+          return current;
+        }
 
-      return {
-        ...current,
-        featuredProductIds: mergedIds,
-      };
-    });
+        return {
+          ...current,
+          featuredProductIds: mergedIds,
+        };
+      });
+    }, 0);
+    return () => clearTimeout(timer);
   }, [availableProducts, isAuthenticated]);
 
   if (!isAuthenticated) {

@@ -102,7 +102,9 @@ function AuditoriaPageContent() {
   }, [actionFilter, fromDate, toDate])
 
   useEffect(() => {
-    loadLogs()
+    // Difiere la carga un tick para no hacer setState síncrono en el efecto.
+    const timer = setTimeout(loadLogs, 0)
+    return () => clearTimeout(timer)
   }, [loadLogs])
 
   const count = useMemo(() => logs.length, [logs])

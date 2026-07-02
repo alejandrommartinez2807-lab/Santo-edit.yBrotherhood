@@ -1430,25 +1430,33 @@ function InventoryPageContent() {
   }
 
   useEffect(() => {
-    const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
+    // Difiere la restauración de sesión un tick para no hacer setState
+    // síncrono dentro del efecto (react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => {
+      const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
 
-    if (!savedPassword) return
+      if (!savedPassword) return
 
-    setAdminPassword(savedPassword)
-    setPasswordInput(savedPassword)
-    loadInventory(savedPassword)
+      setAdminPassword(savedPassword)
+      setPasswordInput(savedPassword)
+      loadInventory(savedPassword)
+    }, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {
-    try {
-      const savedQuickItems = window.localStorage.getItem(INVENTORY_QUICK_ITEMS_STORAGE_KEY)
+    const timer = setTimeout(() => {
+      try {
+        const savedQuickItems = window.localStorage.getItem(INVENTORY_QUICK_ITEMS_STORAGE_KEY)
 
-      if (!savedQuickItems) return
+        if (!savedQuickItems) return
 
-      setQuickInventoryItems(normalizeQuickInventoryItems(JSON.parse(savedQuickItems)))
-    } catch {
-      setQuickInventoryItems(DEFAULT_INVENTORY_QUICK_ITEMS)
-    }
+        setQuickInventoryItems(normalizeQuickInventoryItems(JSON.parse(savedQuickItems)))
+      } catch {
+        setQuickInventoryItems(DEFAULT_INVENTORY_QUICK_ITEMS)
+      }
+    }, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   function updateForm<K extends keyof InventoryForm>(field: K, value: InventoryForm[K]) {

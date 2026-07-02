@@ -1581,13 +1581,18 @@ export default function OwnerDashboardPage() {
   }
 
   useEffect(() => {
-    const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
+    // Difiere la restauración de sesión un tick para no hacer setState
+    // síncrono dentro del efecto (react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => {
+      const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
 
-    if (savedPassword) {
-      setAdminPassword(savedPassword)
-      setPasswordInput(savedPassword)
-      loadDashboardData(savedPassword)
-    }
+      if (savedPassword) {
+        setAdminPassword(savedPassword)
+        setPasswordInput(savedPassword)
+        loadDashboardData(savedPassword)
+      }
+    }, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   const liveReport = useMemo(() => {

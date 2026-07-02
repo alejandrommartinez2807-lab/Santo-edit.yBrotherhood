@@ -177,7 +177,9 @@ function ReportesPageContent() {
   }, [])
 
   useEffect(() => {
-    load(period, consolidated, fromDate, toDate)
+    // Difiere la carga un tick para no hacer setState síncrono en el efecto.
+    const timer = setTimeout(() => load(period, consolidated, fromDate, toDate), 0)
+    return () => clearTimeout(timer)
   }, [period, consolidated, fromDate, toDate, load])
 
   // Comparación por sucursal: pide el resumen de cada sede para el mismo período.

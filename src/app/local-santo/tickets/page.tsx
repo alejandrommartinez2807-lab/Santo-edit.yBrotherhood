@@ -613,7 +613,12 @@ function TicketsPageContent() {
   const [selectedTarget, setSelectedTarget] = useState<TicketTarget | null>(null);
 
   useEffect(() => {
-    setAdminPassword(getStoredPassword());
+    // Difiere la restauración de sesión un tick para no hacer setState
+    // síncrono dentro del efecto (react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => {
+      setAdminPassword(getStoredPassword());
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const ordersById = useMemo(() => {
@@ -701,9 +706,11 @@ function TicketsPageContent() {
   }
 
   useEffect(() => {
-    if (adminPassword.trim()) {
+    if (!adminPassword.trim()) return;
+    const timer = setTimeout(() => {
       loadTicketsData(false);
-    }
+    }, 0);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminPassword]);
 

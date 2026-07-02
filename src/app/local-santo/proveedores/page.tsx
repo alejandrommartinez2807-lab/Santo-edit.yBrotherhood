@@ -63,7 +63,9 @@ function ProveedoresPageContent() {
   }, [])
 
   useEffect(() => {
-    load()
+    // Difiere la carga un tick para no hacer setState síncrono en el efecto.
+    const timer = setTimeout(load, 0)
+    return () => clearTimeout(timer)
   }, [load])
 
   async function create() {

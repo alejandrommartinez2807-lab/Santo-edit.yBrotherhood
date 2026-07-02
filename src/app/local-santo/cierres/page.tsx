@@ -282,25 +282,33 @@ function DayClosesPageContent() {
   }
 
   useEffect(() => {
-    const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
+    // Difiere la restauración de sesión un tick para no hacer setState
+    // síncrono dentro del efecto (react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => {
+      const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
 
-    if (savedPassword) {
-      setAdminPassword(savedPassword)
-      setPasswordInput(savedPassword)
-      loadDayCloses(savedPassword)
-    }
+      if (savedPassword) {
+        setAdminPassword(savedPassword)
+        setPasswordInput(savedPassword)
+        loadDayCloses(savedPassword)
+      }
+    }, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {
-    try {
-      const savedMode = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY)
+    const timer = setTimeout(() => {
+      try {
+        const savedMode = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY)
 
-      if (isReportViewMode(savedMode)) {
-        setReportViewMode(savedMode)
+        if (isReportViewMode(savedMode)) {
+          setReportViewMode(savedMode)
+        }
+      } catch {
+        setReportViewMode("Simple")
       }
-    } catch {
-      setReportViewMode("Simple")
-    }
+    }, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   const filteredDayCloses = useMemo(() => {

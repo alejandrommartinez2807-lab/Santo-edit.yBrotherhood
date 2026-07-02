@@ -704,12 +704,17 @@ function InventoryAlertsPageContent() {
   }
 
   useEffect(() => {
-    const storedPassword = getStoredPassword();
+    // Difiere la restauración de sesión un tick para no hacer setState
+    // síncrono dentro del efecto (react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => {
+      const storedPassword = getStoredPassword();
 
-    if (!storedPassword) return;
+      if (!storedPassword) return;
 
-    setPassword(storedPassword);
-    void loadData(storedPassword, true);
+      setPassword(storedPassword);
+      void loadData(storedPassword, true);
+    }, 0);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
