@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Clock, MapPin, MessageCircle, ShoppingCart, Sparkles } from "lucide-react"
+import { Clock, MapPin, ShoppingCart, Sparkles } from "lucide-react"
 import { BRAND } from "@/lib/brand"
 
 type PublicQuickInfoConfig = {

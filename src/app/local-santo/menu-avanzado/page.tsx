@@ -4,7 +4,6 @@ import { BRAND } from "@/lib/brand"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import {
   ArrowLeft,
-  CheckCircle2,
   ChevronDown,
   ChevronUp,
   Eye,
@@ -18,7 +17,6 @@ import {
   Search,
   SlidersHorizontal,
   Trash2,
-  XCircle,
 } from "lucide-react"
 import {
   type Product,

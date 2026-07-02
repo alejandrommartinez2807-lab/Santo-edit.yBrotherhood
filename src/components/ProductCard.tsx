@@ -14,8 +14,8 @@ import {
   X,
 } from "lucide-react";
 import { formatUSD, formatVES } from "@/utils/formatCurrency";
-import type { CartSelectionOption, ProductToAdd } from "@/hooks/useCart";
-import type { Product, ProductType } from "@/data/products";
+import type { ProductToAdd } from "@/hooks/useCart";
+import type { Product } from "@/data/products";
 import {
   type SelectableOption,
   cleanNumber,
@@ -199,7 +199,6 @@ export default function ProductCard({
   salesChannels,
   variations,
   addons,
-  includedIngredients,
   removableIngredients,
   selectionRules,
   requiresWaiterConfirmation,

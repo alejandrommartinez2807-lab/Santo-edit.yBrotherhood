@@ -8,7 +8,6 @@ import {
   PackageCheck,
   SlidersHorizontal,
   Sparkles,
-  Tags,
   Truck,
 } from "lucide-react";
 import { BRAND } from "@/lib/brand";

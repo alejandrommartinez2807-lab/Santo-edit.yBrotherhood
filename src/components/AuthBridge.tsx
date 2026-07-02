@@ -13,7 +13,6 @@ import { getSelectedBranchId } from "@/lib/branchClient"
 // componentes hijos), evitando carreras con la primera validación de acceso.
 
 declare global {
-  // eslint-disable-next-line no-var
   var __authBridgeInstalled: boolean | undefined
 }
 

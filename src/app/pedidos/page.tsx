@@ -25,16 +25,13 @@ import {
   Truck,
   Volume2,
   VolumeX,
-  X,
 } from "lucide-react"
 import { formatUSD, formatVES } from "@/utils/formatCurrency"
 import { getModulePlanAccess, getShortPlanLabel } from "@/lib/localPlans"
-import type { LocalTable } from "@/lib/orders"
 import type { OpenAccount } from "@/types/localOrders"
 import { FiscalSnapshotView } from "@/components/FiscalBreakdown"
 import { LocalTableQrLinksPanel } from "@/components/local/LocalTableQrLinksPanel"
 import {
-  getOrderItemDetailLines,
   getOrderStaffConfirmationSummary,
   getStaffConfirmationStatusLabel,
   hasConfirmedStaffConfirmationItems,
@@ -42,7 +39,6 @@ import {
 } from "@/lib/localOrderHelpers"
 
 import type {
-  CartItem,
   OrderStatus,
   DeliveryPaymentIn,
   StatusFilter,
@@ -53,13 +49,10 @@ import type {
   NewOrderToast,
   DeliveryZone,
   DaySummaryTotals,
-  DaySummaryItem,
-  PaymentSummaryItem,
   PaymentSummaryTotals,
   FiscalIvaBucket,
   FiscalCloseTotals,
   ExpenseSummaryItem,
-  CloseReviewTone,
   CloseReviewItem,
   DayExpense,
   ExpenseForm,
@@ -1271,12 +1264,6 @@ export default function PedidosPage() {
   const readyOrdersCount = orders.filter((order) => order.status === "Listo").length
   const staffConfirmationPendingOrders = orders.filter(
     (order) => order.status !== "Cancelado" && hasStaffConfirmationItems(order)
-  )
-  const staffConfirmationConfirmedOrders = orders.filter(
-    (order) =>
-      order.status !== "Cancelado" &&
-      !hasStaffConfirmationItems(order) &&
-      hasConfirmedStaffConfirmationItems(order)
   )
   const latestStaffConfirmationOrder = staffConfirmationPendingOrders[0] || null
 

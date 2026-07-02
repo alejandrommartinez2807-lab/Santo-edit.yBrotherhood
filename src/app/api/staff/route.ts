@@ -9,7 +9,6 @@ import {
   getDisplayUsername,
   getEffectiveStaffBranchAccess,
   getEffectiveStaffModules,
-  getEmailForUsername,
   getStaffUsersConfig,
   saveStaffUserAccessConfig,
 } from "@/lib/staffUsers"

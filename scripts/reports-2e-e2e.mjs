@@ -14,7 +14,7 @@ const pwd = env.ORDERS_OWNER_PASSWORD
 
 let pass = 0
 let fail = 0
-const check = (n, c) => { console.log((c ? "✓" : "✗ FALLA") + " " + n); c ? pass++ : fail++ }
+const check = (n, c) => { console.log((c ? "✓" : "✗ FALLA") + " " + n); if (c) pass++; else fail++ }
 
 const auth = { "x-admin-password": pwd, "Content-Type": "application/json" }
 const getConfig = () =>

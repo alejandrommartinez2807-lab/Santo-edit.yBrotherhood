@@ -274,7 +274,6 @@ export default function CartDrawer({
   isOpen,
   onClose,
   items,
-  totalPrice,
   removeItem,
   increaseQuantity,
   decreaseQuantity,

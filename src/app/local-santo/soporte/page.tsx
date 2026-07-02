@@ -13,8 +13,6 @@ import {
   LockKeyhole,
   RefreshCw,
   Save,
-  ShieldCheck,
-  SlidersHorizontal,
   Wrench,
   XCircle,
 } from "lucide-react"

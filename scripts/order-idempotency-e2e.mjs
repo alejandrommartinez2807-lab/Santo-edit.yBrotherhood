@@ -28,7 +28,8 @@ let pass = 0
 let fail = 0
 const check = (name, cond) => {
   console.log((cond ? "✓" : "✗ FALLA") + " " + name)
-  cond ? pass++ : fail++
+  if (cond) pass++
+  else fail++
 }
 const get = (p, extra = {}) =>
   fetch(BASE + p, { headers: { "x-local-password": pwd, ...extra } }).then((r) => r.json())

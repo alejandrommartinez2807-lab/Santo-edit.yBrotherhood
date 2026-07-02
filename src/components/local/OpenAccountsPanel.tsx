@@ -13,7 +13,6 @@ import {
   Plus,
   RefreshCw,
   Store,
-  XCircle,
 } from "lucide-react";
 import { formatUSD } from "@/utils/formatCurrency";
 import type {
@@ -813,10 +812,7 @@ export function OpenAccountsPanel({
     return Number(orderWithRate?.exchangeRate || 0);
   }
 
-  async function saveAccountPayment(
-    account: OpenAccount,
-    accountOrders: OpenAccountOrderSummary[],
-  ) {
+  async function saveAccountPayment(account: OpenAccount) {
     if (!canRegisterPayments || isSaving) return;
 
     const amountReceivedUSD = parseMoneyInput(
@@ -1638,9 +1634,7 @@ export function OpenAccountsPanel({
 
                       <button
                         type="button"
-                        onClick={() =>
-                          saveAccountPayment(account, accountOrders)
-                        }
+                        onClick={() => saveAccountPayment(account)}
                         disabled={isSaving}
                         className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-red-800 disabled:opacity-50"
                       >

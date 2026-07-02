@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { BRAND } from "@/lib/brand"
 import {
   ArrowLeft,
@@ -17,7 +17,6 @@ import {
   Truck,
   Volume2,
   VolumeX,
-  X,
   XCircle,
 } from "lucide-react"
 import {
@@ -163,79 +162,6 @@ function getDisplayTableNumber(order: LocalOrder) {
   }
 
   return order.tableNumber || "Sin ubicación"
-}
-
-function getOrderDeliveryCost(order: LocalOrder) {
-  const savedCost = Number(order.deliveryCostUSD || 0)
-
-  if (savedCost > 0) return savedCost
-  if (!isDeliveryOrder(order)) return 0
-
-  const normalizedZone = String(order.deliveryZone || order.tableNumber || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-
-  if (normalizedZone.includes("trigalena")) return 2
-  if (normalizedZone.includes("centro")) return 1
-  if (normalizedZone.includes("prebo")) return 2.5
-  if (normalizedZone.includes("naguanagua")) return 3
-  if (normalizedZone.includes("samanes")) return 3
-  if (normalizedZone.includes("san diego")) return 4
-
-  return 0
-}
-
-function getOrderTotals(order: LocalOrder) {
-  const exchangeRate = Number(order.exchangeRate || 0)
-  const deliveryCostUSD = getOrderDeliveryCost(order)
-
-  const itemTotals = order.items.reduce(
-    (totals, item) => {
-      const subtotal = Number(item.price || 0) * Number(item.quantity || 0)
-
-      if (isComboItem(item)) {
-        totals.totalCombosUSD += subtotal
-      } else {
-        totals.totalRegularUSD += subtotal
-      }
-
-      return totals
-    },
-    {
-      totalCombosUSD: 0,
-      totalRegularUSD: 0,
-    }
-  )
-
-  const hasReadableItems = Array.isArray(order.items) && order.items.length > 0
-
-  const savedCombosUSD = Number(order.totalCombosUSD ?? 0)
-  const savedRegularUSD = Number(order.totalRegularUSD ?? 0)
-
-  const totalCombosUSD = hasReadableItems
-    ? itemTotals.totalCombosUSD
-    : savedCombosUSD
-
-  const totalRegularUSD = hasReadableItems
-    ? itemTotals.totalRegularUSD
-    : savedRegularUSD
-
-  const totalRegularVES = hasReadableItems
-    ? totalRegularUSD * exchangeRate
-    : Number(order.totalRegularVES ?? order.totalVES ?? totalRegularUSD * exchangeRate)
-
-  const totalBeforeDeliveryUSD = totalCombosUSD + totalRegularUSD
-  const totalUSD = totalBeforeDeliveryUSD + deliveryCostUSD
-
-  return {
-    totalUSD,
-    totalCombosUSD,
-    totalRegularUSD,
-    totalRegularVES,
-    deliveryCostUSD,
-    totalBeforeDeliveryUSD,
-  }
 }
 
 function formatDate(value: string) {
@@ -444,40 +370,6 @@ function InfoBox({ label, value }: { label: string; value: string }) {
       <p className="mt-1 break-words text-sm font-black text-[var(--brand-ink-3)]">
         {value || "—"}
       </p>
-    </div>
-  )
-}
-
-function ModalShell({
-  title,
-  children,
-  onClose,
-}: {
-  title: string
-  children: ReactNode
-  onClose: () => void
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[var(--brand-ink-3)]/60 px-4 py-4 backdrop-blur-sm sm:items-center">
-      <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border-4 border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-ink-3)] shadow-2xl shadow-black/45">
-        <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
-
-        <div className="flex items-start justify-between gap-4 border-b-2 border-[var(--brand-primary)] bg-white px-6 py-5">
-          <h2 className="text-3xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
-            {title}
-          </h2>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
-          >
-            <X size={24} />
-          </button>
-        </div>
-
-        <div className="px-6 py-6">{children}</div>
-      </div>
     </div>
   )
 }

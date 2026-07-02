@@ -200,7 +200,7 @@ function normalizeCartItems(items: unknown): CartItem[] {
         "price" in item
       )
     })
-    .map((item: any) => {
+    .map((item: Record<string, unknown>) => {
       const id = Number(item.id)
       const price = cleanNumber(item.price, 0)
       const basePrice = cleanNumber(item.basePrice, price)
