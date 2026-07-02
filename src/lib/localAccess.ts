@@ -279,6 +279,22 @@ export function canLocalAccessUseModule(
   return canLocalRoleAccessModule(access.role, moduleKey)
 }
 
+// Lista efectiva de módulos que esta clave puede usar (permisos custom del
+// usuario si existen; si no, los del rol). La usa la barra de navegación para
+// mostrar solo los módulos disponibles.
+export function getLocalAccessAllowedModules(
+  access: LocalAccessResult,
+): LocalModuleKey[] {
+  if (!access.ok) return []
+  if (access.permissionsMode === "custom" && access.allowedModules) {
+    return access.allowedModules
+  }
+  if (access.allowedModules && access.allowedModules.length > 0) {
+    return access.allowedModules
+  }
+  return getAllowedModulesForLocalRole(access.role)
+}
+
 export function canLocalAccessUseBranch(
   access: LocalAccessResult,
   branchId: string | null | undefined,

@@ -3,29 +3,12 @@
 import { useEffect, useMemo, useState } from "react"
 import { MapPin } from "lucide-react"
 import {
+  fetchActiveBranches,
   getSelectedBranchId,
   setSelectedBranchId,
   BRANCH_CHANGE_EVENT,
+  type StaffBranch as Branch,
 } from "@/lib/branchClient"
-
-type Branch = { id: string; name: string; is_active?: boolean }
-
-// Clave donde los paneles privados guardan la contraseña de acceso. El
-// AuthBridge sólo adjunta el token de Supabase; cuando el ingreso fue por
-// contraseña necesitamos enviarla explícitamente o /api/branches responde 401
-// y el banner nunca aparece.
-const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
-
-function getBranchFetchHeaders(): Record<string, string> {
-  if (typeof window === "undefined") return {}
-  try {
-    const password = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
-    if (password) return { "x-admin-password": password }
-  } catch {
-    /* sin acceso a storage */
-  }
-  return {}
-}
 
 // Banner de sede dentro del panel. Deja clarísimo en qué sucursal está
 // trabajando el usuario (todos los pedidos y datos que ve son de esta sede).
@@ -37,25 +20,15 @@ export default function CurrentBranchBanner() {
   useEffect(() => {
     let cancelled = false
     ;(async () => {
-      try {
-        const res = await fetch("/api/branches", {
-          cache: "no-store",
-          headers: getBranchFetchHeaders(),
-        })
-        if (!res.ok) return
-        const json = await res.json()
-        const list: Branch[] = (json.branches || []).filter((b: Branch) => b.is_active !== false)
-        if (cancelled || list.length === 0) return
+      const list = await fetchActiveBranches()
+      if (cancelled || list.length === 0) return
 
-        setBranches(list)
-        const current = getSelectedBranchId()
-        const valid = current && list.some((b) => b.id === current)
-        const initial = valid ? current! : list[0].id
-        if (!valid) setSelectedBranchId(initial)
-        setSelected(initial)
-      } catch {
-        /* sin red: no mostramos banner */
-      }
+      setBranches(list)
+      const current = getSelectedBranchId()
+      const valid = current && list.some((b) => b.id === current)
+      const initial = valid ? current! : list[0].id
+      if (!valid) setSelectedBranchId(initial)
+      setSelected(initial)
     })()
     return () => {
       cancelled = true

@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react"
 import {
+  fetchActiveBranches,
   getSelectedBranchId,
   setSelectedBranchId,
   BRANCH_CHANGE_EVENT,
+  type StaffBranch as Branch,
 } from "@/lib/branchClient"
-
-type Branch = { id: string; name: string; is_active?: boolean }
 
 // Selector flotante de sucursal para el staff. Fase 7: /api/branches ya
 // devuelve solo las sedes permitidas para el usuario. Si solo tiene una sede,
@@ -16,30 +16,31 @@ export default function BranchSwitcher() {
   const [branches, setBranches] = useState<Branch[]>([])
   const [selected, setSelected] = useState<string | null>(null)
 
+  // En los módulos del staff (/local-santo/*) la barra de módulos ya muestra
+  // y cambia la sede; el flotante solo estorbaría encima de ella.
+  const [hidden] = useState(() => {
+    if (typeof window === "undefined") return false
+    return /^\/local-santo\/.+/.test(window.location.pathname)
+  })
+
   useEffect(() => {
+    if (hidden) return
     let cancelled = false
     ;(async () => {
-      try {
-        const res = await fetch("/api/branches", { cache: "no-store" })
-        if (!res.ok) return
-        const json = await res.json()
-        const list: Branch[] = (json.branches || []).filter((b: Branch) => b.is_active !== false)
-        if (cancelled || list.length === 0) return
+      const list = await fetchActiveBranches()
+      if (cancelled || list.length === 0) return
 
-        setBranches(list)
-        const current = getSelectedBranchId()
-        const valid = current && list.some((b) => b.id === current)
-        const initial = valid ? current! : list[0].id
-        if (!valid) setSelectedBranchId(initial)
-        setSelected(initial)
-      } catch {
-        /* sin red: no mostramos selector */
-      }
+      setBranches(list)
+      const current = getSelectedBranchId()
+      const valid = current && list.some((b) => b.id === current)
+      const initial = valid ? current! : list[0].id
+      if (!valid) setSelectedBranchId(initial)
+      setSelected(initial)
     })()
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [hidden])
 
   useEffect(() => {
     const onChange = () => setSelected(getSelectedBranchId())
@@ -52,7 +53,7 @@ export default function BranchSwitcher() {
     [branches, selected],
   )
 
-  if (branches.length === 0 || !selectedBranch) return null
+  if (hidden || branches.length === 0 || !selectedBranch) return null
 
   return (
     <div

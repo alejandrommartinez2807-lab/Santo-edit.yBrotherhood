@@ -23,7 +23,10 @@ export function DonutChart({
   data: { label: string; value: number }[]
   unit?: string
 }) {
-  const total = data.reduce((s, d) => s + d.value, 0)
+  // Sin las categorías en 0: un segmento invisible con "0%" en la leyenda
+  // parece una gráfica rota.
+  const segments = data.filter((d) => d.value > 0)
+  const total = segments.reduce((s, d) => s + d.value, 0)
   const size = 160
   const r = 60
   const cx = size / 2
@@ -38,7 +41,7 @@ export function DonutChart({
   return (
     <div className="flex flex-wrap items-center gap-5">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-        {data.map((d, i) => {
+        {segments.map((d, i) => {
           const frac = d.value / total
           const dash = frac * circ
           const seg = (
@@ -60,7 +63,7 @@ export function DonutChart({
         <circle cx={cx} cy={cy} r={r - 11} fill="white" />
       </svg>
       <div className="space-y-1.5">
-        {data.map((d, i) => (
+        {segments.map((d, i) => (
           <div key={d.label} className="flex items-center gap-2 text-sm">
             <span className="inline-block h-3 w-3 rounded-sm" style={{ background: PALETTE[i % PALETTE.length] }} />
             <span className="font-bold text-[var(--brand-ink)]">{d.label}</span>
@@ -116,17 +119,35 @@ export function VBarChart({
   height?: number
   highlightEvery?: number
 }) {
-  const max = Math.max(1, ...data.map((d) => d.value))
+  const max = Math.max(...data.map((d) => d.value), 0)
+
+  if (data.length === 0 || max <= 0) {
+    return <p className="text-sm font-bold text-[var(--brand-ink-2)]/55">Sin datos en el período.</p>
+  }
+
+  // Con pocas barras los valores van siempre visibles (en táctil no hay
+  // hover); con series largas solo al pasar el cursor para no encimarse.
+  const alwaysShowValues = data.length <= 8
+  // En series densas (30 días) las columnas son muy angostas: la etiqueta
+  // visible (espaciada por highlightEvery) se desborda sin recorte; con pocas
+  // barras anchas se trunca el nombre largo.
+  const denseLabels = data.length > 12
+
   return (
-    <div>
-      <div className="flex items-stretch gap-1" style={{ height }}>
-        {data.map((d, i) => (
-          <div
-            key={i}
-            className="group flex h-full flex-1 flex-col items-center justify-end gap-1"
-            title={d.tip || `${d.label}: ${fmtUSD(d.value)}`}
-          >
-            <span className="text-[0.55rem] font-black text-[var(--brand-primary)] opacity-0 group-hover:opacity-100">
+    <div className="flex justify-center gap-1">
+      {data.map((d, i) => (
+        <div
+          key={i}
+          // max-w evita el efecto "bloque gigante" cuando hay 1-3 barras.
+          className="group flex min-w-0 max-w-16 flex-1 flex-col"
+          title={d.tip || `${d.label}: ${fmtUSD(d.value)}`}
+        >
+          <div className="flex flex-col items-center justify-end gap-1" style={{ height }}>
+            <span
+              className={`text-[0.55rem] font-black text-[var(--brand-primary)] ${
+                alwaysShowValues ? "" : "opacity-0 group-hover:opacity-100"
+              }`}
+            >
               {d.value > 0 ? fmtUSD(d.value) : ""}
             </span>
             <div
@@ -134,15 +155,15 @@ export function VBarChart({
               style={{ height: `${(d.value / max) * 100}%`, minHeight: d.value > 0 ? 3 : 0 }}
             />
           </div>
-        ))}
-      </div>
-      <div className="mt-1 flex gap-1">
-        {data.map((d, i) => (
-          <span key={i} className="flex-1 text-center text-[0.5rem] font-bold text-[var(--brand-ink-2)]/50">
-            {i % highlightEvery === 0 ? d.label : " "}
+          <span
+            className={`border-t-2 border-[var(--brand-primary)]/15 pt-1 text-center text-[0.55rem] font-bold text-[var(--brand-ink-2)]/50 ${
+              denseLabels ? "overflow-visible whitespace-nowrap" : "truncate"
+            }`}
+          >
+            {i % highlightEvery === 0 ? d.label : " "}
           </span>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   )
 }

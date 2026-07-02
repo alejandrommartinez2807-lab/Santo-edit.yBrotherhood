@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import PublicBranchPicker, {
+  usePublicBranchSelection,
+} from "@/components/PublicBranchPicker";
 import {
   Loader2,
   QrCode,
@@ -278,6 +281,24 @@ export default function OpenAccountInfo() {
   const [selectedTable, setSelectedTable] = useState("");
   const [lookupState, setLookupState] = useState<AccountLookupState>(EMPTY_LOOKUP);
   const [isLookupLoading, setIsLookupLoading] = useState(false);
+  // Sede elegida por el cliente (Fase 3): las mesas y sus cuentas son por sede.
+  const branchSelection = usePublicBranchSelection();
+  const needsBranchSelection = branchSelection.needsSelection;
+
+  // Al cambiar de sede se limpia la consulta anterior: esa mesa/cuenta
+  // pertenecía a otra sucursal.
+  const previousBranchIdRef = useRef(branchSelection.selectedBranchId);
+  useEffect(() => {
+    const previousBranchId = previousBranchIdRef.current;
+    previousBranchIdRef.current = branchSelection.selectedBranchId;
+
+    if (!previousBranchId || previousBranchId === branchSelection.selectedBranchId) {
+      return;
+    }
+
+    setSelectedTable("");
+    setLookupState(EMPTY_LOOKUP);
+  }, [branchSelection.selectedBranchId]);
 
   useEffect(() => {
     let ignore = false;
@@ -310,7 +331,9 @@ export default function OpenAccountInfo() {
     return () => {
       ignore = true;
     };
-  }, []);
+    // Se recarga al cambiar la sede: cada sucursal tiene sus propias mesas
+    // (AuthBridge adjunta x-branch-id al fetch de configuración pública).
+  }, [branchSelection.selectedBranchId]);
 
   async function handleLookupAccount() {
     const cleanTable = selectedTable.trim();
@@ -393,7 +416,20 @@ export default function OpenAccountInfo() {
           })}
         </div>
 
-        <div className="mt-6 rounded-[1.5rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+        <div className="mt-6">
+          <PublicBranchPicker
+            selection={branchSelection}
+            label="¿En qué sede está tu mesa?"
+          />
+        </div>
+
+        <div className="mt-4 rounded-[1.5rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+          {needsBranchSelection ? (
+            <p className="mb-3 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-yellow-50 px-4 py-3 text-sm font-bold leading-5 text-[var(--brand-ink-2)]/70">
+              Elige arriba la sede donde estás para ver sus mesas y consultar
+              cuentas.
+            </p>
+          ) : null}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <label className="flex-1">
               <span className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
@@ -406,8 +442,9 @@ export default function OpenAccountInfo() {
                   setLookupState(EMPTY_LOOKUP);
                 }}
                 list="public-open-account-tables"
+                disabled={needsBranchSelection}
                 placeholder="Ejemplo: Mesa 1"
-                className="mt-2 h-12 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 text-sm font-black text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]"
+                className="mt-2 h-12 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 text-sm font-black text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)] disabled:opacity-50"
               />
               <datalist id="public-open-account-tables">
                 {tables.map((table) => (
@@ -419,7 +456,9 @@ export default function OpenAccountInfo() {
             <button
               type="button"
               onClick={handleLookupAccount}
-              disabled={!selectedTable.trim() || isLookupLoading}
+              disabled={
+                !selectedTable.trim() || isLookupLoading || needsBranchSelection
+              }
               className="inline-flex h-12 items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLookupLoading ? (

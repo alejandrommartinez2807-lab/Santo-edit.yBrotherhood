@@ -1,8 +1,18 @@
 "use client"
 
-import { useEffect, useState, type ReactNode } from "react"
-import { ArrowLeft, Loader2, LockKeyhole, RefreshCw, ShieldAlert } from "lucide-react"
+import { useEffect, useState, type FormEvent, type ReactNode } from "react"
+import {
+  ArrowLeft,
+  Loader2,
+  LockKeyhole,
+  LogIn,
+  RefreshCw,
+  ShieldAlert,
+} from "lucide-react"
 import { BRAND } from "@/lib/brand"
+import { getSupabaseBrowser } from "@/lib/supabaseBrowser"
+import { resolveStaffLoginEmail } from "@/lib/staffIdentity"
+import LocalStaffShell from "@/components/LocalStaffShell"
 
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -73,6 +83,8 @@ type AccessApiResponse = {
     role?: string | null
     roleLabel?: string
     moduleKey?: ModuleKey
+    displayName?: string
+    navModules?: string[]
     canAccessRole?: boolean
     moduleEnabled?: boolean
     enabledByOwner?: boolean
@@ -209,6 +221,89 @@ function clearStoredAccess() {
   window.location.href = "/local-santo"
 }
 
+// Login directo en la pantalla del módulo: el empleado entra a su enlace
+// (ej. /local-santo/caja), pone usuario y contraseña y queda dentro del módulo
+// al que iba, sin pasar por otra página. La clave privada del negocio (modo
+// .env) sigue funcionando si ya está guardada en la sesión, pero no se ofrece
+// aquí: los empleados entran con su usuario.
+function InlineLoginForm({ onLoggedIn }: { onLoggedIn: () => void }) {
+  const [loginUser, setLoginUser] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+    setError("")
+    setLoading(true)
+
+    try {
+      const supabase = getSupabaseBrowser()
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email: resolveStaffLoginEmail(loginUser),
+        password,
+      })
+
+      if (loginError) {
+        setError("Usuario o contraseña incorrectos.")
+        return
+      }
+
+      onLoggedIn()
+    } catch {
+      setError("No se pudo iniciar sesión. Intenta de nuevo.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const inputClassName =
+    "mt-1 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+  const labelClassName =
+    "text-left text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-6 space-y-4 text-left">
+      <div>
+        <label className={labelClassName}>Usuario</label>
+        <input
+          type="text"
+          autoComplete="username"
+          value={loginUser}
+          onChange={(event) => setLoginUser(event.target.value)}
+          required
+          placeholder="maria, jose o correo"
+          className={inputClassName}
+        />
+      </div>
+      <div>
+        <label className={labelClassName}>Contraseña</label>
+        <input
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          required
+          className={inputClassName}
+        />
+      </div>
+
+      {error ? (
+        <p className="text-sm font-bold text-red-700">{error}</p>
+      ) : null}
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-60"
+      >
+        {loading ? <Loader2 className="animate-spin" size={17} /> : <LogIn size={17} />}
+        {loading ? "Entrando…" : "Entrar"}
+      </button>
+    </form>
+  )
+}
+
 function AccessScreen({
   moduleName,
   businessName,
@@ -218,6 +313,7 @@ function AccessScreen({
   errorMessage,
   access,
   onRetry,
+  onLoggedIn,
 }: {
   moduleName: string
   businessName: string
@@ -227,12 +323,28 @@ function AccessScreen({
   errorMessage: string | null
   access?: AccessApiResponse["access"]
   onRetry?: () => void
+  onLoggedIn?: () => void
 }) {
   const isLoading = state === "loading"
   const needsLogin = state === "needs-login"
   const hasError = state === "error"
   const isRoleBlocked = state === "role-blocked"
   const isPlanBlocked = state === "plan-blocked"
+
+  // "Volver" solo tiene sentido si se llegó navegando desde el panel general;
+  // un empleado que entra directo a su enlace no tiene a dónde "volver".
+  const [cameFromPanel] = useState(() => {
+    if (typeof document === "undefined") return false
+    try {
+      const referrer = document.referrer
+      if (!referrer || !referrer.startsWith(window.location.origin)) return false
+      const referrerPath = new URL(referrer).pathname.replace(/\/$/, "")
+      return referrerPath === "/local-santo"
+    } catch {
+      return false
+    }
+  })
+  const showBack = cameFromPanel
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-3)]">
@@ -285,29 +397,37 @@ function AccessScreen({
             {isLoading
               ? `Estamos verificando el acceso privado para ${businessName}.`
               : needsLogin
-                ? "Entra primero al panel con una clave privada para validar tu acceso."
+                ? "Pon tu usuario y contraseña para entrar directo a este módulo."
                 : hasError
                   ? errorMessage || "No se pudo validar el acceso. Revisa la conexión y vuelve a intentarlo."
                   : getModuleStatusText(moduleKey, state, access)}
           </p>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            <a
-              href="/local-santo"
-              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
-            >
-              <ArrowLeft size={17} />
-              Volver
-            </a>
+          {needsLogin && onLoggedIn ? (
+            <InlineLoginForm onLoggedIn={onLoggedIn} />
+          ) : null}
 
-            <button
-              type="button"
-              onClick={clearStoredAccess}
-              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
-            >
-              <LockKeyhole size={17} />
-              Cambiar clave
-            </button>
+          <div className={`${needsLogin ? "mt-4" : "mt-6"} grid gap-3 ${needsLogin || !showBack ? "" : "sm:grid-cols-2"}`}>
+            {showBack ? (
+              <a
+                href="/local-santo"
+                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+              >
+                <ArrowLeft size={17} />
+                Volver
+              </a>
+            ) : null}
+
+            {needsLogin ? null : (
+              <button
+                type="button"
+                onClick={clearStoredAccess}
+                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+              >
+                <LockKeyhole size={17} />
+                Cambiar clave
+              </button>
+            )}
           </div>
 
           {hasError && onRetry ? (
@@ -424,7 +544,16 @@ export default function ModuleAccessGuard({
   }, [moduleKey, retryKey])
 
   if (state === "available") {
-    return <>{children}</>
+    return (
+      <LocalStaffShell
+        moduleKey={moduleKey}
+        allowedModules={access?.navModules || []}
+        roleLabel={roleLabel}
+        displayName={access?.displayName || ""}
+      >
+        {children}
+      </LocalStaffShell>
+    )
   }
 
   return (
@@ -437,6 +566,7 @@ export default function ModuleAccessGuard({
       errorMessage={errorMessage}
       access={access}
       onRetry={() => setRetryKey((current) => current + 1)}
+      onLoggedIn={() => setRetryKey((current) => current + 1)}
     />
   )
 }

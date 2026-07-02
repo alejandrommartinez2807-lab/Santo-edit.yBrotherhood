@@ -1,6 +1,12 @@
 "use client";
 
-import { type CSSProperties, type ChangeEvent, useEffect, useState } from "react";
+import {
+  type CSSProperties,
+  type ChangeEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { BRAND } from "@/lib/brand";
 import {
   CreditCard,
@@ -61,6 +67,9 @@ import {
   OptionPicker,
 } from "@/components/cartDrawerParts";
 import { enqueueOrder, newClientOrderId } from "@/lib/offlineQueue";
+import PublicBranchPicker, {
+  usePublicBranchSelection,
+} from "@/components/PublicBranchPicker";
 import {
   doesPlanAllowLocalOrders,
   doesPlanAllowDelivery,
@@ -336,6 +345,9 @@ export default function CartDrawer({
   const [publicConfig, setPublicConfig] = useState<PublicBusinessConfig>(() =>
     readCachedPublicBusinessConfig(),
   );
+  // Sede elegida por el cliente (Fase 3): scopea mesas, cuentas y el pedido.
+  const branchSelection = usePublicBranchSelection();
+  const needsBranchSelection = branchSelection.needsSelection;
 
   const canRegisterOrdersInPanel = doesPlanAllowLocalOrders(
     publicConfig.membershipPlan,
@@ -379,7 +391,28 @@ export default function CartDrawer({
     return () => {
       ignore = true;
     };
-  }, []);
+    // Se recarga al cambiar la sede: las mesas y la configuración pública
+    // son distintas por sucursal (AuthBridge adjunta x-branch-id al fetch).
+  }, [branchSelection.selectedBranchId]);
+
+  // Al cambiar de sede, la mesa elegida deja de tener sentido: se limpia la
+  // selección y los avisos de cuenta abierta de la sede anterior.
+  const previousBranchIdRef = useRef(branchSelection.selectedBranchId);
+  useEffect(() => {
+    const previousBranchId = previousBranchIdRef.current;
+    previousBranchIdRef.current = branchSelection.selectedBranchId;
+
+    if (!previousBranchId || previousBranchId === branchSelection.selectedBranchId) {
+      return;
+    }
+
+    setTableNumber((current) =>
+      current === "Para llevar" || current === "Delivery" ? current : "",
+    );
+    setQrTableNotice(null);
+    setTableAccountNotice(null);
+    setAttachToTableOpenAccount(false);
+  }, [branchSelection.selectedBranchId]);
 
   useEffect(() => {
     const nextQuickPlaces = getActivePublicLocalTableNames(
@@ -474,7 +507,9 @@ export default function CartDrawer({
       ignore = true;
       window.clearTimeout(timeoutId);
     };
-  }, [orderType, tableNumber]);
+    // La sede en deps: la misma mesa puede tener cuenta abierta en una sede
+    // y estar libre en otra.
+  }, [orderType, tableNumber, branchSelection.selectedBranchId]);
 
   async function handleOpenTableAccount() {
     const cleanTable = tableNumber.trim();
@@ -755,6 +790,7 @@ export default function CartDrawer({
     hasItems &&
     !hasUnavailableItemsForOrderType &&
     !isSubmittingOrder &&
+    !needsBranchSelection &&
     (isDeliveryOrder
       ? customerName.trim().length > 0 &&
         customerPhone.trim().length > 0 &&
@@ -1765,6 +1801,11 @@ export default function CartDrawer({
               </div>
             ) : (
               <div className="space-y-4 px-6 py-6">
+                <PublicBranchPicker
+                  selection={branchSelection}
+                  label="¿En qué sede estás pidiendo?"
+                />
+
                 <div>
                   <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     {isDeliveryOrder
@@ -1804,7 +1845,20 @@ export default function CartDrawer({
                   </div>
                 </div>
 
-                {!isDeliveryOrder && (
+                {orderType === "Comer aquí" && needsBranchSelection && (
+                  <div className="rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-yellow-50 px-4 py-3">
+                    <p className="inline-flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                      <Table2 size={15} />
+                      Elige tu sede primero
+                    </p>
+                    <p className="mt-1 text-sm font-bold leading-5 text-[var(--brand-ink-2)]/70">
+                      Las mesas dependen de la sede. Selecciona arriba la sede
+                      donde estás y aparecerán sus mesas.
+                    </p>
+                  </div>
+                )}
+
+                {orderType === "Comer aquí" && !needsBranchSelection && (
                   <div>
                     <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       {publicConfig.locationLabel} o ubicación
@@ -2238,6 +2292,15 @@ export default function CartDrawer({
                     </p>
                     <p className="mt-1 text-sm font-bold leading-6 text-[var(--brand-ink)]/80">
                       {staffConfirmationMessage}
+                    </p>
+                  </div>
+                )}
+
+                {needsBranchSelection && (
+                  <div className="rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-accent-100)] px-4 py-3">
+                    <p className="text-sm font-bold leading-6 text-[var(--brand-ink)]/80">
+                      Para registrar el pedido, primero elige la sede donde
+                      estás.
                     </p>
                   </div>
                 )}

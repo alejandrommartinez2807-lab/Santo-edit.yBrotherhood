@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Loader2, Plus, Trash2, Building2 } from "lucide-react"
+import { ArrowLeft, Check, Copy, Link2, Loader2, Plus, Trash2, Building2 } from "lucide-react"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -12,6 +12,78 @@ function authHeaders(): HeadersInit {
   const password =
     typeof window !== "undefined" ? window.sessionStorage.getItem(OWNER_STORAGE_KEY) || "" : ""
   return { "Content-Type": "application/json", "x-admin-password": password }
+}
+
+// Módulos operativos con enlace por sede: al abrir el enlace en un
+// dispositivo, esa sede queda fijada ahí (ideal para la tablet de cada área).
+const LINKABLE_MODULES = [
+  { path: "caja", label: "Caja" },
+  { path: "cocina", label: "Cocina" },
+  { path: "mesonero", label: "Mesonero" },
+  { path: "mesas", label: "Mesas y QR" },
+  { path: "delivery", label: "Delivery" },
+  { path: "inventario", label: "Inventario" },
+] as const
+
+function BranchLinksPanel({ branches }: { branches: Branch[] }) {
+  const [copied, setCopied] = useState("")
+  const active = branches.filter((b) => b.is_active)
+
+  if (active.length === 0) return null
+
+  const origin = typeof window !== "undefined" ? window.location.origin : ""
+
+  async function copy(url: string) {
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(url)
+      setTimeout(() => setCopied(""), 1500)
+    } catch {
+      /* sin permiso de portapapeles */
+    }
+  }
+
+  return (
+    <section className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5">
+      <h2 className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+        <Link2 size={16} /> Enlaces por sede
+      </h2>
+      <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
+        Abre el enlace en el dispositivo de cada área (o guárdalo como favorito):
+        ese equipo queda fijado a su sede y el empleado solo pone su usuario.
+      </p>
+      <div className="mt-4 space-y-4">
+        {active.map((b) => (
+          <div key={b.id}>
+            <p className="text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink-3)]">
+              {b.name}
+            </p>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {LINKABLE_MODULES.map((m) => {
+                const url = `${origin}/local-santo/${m.path}?sede=${b.id}`
+                return (
+                  <button
+                    key={m.path}
+                    type="button"
+                    onClick={() => copy(url)}
+                    title={url}
+                    className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+                  >
+                    {copied === url ? (
+                      <Check size={12} className="text-green-600" />
+                    ) : (
+                      <Copy size={12} />
+                    )}
+                    {m.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
 }
 
 export default function SucursalesPage() {
@@ -199,6 +271,8 @@ export default function SucursalesPage() {
                 ))}
               </ul>
             )}
+
+            {!loading ? <BranchLinksPanel branches={branches} /> : null}
           </>
         )}
       </div>

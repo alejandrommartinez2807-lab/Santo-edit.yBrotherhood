@@ -5,12 +5,13 @@ import Link from "next/link"
 import { ArrowLeft, Loader2, BarChart3, TrendingUp, TrendingDown, Clock, PieChart, Download, Printer, CreditCard, Truck, Percent, Boxes, Wallet } from "lucide-react"
 import { DonutChart, HBarChart, VBarChart } from "@/components/charts"
 import { buildCsvSections, downloadCsv } from "@/lib/csv"
+import { fillDailySeries } from "@/lib/reportSeries"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
 
 type Report = {
-  range: { label: string }
+  range: { label: string; from?: string; to?: string }
   summary: { orders: number; totalUSD: number; collectedUSD: number; pendingUSD: number; avgTicket: number }
   comparison?: {
     previous: { orders: number; totalUSD: number; avgTicket: number }
@@ -304,7 +305,13 @@ function ReportesPageContent() {
     downloadCsv(`reporte-${tag}-${today}.csv`, csv)
   }
 
-  const showDaily = period !== "today" && report && report.byDay.length > 1
+  // El API solo devuelve días con ventas; se rellena el resto del rango con
+  // ceros para que la gráfica muestre el período completo (y no desaparezca
+  // cuando todas las ventas cayeron en un solo día).
+  const dailySeries = report
+    ? fillDailySeries(report.byDay, report.range?.from, report.range?.to)
+    : []
+  const showDaily = period !== "today" && dailySeries.length > 1
 
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
@@ -498,7 +505,8 @@ function ReportesPageContent() {
               <Card title="Ventas por día" icon={<TrendingUp size={16} />}>
                 <VBarChart
                   height={160}
-                  data={report.byDay.map((d) => ({
+                  highlightEvery={Math.max(1, Math.ceil(dailySeries.length / 8))}
+                  data={dailySeries.map((d) => ({
                     label: d.date.slice(5),
                     value: d.totalUSD,
                     tip: `${d.date}: ${usd(d.totalUSD)} · ${d.orders} pedidos`,

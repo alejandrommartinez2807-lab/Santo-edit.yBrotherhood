@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getBusinessConfig } from "@/lib/orders"
 import {
   canLocalAccessUseModule,
+  getLocalAccessAllowedModules,
   getRequestAccess,
   isKnownLocalModuleKey,
   type LocalModuleKey,
@@ -119,6 +120,7 @@ async function handleLocalAuth(request: NextRequest) {
           displayName: localAccess.displayName || "",
           permissionsMode: localAccess.permissionsMode || "role",
           allowedModules: localAccess.allowedModules || [],
+          navModules: getLocalAccessAllowedModules(localAccess),
           allBranches: localAccess.allBranches !== false,
           allowedBranchIds: localAccess.allowedBranchIds || [],
           moduleKey,
