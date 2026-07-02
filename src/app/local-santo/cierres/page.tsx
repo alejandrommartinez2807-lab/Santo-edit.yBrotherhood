@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import { BRAND } from "@/lib/brand"
-import { useEffect, useMemo, useState, type ReactNode } from "react"
+import { useEffect, useEffectEvent, useMemo, useState, type ReactNode } from "react"
 import {
   AlertTriangle,
   ArrowLeft,
@@ -282,18 +282,20 @@ function DayClosesPageContent() {
     }, 3000)
   }
 
+  const restoreSession = useEffectEvent(() => {
+    const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
+
+    if (savedPassword) {
+      setAdminPassword(savedPassword)
+      setPasswordInput(savedPassword)
+      loadDayCloses(savedPassword)
+    }
+  })
+
   useEffect(() => {
     // Difiere la restauración de sesión un tick para no hacer setState
     // síncrono dentro del efecto (react-hooks/set-state-in-effect).
-    const timer = setTimeout(() => {
-      const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
-
-      if (savedPassword) {
-        setAdminPassword(savedPassword)
-        setPasswordInput(savedPassword)
-        loadDayCloses(savedPassword)
-      }
-    }, 0)
+    const timer = setTimeout(restoreSession, 0)
     return () => clearTimeout(timer)
   }, [])
 

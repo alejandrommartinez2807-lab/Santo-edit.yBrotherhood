@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import { BRAND } from "@/lib/brand"
 import {
@@ -495,37 +495,43 @@ function CajaPageContent() {
     }
   }
 
+  const restoreSession = useEffectEvent(() => {
+    const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
+
+    loadLocalTables()
+
+    if (savedPassword) {
+      setAdminPassword(savedPassword)
+      setPasswordInput(savedPassword)
+      loadOrders(savedPassword)
+      loadOpenAccounts(savedPassword, true)
+      loadPaymentProofs(savedPassword, true)
+    }
+  })
+
   useEffect(() => {
     // Difiere la restauración de sesión un tick para no hacer setState
     // síncrono dentro del efecto (react-hooks/set-state-in-effect).
-    const timer = setTimeout(() => {
-      const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
-
-      loadLocalTables()
-
-      if (savedPassword) {
-        setAdminPassword(savedPassword)
-        setPasswordInput(savedPassword)
-        loadOrders(savedPassword)
-        loadOpenAccounts(savedPassword, true)
-        loadPaymentProofs(savedPassword, true)
-      }
-    }, 0)
+    const timer = setTimeout(restoreSession, 0)
     return () => clearTimeout(timer)
   }, [])
 
-  useEffect(() => {
-    if (!adminPassword) return
-    const interval = window.setInterval(() => {
-      loadOrders(adminPassword, true)
-      loadOpenAccounts(adminPassword, true)
-    }, 2500)
-    return () => window.clearInterval(interval)
-  }, [adminPassword])
+  const refreshOrdersTick = useEffectEvent(() => {
+    loadOrders(adminPassword, true)
+    loadOpenAccounts(adminPassword, true)
+  })
 
   useEffect(() => {
     if (!adminPassword) return
-    const interval = window.setInterval(() => loadPaymentProofs(adminPassword, true), 10000)
+    const interval = window.setInterval(refreshOrdersTick, 2500)
+    return () => window.clearInterval(interval)
+  }, [adminPassword])
+
+  const refreshProofsTick = useEffectEvent(() => loadPaymentProofs(adminPassword, true))
+
+  useEffect(() => {
+    if (!adminPassword) return
+    const interval = window.setInterval(refreshProofsTick, 10000)
     return () => window.clearInterval(interval)
   }, [adminPassword])
 

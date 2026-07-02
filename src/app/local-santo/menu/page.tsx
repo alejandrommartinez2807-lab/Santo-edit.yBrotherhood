@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
-import Image from "next/image"
+import { useEffect, useEffectEvent, useMemo, useRef, useState, type ReactNode } from "react"
+import NextImage from "next/image"
 import { BRAND } from "@/lib/brand"
 import {
   ArrowLeft,
@@ -695,7 +695,7 @@ export default function LocalMenuPage() {
       .catch(() => {})
   }, [adminPassword])
 
-  useEffect(() => {
+  const restoreSavedSession = useEffectEvent(() => {
     const storedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
     const savedPassword = typeof storedPassword === "string" ? storedPassword.trim() : ""
 
@@ -725,6 +725,10 @@ export default function LocalMenuPage() {
     }
 
     restoreSession()
+  })
+
+  useEffect(() => {
+    restoreSavedSession()
   }, [])
 
   function updateForm<K extends keyof MenuForm>(field: K, value: MenuForm[K]) {
@@ -1053,7 +1057,7 @@ export default function LocalMenuPage() {
               Volver
             </a>
 
-            <Image
+            <NextImage
               src={BRAND.logoUrl || "/logoremovebg.png"}
               alt={BRAND.name}
               width={112}
@@ -1483,7 +1487,7 @@ export default function LocalMenuPage() {
 
                   <div className="overflow-hidden rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white">
                     {form.image ? (
-                      <Image
+                      <NextImage
                         src={form.image}
                         alt="Vista previa del producto"
                         width={640}
@@ -1698,7 +1702,7 @@ export default function LocalMenuPage() {
                     <div className="grid gap-3 sm:grid-cols-[110px_1fr]">
                       <div className="flex h-28 w-full items-center justify-center overflow-hidden rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)]">
                         {product.image ? (
-                          <Image
+                          <NextImage
                             src={product.image}
                             alt={product.name}
                             width={64}

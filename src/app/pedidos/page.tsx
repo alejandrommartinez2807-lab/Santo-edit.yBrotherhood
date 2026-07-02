@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { BRAND } from "@/lib/brand"
@@ -1204,58 +1204,66 @@ export default function PedidosPage() {
     return () => clearTimeout(timer)
   }, [])
 
+  const restoreSession = useEffectEvent((savedPassword: string) => {
+    startLocalSession(savedPassword).catch((error) => {
+      window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
+      setAdminPassword("")
+      setPasswordInput("")
+      setLocalAccessRole(null)
+      setLocalAccessRoleLabel("")
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "No se pudo restaurar el acceso privado"
+      )
+    })
+  })
+
   useEffect(() => {
     const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
 
     if (!savedPassword) return
 
-    const timer = setTimeout(() => {
-      startLocalSession(savedPassword).catch((error) => {
-        window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
-        setAdminPassword("")
-        setPasswordInput("")
-        setLocalAccessRole(null)
-        setLocalAccessRoleLabel("")
-        setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "No se pudo restaurar el acceso privado"
-        )
-      })
-    }, 0)
+    const timer = setTimeout(() => restoreSession(savedPassword), 0)
     return () => clearTimeout(timer)
   }, [])
 
+  const refreshOrdersTick = useEffectEvent(() => {
+    loadOrders(adminPassword, true)
+  })
+
   useEffect(() => {
     if (!adminPassword) return
 
-    const interval = window.setInterval(() => {
-      loadOrders(adminPassword, true)
-    }, 2500)
+    const interval = window.setInterval(refreshOrdersTick, 2500)
 
     return () => {
       window.clearInterval(interval)
     }
   }, [adminPassword])
 
+  const refreshOpenAccountsTick = useEffectEvent(() => {
+    loadOpenAccounts(adminPassword, true)
+  })
+
   useEffect(() => {
     if (!adminPassword) return
 
-    const interval = window.setInterval(() => {
-      loadOpenAccounts(adminPassword, true)
-    }, 8000)
+    const interval = window.setInterval(refreshOpenAccountsTick, 8000)
 
     return () => {
       window.clearInterval(interval)
     }
   }, [adminPassword])
 
+  const refreshProofsTick = useEffectEvent(() => {
+    loadPaymentProofs(adminPassword, true)
+  })
+
   useEffect(() => {
     if (!adminPassword) return
 
-    const interval = window.setInterval(() => {
-      loadPaymentProofs(adminPassword, true)
-    }, 10000)
+    const interval = window.setInterval(refreshProofsTick, 10000)
 
     return () => {
       window.clearInterval(interval)

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import { BRAND } from "@/lib/brand"
 import {
@@ -924,27 +924,31 @@ function DeliveryPageContent() {
     }
   }
 
+  const restoreSession = useEffectEvent(() => {
+    const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
+
+    if (savedPassword) {
+      setAdminPassword(savedPassword)
+      setPasswordInput(savedPassword)
+      loadOrders(savedPassword)
+    }
+  })
+
   useEffect(() => {
     // Difiere la restauración de sesión un tick para no hacer setState
     // síncrono dentro del efecto (react-hooks/set-state-in-effect).
-    const timer = setTimeout(() => {
-      const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
-
-      if (savedPassword) {
-        setAdminPassword(savedPassword)
-        setPasswordInput(savedPassword)
-        loadOrders(savedPassword)
-      }
-    }, 0)
+    const timer = setTimeout(restoreSession, 0)
     return () => clearTimeout(timer)
   }, [])
+
+  const refreshOrdersTick = useEffectEvent(() => {
+    loadOrders(adminPassword, true)
+  })
 
   useEffect(() => {
     if (!adminPassword) return
 
-    const interval = window.setInterval(() => {
-      loadOrders(adminPassword, true)
-    }, 2500)
+    const interval = window.setInterval(refreshOrdersTick, 2500)
 
     return () => {
       window.clearInterval(interval)

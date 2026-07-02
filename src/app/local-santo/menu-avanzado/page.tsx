@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import { BRAND } from "@/lib/brand"
-import { useEffect, useMemo, useState, type ReactNode } from "react"
+import { useEffect, useEffectEvent, useMemo, useState, type ReactNode } from "react"
 import {
   ArrowLeft,
   ChevronDown,
@@ -859,7 +859,7 @@ export default function AdvancedMenuPage() {
     setSuccessMessage(null)
   }
 
-  useEffect(() => {
+  const restoreSavedSession = useEffectEvent(() => {
     const storedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
     const savedPassword = typeof storedPassword === "string" ? storedPassword.trim() : ""
 
@@ -889,6 +889,10 @@ export default function AdvancedMenuPage() {
     }
 
     restoreSession()
+  })
+
+  useEffect(() => {
+    restoreSavedSession()
   }, [])
 
   async function saveAdvancedConfiguration() {

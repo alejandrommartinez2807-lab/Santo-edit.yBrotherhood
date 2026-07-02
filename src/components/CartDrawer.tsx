@@ -4,6 +4,7 @@ import {
   type CSSProperties,
   type ChangeEvent,
   useEffect,
+  useEffectEvent,
   useRef,
   useState,
 } from "react";
@@ -615,9 +616,11 @@ export default function CartDrawer({
     reader.readAsDataURL(file);
   }
 
+  const requestCloseOrderModal = useEffectEvent(() => closeOrderModal());
+
   useEffect(() => {
     if (!canRegisterOrdersInPanel && isOrderModalOpen) {
-      const timer = setTimeout(closeOrderModal, 0);
+      const timer = setTimeout(requestCloseOrderModal, 0);
       return () => clearTimeout(timer);
     }
   }, [canRegisterOrdersInPanel, isOrderModalOpen]);

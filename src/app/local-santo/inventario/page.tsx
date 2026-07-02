@@ -3,7 +3,7 @@
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
 import Image from "next/image"
 import { BRAND } from "@/lib/brand"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useEffectEvent, useMemo, useState } from "react"
 import {
   AlertTriangle,
   ArrowLeft,
@@ -1430,18 +1430,20 @@ function InventoryPageContent() {
     setBusinessConfig(DEFAULT_BUSINESS_CONFIG)
   }
 
+  const restoreSession = useEffectEvent(() => {
+    const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
+
+    if (!savedPassword) return
+
+    setAdminPassword(savedPassword)
+    setPasswordInput(savedPassword)
+    loadInventory(savedPassword)
+  })
+
   useEffect(() => {
     // Difiere la restauración de sesión un tick para no hacer setState
     // síncrono dentro del efecto (react-hooks/set-state-in-effect).
-    const timer = setTimeout(() => {
-      const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
-
-      if (!savedPassword) return
-
-      setAdminPassword(savedPassword)
-      setPasswordInput(savedPassword)
-      loadInventory(savedPassword)
-    }, 0)
+    const timer = setTimeout(restoreSession, 0)
     return () => clearTimeout(timer)
   }, [])
 

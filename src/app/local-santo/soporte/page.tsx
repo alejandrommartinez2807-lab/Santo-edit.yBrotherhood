@@ -1,7 +1,7 @@
 "use client"
 
 import { BRAND } from "@/lib/brand"
-import { useEffect, useMemo, useState, type ReactNode } from "react"
+import { useEffect, useEffectEvent, useMemo, useState, type ReactNode } from "react"
 import {
   AlertTriangle,
   ArrowLeft,
@@ -383,16 +383,18 @@ export default function SupportPage() {
     })
   }
 
+  const restoreSession = useEffectEvent(() => {
+    const savedPassword = window.sessionStorage.getItem(SUPPORT_STORAGE_KEY)
+
+    if (savedPassword) {
+      validateSupportAccess(savedPassword)
+    }
+  })
+
   useEffect(() => {
     // Difiere la restauración de sesión un tick para no hacer setState
     // síncrono dentro del efecto (react-hooks/set-state-in-effect).
-    const timer = setTimeout(() => {
-      const savedPassword = window.sessionStorage.getItem(SUPPORT_STORAGE_KEY)
-
-      if (savedPassword) {
-        validateSupportAccess(savedPassword)
-      }
-    }, 0)
+    const timer = setTimeout(restoreSession, 0)
     return () => clearTimeout(timer)
   }, [])
 

@@ -4,6 +4,7 @@ import { BRAND } from "@/lib/brand";
 import { BUSINESS_TYPE_PRESETS } from "@/lib/businessTypes";
 import {
   useEffect,
+  useEffectEvent,
   useMemo,
   useRef,
   useState,
@@ -2473,16 +2474,18 @@ export default function BusinessConfigPage() {
     setSuccessMessage(null);
   }
 
+  const restoreSession = useEffectEvent(() => {
+    const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY);
+
+    if (savedPassword) {
+      loadBusinessConfig(savedPassword, true);
+    }
+  });
+
   useEffect(() => {
     // Difiere la restauración de sesión un tick para no hacer setState
     // síncrono dentro del efecto (react-hooks/set-state-in-effect).
-    const timer = setTimeout(() => {
-      const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY);
-
-      if (savedPassword) {
-        loadBusinessConfig(savedPassword, true);
-      }
-    }, 0);
+    const timer = setTimeout(restoreSession, 0);
     return () => clearTimeout(timer);
   }, []);
 
