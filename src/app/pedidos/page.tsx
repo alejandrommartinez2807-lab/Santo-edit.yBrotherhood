@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import Link from "next/link"
 import { BRAND } from "@/lib/brand"
 import {
   AlertTriangle,
@@ -3174,13 +3175,13 @@ export default function PedidosPage() {
           <div className="h-6 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="px-6 py-6">
-            <a
+            <Link
               href="/"
               className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
             >
               <ArrowLeft size={16} />
               Volver
-            </a>
+            </Link>
 
             <img
               src={BRAND.logoUrl || (BRAND.logoUrl || "/logoremovebg.png")}
@@ -3281,13 +3282,13 @@ export default function PedidosPage() {
             <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-center 2xl:justify-between">
               <div>
                 <div className="flex flex-wrap gap-2">
-                  <a
+                  <Link
                     href="/"
                     className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     <ArrowLeft size={16} />
                     Menú
-                  </a>
+                  </Link>
 
                   <button
                     type="button"

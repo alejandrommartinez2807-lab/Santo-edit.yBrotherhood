@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import Link from "next/link";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -505,13 +506,13 @@ function MesoneroContent() {
                   <ArrowLeft size={16} />
                   Panel
                 </a>
-                <a
+                <Link
                   href="/"
                   className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-yellow-50"
                 >
                   <Store size={16} />
                   Menú
-                </a>
+                </Link>
                 <button
                   type="button"
                   onClick={() => { loadOrders(adminPassword); loadOpenAccounts(adminPassword, true); loadLocalTables(); }}
