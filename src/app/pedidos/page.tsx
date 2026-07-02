@@ -1102,70 +1102,82 @@ export default function PedidosPage() {
   }
 
   useEffect(() => {
-    try {
-      const storedLocations = window.localStorage.getItem(LOCATIONS_STORAGE_KEY)
+    // Difiere la lectura de localStorage un tick para no hacer setState
+    // síncrono dentro del efecto (react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => {
+      try {
+        const storedLocations = window.localStorage.getItem(LOCATIONS_STORAGE_KEY)
 
-      if (!storedLocations) return
+        if (!storedLocations) return
 
-      const parsedLocations = JSON.parse(storedLocations)
+        const parsedLocations = JSON.parse(storedLocations)
 
-      if (!Array.isArray(parsedLocations)) return
+        if (!Array.isArray(parsedLocations)) return
 
-      const cleanLocations = parsedLocations
-        .map((location) => String(location || "").trim())
-        .filter(Boolean)
+        const cleanLocations = parsedLocations
+          .map((location) => String(location || "").trim())
+          .filter(Boolean)
 
-      if (cleanLocations.length > 0) {
-        setOrderLocations(cleanLocations)
+        if (cleanLocations.length > 0) {
+          setOrderLocations(cleanLocations)
+        }
+      } catch {
+        setOrderLocations(DEFAULT_ORDER_LOCATIONS)
       }
-    } catch {
-      setOrderLocations(DEFAULT_ORDER_LOCATIONS)
-    }
+    }, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {
-    try {
-      const savedConcepts = window.localStorage.getItem(EXPENSE_CONCEPTS_STORAGE_KEY)
+    const timer = setTimeout(() => {
+      try {
+        const savedConcepts = window.localStorage.getItem(EXPENSE_CONCEPTS_STORAGE_KEY)
 
-      if (!savedConcepts) {
-        return
+        if (!savedConcepts) {
+          return
+        }
+
+        const parsedConcepts = JSON.parse(savedConcepts)
+        const cleanConcepts = normalizeExpenseQuickConcepts(parsedConcepts)
+
+        if (cleanConcepts.length > 0) {
+          setExpenseQuickConcepts(cleanConcepts)
+        }
+      } catch {
+        setExpenseQuickConcepts(DEFAULT_EXPENSE_QUICK_CONCEPTS)
       }
-
-      const parsedConcepts = JSON.parse(savedConcepts)
-      const cleanConcepts = normalizeExpenseQuickConcepts(parsedConcepts)
-
-      if (cleanConcepts.length > 0) {
-        setExpenseQuickConcepts(cleanConcepts)
-      }
-    } catch {
-      setExpenseQuickConcepts(DEFAULT_EXPENSE_QUICK_CONCEPTS)
-    }
+    }, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {
-    loadDeliveryZones(true)
+    const timer = setTimeout(() => loadDeliveryZones(true), 0)
+    return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {
     businessConfigRef.current = businessConfig
 
-    if (!isBusinessModuleEffective(businessConfig, "cashier")) {
-      setPanelPaymentFilter("Todos los cobros")
-    }
+    const timer = setTimeout(() => {
+      if (!isBusinessModuleEffective(businessConfig, "cashier")) {
+        setPanelPaymentFilter("Todos los cobros")
+      }
 
-    if (!isBusinessModuleEffective(businessConfig, "delivery")) {
-      setPanelOrderScopeFilter("Todos los tipos")
-    }
+      if (!isBusinessModuleEffective(businessConfig, "delivery")) {
+        setPanelOrderScopeFilter("Todos los tipos")
+      }
 
-    if (!isBusinessModuleEffective(businessConfig, "paymentProofs")) {
-      setPaymentProofs([])
-      setPaymentProofsMessage(null)
-    }
+      if (!isBusinessModuleEffective(businessConfig, "paymentProofs")) {
+        setPaymentProofs([])
+        setPaymentProofsMessage(null)
+      }
 
-    if (!isBusinessModuleEffective(businessConfig, "openAccounts")) {
-      setOpenAccounts([])
-      setOpenAccountsMessage(null)
-    }
+      if (!isBusinessModuleEffective(businessConfig, "openAccounts")) {
+        setOpenAccounts([])
+        setOpenAccountsMessage(null)
+      }
+    }, 0)
+    return () => clearTimeout(timer)
   }, [businessConfig])
 
   useEffect(() => {
@@ -1173,18 +1185,21 @@ export default function PedidosPage() {
   }, [soundEnabled])
 
   useEffect(() => {
-    try {
-      const savedSoundPreference = window.localStorage.getItem(SOUND_STORAGE_KEY)
+    const timer = setTimeout(() => {
+      try {
+        const savedSoundPreference = window.localStorage.getItem(SOUND_STORAGE_KEY)
 
-      if (savedSoundPreference !== null) {
-        const isSoundEnabled = savedSoundPreference === "true"
+        if (savedSoundPreference !== null) {
+          const isSoundEnabled = savedSoundPreference === "true"
 
-        setSoundEnabled(isSoundEnabled)
-        soundEnabledRef.current = isSoundEnabled
+          setSoundEnabled(isSoundEnabled)
+          soundEnabledRef.current = isSoundEnabled
+        }
+      } catch {
+        soundEnabledRef.current = false
       }
-    } catch {
-      soundEnabledRef.current = false
-    }
+    }, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {
@@ -1192,18 +1207,21 @@ export default function PedidosPage() {
 
     if (!savedPassword) return
 
-    startLocalSession(savedPassword).catch((error) => {
-      window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
-      setAdminPassword("")
-      setPasswordInput("")
-      setLocalAccessRole(null)
-      setLocalAccessRoleLabel("")
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "No se pudo restaurar el acceso privado"
-      )
-    })
+    const timer = setTimeout(() => {
+      startLocalSession(savedPassword).catch((error) => {
+        window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
+        setAdminPassword("")
+        setPasswordInput("")
+        setLocalAccessRole(null)
+        setLocalAccessRoleLabel("")
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "No se pudo restaurar el acceso privado"
+        )
+      })
+    }, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   useEffect(() => {

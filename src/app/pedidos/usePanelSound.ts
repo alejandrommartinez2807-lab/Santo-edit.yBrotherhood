@@ -35,19 +35,24 @@ export function usePanelSound(
   }, [soundEnabled])
 
   useEffect(() => {
-    try {
-      const savedSoundPreference =
-        window.localStorage.getItem(SOUND_STORAGE_KEY)
+    // Difiere la lectura de localStorage un tick para no hacer setState
+    // síncrono dentro del efecto (react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => {
+      try {
+        const savedSoundPreference =
+          window.localStorage.getItem(SOUND_STORAGE_KEY)
 
-      if (savedSoundPreference !== null) {
-        const isSoundEnabled = savedSoundPreference === "true"
+        if (savedSoundPreference !== null) {
+          const isSoundEnabled = savedSoundPreference === "true"
 
-        setSoundEnabled(isSoundEnabled)
-        soundEnabledRef.current = isSoundEnabled
+          setSoundEnabled(isSoundEnabled)
+          soundEnabledRef.current = isSoundEnabled
+        }
+      } catch {
+        soundEnabledRef.current = false
       }
-    } catch {
-      soundEnabledRef.current = false
-    }
+    }, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   function getPanelAudioContext() {
