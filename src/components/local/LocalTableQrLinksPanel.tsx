@@ -11,6 +11,7 @@ import {
   MessageCircle,
   Printer,
   QrCode,
+  Store,
   Table2,
 } from "lucide-react";
 import {
@@ -18,7 +19,12 @@ import {
   normalizeLocalTablesForMap,
   type LocalTableMapItem,
 } from "@/components/local/LocalTablesMap";
-import { getSelectedBranchId } from "@/lib/branchClient";
+import {
+  BRANCH_CHANGE_EVENT,
+  fetchActiveBranches,
+  getSelectedBranchId,
+  type StaffBranch,
+} from "@/lib/branchClient";
 
 type LocalTableQrLinksPanelProps = {
   tables: LocalTableMapItem[];
@@ -46,12 +52,12 @@ function getTableToken(table: LocalTableMapItem) {
   return cleanText(table.id || table.name).replace(/^\/+|\/+$/g, "") || cleanText(table.name) || "mesa";
 }
 
-function buildTablePath(table: LocalTableMapItem, branchId: string | null = getSelectedBranchId()) {
+function buildTablePath(table: LocalTableMapItem, branchId: string | null) {
   const suffix = branchId ? `?branch=${encodeURIComponent(branchId)}` : "";
   return `/mesa/${encodeURIComponent(getTableToken(table))}${suffix}`;
 }
 
-function buildDirectMenuPath(table: LocalTableMapItem, branchId: string | null = getSelectedBranchId()) {
+function buildDirectMenuPath(table: LocalTableMapItem, branchId: string | null) {
   const suffix = branchId ? `&branch=${encodeURIComponent(branchId)}` : "";
   return `/?mesa=${encodeURIComponent(getTableToken(table))}${suffix}`;
 }
@@ -76,15 +82,15 @@ function buildQrImageUrl(link: string) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=16&data=${encodeURIComponent(link)}`;
 }
 
-function buildAllLinksText(tables: LocalTableMapItem[], baseUrl: string) {
+function buildAllLinksText(tables: LocalTableMapItem[], baseUrl: string, branchId: string | null) {
   return tables
-    .map((table) => `${table.name}: ${joinBaseUrl(baseUrl, buildTablePath(table))}`)
+    .map((table) => `${table.name}: ${joinBaseUrl(baseUrl, buildTablePath(table, branchId))}`)
     .join("\n");
 }
 
-function buildAllMessagesText(tables: LocalTableMapItem[], baseUrl: string) {
+function buildAllMessagesText(tables: LocalTableMapItem[], baseUrl: string, branchId: string | null) {
   return tables
-    .map((table) => buildTableMessage(table, joinBaseUrl(baseUrl, buildTablePath(table))))
+    .map((table) => buildTableMessage(table, joinBaseUrl(baseUrl, buildTablePath(table, branchId))))
     .join("\n\n---\n\n");
 }
 
@@ -121,14 +127,35 @@ export function LocalTableQrLinksPanel({
 }: LocalTableQrLinksPanelProps) {
   const [browserBaseUrl, setBrowserBaseUrl] = useState("");
   const [copiedState, setCopiedState] = useState<CopiedState>(null);
+  const [branchId, setBranchId] = useState<string | null>(null);
+  const [branches, setBranches] = useState<StaffBranch[]>([]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     // Difiere el setState un tick para no hacerlo síncrono en el efecto.
-    const timer = setTimeout(() => setBrowserBaseUrl(window.location.origin), 0);
-    return () => clearTimeout(timer);
+    const timer = setTimeout(() => {
+      setBrowserBaseUrl(window.location.origin);
+      setBranchId(getSelectedBranchId());
+    }, 0);
+
+    // Los enlaces llevan ?branch=<sede>; si el staff cambia de sede, se
+    // regeneran para que el QR apunte a la sucursal correcta.
+    const handleBranchChange = () => setBranchId(getSelectedBranchId());
+    window.addEventListener(BRANCH_CHANGE_EVENT, handleBranchChange);
+
+    fetchActiveBranches().then((activeBranches) => setBranches(activeBranches));
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener(BRANCH_CHANGE_EVENT, handleBranchChange);
+    };
   }, []);
+
+  const branchName = useMemo(() => {
+    if (!branchId) return "";
+    return branches.find((branch) => branch.id === branchId)?.name || branchId;
+  }, [branchId, branches]);
 
   const activeTables = useMemo(
     () =>
@@ -155,7 +182,7 @@ export function LocalTableQrLinksPanel({
   }
 
   async function handleCopy(table: LocalTableMapItem, action: "link" | "message") {
-    const link = joinBaseUrl(resolvedBaseUrl, buildTablePath(table));
+    const link = joinBaseUrl(resolvedBaseUrl, buildTablePath(table, branchId));
     const value = action === "message" ? buildTableMessage(table, link) : link;
 
     await copyToClipboard(value);
@@ -165,8 +192,8 @@ export function LocalTableQrLinksPanel({
   async function handleCopyAll(action: "all" | "allMessages") {
     const value =
       action === "allMessages"
-        ? buildAllMessagesText(activeTables, resolvedBaseUrl)
-        : buildAllLinksText(activeTables, resolvedBaseUrl);
+        ? buildAllMessagesText(activeTables, resolvedBaseUrl, branchId)
+        : buildAllLinksText(activeTables, resolvedBaseUrl, branchId);
 
     await copyToClipboard(value);
     resetCopyState({ tableName: "Todas", action });
@@ -192,6 +219,13 @@ export function LocalTableQrLinksPanel({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 print:hidden">
+          {branchName && (
+            <span className="inline-flex w-fit items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-white">
+              <Store size={15} />
+              Sede: {branchName}
+            </span>
+          )}
+
           <span className="inline-flex w-fit items-center gap-2 rounded-full border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
             <Table2 size={15} />
             {activeTables.length} mesa(s)
@@ -249,8 +283,8 @@ export function LocalTableQrLinksPanel({
       ) : (
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3 print:grid-cols-2">
           {activeTables.map((table) => {
-            const tablePath = buildTablePath(table);
-            const directMenuPath = buildDirectMenuPath(table);
+            const tablePath = buildTablePath(table, branchId);
+            const directMenuPath = buildDirectMenuPath(table, branchId);
             const tableLink = joinBaseUrl(resolvedBaseUrl, tablePath);
             const copiedLink = copiedState?.tableName === table.name && copiedState.action === "link";
             const copiedMessage = copiedState?.tableName === table.name && copiedState.action === "message";

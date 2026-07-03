@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
-import { getBusinessConfig } from "@/lib/orders"
+import { getBusinessConfig, getRawBusinessConfig } from "@/lib/orders"
+import { getBranchConfig, getExplicitBranchIdFromRequest } from "@/lib/branch"
 import { buildPublicBusinessConfigResponse } from "@/lib/publicBusinessConfigResponse"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
@@ -24,10 +25,29 @@ export async function GET(request: NextRequest) {
   try {
     const businessConfig = await getBusinessConfig()
 
+    // Sede solicitada: header x-branch-id (lo adjunta AuthBridge en cada fetch)
+    // o ?branch= en la URL. Si la sede tiene configuración propia, sus campos
+    // públicos (mesas, whatsapps) pisan los globales.
+    const branchId =
+      getExplicitBranchIdFromRequest(request) ||
+      request.nextUrl.searchParams.get("branch") ||
+      request.nextUrl.searchParams.get("branchId")
+    let scopedConfig: Record<string, unknown> = businessConfig as Record<string, unknown>
+
+    if (branchId) {
+      const branchConfig = getBranchConfig(await getRawBusinessConfig(), branchId)
+
+      if ("localTables" in branchConfig) scopedConfig = { ...scopedConfig, localTables: branchConfig.localTables }
+      if (branchConfig.mainWhatsapp) scopedConfig = { ...scopedConfig, mainWhatsapp: branchConfig.mainWhatsapp }
+      if (branchConfig.deliveryWhatsapp) {
+        scopedConfig = { ...scopedConfig, deliveryWhatsapp: branchConfig.deliveryWhatsapp }
+      }
+    }
+
     return NextResponse.json(
       {
         ok: true,
-        businessConfig: buildPublicBusinessConfigResponse(businessConfig),
+        businessConfig: buildPublicBusinessConfigResponse(scopedConfig),
       },
       {
         headers: NO_STORE_HEADERS,

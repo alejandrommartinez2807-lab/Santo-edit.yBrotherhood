@@ -1160,8 +1160,8 @@ export function OpenAccountsPanel({
                     : "border-[var(--brand-primary)]"
                 }`}
               >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                         {account.tableNumber}
@@ -1194,7 +1194,7 @@ export function OpenAccountsPanel({
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-center sm:min-w-[320px]">
+                  <div className="grid grid-cols-2 gap-2 text-center lg:w-[320px] lg:shrink-0">
                     <MiniStat
                       label="Pedidos"
                       value={accountOrders.length}
