@@ -8,7 +8,7 @@ import {
 } from "@/lib/orders"
 import { getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
-import { resolveBranchId } from "@/lib/branch"
+import { resolveBranchId, resolveScopedBranchId } from "@/lib/branch"
 
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 
@@ -170,7 +170,7 @@ export async function GET(request: NextRequest) {
         ...(dateTo ? { dateTo } : {}),
         ...(dateValue ? { dateValue } : {}),
       },
-      await resolveBranchId(request),
+      await resolveScopedBranchId(request, access.role),
     )
 
     return NextResponse.json({

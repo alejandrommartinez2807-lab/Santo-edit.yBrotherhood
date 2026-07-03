@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   BarChart3,
+  Building2,
   CheckCircle2,
   Clock,
   Eye,
@@ -32,6 +33,7 @@ import type {
   OrderPayment,
   PaymentStatus,
   SavedDayClose,
+  SupplierPurchase,
 } from "@/lib/orders"
 
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
@@ -1483,6 +1485,10 @@ export default function OwnerDashboardPage() {
   const [orders, setOrders] = useState<LocalOrder[]>([])
   const [dayExpenses, setDayExpenses] = useState<DayExpense[]>([])
   const [dayCloses, setDayCloses] = useState<SavedDayClose[]>([])
+  const [supplierPurchases, setSupplierPurchases] = useState<SupplierPurchase[]>([])
+  // Consolidado: dueño ve todas las sedes juntas (scope=all) en vez de solo la
+  // sede actual. El resto de roles nunca puede consolidar (lo bloquea el API).
+  const [consolidated, setConsolidated] = useState(false)
 
   const [rangeMode, setRangeMode] = useState<DashboardRangeMode>("today")
   const [customStartDate, setCustomStartDate] = useState("")
@@ -1495,7 +1501,10 @@ export default function OwnerDashboardPage() {
 
   const isLoggedIn = adminPassword.length > 0
 
-  async function loadDashboardData(password = adminPassword) {
+  async function loadDashboardData(
+    password = adminPassword,
+    scopeAll = consolidated,
+  ) {
     if (!password) return
 
     try {
@@ -1503,26 +1512,30 @@ export default function OwnerDashboardPage() {
       setErrorMessage(null)
 
       const todayKey = getTodayDateInputValue()
+      // scope=all pide el consolidado de todas las sedes; el API solo lo permite
+      // a dueño/soporte y lo ignora para el resto.
+      const scopeQuery = scopeAll ? "?scope=all" : ""
+      const scopeAmp = scopeAll ? "&scope=all" : ""
+      const headers = { "x-admin-password": password }
 
-      const [ordersResponse, expensesResponse, closesResponse] = await Promise.all([
-        fetch("/api/orders", {
-          headers: {
-            "x-admin-password": password,
-          },
+      const [
+        ordersResponse,
+        expensesResponse,
+        closesResponse,
+        purchasesResponse,
+      ] = await Promise.all([
+        fetch(`/api/orders${scopeQuery}`, { headers, cache: "no-store" }),
+        fetch(`/api/day-expenses?dateValue=${todayKey}${scopeAmp}`, {
+          headers,
           cache: "no-store",
         }),
-        fetch(`/api/day-expenses?dateValue=${todayKey}`, {
-          headers: {
-            "x-admin-password": password,
-          },
+        fetch(`/api/day-closes${scopeQuery}`, { headers, cache: "no-store" }),
+        // Compras a proveedores: no-fatal. Si el módulo está apagado (403) o
+        // falla, la sección de compras/deudas queda vacía sin romper el panel.
+        fetch(`/api/supplier-purchases${scopeQuery}`, {
+          headers,
           cache: "no-store",
-        }),
-        fetch("/api/day-closes", {
-          headers: {
-            "x-admin-password": password,
-          },
-          cache: "no-store",
-        }),
+        }).catch(() => null),
       ])
 
       const [ordersData, expensesData, closesData] = await Promise.all([
@@ -1550,6 +1563,15 @@ export default function OwnerDashboardPage() {
       setDayCloses(
         Array.isArray(closesData.dayCloses) ? closesData.dayCloses : []
       )
+
+      if (purchasesResponse && purchasesResponse.ok) {
+        const purchasesData = await readApiResponse(purchasesResponse)
+        setSupplierPurchases(
+          Array.isArray(purchasesData.purchases) ? purchasesData.purchases : []
+        )
+      } else {
+        setSupplierPurchases([])
+      }
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -1578,6 +1600,7 @@ export default function OwnerDashboardPage() {
     setOrders([])
     setDayExpenses([])
     setDayCloses([])
+    setSupplierPurchases([])
     setErrorMessage(null)
   }
 
@@ -1663,6 +1686,51 @@ export default function OwnerDashboardPage() {
     selectedRange.startDate,
     visibleDayCloses,
   ])
+
+  // Compras a proveedores y deudas por pagar. Las compras del período usan el
+  // mismo rango de fechas del panel; las deudas (payables) son el saldo vivo
+  // de TODAS las compras sin pagar, no dependen del rango.
+  const purchasesReport = useMemo(() => {
+    const { startDate, endDate } = selectedRange
+    const inRange = (date: string) =>
+      Boolean(date) &&
+      (!startDate || date >= startDate) &&
+      (!endDate || date <= endDate)
+
+    let periodCount = 0
+    let periodTotalUSD = 0
+    let payableUSD = 0
+    let payableCount = 0
+    let overdueUSD = 0
+    let overdueCount = 0
+
+    for (const purchase of supplierPurchases) {
+      if (inRange(purchase.purchaseDate)) {
+        periodCount += 1
+        periodTotalUSD += toNumber(purchase.totalUSD)
+      }
+
+      const pending = toNumber(purchase.pendingUSD)
+      if (pending > 0.01) {
+        payableUSD += pending
+        payableCount += 1
+        if (purchase.isOverdue) {
+          overdueUSD += pending
+          overdueCount += 1
+        }
+      }
+    }
+
+    return {
+      hasData: supplierPurchases.length > 0,
+      periodCount,
+      periodTotalUSD: roundMoney(periodTotalUSD),
+      payableUSD: roundMoney(payableUSD),
+      payableCount,
+      overdueUSD: roundMoney(overdueUSD),
+      overdueCount,
+    }
+  }, [supplierPurchases, selectedRange])
 
   const alerts = useMemo(() => getDashboardAlerts(report), [report])
   const attentionOrders = useMemo(() => getAttentionOrders(orders), [orders])
@@ -1841,6 +1909,31 @@ export default function OwnerDashboardPage() {
                 </RangeButton>
               </div>
 
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[var(--brand-ink-2)]/60">
+                  Alcance
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextConsolidated = !consolidated
+                    setConsolidated(nextConsolidated)
+                    loadDashboardData(adminPassword, nextConsolidated)
+                  }}
+                  disabled={isLoading}
+                  className={`inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition disabled:opacity-50 ${
+                    consolidated
+                      ? "bg-[var(--brand-primary)] text-white"
+                      : "bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
+                  }`}
+                >
+                  <Building2 size={15} />
+                  {consolidated
+                    ? "Consolidado: todas las sedes"
+                    : "Solo esta sucursal"}
+                </button>
+              </div>
+
               {rangeMode === "custom" && (
                 <div className="mt-3 grid gap-3 rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3 sm:grid-cols-2">
                   <DateFilterInput
@@ -1912,6 +2005,33 @@ export default function OwnerDashboardPage() {
             helper={`${report.deliveryDelivered} entregado(s) · ${report.deliveryPending} pendiente(s)`}
           />
         </section>
+
+        {purchasesReport.hasData && (
+          <section className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <BigMetricCard
+              icon={<PackageCheck size={24} />}
+              title="Compras del período"
+              mainValue={formatUSD(purchasesReport.periodTotalUSD)}
+              helper={`${purchasesReport.periodCount} compra(s) · ${report.label}`}
+            />
+
+            <BigMetricCard
+              icon={<WalletCards size={24} />}
+              title="Deudas por pagar"
+              mainValue={formatUSD(purchasesReport.payableUSD)}
+              helper={`${purchasesReport.payableCount} compra(s) con saldo · proveedores`}
+              tone={purchasesReport.payableUSD > 0 ? "warning" : "good"}
+            />
+
+            <BigMetricCard
+              icon={<AlertTriangle size={24} />}
+              title="Deudas vencidas"
+              mainValue={formatUSD(purchasesReport.overdueUSD)}
+              helper={`${purchasesReport.overdueCount} compra(s) vencida(s)`}
+              tone={purchasesReport.overdueUSD > 0 ? "warning" : "soft"}
+            />
+          </section>
+        )}
 
         <section className="mt-4 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
           <PanelCard

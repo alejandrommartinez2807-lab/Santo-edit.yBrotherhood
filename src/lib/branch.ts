@@ -176,6 +176,36 @@ export async function resolveBranchId(request: HeaderBag): Promise<string | null
   return getDefaultBranchId()
 }
 
+type ScopeRequest = HeaderBag & {
+  url?: string
+  nextUrl?: { searchParams: { get(name: string): string | null } }
+}
+
+function wantsConsolidatedScope(request: ScopeRequest): boolean {
+  const fromNextUrl = request.nextUrl?.searchParams?.get("scope")
+  if (fromNextUrl) return fromNextUrl === "all"
+  if (request.url) {
+    try {
+      return new URL(request.url).searchParams.get("scope") === "all"
+    } catch {
+      return false
+    }
+  }
+  return false
+}
+
+// Igual que resolveBranchId, pero devuelve null (todas las sedes) cuando se pide
+// ?scope=all y el rol puede consolidar (dueño/soporte). Mismo criterio que usa
+// /api/reports; el resto de roles siempre queda acotado a su sede.
+export async function resolveScopedBranchId(
+  request: ScopeRequest,
+  role?: string | null,
+): Promise<string | null> {
+  const privileged = role === "owner" || role === "support"
+  if (privileged && wantsConsolidatedScope(request)) return null
+  return resolveBranchId(request)
+}
+
 export function getExplicitBranchIdFromRequest(request: HeaderBag): string | null {
   const headers = request.headers
   const fromHeader = cleanText(

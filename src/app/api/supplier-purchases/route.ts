@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getInventory, getSupplierPurchases, getSuppliers, saveSupplierPurchase } from "@/lib/orders"
 import { getModulePlanAccess } from "@/lib/localPlans"
-import { resolveBranchId } from "@/lib/branch"
+import { resolveBranchId, resolveScopedBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 import { writeAuditLog } from "@/lib/audit"
 
@@ -38,7 +38,10 @@ export async function GET(request: NextRequest) {
     if (!access.ok) return access.response
 
     const supplierId = request.nextUrl.searchParams.get("supplierId") || null
-    const purchases = await getSupplierPurchases(await resolveBranchId(request), supplierId)
+    const purchases = await getSupplierPurchases(
+      await resolveScopedBranchId(request, access.role),
+      supplierId,
+    )
 
     return NextResponse.json({ ok: true, purchases })
   } catch (error) {

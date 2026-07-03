@@ -19,7 +19,7 @@ import {
 } from "@/lib/localOrderHelpers"
 import { canLocalAccessUseModule, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess, type LocalModuleKey } from "@/lib/localPlans"
-import { resolveBranchId } from "@/lib/branch"
+import { resolveBranchId, resolveScopedBranchId } from "@/lib/branch"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
 import { DataUrlImageError, assertDataUrlImage, sanitizeUploadedImageFileName } from "@/lib/dataUrlImages"
@@ -189,7 +189,9 @@ export async function GET(request: NextRequest) {
       return forbiddenResponse("Este usuario no tiene permiso para este módulo")
     }
 
-    const orders = await getOrders(await resolveBranchId(request))
+    const orders = await getOrders(
+      await resolveScopedBranchId(request, access.role),
+    )
 
     return NextResponse.json({
       orders,
