@@ -3,16 +3,8 @@
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Check, Copy, Link2, Loader2, Plus, Trash2, Building2 } from "lucide-react"
-
-const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
-
-type Branch = { id: string; name: string; is_active: boolean; sort_order: number }
-
-function authHeaders(): HeadersInit {
-  const password =
-    typeof window !== "undefined" ? window.sessionStorage.getItem(OWNER_STORAGE_KEY) || "" : ""
-  return { "Content-Type": "application/json", "x-admin-password": password }
-}
+import BranchConfigPanel from "./BranchConfigPanel"
+import { authHeaders, type Branch } from "./shared"
 
 // Módulos operativos con enlace por sede: al abrir el enlace en un
 // dispositivo, esa sede queda fijada ahí (ideal para la tablet de cada área).
@@ -273,6 +265,8 @@ export default function SucursalesPage() {
                 ))}
               </ul>
             )}
+
+            {!loading ? <BranchConfigPanel branches={branches} /> : null}
 
             {!loading ? <BranchLinksPanel branches={branches} /> : null}
           </>
