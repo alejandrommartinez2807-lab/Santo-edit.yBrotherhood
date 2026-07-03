@@ -296,6 +296,13 @@ function ControlGastosContent() {
       description: "Registra compras a proveedores, abonos y vencimientos.",
     },
     {
+      key: "accountsPayable",
+      href: "/local-santo/cuentas-por-pagar",
+      icon: <Wallet size={22} />,
+      title: "Cuentas por pagar",
+      description: "Lo que le debes a cada proveedor y las compras vencidas.",
+    },
+    {
       key: "suppliers",
       href: "/local-santo/proveedores",
       icon: <Truck size={22} />,

@@ -34,6 +34,7 @@ const NAV_ENTRIES: NavEntry[] = [
   { key: "expenses", label: "Control de gastos", href: "/local-santo/control-gastos" },
   { key: "suppliers", label: "Proveedores", href: "/local-santo/proveedores" },
   { key: "supplierPurchases", label: "Compras", href: "/local-santo/compras" },
+  { key: "accountsPayable", label: "Cuentas por pagar", href: "/local-santo/cuentas-por-pagar" },
   { key: "customers", label: "Clientes", href: "/local-santo/clientes" },
   { key: "history", label: "Cierres", href: "/local-santo/cierres" },
   { key: "reports", label: "Reportes", href: "/local-santo/reportes" },

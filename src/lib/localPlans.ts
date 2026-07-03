@@ -835,13 +835,14 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
   {
     key: "accountsPayable",
     label: "Cuentas por pagar",
-    description: "Base para compras a crédito, pagos parciales, deudas por proveedor y vencimientos.",
+    description: "Deudas a proveedores: lo que debes por proveedor, compras pendientes o parciales, vencidas y próximas a vencer, con abonos rápidos.",
     category: "money",
     minimumPlan: "complete",
     ownerConfigKey: "accountsPayableModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
-    comingSoon: true,
+    routePath: "/local-santo/cuentas-por-pagar",
+    comingSoon: false,
   },
   {
     key: "subrecipes",
