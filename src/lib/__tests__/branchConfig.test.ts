@@ -47,6 +47,35 @@ describe("branch scoped business config", () => {
     expect(getBranchConfig(next, "centro").ordersPaused).toBe(true);
   });
 
+  it("un campo en null elimina el override de la sede", () => {
+    const raw = {
+      branchConfigs: {
+        centro: {
+          publicName: "Centro",
+          localTables: [{ name: "Mesa 1" }, { name: "Mesa 2" }],
+        },
+      },
+    };
+
+    const next = mergeRawBusinessConfigWithBranchConfig(raw, "centro", {
+      localTables: null,
+    });
+
+    const config = getBranchConfig(next, "centro");
+    expect("localTables" in config).toBe(false);
+    expect(config.publicName).toBe("Centro");
+  });
+
+  it("mesas propias vacías se guardan como override vacío (no como ausencia)", () => {
+    const next = mergeRawBusinessConfigWithBranchConfig({}, "centro", {
+      localTables: [],
+    });
+
+    const config = getBranchConfig(next, "centro");
+    expect("localTables" in config).toBe(true);
+    expect(config.localTables).toEqual([]);
+  });
+
   it("copia configuración de una sede a otra", () => {
     const raw = {
       branchConfigs: {

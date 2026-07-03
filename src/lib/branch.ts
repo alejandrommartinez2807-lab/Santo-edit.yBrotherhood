@@ -423,7 +423,9 @@ export function getBranchConfig(
 }
 
 // Mezcla un override de configuración sobre la sede indicada, preservando la
-// configuración de las demás sedes.
+// configuración de las demás sedes. Un campo enviado como null elimina ese
+// override de la sede (p. ej. localTables: null vuelve a las mesas globales,
+// porque la ausencia de la clave es lo que significa "usar lo global").
 export function mergeRawBusinessConfigWithBranchConfig(
   rawBusinessConfig: unknown,
   branchId: string | null | undefined,
@@ -435,15 +437,20 @@ export function mergeRawBusinessConfigWithBranchConfig(
 
   const branchConfigs = getBranchConfigsFromRawBusinessConfig(raw)
   const previousBranchConfig = branchConfigs[normalizedBranchId] || {}
+  const mergedConfig: UnknownRecord = {
+    ...previousBranchConfig,
+    ...toRecord(branchConfig),
+  }
+
+  for (const key of Object.keys(mergedConfig)) {
+    if (mergedConfig[key] === null) delete mergedConfig[key]
+  }
 
   return {
     ...raw,
     branchConfigs: {
       ...branchConfigs,
-      [normalizedBranchId]: normalizeBranchScopedConfig({
-        ...previousBranchConfig,
-        ...toRecord(branchConfig),
-      }),
+      [normalizedBranchId]: normalizeBranchScopedConfig(mergedConfig),
     },
   }
 }
