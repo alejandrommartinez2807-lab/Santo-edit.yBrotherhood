@@ -847,13 +847,14 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
   {
     key: "subrecipes",
     label: "Subrecetas",
-    description: "Preparación para recetas reutilizables como carnes, mezclas, masas o preparaciones base.",
+    description: "Recetas base reutilizables (carnes, mezclas, masas, salsas) hechas con insumos del inventario, con costo calculado por rendimiento.",
     category: "management",
     minimumPlan: "complete",
     ownerConfigKey: "subrecipesModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
-    comingSoon: true,
+    routePath: "/local-santo/subrecetas",
+    comingSoon: false,
   },
   {
     key: "auditLog",
