@@ -27,6 +27,7 @@ import {
   Truck,
   Volume2,
   VolumeX,
+  Wallet,
 } from "lucide-react"
 import { formatUSD, formatVES } from "@/utils/formatCurrency"
 import { getModulePlanAccess, getShortPlanLabel } from "@/lib/localPlans"
@@ -3631,18 +3632,11 @@ export default function PedidosPage() {
 
           {isExpensesModuleVisible && (
             <ModuleAccessCard
-              onClick={() => {
-                setExpenseMessage(null)
-                setIsExpensesModalOpen(true)
-                loadDayExpenses(adminPassword, true)
-                if (isBusinessModuleEffective(businessConfigRef.current, "inventory")) {
-                  loadExpenseInventory(true)
-                }
-              }}
-              icon={<Plus size={24} />}
-              eyebrow="Gastos"
-              title="Gastos del día"
-              description="Registra compras, pagos y salidas de caja para estimar el neto diario."
+              href="/local-santo/control-gastos"
+              icon={<Wallet size={24} />}
+              eyebrow="Egresos"
+              title="Control de gastos"
+              description="Gastos del día, compras, proveedores y alertas de inventario, por sede o negocio completo."
               metric={formatUSD(dayExpenseTotals.equivalentUSD)}
             />
           )}
@@ -3745,18 +3739,6 @@ export default function PedidosPage() {
               metric="Roles"
             />
           )}
-
-          {isSuppliersModuleVisible && (
-            <ModuleAccessCard
-              href="/local-santo/proveedores"
-              icon={<Truck size={24} />}
-              eyebrow="Proveedores"
-              title="Proveedores"
-              description="Lista de proveedores del local con contacto y teléfono para tus compras."
-              metric="Contactos"
-            />
-          )}
-
 
           {isReservationsModuleVisible && (
             <ModuleAccessCard

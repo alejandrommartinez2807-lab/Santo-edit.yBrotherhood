@@ -508,14 +508,14 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
   },
   {
     key: "expenses",
-    label: "Gastos",
-    description: "Registro de gastos diarios, métodos de pago y relación con inventario.",
+    label: "Control de gastos",
+    description: "Centro de egresos del negocio: gastos del día, compras a proveedores, proveedores y alertas de inventario, con resumen por sede y consolidado.",
     category: "money",
     minimumPlan: "pro",
     ownerConfigKey: "expensesModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
-    routePath: "/local-santo/cierres",
+    routePath: "/local-santo/control-gastos",
   },
   {
     key: "reports",

@@ -31,6 +31,7 @@ const NAV_ENTRIES: NavEntry[] = [
   { key: "kitchenItems", label: "Cocina por producto", href: "/local-santo/cocina-productos" },
   { key: "inventory", label: "Inventario", href: "/local-santo/inventario" },
   { key: "inventoryAlerts", label: "Alertas", href: "/local-santo/inventario-alertas" },
+  { key: "expenses", label: "Control de gastos", href: "/local-santo/control-gastos" },
   { key: "suppliers", label: "Proveedores", href: "/local-santo/proveedores" },
   { key: "supplierPurchases", label: "Compras", href: "/local-santo/compras" },
   { key: "customers", label: "Clientes", href: "/local-santo/clientes" },
