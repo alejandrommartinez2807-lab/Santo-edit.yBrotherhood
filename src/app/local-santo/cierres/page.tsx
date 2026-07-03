@@ -30,6 +30,7 @@ import {
   createSafeFileName,
   formatDate,
   getCloseNetEstimatedUSD,
+  getCloseNetAfterPurchasesUSD,
   getClosePaymentState,
   getCloseTitle,
   getDateInputValueDaysAgo,
@@ -999,6 +1000,18 @@ function CloseCard({
           <InfoBox label="Gastos" value={formatUSD(close.expensesTotalUSD)} />
           <InfoBox label="Neto estimado" value={formatUSD(getCloseNetEstimatedUSD(close))} />
           <InfoBox label="Pagados" value={String(close.paidOrders)} />
+          {close.supplierPaymentsEquivalentUSD > 0 && (
+            <>
+              <InfoBox
+                label="Salidas a proveedores"
+                value={formatUSD(close.supplierPaymentsEquivalentUSD)}
+              />
+              <InfoBox
+                label="Neto después de compras"
+                value={formatUSD(getCloseNetAfterPurchasesUSD(close))}
+              />
+            </>
+          )}
         </div>
 
         <div className="grid gap-2 sm:grid-cols-2">

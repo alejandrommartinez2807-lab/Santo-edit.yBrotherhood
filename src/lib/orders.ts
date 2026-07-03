@@ -145,6 +145,7 @@ export {
   saveSupplierPurchase,
   updateSupplierPurchase,
   getSupplierPurchasePayments,
+  getSupplierPurchasePaymentsInRange,
   saveSupplierPurchasePayment,
 } from "./ordersSupplierPurchases"
 

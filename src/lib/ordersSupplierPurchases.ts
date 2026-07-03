@@ -130,6 +130,33 @@ export async function getSupplierPurchasePayments(
   return (data ?? []).map((raw) => mapSupplierPurchasePayment(raw as PaymentRow))
 }
 
+// Abonos a proveedores dentro de un rango de fechas (para el cierre de caja:
+// "salidas a proveedores del día"). Filtra por sucursal; no depende de un
+// purchase_id concreto. dateFrom/dateTo son YYYY-MM-DD inclusivos.
+export async function getSupplierPurchasePaymentsInRange(
+  branchId: string | null | undefined,
+  range: { dateFrom?: string; dateTo?: string } = {},
+): Promise<SupplierPurchasePayment[]> {
+  const dateFrom = cleanText(range.dateFrom)
+  const dateTo = cleanText(range.dateTo)
+
+  const supabase = getSupabaseAdmin()
+  let query = supabase
+    .from("supplier_purchase_payments")
+    .select("*")
+    .order("payment_date", { ascending: false })
+    .order("created_at", { ascending: false })
+
+  if (branchId) query = query.eq("branch_id", branchId)
+  if (dateFrom) query = query.gte("payment_date", dateFrom)
+  if (dateTo) query = query.lte("payment_date", dateTo)
+
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+
+  return (data ?? []).map((raw) => mapSupplierPurchasePayment(raw as PaymentRow))
+}
+
 // Tolerancia de centavos para comparar montos (evita rechazos por redondeo).
 const PAYMENT_OVERPAY_TOLERANCE = 0.01
 

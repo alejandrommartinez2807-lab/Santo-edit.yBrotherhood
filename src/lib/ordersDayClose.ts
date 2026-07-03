@@ -111,6 +111,15 @@ export type SaveDayCloseInput = {
   netEstimatedUSD?: number
   expenses?: DayCloseExpense[]
 
+  // Compras a proveedores: abonos pagados dentro del rango del cierre (todos los
+  // métodos) como salida de caja. netAfterPurchasesUSD = netEstimatedUSD − abonos.
+  // No altera netEstimatedUSD (ventas − gastos) para no romper cierres previos.
+  supplierPaymentsCount?: number
+  supplierPaymentsUSD?: number
+  supplierPaymentsVES?: number
+  supplierPaymentsEquivalentUSD?: number
+  netAfterPurchasesUSD?: number
+
   inventoryProcessedOrders?: number
   inventoryPendingOrders?: number
   inventoryWarningOrders?: number

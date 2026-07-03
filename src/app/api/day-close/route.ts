@@ -183,9 +183,15 @@ export async function POST(request: NextRequest) {
     const deliveryAccess = getModulePlanAccess(businessConfigRecord, "delivery")
     const expensesAccess = getModulePlanAccess(businessConfigRecord, "expenses")
 
+    const supplierPurchasesAccess = getModulePlanAccess(
+      businessConfigRecord,
+      "supplierPurchases",
+    )
+
     const canIncludeCashierAudit = cashierAccess.effectiveEnabled
     const canIncludeDeliveryAudit = deliveryAccess.effectiveEnabled
     const canIncludeExpensesAudit = expensesAccess.effectiveEnabled
+    const canIncludeSupplierPayments = supplierPurchasesAccess.effectiveEnabled
 
     const body = await request.json()
     const rawDayClose = body.dayClose || body.closeSummary || body
@@ -321,6 +327,22 @@ export async function POST(request: NextRequest) {
       expenses: canIncludeExpensesAudit
         ? normalizeExpenses(rawDayClose.expenses)
         : [],
+
+      supplierPaymentsCount: canIncludeSupplierPayments
+        ? toNumber(rawDayClose.supplierPaymentsCount)
+        : 0,
+      supplierPaymentsUSD: canIncludeSupplierPayments
+        ? toNumber(rawDayClose.supplierPaymentsUSD)
+        : 0,
+      supplierPaymentsVES: canIncludeSupplierPayments
+        ? toNumber(rawDayClose.supplierPaymentsVES)
+        : 0,
+      supplierPaymentsEquivalentUSD: canIncludeSupplierPayments
+        ? toNumber(rawDayClose.supplierPaymentsEquivalentUSD)
+        : 0,
+      netAfterPurchasesUSD: canIncludeSupplierPayments
+        ? toNumber(rawDayClose.netAfterPurchasesUSD)
+        : toNumber(rawDayClose.netEstimatedUSD),
 
       salesByType: normalizeSummaryItems(rawDayClose.salesByType),
       deliveryByPayment: canIncludeDeliveryAudit

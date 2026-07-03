@@ -218,6 +218,10 @@ export default function PedidosPage() {
     useState<string | null>(null)
 
   const [dayExpenses, setDayExpenses] = useState<DayExpense[]>([])
+  // Abonos a proveedores del día (compras): salida de caja para el cierre.
+  const [supplierDayPayments, setSupplierDayPayments] = useState<
+    { amountUSD: number; amountVES: number }[]
+  >([])
   const [isExpensesModalOpen, setIsExpensesModalOpen] = useState(false)
   const [expenseForm, setExpenseForm] =
     useState<ExpenseForm>(EMPTY_EXPENSE_FORM)
@@ -667,8 +671,46 @@ export default function PedidosPage() {
     }
   }
 
+  // Abonos a proveedores del día (módulo Compras). Se cargan junto con los
+  // gastos para que el cierre pueda restar las "salidas a proveedores".
+  async function loadSupplierDayPayments(password = adminPassword) {
+    if (!password) return
+
+    if (!isBusinessModuleEffective(businessConfigRef.current, "supplierPurchases")) {
+      setSupplierDayPayments([])
+      return
+    }
+
+    try {
+      const todayKey = getDateKeyInCaracas(new Date())
+      const response = await fetch(
+        `/api/supplier-purchases/payments?dateValue=${todayKey}`,
+        { headers: { "x-admin-password": password }, cache: "no-store" },
+      )
+
+      if (!response.ok) {
+        // No-fatal: si Compras está apagado o falla, el cierre sigue sin la línea.
+        setSupplierDayPayments([])
+        return
+      }
+
+      const data = await readApiResponse(response)
+      const payments = Array.isArray(data.payments) ? data.payments : []
+      setSupplierDayPayments(
+        payments.map((payment: { amountUSD?: unknown; amountVES?: unknown }) => ({
+          amountUSD: Number(payment.amountUSD) || 0,
+          amountVES: Number(payment.amountVES) || 0,
+        })),
+      )
+    } catch {
+      setSupplierDayPayments([])
+    }
+  }
+
   async function loadDayExpenses(password = adminPassword, silent = false) {
     if (!password) return
+
+    void loadSupplierDayPayments(password)
 
     if (!isBusinessModuleEffective(businessConfigRef.current, "expenses")) {
       setDayExpenses([])
@@ -1450,6 +1492,31 @@ export default function PedidosPage() {
       }
     )
   }, [dayExpenses])
+
+  // Salidas a proveedores del día: suma de abonos (compras), con el equivalente
+  // en USD calculado con la misma tasa que usa el resto del cierre.
+  const supplierPaymentTotals = useMemo(() => {
+    const rate = Number(latestExpenseExchangeRate || 0)
+    return supplierDayPayments.reduce<{
+      count: number
+      amountUSD: number
+      amountVES: number
+      equivalentUSD: number
+    }>(
+      (totals, payment) => {
+        const amountUSD = roundMoney(payment.amountUSD)
+        const amountVES = roundMoney(payment.amountVES)
+        totals.count += 1
+        totals.amountUSD += amountUSD
+        totals.amountVES += amountVES
+        totals.equivalentUSD += roundMoney(
+          amountUSD + (amountVES > 0 && rate > 0 ? amountVES / rate : 0)
+        )
+        return totals
+      },
+      { count: 0, amountUSD: 0, amountVES: 0, equivalentUSD: 0 }
+    )
+  }, [supplierDayPayments, latestExpenseExchangeRate])
 
   const expenseCloseBreakdown = useMemo(() => {
     const createSummary = (label: string): ExpenseSummaryItem => ({
@@ -2286,6 +2353,16 @@ export default function PedidosPage() {
       netEstimatedUSD: roundMoney(
         dayStats.realPaymentTotals.realCollectedUSD -
           dayExpenseTotals.equivalentUSD
+      ),
+
+      supplierPaymentsCount: supplierPaymentTotals.count,
+      supplierPaymentsUSD: supplierPaymentTotals.amountUSD,
+      supplierPaymentsVES: supplierPaymentTotals.amountVES,
+      supplierPaymentsEquivalentUSD: supplierPaymentTotals.equivalentUSD,
+      netAfterPurchasesUSD: roundMoney(
+        dayStats.realPaymentTotals.realCollectedUSD -
+          dayExpenseTotals.equivalentUSD -
+          supplierPaymentTotals.equivalentUSD
       ),
       expenses: dayExpenses.map((expense) => ({
         id: expense.id,

@@ -104,6 +104,12 @@ export type SavedDayClose = {
   netEstimatedUSD: number
   expenses: DayCloseExpense[]
 
+  supplierPaymentsCount: number
+  supplierPaymentsUSD: number
+  supplierPaymentsVES: number
+  supplierPaymentsEquivalentUSD: number
+  netAfterPurchasesUSD: number
+
   salesByType: SummaryItem[]
   deliveryByPayment: SummaryItem[]
   deliveryByZone: SummaryItem[]
@@ -394,6 +400,12 @@ export function normalizeDayClose(value: unknown): SavedDayClose | null {
     netEstimatedUSD: toNumber(close.netEstimatedUSD),
     expenses: normalizeDayCloseExpenses(close.expenses),
 
+    supplierPaymentsCount: toNumber(close.supplierPaymentsCount),
+    supplierPaymentsUSD: toNumber(close.supplierPaymentsUSD),
+    supplierPaymentsVES: toNumber(close.supplierPaymentsVES),
+    supplierPaymentsEquivalentUSD: toNumber(close.supplierPaymentsEquivalentUSD),
+    netAfterPurchasesUSD: toNumber(close.netAfterPurchasesUSD),
+
     salesByType: normalizeSummaryArray(close.salesByType),
     deliveryByPayment: normalizeSummaryArray(close.deliveryByPayment),
     deliveryByZone: normalizeSummaryArray(close.deliveryByZone),
@@ -453,6 +465,18 @@ export function getCloseNetEstimatedUSD(close: SavedDayClose) {
   }
 
   return close.netEstimatedUSD || calculatedNet
+}
+
+// Neto después de compras = neto estimado − salidas a proveedores del día.
+// Cae al neto estimado si el cierre es previo a esta función (sin datos).
+export function getCloseNetAfterPurchasesUSD(close: SavedDayClose) {
+  const net = getCloseNetEstimatedUSD(close)
+
+  if (close.supplierPaymentsEquivalentUSD <= 0 && close.netAfterPurchasesUSD === 0) {
+    return net
+  }
+
+  return close.netAfterPurchasesUSD || net - close.supplierPaymentsEquivalentUSD
 }
 
 export function getClosePaymentState(close: SavedDayClose) {
@@ -1163,6 +1187,9 @@ export function buildDayClosesCsv(dayCloses: SavedDayClose[]) {
     "Gastos bolívares Bs",
     "Gastos bolívares equiv USD",
     "Neto estimado USD",
+    "Abonos proveedores registros",
+    "Salidas a proveedores USD",
+    "Neto después de compras USD",
     "Proveedor principal",
     "Tipo gasto principal",
     "Compras inventario USD",
@@ -1205,6 +1232,9 @@ export function buildDayClosesCsv(dayCloses: SavedDayClose[]) {
     close.expensesVES,
     close.expensesVESEquivalentUSD,
     getCloseNetEstimatedUSD(close),
+    toNumber(close.supplierPaymentsCount),
+    toNumber(close.supplierPaymentsEquivalentUSD),
+    getCloseNetAfterPurchasesUSD(close),
     topExpenseProvider?.label || "",
     topExpenseType?.label || "",
     toNumber(inventoryExpenses.totalUSD),
