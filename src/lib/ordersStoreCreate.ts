@@ -99,6 +99,13 @@ export async function createOrderInStore(
     delivery_payment_in: "Sin registrar",
   }
 
+  // Modo entrenamiento: solo referenciamos la columna is_training cuando el
+  // pedido es de práctica, para no romper el insert si la migración 0021 aún
+  // no se aplicó (pedidos reales nunca tocan la columna).
+  if (input.isTraining) {
+    ;(orderRow as Record<string, unknown>).is_training = true
+  }
+
   // branch-exempt: orderRow incluye branch_id (asignado arriba).
   const { error: insertError } = await supabase.from("orders").insert(orderRow)
   if (insertError) {

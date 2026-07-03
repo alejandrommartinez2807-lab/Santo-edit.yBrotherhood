@@ -13,6 +13,7 @@ import {
   CookingPot,
   Eye,
   EyeOff,
+  GraduationCap,
   Loader2,
   LogIn,
   MapPin,
@@ -219,6 +220,11 @@ export default function PedidosPage() {
     useState<string | null>(null)
 
   const [dayExpenses, setDayExpenses] = useState<DayExpense[]>([])
+  // Modo entrenamiento (global): mientras está activo, el panel ve pedidos de
+  // práctica y los nuevos no afectan inventario/reportes/cierre.
+  const [trainingActive, setTrainingActive] = useState(false)
+  const [trainingAvailable, setTrainingAvailable] = useState(false)
+  const [isSavingTraining, setIsSavingTraining] = useState(false)
   // Abonos a proveedores del día (compras): salida de caja para el cierre.
   const [supplierDayPayments, setSupplierDayPayments] = useState<
     { amountUSD: number; amountVES: number }[]
@@ -889,6 +895,47 @@ export default function PedidosPage() {
     }
   }
 
+  async function setTrainingMode(active: boolean) {
+    if (!adminPassword || isSavingTraining) return
+
+    setIsSavingTraining(true)
+    setErrorMessage(null)
+
+    try {
+      const response = await fetch("/api/business-config", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": adminPassword,
+        },
+        body: JSON.stringify({ businessConfig: { trainingModeActive: active } }),
+      })
+      const data = await readApiResponse(response)
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || "No se pudo cambiar el modo entrenamiento"
+        )
+      }
+
+      if (data.businessConfig) {
+        businessConfigRef.current = normalizeBusinessConfig(data.businessConfig)
+      }
+
+      setTrainingActive(active)
+      // Recarga: la lista cambia entre pedidos reales y de práctica.
+      await loadOrders(adminPassword, true)
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "No se pudo cambiar el modo entrenamiento"
+      )
+    } finally {
+      setIsSavingTraining(false)
+    }
+  }
+
   async function loadOrders(password = adminPassword, silent = false) {
     if (!password) return
 
@@ -911,6 +958,9 @@ export default function PedidosPage() {
       if (!response.ok) {
         throw new Error(data.error || "No se pudieron cargar los pedidos")
       }
+
+      setTrainingActive(data.trainingModeActive === true)
+      setTrainingAvailable(data.trainingModeAvailable === true)
 
       let nextOrders: LocalOrder[] = data.orders || []
 
@@ -1037,7 +1087,7 @@ export default function PedidosPage() {
       return false
     }
 
-    window.location.href = LOCAL_ROLE_HOME_PATHS[role]
+    window.location.assign(LOCAL_ROLE_HOME_PATHS[role])
     return true
   }
 
@@ -3550,7 +3600,65 @@ export default function PedidosPage() {
           </div>
         </header>
 
-
+        {(trainingActive || (canEditSensitiveSettings && trainingAvailable)) && (
+          <section
+            className={`mt-4 flex flex-col gap-3 rounded-[1.4rem] border-2 p-4 sm:flex-row sm:items-center sm:justify-between ${
+              trainingActive
+                ? "border-orange-500 bg-orange-100"
+                : "border-[var(--brand-primary)]/25 bg-white"
+            }`}
+          >
+            <div className="flex items-start gap-2">
+              <GraduationCap
+                size={22}
+                className={
+                  trainingActive
+                    ? "text-orange-700"
+                    : "text-[var(--brand-primary)]"
+                }
+              />
+              <div>
+                <p
+                  className={`text-sm font-black uppercase tracking-[0.12em] ${
+                    trainingActive
+                      ? "text-orange-800"
+                      : "text-[var(--brand-primary)]"
+                  }`}
+                >
+                  {trainingActive
+                    ? "Modo entrenamiento ACTIVO"
+                    : "Modo entrenamiento"}
+                </p>
+                <p className="mt-0.5 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
+                  {trainingActive
+                    ? "Los pedidos que se creen ahora son de práctica: no cuentan en inventario, reportes ni cierre. Acuérdate de salir al terminar."
+                    : "Actívalo para entrenar al personal: los pedidos nuevos serán de práctica y no afectarán la operación real."}
+                </p>
+              </div>
+            </div>
+            {canEditSensitiveSettings && (
+              <button
+                type="button"
+                onClick={() => setTrainingMode(!trainingActive)}
+                disabled={isSavingTraining}
+                className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-full border-2 px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] transition disabled:opacity-50 ${
+                  trainingActive
+                    ? "border-orange-600 bg-orange-600 text-white hover:bg-orange-700"
+                    : "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[var(--brand-accent-200)]"
+                }`}
+              >
+                {isSavingTraining ? (
+                  <Loader2 size={15} className="animate-spin" />
+                ) : (
+                  <GraduationCap size={15} />
+                )}
+                {trainingActive
+                  ? "Salir de entrenamiento"
+                  : "Entrar a entrenamiento"}
+              </button>
+            )}
+          </section>
+        )}
 
         <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {isOwnerDashboardModuleVisible && (

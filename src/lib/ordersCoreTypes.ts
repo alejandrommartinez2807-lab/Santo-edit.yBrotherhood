@@ -16,6 +16,10 @@ export type CreateOrderInput = {
   // pedido encolado offline sin crear duplicados. Ver 0018_order_idempotency.
   clientOrderId?: string
 
+  // Pedido de práctica (Modo entrenamiento). Lo decide el servidor según el
+  // flag global del negocio; no se toma del cliente. Ver 0021_training_mode.
+  isTraining?: boolean
+
   deliveryAddress?: string
   deliveryReference?: string
   deliveryZone?: string

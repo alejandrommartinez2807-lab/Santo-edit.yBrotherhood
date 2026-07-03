@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
   const branchId = consolidated ? null : await resolveBranchId(request)
 
   const SELECT_COLS =
-    "id, created_at, status, order_type, total_usd, payment_status, payment_received_equiv_usd, payment_pending_usd, payment_method_usd, payment_method_ves, delivery_cost_usd"
+    "id, created_at, status, order_type, total_usd, payment_status, payment_received_equiv_usd, payment_pending_usd, payment_method_usd, payment_method_ves, delivery_cost_usd, is_training"
 
   let query = supabase
     .from("orders")
@@ -123,7 +123,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const orders = (orderRows ?? []).filter((o) => (o as { status?: string }).status !== "Cancelado")
+  // Excluye cancelados y pedidos de práctica (Modo entrenamiento) para que los
+  // reportes reflejen solo la operación real.
+  const orders = (orderRows ?? []).filter((o) => {
+    const row = o as { status?: string; is_training?: boolean }
+    return row.status !== "Cancelado" && row.is_training !== true
+  })
 
   // Fecha (YYYY-MM-DD) en la zona horaria del negocio, para agrupar por día.
   const dayFmt = new Intl.DateTimeFormat("en-CA", {
@@ -227,13 +232,16 @@ export async function GET(request: NextRequest) {
 
   let prevQuery = supabase
     .from("orders")
-    .select("total_usd, status")
+    .select("total_usd, status, is_training")
     .gte("created_at", prevStart.toISOString())
     .lt("created_at", rangeStart.toISOString())
   if (branchId) prevQuery = prevQuery.eq("branch_id", branchId)
   const { data: prevRows } = await prevQuery
 
-  const prevOrders = (prevRows ?? []).filter((o) => (o as { status?: string }).status !== "Cancelado")
+  const prevOrders = (prevRows ?? []).filter((o) => {
+    const row = o as { status?: string; is_training?: boolean }
+    return row.status !== "Cancelado" && row.is_training !== true
+  })
   const prevTotalUSD = prevOrders.reduce((s, o) => s + num((o as Record<string, unknown>).total_usd), 0)
   const prevCount = prevOrders.length
   const prevAvgTicket = prevCount > 0 ? prevTotalUSD / prevCount : 0

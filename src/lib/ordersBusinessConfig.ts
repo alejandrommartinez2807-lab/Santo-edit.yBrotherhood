@@ -148,6 +148,10 @@ export type BusinessConfig = {
   auditLogModuleEnabled: boolean
   visualEditorModuleEnabled: boolean
   trainingModeModuleEnabled: boolean
+  // Estado en vivo del Modo entrenamiento: mientras está en true, TODOS los
+  // pedidos nuevos se marcan como práctica (is_training) y se excluyen de
+  // reportes/inventario/cierre. No es un módulo, es un interruptor de sesión.
+  trainingModeActive: boolean
   branchesModuleEnabled: boolean
   defaultViewMode: BusinessViewMode
   soundEnabled: boolean
@@ -264,6 +268,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   auditLogModuleEnabled: true,
   visualEditorModuleEnabled: true,
   trainingModeModuleEnabled: false,
+  trainingModeActive: false,
   branchesModuleEnabled: true,
   defaultViewMode: "negocio",
   soundEnabled: true,
@@ -330,6 +335,13 @@ function createLocalTableId(value: string, index: number) {
     .replace(/^-|-$/g, "")
 
   return base || `mesa-${index + 1}`
+}
+
+// Modo entrenamiento activo = módulo habilitado (plan + dueño) Y el interruptor
+// en vivo encendido. Mientras esté activo, los pedidos nuevos son de práctica.
+export function isTrainingModeActive(config: BusinessConfig): boolean {
+  if (!getModulePlanAccess(config, "trainingMode").effectiveEnabled) return false
+  return config.trainingModeActive === true
 }
 
 export function normalizeLocalTablesConfig(
@@ -742,6 +754,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     trainingModeModuleEnabled: normalizeBooleanConfig(
       source.trainingModeModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.trainingModeModuleEnabled
+    ),
+    trainingModeActive: normalizeBooleanConfig(
+      source.trainingModeActive,
+      DEFAULT_BUSINESS_CONFIG.trainingModeActive
     ),
     branchesModuleEnabled: normalizeBooleanConfig(
       source.branchesModuleEnabled,

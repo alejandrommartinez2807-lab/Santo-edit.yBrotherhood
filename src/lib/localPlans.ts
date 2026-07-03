@@ -883,13 +883,13 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
   {
     key: "trainingMode",
     label: "Modo entrenamiento",
-    description: "Base para pedidos, cobros y cierres de práctica sin afectar inventario ni reportes reales.",
+    description: "Interruptor global de práctica: mientras está activo, los pedidos nuevos son de prueba y no afectan inventario, reportes ni cierre. Ideal para entrenar personal.",
     category: "internal",
     minimumPlan: "complete",
     ownerConfigKey: "trainingModeModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     key: "advancedReports",

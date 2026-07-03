@@ -40,6 +40,7 @@ export {
   getActiveLocalTableNames,
   getBusinessConfig,
   getRawBusinessConfig,
+  isTrainingModeActive,
   normalizeBusinessConfig,
   normalizeLocalTablesConfig,
   saveBusinessConfig,

@@ -469,6 +469,7 @@ function normalizeBusinessConfigPayload(
   setBooleanConfig(config, source, "filtersOpenByDefault", currentBusinessConfig, role)
   setBooleanConfig(config, source, "allowCloseWithPendingOrders", currentBusinessConfig, role)
   setBooleanConfig(config, source, "allowCloseWithPendingPayments", currentBusinessConfig, role)
+  setBooleanConfig(config, source, "trainingModeActive", currentBusinessConfig, role)
 
   const canEditTables =
     role === "support" ||

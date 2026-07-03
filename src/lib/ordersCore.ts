@@ -7,7 +7,7 @@ import type {
 } from "./ordersCoreTypes"
 
 import * as ordersStore from "./ordersStore"
-import { getBusinessConfig } from "./ordersBusinessConfig"
+import { getBusinessConfig, isTrainingModeActive } from "./ordersBusinessConfig"
 import { isInventoryAutoDeductActuallyEnabled } from "./businessComplexity"
 import { applyInventoryConsumption, getInventoryRecipes } from "./ordersInventory"
 import { getMenuProducts } from "./ordersMenu"
@@ -33,15 +33,25 @@ export async function findOrderByClientOrderId(
 }
 
 export async function createOrder(input: CreateOrderInput, branchId?: string | null) {
-  const order = await ordersStore.createOrder(input, branchId)
+  // Modo entrenamiento global: mientras esté activo, el pedido nace como
+  // práctica (is_training) y NO afecta inventario ni reportes reales. El flag lo
+  // decide el servidor por config, no el cliente.
+  const training = isTrainingModeActive(await getBusinessConfig())
+
+  const order = await ordersStore.createOrder(
+    training ? { ...input, isTraining: true } : input,
+    branchId,
+  )
 
   // Cierre del lazo de inventario: descuenta stock según recetas (o vínculos de
   // ingredientes del producto) cuando el dueño activó el descuento automático.
   // Es "mejor esfuerzo": cualquier fallo se registra pero NUNCA tumba el pedido
-  // ya creado ni la respuesta al cliente.
-  await deductInventoryForOrder(order, branchId).catch((error) => {
-    captureError(error, { route: "ordersCore.createOrder", action: "deductInventory" })
-  })
+  // ya creado ni la respuesta al cliente. Los pedidos de práctica no descuentan.
+  if (!training) {
+    await deductInventoryForOrder(order, branchId).catch((error) => {
+      captureError(error, { route: "ordersCore.createOrder", action: "deductInventory" })
+    })
+  }
 
   return order
 }

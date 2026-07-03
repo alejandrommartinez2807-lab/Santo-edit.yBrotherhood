@@ -7,6 +7,7 @@ import {
   getDeliveryZones,
   getOpenAccounts,
   getOrders,
+  isTrainingModeActive,
 } from "@/lib/orders"
 import type { OrderType } from "@/types/localOrders"
 import { calculateOrderTotalsFromItems } from "@/lib/localOrderMoney"
@@ -189,12 +190,27 @@ export async function GET(request: NextRequest) {
       return forbiddenResponse("Este usuario no tiene permiso para este módulo")
     }
 
-    const orders = await getOrders(
+    const trainingConfig = await getBusinessConfig()
+    const trainingActive = isTrainingModeActive(trainingConfig)
+    const trainingAvailable = getModulePlanAccess(
+      trainingConfig as unknown as Record<string, unknown>,
+      "trainingMode",
+    ).effectiveEnabled
+    const allOrders = await getOrders(
       await resolveScopedBranchId(request, access.role),
+    )
+
+    // Modo entrenamiento: mientras está activo, el panel ve SOLO los pedidos de
+    // práctica (sandbox); si no, solo los reales. Así los pedidos de práctica
+    // nunca se mezclan con la operación real (reportes/cierre/stats del panel).
+    const orders = allOrders.filter((order) =>
+      trainingActive ? order.isTraining === true : order.isTraining !== true,
     )
 
     return NextResponse.json({
       orders,
+      trainingModeActive: trainingActive,
+      trainingModeAvailable: trainingAvailable,
       access: {
         role: access.role,
         moduleKey,

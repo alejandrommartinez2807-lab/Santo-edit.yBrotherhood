@@ -137,6 +137,7 @@ export function orderRowToLocalOrder(row: Row, items: OrderItem[]): LocalOrder {
     exchangeSource: cleanText(row.exchange_source) || undefined,
     exchangeValueDate: cleanText(row.exchange_value_date) || undefined,
     status: (cleanText(row.status) || "Nuevo") as OrderStatus,
+    isTraining: row.is_training === true,
 
     deliveryReportStatus: (row.delivery_report_status as LocalOrder["deliveryReportStatus"]) || undefined,
     deliveryReportedAt: cleanText(row.delivery_reported_at) || undefined,

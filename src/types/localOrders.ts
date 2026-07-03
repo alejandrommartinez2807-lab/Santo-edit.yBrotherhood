@@ -152,6 +152,8 @@ export type LocalOrder = {
   exchangeSource?: string
   exchangeValueDate?: string
   status: OrderStatus
+  // Pedido de práctica (Modo entrenamiento): excluido de reportes/inventario/cierre.
+  isTraining?: boolean
 
   deliveryReportStatus?: DeliveryReportStatus
   deliveryReportedAt?: string
