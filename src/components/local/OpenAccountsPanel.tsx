@@ -1375,9 +1375,7 @@ export function OpenAccountsPanel({
                 )}
 
                 {canManage && !isClosed && (
-                  <div
-                    className={`mt-4 grid gap-2 ${canCloseAccounts ? "sm:grid-cols-[1fr_auto_auto_auto]" : "sm:grid-cols-[1fr_auto]"}`}
-                  >
+                  <div className="mt-4 flex flex-wrap items-stretch gap-2">
                     <select
                       value={selectedOrderByAccount[account.id] || ""}
                       onChange={(event) =>
@@ -1386,7 +1384,7 @@ export function OpenAccountsPanel({
                           [account.id]: event.target.value,
                         }))
                       }
-                      className="rounded-2xl border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
+                      className="w-full min-w-0 flex-1 rounded-2xl border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)] sm:w-auto sm:basis-[16rem]"
                     >
                       <option value="">
                         Asociar pedido local pendiente de cuenta
@@ -1442,7 +1440,7 @@ export function OpenAccountsPanel({
                       type="button"
                       onClick={() => attachOrder(account.id)}
                       disabled={isSaving || !selectedOrderByAccount[account.id]}
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+                      className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
                     >
                       <CreditCard size={15} />
                       Asociar pedido
@@ -1454,7 +1452,7 @@ export function OpenAccountsPanel({
                           openAccountPayment(account, accountOrders)
                         }
                         disabled={isSaving || totals.pendingUSD <= 0.01}
-                        className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-red-800 disabled:opacity-50"
+                        className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-red-800 disabled:opacity-50"
                       >
                         <CreditCard size={15} />
                         Cobrar cuenta
@@ -1465,7 +1463,7 @@ export function OpenAccountsPanel({
                         type="button"
                         onClick={() => closeAccount(account, accountOrders)}
                         disabled={isSaving}
-                        className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-green-700 bg-green-100 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-green-800 transition hover:bg-green-200 disabled:opacity-50"
+                        className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border-2 border-green-700 bg-green-100 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-green-800 transition hover:bg-green-200 disabled:opacity-50"
                       >
                         <CheckCircle2 size={15} />
                         Cerrar cuenta
