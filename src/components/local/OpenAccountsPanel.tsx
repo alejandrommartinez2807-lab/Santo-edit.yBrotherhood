@@ -13,6 +13,7 @@ import {
   Plus,
   RefreshCw,
   Store,
+  Users,
 } from "lucide-react";
 import { formatUSD } from "@/utils/formatCurrency";
 import type {
@@ -26,6 +27,7 @@ import {
   normalizeComparableText,
 } from "@/lib/localOrderHelpers";
 import { getOrderPayment, getOrderTotals } from "@/lib/localOrderMoney";
+import { SepararCuentaModal } from "./SepararCuentaModal";
 
 type OpenAccountsPanelProps = {
   adminPassword: string;
@@ -33,6 +35,7 @@ type OpenAccountsPanelProps = {
   canManage?: boolean;
   canCloseAccounts?: boolean;
   canRegisterPayments?: boolean;
+  canSplitBill?: boolean;
   compact?: boolean;
   title?: string;
   description?: string;
@@ -398,6 +401,7 @@ export function OpenAccountsPanel({
   canManage = true,
   canCloseAccounts = canManage,
   canRegisterPayments = canCloseAccounts,
+  canSplitBill = false,
   compact = false,
   title = "Cuentas abiertas",
   description = "Abre una cuenta para una mesa o ubicación, asocia pedidos de consumo local y ciérrala desde caja. Cerrar una cuenta no registra cobro ni cambia estados de pago.",
@@ -423,6 +427,7 @@ export function OpenAccountsPanel({
     useState<AccountPaymentForm>(EMPTY_ACCOUNT_PAYMENT_FORM);
   const [closeAfterAccountPayment, setCloseAfterAccountPayment] =
     useState(false);
+  const [splitOpen, setSplitOpen] = useState(false);
 
   const activeAccounts = useMemo(
     () => openAccounts.filter((account) => account.status === "Abierta"),
@@ -792,6 +797,7 @@ export function OpenAccountsPanel({
 
     setPaymentAccountId(account.id);
     setCloseAfterAccountPayment(false);
+    setSplitOpen(false);
     setAccountPaymentForm({
       ...EMPTY_ACCOUNT_PAYMENT_FORM,
       amountReceivedUSD: formatMoneyForInput(totals.pendingUSD),
@@ -1604,6 +1610,31 @@ export function OpenAccountsPanel({
                           Completar en Bs
                         </button>
                       </div>
+
+                      {canSplitBill && (
+                        <div className="mt-3">
+                          <button
+                            type="button"
+                            onClick={() => setSplitOpen(true)}
+                            disabled={totals.pendingUSD <= 0.01}
+                            className="inline-flex items-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-4 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
+                          >
+                            <Users size={15} /> Separar cuenta
+                          </button>
+                          <SepararCuentaModal
+                            open={splitOpen}
+                            onClose={() => setSplitOpen(false)}
+                            totalUSD={totals.pendingUSD}
+                            label={account.tableNumber}
+                            onUseAmount={(usd) =>
+                              updateAccountPaymentForm(
+                                "amountReceivedUSD",
+                                formatMoneyForInput(usd),
+                              )
+                            }
+                          />
+                        </div>
+                      )}
 
                       <div className="mt-3">
                         <label className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">

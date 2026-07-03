@@ -789,13 +789,13 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
   {
     key: "splitBill",
     label: "Separar cuenta",
-    description: "Preparación para dividir cuentas por productos, partes iguales, pagos parciales o montos personalizados.",
+    description: "Divide el total de una cuenta entre varias personas (partes iguales o montos personalizados) y cobra parte por parte desde el cobro de la cuenta.",
     category: "money",
     minimumPlan: "complete",
     ownerConfigKey: "splitBillModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     key: "serviceChargeTips",

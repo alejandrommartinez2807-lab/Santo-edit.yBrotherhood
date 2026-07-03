@@ -268,6 +268,7 @@ export function buildPublicBusinessConfigResponse(
   const featuredProductsAccess = getModulePlanAccess(config, "featuredProducts")
   const paymentProofsAccess = getModulePlanAccess(config, "paymentProofs")
   const openAccountsAccess = getModulePlanAccess(config, "openAccounts")
+  const splitBillAccess = getModulePlanAccess(config, "splitBill")
   const featuredProductsActive = normalizeBoolean(config.featuredProductsActive, false)
   const featuredProductIds = normalizeProductIds(config.featuredProductIds)
   const featuredProductsCanShow =
@@ -345,6 +346,7 @@ export function buildPublicBusinessConfigResponse(
     paymentProofsEnabled: paymentProofsAccess.effectiveEnabled,
     paymentProofsModuleEnabled: paymentProofsAccess.effectiveEnabled,
     openAccountsEnabled: openAccountsAccess.effectiveEnabled,
+    splitBillEnabled: splitBillAccess.effectiveEnabled,
     localTables: normalizePublicLocalTables(config.localTables),
     promotionActive: promotionCanShow,
     promotionTitle: promotionCanShow ? promotionTitle : "",

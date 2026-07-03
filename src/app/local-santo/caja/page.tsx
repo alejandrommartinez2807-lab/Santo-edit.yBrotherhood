@@ -111,6 +111,7 @@ function CajaPageContent() {
   const [paymentProofsMessage, setPaymentProofsMessage] = useState<string | null>(null)
   const [confirmingStaffOrderId, setConfirmingStaffOrderId] = useState<string | null>(null)
   const [attachingOpenAccountOrderId, setAttachingOpenAccountOrderId] = useState<string | null>(null)
+  const [canSplitBill, setCanSplitBill] = useState(false)
 
   const pendingStatusRef = useRef<Map<string, OrderStatus>>(new Map())
   const isLoggedIn = adminPassword.length > 0
@@ -133,6 +134,7 @@ function CajaPageContent() {
         : data
 
       setLocalTables(normalizeLocalTablesForMap(businessConfig.localTables))
+      setCanSplitBill(Boolean(businessConfig.splitBillEnabled))
     } catch {
       setLocalTables(DEFAULT_LOCAL_TABLES)
     }
@@ -888,6 +890,7 @@ function CajaPageContent() {
           canManage
           canCloseAccounts
           canRegisterPayments
+          canSplitBill={canSplitBill}
           compact
           title="Cuentas abiertas de caja"
           description="Revisa todo lo asociado a cada mesa, cobra la cuenta completa en un solo paso y ciérrala solo cuando la mesa termine."
