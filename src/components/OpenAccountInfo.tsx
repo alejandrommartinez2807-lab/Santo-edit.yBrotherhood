@@ -387,9 +387,9 @@ export default function OpenAccountInfo() {
 
   return (
     <section id="abrir-cuenta" className="mx-auto w-full max-w-6xl px-4 py-10">
-      <div className="rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white p-6 shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.12)] sm:p-8">
+      <div className="rounded-[2rem] border border-[var(--brand-border)] bg-[var(--brand-surface)] p-6 sm:p-8">
         <div className="flex flex-col items-center text-center">
-          <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-[var(--brand-accent)] text-[var(--brand-primary)]">
+          <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-[var(--brand-accent)] text-black">
             <QrCode size={28} />
           </span>
           <p className="mt-3 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
@@ -410,10 +410,10 @@ export default function OpenAccountInfo() {
             return (
               <article
                 key={step.title}
-                className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4"
+                className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4"
               >
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-white text-sm font-black text-[var(--brand-primary)]">
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--brand-primary)] bg-black text-sm font-black text-[var(--brand-primary)]">
                     {index + 1}
                   </span>
                   <Icon size={18} className="text-[var(--brand-primary)]" />
@@ -436,9 +436,9 @@ export default function OpenAccountInfo() {
           />
         </div>
 
-        <div className="mt-4 rounded-[1.5rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+        <div className="mt-4 rounded-[1.5rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
           {needsBranchSelection ? (
-            <p className="mb-3 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-yellow-50 px-4 py-3 text-sm font-bold leading-5 text-[var(--brand-ink-2)]/70">
+            <p className="mb-3 rounded-2xl border border-[rgba(var(--brand-primary-rgb),0.35)] bg-[rgba(var(--brand-primary-rgb),0.08)] px-4 py-3 text-sm font-bold leading-5 text-[var(--brand-ink-2)]">
               Elige arriba la sede donde estás para ver sus mesas y consultar
               cuentas.
             </p>
@@ -457,7 +457,7 @@ export default function OpenAccountInfo() {
                 list="public-open-account-tables"
                 disabled={needsBranchSelection}
                 placeholder="Ejemplo: Mesa 1"
-                className="mt-2 h-12 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 text-sm font-black text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)] disabled:opacity-50"
+                className="mt-2 h-12 w-full rounded-2xl border border-[var(--brand-border)] bg-black px-4 text-sm font-bold text-[var(--brand-ink-3)] outline-none placeholder:text-[var(--brand-ink-2)] focus:border-[var(--brand-primary)] disabled:opacity-50"
               />
               <datalist id="public-open-account-tables">
                 {tables.map((table) => (
@@ -472,7 +472,7 @@ export default function OpenAccountInfo() {
               disabled={
                 !selectedTable.trim() || isLookupLoading || needsBranchSelection
               }
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[var(--brand-accent)] px-5 text-xs font-black uppercase tracking-[0.12em] text-black transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLookupLoading ? (
                 <Loader2 size={17} className="animate-spin" />
@@ -484,7 +484,7 @@ export default function OpenAccountInfo() {
           </div>
 
           {lookupState.status !== "idle" ? (
-            <div className="mt-4 rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-white p-4">
+            <div className="mt-4 rounded-2xl border border-[var(--brand-border)] bg-black p-4">
               <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
                 {lookupState.tableName || selectedTable}
               </p>
@@ -501,7 +501,7 @@ export default function OpenAccountInfo() {
                     <span className="rounded-2xl bg-[var(--brand-cream)] px-3 py-2">
                       Cobrado {formatUSD(lookupState.account.totalCollectedUSD)}
                     </span>
-                    <span className="rounded-2xl bg-[var(--brand-accent-100)] px-3 py-2 text-[var(--brand-ink)]">
+                    <span className="rounded-2xl bg-[var(--brand-accent)] px-3 py-2 text-black">
                       Pendiente {formatUSD(lookupState.account.pendingUSD)}
                     </span>
                   </div>
