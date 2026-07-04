@@ -51,12 +51,12 @@ export default function CurrentBranchBanner() {
   const multiBranch = branches.length > 1
 
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-[var(--brand-ink)]">
+    <div className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-black">
       <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-white text-[var(--brand-primary)]">
         <MapPin size={18} />
       </span>
       <div className="flex flex-col">
-        <span className="text-[0.6rem] font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+        <span className="text-[0.6rem] font-black uppercase tracking-[0.18em] text-black/70">
           Estás viendo la sede
         </span>
         {multiBranch ? (
@@ -76,12 +76,12 @@ export default function CurrentBranchBanner() {
             ))}
           </select>
         ) : (
-          <span className="text-xl font-black uppercase leading-tight text-[var(--brand-primary)]">
+          <span className="text-xl font-black uppercase leading-tight text-black">
             {selectedBranch.name}
           </span>
         )}
       </div>
-      <span className="ml-auto max-w-[15rem] text-right text-[0.68rem] font-bold leading-tight text-[var(--brand-ink)]/80">
+      <span className="ml-auto max-w-[15rem] text-right text-[0.68rem] font-bold leading-tight text-black/80">
         {multiBranch
           ? "Todos los pedidos y datos de abajo son solo de esta sede. Cambia arriba para ver otra."
           : "Todos los pedidos y datos de abajo son de esta sede."}
