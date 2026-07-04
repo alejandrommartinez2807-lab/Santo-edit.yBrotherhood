@@ -64,6 +64,7 @@ export default function Home() {
         exchangeSource={exchange.source}
         exchangeValueDate={exchange.valueDate}
         exchangeFallback={exchange.fallback}
+        exchangeManual={exchange.manual}
         exchangeWarning={exchange.warning}
       />
     </main>

@@ -9,12 +9,12 @@ import {
 } from "@/lib/exchangeRateCache"
 
 const baseRate: ExchangeRateCacheableResponse = {
-  rate: 602.18,
-  currency: "EUR",
+  rate: 667.05,
+  currency: "USD",
   source: "BCV",
-  name: "Euro Oficial BCV",
-  valueDate: "Viernes, 26 Junio 2026",
-  updatedAt: "2026-06-28T12:00:00.000Z",
+  name: "Dólar Oficial BCV",
+  valueDate: "Lunes, 06 Julio 2026",
+  updatedAt: "2026-07-06T12:00:00.000Z",
   fallback: false,
 }
 

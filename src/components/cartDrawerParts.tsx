@@ -340,6 +340,7 @@ type CartSummaryFooterProps = {
   comboTotalPrice: number;
   regularTotalPrice: number;
   regularTotalVES: number;
+  totalVES: number;
   isOfficialBcv: boolean;
   sourceLabel: string;
   exchangeValueDate?: string;
@@ -360,6 +361,7 @@ export function CartSummaryFooter({
   comboTotalPrice,
   regularTotalPrice,
   regularTotalVES,
+  totalVES,
   isOfficialBcv,
   sourceLabel,
   exchangeValueDate,
@@ -392,6 +394,12 @@ export function CartSummaryFooter({
             {formatUSD(totalUSD)}
           </p>
         </div>
+
+        {exchangeRate > 0 && (
+          <p className="mt-1 text-right text-xs font-black text-[var(--brand-ink-2)]/75">
+            ≈ Bs {formatVES(totalVES)}
+          </p>
+        )}
 
         {hasCombos && hasRegularProducts ? (
           <div className="mt-2 grid grid-cols-2 overflow-hidden rounded-[1rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)]">
@@ -463,7 +471,7 @@ export function CartSummaryFooter({
           </div>
         )}
 
-        {hasRegularProducts && (
+        {exchangeRate > 0 && (
           <div className="mt-1.5 flex items-center justify-between gap-3 rounded-[1rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)]/70 px-3 py-1.5">
             <div className="min-w-0">
               <p className="inline-flex items-center gap-1 text-[0.58rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
@@ -472,7 +480,7 @@ export function CartSummaryFooter({
                 ) : (
                   <AlertTriangle size={11} />
                 )}
-                Tasa {sourceLabel}
+                {sourceLabel}
               </p>
 
               {exchangeValueDate && (
@@ -488,7 +496,7 @@ export function CartSummaryFooter({
           </div>
         )}
 
-        {exchangeWarning && hasRegularProducts && (
+        {exchangeWarning && (
           <div className="mt-1.5 rounded-xl border border-orange-400/35 bg-orange-100 px-3 py-1.5">
             <p className="text-[0.62rem] font-bold leading-4 text-[#7a2e00]">
               {exchangeWarning}

@@ -98,6 +98,7 @@ type CartDrawerProps = {
   exchangeSource?: string;
   exchangeValueDate?: string;
   exchangeFallback?: boolean;
+  exchangeManual?: boolean;
   exchangeWarning?: string;
 };
 
@@ -284,6 +285,7 @@ export default function CartDrawer({
   exchangeSource,
   exchangeValueDate,
   exchangeFallback,
+  exchangeManual,
   exchangeWarning,
 }: CartDrawerProps) {
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
@@ -812,8 +814,19 @@ export default function CartDrawer({
     ? tableAccountNotice?.openAccount || null
     : null;
 
-  const sourceLabel = exchangeSource || "BCV";
-  const isOfficialBcv = sourceLabel === "BCV" && !exchangeFallback;
+  // Etiqueta de la tasa activa: el cliente debe saber si es la oficial del
+  // BCV (automática) o una fijada por el negocio en su panel.
+  const isManualRate = Boolean(exchangeManual) || exchangeSource === "Negocio";
+  const sourceLabel = isManualRate
+    ? "Tasa del negocio"
+    : exchangeSource === "BCV"
+      ? "Tasa BCV (automática)"
+      : exchangeSource === "DolarApi"
+        ? "Tasa oficial (respaldo)"
+        : `Tasa ${exchangeSource || "BCV"}`;
+  const isOfficialBcv =
+    (exchangeSource === "BCV" && !exchangeFallback) || isManualRate;
+  const totalVES = totalUSD * exchangeRate;
 
   const canRegisterLocalOrder =
     hasItems &&
@@ -895,11 +908,13 @@ export default function CartDrawer({
       return buildWhatsAppProductLine(item, baseLine);
     });
 
-    const sourceLine = isOfficialBcv
-      ? `Fuente: BCV${
-          exchangeValueDate ? `\nFecha valor: ${exchangeValueDate}` : ""
-        }`
-      : `Fuente: ${sourceLabel}`;
+    const sourceLine = isManualRate
+      ? "Fuente: tasa fijada por el negocio"
+      : exchangeSource === "BCV" && !exchangeFallback
+        ? `Fuente: BCV${
+            exchangeValueDate ? `\nFecha valor: ${exchangeValueDate}` : ""
+          }`
+        : `Fuente: ${sourceLabel}`;
 
     const currentBusinessName = publicConfig.businessName || BRAND.name;
 
@@ -969,6 +984,7 @@ export default function CartDrawer({
     }
 
     messageParts.push(`Total final en divisas: ${formatUSD(totalUSD)}`);
+    messageParts.push(`Referencia en bolívares: Bs ${formatVES(totalVES)}`);
 
     if (hasCombos) {
       messageParts.push(`Combos solo divisas: ${formatUSD(comboTotalPrice)}`);
@@ -980,10 +996,11 @@ export default function CartDrawer({
           regularTotalVES,
         )}`,
       );
-      messageParts.push("");
-      messageParts.push(`Tasa usada: Bs ${formatVES(exchangeRate)}`);
-      messageParts.push(sourceLine);
     }
+
+    messageParts.push("");
+    messageParts.push(`Tasa usada: Bs ${formatVES(exchangeRate)}`);
+    messageParts.push(sourceLine);
 
     return encodeURIComponent(messageParts.join("\n"));
   }
@@ -1507,6 +1524,7 @@ export default function CartDrawer({
             comboTotalPrice={comboTotalPrice}
             regularTotalPrice={regularTotalPrice}
             regularTotalVES={regularTotalVES}
+            totalVES={totalVES}
             isOfficialBcv={isOfficialBcv}
             sourceLabel={sourceLabel}
             exchangeValueDate={exchangeValueDate}
