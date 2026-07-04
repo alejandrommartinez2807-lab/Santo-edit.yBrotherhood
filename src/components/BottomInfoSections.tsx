@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import Image from "next/image"
 import { BRAND } from "@/lib/brand"
-import { Clock, MapPin, MessageCircle, Star } from "lucide-react"
+import { AtSign, Bike, Clock, MapPin, MessageCircle } from "lucide-react"
 
 type PublicBusinessConfig = {
   businessName: string
@@ -134,6 +135,21 @@ function normalizeExternalUrl(value: string, fallback = "#") {
   return fallback
 }
 
+function formatWhatsappDisplay(value: string) {
+  const digits = String(value || "").replace(/\D/g, "")
+
+  if (!digits) return ""
+
+  // Números venezolanos guardados con prefijo 58 se muestran como 0XXX-XXX-XXXX.
+  const local = digits.startsWith("58") ? `0${digits.slice(2)}` : digits
+
+  if (local.length === 11) {
+    return `${local.slice(0, 4)}-${local.slice(4, 7)}-${local.slice(7)}`
+  }
+
+  return local
+}
+
 function buildWhatsappUrl(value: string) {
   const cleanValue = String(value || "").trim()
 
@@ -209,34 +225,42 @@ export default function BottomInfoSections() {
     return normalizeExternalUrl(businessConfig.instagramUrl, "")
   }, [businessConfig.instagramUrl])
 
+  const whatsappDisplay = formatWhatsappDisplay(
+    businessConfig.deliveryWhatsapp || businessConfig.mainWhatsapp,
+  )
+
   return (
     <section
       id="contacto"
-      className="bg-[var(--brand-cream)] px-4 py-12 text-[var(--brand-ink-3)] sm:px-6 lg:px-8"
+      className="relative overflow-hidden bg-[var(--brand-cream)] px-4 pb-0 pt-14 text-[var(--brand-ink-3)] sm:px-6 lg:px-8"
     >
-      <div className="mx-auto max-w-7xl overflow-hidden rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.14)]">
-        <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,-16px_0] bg-[var(--brand-cream)]" />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-96 bg-[radial-gradient(ellipse_at_50%_120%,rgba(var(--brand-primary-rgb),0.14),transparent_60%)]"
+      />
 
-        <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="border-b-4 border-[var(--brand-primary)] p-6 sm:p-8 lg:border-b-0 lg:border-r-4">
-            <div className="inline-flex rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-ink)]">
+      <div className="relative mx-auto max-w-7xl">
+        <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+          {/* Bloque de bienvenida */}
+          <div>
+            <div className="inline-flex rounded-full border border-[rgba(var(--brand-primary-rgb),0.45)] bg-black/50 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--brand-primary)]">
               {businessConfig.publicSectionTitle || "Contacto"}
             </div>
 
-            <h2 className="mt-5 max-w-3xl text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.8)] sm:text-5xl">
+            <h2 className="font-display mt-5 max-w-3xl text-[2.8rem] uppercase leading-[0.9] text-[var(--brand-ink-3)] [text-shadow:0_8px_40px_rgba(var(--brand-primary-rgb),0.3)] sm:text-6xl">
               {businessConfig.publicWelcomeTitle}
             </h2>
 
-            <p className="mt-4 max-w-2xl text-sm font-bold leading-7 text-[var(--brand-ink-2)]/85 sm:text-base">
+            <p className="mt-4 max-w-2xl text-sm font-medium leading-7 text-[var(--brand-ink-2)] sm:text-base">
               {businessConfig.publicWelcomeText}
             </p>
 
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-7 flex flex-wrap gap-3">
               <a
                 href={whatsappUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.16)] transition hover:scale-[1.02] hover:bg-[var(--brand-accent-200)]"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--brand-primary)] px-6 py-3.5 text-xs font-black uppercase tracking-[0.12em] text-black shadow-[0_14px_36px_-12px_rgba(var(--brand-primary-rgb),0.8)] transition hover:bg-[var(--brand-accent)] active:scale-95"
               >
                 <MessageCircle size={17} />
                 {businessConfig.whatsappButtonText}
@@ -246,7 +270,7 @@ export default function BottomInfoSections() {
                 href={googleMapsUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.10)] transition hover:scale-[1.02] hover:bg-[var(--brand-accent-100)]"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] px-6 py-3.5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95"
               >
                 <MapPin size={17} />
                 {businessConfig.locationButtonText}
@@ -257,40 +281,89 @@ export default function BottomInfoSections() {
                   href={instagramUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.10)] transition hover:scale-[1.02] hover:bg-[var(--brand-accent-100)]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] px-6 py-3.5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95"
                 >
-                  <Star size={17} />
+                  <AtSign size={17} />
                   {businessConfig.instagramButtonText}
                 </a>
               ) : null}
             </div>
           </div>
 
-          <div className="p-6 sm:p-8">
-            <article className="rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] p-5 shadow-[0_7px_0_rgba(var(--brand-primary-rgb),0.10)]">
-              <div className="flex gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]">
-                  <Clock size={23} />
-                </div>
+          {/* Tiles de información */}
+          <div className="grid gap-4">
+            <article className="flex gap-4 rounded-[1.4rem] border border-[var(--brand-border)] bg-[var(--brand-surface)] p-5 transition hover:border-[rgba(var(--brand-primary-rgb),0.5)]">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[rgba(var(--brand-primary-rgb),0.12)] text-[var(--brand-primary)]">
+                <Clock size={24} />
+              </div>
 
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.22em] text-[var(--brand-primary)]">
-                    {businessConfig.scheduleTitle}
-                  </p>
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-[var(--brand-primary)]">
+                  {businessConfig.scheduleTitle}
+                </p>
 
-                  <div className="mt-3 space-y-2 text-sm font-black leading-6 text-[var(--brand-ink-3)] sm:text-base">
-                    <p>{businessConfig.scheduleLine1}</p>
-                    {businessConfig.scheduleLine2 ? <p>{businessConfig.scheduleLine2}</p> : null}
-                  </div>
+                <div className="mt-2 space-y-1 text-sm font-bold leading-6 text-[var(--brand-ink-3)] sm:text-base">
+                  <p>{businessConfig.scheduleLine1}</p>
+                  {businessConfig.scheduleLine2 ? <p>{businessConfig.scheduleLine2}</p> : null}
                 </div>
               </div>
             </article>
 
-            <p className="mt-5 rounded-[1.2rem] border-2 border-[var(--brand-primary)]/15 bg-white px-4 py-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
-              Esta sección final se mantiene simple: contacto, ubicación, redes y horario. No incluye bloques viejos de reseñas, guías ni pedido rápido.
-            </p>
+            {whatsappDisplay ? (
+              <article className="flex gap-4 rounded-[1.4rem] border border-[var(--brand-border)] bg-[var(--brand-surface)] p-5 transition hover:border-[rgba(var(--brand-primary-rgb),0.5)]">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[rgba(var(--brand-primary-rgb),0.12)] text-[var(--brand-primary)]">
+                  <Bike size={24} />
+                </div>
+
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.22em] text-[var(--brand-primary)]">
+                    Pedido rápido
+                  </p>
+                  <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]">
+                    Haz tu pedido por WhatsApp
+                  </p>
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 inline-block text-xl font-black tracking-wide text-[var(--brand-primary)] transition hover:text-[var(--brand-accent)] sm:text-2xl"
+                  >
+                    {whatsappDisplay}
+                  </a>
+                </div>
+              </article>
+            ) : null}
           </div>
         </div>
+
+        {/* Pie de página de marca */}
+        <footer className="mt-14 border-t border-[var(--brand-border)] py-8">
+          <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:justify-between sm:text-left">
+            <div className="flex items-center gap-3">
+              <Image
+                src={BRAND.logoUrl || "/logoremovebg.png"}
+                alt={businessConfig.businessName}
+                width={44}
+                height={44}
+                unoptimized
+                className="h-11 w-11 rounded-full border border-[var(--brand-border)] object-cover"
+              />
+              <div>
+                <p className="font-display text-xl uppercase leading-none text-[var(--brand-ink-3)]">
+                  {businessConfig.businessName}
+                </p>
+                <p className="mt-1 text-[0.62rem] font-bold uppercase tracking-[0.22em] text-[var(--brand-primary)]">
+                  {BRAND.tagline}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs font-medium text-[var(--brand-ink-2)]">
+              © {new Date().getFullYear()} {businessConfig.businessName} · Hecho
+              con hambre en Venezuela
+            </p>
+          </div>
+        </footer>
       </div>
     </section>
   )
