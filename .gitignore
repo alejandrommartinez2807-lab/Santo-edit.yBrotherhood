@@ -48,3 +48,5 @@ next-env.d.ts
 /src/**/*.bak-*
 /scripts/fix-*.mjs
 /scripts/_*.mjs
+
+.vercel
