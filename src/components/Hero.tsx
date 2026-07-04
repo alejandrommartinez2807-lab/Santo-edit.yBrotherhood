@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import {
+  ArrowRight,
   Beef,
   Flame,
   MapPin,
@@ -247,19 +248,57 @@ export default function Hero() {
     { icon: Sandwich, top: "Pan", bottom: "brioche" },
   ]
 
+  const marqueeItems = [
+    ...businessConfig.heroBadgeText
+      .split("·")
+      .map((item) => item.trim())
+      .filter(Boolean),
+    ...guarantees.map(({ top, bottom }) => `${top} ${bottom}`),
+  ]
+
+  const marqueeTrack = Array.from(
+    { length: 3 },
+    () => marqueeItems
+  ).flat()
+
   return (
     <section
       id="inicio"
-      className="relative overflow-hidden bg-[var(--brand-cream)] px-5 pb-14 pt-10 sm:px-6 sm:pt-16"
+      className="relative isolate overflow-hidden bg-[var(--brand-cream)]"
     >
-      {/* Resplandor de marca */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(var(--brand-primary-rgb),0.16),transparent_55%)]" />
-      <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-[rgba(var(--brand-primary-rgb),0.12)] blur-3xl" />
+      <style>{`
+        @keyframes bh-hero-marquee {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
+        }
+        @keyframes bh-hero-glow {
+          0%, 100% { opacity: 0.75; }
+          50% { opacity: 1; }
+        }
+      `}</style>
 
-      <div className="relative mx-auto flex max-w-3xl flex-col items-center text-center">
+      {/* Fondo: resplandor naranja + logo marca de agua */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+        <div
+          className="absolute inset-x-0 top-0 h-[34rem] bg-[radial-gradient(ellipse_at_50%_-10%,rgba(var(--brand-primary-rgb),0.22),transparent_60%)]"
+          style={{ animation: "bh-hero-glow 6s ease-in-out infinite" }}
+        />
+        <div className="absolute -left-24 top-1/3 h-72 w-72 rounded-full bg-[rgba(var(--brand-primary-rgb),0.07)] blur-3xl" />
+        <Image
+          src="/brotherhood-logo-transparente.png"
+          alt=""
+          width={720}
+          height={720}
+          unoptimized
+          className="absolute -right-24 top-16 w-[22rem] rotate-12 opacity-[0.05] sm:-right-16 sm:w-[34rem]"
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_55%,var(--brand-cream)_100%)]" />
+      </div>
+
+      <div className="relative mx-auto flex max-w-4xl flex-col items-center px-5 pb-12 pt-10 text-center sm:px-6 sm:pt-16">
         {/* Logo */}
         <div className="relative mb-6">
-          <div className="absolute inset-0 -z-10 rounded-full bg-[rgba(var(--brand-primary-rgb),0.18)] blur-2xl" />
+          <div className="absolute inset-2 -z-10 rounded-full bg-[rgba(var(--brand-primary-rgb),0.25)] blur-2xl" />
           <Image
             src={BRAND.logoUrl || "/logoremovebg.png"}
             alt={businessConfig.businessName}
@@ -267,46 +306,50 @@ export default function Hero() {
             height={320}
             unoptimized
             priority
-            className="h-36 w-36 rounded-3xl object-contain sm:h-52 sm:w-52"
+            className="h-32 w-32 rounded-full border border-[var(--brand-border)] object-cover shadow-[0_0_60px_-10px_rgba(var(--brand-primary-rgb),0.55)] sm:h-44 sm:w-44"
           />
         </div>
 
         {/* Badge */}
-        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand-primary-rgb),0.4)] bg-[var(--brand-surface)] px-4 py-2 text-[0.6rem] font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)] sm:text-xs">
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand-primary-rgb),0.45)] bg-black/50 px-4 py-2 text-[0.62rem] font-bold uppercase tracking-[0.22em] text-[var(--brand-primary)] backdrop-blur sm:text-xs">
           <Flame size={14} />
           {businessConfig.heroBadgeText}
         </div>
 
         {/* Título */}
-        <h1 className="font-display text-[3.25rem] leading-[0.86] text-[var(--brand-ink-3)] sm:text-7xl md:text-8xl">
+        <h1 className="font-display text-[4rem] uppercase leading-[0.85] tracking-tight text-[var(--brand-ink-3)] [text-shadow:0_10px_50px_rgba(var(--brand-primary-rgb),0.35)] sm:text-8xl md:text-[7.5rem]">
           {businessConfig.businessName}
         </h1>
 
         {/* Subtítulo */}
-        <p className="mt-4 font-display text-lg tracking-wide text-[var(--brand-primary)] sm:text-2xl">
+        <p className="mt-4 font-display text-xl uppercase tracking-[0.06em] text-[var(--brand-primary)] sm:text-3xl">
           {businessConfig.heroSubtitle}
         </p>
 
         {/* Descripción */}
-        <p className="mt-4 max-w-xl text-sm leading-relaxed text-[var(--brand-ink-2)] sm:text-base">
+        <p className="mt-5 max-w-xl text-sm leading-relaxed text-[var(--brand-ink-2)] sm:text-base">
           {businessConfig.heroDescription}
         </p>
 
         {/* CTAs primarias */}
-        <div className="mt-8 grid w-full max-w-md grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="mt-9 grid w-full max-w-md grid-cols-1 gap-3 sm:grid-cols-2">
           <a
             href="#menu"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--brand-primary)] px-6 py-4 text-sm font-extrabold uppercase tracking-wide text-black shadow-[0_10px_30px_-8px_rgba(var(--brand-primary-rgb),0.6)] transition active:scale-95"
+            className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--brand-primary)] px-6 py-4 text-sm font-extrabold uppercase tracking-wide text-black shadow-[0_14px_38px_-10px_rgba(var(--brand-primary-rgb),0.65)] transition hover:bg-[var(--brand-accent)] active:scale-95"
           >
             <UtensilsCrossed size={18} />
             {businessConfig.publicMenuTitle || "Ver menú"}
+            <ArrowRight
+              size={16}
+              className="transition-transform group-hover:translate-x-1"
+            />
           </a>
 
           <a
             href={whatsappUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface)] px-6 py-4 text-sm font-extrabold uppercase tracking-wide text-[var(--brand-ink-3)] transition active:scale-95"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[rgba(var(--brand-primary-rgb),0.35)] bg-[var(--brand-surface)] px-6 py-4 text-sm font-extrabold uppercase tracking-wide text-[var(--brand-ink-3)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95"
           >
             <MessageCircle size={18} />
             Pedir ahora
@@ -319,7 +362,7 @@ export default function Hero() {
             href={googleMapsUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--brand-border)] px-4 py-3 text-xs font-bold uppercase tracking-wide text-[var(--brand-ink)] transition active:scale-95"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--brand-border)] bg-black/30 px-4 py-3 text-xs font-bold uppercase tracking-wide text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95"
           >
             <MapPin size={16} />
             {businessConfig.locationButtonText}
@@ -327,7 +370,7 @@ export default function Hero() {
 
           <a
             href="#resena"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--brand-border)] px-4 py-3 text-xs font-bold uppercase tracking-wide text-[var(--brand-ink)] transition active:scale-95"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--brand-border)] bg-black/30 px-4 py-3 text-xs font-bold uppercase tracking-wide text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95"
           >
             <Star size={16} />
             {businessConfig.reviewsTitle || "Reseñas"}
@@ -335,16 +378,43 @@ export default function Hero() {
         </div>
 
         {/* Garantías */}
-        <div className="mt-9 grid w-full max-w-md grid-cols-3 gap-2 border-t border-[var(--brand-border)] pt-6">
+        <div className="mt-10 grid w-full max-w-md grid-cols-3 gap-3">
           {guarantees.map(({ icon: Icon, top, bottom }) => (
-            <div key={top} className="flex flex-col items-center gap-1">
-              <Icon size={20} className="text-[var(--brand-primary)]" />
+            <div
+              key={top}
+              className="flex flex-col items-center gap-2 rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface)] px-2 py-4 transition hover:border-[rgba(var(--brand-primary-rgb),0.5)]"
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(var(--brand-primary-rgb),0.12)] text-[var(--brand-primary)]">
+                <Icon size={20} />
+              </span>
               <span className="text-[0.7rem] font-bold uppercase tracking-wide text-[var(--brand-ink-3)]">
                 {top}
               </span>
-              <span className="text-[0.6rem] uppercase tracking-wide text-[var(--brand-ink-2)]">
+              <span className="-mt-1.5 text-[0.6rem] uppercase tracking-wide text-[var(--brand-ink-2)]">
                 {bottom}
               </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Cinta en movimiento con lo esencial de la marca */}
+      <div className="relative overflow-hidden border-y border-[var(--brand-border)] bg-black/60 py-3">
+        <div
+          className="flex w-max whitespace-nowrap"
+          style={{ animation: "bh-hero-marquee 28s linear infinite" }}
+        >
+          {[0, 1].map((copy) => (
+            <div key={copy} aria-hidden={copy === 1} className="flex items-center">
+              {marqueeTrack.map((item, index) => (
+                <span
+                  key={`${copy}-${index}`}
+                  className="flex items-center gap-6 pr-6 font-display text-sm uppercase tracking-[0.24em] text-[var(--brand-ink-2)]"
+                >
+                  {item}
+                  <Flame size={13} className="text-[var(--brand-primary)]" />
+                </span>
+              ))}
             </div>
           ))}
         </div>

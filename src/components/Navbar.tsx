@@ -288,30 +288,59 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
   }, [businessConfig.publicNavButtons, instagramUrl, whatsappUrl])
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-[var(--brand-border)] bg-[rgba(13,13,13,0.85)] backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6 lg:px-8">
-        <a href="#inicio" className="flex min-w-0 items-center gap-3">
-          <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[var(--brand-border)] bg-black sm:h-[62px] sm:w-[62px]">
+    <header className="sticky top-0 z-50 w-full border-b border-[var(--brand-border)] bg-[rgba(9,9,9,0.88)] backdrop-blur-xl">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+        <a href="#inicio" className="group flex min-w-0 items-center gap-3">
+          <div className="relative shrink-0">
+            <div className="absolute inset-0 rounded-full bg-[rgba(var(--brand-primary-rgb),0.35)] opacity-0 blur-md transition group-hover:opacity-100" />
             <Image
               src={BRAND.logoUrl || "/logoremovebg.png"}
               alt={businessName}
               width={58}
               height={58}
               unoptimized
-              className="h-[44px] w-[44px] object-contain sm:h-[54px] sm:w-[54px]"
+              className="relative h-11 w-11 rounded-full border border-[var(--brand-border)] object-cover sm:h-[52px] sm:w-[52px]"
             />
           </div>
 
           <div className="min-w-0">
-            <p className="font-display truncate text-[1.4rem] leading-none text-[var(--brand-ink-3)] sm:text-3xl">
+            <p className="font-display truncate text-[1.35rem] uppercase leading-none tracking-wide text-[var(--brand-ink-3)] sm:text-2xl">
               {businessName}
             </p>
 
-            <p className="mt-1 line-clamp-1 text-[0.74rem] font-black leading-tight tracking-[0.04em] text-[var(--brand-ink-3)] sm:text-base sm:tracking-[0.08em]">
+            <p className="mt-1 line-clamp-1 text-[0.6rem] font-bold uppercase leading-tight tracking-[0.22em] text-[var(--brand-primary)] sm:text-[0.68rem]">
               {businessShortDescription}
             </p>
           </div>
         </a>
+
+        {/* Nav central (escritorio) */}
+        <nav className="hidden items-center rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] p-1.5 lg:flex">
+          {navItems.map((item) => {
+            const linkClass =
+              "rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-primary)] hover:text-black"
+
+            if (item.external) {
+              return (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={linkClass}
+                >
+                  {item.label}
+                </a>
+              )
+            }
+
+            return (
+              <a key={item.label} href={item.href} className={linkClass}>
+                {item.label}
+              </a>
+            )
+          })}
+        </nav>
 
         <div className="flex shrink-0 items-center gap-2">
           {businessConfig.googleMapsUrl ? (
@@ -320,9 +349,9 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
               target="_blank"
               rel="noreferrer"
               aria-label={businessConfig.locationButtonText || "Abrir ubicación"}
-              className="hidden h-[52px] w-[52px] items-center justify-center rounded-[1.1rem] border-2 border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] shadow-[0_10px_24px_rgba(80,0,0,0.12)] transition hover:scale-105 sm:flex"
+              className="hidden h-11 w-11 items-center justify-center rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] sm:flex"
             >
-              <MapPin size={25} strokeWidth={2.4} />
+              <MapPin size={20} strokeWidth={2.2} />
             </a>
           ) : null}
 
@@ -332,9 +361,9 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
               target="_blank"
               rel="noreferrer"
               aria-label="Abrir WhatsApp"
-              className="hidden h-[52px] w-[52px] items-center justify-center rounded-[1.1rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black shadow-[0_10px_24px_rgba(80,0,0,0.12)] transition hover:scale-105 sm:flex"
+              className="hidden h-11 w-11 items-center justify-center rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] sm:flex"
             >
-              <MessageCircle size={25} strokeWidth={2.4} />
+              <MessageCircle size={20} strokeWidth={2.2} />
             </a>
           ) : null}
 
@@ -342,12 +371,15 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
             type="button"
             onClick={onOpenCart}
             aria-label="Abrir carrito"
-            className="relative flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-[1.1rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black shadow-[0_10px_24px_rgba(80,0,0,0.18)] transition hover:scale-105 sm:h-16 sm:w-16"
+            className="relative flex h-12 items-center justify-center gap-2 rounded-full bg-[var(--brand-primary)] px-4 text-black shadow-[0_10px_30px_-10px_rgba(var(--brand-primary-rgb),0.8)] transition hover:bg-[var(--brand-accent)] hover:shadow-[0_10px_34px_-8px_rgba(var(--brand-primary-rgb),0.9)] active:scale-95 sm:px-5"
           >
-            <ShoppingCart size={28} strokeWidth={2.4} />
+            <ShoppingCart size={22} strokeWidth={2.4} />
+            <span className="hidden text-xs font-black uppercase tracking-[0.12em] sm:inline">
+              Carrito
+            </span>
 
             {totalItems > 0 && (
-              <span className="absolute -right-2 -top-2 flex h-7 min-w-7 items-center justify-center rounded-full bg-[var(--brand-primary)] px-2 text-xs font-black text-white shadow-md">
+              <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-black px-1.5 text-xs font-black text-[var(--brand-primary)]">
                 {totalItems}
               </span>
             )}
@@ -355,18 +387,12 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-3 pb-3 sm:px-6 lg:px-8">
-        <nav
-          className="mx-auto flex max-w-5xl overflow-hidden rounded-[1rem] border border-[var(--brand-border)] bg-[var(--brand-surface)]"
-        >
-          {navItems.map((item, index) => {
-            const linkClass = [
-              "flex h-[42px] min-w-0 flex-1 items-center justify-center text-center",
-              "border-[var(--brand-border)] px-1.5 text-[0.56rem] font-bold uppercase tracking-[0.07em]",
-              "text-[var(--brand-ink)] transition duration-200 hover:bg-[var(--brand-primary)] hover:text-black",
-              "sm:h-[48px] sm:px-2 sm:text-xs sm:tracking-[0.12em] lg:text-sm lg:tracking-[0.16em]",
-              index !== navItems.length - 1 ? "border-r" : "",
-            ].join(" ")
+      {/* Nav (móvil / tablet) */}
+      <div className="mx-auto max-w-7xl px-3 pb-3 sm:px-6 lg:hidden">
+        <nav className="flex gap-1.5 overflow-x-auto rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] p-1.5">
+          {navItems.map((item) => {
+            const linkClass =
+              "flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full px-3 py-2 text-center text-[0.6rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-primary)] hover:text-black sm:text-xs"
 
             if (item.external) {
               return (
