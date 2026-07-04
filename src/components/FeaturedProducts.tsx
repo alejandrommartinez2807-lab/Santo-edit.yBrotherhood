@@ -80,16 +80,16 @@ export default function FeaturedProducts({
               businessConfig.publicCustomizerTitle || ""
             ).trim(),
             productCardBackgroundColor: String(
-              businessConfig.productCardBackgroundColor || "#ffffff"
+              businessConfig.productCardBackgroundColor || "#141414"
             ).trim(),
             productCardTextColor: String(
-              businessConfig.productCardTextColor || "#4a0000"
+              businessConfig.productCardTextColor || "#fafaf9"
             ).trim(),
             productCardBorderColor: String(
-              businessConfig.productCardBorderColor || "#a00000"
+              businessConfig.productCardBorderColor || "#2a2a2a"
             ).trim(),
             productCardButtonColor: String(
-              businessConfig.productCardButtonColor || "#ffd23c"
+              businessConfig.productCardButtonColor || "#f5a623"
             ).trim(),
           }
         }
@@ -149,65 +149,64 @@ export default function FeaturedProducts({
     config.featuredProductsText ||
     "Una selección rápida para pedir lo más recomendado del menú."
   const productCardStyle = {
-    "--product-card-bg": config.productCardBackgroundColor || "#ffffff",
-    "--product-card-text": config.productCardTextColor || "#4a0000",
-    "--product-card-border": config.productCardBorderColor || "#a00000",
-    "--product-card-button": config.productCardButtonColor || "#ffd23c",
+    "--product-card-bg": config.productCardBackgroundColor || "#141414",
+    "--product-card-text": config.productCardTextColor || "#fafaf9",
+    "--product-card-border": config.productCardBorderColor || "#2a2a2a",
+    "--product-card-button": config.productCardButtonColor || "#f5a623",
   } as CSSProperties
 
   return (
     <section
-      className="bg-[var(--brand-cream)] px-4 pt-20 pb-8 text-[var(--brand-ink-3)] sm:px-6 sm:pt-24 lg:px-8"
+      className="relative overflow-hidden bg-[var(--brand-cream)] px-4 pb-10 pt-16 text-[var(--brand-ink-3)] sm:px-6 sm:pt-20 lg:px-8"
       style={productCardStyle}
     >
-      <div className="mx-auto max-w-7xl overflow-hidden rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_14px_0_rgba(var(--brand-primary-rgb),0.12)]">
-        <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,-16px_0] bg-[var(--brand-cream)]" />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(ellipse_at_20%_0%,rgba(var(--brand-primary-rgb),0.12),transparent_55%)]"
+      />
 
-        <div className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(var(--brand-accent-rgb),0.28),transparent_34%),linear-gradient(180deg,#fffdf5_0%,var(--brand-cream)_100%)] p-5 sm:p-7 lg:p-8">
-          <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-[var(--brand-accent)]/40 blur-3xl" />
-
-          <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-ink)] shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.12)]">
-                <Sparkles size={16} />
-                Recomendados
-              </div>
-
-              <h2 className="mt-4 max-w-4xl text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl lg:text-6xl">
-                {title}
-              </h2>
-
-              <p className="mt-4 max-w-2xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75 sm:text-base">
-                {text}
-              </p>
+      <div className="relative mx-auto max-w-7xl">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand-primary-rgb),0.45)] bg-black/50 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--brand-primary)]">
+              <Sparkles size={16} />
+              Recomendados
             </div>
 
-            <a
-              href="#menu"
-              className="inline-flex w-fit items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.16)] transition hover:bg-[var(--brand-accent)] hover:text-[var(--brand-ink)]"
-            >
-              Ver menú completo
-            </a>
+            <h2 className="font-display mt-4 max-w-4xl text-[2.8rem] uppercase leading-[0.9] text-[var(--brand-ink-3)] sm:text-6xl">
+              {title}
+            </h2>
+
+            <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-[var(--brand-ink-2)] sm:text-base">
+              {text}
+            </p>
           </div>
 
-          <div className="relative mt-7 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {featuredProducts.map((product, index) => (
-              <ProductCard
-                key={product.id}
-                {...product}
-                exchangeRate={exchangeRate}
-                index={index}
-                onAddToCart={onAddToCart}
-                publicLabels={{
-                  customizeAction: config.publicCustomizeButtonText || "Elige tus ingredientes",
-                  customizerTitle:
-                    config.publicCustomizerTitle ||
-                    config.publicCustomizeButtonText ||
-                    "Elige tus ingredientes",
-                }}
-              />
-            ))}
-          </div>
+          <a
+            href="#menu"
+            className="inline-flex w-fit shrink-0 items-center justify-center rounded-full border border-[rgba(var(--brand-primary-rgb),0.45)] bg-transparent px-6 py-3.5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-primary)] hover:text-black active:scale-95"
+          >
+            Ver menú completo
+          </a>
+        </div>
+
+        <div className="relative mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {featuredProducts.map((product, index) => (
+            <ProductCard
+              key={product.id}
+              {...product}
+              exchangeRate={exchangeRate}
+              index={index}
+              onAddToCart={onAddToCart}
+              publicLabels={{
+                customizeAction: config.publicCustomizeButtonText || "Elige tus ingredientes",
+                customizerTitle:
+                  config.publicCustomizerTitle ||
+                  config.publicCustomizeButtonText ||
+                  "Elige tus ingredientes",
+              }}
+            />
+          ))}
         </div>
       </div>
     </section>
