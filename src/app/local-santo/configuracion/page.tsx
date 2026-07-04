@@ -4912,13 +4912,13 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<DollarSign size={22} />}
             title="Tasa y moneda"
-            description="Se mantiene la lógica actual del sistema. No cambia la fuente ni la regla de conversión por modificar esta pantalla."
+            description="En Automática, el sitio público usa la tasa oficial USD del BCV. En Manual, usa la tasa que fijes aquí (el carrito le dice al cliente cuál está activa)."
           >
             <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
               <div className="grid gap-3 sm:grid-cols-2">
                 <ModeButton
-                  label="Automática"
-                  description="Usar la tasa calculada por el sistema actual."
+                  label="Automática (BCV)"
+                  description="Seguir la tasa oficial del dólar publicada por el BCV."
                   active={businessConfig.exchangeRateMode === "automatic"}
                   onClick={() => updateConfig("exchangeRateMode", "automatic")}
                 />
@@ -4931,7 +4931,7 @@ export default function BusinessConfigPage() {
               </div>
 
               <TextInput
-                label="Tasa manual de referencia"
+                label="Tasa manual (Bs por dólar)"
                 type="number"
                 value={businessConfig.manualExchangeRate || ""}
                 onChange={(value) =>
@@ -4942,10 +4942,14 @@ export default function BusinessConfigPage() {
                       : 0,
                   )
                 }
-                placeholder="Ej: 645.68"
+                placeholder="Ej: 667.05"
                 helper="Solo se usa si el modo de tasa está en Manual."
               />
             </div>
+
+            <LiveBcvRateHint
+              manualActive={businessConfig.exchangeRateMode === "manual"}
+            />
           </SectionCard>
 
           <SectionCard
@@ -5256,6 +5260,55 @@ function ModeButton({
       <p className="text-sm font-black uppercase">{label}</p>
       <p className="mt-2 text-xs font-bold leading-5">{description}</p>
     </button>
+  );
+}
+
+// Muestra la tasa BCV vigente (la que usaría el modo Automática) para que el
+// dueño decida con contexto si necesita una tasa manual.
+function LiveBcvRateHint({ manualActive }: { manualActive: boolean }) {
+  const [bcvText, setBcvText] = useState("Consultando tasa BCV…");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const response = await fetch("/api/exchange-rate", { cache: "no-store" });
+        const data = await response.json();
+        if (cancelled) return;
+        const rate = Number(data.rate);
+        if (!Number.isFinite(rate) || rate <= 0) {
+          setBcvText("No se pudo consultar la tasa BCV ahora mismo.");
+          return;
+        }
+        // Si el modo manual está activo, la API devuelve la tasa del negocio;
+        // igual sirve como referencia de lo que está viendo el cliente.
+        const label = data.manual
+          ? "Tasa activa (manual del negocio)"
+          : `Tasa BCV oficial${data.valueDate ? ` · ${data.valueDate}` : ""}`;
+        setBcvText(`${label}: Bs ${rate.toFixed(2)} por dólar`);
+      } catch {
+        if (!cancelled) setBcvText("No se pudo consultar la tasa BCV ahora mismo.");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <div className="mt-3 rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3">
+      <p className="text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+        Referencia en vivo
+      </p>
+      <p className="mt-1 text-sm font-bold text-[var(--brand-ink)]">{bcvText}</p>
+      <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
+        {manualActive
+          ? "El sitio público está usando la tasa manual. Vuelve a Automática para seguir al BCV."
+          : "El sitio público sigue al BCV automáticamente. Cada sede puede fijar su propia tasa en Sucursales → Configuración por sede."}
+      </p>
+    </div>
   );
 }
 

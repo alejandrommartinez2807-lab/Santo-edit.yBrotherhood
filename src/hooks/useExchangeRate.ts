@@ -1,13 +1,19 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { BRANCH_CHANGE_EVENT, getSelectedBranchId } from "@/lib/branchClient"
 
 // v4: tasa en DÓLARES (los precios del negocio son USD). La key nueva
 // invalida la caché vieja del euro. La ventana es corta para que un cambio
-// de tasa manual del dueño se refleje rápido en los clientes.
+// de tasa manual del dueño se refleje rápido en los clientes. La caché es
+// por sede: una sucursal puede tener su propia tasa manual.
 const CACHE_KEY = "santo_perrito_bcv_usd_rate_cache_v4"
 const FALLBACK_USD_RATE = 667.05
 const CACHE_DURATION = 5 * 60 * 1000
+
+function getBranchCacheKey(branchId: string | null) {
+  return branchId ? `${CACHE_KEY}:${branchId}` : CACHE_KEY
+}
 
 type CachedRate = {
   rate: number
@@ -40,9 +46,9 @@ function isValidRate(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value > 0
 }
 
-function readCachedRate() {
+function readCachedRate(cacheKey: string) {
   try {
-    const cachedRaw = window.localStorage.getItem(CACHE_KEY)
+    const cachedRaw = window.localStorage.getItem(cacheKey)
 
     if (!cachedRaw) {
       return null
@@ -75,11 +81,26 @@ export function useExchangeRate(): ExchangeRateState {
     error: null,
   })
 
+  // Cambia con la sede elegida por el cliente para recargar su tasa.
+  const [branchTick, setBranchTick] = useState(0)
+
+  useEffect(() => {
+    const onBranchChange = () => setBranchTick((current) => current + 1)
+    window.addEventListener(BRANCH_CHANGE_EVENT, onBranchChange)
+    return () => window.removeEventListener(BRANCH_CHANGE_EVENT, onBranchChange)
+  }, [])
+
   useEffect(() => {
     let isMounted = true
 
+    const branchId = getSelectedBranchId()
+    const cacheKey = getBranchCacheKey(branchId)
+    const apiUrl = branchId
+      ? `/api/exchange-rate?branch=${encodeURIComponent(branchId)}`
+      : "/api/exchange-rate"
+
     async function loadRate() {
-      const cached = readCachedRate()
+      const cached = readCachedRate(cacheKey)
 
       if (cached && cached.expiresAt > Date.now()) {
         if (!isMounted) return
@@ -102,7 +123,7 @@ export function useExchangeRate(): ExchangeRateState {
       }
 
       try {
-        const response = await fetch("/api/exchange-rate", {
+        const response = await fetch(apiUrl, {
           cache: "no-store",
         })
 
@@ -130,7 +151,7 @@ export function useExchangeRate(): ExchangeRateState {
           expiresAt: Date.now() + CACHE_DURATION,
         }
 
-        window.localStorage.setItem(CACHE_KEY, JSON.stringify(nextCache))
+        window.localStorage.setItem(cacheKey, JSON.stringify(nextCache))
 
         if (!isMounted) return
 
@@ -151,7 +172,7 @@ export function useExchangeRate(): ExchangeRateState {
         const message =
           error instanceof Error ? error.message : "Error desconocido"
 
-        const staleCache = readCachedRate()
+        const staleCache = readCachedRate(cacheKey)
 
         if (staleCache) {
           if (!isMounted) return
@@ -198,7 +219,7 @@ export function useExchangeRate(): ExchangeRateState {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [branchTick])
 
   return state
 }

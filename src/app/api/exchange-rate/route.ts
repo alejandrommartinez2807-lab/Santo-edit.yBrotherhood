@@ -7,7 +7,11 @@ import {
   setCachedExchangeRate,
   type ExchangeRateCacheableResponse,
 } from "@/lib/exchangeRateCache"
-import { getBusinessConfig } from "@/lib/ordersBusinessConfig"
+import { getBranchConfig, getExplicitBranchIdFromRequest } from "@/lib/branch"
+import {
+  getRawBusinessConfig,
+  normalizeBusinessConfig,
+} from "@/lib/ordersBusinessConfig"
 import { captureError } from "@/lib/monitoring"
 import { enforceRateLimit } from "@/lib/rateLimit"
 
@@ -149,21 +153,48 @@ async function getDolarApiUsdRate(): Promise<ExchangeRateResponse> {
   }
 }
 
-// Tasa fijada por el dueño en Configuración → "Tasa y moneda" (modo manual).
-// Se resuelve en cada request (sin caché) para que un cambio del dueño se vea
-// de inmediato; si la lectura de la config falla, seguimos con el BCV.
-async function getManualRateFromConfig(): Promise<ExchangeRateResponse | null> {
+// Tasa fijada por el dueño (modo manual): global en Configuración → "Tasa y
+// moneda", con override por sede en Sucursales → Configuración por sede. Se
+// resuelve en cada request (sin caché) para que un cambio del dueño se vea de
+// inmediato; si la lectura de la config falla, seguimos con el BCV.
+async function getManualRateFromConfig(
+  request: NextRequest
+): Promise<ExchangeRateResponse | null> {
   try {
-    const config = await getBusinessConfig()
+    const rawConfig = await getRawBusinessConfig()
+    const businessConfig = normalizeBusinessConfig(rawConfig)
 
-    if (config.exchangeRateMode !== "manual") return null
+    let mode = businessConfig.exchangeRateMode
+    let manualRate = Number(businessConfig.manualExchangeRate)
 
-    const rate = Number(config.manualExchangeRate)
+    const branchId =
+      getExplicitBranchIdFromRequest(request) ||
+      request.nextUrl.searchParams.get("branch") ||
+      request.nextUrl.searchParams.get("branchId")
 
-    if (!Number.isFinite(rate) || rate <= 0) return null
+    if (branchId) {
+      const branchConfig = getBranchConfig(rawConfig, branchId)
+
+      if (
+        branchConfig.exchangeRateMode === "automatic" ||
+        branchConfig.exchangeRateMode === "manual"
+      ) {
+        mode = branchConfig.exchangeRateMode
+      }
+
+      const branchRate = Number(branchConfig.manualExchangeRate)
+
+      if (Number.isFinite(branchRate) && branchRate > 0) {
+        manualRate = branchRate
+      }
+    }
+
+    if (mode !== "manual") return null
+
+    if (!Number.isFinite(manualRate) || manualRate <= 0) return null
 
     return {
-      rate,
+      rate: manualRate,
       currency: "USD",
       source: "Negocio",
       name: "Tasa fijada por el negocio",
@@ -202,7 +233,7 @@ export async function GET(request: NextRequest) {
 
   if (rateLimitResponse) return rateLimitResponse
 
-  const manualRate = await getManualRateFromConfig()
+  const manualRate = await getManualRateFromConfig(request)
 
   if (manualRate) {
     return jsonExchangeRate(manualRate)
