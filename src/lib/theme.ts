@@ -49,9 +49,8 @@ export function buildBrandThemeCss(colors: BrandThemeColors): string {
     lines.push(`--brand-primary:${primary};`)
     lines.push(`--brand-primary-rgb:${r}, ${g}, ${b};`)
     lines.push(`--brand-primary-dark:${darken(primary, 0.25)};`)
-    lines.push(`--brand-ink:${darken(primary, 0.55)};`)
-    lines.push(`--brand-ink-2:${darken(primary, 0.7)};`)
-    lines.push(`--brand-ink-3:${darken(primary, 0.85)};`)
+    // Tema oscuro: los --brand-ink* (texto) se quedan claros desde globals.css.
+    // No los derivamos del primary para no volver el texto oscuro sobre el fondo negro.
   }
 
   if (cream) {

@@ -178,7 +178,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   igtfRate: 3,
   themePrimaryColor: "#f5a623",
   themeAccentColor: "#ffb340",
-  themeCreamColor: "#fff7ec",
+  themeCreamColor: "#0d0d0d",
   productCardBackgroundColor: "#141414",
   productCardTextColor: "#ffffff",
   productCardBorderColor: "#f5a623",

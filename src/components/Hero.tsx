@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import {
+  Beef,
   Flame,
   MapPin,
   MessageCircle,
+  Sandwich,
   Star,
   UtensilsCrossed,
 } from "lucide-react"
@@ -239,102 +241,112 @@ export default function Hero() {
     )
   }, [businessConfig.googleMapsUrl])
 
+  const guarantees = [
+    { icon: Beef, top: "Carne", bottom: "100% res" },
+    { icon: Flame, top: "Queso", bottom: "fundido" },
+    { icon: Sandwich, top: "Pan", bottom: "brioche" },
+  ]
+
   return (
     <section
       id="inicio"
-      className="relative overflow-hidden bg-[var(--brand-cream)] px-4 pb-16 pt-10 sm:pt-16 md:py-24"
+      className="relative overflow-hidden bg-[var(--brand-cream)] px-5 pb-14 pt-10 sm:px-6 sm:pt-16"
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_50%,rgba(180,0,0,0.08),transparent_34%),radial-gradient(circle_at_15%_75%,rgba(var(--brand-primary-rgb),0.06),transparent_34%)]" />
+      {/* Resplandor de marca */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(var(--brand-primary-rgb),0.16),transparent_55%)]" />
+      <div className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-[rgba(var(--brand-primary-rgb),0.12)] blur-3xl" />
 
-      <div className="absolute left-0 top-0 h-full w-4 bg-[var(--brand-primary)]" />
-      <div className="absolute right-0 top-0 h-full w-4 bg-[var(--brand-primary)]" />
-
-      <div className="absolute inset-x-0 bottom-0 h-8 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,-16px_0] bg-[var(--brand-cream)]" />
-
-      <div className="relative mx-auto grid max-w-7xl items-center gap-10 md:grid-cols-[1fr_0.9fr]">
-        <div className="text-center md:text-left">
+      <div className="relative mx-auto flex max-w-3xl flex-col items-center text-center">
+        {/* Logo */}
+        <div className="relative mb-6">
+          <div className="absolute inset-0 -z-10 rounded-full bg-[rgba(var(--brand-primary-rgb),0.18)] blur-2xl" />
           <Image
             src={BRAND.logoUrl || "/logoremovebg.png"}
             alt={businessConfig.businessName}
-            width={384}
-            height={384}
+            width={320}
+            height={320}
             unoptimized
-            className="mx-auto mb-7 h-72 w-72 object-contain drop-shadow-[0_14px_24px_rgba(var(--brand-primary-rgb),0.18)] sm:h-96 sm:w-96 md:hidden"
+            priority
+            className="h-36 w-36 rounded-3xl object-contain sm:h-52 sm:w-52"
           />
-
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-[0.68rem] font-black uppercase tracking-[0.22em] text-[var(--brand-primary)] shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)] sm:text-sm">
-            <Flame size={16} />
-            {businessConfig.heroBadgeText}
-          </div>
-
-          <h1 className="mx-auto max-w-4xl text-6xl font-black uppercase leading-[0.86] tracking-[-0.08em] text-[var(--brand-primary)] drop-shadow-[0_5px_0_rgba(var(--brand-accent-rgb),0.8)] sm:text-7xl md:mx-0 md:text-8xl lg:text-9xl">
-            {businessConfig.businessName}
-          </h1>
-
-          <p className="mt-5 text-2xl font-black uppercase tracking-[0.22em] text-[var(--brand-ink-3)] sm:text-3xl">
-            {businessConfig.heroSubtitle}
-          </p>
-
-          <p className="mx-auto mt-6 max-w-2xl text-base font-bold leading-relaxed text-[var(--brand-ink-2)] sm:text-lg md:mx-0 md:text-xl">
-            {businessConfig.heroDescription}
-          </p>
-
-          <div className="mt-9 grid gap-3 sm:grid-cols-2 md:max-w-2xl">
-            <a
-              href="#menu"
-              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-6 py-4 text-sm font-black uppercase tracking-[0.08em] text-white shadow-[0_8px_0_rgba(90,0,0,0.22)] transition hover:scale-105"
-            >
-              <UtensilsCrossed size={19} />
-              {businessConfig.publicMenuTitle || "Ver menú"}
-            </a>
-
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.08em] text-[var(--brand-ink)] shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.16)] transition hover:scale-105"
-            >
-              <MessageCircle size={19} />
-              Pedir ahora
-            </a>
-          </div>
-
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 md:max-w-2xl">
-            <a
-              href={googleMapsUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-6 py-4 text-sm font-black uppercase tracking-[0.08em] text-[var(--brand-primary)] shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)] transition hover:scale-105 hover:bg-[var(--brand-accent-100)]"
-            >
-              <MapPin size={19} />
-              {businessConfig.locationButtonText}
-            </a>
-
-            <a
-              href="#resena"
-              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-6 py-4 text-sm font-black uppercase tracking-[0.08em] text-[var(--brand-primary)] shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)] transition hover:scale-105 hover:bg-[var(--brand-accent-100)]"
-            >
-              <Star size={19} />
-              {businessConfig.reviewsTitle || "Reseñas"}
-            </a>
-          </div>
         </div>
 
-        <div className="relative mx-auto hidden max-w-md items-center justify-center md:flex">
-          <div className="absolute h-[28rem] w-[28rem] rounded-full bg-white/85 blur-3xl" />
-          <div className="absolute h-[24rem] w-[24rem] rounded-full border-[18px] border-[var(--brand-primary)]/10" />
+        {/* Badge */}
+        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand-primary-rgb),0.4)] bg-[var(--brand-surface)] px-4 py-2 text-[0.6rem] font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)] sm:text-xs">
+          <Flame size={14} />
+          {businessConfig.heroBadgeText}
+        </div>
 
-          <div className="relative rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white p-8 shadow-[0_18px_0_rgba(var(--brand-primary-rgb),0.14)]">
-            <Image
-              src={BRAND.logoUrl || "/logoremovebg.png"}
-              alt={businessConfig.businessName}
-              width={512}
-              height={512}
-              unoptimized
-              className="relative w-full max-w-md object-contain drop-shadow-[0_16px_18px_rgba(var(--brand-primary-rgb),0.16)] lg:max-w-lg"
-            />
-          </div>
+        {/* Título */}
+        <h1 className="font-display text-[3.25rem] leading-[0.86] text-[var(--brand-ink-3)] sm:text-7xl md:text-8xl">
+          {businessConfig.businessName}
+        </h1>
+
+        {/* Subtítulo */}
+        <p className="mt-4 font-display text-lg tracking-wide text-[var(--brand-primary)] sm:text-2xl">
+          {businessConfig.heroSubtitle}
+        </p>
+
+        {/* Descripción */}
+        <p className="mt-4 max-w-xl text-sm leading-relaxed text-[var(--brand-ink-2)] sm:text-base">
+          {businessConfig.heroDescription}
+        </p>
+
+        {/* CTAs primarias */}
+        <div className="mt-8 grid w-full max-w-md grid-cols-1 gap-3 sm:grid-cols-2">
+          <a
+            href="#menu"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--brand-primary)] px-6 py-4 text-sm font-extrabold uppercase tracking-wide text-black shadow-[0_10px_30px_-8px_rgba(var(--brand-primary-rgb),0.6)] transition active:scale-95"
+          >
+            <UtensilsCrossed size={18} />
+            {businessConfig.publicMenuTitle || "Ver menú"}
+          </a>
+
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface)] px-6 py-4 text-sm font-extrabold uppercase tracking-wide text-[var(--brand-ink-3)] transition active:scale-95"
+          >
+            <MessageCircle size={18} />
+            Pedir ahora
+          </a>
+        </div>
+
+        {/* CTAs secundarias */}
+        <div className="mt-3 grid w-full max-w-md grid-cols-2 gap-3">
+          <a
+            href={googleMapsUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--brand-border)] px-4 py-3 text-xs font-bold uppercase tracking-wide text-[var(--brand-ink)] transition active:scale-95"
+          >
+            <MapPin size={16} />
+            {businessConfig.locationButtonText}
+          </a>
+
+          <a
+            href="#resena"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--brand-border)] px-4 py-3 text-xs font-bold uppercase tracking-wide text-[var(--brand-ink)] transition active:scale-95"
+          >
+            <Star size={16} />
+            {businessConfig.reviewsTitle || "Reseñas"}
+          </a>
+        </div>
+
+        {/* Garantías */}
+        <div className="mt-9 grid w-full max-w-md grid-cols-3 gap-2 border-t border-[var(--brand-border)] pt-6">
+          {guarantees.map(({ icon: Icon, top, bottom }) => (
+            <div key={top} className="flex flex-col items-center gap-1">
+              <Icon size={20} className="text-[var(--brand-primary)]" />
+              <span className="text-[0.7rem] font-bold uppercase tracking-wide text-[var(--brand-ink-3)]">
+                {top}
+              </span>
+              <span className="text-[0.6rem] uppercase tracking-wide text-[var(--brand-ink-2)]">
+                {bottom}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </section>

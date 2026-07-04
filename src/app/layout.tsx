@@ -1,5 +1,14 @@
 import type { Metadata } from "next";
+import { Anton } from "next/font/google";
 import { BRAND } from "@/lib/brand";
+
+// Fuente display condensada (títulos/hero) — el cuerpo sigue en la sans del sistema.
+const displayFont = Anton({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+});
 import AuthBridge from "@/components/AuthBridge";
 import BranchSwitcher from "@/components/BranchSwitcher";
 import OfflineSync from "@/components/OfflineSync";
@@ -37,7 +46,7 @@ export default async function RootLayout({
   const themeCss = await getThemeCss();
 
   return (
-    <html lang="es" className="h-full antialiased">
+    <html lang="es" className={`h-full antialiased ${displayFont.variable}`}>
       <head>
         {themeCss ? <style id="brand-theme" dangerouslySetInnerHTML={{ __html: themeCss }} /> : null}
       </head>

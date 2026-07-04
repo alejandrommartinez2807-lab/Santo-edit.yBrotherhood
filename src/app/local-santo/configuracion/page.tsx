@@ -241,7 +241,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   igtfEnabled: true,
   igtfRate: 3,
   themePrimaryColor: "#f5a623",
-  themeCreamColor: "#fff7ec",
+  themeCreamColor: "#0d0d0d",
   themeAccentColor: "#ffb340",
   productCardBackgroundColor: "#141414",
   productCardTextColor: "#ffffff",

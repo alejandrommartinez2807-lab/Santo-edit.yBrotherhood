@@ -288,24 +288,22 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
   }, [businessConfig.publicNavButtons, instagramUrl, whatsappUrl])
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b-4 border-[var(--brand-primary)] bg-[var(--brand-cream)] shadow-[0_10px_28px_rgba(80,0,0,0.14)]">
-      <div className="h-4 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:28px_28px] bg-[position:0_0,0_14px,14px_-14px,-14px_0] bg-[var(--brand-cream)]" />
-
+    <header className="sticky top-0 z-50 w-full border-b border-[var(--brand-border)] bg-[rgba(13,13,13,0.85)] backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 sm:px-6 lg:px-8">
         <a href="#inicio" className="flex min-w-0 items-center gap-3">
-          <div className="flex h-[56px] w-[56px] shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary)] shadow-[0_10px_24px_rgba(var(--brand-primary-rgb),0.22)] ring-4 ring-[var(--brand-accent)] sm:h-[70px] sm:w-[70px]">
+          <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[var(--brand-border)] bg-black sm:h-[62px] sm:w-[62px]">
             <Image
               src={BRAND.logoUrl || "/logoremovebg.png"}
               alt={businessName}
               width={58}
               height={58}
               unoptimized
-              className="h-[47px] w-[47px] object-contain sm:h-[58px] sm:w-[58px]"
+              className="h-[44px] w-[44px] object-contain sm:h-[54px] sm:w-[54px]"
             />
           </div>
 
           <div className="min-w-0">
-            <p className="truncate text-[1.45rem] font-black uppercase leading-none tracking-[-0.04em] text-[var(--brand-primary)] sm:text-4xl">
+            <p className="font-display truncate text-[1.4rem] leading-none text-[var(--brand-ink-3)] sm:text-3xl">
               {businessName}
             </p>
 
@@ -334,7 +332,7 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
               target="_blank"
               rel="noreferrer"
               aria-label="Abrir WhatsApp"
-              className="hidden h-[52px] w-[52px] items-center justify-center rounded-[1.1rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] shadow-[0_10px_24px_rgba(80,0,0,0.12)] transition hover:scale-105 sm:flex"
+              className="hidden h-[52px] w-[52px] items-center justify-center rounded-[1.1rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black shadow-[0_10px_24px_rgba(80,0,0,0.12)] transition hover:scale-105 sm:flex"
             >
               <MessageCircle size={25} strokeWidth={2.4} />
             </a>
@@ -344,7 +342,7 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
             type="button"
             onClick={onOpenCart}
             aria-label="Abrir carrito"
-            className="relative flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-[1.1rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] shadow-[0_10px_24px_rgba(80,0,0,0.18)] transition hover:scale-105 sm:h-16 sm:w-16"
+            className="relative flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-[1.1rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black shadow-[0_10px_24px_rgba(80,0,0,0.18)] transition hover:scale-105 sm:h-16 sm:w-16"
           >
             <ShoppingCart size={28} strokeWidth={2.4} />
 
@@ -359,13 +357,13 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
 
       <div className="mx-auto max-w-7xl px-3 pb-3 sm:px-6 lg:px-8">
         <nav
-          className="mx-auto flex max-w-5xl overflow-hidden rounded-[1rem] border-2 border-[var(--brand-primary)] bg-white shadow-[0_7px_0_rgba(var(--brand-primary-rgb),0.12)]"
+          className="mx-auto flex max-w-5xl overflow-hidden rounded-[1rem] border border-[var(--brand-border)] bg-[var(--brand-surface)]"
         >
           {navItems.map((item, index) => {
             const linkClass = [
               "flex h-[42px] min-w-0 flex-1 items-center justify-center text-center",
-              "border-[var(--brand-primary)]/15 px-1.5 text-[0.56rem] font-black uppercase tracking-[0.07em]",
-              "text-[var(--brand-primary)] transition duration-200 hover:bg-[var(--brand-accent)] hover:text-[var(--brand-ink)]",
+              "border-[var(--brand-border)] px-1.5 text-[0.56rem] font-bold uppercase tracking-[0.07em]",
+              "text-[var(--brand-ink)] transition duration-200 hover:bg-[var(--brand-primary)] hover:text-black",
               "sm:h-[48px] sm:px-2 sm:text-xs sm:tracking-[0.12em] lg:text-sm lg:tracking-[0.16em]",
               index !== navItems.length - 1 ? "border-r" : "",
             ].join(" ")
