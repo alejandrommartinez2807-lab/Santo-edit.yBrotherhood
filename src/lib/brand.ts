@@ -21,7 +21,7 @@ export const BRAND = {
   description:
     "Smash burgers jugosas, combos, papas, chicken y bebidas frías. Delivery y pick up en Valencia y San Diego.",
   /** Logo en /public (déjalo vacío para usar solo texto). */
-  logoUrl: "",
+  logoUrl: "/brotherhood-logo.png",
 
   /** Contacto / redes (defaults; la config en BD puede sobreescribir). */
   whatsapp: "584124467558",

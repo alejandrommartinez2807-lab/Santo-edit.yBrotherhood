@@ -23,17 +23,16 @@ type PublicBusinessConfig = {
 
 const DEFAULT_PUBLIC_CONFIG: PublicBusinessConfig = {
   businessName: BRAND.name,
-  mainWhatsapp: "584144014587",
+  mainWhatsapp: BRAND.whatsapp,
   deliveryWhatsapp: "",
-  googleMapsUrl: "https://maps.app.goo.gl/qAAHRjoTeYByH2We8",
-  instagramUrl: "https://www.instagram.com/santoperritoval/",
+  googleMapsUrl: "",
+  instagramUrl: `https://www.instagram.com/${BRAND.instagram}/`,
   publicSectionTitle: "Contacto",
   publicWelcomeTitle: `Visita ${BRAND.name}`,
-  publicWelcomeText:
-    "Estamos listos para recibirte con perritos, salchipapas, raciones y bebidas frías.",
+  publicWelcomeText: BRAND.description,
   scheduleTitle: "Horario",
-  scheduleLine1: "Lunes a jueves: 6:00 p.m. a 12:00 a.m.",
-  scheduleLine2: "Viernes a domingo: 6:00 p.m. a 1:00 a.m.",
+  scheduleLine1: "Martes a domingo: 5:00 p.m. a 11:30 p.m.",
+  scheduleLine2: "Lunes: cerrado",
   locationButtonText: "Abrir ubicación",
   whatsappButtonText: "WhatsApp",
   instagramButtonText: "Instagram",

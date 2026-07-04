@@ -10,11 +10,12 @@ export type PublicNavButton = {
 }
 
 export const DEFAULT_PUBLIC_CATEGORY_ORDER = [
+  "Burgers",
   "Combos",
-  "Perritos",
-  "Salchipapas",
-  "Raciones",
+  "Papas",
+  "Chicken",
   "Bebidas",
+  "Postres",
 ]
 
 export const DEFAULT_PUBLIC_NAV_BUTTONS: PublicNavButton[] = [
