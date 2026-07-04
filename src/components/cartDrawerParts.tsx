@@ -59,8 +59,8 @@ export function OptionPicker({
         onClick={onToggle}
         className={`mt-2 flex w-full items-center justify-between gap-3 rounded-2xl border-2 px-4 py-4 text-left text-sm font-black outline-none transition ${
           isOpen
-            ? "border-[var(--brand-primary)] bg-white shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.12)]"
-            : "border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] hover:border-[var(--brand-primary)]/60"
+            ? "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.12)]"
+            : "border-[var(--brand-border)] bg-[var(--brand-cream)] hover:border-[var(--brand-primary)]/60"
         }`}
       >
         <span
@@ -75,7 +75,7 @@ export function OptionPicker({
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.45rem)] z-[180] overflow-hidden rounded-[1.25rem] border-2 border-[var(--brand-primary)] bg-white shadow-[0_16px_34px_rgba(74,0,0,0.22)]">
+        <div className="absolute left-0 right-0 top-[calc(100%+0.45rem)] z-[180] overflow-hidden rounded-[1.25rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] shadow-[0_16px_34px_rgba(74,0,0,0.22)]">
           <div className="max-h-72 overflow-y-auto p-2">
             <button
               type="button"
@@ -141,7 +141,7 @@ type EmptyCartStateProps = {
 
 export function EmptyCartState({ businessName, onClose }: EmptyCartStateProps) {
   return (
-    <div className="flex min-h-[calc(100vh-210px)] flex-col items-center justify-center rounded-[2rem] border-2 border-[var(--brand-primary)] bg-white px-6 py-12 text-center shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
+    <div className="flex min-h-[calc(100vh-210px)] flex-col items-center justify-center rounded-[2rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-6 py-12 text-center shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
       <Image
         src={BRAND.logoUrl || "/logoremovebg.png"}
         alt={businessName}
@@ -235,8 +235,8 @@ export function CartLineItem({
               <p
                 className={`mt-2 rounded-2xl px-3 py-2 text-[0.68rem] font-black uppercase leading-4 tracking-[0.1em] ${
                   itemSupportsOrderType(item, orderType)
-                    ? "bg-white/75 text-[var(--product-card-text)]/70"
-                    : "bg-red-100 text-red-800"
+                    ? "bg-[var(--brand-surface-2)]/75 text-[var(--product-card-text)]/70"
+                    : "bg-red-500/15 text-red-300"
                 }`}
               >
                 Disponible: {formatItemSalesChannels(item)}
@@ -247,7 +247,7 @@ export function CartLineItem({
               type="button"
               onClick={() => removeItem(cartLineId)}
               aria-label={`Eliminar ${item.name}`}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[var(--product-card-border)] bg-white text-[var(--product-card-border)] transition hover:bg-[var(--product-card-border)] hover:text-white"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[var(--product-card-border)] bg-[var(--brand-surface-2)] text-[var(--product-card-border)] transition hover:bg-[var(--product-card-border)] hover:text-white"
             >
               <Trash2 size={18} />
             </button>
@@ -322,7 +322,7 @@ export function CartLineItem({
               value={item.note || ""}
               onChange={(event) => updateItemNote(cartLineId, event.target.value)}
               placeholder="Ejemplo: sin cebolla, extra salsa, sin picante..."
-              className="mt-3 min-h-20 w-full resize-none rounded-2xl border-2 border-[var(--product-card-border)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--product-card-text)] outline-none placeholder:text-[var(--product-card-text)]/45 focus:border-[var(--product-card-border)]"
+              className="mt-3 min-h-20 w-full resize-none rounded-2xl border-2 border-[var(--product-card-border)]/25 bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--product-card-text)] outline-none placeholder:text-[var(--product-card-text)]/45 focus:border-[var(--product-card-border)]"
             />
           )}
         </div>
@@ -371,7 +371,7 @@ export function CartSummaryFooter({
   whatsappButtonLabel,
 }: CartSummaryFooterProps) {
   return (
-    <div className="shrink-0 border-t-4 border-[var(--brand-primary)] bg-white px-4 py-2.5 sm:px-6">
+    <div className="shrink-0 border-t-4 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2.5 sm:px-6">
       {publicConfig.fiscalEnabled && (
         <div className="mb-2.5">
           <FiscalBreakdown items={items} config={publicConfig} />
@@ -394,8 +394,8 @@ export function CartSummaryFooter({
         </div>
 
         {hasCombos && hasRegularProducts ? (
-          <div className="mt-2 grid grid-cols-2 overflow-hidden rounded-[1rem] border border-[var(--brand-primary)]/20 bg-white">
-            <div className="border-r border-[var(--brand-primary)]/15 px-3 py-2">
+          <div className="mt-2 grid grid-cols-2 overflow-hidden rounded-[1rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)]">
+            <div className="border-r border-[var(--brand-border)] px-3 py-2">
               <p className="text-[0.6rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                 Combos
               </p>
@@ -424,7 +424,7 @@ export function CartSummaryFooter({
             </div>
           </div>
         ) : (
-          <div className="mt-2 rounded-[1rem] border border-[var(--brand-primary)]/20 bg-white px-3 py-2">
+          <div className="mt-2 rounded-[1rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-3 py-2">
             {hasCombos && (
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
@@ -464,7 +464,7 @@ export function CartSummaryFooter({
         )}
 
         {hasRegularProducts && (
-          <div className="mt-1.5 flex items-center justify-between gap-3 rounded-[1rem] border border-[var(--brand-primary)]/20 bg-white/70 px-3 py-1.5">
+          <div className="mt-1.5 flex items-center justify-between gap-3 rounded-[1rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)]/70 px-3 py-1.5">
             <div className="min-w-0">
               <p className="inline-flex items-center gap-1 text-[0.58rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                 {isOfficialBcv ? (
@@ -502,7 +502,7 @@ export function CartSummaryFooter({
           <button
             type="button"
             onClick={onOpenOrderModal}
-            className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:bg-[var(--brand-accent-200)] active:translate-y-1 active:shadow-none"
+            className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)] active:translate-y-1 active:shadow-none"
           >
             <Store size={17} />
             Registrar pedido local

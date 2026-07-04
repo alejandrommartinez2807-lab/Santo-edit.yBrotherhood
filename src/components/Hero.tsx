@@ -317,7 +317,7 @@ export default function Hero() {
         </div>
 
         {/* Título */}
-        <h1 className="font-display text-[4rem] uppercase leading-[0.85] tracking-tight text-[var(--brand-ink-3)] [text-shadow:0_10px_50px_rgba(var(--brand-primary-rgb),0.35)] sm:text-8xl md:text-[7.5rem]">
+        <h1 className="max-w-full font-display text-[clamp(2.6rem,14.5vw,4.5rem)] uppercase leading-[0.85] tracking-tight text-[var(--brand-ink-3)] [text-shadow:0_10px_50px_rgba(var(--brand-primary-rgb),0.35)] sm:text-8xl md:text-[7.5rem]">
           {businessConfig.businessName}
         </h1>
 

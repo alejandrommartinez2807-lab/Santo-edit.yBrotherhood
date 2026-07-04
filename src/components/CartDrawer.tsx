@@ -151,7 +151,7 @@ function getPublicOrderDeliveryClass(status: string) {
   if (status === "Entregado")
     return "border-green-600 bg-green-100 text-green-800";
   if (status === "Listo")
-    return "border-yellow-500 bg-[var(--brand-accent-100)] text-[var(--brand-ink)]";
+    return "border-yellow-500 bg-[rgba(var(--brand-primary-rgb),0.12)] text-[var(--brand-ink)]";
   if (status === "Cancelado")
     return "border-zinc-300 bg-zinc-100 text-zinc-700";
   return "border-orange-300 bg-orange-50 text-orange-900";
@@ -171,7 +171,7 @@ function PublicOpenAccountPanel({
 
   return (
     <div
-      className={`${compact ? "mt-4" : "mt-3"} rounded-[1.25rem] border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3`}
+      className={`${compact ? "mt-4" : "mt-3"} rounded-[1.25rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3`}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -194,7 +194,7 @@ function PublicOpenAccountPanel({
           <span className="rounded-2xl bg-green-100 px-3 py-2 text-green-800">
             Entregados {deliveryStats.delivered}
           </span>
-          <span className="rounded-2xl bg-[var(--brand-accent-100)] px-3 py-2 text-[var(--brand-ink)]">
+          <span className="rounded-2xl bg-[rgba(var(--brand-primary-rgb),0.12)] px-3 py-2 text-[var(--brand-ink)]">
             Listos {deliveryStats.ready}
           </span>
         </div>
@@ -224,7 +224,7 @@ function PublicOpenAccountPanel({
             return (
               <div
                 key={order.id}
-                className="rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-3 py-3"
+                className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-3 py-3"
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
@@ -263,7 +263,7 @@ function PublicOpenAccountPanel({
           })}
         </div>
       ) : (
-        <p className="mt-3 rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-3 py-3 text-sm font-bold leading-5 text-[var(--brand-ink-2)]/70">
+        <p className="mt-3 rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-3 py-3 text-sm font-bold leading-5 text-[var(--brand-ink-2)]/70">
           Todavía no hay pedidos asociados a esta cuenta.
         </p>
       )}
@@ -1407,13 +1407,13 @@ export default function CartDrawer({
         type="button"
         aria-label="Cerrar carrito"
         onClick={onClose}
-        className="absolute inset-0 bg-[var(--brand-ink-3)]/45 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
       />
 
       <aside className="absolute right-0 top-0 flex h-full w-full max-w-xl flex-col overflow-hidden border-l-4 border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-ink-3)] shadow-2xl shadow-black/40 sm:w-[92%]">
-        <div className="h-5 shrink-0 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px_0] bg-[var(--brand-cream)]" />
+        <div className="h-1.5 shrink-0 bg-[linear-gradient(90deg,var(--brand-primary),var(--brand-accent))]" />
 
-        <div className="relative shrink-0 overflow-hidden border-b-4 border-[var(--brand-primary)] bg-white px-5 py-5 sm:px-8">
+        <div className="relative shrink-0 overflow-hidden border-b-4 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-5 py-5 sm:px-8">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(var(--brand-accent-rgb),0.32),transparent_42%)]" />
 
           <div className="relative flex items-center justify-between gap-4">
@@ -1467,18 +1467,18 @@ export default function CartDrawer({
           )}
 
           {hasItems && hasUnavailableItemsForOrderType ? (
-            <div className="mt-4 rounded-[1.25rem] border-2 border-red-500/30 bg-red-100 px-4 py-3">
-              <p className="text-xs font-black uppercase tracking-[0.12em] text-red-800">
+            <div className="mt-4 rounded-[1.25rem] border-2 border-red-500/30 bg-red-500/15 px-4 py-3">
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-red-300">
                 Revisa el tipo de pedido
               </p>
-              <p className="mt-1 text-sm font-bold leading-6 text-red-800/85">
+              <p className="mt-1 text-sm font-bold leading-6 text-red-200/85">
                 {unavailableItemsMessage}
               </p>
             </div>
           ) : null}
 
           {hasItems && hasStaffConfirmationItems ? (
-            <div className="mt-4 rounded-[1.25rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-accent-100)] px-4 py-3">
+            <div className="mt-4 rounded-[1.25rem] border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3">
               <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                 Confirmación del personal
               </p>
@@ -1521,11 +1521,11 @@ export default function CartDrawer({
       </aside>
 
       {isOrderModalOpen && canRegisterOrdersInPanel && (
-        <div className="fixed inset-0 z-[110] flex items-end justify-center bg-[var(--brand-ink-3)]/60 px-4 py-4 backdrop-blur-sm sm:items-center">
+        <div className="fixed inset-0 z-[110] flex items-end justify-center bg-black/75 px-4 py-4 backdrop-blur-sm sm:items-center">
           <div className="max-h-[94vh] w-full max-w-lg overflow-y-auto rounded-[2rem] border-4 border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-ink-3)] shadow-2xl shadow-black/45">
-            <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px_0] bg-[var(--brand-cream)]" />
+            <div className="h-1.5 shrink-0 bg-[linear-gradient(90deg,var(--brand-primary),var(--brand-accent))]" />
 
-            <div className="relative bg-white px-6 py-5">
+            <div className="relative bg-[var(--brand-surface-2)] px-6 py-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.28em] text-[var(--brand-primary)]">
@@ -1609,7 +1609,7 @@ export default function CartDrawer({
                   )}
 
                 {lastOrderAttachedToOpenAccount ? (
-                  <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-3 text-left">
+                  <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-left">
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
                       Cuenta abierta
                     </p>
@@ -1620,7 +1620,7 @@ export default function CartDrawer({
                     </p>
                   </div>
                 ) : (
-                  <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-3 text-left">
+                  <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-left">
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
                       Importante
                     </p>
@@ -1643,7 +1643,7 @@ export default function CartDrawer({
                 {lastOrderCanReportPayment &&
                   isPaymentProofPublicAvailable &&
                   !paymentProofSuccess && (
-                    <div className="rounded-[1.5rem] border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-left">
+                    <div className="rounded-[1.5rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-left">
                       <button
                         type="button"
                         onClick={() => {
@@ -1667,7 +1667,7 @@ export default function CartDrawer({
                               onChange={(event) =>
                                 setPaymentProofMethod(event.target.value)
                               }
-                              className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                              className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                             >
                               <option value="">Selecciona método</option>
                               {PAYMENT_METHOD_OPTIONS.map((method) => (
@@ -1691,7 +1691,7 @@ export default function CartDrawer({
                                 }
                                 inputMode="decimal"
                                 placeholder="0.00"
-                                className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                                className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                               />
                             </div>
 
@@ -1706,7 +1706,7 @@ export default function CartDrawer({
                                 }
                                 inputMode="decimal"
                                 placeholder="0,00"
-                                className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                                className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                               />
                             </div>
                           </div>
@@ -1721,7 +1721,7 @@ export default function CartDrawer({
                                 setPaymentProofReference(event.target.value)
                               }
                               placeholder="Número de referencia, banco o dato útil"
-                              className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                              className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                             />
                           </div>
 
@@ -1737,7 +1737,7 @@ export default function CartDrawer({
                                   event.target.files?.[0],
                                 )
                               }
-                              className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-sm font-bold text-[var(--brand-ink)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--brand-primary)] file:px-4 file:py-2 file:text-xs file:font-black file:uppercase file:tracking-[0.08em] file:text-white"
+                              className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-sm font-bold text-[var(--brand-ink)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--brand-primary)] file:px-4 file:py-2 file:text-xs file:font-black file:uppercase file:tracking-[0.08em] file:text-white"
                             />
                             {paymentProofFileName && (
                               <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -1756,13 +1756,13 @@ export default function CartDrawer({
                                 setPaymentProofNote(event.target.value)
                               }
                               placeholder="Aclara cualquier detalle del pago"
-                              className="mt-2 min-h-20 w-full resize-none rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                              className="mt-2 min-h-20 w-full resize-none rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                             />
                           </div>
 
                           {paymentProofError && (
-                            <div className="rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
-                              <p className="text-sm font-bold leading-6 text-red-800">
+                            <div className="rounded-2xl border-2 border-red-500/35 bg-red-500/15 px-4 py-3">
+                              <p className="text-sm font-bold leading-6 text-red-300">
                                 {paymentProofError}
                               </p>
                             </div>
@@ -1775,7 +1775,7 @@ export default function CartDrawer({
                             className={`flex w-full items-center justify-center gap-3 rounded-full border-2 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none ${
                               canSubmitPaymentProof
                                 ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-accent)] hover:text-[var(--brand-ink)]"
-                                : "border-[var(--brand-primary)]/15 bg-[#ddd3c4] text-[var(--brand-ink-2)]/35"
+                                : "border-[var(--brand-border)] bg-[#ddd3c4] text-[var(--brand-ink-2)]/35"
                             }`}
                           >
                             {isSubmittingPaymentProof ? (
@@ -1792,7 +1792,7 @@ export default function CartDrawer({
 
                 {lastOrderCanReportPayment &&
                   !isPaymentProofPublicAvailable && (
-                    <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-3 text-left">
+                    <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-left">
                       <p className="text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
                         El pedido ya quedó registrado. Si ya pagaste, comunícate
                         con el local por el canal indicado.
@@ -1847,7 +1847,7 @@ export default function CartDrawer({
                     onChange={(event) => setCustomerName(event.target.value)}
                     placeholder="Ejemplo: Carlos"
                     autoComplete="name"
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
@@ -1865,7 +1865,7 @@ export default function CartDrawer({
                         className={`rounded-2xl border-2 px-4 py-4 text-sm font-black uppercase transition ${
                           orderType === type
                             ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
-                            : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)]"
+                            : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)]"
                         }`}
                       >
                         {type}
@@ -1875,7 +1875,7 @@ export default function CartDrawer({
                 </div>
 
                 {orderType === "Comer aquí" && needsBranchSelection && (
-                  <div className="rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-yellow-50 px-4 py-3">
+                  <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.08)] px-4 py-3">
                     <p className="inline-flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                       <Table2 size={15} />
                       Elige tu sede primero
@@ -1894,7 +1894,7 @@ export default function CartDrawer({
                     </label>
 
                     {hasValidQrTableNotice && (
-                      <div className="mt-2 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-yellow-50 px-4 py-3">
+                      <div className="mt-2 rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.08)] px-4 py-3">
                         <p className="inline-flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                           <Table2 size={15} />
                           Mesa preseleccionada
@@ -1936,7 +1936,7 @@ export default function CartDrawer({
                           className={`rounded-xl border-2 px-3 py-3 text-xs font-black uppercase transition ${
                             tableNumber === place
                               ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
-                              : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)]"
+                              : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)]"
                           }`}
                         >
                           {place}
@@ -1953,11 +1953,11 @@ export default function CartDrawer({
                         }
                       }}
                       placeholder="O escribe otra ubicación..."
-                      className="mt-3 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                      className="mt-3 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                     />
 
                     {isLoadingTableAccountNotice && tableNumber.trim() ? (
-                      <div className="mt-3 rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-white px-4 py-3">
+                      <div className="mt-3 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
                         <p className="inline-flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                           <Loader2 size={15} className="animate-spin" />
                           Consultando mesa
@@ -1971,7 +1971,7 @@ export default function CartDrawer({
 
                     {!isLoadingTableAccountNotice &&
                     hasOpenAccountTableNotice ? (
-                      <div className="mt-3 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-yellow-50 px-4 py-3">
+                      <div className="mt-3 rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.08)] px-4 py-3">
                         <p className="inline-flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                           <Table2 size={15} />
                           Mesa con cuenta abierta
@@ -1996,8 +1996,8 @@ export default function CartDrawer({
                           }
                           className={`mt-3 flex w-full items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 text-left transition ${
                             attachToTableOpenAccount
-                              ? "border-[var(--brand-primary)] bg-white text-[var(--brand-ink)]"
-                              : "border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] text-[var(--brand-ink)]/70"
+                              ? "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-ink)]"
+                              : "border-[var(--brand-border)] bg-[var(--brand-cream)] text-[var(--brand-ink)]/70"
                           }`}
                         >
                           <span>
@@ -2016,7 +2016,7 @@ export default function CartDrawer({
                             className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 text-xs font-black ${
                               attachToTableOpenAccount
                                 ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
-                                : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink)]/45"
+                                : "border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-ink)]/45"
                             }`}
                           >
                             {attachToTableOpenAccount ? "✓" : ""}
@@ -2081,7 +2081,7 @@ export default function CartDrawer({
                 )}
 
                 {isDeliveryOrder && (
-                  <div className="space-y-4 rounded-[1.5rem] border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4">
+                  <div className="space-y-4 rounded-[1.5rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4">
                     <div>
                       <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                         Teléfono
@@ -2095,7 +2095,7 @@ export default function CartDrawer({
                           setCustomerPhone(event.target.value)
                         }
                         placeholder="Ejemplo: 0412-0000000"
-                        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                       />
                     </div>
 
@@ -2110,7 +2110,7 @@ export default function CartDrawer({
                         }
                         placeholder="Ejemplo: Urb. La Trigaleña, calle 3, edificio Torre Azul, apto 4B"
                         autoComplete="street-address"
-                        className="mt-2 min-h-24 w-full resize-none rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                        className="mt-2 min-h-24 w-full resize-none rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                       />
                       <div className="mt-2 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                         {ADDRESS_HELPERS.map((helper) => (
@@ -2118,7 +2118,7 @@ export default function CartDrawer({
                             key={helper}
                             type="button"
                             onClick={() => appendAddressHelper(helper)}
-                            className="shrink-0 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.68rem] font-black uppercase text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
+                            className="shrink-0 rounded-full border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-3 py-1.5 text-[0.68rem] font-black uppercase text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)] hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                           >
                             + {helper}
                           </button>
@@ -2141,7 +2141,7 @@ export default function CartDrawer({
                           setDeliveryReference(event.target.value)
                         }
                         placeholder="Ejemplo: frente a la farmacia, portón negro, al lado del colegio..."
-                        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                       />
                     </div>
 
@@ -2192,7 +2192,7 @@ export default function CartDrawer({
                       </div>
                     )}
 
-                    <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3">
+                    <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3">
                       <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                         Costo de delivery
                       </p>
@@ -2209,7 +2209,7 @@ export default function CartDrawer({
                   </div>
                 )}
 
-                <div className="rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3">
+                <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Resumen de cobro
                   </p>
@@ -2261,7 +2261,7 @@ export default function CartDrawer({
                     value={customerNote}
                     onChange={(event) => setCustomerNote(event.target.value)}
                     placeholder="Ejemplo: cliente espera afuera, entregar rápido..."
-                    className="mt-2 min-h-20 w-full resize-none rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                    className="mt-2 min-h-20 w-full resize-none rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
@@ -2275,7 +2275,7 @@ export default function CartDrawer({
                   </p>
 
                   {orderAttachmentDataUrl ? (
-                    <div className="mt-2 flex items-center gap-3 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2">
+                    <div className="mt-2 flex items-center gap-3 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-3 py-2">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={orderAttachmentDataUrl}
@@ -2294,7 +2294,7 @@ export default function CartDrawer({
                       </button>
                     </div>
                   ) : (
-                    <label className="mt-2 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/35 bg-white px-4 py-3 text-sm font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-yellow-50">
+                    <label className="mt-2 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.08)]">
                       <ImagePlus size={18} />
                       Elegir imagen
                       <input
@@ -2314,15 +2314,15 @@ export default function CartDrawer({
                 </div>
 
                 {hasUnavailableItemsForOrderType && (
-                  <div className="rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
-                    <p className="text-xs font-black uppercase tracking-[0.12em] text-red-800">
+                  <div className="rounded-2xl border-2 border-red-500/35 bg-red-500/15 px-4 py-3">
+                    <p className="text-xs font-black uppercase tracking-[0.12em] text-red-300">
                       Productos no disponibles para {orderTypeChannelLabel}
                     </p>
-                    <p className="mt-1 text-sm font-bold leading-6 text-red-800/85">
+                    <p className="mt-1 text-sm font-bold leading-6 text-red-200/85">
                       Cambia el tipo de pedido o retira esos productos del
                       carrito.
                     </p>
-                    <p className="mt-1 text-sm font-black leading-6 text-red-800">
+                    <p className="mt-1 text-sm font-black leading-6 text-red-300">
                       {unavailableItemsForOrderType
                         .map((item) => item.name)
                         .join(", ")}
@@ -2331,7 +2331,7 @@ export default function CartDrawer({
                 )}
 
                 {hasStaffConfirmationItems && (
-                  <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-accent-100)] px-4 py-3">
+                  <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3">
                     <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                       Confirmación del personal
                     </p>
@@ -2342,7 +2342,7 @@ export default function CartDrawer({
                 )}
 
                 {needsBranchSelection && (
-                  <div className="rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-accent-100)] px-4 py-3">
+                  <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3">
                     <p className="text-sm font-bold leading-6 text-[var(--brand-ink)]/80">
                       Para registrar el pedido, primero elige la sede donde
                       estás.
@@ -2351,8 +2351,8 @@ export default function CartDrawer({
                 )}
 
                 {orderError && (
-                  <div className="rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
-                    <p className="text-sm font-bold leading-6 text-red-800">
+                  <div className="rounded-2xl border-2 border-red-500/35 bg-red-500/15 px-4 py-3">
+                    <p className="text-sm font-bold leading-6 text-red-300">
                       {orderError}
                     </p>
                   </div>
@@ -2365,7 +2365,7 @@ export default function CartDrawer({
                   className={`mt-2 flex w-full items-center justify-center gap-3 rounded-full border-2 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none ${
                     canRegisterLocalOrder
                       ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
-                      : "border-[var(--brand-primary)]/15 bg-[#ddd3c4] text-[var(--brand-ink-2)]/35"
+                      : "border-[var(--brand-border)] bg-[#ddd3c4] text-[var(--brand-ink-2)]/35"
                   }`}
                 >
                   <ClipboardList size={21} />

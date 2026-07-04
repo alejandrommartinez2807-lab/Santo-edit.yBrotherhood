@@ -144,10 +144,10 @@ export default function PublicBranchPicker({
 
   return (
     <div
-      className={`rounded-2xl border-2 px-4 py-3 ${
+      className={`rounded-2xl border px-4 py-3 ${
         needsSelection
-          ? "border-[var(--brand-primary)] bg-[var(--brand-accent-100)]"
-          : "border-[var(--brand-primary)]/25 bg-white"
+          ? "border-[var(--brand-primary)] bg-[rgba(var(--brand-primary-rgb),0.12)]"
+          : "border-[var(--brand-border)] bg-[var(--brand-surface-2)]"
       }`}
     >
       <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
@@ -164,7 +164,7 @@ export default function PublicBranchPicker({
           <select
             value={selectedBranchId}
             onChange={(event) => selectBranch(event.target.value)}
-            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-black text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+            className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-black px-4 py-3 text-sm font-black text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
           >
             <option value="" disabled>
               Elige tu sede…
