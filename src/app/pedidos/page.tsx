@@ -3308,13 +3308,13 @@ export default function PedidosPage() {
   if (!isLoggedIn) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-3)]">
-        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.14)]">
+        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border-4 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.14)]">
           <div className="h-6 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="px-6 py-6">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+              className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
             >
               <ArrowLeft size={16} />
               Volver
@@ -3357,7 +3357,7 @@ export default function PedidosPage() {
                     if (event.key === "Enter") handleLogin()
                   }}
                   placeholder="Ingresa la clave del local"
-                  className="w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                  className="w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                 />
 
                 <button
@@ -3371,8 +3371,8 @@ export default function PedidosPage() {
             </div>
 
             {errorMessage && (
-              <div className="rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
-                <p className="text-sm font-bold leading-6 text-red-800">
+              <div className="rounded-2xl border-2 border-red-500/35 bg-red-500/100/15 px-4 py-3">
+                <p className="text-sm font-bold leading-6 text-red-300">
                   {errorMessage}
                 </p>
               </div>
@@ -3396,7 +3396,7 @@ export default function PedidosPage() {
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-3 py-4 text-[var(--brand-ink-3)] sm:px-6 lg:px-8">
       {newOrderToast && (
-        <div className="fixed right-4 top-4 z-50 max-w-sm rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-2xl shadow-black/20">
+        <div className="fixed right-4 top-4 z-50 max-w-sm rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] p-4 shadow-2xl shadow-black/20">
           <div className="flex gap-3">
             <BellRing className="mt-1 text-[var(--brand-primary)]" size={24} />
             <div>
@@ -3415,8 +3415,8 @@ export default function PedidosPage() {
       )}
 
       <div className="mx-auto max-w-7xl">
-        <header className="overflow-hidden rounded-[1.6rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
-          <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
+        <header className="overflow-hidden rounded-[1.6rem] border-4 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
+          <div className="h-1.5 shrink-0 bg-[linear-gradient(90deg,var(--brand-primary),var(--brand-accent))]" />
 
           <div className="p-4 sm:p-5">
             <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-center 2xl:justify-between">
@@ -3424,7 +3424,7 @@ export default function PedidosPage() {
                 <div className="flex flex-wrap gap-2">
                   <Link
                     href="/"
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                   >
                     <ArrowLeft size={16} />
                     Menú
@@ -3436,7 +3436,7 @@ export default function PedidosPage() {
                       setCloseSummaryMessage(null)
                       setIsCloseModalOpen(true)
                     }}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                   >
                     <Clock size={16} />
                     Cierre del día
@@ -3445,7 +3445,7 @@ export default function PedidosPage() {
                   {isHistoryModuleVisible && (
                     <a
                       href="/local-santo/cierres"
-                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                     >
                       <Clock size={16} />
                       Historial de cierres
@@ -3463,7 +3463,7 @@ export default function PedidosPage() {
                           loadExpenseInventory(true)
                         }
                       }}
-                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                     >
                       <Plus size={16} />
                       Gastos
@@ -3473,7 +3473,7 @@ export default function PedidosPage() {
                   {isCustomersModuleVisible && (
                     <a
                       href="/local-santo/clientes"
-                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                     >
                       <MessageCircle size={16} />
                       Clientes
@@ -3483,7 +3483,7 @@ export default function PedidosPage() {
                   {isInventoryModuleVisible && (
                     <a
                       href="/local-santo/inventario"
-                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                     >
                       <PackageCheck size={16} />
                       Inventario
@@ -3493,7 +3493,7 @@ export default function PedidosPage() {
                   {isMenuProductsModuleVisible && (
                     <a
                       href="/local-santo/menu"
-                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                     >
                       <Store size={16} />
                       Productos
@@ -3507,7 +3507,7 @@ export default function PedidosPage() {
                       setIsLocationsModalOpen(true)
                       loadOpenAccounts(adminPassword, true)
                     }}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                   >
                     <MapPin size={16} />
                     Mesas
@@ -3521,7 +3521,7 @@ export default function PedidosPage() {
                         setIsDeliveryZonesModalOpen(true)
                         loadDeliveryZones(true)
                       }}
-                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                     >
                       <Truck size={16} />
                       Zonas delivery
@@ -3533,7 +3533,7 @@ export default function PedidosPage() {
                       type="button"
                       onClick={() => loadBusinessConfig(adminPassword)}
                       disabled={isLoadingBusinessConfig}
-                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
+                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)] disabled:opacity-50"
                     >
                       {isLoadingBusinessConfig ? (
                         <Loader2 size={16} className="animate-spin" />
@@ -3550,8 +3550,8 @@ export default function PedidosPage() {
                     disabled={!isPanelSoundAvailable}
                     className={`inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-60 ${
                       isPanelSoundActive
-                        ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[var(--brand-accent-200)]"
-                        : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
+                        ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
+                        : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)] hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                     }`}
                   >
                     {isPanelSoundActive ? <Volume2 size={16} /> : <VolumeX size={16} />}
@@ -3561,7 +3561,7 @@ export default function PedidosPage() {
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
                   >
                     Cerrar sesión
                   </button>
@@ -3581,7 +3581,7 @@ export default function PedidosPage() {
                 </p>
 
                 {soundMessage && (
-                  <p className="mt-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-3 py-2 text-xs font-black text-[var(--brand-ink-2)]">
+                  <p className="mt-2 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-3 py-2 text-xs font-black text-[var(--brand-ink-2)]">
                     {soundMessage}
                   </p>
                 )}
@@ -3605,7 +3605,7 @@ export default function PedidosPage() {
             className={`mt-4 flex flex-col gap-3 rounded-[1.4rem] border-2 p-4 sm:flex-row sm:items-center sm:justify-between ${
               trainingActive
                 ? "border-orange-500 bg-orange-100"
-                : "border-[var(--brand-primary)]/25 bg-white"
+                : "border-[var(--brand-border)] bg-[var(--brand-surface-2)]"
             }`}
           >
             <div className="flex items-start gap-2">
@@ -3644,7 +3644,7 @@ export default function PedidosPage() {
                 className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-full border-2 px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] transition disabled:opacity-50 ${
                   trainingActive
                     ? "border-orange-600 bg-orange-600 text-white hover:bg-orange-700"
-                    : "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[var(--brand-accent-200)]"
+                    : "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
                 }`}
               >
                 {isSavingTraining ? (
@@ -3883,7 +3883,7 @@ export default function PedidosPage() {
         </section>
 
         {isPaymentProofsModuleVisible && (pendingPaymentProofsCount > 0 || paymentProofsMessage) && (
-          <section className={`mt-4 rounded-[1.4rem] border-2 p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)] ${pendingPaymentProofsCount > 0 ? "border-[var(--brand-primary)] bg-[var(--brand-accent-100)]" : "border-orange-400 bg-orange-100"}`}>
+          <section className={`mt-4 rounded-[1.4rem] border-2 p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)] ${pendingPaymentProofsCount > 0 ? "border-[var(--brand-primary)] bg-[rgba(var(--brand-primary-rgb),0.12)]" : "border-orange-400 bg-orange-100"}`}>
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
@@ -3906,7 +3906,7 @@ export default function PedidosPage() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => loadPaymentProofs(adminPassword)} className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-yellow-50">
+                <button type="button" onClick={() => loadPaymentProofs(adminPassword)} className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.08)]">
                   <RefreshCw size={16} />
                   Actualizar
                 </button>
@@ -3919,7 +3919,7 @@ export default function PedidosPage() {
         )}
 
         {staffConfirmationPendingOrders.length > 0 && (
-          <section className="mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-accent-100)] p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+          <section className="mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-[rgba(var(--brand-primary-rgb),0.12)] p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
@@ -3946,7 +3946,7 @@ export default function PedidosPage() {
         )}
 
         {visibleOperationalModules === 0 && (
-          <section className="mt-4 rounded-[1.4rem] border-2 border-yellow-400 bg-[var(--brand-accent-100)] p-4">
+          <section className="mt-4 rounded-[1.4rem] border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] p-4">
             <p className="text-sm font-black uppercase text-[var(--brand-amber)]">
               No hay módulos operativos visibles
             </p>
@@ -3956,7 +3956,7 @@ export default function PedidosPage() {
           </section>
         )}
 
-        <section className="sticky top-0 z-30 mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-white p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+        <section className="sticky top-0 z-30 mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
@@ -3978,7 +3978,7 @@ export default function PedidosPage() {
               <button
                 type="button"
                 onClick={() => setArePanelFiltersVisible((value) => !value)}
-                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
               >
                 {arePanelFiltersVisible ? <EyeOff size={17} /> : <Eye size={17} />}
                 {arePanelFiltersVisible ? "Ocultar filtros" : "Mostrar filtros"}
@@ -3992,7 +3992,7 @@ export default function PedidosPage() {
                   setPanelOrderScopeFilter("Todos los tipos")
                   setPanelSearchText("")
                 }}
-                className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
               >
                 Limpiar filtros
               </button>
@@ -4024,7 +4024,7 @@ export default function PedidosPage() {
                     value={panelSearchText}
                     onChange={(event) => setPanelSearchText(event.target.value)}
                     placeholder="Buscar por cliente, teléfono, mesa, zona, producto, número, variación, adicional o revisión"
-                    className="w-full rounded-full border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                    className="w-full rounded-full border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                   />
                 </div>
               </div>
@@ -4042,7 +4042,7 @@ export default function PedidosPage() {
                         className={`shrink-0 rounded-full border-2 px-4 py-2.5 text-xs font-black uppercase transition ${
                           isActive
                             ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
-                            : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
+                            : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)] hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                         }`}
                       >
                         {status}
@@ -4064,7 +4064,7 @@ export default function PedidosPage() {
                           className={`shrink-0 rounded-full border-2 px-4 py-2.5 text-xs font-black uppercase transition ${
                             isActive
                               ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
-                              : "border-[var(--brand-primary)]/35 bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
+                              : "border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)] hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                           }`}
                         >
                           {filter}
@@ -4086,7 +4086,7 @@ export default function PedidosPage() {
                         className={`shrink-0 rounded-full border-2 px-4 py-2.5 text-xs font-black uppercase transition ${
                           isActive
                             ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
-                            : "border-[var(--brand-primary)]/35 bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
+                            : "border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)] hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                         }`}
                       >
                         {filter}
@@ -4114,8 +4114,8 @@ export default function PedidosPage() {
           )}
 
           {errorMessage && (
-            <div className="mt-3 rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
-              <p className="text-sm font-bold leading-6 text-red-800">
+            <div className="mt-3 rounded-2xl border-2 border-red-500/35 bg-red-500/100/15 px-4 py-3">
+              <p className="text-sm font-bold leading-6 text-red-300">
                 {errorMessage}
               </p>
             </div>
@@ -4123,7 +4123,7 @@ export default function PedidosPage() {
         </section>
 
         {filteredOrders.length === 0 ? (
-          <section className="mt-5 rounded-[2rem] border-2 border-[var(--brand-primary)] bg-white px-6 py-14 text-center shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]">
+          <section className="mt-5 rounded-[2rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-6 py-14 text-center shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]">
             <Image
               src={BRAND.logoUrl || "/logoremovebg.png"}
               alt={BRAND.name}
@@ -4166,7 +4166,7 @@ export default function PedidosPage() {
               return (
                 <article
                   key={order.id}
-                  className={`overflow-hidden rounded-[1.6rem] border-2 bg-white shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)] transition ${
+                  className={`overflow-hidden rounded-[1.6rem] border-2 bg-[var(--brand-surface-2)] shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)] transition ${
                     isHighlighted
                       ? "border-red-500 ring-4 ring-red-300"
                       : "border-[var(--brand-primary)]"
@@ -4212,7 +4212,7 @@ export default function PedidosPage() {
                           )}
 
                           {hasConfirmedStaffConfirmation && (
-                            <span className="inline-flex items-center gap-2 rounded-full border border-green-600 bg-green-500 px-3 py-1.5 text-xs font-black uppercase text-white">
+                            <span className="inline-flex items-center gap-2 rounded-full border border-green-600 bg-green-500/100 px-3 py-1.5 text-xs font-black uppercase text-white">
                               <CheckCircle2 size={15} />
                               Revisión confirmada
                             </span>
@@ -4259,11 +4259,11 @@ export default function PedidosPage() {
                     {staffConfirmationSummary.requiredCount > 0 && (
                       <div className={`rounded-[1.4rem] border-2 p-4 ${
                         hasPendingStaffConfirmation
-                          ? "border-yellow-400 bg-[var(--brand-accent-100)]"
-                          : "border-green-500/45 bg-green-50"
+                          ? "border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)]"
+                          : "border-green-500/45 bg-green-500/10"
                       }`}>
                         <p className={`flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] ${
-                          hasPendingStaffConfirmation ? "text-[var(--brand-amber)]" : "text-green-800"
+                          hasPendingStaffConfirmation ? "text-[var(--brand-amber)]" : "text-green-300"
                         }`}>
                           {hasPendingStaffConfirmation ? <AlertTriangle size={16} /> : <CheckCircle2 size={16} />}
                           {getStaffConfirmationStatusLabel(staffConfirmationSummary.status)}
@@ -4299,7 +4299,7 @@ export default function PedidosPage() {
                                 updateStaffConfirmation(order, "resetStaffItems")
                               }
                               disabled={isUpdatingStaffConfirmation}
-                              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)]/35 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:cursor-not-allowed disabled:opacity-60"
+                              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)] disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {isUpdatingStaffConfirmation ? (
                                 <Loader2 size={15} className="animate-spin" />
@@ -4313,7 +4313,7 @@ export default function PedidosPage() {
                           {hasPendingStaffConfirmation && (
                             <a
                               href="/local-santo/mesonero"
-                              className="inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                              className="inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                             >
                               Abrir mesonero
                             </a>
@@ -4323,7 +4323,7 @@ export default function PedidosPage() {
                     )}
 
                     {isDelivery && (
-                      <div className="space-y-3 rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4">
+                      <div className="space-y-3 rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-4">
                         <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                           <Truck size={16} />
                           Datos de delivery
@@ -4331,14 +4331,14 @@ export default function PedidosPage() {
 
                         <div className="grid gap-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/80">
                           <div className="grid gap-2 sm:grid-cols-2">
-                            <p className="rounded-2xl bg-white px-3 py-2"><strong>Teléfono:</strong> {order.customerPhone || "Sin teléfono"}</p>
-                            <p className="rounded-2xl bg-white px-3 py-2"><strong>Método de pago:</strong> {order.paymentMethod || "Sin método"}</p>
+                            <p className="rounded-2xl bg-[var(--brand-surface-2)] px-3 py-2"><strong>Teléfono:</strong> {order.customerPhone || "Sin teléfono"}</p>
+                            <p className="rounded-2xl bg-[var(--brand-surface-2)] px-3 py-2"><strong>Método de pago:</strong> {order.paymentMethod || "Sin método"}</p>
                           </div>
-                          <p className="rounded-2xl bg-white px-3 py-2"><strong>Dirección:</strong> {order.deliveryAddress || "Sin dirección"}</p>
-                          <p className="rounded-2xl bg-white px-3 py-2"><strong>Referencia:</strong> {order.deliveryReference || "Sin referencia"}</p>
+                          <p className="rounded-2xl bg-[var(--brand-surface-2)] px-3 py-2"><strong>Dirección:</strong> {order.deliveryAddress || "Sin dirección"}</p>
+                          <p className="rounded-2xl bg-[var(--brand-surface-2)] px-3 py-2"><strong>Referencia:</strong> {order.deliveryReference || "Sin referencia"}</p>
                           <div className="grid gap-2 sm:grid-cols-2">
-                            <p className="rounded-2xl bg-white px-3 py-2"><strong>Zona:</strong> {displayTableNumber}</p>
-                            <p className="rounded-2xl bg-white px-3 py-2"><strong>Costo delivery:</strong> {formatUSD(orderTotals.deliveryCostUSD)} / Bs {formatVES(orderTotals.deliveryCostUSD * Number(order.exchangeRate || 0))}</p>
+                            <p className="rounded-2xl bg-[var(--brand-surface-2)] px-3 py-2"><strong>Zona:</strong> {displayTableNumber}</p>
+                            <p className="rounded-2xl bg-[var(--brand-surface-2)] px-3 py-2"><strong>Costo delivery:</strong> {formatUSD(orderTotals.deliveryCostUSD)} / Bs {formatVES(orderTotals.deliveryCostUSD * Number(order.exchangeRate || 0))}</p>
                           </div>
                         </div>
 
@@ -4348,7 +4348,7 @@ export default function PedidosPage() {
                               href={buildDeliveryWhatsAppUrl(order, "confirm")}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+                              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
                             >
                               <MessageCircle size={16} />
                               Confirmar
@@ -4358,7 +4358,7 @@ export default function PedidosPage() {
                               href={buildDeliveryWhatsAppUrl(order, "preparing")}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                             >
                               <CookingPot size={16} />
                               Preparación
@@ -4378,21 +4378,21 @@ export default function PedidosPage() {
                               href={buildDeliveryWhatsAppUrl(order, "arrived")}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-green-600 bg-green-500 px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.1em] text-white transition hover:bg-green-400"
+                              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-green-600 bg-green-500/100 px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.1em] text-white transition hover:bg-green-400"
                             >
                               <CheckCircle2 size={16} />
                               Llegué
                             </a>
                           </div>
                         ) : isDeliveryModuleVisible ? (
-                          <div className="rounded-2xl border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-3 py-2 text-xs font-black text-[var(--brand-amber)]">
+                          <div className="rounded-2xl border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-3 py-2 text-xs font-black text-[var(--brand-amber)]">
                             Este delivery no tiene teléfono válido para abrir WhatsApp.
                           </div>
                         ) : null}
                       </div>
                     )}
 
-                    <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
+                    <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
                       <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                         Productos
                       </p>
@@ -4420,7 +4420,7 @@ export default function PedidosPage() {
                     </div>
 
                     {isCashierModuleVisible && (
-                      <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4">
+                      <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-4">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div>
                             <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
@@ -4438,7 +4438,7 @@ export default function PedidosPage() {
                           <button
                             type="button"
                             onClick={() => openPaymentModal(order)}
-                            className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+                            className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
                           >
                             Registrar cobro
                           </button>
@@ -4480,7 +4480,7 @@ export default function PedidosPage() {
 
                         {(orderPayment.amountReceivedUSD > 0 ||
                           orderPayment.amountReceivedVES > 0) && (
-                          <div className="mt-3 rounded-2xl bg-white px-3 py-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
+                          <div className="mt-3 rounded-2xl bg-[var(--brand-surface-2)] px-3 py-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
                             {orderPayment.amountReceivedUSD > 0 && (
                               <p>
                                 Divisas recibidas: {formatUSD(orderPayment.amountReceivedUSD)}
@@ -4506,7 +4506,7 @@ export default function PedidosPage() {
                     )}
 
                     {order.customerNote && (
-                      <div className="rounded-[1.4rem] border-2 border-yellow-400 bg-[var(--brand-accent-100)] p-4">
+                      <div className="rounded-[1.4rem] border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] p-4">
                         <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-amber)]">
                           Nota general
                         </p>
@@ -4521,7 +4521,7 @@ export default function PedidosPage() {
                         href={order.attachmentImageUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-center gap-3 rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-3 transition hover:bg-yellow-50"
+                        className="flex items-center gap-3 rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-3 transition hover:bg-[rgba(var(--brand-primary-rgb),0.08)]"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -4567,7 +4567,7 @@ export default function PedidosPage() {
       {isCloseModalOpen && (
         <ModalShell onClose={() => setIsCloseModalOpen(false)} title="Cierre del día">
           <div className="space-y-4">
-            <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-white p-4">
+            <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] p-4">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
@@ -4584,8 +4584,8 @@ export default function PedidosPage() {
                 <span
                   className={`inline-flex w-fit items-center gap-2 rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] ${
                     hasCloseReviewWarnings
-                      ? "border-yellow-400 bg-[var(--brand-accent-100)] text-[var(--brand-amber)]"
-                      : "border-green-600 bg-green-50 text-green-700"
+                      ? "border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] text-[var(--brand-amber)]"
+                      : "border-green-600 bg-green-500/10 text-green-300"
                   }`}
                 >
                   {hasCloseReviewWarnings ? <AlertTriangle size={17} /> : <CheckCircle2 size={17} />}
@@ -4634,15 +4634,15 @@ export default function PedidosPage() {
             <div
               className={`rounded-[1.4rem] border-2 p-4 ${
                 hasCloseReviewWarnings
-                  ? "border-yellow-400 bg-[var(--brand-accent-100)]"
-                  : "border-green-500/35 bg-green-50"
+                  ? "border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)]"
+                  : "border-green-500/35 bg-green-500/10"
               }`}
             >
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <p
                     className={`text-xs font-black uppercase tracking-[0.18em] ${
-                      hasCloseReviewWarnings ? "text-[var(--brand-amber)]" : "text-green-800"
+                      hasCloseReviewWarnings ? "text-[var(--brand-amber)]" : "text-green-300"
                     }`}
                   >
                     Alertas antes de cerrar
@@ -4652,7 +4652,7 @@ export default function PedidosPage() {
                   </p>
                 </div>
 
-                <span className="rounded-full bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]">
+                <span className="rounded-full bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]">
                   {closeReviewItems.length} punto(s)
                 </span>
               </div>
@@ -4685,7 +4685,7 @@ export default function PedidosPage() {
               </div>
 
               {closeReviewItems.length > 4 && (
-                <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-xs font-black text-[var(--brand-ink-2)]/70">
+                <p className="mt-3 rounded-2xl bg-[var(--brand-surface-2)] px-4 py-3 text-xs font-black text-[var(--brand-ink-2)]/70">
                   Hay {closeReviewItems.length - 4} punto(s) adicional(es). Abre “Alertas completas” para revisarlos todos.
                 </p>
               )}
@@ -4782,7 +4782,7 @@ export default function PedidosPage() {
                   items={dayStats.deliveredByType}
                 />
 
-                <div className="rounded-[1.4rem] border-2 border-yellow-400 bg-[var(--brand-accent-100)] p-4">
+                <div className="rounded-[1.4rem] border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] p-4">
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-amber)]">
                     Pendiente por entregar
                   </p>
@@ -4823,7 +4823,7 @@ export default function PedidosPage() {
               </div>
 
               {dayStats.realPaymentTotals.deliveryWithoutPaymentMethodUSD > 0 && (
-                <p className="mt-3 rounded-2xl border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3 text-xs font-black leading-5 text-[var(--brand-amber)]">
+                <p className="mt-3 rounded-2xl border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3 text-xs font-black leading-5 text-[var(--brand-amber)]">
                   Hay delivery con costo registrado, pero todavía sin forma de cobro marcada. Revisa los pedidos pendientes o parciales antes de cerrar caja.
                 </p>
               )}
@@ -4874,7 +4874,7 @@ export default function PedidosPage() {
               </div>
 
               {expenseCloseBreakdown.expensesWithoutProvider.length > 0 && (
-                <p className="mt-3 rounded-2xl border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3 text-xs font-black leading-5 text-[var(--brand-amber)]">
+                <p className="mt-3 rounded-2xl border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3 text-xs font-black leading-5 text-[var(--brand-amber)]">
                   Hay {expenseCloseBreakdown.expensesWithoutProvider.length} gasto(s) sin proveedor. No bloquea el cierre, pero conviene completarlo para que el historial sea más útil.
                 </p>
               )}
@@ -4902,7 +4902,7 @@ export default function PedidosPage() {
                 />
               </div>
 
-              <div className="mt-3 rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
+              <div className="mt-3 rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   Gastos registrados hoy
                 </p>
@@ -4915,7 +4915,7 @@ export default function PedidosPage() {
                     {dayExpenses.map((expense) => (
                       <div
                         key={expense.id}
-                        className="rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3"
+                        className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3"
                       >
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                           <div>
@@ -4927,7 +4927,7 @@ export default function PedidosPage() {
                               {expense.provider ? ` · ${expense.provider}` : " · Sin proveedor"}
                             </p>
                             {expense.inventoryLinked && expense.inventoryItemName && (
-                              <p className="mt-1 text-xs font-black text-green-700">
+                              <p className="mt-1 text-xs font-black text-green-300">
                                 Inventario: {expense.inventoryItemName} +{expense.inventoryQuantity || 0} {expense.inventoryUnit || "unidades"}
                               </p>
                             )}
@@ -4975,7 +4975,7 @@ export default function PedidosPage() {
                 />
               </div>
 
-              <p className="mt-3 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
+              <p className="mt-3 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
                 Los descuentos por receta se ejecutan cuando los pedidos se marcan como entregados. Esta sección resume las compras que sumaron inventario desde gastos y los productos vendidos que conviene revisar contra recetas.
               </p>
 
@@ -4988,18 +4988,18 @@ export default function PedidosPage() {
                   {expenseCloseBreakdown.inventoryLinkedExpenses.map((expense) => (
                     <div
                       key={expense.id}
-                      className="rounded-2xl border border-green-500/25 bg-green-50 px-4 py-3"
+                      className="rounded-2xl border border-green-500/25 bg-green-500/10 px-4 py-3"
                     >
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                         <div>
-                          <p className="text-sm font-black uppercase text-green-800">
+                          <p className="text-sm font-black uppercase text-green-300">
                             {expense.inventoryItemName}
                           </p>
                           <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
                             {expense.concept || "Compra"} · {expense.provider || "Sin proveedor"}
                           </p>
                         </div>
-                        <p className="text-sm font-black text-green-700">
+                        <p className="text-sm font-black text-green-300">
                           +{expense.inventoryQuantity || 0} {expense.inventoryUnit || "unidades"}
                         </p>
                       </div>
@@ -5022,7 +5022,7 @@ export default function PedidosPage() {
                   {dayStats.productsSold.map((product, index) => (
                     <div
                       key={product.name}
-                      className="rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3"
+                      className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
@@ -5091,14 +5091,14 @@ export default function PedidosPage() {
               title="Resumen para copiar"
               description="Texto completo para enviar o guardar fuera del sistema."
             >
-              <pre className="max-h-[360px] overflow-y-auto whitespace-pre-wrap rounded-2xl bg-white p-4 text-sm font-bold leading-6 text-[var(--brand-ink-2)]">
+              <pre className="max-h-[360px] overflow-y-auto whitespace-pre-wrap rounded-2xl bg-[var(--brand-surface-2)] p-4 text-sm font-bold leading-6 text-[var(--brand-ink-2)]">
                 {closeSummaryText}
               </pre>
             </CloseDetailSection>
 
             {closeSummaryMessage && (
-              <div className="rounded-2xl border-2 border-green-500/30 bg-green-50 px-4 py-3">
-                <p className="text-sm font-black text-green-700">
+              <div className="rounded-2xl border-2 border-green-500/30 bg-green-500/10 px-4 py-3">
+                <p className="text-sm font-black text-green-300">
                   {closeSummaryMessage}
                 </p>
               </div>
@@ -5134,20 +5134,20 @@ export default function PedidosPage() {
             <div
               className={`rounded-[1.4rem] border-2 p-4 ${
                 hasCloseReviewWarnings
-                  ? "border-yellow-400 bg-[var(--brand-accent-100)]"
-                  : "border-green-500/35 bg-green-50"
+                  ? "border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)]"
+                  : "border-green-500/35 bg-green-500/10"
               }`}
             >
               <div className="flex gap-3">
                 {hasCloseReviewWarnings ? (
                   <AlertTriangle className="mt-1 shrink-0 text-[var(--brand-amber)]" size={26} />
                 ) : (
-                  <CheckCircle2 className="mt-1 shrink-0 text-green-700" size={26} />
+                  <CheckCircle2 className="mt-1 shrink-0 text-green-300" size={26} />
                 )}
                 <div>
                   <p
                     className={`text-sm font-black uppercase ${
-                      hasCloseReviewWarnings ? "text-[var(--brand-amber)]" : "text-green-800"
+                      hasCloseReviewWarnings ? "text-[var(--brand-amber)]" : "text-green-300"
                     }`}
                   >
                     {hasCloseReviewWarnings
@@ -5184,14 +5184,14 @@ export default function PedidosPage() {
               }
             />
 
-            <div className="rounded-[1.4rem] border-2 border-red-500/35 bg-red-50 p-4">
+            <div className="rounded-[1.4rem] border-2 border-red-500/35 bg-red-500/10 p-4">
               <div className="flex gap-3">
                 <AlertTriangle className="mt-1 shrink-0 text-red-600" size={26} />
                 <div>
-                  <p className="text-sm font-black uppercase text-red-800">
+                  <p className="text-sm font-black uppercase text-red-300">
                     Esta acción reinicia el día operativo.
                   </p>
-                  <p className="mt-2 text-sm font-bold leading-6 text-red-800/80">
+                  <p className="mt-2 text-sm font-bold leading-6 text-red-300/80">
                     Si continúas, primero se intentará guardar el cierre. Si el cierre no se guarda, el sistema no debería borrar los pedidos.
                   </p>
                 </div>
@@ -5206,7 +5206,7 @@ export default function PedidosPage() {
                 value={resetConfirmationText}
                 onChange={(event) => setResetConfirmationText(event.target.value)}
                 placeholder="REINICIAR"
-                className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
               />
               <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
                 Esta palabra evita reinicios accidentales. Puedes volver al panel para corregir pedidos antes de cerrar.
@@ -5222,7 +5222,7 @@ export default function PedidosPage() {
                   setResetConfirmationText("")
                 }}
                 disabled={isResettingDay}
-                className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
               >
                 Volver a revisar pedidos
               </button>
@@ -5231,7 +5231,7 @@ export default function PedidosPage() {
                 type="button"
                 onClick={() => setIsResetModalOpen(false)}
                 disabled={isResettingDay}
-                className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
               >
                 Seguir viendo cierre
               </button>
@@ -5262,7 +5262,7 @@ export default function PedidosPage() {
           title="Gastos del día"
         >
           <div className="space-y-4">
-            <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
+            <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Control de salidas de caja
               </p>
@@ -5301,7 +5301,7 @@ export default function PedidosPage() {
                     onChange={(event) =>
                       selectExpenseQuickConcept(event.target.value)
                     }
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   >
                     <option value="">Selecciona un gasto rápido o insumo guardado</option>
                     {expenseQuickConcepts.map((concept) => (
@@ -5332,7 +5332,7 @@ export default function PedidosPage() {
                       }
                     }}
                     placeholder="Ej: compra de pan, pago motorizado, salsas"
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
@@ -5346,7 +5346,7 @@ export default function PedidosPage() {
                       updateExpenseForm("provider", event.target.value)
                     }
                     placeholder="Ej: Distribuidora, mercado, motorizado"
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
@@ -5359,7 +5359,7 @@ export default function PedidosPage() {
                     onChange={(event) =>
                       updateExpenseForm("expenseType", event.target.value)
                     }
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   >
                     {EXPENSE_TYPES.map((expenseType) => (
                       <option key={expenseType} value={expenseType}>
@@ -5378,7 +5378,7 @@ export default function PedidosPage() {
                     onChange={(event) =>
                       updateExpenseForm("category", event.target.value)
                     }
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   >
                     {EXPENSE_CATEGORIES.map((category) => (
                       <option key={category} value={category}>
@@ -5397,7 +5397,7 @@ export default function PedidosPage() {
                     onChange={(event) =>
                       updateExpenseForm("method", event.target.value)
                     }
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   >
                     {EXPENSE_METHODS.map((method) => (
                       <option key={method} value={method}>
@@ -5419,7 +5419,7 @@ export default function PedidosPage() {
                       updateExpenseForm("amountUSD", event.target.value)
                     }
                     placeholder="Ej: 10.00"
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
@@ -5435,7 +5435,7 @@ export default function PedidosPage() {
                       updateExpenseForm("amountVES", event.target.value)
                     }
                     placeholder="Ej: 650.00 o 650,00"
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
@@ -5451,7 +5451,7 @@ export default function PedidosPage() {
                       updateExpenseForm("equivalentUSD", event.target.value)
                     }
                     placeholder="Opcional. Útil si no hay tasa del día."
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   />
                   <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
                     Estimado actual: {formatUSD(expenseDraftEquivalentUSD)}
@@ -5472,11 +5472,11 @@ export default function PedidosPage() {
                     }
                     placeholder="Detalle opcional del gasto."
                     rows={3}
-                    className="mt-2 w-full resize-none rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full resize-none rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
-                <div className="sm:col-span-2 rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
+                <div className="sm:col-span-2 rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
@@ -5491,7 +5491,7 @@ export default function PedidosPage() {
                     <label className={`inline-flex items-center gap-2 rounded-full border-2 px-4 py-3 text-xs font-black uppercase tracking-[0.1em] ${
                       isInventoryModuleVisible
                         ? "cursor-pointer border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
-                        : "cursor-not-allowed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] text-[var(--brand-primary)]/55"
+                        : "cursor-not-allowed border-[var(--brand-border)] bg-[var(--brand-cream)] text-[var(--brand-primary)]/55"
                     }`}>
                       <input
                         type="checkbox"
@@ -5510,7 +5510,7 @@ export default function PedidosPage() {
                   </div>
 
                   {!isInventoryModuleVisible && (
-                    <p className="mt-3 rounded-2xl border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3 text-xs font-black leading-5 text-[var(--brand-amber)]">
+                    <p className="mt-3 rounded-2xl border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3 text-xs font-black leading-5 text-[var(--brand-amber)]">
                       Inventario no está activo en este plan. El gasto puede guardarse normalmente, pero no se sumará mercancía.
                     </p>
                   )}
@@ -5524,7 +5524,7 @@ export default function PedidosPage() {
                           className={`rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] ${
                             expenseInventoryForm.mode === "existing"
                               ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
-                              : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)]"
+                              : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)]"
                           }`}
                         >
                           Producto existente
@@ -5535,7 +5535,7 @@ export default function PedidosPage() {
                           className={`rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] ${
                             expenseInventoryForm.mode === "new"
                               ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
-                              : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)]"
+                              : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)]"
                           }`}
                         >
                           Nuevo producto
@@ -5544,7 +5544,7 @@ export default function PedidosPage() {
                           type="button"
                           onClick={() => loadExpenseInventory()}
                           disabled={isLoadingExpenseInventory}
-                          className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                          className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
                         >
                           {isLoadingExpenseInventory ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
                           Inventario
@@ -5559,7 +5559,7 @@ export default function PedidosPage() {
                           <select
                             value={expenseInventoryForm.itemId}
                             onChange={(event) => updateExpenseInventoryForm("itemId", event.target.value)}
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           >
                             <option value="">Selecciona un producto</option>
                             {expenseInventory.map((item) => (
@@ -5579,7 +5579,7 @@ export default function PedidosPage() {
                               value={expenseInventoryForm.name}
                               onChange={(event) => updateExpenseInventoryForm("name", event.target.value)}
                               placeholder="Ej: Pan, salchichas, papas"
-                              className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                              className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                             />
                           </div>
                           <div>
@@ -5589,7 +5589,7 @@ export default function PedidosPage() {
                             <select
                               value={expenseInventoryForm.category}
                               onChange={(event) => updateExpenseInventoryForm("category", event.target.value)}
-                              className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                              className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                             >
                               {EXPENSE_CATEGORIES.map((category) => (
                                 <option key={category} value={category}>
@@ -5611,7 +5611,7 @@ export default function PedidosPage() {
                           value={expenseInventoryForm.quantity}
                           onChange={(event) => updateExpenseInventoryForm("quantity", event.target.value)}
                           placeholder="Ej: 24"
-                          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                         />
                       </div>
 
@@ -5623,7 +5623,7 @@ export default function PedidosPage() {
                           value={expenseInventoryForm.unit}
                           onChange={(event) => updateExpenseInventoryForm("unit", event.target.value)}
                           disabled={expenseInventoryForm.mode === "existing"}
-                          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)] disabled:opacity-60"
+                          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)] disabled:opacity-60"
                         >
                           {EXPENSE_INVENTORY_UNIT_OPTIONS.map((unit) => (
                             <option key={unit} value={unit}>
@@ -5644,7 +5644,7 @@ export default function PedidosPage() {
                             value={expenseInventoryForm.minimumStock}
                             onChange={(event) => updateExpenseInventoryForm("minimumStock", event.target.value)}
                             placeholder="Opcional"
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           />
                         </div>
                       )}
@@ -5657,7 +5657,7 @@ export default function PedidosPage() {
                           value={expenseInventoryForm.note}
                           onChange={(event) => updateExpenseInventoryForm("note", event.target.value)}
                           placeholder="Opcional. Ej: compra de la mañana"
-                          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                         />
                       </div>
                     </div>
@@ -5665,7 +5665,7 @@ export default function PedidosPage() {
                 </div>
               </div>
 
-                <details className="sm:col-span-2 rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
+                <details className="sm:col-span-2 rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
                   <summary className="cursor-pointer text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Editar conceptos frecuentes
                   </summary>
@@ -5679,7 +5679,7 @@ export default function PedidosPage() {
                       {expenseQuickConcepts.map((concept) => (
                         <div
                           key={concept.id}
-                          className="rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3"
+                          className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-3"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div>
@@ -5699,7 +5699,7 @@ export default function PedidosPage() {
                             <button
                               type="button"
                               onClick={() => removeExpenseQuickConcept(concept.id)}
-                              className="rounded-full bg-red-100 p-2 text-red-700"
+                              className="rounded-full bg-red-500/100/15 p-2 text-red-300"
                               aria-label={`Eliminar ${concept.name}`}
                             >
                               <Trash2 size={15} />
@@ -5709,7 +5709,7 @@ export default function PedidosPage() {
                       ))}
                     </div>
 
-                    <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+                    <div className="rounded-[1.2rem] border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-4">
                       <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                         Agregar concepto
                       </p>
@@ -5725,7 +5725,7 @@ export default function PedidosPage() {
                               setNewExpenseQuickConceptName(event.target.value)
                             }
                             placeholder="Ej: Carbón, aceite, gas, hielo"
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           />
                         </div>
 
@@ -5738,7 +5738,7 @@ export default function PedidosPage() {
                             onChange={(event) =>
                               setNewExpenseQuickConceptCategory(event.target.value)
                             }
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           >
                             {EXPENSE_CATEGORIES.map((category) => (
                               <option key={category} value={category}>
@@ -5757,7 +5757,7 @@ export default function PedidosPage() {
                             onChange={(event) =>
                               setNewExpenseQuickConceptUnit(event.target.value)
                             }
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           >
                             {EXPENSE_INVENTORY_UNIT_OPTIONS.map((unit) => (
                               <option key={unit} value={unit}>
@@ -5767,7 +5767,7 @@ export default function PedidosPage() {
                           </select>
                         </div>
 
-                        <label className="sm:col-span-2 inline-flex items-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-3 text-sm font-black text-[var(--brand-ink)]">
+                        <label className="sm:col-span-2 inline-flex items-center gap-2 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-black text-[var(--brand-ink)]">
                           <input
                             type="checkbox"
                             checked={newExpenseQuickConceptRelatedInventory}
@@ -5792,7 +5792,7 @@ export default function PedidosPage() {
                         <button
                           type="button"
                           onClick={resetExpenseQuickConcepts}
-                          className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+                          className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
                         >
                           Restaurar lista base
                         </button>
@@ -5817,7 +5817,7 @@ export default function PedidosPage() {
                   type="button"
                   onClick={resetExpenseForm}
                   disabled={isSavingExpense}
-                  className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                  className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
                 >
                   Limpiar formulario
                 </button>
@@ -5825,12 +5825,12 @@ export default function PedidosPage() {
             </div>
 
             {expenseMessage && (
-              <p className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-3 text-sm font-black text-[var(--brand-ink-2)]">
+              <p className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-black text-[var(--brand-ink-2)]">
                 {expenseMessage}
               </p>
             )}
 
-            <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
+            <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
@@ -5855,7 +5855,7 @@ export default function PedidosPage() {
                     type="button"
                     onClick={() => loadDayExpenses(adminPassword)}
                     disabled={isLoadingExpenses}
-                    className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
                   >
                     {isLoadingExpenses ? (
                       <Loader2 size={16} className="animate-spin" />
@@ -5877,7 +5877,7 @@ export default function PedidosPage() {
                     {dayExpenses.map((expense) => (
                       <div
                         key={expense.id}
-                        className="rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4"
+                        className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-4"
                       >
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div>
@@ -5931,7 +5931,7 @@ export default function PedidosPage() {
                               type="button"
                               onClick={() => deleteDayExpense(expense.id)}
                               disabled={deletingExpenseId === expense.id}
-                              className="inline-flex items-center gap-2 rounded-full bg-red-100 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-red-700 disabled:opacity-50"
+                              className="inline-flex items-center gap-2 rounded-full bg-red-500/100/15 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-red-300 disabled:opacity-50"
                             >
                               {deletingExpenseId === expense.id ? (
                                 <Loader2 size={16} className="animate-spin" />
@@ -5947,7 +5947,7 @@ export default function PedidosPage() {
                   </div>
                 )
               ) : (
-                <p className="mt-4 rounded-2xl border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-amber)]">
+                <p className="mt-4 rounded-2xl border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-amber)]">
                   Lista oculta. Hay {dayExpenseTotals.count} gasto(s) por {formatUSD(dayExpenseTotals.equivalentUSD)}.
                 </p>
               )}
@@ -5959,7 +5959,7 @@ export default function PedidosPage() {
       {isLocationsModalOpen && (
         <ModalShell onClose={() => setIsLocationsModalOpen(false)} title="Mesas y ubicaciones">
           <div className="space-y-4">
-            <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
+            <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
@@ -5975,7 +5975,7 @@ export default function PedidosPage() {
                     loadOrders(adminPassword, true)
                     loadOpenAccounts(adminPassword, false)
                   }}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
                 >
                   <RefreshCw size={16} />
                   Actualizar
@@ -5993,7 +5993,7 @@ export default function PedidosPage() {
                 </span>
               </div>
               {openAccountsMessage && (
-                <p className="mt-3 rounded-2xl border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3 text-sm font-bold text-[var(--brand-amber)]">
+                <p className="mt-3 rounded-2xl border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3 text-sm font-bold text-[var(--brand-amber)]">
                   {openAccountsMessage}
                 </p>
               )}
@@ -6027,7 +6027,7 @@ export default function PedidosPage() {
                         type="button"
                         onClick={() => removeOrderLocation(location)}
                         disabled={isSavingLocations}
-                        className="rounded-full bg-red-100 p-2 text-red-700 disabled:opacity-50"
+                        className="rounded-full bg-red-500/100/15 p-2 text-red-300 disabled:opacity-50"
                         aria-label={`Eliminar ${location}`}
                       >
                         <Trash2 size={16} />
@@ -6035,16 +6035,16 @@ export default function PedidosPage() {
                     </div>
 
                     <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-black">
-                      <span className="rounded-xl bg-white/75 px-3 py-2">
+                      <span className="rounded-xl bg-[var(--brand-surface)]/85 px-3 py-2">
                         Activos: {tableSummary.activeOrders.length}
                       </span>
-                      <span className="rounded-xl bg-white/75 px-3 py-2">
+                      <span className="rounded-xl bg-[var(--brand-surface)]/85 px-3 py-2">
                         Pedidos: {Math.max(tableSummary.tableOrders.length, tableSummary.accountOrdersCount)}
                       </span>
-                      <span className="rounded-xl bg-white/75 px-3 py-2">
+                      <span className="rounded-xl bg-[var(--brand-surface)]/85 px-3 py-2">
                         Total: {formatUSD(tableSummary.totalUSD)}
                       </span>
-                      <span className="rounded-xl bg-white/75 px-3 py-2">
+                      <span className="rounded-xl bg-[var(--brand-surface)]/85 px-3 py-2">
                         Pendiente: {formatUSD(tableSummary.pendingUSD)}
                       </span>
                     </div>
@@ -6052,13 +6052,13 @@ export default function PedidosPage() {
                     {tableSummary.activeOpenAccounts.length > 0 ? (
                       <div className="mt-3 space-y-1">
                         {tableSummary.activeOpenAccounts.slice(0, 2).map((account) => (
-                          <p key={account.id} className="rounded-xl bg-white/80 px-3 py-2 text-[0.68rem] font-bold text-[var(--brand-ink-2)]">
+                          <p key={account.id} className="rounded-xl bg-[var(--brand-surface)]/90 px-3 py-2 text-[0.68rem] font-bold text-[var(--brand-ink-2)]">
                             Cuenta abierta · {account.customerName || account.tableNumber || "Mesa"} · Pendiente {formatUSD(getOpenAccountPendingUSD(account))}
                           </p>
                         ))}
                       </div>
                     ) : tableSummary.hasOpenAccount ? (
-                      <p className="mt-3 rounded-xl bg-white/80 px-3 py-2 text-[0.68rem] font-black uppercase tracking-[0.10em]">
+                      <p className="mt-3 rounded-xl bg-[var(--brand-surface)]/90 px-3 py-2 text-[0.68rem] font-black uppercase tracking-[0.10em]">
                         Cuenta abierta asociada
                       </p>
                     ) : null}
@@ -6072,7 +6072,7 @@ export default function PedidosPage() {
                 value={newLocationName}
                 onChange={(event) => setNewLocationName(event.target.value)}
                 placeholder="Nueva mesa o ubicación"
-                className="rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
               />
               <button
                 type="button"
@@ -6086,7 +6086,7 @@ export default function PedidosPage() {
             </div>
 
             {locationsMessage && (
-              <p className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]">
+              <p className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]">
                 {locationsMessage}
               </p>
             )}
@@ -6095,7 +6095,7 @@ export default function PedidosPage() {
               type="button"
               onClick={restoreDefaultOrderLocations}
               disabled={isSavingLocations}
-              className="w-full rounded-full border-2 border-[var(--brand-primary)] bg-white px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+              className="w-full rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
             >
               Restaurar mesas base
             </button>
@@ -6116,7 +6116,7 @@ export default function PedidosPage() {
           title="Zonas de delivery"
         >
           <div className="space-y-4">
-            <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
+            <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Precios publicados en el carrito
               </p>
@@ -6129,7 +6129,7 @@ export default function PedidosPage() {
               {deliveryZones.map((zone, index) => (
                 <div
                   key={`${zone.name}-${index}`}
-                  className="grid gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white p-3 sm:grid-cols-[1fr_140px_auto] sm:items-center"
+                  className="grid gap-2 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-3 sm:grid-cols-[1fr_140px_auto] sm:items-center"
                 >
                   <input
                     value={zone.name}
@@ -6137,7 +6137,7 @@ export default function PedidosPage() {
                       updateDeliveryZoneName(index, event.target.value)
                     }
                     placeholder="Nombre de la zona"
-                    className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3 text-sm font-black text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3 text-sm font-black text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   />
 
                   <input
@@ -6149,13 +6149,13 @@ export default function PedidosPage() {
                       updateDeliveryZoneCost(index, event.target.value)
                     }
                     placeholder="USD"
-                    className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3 text-sm font-black text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3 text-sm font-black text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   />
 
                   <button
                     type="button"
                     onClick={() => removeDeliveryZone(index)}
-                    className="inline-flex items-center justify-center rounded-full bg-red-100 p-3 text-red-700 transition hover:bg-red-200"
+                    className="inline-flex items-center justify-center rounded-full bg-red-500/100/15 p-3 text-red-300 transition hover:bg-red-200"
                     aria-label={`Eliminar ${zone.name}`}
                   >
                     <Trash2 size={17} />
@@ -6164,7 +6164,7 @@ export default function PedidosPage() {
               ))}
             </div>
 
-            <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4">
+            <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-4">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Agregar zona
               </p>
@@ -6174,7 +6174,7 @@ export default function PedidosPage() {
                   value={newDeliveryZoneName}
                   onChange={(event) => setNewDeliveryZoneName(event.target.value)}
                   placeholder="Ejemplo: Las Chimeneas"
-                  className="rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                 />
 
                 <input
@@ -6184,7 +6184,7 @@ export default function PedidosPage() {
                   value={newDeliveryZoneCost}
                   onChange={(event) => setNewDeliveryZoneCost(event.target.value)}
                   placeholder="USD"
-                  className="rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                 />
 
                 <button
@@ -6199,7 +6199,7 @@ export default function PedidosPage() {
             </div>
 
             {deliveryZonesMessage && (
-              <p className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]">
+              <p className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]">
                 {deliveryZonesMessage}
               </p>
             )}
@@ -6219,7 +6219,7 @@ export default function PedidosPage() {
                 type="button"
                 onClick={restoreDefaultDeliveryZones}
                 disabled={isSavingDeliveryZones}
-                className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
               >
                 Restaurar base
               </button>
@@ -6240,7 +6240,7 @@ export default function PedidosPage() {
           title="Registrar cobro"
         >
           <div className="space-y-4">
-            <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
+            <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 {getDisplayOrderNumber(paymentModalOrder)} · {paymentModalOrder.customerName || "Cliente"}
               </p>
@@ -6264,7 +6264,7 @@ export default function PedidosPage() {
               />
             </div>
 
-            <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4">
+            <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   Estado estimado
@@ -6284,7 +6284,7 @@ export default function PedidosPage() {
             </div>
 
             {paymentDraft.status !== "Pagado" && (
-              <div className="rounded-[1.4rem] border-2 border-yellow-400 bg-[var(--brand-accent-100)] p-4">
+              <div className="rounded-[1.4rem] border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] p-4">
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-amber)]">
                   Ayuda rápida para completar el pendiente
                 </p>
@@ -6296,7 +6296,7 @@ export default function PedidosPage() {
                     type="button"
                     onClick={completePaymentPendingInVES}
                     disabled={paymentDraft.pendingUSD <= 0 || paymentExchangeRate <= 0}
-                    className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                    className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
                   >
                     Completar pendiente en Bs
                   </button>
@@ -6304,7 +6304,7 @@ export default function PedidosPage() {
                     type="button"
                     onClick={completePaymentPendingInUSD}
                     disabled={paymentDraft.pendingUSD <= 0}
-                    className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                    className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
                   >
                     Completar pendiente en divisas
                   </button>
@@ -6313,8 +6313,8 @@ export default function PedidosPage() {
             )}
 
             {showLowVESWarning && (
-              <div className="rounded-[1.4rem] border-2 border-red-500/35 bg-red-50 p-4">
-                <p className="text-sm font-black leading-6 text-red-800">
+              <div className="rounded-[1.4rem] border-2 border-red-500/35 bg-red-500/10 p-4">
+                <p className="text-sm font-black leading-6 text-red-300">
                   Revisa el monto en bolívares: lo escrito equivale a menos de $0.20. Si querías cubrir el pendiente en Bs, usa el botón “Completar pendiente en Bs” o escribe el monto completo sin separador de miles.
                 </p>
               </div>
@@ -6333,7 +6333,7 @@ export default function PedidosPage() {
                     updatePaymentForm("amountReceivedUSD", event.target.value)
                   }
                   placeholder="Ej: 35.00"
-                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                 />
               </div>
 
@@ -6346,7 +6346,7 @@ export default function PedidosPage() {
                   onChange={(event) =>
                     updatePaymentForm("paymentMethodUSD", event.target.value)
                   }
-                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                 >
                   {paymentForm.paymentMethodUSD &&
                     !PAYMENT_METHOD_USD_OPTIONS.includes(paymentForm.paymentMethodUSD) && (
@@ -6374,7 +6374,7 @@ export default function PedidosPage() {
                     updatePaymentForm("amountReceivedVES", event.target.value)
                   }
                   placeholder="Ej: 1569.25 o 1569,25"
-                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                 />
                 <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
                   Escribe el monto real en bolívares, no el equivalente en dólares. Evita separador de miles: usa 1569.25 o 1569,25.
@@ -6390,7 +6390,7 @@ export default function PedidosPage() {
                   onChange={(event) =>
                     updatePaymentForm("paymentMethodVES", event.target.value)
                   }
-                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                 >
                   {paymentForm.paymentMethodVES &&
                     !PAYMENT_METHOD_VES_OPTIONS.includes(paymentForm.paymentMethodVES) && (
@@ -6420,7 +6420,7 @@ export default function PedidosPage() {
                       event.target.value as DeliveryPaymentIn
                     )
                   }
-                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                 >
                   {DELIVERY_PAYMENT_OPTIONS.map((option) => (
                     <option key={option} value={option}>
@@ -6445,12 +6445,12 @@ export default function PedidosPage() {
                 }
                 placeholder="Ejemplo: Cliente pagó productos mixto y delivery por pago móvil."
                 rows={4}
-                className="mt-2 w-full resize-none rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                className="mt-2 w-full resize-none rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
               />
             </div>
 
             {paymentMessage && (
-              <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-3">
+              <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
                 <p className="text-sm font-black text-[var(--brand-ink-2)]">
                   {paymentMessage}
                 </p>
