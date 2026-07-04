@@ -467,19 +467,19 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-4">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+            <p className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand-primary-rgb),0.4)] bg-[var(--brand-surface)] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
               <Sparkles size={16} />
               {publicMenuConfig.publicMenuEyebrow}
             </p>
-            <h2 className="mt-4 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.7)] sm:text-5xl">
+            <h2 className="font-display mt-4 text-5xl leading-none text-[var(--brand-ink-3)] sm:text-6xl">
               {publicMenuConfig.publicMenuTitle}
             </h2>
-            <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70 sm:text-base">
+            <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-[var(--brand-ink-2)] sm:text-base">
               {publicMenuConfig.publicMenuText}
             </p>
           </div>
 
-          <div className="rounded-[1.35rem] border-2 border-[var(--brand-primary)] bg-white p-2 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)] sm:max-w-3xl">
+          <div className="rounded-[1.35rem] border border-[var(--brand-border)] bg-[var(--brand-surface)] p-2 sm:max-w-3xl">
             <div className="relative">
               <Search
                 size={21}
@@ -489,14 +489,14 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder={publicMenuConfig.publicMenuSearchPlaceholder}
-                className="h-[3.25rem] w-full rounded-[1rem] bg-[var(--brand-cream)] px-12 py-4 text-base font-black text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:bg-white"
+                className="h-[3.25rem] w-full rounded-[1rem] bg-[var(--brand-surface-2)] px-12 py-4 text-base font-bold text-[var(--brand-ink-3)] outline-none placeholder:text-[var(--brand-ink-2)] focus:bg-black"
               />
               {searchTerm.trim() ? (
                 <button
                   type="button"
                   onClick={() => setSearchTerm("")}
                   aria-label="Limpiar búsqueda"
-                  className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[var(--brand-primary)] shadow-sm transition hover:bg-[var(--brand-accent-100)]"
+                  className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--brand-surface-2)] text-[var(--brand-primary)] transition hover:bg-black"
                 >
                   <X size={18} />
                 </button>
@@ -506,13 +506,13 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
         </div>
 
         {menuWarning && (
-          <div className="mt-5 rounded-2xl border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3 text-sm font-black leading-6 text-[var(--brand-amber)]">
+          <div className="mt-5 rounded-2xl border border-[rgba(var(--brand-primary-rgb),0.4)] bg-[var(--brand-surface)] px-4 py-3 text-sm font-semibold leading-6 text-[var(--brand-accent)]">
             {menuWarning}
           </div>
         )}
 
         {comboProducts.length > 0 && (
-          <div className="mt-8 rounded-[1.6rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+          <div className="mt-8 rounded-[1.6rem] border border-[var(--brand-border)] bg-[var(--brand-surface)] p-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
@@ -528,7 +528,7 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
                   setSelectedCategory("Combos")
                   setSelectedQuickFilter("all")
                 }}
-                className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]"
+                className="rounded-full bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-black"
               >
                 {publicMenuConfig.publicComboButtonText}
               </button>
@@ -536,9 +536,9 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
           </div>
         )}
 
-        <div className="mt-8 rounded-[1.6rem] border-2 border-[var(--brand-primary)]/15 bg-white p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.08)]">
+        <div className="mt-8 rounded-[1.6rem] border border-[var(--brand-border)] bg-[var(--brand-surface)] p-3">
           <div>
-            <p className="mb-2 px-2 text-[0.68rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]/70">
+            <p className="mb-2 px-2 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-ink-2)]">
               Categorías
             </p>
             <div className="flex gap-3 overflow-x-auto pb-2">
@@ -563,14 +563,14 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
                       setSelectedCategory(category)
                       setSelectedQuickFilter("all")
                     }}
-                    className={`shrink-0 rounded-full border-2 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] transition ${
+                    className={`shrink-0 rounded-full border px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] transition ${
                       isActive
-                        ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.16)]"
-                        : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-primary)] hover:border-[var(--brand-primary)]"
+                        ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-black"
+                        : "border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-ink)] hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
                     }`}
                   >
                     {category}
-                    <span className="ml-2 rounded-full bg-white/80 px-2 py-0.5 text-[0.62rem]">
+                    <span className="ml-2 rounded-full bg-black/30 px-2 py-0.5 text-[0.62rem]">
                       {count}
                     </span>
                   </button>
@@ -582,8 +582,8 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
         </div>
 
         {filteredProducts.length === 0 ? (
-          <div className="mt-8 rounded-[1.5rem] border-2 border-[var(--brand-primary)]/20 bg-white px-5 py-10 text-center">
-            <p className="text-lg font-black uppercase text-[var(--brand-primary)]">
+          <div className="mt-8 rounded-[1.5rem] border border-[var(--brand-border)] bg-[var(--brand-surface)] px-5 py-10 text-center">
+            <p className="font-display text-2xl text-[var(--brand-primary)]">
               No encontramos productos con ese filtro
             </p>
             <p className="mt-2 text-sm font-bold text-[var(--brand-ink-2)]/65">
@@ -594,7 +594,7 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
             <button
               type="button"
               onClick={clearFilters}
-              className="mt-5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]"
+              className="mt-5 rounded-full bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-black"
             >
               Ver todo el menú
             </button>
