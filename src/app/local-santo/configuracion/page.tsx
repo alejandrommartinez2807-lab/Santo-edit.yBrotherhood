@@ -240,23 +240,23 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   pricesIncludeIva: true,
   igtfEnabled: true,
   igtfRate: 3,
-  themePrimaryColor: "#a00000",
-  themeCreamColor: "#fff7e8",
-  themeAccentColor: "#ffd23c",
-  productCardBackgroundColor: "#ffffff",
-  productCardTextColor: "#4a0000",
-  productCardBorderColor: "#a00000",
-  productCardButtonColor: "#ffd23c",
-  publicTagline: "Los Mejores Perros De Valencia",
+  themePrimaryColor: "#f5a623",
+  themeCreamColor: "#fff7ec",
+  themeAccentColor: "#ffb340",
+  productCardBackgroundColor: "#141414",
+  productCardTextColor: "#ffffff",
+  productCardBorderColor: "#f5a623",
+  productCardButtonColor: "#f5a623",
+  publicTagline: "Smash Burgers, Combos y Sides",
   publicInfoTitle: `Visita ${BRAND.name}`,
   publicInfoText:
-    "Estamos listos para recibirte con perritos, salchipapas, raciones y bebidas frías. Abre nuestra ubicación en Google Maps o escribe por WhatsApp para coordinar tu pedido.",
+    "Somos simples: porque nos gustan las buenas burgers. Ingredientes de calidad y mucho sabor. Abre nuestra ubicación en Google Maps o escribe por WhatsApp para coordinar tu pedido. Delivery & Pick Up en Valencia y San Diego.",
   scheduleTitle: "Horario",
-  scheduleLine1: "Lunes a jueves: 6:00 p.m. a 12:00 a.m.",
-  scheduleLine2: "Viernes a domingos: 6:00 p.m. a 1:00 a.m.",
+  scheduleLine1: "Martes a domingo: 5:00 p.m. a 11:30 p.m.",
+  scheduleLine2: "Lunes: cerrado",
   reviewsTitle: "Reseñas",
   reviewsText:
-    "Después de probar tu pedido, puedes apoyar el negocio dejando tu reseña o compartiendo la página.",
+    "Después de probar tu pedido, puedes apoyar el negocio dejando tu reseña o compartiendo la página. Gracias por el apoyo, frater.",
   quickOrderTitle: "Pedido rápido",
   quickOrderText:
     "Agrega productos al carrito y registra el pedido en el local o envíalo directamente por WhatsApp.",
@@ -4094,7 +4094,7 @@ export default function BusinessConfigPage() {
                 label="Frase principal pública"
                 value={businessConfig.publicTagline}
                 onChange={(value) => updateConfig("publicTagline", value)}
-                placeholder="Los Mejores Perros De Valencia"
+                placeholder="Smash Burgers, Combos y Sides"
                 disabled={!canEditAdvancedPublic}
               />
               <TextInput

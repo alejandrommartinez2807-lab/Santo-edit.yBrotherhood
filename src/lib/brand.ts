@@ -12,20 +12,20 @@
 
 export const BRAND = {
   /** Nombre del negocio (default si la config en BD viene vacía). */
-  name: "Santo Perrito",
+  name: "Brotherhood",
   /** Nombre corto para títulos/QR. */
-  shortName: "Santo Perrito",
+  shortName: "Brotherhood",
   /** Frase corta de marca. */
-  tagline: "Los Mejores Perros De Valencia",
+  tagline: "Smash Burgers, Combos y Sides",
   /** Descripción para el menú/landing. */
   description:
-    "Perros calientes cargados, salchipapas, raciones y bebidas frías.",
+    "Smash burgers jugosas, combos, papas, chicken y bebidas frías. Delivery y pick up en Valencia y San Diego.",
   /** Logo en /public (déjalo vacío para usar solo texto). */
   logoUrl: "",
 
   /** Contacto / redes (defaults; la config en BD puede sobreescribir). */
-  whatsapp: "584145827432",
-  instagram: "burgerclub.val",
+  whatsapp: "584124467558",
+  instagram: "brotherhood_vzla",
   location: "Valencia, Venezuela",
 
   /** Moneda e idioma. */

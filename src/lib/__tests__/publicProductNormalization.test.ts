@@ -67,7 +67,7 @@ describe("publicProductNormalization", () => {
         ?.productType,
     ).toBe("combo")
     expect(
-      normalizePublicProduct({ id: 2, name: "Perro", category: "Perritos", productType: "otro" })
+      normalizePublicProduct({ id: 2, name: "Perro", category: "Burgers", productType: "otro" })
         ?.productType,
     ).toBe("normal")
   })
