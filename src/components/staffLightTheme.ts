@@ -13,9 +13,14 @@ import type { CSSProperties } from "react"
 // ganan tanto sobre :root de globals.css como sobre el tema que inyecta
 // business_config (<style id="brand-theme">, también a nivel :root).
 export const STAFF_LIGHT_THEME_STYLE = {
-  "--brand-primary": "#f5a623",
-  "--brand-primary-dark": "#d4820a",
-  "--brand-primary-rgb": "245, 166, 35",
+  // Primary del panel: ámbar OSCURO (#b45309 ≈ 4.5:1 sobre blanco) porque el
+  // panel lo usa como color de TEXTO y bordes sobre fondos claros; el naranja
+  // brillante de la marca (#f5a623) no llega ni a 2:1 y se leía fatal. El
+  // naranja vivo sigue presente en --brand-accent (fondos de botones/chips
+  // con texto oscuro), que sí soporta texto negro encima.
+  "--brand-primary": "#b45309",
+  "--brand-primary-dark": "#92400e",
+  "--brand-primary-rgb": "180, 83, 9",
   "--brand-cream": "#fff7ec",
   "--brand-ink": "#1a1a1a",
   "--brand-ink-2": "#121212",
