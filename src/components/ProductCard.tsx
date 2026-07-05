@@ -19,15 +19,15 @@ import type { ProductToAdd } from "@/hooks/useCart";
 import type { Product } from "@/data/products";
 import {
   type SelectableOption,
+  type VariationGroupView,
   cleanNumber,
   getProductType,
   getSalesChannels,
   normalizeSelectionRules,
   formatSelectedOption,
-  flattenVariationOptions,
   flattenAddonOptions,
   flattenIngredientOptions,
-  hasRequiredVariation,
+  readVariationGroups,
 } from "@/components/productCardHelpers";
 
 type ProductCardPublicLabels = {
@@ -213,7 +213,11 @@ export default function ProductCard({
   const [added, setAdded] = useState(false);
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
   const [formMessage, setFormMessage] = useState("");
-  const [selectedVariationKey, setSelectedVariationKey] = useState("");
+  // Selección por grupo de variaciones (estilo BOMBASTYC: burger, tipo de
+  // molla, refresco…). key del grupo → keys de opciones elegidas.
+  const [selectedVariationKeys, setSelectedVariationKeys] = useState<
+    Record<string, string[]>
+  >({});
   const [selectedAddonKeys, setSelectedAddonKeys] = useState<string[]>([]);
   const [addonQuantities, setAddonQuantities] = useState<
     Record<string, number>
@@ -240,8 +244,8 @@ export default function ProductCard({
     paymentMode === "divisa" ||
     productType === "combo" ||
     category === "Combos";
-  const selectableVariations = useMemo(
-    () => flattenVariationOptions(variations),
+  const variationGroups = useMemo(
+    () => readVariationGroups(variations),
     [variations],
   );
   const selectableAddons = useMemo(() => flattenAddonOptions(addons), [addons]);
@@ -249,13 +253,30 @@ export default function ProductCard({
     () => flattenIngredientOptions(removableIngredients),
     [removableIngredients],
   );
-  const variationRequired = hasRequiredVariation(variations);
   const maxAddons = ruleSettings.maxAddons;
   const minAddons = ruleSettings.minAddons;
+  const selectedVariationOptions = variationGroups.flatMap((group) =>
+    group.options.filter((option) =>
+      (selectedVariationKeys[group.key] || []).includes(option.key),
+    ),
+  );
+  const variationsPrice = selectedVariationOptions.reduce(
+    (sum, option) => sum + Number(option.priceDelta || 0),
+    0,
+  );
+  // Compatibilidad con el carrito/pedidos: una sola "variación" que resume
+  // todas las secciones elegidas (el detalle por grupo va en selectionSummary).
   const selectedVariation =
-    selectableVariations.find(
-      (option) => option.key === selectedVariationKey,
-    ) || null;
+    selectedVariationOptions.length === 0
+      ? null
+      : selectedVariationOptions.length === 1
+        ? selectedVariationOptions[0]
+        : {
+            name: selectedVariationOptions
+              .map((option) => option.name)
+              .join(" · "),
+            priceDelta: variationsPrice,
+          };
   const selectedAddons = selectableAddons
     .filter((option) => selectedAddonKeys.includes(option.key))
     .map((option) => ({
@@ -279,8 +300,7 @@ export default function ProductCard({
         Math.max(1, Number(option.quantity || 1)),
     0,
   );
-  const optionsPrice =
-    Number(selectedVariation?.priceDelta || 0) + selectedAddonTotalPrice;
+  const optionsPrice = variationsPrice + selectedAddonTotalPrice;
   const finalUnitPrice = Math.max(0, price + optionsPrice);
   const finalVES = finalUnitPrice * exchangeRate;
   const hasAddonLimit = maxAddons > 0;
@@ -303,7 +323,7 @@ export default function ProductCard({
     ? Math.max(0, maxAddons - selectedAddonUnitCount)
     : 0;
   const hasSelectableOptions =
-    selectableVariations.length > 0 ||
+    variationGroups.length > 0 ||
     selectableAddons.length > 0 ||
     selectableRemovableIngredients.length > 0;
 
@@ -402,6 +422,47 @@ export default function ProductCard({
     }));
   }
 
+  function toggleVariationOption(
+    group: VariationGroupView,
+    option: SelectableOption,
+  ) {
+    resetMessage();
+
+    setSelectedVariationKeys((current) => {
+      const keys = current[group.key] || [];
+      const isSelected = keys.includes(option.key);
+
+      if (group.multiple) {
+        if (isSelected) {
+          return {
+            ...current,
+            [group.key]: keys.filter((key) => key !== option.key),
+          };
+        }
+
+        if (group.maxSelections > 0 && keys.length >= group.maxSelections) {
+          return current;
+        }
+
+        return { ...current, [group.key]: [...keys, option.key] };
+      }
+
+      if (isSelected) {
+        // En grupos obligatorios de una sola opción no se permite quedar vacío.
+        return group.required
+          ? current
+          : { ...current, [group.key]: [] };
+      }
+
+      return { ...current, [group.key]: [option.key] };
+    });
+  }
+
+  function clearVariationGroup(group: VariationGroupView) {
+    resetMessage();
+    setSelectedVariationKeys((current) => ({ ...current, [group.key]: [] }));
+  }
+
   function toggleRemovedIngredient(key: string) {
     resetMessage();
 
@@ -415,9 +476,19 @@ export default function ProductCard({
   function buildSelectionSummary() {
     const parts: string[] = [];
 
-    if (selectedVariation) {
-      parts.push(`Variación: ${formatSelectedOption(selectedVariation)}`);
-    }
+    variationGroups.forEach((group) => {
+      const chosen = group.options.filter((option) =>
+        (selectedVariationKeys[group.key] || []).includes(option.key),
+      );
+
+      if (chosen.length > 0) {
+        parts.push(
+          `${group.name || "Variación"}: ${chosen
+            .map(formatSelectedOption)
+            .join(", ")}`,
+        );
+      }
+    });
 
     if (selectedAddons.length > 0) {
       parts.push(
@@ -439,13 +510,20 @@ export default function ProductCard({
   }
 
   function handleAddToCart() {
-    if (
-      variationRequired &&
-      selectableVariations.length > 0 &&
-      !selectedVariation
-    ) {
-      setFormMessage("Elige una variación antes de agregar este producto.");
-      return;
+    for (const group of variationGroups) {
+      const selectedCount = (selectedVariationKeys[group.key] || []).length;
+      const requiredCount = group.required
+        ? Math.max(1, group.minSelections)
+        : 0;
+
+      if (selectedCount < requiredCount) {
+        setFormMessage(
+          group.name
+            ? `Elige ${group.name} antes de agregar este producto.`
+            : "Elige una variación antes de agregar este producto.",
+        );
+        return;
+      }
     }
 
     if (minAddons > 0 && selectedAddonUnitCount < minAddons) {
@@ -694,52 +772,60 @@ export default function ProductCard({
               </div>
 
               <div className="space-y-4 p-5 sm:p-6">
-                {selectableVariations.length > 0 && (
-                  <div className="rounded-[1.4rem] border border-[var(--brand-border)] bg-black/30 p-4">
-                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-                          Elige presentación
-                        </p>
-                        {variationRequired ? (
-                          <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
-                            Esta selección es obligatoria.
+                {variationGroups.map((group) => {
+                  const groupKeys = selectedVariationKeys[group.key] || [];
+
+                  return (
+                    <div
+                      key={group.key}
+                      className="rounded-[1.4rem] border border-[var(--brand-border)] bg-black/30 p-4"
+                    >
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                            {group.name || "Elige presentación"}
                           </p>
+                          {group.required ? (
+                            <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
+                              {group.multiple && group.minSelections > 1
+                                ? `Elige al menos ${group.minSelections}.`
+                                : "Esta selección es obligatoria."}
+                            </p>
+                          ) : null}
+                          {group.multiple && group.maxSelections > 0 ? (
+                            <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
+                              Elegidos: {groupKeys.length}/{group.maxSelections}
+                            </p>
+                          ) : null}
+                        </div>
+                        {group.required ? (
+                          <span className="rounded-full bg-[var(--brand-cream)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                            Obligatoria
+                          </span>
                         ) : null}
                       </div>
-                      {variationRequired ? (
-                        <span className="rounded-full bg-[var(--brand-cream)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-                          Obligatoria
-                        </span>
-                      ) : null}
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {!group.required && !group.multiple ? (
+                          <ChoiceButton
+                            label="Base"
+                            detail="Sin cambio"
+                            selected={groupKeys.length === 0}
+                            onClick={() => clearVariationGroup(group)}
+                          />
+                        ) : null}
+                        {group.options.map((option) => (
+                          <ChoiceButton
+                            key={option.key}
+                            label={option.name}
+                            detail={option.detail}
+                            selected={groupKeys.includes(option.key)}
+                            onClick={() => toggleVariationOption(group, option)}
+                          />
+                        ))}
+                      </div>
                     </div>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      {!variationRequired ? (
-                        <ChoiceButton
-                          label="Base"
-                          detail="Sin cambio"
-                          selected={!selectedVariationKey}
-                          onClick={() => {
-                            resetMessage();
-                            setSelectedVariationKey("");
-                          }}
-                        />
-                      ) : null}
-                      {selectableVariations.map((option) => (
-                        <ChoiceButton
-                          key={option.key}
-                          label={option.name}
-                          detail={option.detail}
-                          selected={selectedVariationKey === option.key}
-                          onClick={() => {
-                            resetMessage();
-                            setSelectedVariationKey(option.key);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
+                  );
+                })}
 
                 {includedAddons.length > 0 && (
                   <div className="rounded-[1.4rem] border border-[var(--brand-border)] bg-black/30 p-4">
