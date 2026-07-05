@@ -35,7 +35,7 @@ const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
 const EMPTY_FORM = {
   id: "",
   name: "",
-  category: "Perritos",
+  category: "Burgers",
   customCategory: "",
   description: "",
   price: "",
@@ -1210,7 +1210,7 @@ export default function LocalMenuPage() {
                 Crear o editar producto
               </p>
               <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-                Los productos activos son los que podrá cargar la página pública desde Supabase. Si no hay productos activos, la página mantiene el menú base como respaldo.
+                Los productos activos son los que se muestran en el menú de la página pública. Desactiva un producto para ocultarlo sin borrarlo.
               </p>
             </div>
 
@@ -1224,21 +1224,23 @@ export default function LocalMenuPage() {
                 {isFormVisible ? "Ocultar formulario" : "Mostrar formulario"}
               </button>
 
-              <button
-                type="button"
-                onClick={importBaseMenu}
-                disabled={isImporting || isSaving}
-                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
-              >
-                {isImporting ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                Cargar menú actual
-              </button>
+              {baseProducts.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={importBaseMenu}
+                  disabled={isImporting || isSaving}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                >
+                  {isImporting ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                  Cargar menú de plantilla
+                </button>
+              ) : null}
             </div>
           </div>
 
           {isFormVisible && (
             <div className="mt-4 grid gap-3 lg:grid-cols-2">
-              <InputField label="Nombre" value={form.name} onChange={(value) => updateForm("name", value)} placeholder="Ej: Salchicha polaca especial" full />
+              <InputField label="Nombre" value={form.name} onChange={(value) => updateForm("name", value)} placeholder="Ej: Smash burger doble" full />
 
               <div>
                 <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
@@ -1283,15 +1285,17 @@ export default function LocalMenuPage() {
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                      Configuración premium del producto
+                      Opciones del producto
                     </p>
                     <p className="mt-1 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/65">
-                      Esta información queda guardada para las siguientes fases. Por ahora no cambia el carrito público actual.
+                      Variaciones, adicionales e ingredientes que el cliente verá
+                      al personalizar este producto en el menú público. Para
+                      secciones obligatorias y precios extra, usa Menú avanzado.
                     </p>
                   </div>
 
                   <span className="w-fit rounded-full border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-                    Base segura
+                    Se ve en el menú público
                   </span>
                 </div>
 
@@ -1373,36 +1377,36 @@ export default function LocalMenuPage() {
                     </div>
                   </div>
 
-                  <PremiumTextArea
+                  <TagListEditor
                     label="Variaciones"
                     value={form.variationText}
                     onChange={(value) => updateForm("variationText", value)}
-                    placeholder="Ej: Pequeña, Mediana, Grande"
-                    helper="Escribe opciones separadas por coma o por línea."
+                    placeholder="Escribe una opción y presiona Enter"
+                    helper="Opciones simples de una sola elección (ej: tamaños). Para secciones con precio extra y obligatorias, usa Menú avanzado."
                   />
 
-                  <PremiumTextArea
+                  <TagListEditor
                     label="Adicionales"
                     value={form.addonsText}
                     onChange={(value) => updateForm("addonsText", value)}
-                    placeholder="Ej: Tocineta, Queso extra, Papas extra"
-                    helper="En esta fase se guardan con precio 0 para configurarlos después con precio propio."
+                    placeholder="Escribe un adicional y presiona Enter"
+                    helper="Se crean sin costo; asígnales precio propio en Menú avanzado."
                   />
 
-                  <PremiumTextArea
+                  <TagListEditor
                     label="Ingredientes incluidos"
                     value={form.includedIngredientsText}
                     onChange={(value) => updateForm("includedIngredientsText", value)}
-                    placeholder="Ej: Pan, salchicha, cebolla, papas, salsas"
-                    helper="Sirve para mostrar o preparar recetas del producto más adelante."
+                    placeholder="Escribe un ingrediente y presiona Enter"
+                    helper="Lo que trae el producto. Sirve para recetas y para informar al cliente."
                   />
 
-                  <PremiumTextArea
+                  <TagListEditor
                     label="Ingredientes removibles"
                     value={form.removableIngredientsText}
                     onChange={(value) => updateForm("removableIngredientsText", value)}
-                    placeholder="Ej: Sin cebolla, sin ensalada, sin salsas"
-                    helper="Esto prepara la opción para que el cliente o mesonero quite ingredientes."
+                    placeholder="Escribe un ingrediente y presiona Enter"
+                    helper="El cliente podrá pedir el producto sin estos ingredientes."
                   />
 
                   <div className="lg:col-span-2 grid gap-2 sm:grid-cols-2">
@@ -1792,40 +1796,6 @@ export default function LocalMenuPage() {
   )
 }
 
-function PremiumTextArea({
-  label,
-  value,
-  onChange,
-  placeholder,
-  helper,
-}: {
-  label: string
-  value: string
-  onChange: (value: string) => void
-  placeholder?: string
-  helper?: string
-}) {
-  return (
-    <div>
-      <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-        {label}
-      </label>
-      <textarea
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        rows={3}
-        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
-      />
-      {helper && (
-        <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/58">
-          {helper}
-        </p>
-      )}
-    </div>
-  )
-}
-
 function InputField({
   label,
   value,
@@ -1853,6 +1823,95 @@ function InputField({
         inputMode={inputMode}
         className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
       />
+    </div>
+  )
+}
+
+// Editor de listas tipo "chips": el dueño escribe una opción, presiona Enter
+// (o el botón Agregar) y la ve como etiqueta con su X para quitarla. Por
+// debajo el valor se sigue guardando como texto multilínea, así el guardado
+// existente (splitNamesFromText) no cambia.
+function TagListEditor({
+  label,
+  value,
+  onChange,
+  placeholder,
+  helper,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  helper?: string
+}) {
+  const [draft, setDraft] = useState("")
+  const items = splitNamesFromText(value)
+
+  function commitDraft() {
+    if (!draft.trim()) return
+    const nextItems = splitNamesFromText(`${value}\n${draft}`)
+    setDraft("")
+    onChange(nextItems.join("\n"))
+  }
+
+  function removeItem(target: string) {
+    onChange(items.filter((item) => item !== target).join("\n"))
+  }
+
+  return (
+    <div>
+      <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+        {label}
+      </label>
+      <div className="mt-2 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-2.5 transition focus-within:border-[var(--brand-primary)]">
+        {items.length > 0 ? (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {items.map((item) => (
+              <span
+                key={item}
+                className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-1 text-xs font-black text-[var(--brand-ink)]"
+              >
+                {item}
+                <button
+                  type="button"
+                  onClick={() => removeItem(item)}
+                  aria-label={`Quitar ${item}`}
+                  className="text-[var(--brand-primary)] transition hover:scale-110"
+                >
+                  <XCircle size={14} />
+                </button>
+              </span>
+            ))}
+          </div>
+        ) : null}
+        <div className="flex gap-2">
+          <input
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === ",") {
+                event.preventDefault()
+                commitDraft()
+              }
+            }}
+            placeholder={placeholder}
+            className="min-w-0 flex-1 rounded-xl border-2 border-transparent bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]/40"
+          />
+          <button
+            type="button"
+            onClick={commitDraft}
+            disabled={!draft.trim()}
+            className="inline-flex shrink-0 items-center gap-1 rounded-xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3 py-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:brightness-105 disabled:opacity-40"
+          >
+            <Plus size={14} /> Agregar
+          </button>
+        </div>
+      </div>
+      {helper ? (
+        <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/58">
+          {helper}
+        </p>
+      ) : null}
     </div>
   )
 }
