@@ -14,7 +14,7 @@ export default function PagoExitoPage() {
         </p>
         <Link
           href="/"
-          className="mt-6 inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-3 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]"
+          className="mt-6 inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-3 text-sm font-black uppercase tracking-[0.12em] text-black"
         >
           Volver al menú
         </Link>

@@ -82,7 +82,7 @@ export function OptionPicker({
               onClick={() => onSelect("")}
               className={`flex w-full flex-col rounded-2xl px-4 py-3 text-left transition ${
                 !value
-                  ? "bg-[var(--brand-accent)] text-[var(--brand-ink)]"
+                  ? "bg-[var(--brand-accent)] text-black"
                   : "text-[var(--brand-ink)] hover:bg-[var(--brand-cream)]"
               }`}
             >
@@ -104,7 +104,7 @@ export function OptionPicker({
                   onClick={() => onSelect(option.value)}
                   className={`mt-1 flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left transition ${
                     selected
-                      ? "bg-[var(--brand-accent)] text-[var(--brand-ink)]"
+                      ? "bg-[var(--brand-accent)] text-black"
                       : "text-[var(--brand-ink)] hover:bg-[var(--brand-cream)]"
                   }`}
                 >
@@ -171,7 +171,7 @@ export function EmptyCartState({
       <a
         href="#menu"
         onClick={onClose}
-        className="mt-7 inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-7 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-105"
+        className="mt-7 inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-7 py-4 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-105"
       >
         {buttonText || "Ver menú"}
       </a>
@@ -523,7 +523,7 @@ export function CartSummaryFooter({
           <button
             type="button"
             onClick={onOpenOrderModal}
-            className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)] active:translate-y-1 active:shadow-none"
+            className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-black shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)] active:translate-y-1 active:shadow-none"
           >
             <Store size={17} />
             {publicConfig.publicCartLocalOrderButtonText || "Registrar pedido local"}
@@ -540,7 +540,7 @@ export function CartSummaryFooter({
           }}
           className={`flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none ${
             whatsappHref
-              ? "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-accent)] hover:text-[var(--brand-ink)]"
+              ? "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-accent)] hover:text-black"
               : "cursor-not-allowed bg-[#ddd3c4] text-[var(--brand-ink-2)]/45"
           }`}
         >

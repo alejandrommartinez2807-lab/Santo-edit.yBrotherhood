@@ -34,7 +34,7 @@ export default function PublicFloatingCartSummary({
       <div className="overflow-hidden rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.16)]">
         <div className="flex items-center justify-between gap-3 bg-[var(--brand-primary)] px-4 py-3 text-white">
           <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--brand-accent)] text-[var(--brand-ink)]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--brand-accent)] text-black">
               <ShoppingCart size={17} />
             </span>
             <div>
@@ -69,7 +69,7 @@ export default function PublicFloatingCartSummary({
           <button
             type="button"
             onClick={onOpenCart}
-            className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.14)] transition active:translate-y-0.5"
+            className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-black shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.14)] transition active:translate-y-0.5"
           >
             Ver carrito
             <ArrowUpRight size={15} />

@@ -51,7 +51,6 @@ import {
 import { cleanText } from "@/components/cartUtils";
 import {
   ADDRESS_HELPERS,
-  DEFAULT_DELIVERY_ZONES,
   LOCATIONS_STORAGE_KEY,
   PAYMENT_METHOD_OPTIONS,
   cleanCustomerNoteWithStaffConfirmation,
@@ -337,9 +336,9 @@ export default function CartDrawer({
   const [quickPlaces, setQuickPlaces] = useState(DEFAULT_QUICK_PLACES);
   const [isZonePickerOpen, setIsZonePickerOpen] = useState(false);
   const [isPaymentPickerOpen, setIsPaymentPickerOpen] = useState(false);
-  const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>(
-    DEFAULT_DELIVERY_ZONES,
-  );
+  // Arranca vacío: las zonas reales llegan de /api/delivery-zones. Un default
+  // local mostraría zonas de otro negocio mientras carga.
+  const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
   const [isLoadingDeliveryZones, setIsLoadingDeliveryZones] = useState(false);
   const [deliveryZonesError, setDeliveryZonesError] = useState<string | null>(
     null,
@@ -1455,7 +1454,7 @@ export default function CartDrawer({
               type="button"
               onClick={onClose}
               aria-label="Cerrar carrito"
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-105"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-105"
             >
               <X size={28} />
             </button>
@@ -1567,7 +1566,7 @@ export default function CartDrawer({
                   type="button"
                   onClick={closeOrderModal}
                   disabled={isSubmittingOrder || isSubmittingPaymentProof}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] disabled:opacity-50"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black disabled:opacity-50"
                 >
                   <X size={24} />
                 </button>
@@ -1624,10 +1623,10 @@ export default function CartDrawer({
                         <CreditCard size={18} />
                         {isStartingPayment
                           ? "Abriendo pago…"
-                          : `Pagar en línea ${lastCreatedOrder.totalUSD.toFixed(2)}`}
+                          : `Pagar en línea ${formatUSD(lastCreatedOrder.totalUSD)}`}
                       </button>
                       {paymentStartError ? (
-                        <p className="mt-2 text-[0.7rem] font-bold text-red-700">
+                        <p className="mt-2 text-[0.7rem] font-bold text-red-300">
                           {paymentStartError}
                         </p>
                       ) : null}
@@ -1676,7 +1675,7 @@ export default function CartDrawer({
                           setPaymentProofError(null);
                           setIsPaymentProofFormOpen((current) => !current);
                         }}
-                        className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3.5 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none"
+                        className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3.5 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none"
                       >
                         <BadgeCheck size={20} />
                         Ya pagué / enviar comprobante
@@ -1800,7 +1799,7 @@ export default function CartDrawer({
                             onClick={handleSubmitPaymentProof}
                             className={`flex w-full items-center justify-center gap-3 rounded-full border-2 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none ${
                               canSubmitPaymentProof
-                                ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-accent)] hover:text-[var(--brand-ink)]"
+                                ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-accent)] hover:text-black"
                                 : "border-[var(--brand-border)] bg-[#ddd3c4] text-[var(--brand-ink-2)]/35"
                             }`}
                           >
@@ -1830,7 +1829,7 @@ export default function CartDrawer({
                   type="button"
                   disabled={isSubmittingPaymentProof}
                   onClick={finishCreatedOrderFlow}
-                  className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none disabled:opacity-50"
                 >
                   Finalizar
                 </button>
@@ -1890,7 +1889,7 @@ export default function CartDrawer({
                         onClick={() => selectOrderType(type)}
                         className={`rounded-2xl border-2 px-4 py-4 text-sm font-black uppercase transition ${
                           orderType === type
-                            ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
+                            ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
                             : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)]"
                         }`}
                       >
@@ -1961,7 +1960,7 @@ export default function CartDrawer({
                           }}
                           className={`rounded-xl border-2 px-3 py-3 text-xs font-black uppercase transition ${
                             tableNumber === place
-                              ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
+                              ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
                               : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)]"
                           }`}
                         >
@@ -2041,7 +2040,7 @@ export default function CartDrawer({
                           <span
                             className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 text-xs font-black ${
                               attachToTableOpenAccount
-                                ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
+                                ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
                                 : "border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-ink)]/45"
                             }`}
                           >
@@ -2209,11 +2208,27 @@ export default function CartDrawer({
                       />
                     </div>
 
+                    {!isLoadingDeliveryZones &&
+                      !deliveryZonesError &&
+                      deliveryZones.length === 0 && (
+                        <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3">
+                          <p className="inline-flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-amber-800">
+                            <AlertTriangle size={15} />
+                            Delivery no disponible por ahora
+                          </p>
+                          <p className="mt-1 text-sm font-bold leading-5 text-amber-900/80">
+                            El local todavía no cargó sus zonas de delivery, así
+                            que no se puede registrar este tipo de pedido. Elige
+                            Comer aquí o Para llevar mientras tanto.
+                          </p>
+                        </div>
+                      )}
+
                     {deliveryZonesError && (
                       <div className="rounded-2xl border-2 border-orange-400/35 bg-orange-100 px-4 py-3">
                         <p className="text-sm font-bold leading-5 text-orange-800">
-                          {deliveryZonesError}. Se usarán las zonas base
-                          mientras se revisa la conexión.
+                          {deliveryZonesError}. Revisa tu conexión e intenta
+                          de nuevo en unos segundos.
                         </p>
                       </div>
                     )}
@@ -2333,7 +2348,7 @@ export default function CartDrawer({
                   )}
 
                   {orderAttachmentError ? (
-                    <p className="mt-2 text-[0.7rem] font-bold text-red-700">
+                    <p className="mt-2 text-[0.7rem] font-bold text-red-300">
                       {orderAttachmentError}
                     </p>
                   ) : null}
@@ -2390,7 +2405,7 @@ export default function CartDrawer({
                   onClick={handleRegisterLocalOrder}
                   className={`mt-2 flex w-full items-center justify-center gap-3 rounded-full border-2 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none ${
                     canRegisterLocalOrder
-                      ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
+                      ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
                       : "border-[var(--brand-border)] bg-[#ddd3c4] text-[var(--brand-ink-2)]/35"
                   }`}
                 >
@@ -2408,7 +2423,7 @@ export default function CartDrawer({
                   }}
                   className={`flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none ${
                     whatsappHref
-                      ? "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-accent)] hover:text-[var(--brand-ink)]"
+                      ? "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-accent)] hover:text-black"
                       : "cursor-not-allowed bg-[#ddd3c4] text-[var(--brand-ink-2)]/45"
                   }`}
                 >

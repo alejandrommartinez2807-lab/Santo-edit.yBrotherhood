@@ -8,6 +8,8 @@ export type DeliveryZone = {
 
 export const LOCATIONS_STORAGE_KEY = "santo_perrito_order_locations";
 
+// Semilla del editor de zonas en Configuración (panel privado). El carrito
+// público ya NO las usa: ahí solo valen las zonas reales de /api/delivery-zones.
 export const DEFAULT_DELIVERY_ZONES: DeliveryZone[] = [
   { name: "La Trigaleña", costUSD: 2, isActive: true },
   { name: "Centro", costUSD: 1, isActive: true },
