@@ -1398,7 +1398,7 @@ export default function CartDrawer({
   const whatsappButtonLabel = hasUnavailableItemsForOrderType
     ? "Ajusta el tipo de pedido"
     : whatsappHref
-      ? "Enviar por WhatsApp"
+      ? publicConfig.publicCartWhatsappButtonText || "Enviar por WhatsApp"
       : "WhatsApp no configurado";
   const orderTypes: OrderType[] = isPublicDeliveryAvailable
     ? ["Comer aquí", "Para llevar", "Delivery"]
@@ -1446,7 +1446,7 @@ export default function CartDrawer({
                 />
 
                 <h2 className="pb-1 text-[2.35rem] font-black uppercase leading-[1.02] text-[var(--brand-primary)] drop-shadow-[0_4px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl">
-                  Tu pedido
+                  {publicConfig.publicCartTitle || "Tu pedido"}
                 </h2>
               </div>
             </div>
@@ -1464,7 +1464,13 @@ export default function CartDrawer({
 
         <div className="flex-1 overflow-y-auto px-5 py-6 sm:px-8">
           {!hasItems ? (
-            <EmptyCartState businessName={businessName} onClose={onClose} />
+            <EmptyCartState
+              businessName={businessName}
+              onClose={onClose}
+              title={publicConfig.publicCartEmptyTitle}
+              text={publicConfig.publicCartEmptyText}
+              buttonText={publicConfig.publicCartEmptyButtonText}
+            />
           ) : (
             <div className="space-y-4">
               {items.map((item) => (
@@ -1478,6 +1484,8 @@ export default function CartDrawer({
                   decreaseQuantity={decreaseQuantity}
                   updateItemNote={updateItemNote}
                   updateItemNoteEnabled={updateItemNoteEnabled}
+                  availabilityLabel={publicConfig.publicAvailabilityLabel}
+                  divisaOnlyBadge={publicConfig.publicDivisaOnlyBadge}
                 />
               ))}
             </div>

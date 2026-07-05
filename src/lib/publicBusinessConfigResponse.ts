@@ -327,6 +327,32 @@ export function buildPublicBusinessConfigResponse(
       cleanText(config.publicCustomizerTitle) ||
       cleanText(config.publicCustomizeButtonText) ||
       "Elige tus ingredientes",
+    publicCartTitle: cleanText(config.publicCartTitle) || "Tu pedido",
+    publicCartEmptyTitle:
+      cleanText(config.publicCartEmptyTitle) || "Tu carrito está vacío",
+    publicCartEmptyText:
+      cleanText(config.publicCartEmptyText) ||
+      "Agrega productos del menú para preparar tu pedido.",
+    publicCartEmptyButtonText:
+      cleanText(config.publicCartEmptyButtonText) || "Ver menú",
+    publicCartTotalLabel:
+      cleanText(config.publicCartTotalLabel) || "Total a cobrar",
+    publicCartTotalHint:
+      cleanText(config.publicCartTotalHint) || "Total general en divisas",
+    publicCartLocalOrderButtonText:
+      cleanText(config.publicCartLocalOrderButtonText) || "Registrar pedido local",
+    publicCartWhatsappButtonText:
+      cleanText(config.publicCartWhatsappButtonText) || "Enviar por WhatsApp",
+    publicDivisaGroupTitle:
+      cleanText(config.publicDivisaGroupTitle) || "Combos",
+    publicDivisaOnlyNote:
+      cleanText(config.publicDivisaOnlyNote) || "Pago solo en divisas",
+    publicDivisaOnlyBadge:
+      cleanText(config.publicDivisaOnlyBadge) || "Solo divisas",
+    publicRegularGroupTitle:
+      cleanText(config.publicRegularGroupTitle) || "Productos normales",
+    publicAvailabilityLabel:
+      cleanText(config.publicAvailabilityLabel) || "Disponible",
     locationButtonText: cleanText(config.locationButtonText),
     googleMapsUrl: cleanUrl(config.googleMapsUrl),
     instagramUrl: cleanUrl(config.instagramUrl),

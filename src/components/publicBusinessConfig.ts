@@ -32,6 +32,19 @@ export const DEFAULT_PUBLIC_CONFIG: PublicBusinessConfig = {
   publicComboButtonText: "Ver combos",
   publicCustomizeButtonText: "Elige tus ingredientes",
   publicCustomizerTitle: "Elige tus ingredientes",
+  publicCartTitle: "Tu pedido",
+  publicCartEmptyTitle: "Tu carrito está vacío",
+  publicCartEmptyText: "Agrega productos del menú para preparar tu pedido.",
+  publicCartEmptyButtonText: "Ver menú",
+  publicCartTotalLabel: "Total a cobrar",
+  publicCartTotalHint: "Total general en divisas",
+  publicCartLocalOrderButtonText: "Registrar pedido local",
+  publicCartWhatsappButtonText: "Enviar por WhatsApp",
+  publicDivisaGroupTitle: "Combos",
+  publicDivisaOnlyNote: "Pago solo en divisas",
+  publicDivisaOnlyBadge: "Solo divisas",
+  publicRegularGroupTitle: "Productos normales",
+  publicAvailabilityLabel: "Disponible",
   themePrimaryColor: "#a00000",
   themeAccentColor: "#ffd23c",
   themeCreamColor: "#fff7e8",
@@ -438,6 +451,45 @@ export function normalizePublicBusinessConfig(value: unknown): PublicBusinessCon
       cleanText(businessConfig.publicCustomizerTitle) ||
       cleanText(businessConfig.publicCustomizeButtonText) ||
       DEFAULT_PUBLIC_CONFIG.publicCustomizerTitle,
+    publicCartTitle:
+      cleanText(businessConfig.publicCartTitle) ||
+      DEFAULT_PUBLIC_CONFIG.publicCartTitle,
+    publicCartEmptyTitle:
+      cleanText(businessConfig.publicCartEmptyTitle) ||
+      DEFAULT_PUBLIC_CONFIG.publicCartEmptyTitle,
+    publicCartEmptyText:
+      cleanText(businessConfig.publicCartEmptyText) ||
+      DEFAULT_PUBLIC_CONFIG.publicCartEmptyText,
+    publicCartEmptyButtonText:
+      cleanText(businessConfig.publicCartEmptyButtonText) ||
+      DEFAULT_PUBLIC_CONFIG.publicCartEmptyButtonText,
+    publicCartTotalLabel:
+      cleanText(businessConfig.publicCartTotalLabel) ||
+      DEFAULT_PUBLIC_CONFIG.publicCartTotalLabel,
+    publicCartTotalHint:
+      cleanText(businessConfig.publicCartTotalHint) ||
+      DEFAULT_PUBLIC_CONFIG.publicCartTotalHint,
+    publicCartLocalOrderButtonText:
+      cleanText(businessConfig.publicCartLocalOrderButtonText) ||
+      DEFAULT_PUBLIC_CONFIG.publicCartLocalOrderButtonText,
+    publicCartWhatsappButtonText:
+      cleanText(businessConfig.publicCartWhatsappButtonText) ||
+      DEFAULT_PUBLIC_CONFIG.publicCartWhatsappButtonText,
+    publicDivisaGroupTitle:
+      cleanText(businessConfig.publicDivisaGroupTitle) ||
+      DEFAULT_PUBLIC_CONFIG.publicDivisaGroupTitle,
+    publicDivisaOnlyNote:
+      cleanText(businessConfig.publicDivisaOnlyNote) ||
+      DEFAULT_PUBLIC_CONFIG.publicDivisaOnlyNote,
+    publicDivisaOnlyBadge:
+      cleanText(businessConfig.publicDivisaOnlyBadge) ||
+      DEFAULT_PUBLIC_CONFIG.publicDivisaOnlyBadge,
+    publicRegularGroupTitle:
+      cleanText(businessConfig.publicRegularGroupTitle) ||
+      DEFAULT_PUBLIC_CONFIG.publicRegularGroupTitle,
+    publicAvailabilityLabel:
+      cleanText(businessConfig.publicAvailabilityLabel) ||
+      DEFAULT_PUBLIC_CONFIG.publicAvailabilityLabel,
     themePrimaryColor:
       cleanText(businessConfig.themePrimaryColor) ||
       DEFAULT_PUBLIC_CONFIG.themePrimaryColor,

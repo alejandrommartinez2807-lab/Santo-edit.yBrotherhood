@@ -82,6 +82,19 @@ export type BusinessConfig = {
   publicComboButtonText: string
   publicCustomizeButtonText: string
   publicCustomizerTitle: string
+  publicCartTitle: string
+  publicCartEmptyTitle: string
+  publicCartEmptyText: string
+  publicCartEmptyButtonText: string
+  publicCartTotalLabel: string
+  publicCartTotalHint: string
+  publicCartLocalOrderButtonText: string
+  publicCartWhatsappButtonText: string
+  publicDivisaGroupTitle: string
+  publicDivisaOnlyNote: string
+  publicDivisaOnlyBadge: string
+  publicRegularGroupTitle: string
+  publicAvailabilityLabel: string
   locationButtonText: string
   googleMapsUrl: string
   instagramUrl: string
@@ -202,6 +215,19 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicComboButtonText: "Ver combos",
   publicCustomizeButtonText: "Elige tus ingredientes",
   publicCustomizerTitle: "Elige tus ingredientes",
+  publicCartTitle: "Tu pedido",
+  publicCartEmptyTitle: "Tu carrito está vacío",
+  publicCartEmptyText: "Agrega productos del menú para preparar tu pedido.",
+  publicCartEmptyButtonText: "Ver menú",
+  publicCartTotalLabel: "Total a cobrar",
+  publicCartTotalHint: "Total general en divisas",
+  publicCartLocalOrderButtonText: "Registrar pedido local",
+  publicCartWhatsappButtonText: "Enviar por WhatsApp",
+  publicDivisaGroupTitle: "Combos",
+  publicDivisaOnlyNote: "Pago solo en divisas",
+  publicDivisaOnlyBadge: "Solo divisas",
+  publicRegularGroupTitle: "Productos normales",
+  publicAvailabilityLabel: "Disponible",
   locationButtonText: "Abrir ubicación",
   googleMapsUrl: "",
   instagramUrl: "",
@@ -545,6 +571,45 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     publicCustomizerTitle:
       String(source.publicCustomizerTitle || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.publicCustomizerTitle,
+    publicCartTitle:
+      String(source.publicCartTitle || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartTitle,
+    publicCartEmptyTitle:
+      String(source.publicCartEmptyTitle || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartEmptyTitle,
+    publicCartEmptyText:
+      String(source.publicCartEmptyText || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartEmptyText,
+    publicCartEmptyButtonText:
+      String(source.publicCartEmptyButtonText || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartEmptyButtonText,
+    publicCartTotalLabel:
+      String(source.publicCartTotalLabel || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartTotalLabel,
+    publicCartTotalHint:
+      String(source.publicCartTotalHint || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartTotalHint,
+    publicCartLocalOrderButtonText:
+      String(source.publicCartLocalOrderButtonText || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartLocalOrderButtonText,
+    publicCartWhatsappButtonText:
+      String(source.publicCartWhatsappButtonText || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartWhatsappButtonText,
+    publicDivisaGroupTitle:
+      String(source.publicDivisaGroupTitle || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicDivisaGroupTitle,
+    publicDivisaOnlyNote:
+      String(source.publicDivisaOnlyNote || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicDivisaOnlyNote,
+    publicDivisaOnlyBadge:
+      String(source.publicDivisaOnlyBadge || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicDivisaOnlyBadge,
+    publicRegularGroupTitle:
+      String(source.publicRegularGroupTitle || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicRegularGroupTitle,
+    publicAvailabilityLabel:
+      String(source.publicAvailabilityLabel || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicAvailabilityLabel,
     locationButtonText:
       String(source.locationButtonText || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.locationButtonText,

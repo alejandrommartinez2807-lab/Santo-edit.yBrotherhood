@@ -120,6 +120,19 @@ type BusinessConfig = {
   publicComboButtonText: string;
   publicCustomizeButtonText: string;
   publicCustomizerTitle: string;
+  publicCartTitle: string;
+  publicCartEmptyTitle: string;
+  publicCartEmptyText: string;
+  publicCartEmptyButtonText: string;
+  publicCartTotalLabel: string;
+  publicCartTotalHint: string;
+  publicCartLocalOrderButtonText: string;
+  publicCartWhatsappButtonText: string;
+  publicDivisaGroupTitle: string;
+  publicDivisaOnlyNote: string;
+  publicDivisaOnlyBadge: string;
+  publicRegularGroupTitle: string;
+  publicAvailabilityLabel: string;
   locationButtonText: string;
   googleMapsUrl: string;
   instagramUrl: string;
@@ -271,6 +284,19 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicComboButtonText: "Ver combos",
   publicCustomizeButtonText: "Elige tus ingredientes",
   publicCustomizerTitle: "Elige tus ingredientes",
+  publicCartTitle: "Tu pedido",
+  publicCartEmptyTitle: "Tu carrito está vacío",
+  publicCartEmptyText: "Agrega productos del menú para preparar tu pedido.",
+  publicCartEmptyButtonText: "Ver menú",
+  publicCartTotalLabel: "Total a cobrar",
+  publicCartTotalHint: "Total general en divisas",
+  publicCartLocalOrderButtonText: "Registrar pedido local",
+  publicCartWhatsappButtonText: "Enviar por WhatsApp",
+  publicDivisaGroupTitle: "Combos",
+  publicDivisaOnlyNote: "Pago solo en divisas",
+  publicDivisaOnlyBadge: "Solo divisas",
+  publicRegularGroupTitle: "Productos normales",
+  publicAvailabilityLabel: "Disponible",
   locationButtonText: "Abrir ubicación",
   googleMapsUrl: "",
   instagramUrl: "",
@@ -921,6 +947,45 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
       String(source.publicCustomizerTitle || "").trim() ||
       String(source.publicCustomizeButtonText || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.publicCustomizerTitle,
+    publicCartTitle:
+      String(source.publicCartTitle || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartTitle,
+    publicCartEmptyTitle:
+      String(source.publicCartEmptyTitle || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartEmptyTitle,
+    publicCartEmptyText:
+      String(source.publicCartEmptyText || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartEmptyText,
+    publicCartEmptyButtonText:
+      String(source.publicCartEmptyButtonText || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartEmptyButtonText,
+    publicCartTotalLabel:
+      String(source.publicCartTotalLabel || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartTotalLabel,
+    publicCartTotalHint:
+      String(source.publicCartTotalHint || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartTotalHint,
+    publicCartLocalOrderButtonText:
+      String(source.publicCartLocalOrderButtonText || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartLocalOrderButtonText,
+    publicCartWhatsappButtonText:
+      String(source.publicCartWhatsappButtonText || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartWhatsappButtonText,
+    publicDivisaGroupTitle:
+      String(source.publicDivisaGroupTitle || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicDivisaGroupTitle,
+    publicDivisaOnlyNote:
+      String(source.publicDivisaOnlyNote || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicDivisaOnlyNote,
+    publicDivisaOnlyBadge:
+      String(source.publicDivisaOnlyBadge || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicDivisaOnlyBadge,
+    publicRegularGroupTitle:
+      String(source.publicRegularGroupTitle || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicRegularGroupTitle,
+    publicAvailabilityLabel:
+      String(source.publicAvailabilityLabel || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicAvailabilityLabel,
     locationButtonText:
       String(source.locationButtonText || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.locationButtonText,
@@ -4220,6 +4285,126 @@ export default function BusinessConfigPage() {
                   />
                 </div>
               </div>
+
+              <div className="rounded-[1.5rem] border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4 sm:col-span-2">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+                  Textos del carrito
+                </p>
+                <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
+                  Título, totales, botones y etiquetas que ve el cliente dentro
+                  del carrito público.
+                </p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <TextInput
+                    label="Título del carrito"
+                    value={businessConfig.publicCartTitle}
+                    onChange={(value) => updateConfig("publicCartTitle", value)}
+                    placeholder="Tu pedido"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Etiqueta del total"
+                    value={businessConfig.publicCartTotalLabel}
+                    onChange={(value) => updateConfig("publicCartTotalLabel", value)}
+                    placeholder="Total a cobrar"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Texto bajo el total"
+                    value={businessConfig.publicCartTotalHint}
+                    onChange={(value) => updateConfig("publicCartTotalHint", value)}
+                    placeholder="Total general en divisas"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Botón de pedido local"
+                    value={businessConfig.publicCartLocalOrderButtonText}
+                    onChange={(value) =>
+                      updateConfig("publicCartLocalOrderButtonText", value)
+                    }
+                    placeholder="Registrar pedido local"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Botón de WhatsApp"
+                    value={businessConfig.publicCartWhatsappButtonText}
+                    onChange={(value) =>
+                      updateConfig("publicCartWhatsappButtonText", value)
+                    }
+                    placeholder="Enviar por WhatsApp"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Etiqueta de disponibilidad"
+                    value={businessConfig.publicAvailabilityLabel}
+                    onChange={(value) =>
+                      updateConfig("publicAvailabilityLabel", value)
+                    }
+                    placeholder="Disponible"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Título del grupo en divisas"
+                    value={businessConfig.publicDivisaGroupTitle}
+                    onChange={(value) =>
+                      updateConfig("publicDivisaGroupTitle", value)
+                    }
+                    placeholder="Combos"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Nota del grupo en divisas"
+                    value={businessConfig.publicDivisaOnlyNote}
+                    onChange={(value) =>
+                      updateConfig("publicDivisaOnlyNote", value)
+                    }
+                    placeholder="Pago solo en divisas"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Etiqueta corta en divisas"
+                    value={businessConfig.publicDivisaOnlyBadge}
+                    onChange={(value) =>
+                      updateConfig("publicDivisaOnlyBadge", value)
+                    }
+                    placeholder="Solo divisas"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Título de productos normales"
+                    value={businessConfig.publicRegularGroupTitle}
+                    onChange={(value) =>
+                      updateConfig("publicRegularGroupTitle", value)
+                    }
+                    placeholder="Productos normales"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Título de carrito vacío"
+                    value={businessConfig.publicCartEmptyTitle}
+                    onChange={(value) => updateConfig("publicCartEmptyTitle", value)}
+                    placeholder="Tu carrito está vacío"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Texto de carrito vacío"
+                    value={businessConfig.publicCartEmptyText}
+                    onChange={(value) => updateConfig("publicCartEmptyText", value)}
+                    placeholder="Agrega productos del menú para preparar tu pedido."
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Botón de carrito vacío"
+                    value={businessConfig.publicCartEmptyButtonText}
+                    onChange={(value) =>
+                      updateConfig("publicCartEmptyButtonText", value)
+                    }
+                    placeholder="Ver menú"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                </div>
+              </div>
+
               <div className="rounded-[1.5rem] border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4 sm:col-span-2">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>

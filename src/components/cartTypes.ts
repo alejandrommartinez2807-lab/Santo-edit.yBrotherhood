@@ -81,6 +81,20 @@ export type PublicBusinessConfig = {
   publicComboButtonText?: string;
   publicCustomizeButtonText?: string;
   publicCustomizerTitle?: string;
+  // Textos del carrito editables por el dueño (Configuración → textos).
+  publicCartTitle?: string;
+  publicCartEmptyTitle?: string;
+  publicCartEmptyText?: string;
+  publicCartEmptyButtonText?: string;
+  publicCartTotalLabel?: string;
+  publicCartTotalHint?: string;
+  publicCartLocalOrderButtonText?: string;
+  publicCartWhatsappButtonText?: string;
+  publicDivisaGroupTitle?: string;
+  publicDivisaOnlyNote?: string;
+  publicDivisaOnlyBadge?: string;
+  publicRegularGroupTitle?: string;
+  publicAvailabilityLabel?: string;
   themePrimaryColor?: string;
   themeAccentColor?: string;
   themeCreamColor?: string;

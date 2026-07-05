@@ -137,9 +137,18 @@ export function OptionPicker({
 type EmptyCartStateProps = {
   businessName: string;
   onClose: () => void;
+  title?: string;
+  text?: string;
+  buttonText?: string;
 };
 
-export function EmptyCartState({ businessName, onClose }: EmptyCartStateProps) {
+export function EmptyCartState({
+  businessName,
+  onClose,
+  title,
+  text,
+  buttonText,
+}: EmptyCartStateProps) {
   return (
     <div className="flex min-h-[calc(100vh-210px)] flex-col items-center justify-center rounded-[2rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-6 py-12 text-center shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
       <Image
@@ -152,11 +161,11 @@ export function EmptyCartState({ businessName, onClose }: EmptyCartStateProps) {
       />
 
       <h3 className="text-3xl font-black uppercase leading-tight text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
-        Tu carrito está vacío
+        {title || "Tu carrito está vacío"}
       </h3>
 
       <p className="mt-4 max-w-sm text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
-        Agrega productos del menú para preparar tu pedido.
+        {text || "Agrega productos del menú para preparar tu pedido."}
       </p>
 
       <a
@@ -164,7 +173,7 @@ export function EmptyCartState({ businessName, onClose }: EmptyCartStateProps) {
         onClick={onClose}
         className="mt-7 inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-7 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-105"
       >
-        Ver menú
+        {buttonText || "Ver menú"}
       </a>
     </div>
   );
@@ -179,6 +188,8 @@ type CartLineItemProps = {
   decreaseQuantity: (cartLineId: string) => void;
   updateItemNote?: (cartLineId: string, note: string) => void;
   updateItemNoteEnabled?: (cartLineId: string, enabled: boolean) => void;
+  availabilityLabel?: string;
+  divisaOnlyBadge?: string;
 };
 
 export function CartLineItem({
@@ -190,6 +201,8 @@ export function CartLineItem({
   decreaseQuantity,
   updateItemNote,
   updateItemNoteEnabled,
+  availabilityLabel,
+  divisaOnlyBadge,
 }: CartLineItemProps) {
   const itemSubtotal = item.price * item.quantity;
   const itemSubtotalVES = itemSubtotal * exchangeRate;
@@ -239,7 +252,7 @@ export function CartLineItem({
                     : "bg-red-500/15 text-red-300"
                 }`}
               >
-                Disponible: {formatItemSalesChannels(item)}
+                {availabilityLabel || "Disponible"}: {formatItemSalesChannels(item)}
               </p>
             </div>
 
@@ -291,7 +304,7 @@ export function CartLineItem({
 
               {isCombo ? (
                 <p className="mt-1 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[var(--product-card-border)]">
-                  Solo divisas
+                  {divisaOnlyBadge || "Solo divisas"}
                 </p>
               ) : (
                 <p className="mt-1 text-xs font-black text-[var(--product-card-text)]/65">
@@ -383,10 +396,10 @@ export function CartSummaryFooter({
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[0.64rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
-              Total a cobrar
+              {publicConfig.publicCartTotalLabel || "Total a cobrar"}
             </p>
             <p className="text-[0.68rem] font-black leading-4 text-[var(--brand-ink-2)]/60">
-              Total general en divisas
+              {publicConfig.publicCartTotalHint || "Total general en divisas"}
             </p>
           </div>
 
@@ -405,7 +418,7 @@ export function CartSummaryFooter({
           <div className="mt-2 grid grid-cols-2 overflow-hidden rounded-[1rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)]">
             <div className="border-r border-[var(--brand-border)] px-3 py-2">
               <p className="text-[0.6rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
-                Combos
+                {publicConfig.publicDivisaGroupTitle || "Combos"}
               </p>
 
               <strong className="block text-sm font-black leading-5 text-[var(--brand-ink-3)]">
@@ -413,13 +426,13 @@ export function CartSummaryFooter({
               </strong>
 
               <p className="text-[0.6rem] font-bold leading-3 text-[var(--brand-ink-2)]/55">
-                Solo divisas
+                {publicConfig.publicDivisaOnlyBadge || "Solo divisas"}
               </p>
             </div>
 
             <div className="px-3 py-2">
               <p className="text-[0.6rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
-                Normales
+                {publicConfig.publicRegularGroupTitle || "Normales"}
               </p>
 
               <strong className="block text-sm font-black leading-5 text-[var(--brand-ink-3)]">
@@ -437,11 +450,11 @@ export function CartSummaryFooter({
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
-                    Combos
+                    {publicConfig.publicDivisaGroupTitle || "Combos"}
                   </p>
 
                   <p className="text-[0.62rem] font-bold text-[var(--brand-ink-2)]/55">
-                    Pago solo en divisas
+                    {publicConfig.publicDivisaOnlyNote || "Pago solo en divisas"}
                   </p>
                 </div>
 
@@ -455,7 +468,7 @@ export function CartSummaryFooter({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
-                    Productos normales
+                    {publicConfig.publicRegularGroupTitle || "Productos normales"}
                   </p>
 
                   <p className="text-[0.62rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
@@ -513,7 +526,7 @@ export function CartSummaryFooter({
             className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)] active:translate-y-1 active:shadow-none"
           >
             <Store size={17} />
-            Registrar pedido local
+            {publicConfig.publicCartLocalOrderButtonText || "Registrar pedido local"}
           </button>
         )}
 
