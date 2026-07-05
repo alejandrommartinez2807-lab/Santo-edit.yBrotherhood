@@ -47,9 +47,16 @@ const EMPTY_FORM = {
   productType: "normal" as ProductType,
   salesChannels: ["local", "takeaway", "delivery"] as ProductSalesChannel[],
   variationText: "",
-  addonsText: "",
+  addonRows: [] as { name: string; price: string }[],
   includedIngredientsText: "",
   removableIngredientsText: "",
+  // Regla "elige al menos N / máximo N" sobre adicionales e ingredientes
+  // (la aplica el customizer público). "" o 0 = sin límite.
+  minAddons: "",
+  maxAddons: "",
+  // Resto de selectionRules (notas internas, revisión del mesonero…) que se
+  // editan en Menú avanzado: se conservan tal cual al guardar desde aquí.
+  selectionRulesBase: {} as Record<string, unknown>,
   preparationMinutes: "",
   requiresWaiterConfirmation: false,
   inventoryDiscountEnabled: true,
@@ -273,14 +280,50 @@ function buildVariationGroupsFromText(value: string) {
   ]
 }
 
-function buildAddonsFromText(value: string) {
-  return splitNamesFromText(value).map((name, index) => ({
-    name,
-    price: 0,
-    isActive: true,
-    maxQuantity: 1,
-    sortOrder: index + 1,
-  }))
+// Filas de adicionales {nombre, precio} desde lo guardado (acepta price,
+// priceDelta o extraPrice según la época en que se guardó el producto).
+function extractAddonRows(value: unknown): { name: string; price: string }[] {
+  return normalizeUnknownArray(value)
+    .map((item) => {
+      if (!item || typeof item !== "object") {
+        const name = String(item || "").trim()
+        return name ? { name, price: "" } : null
+      }
+
+      const source = item as { name?: unknown; price?: unknown; priceDelta?: unknown; extraPrice?: unknown }
+      const name = String(source.name || "").trim()
+      if (!name) return null
+
+      const price = Number(source.price ?? source.priceDelta ?? source.extraPrice ?? 0)
+      return { name, price: Number.isFinite(price) && price > 0 ? String(price) : "" }
+    })
+    .filter((row): row is { name: string; price: string } => Boolean(row))
+}
+
+function buildAddonsFromRows(rows: { name: string; price: string }[]) {
+  const seen = new Set<string>()
+
+  return rows
+    .map((row) => ({ name: row.name.trim(), price: Number(row.price) }))
+    .filter((row) => {
+      if (!row.name) return false
+      const normalized = row.name.toLowerCase()
+      if (seen.has(normalized)) return false
+      seen.add(normalized)
+      return true
+    })
+    .map((row, index) => ({
+      name: row.name,
+      price: Number.isFinite(row.price) && row.price > 0 ? row.price : 0,
+      isActive: true,
+      maxQuantity: 1,
+      sortOrder: index + 1,
+    }))
+}
+
+function readRulePositiveInteger(value: unknown): string {
+  const parsed = Math.floor(Number(value))
+  return Number.isFinite(parsed) && parsed > 0 ? String(parsed) : ""
 }
 
 function buildIngredientsFromText(value: string, mode: "included" | "removable") {
@@ -402,9 +445,19 @@ function buildFormFromProduct(product: MenuProduct): MenuForm {
     productType: normalizeProductType(product.productType),
     salesChannels: normalizeSalesChannels(product.salesChannels),
     variationText: extractNamesFromUnknownArray(product.variations),
-    addonsText: extractNamesFromUnknownArray(product.addons),
+    addonRows: extractAddonRows(product.addons),
     includedIngredientsText: extractNamesFromUnknownArray(product.includedIngredients),
     removableIngredientsText: extractNamesFromUnknownArray(product.removableIngredients),
+    minAddons: readRulePositiveInteger(
+      (product.selectionRules as { minAddons?: unknown } | undefined)?.minAddons,
+    ),
+    maxAddons: readRulePositiveInteger(
+      (product.selectionRules as { maxAddons?: unknown } | undefined)?.maxAddons,
+    ),
+    selectionRulesBase:
+      product.selectionRules && typeof product.selectionRules === "object"
+        ? (product.selectionRules as Record<string, unknown>)
+        : {},
     preparationMinutes: product.preparationMinutes ? String(product.preparationMinutes) : "",
     requiresWaiterConfirmation: product.requiresWaiterConfirmation === true,
     inventoryDiscountEnabled: product.inventoryDiscountEnabled !== false,
@@ -823,10 +876,15 @@ export default function LocalMenuPage() {
       productType: normalizeProductType(form.productType),
       salesChannels: normalizeSalesChannels(form.salesChannels),
       variations: buildVariationGroupsFromText(form.variationText),
-      addons: buildAddonsFromText(form.addonsText),
+      addons: buildAddonsFromRows(form.addonRows),
       includedIngredients: buildIngredientsFromText(form.includedIngredientsText, "included"),
       removableIngredients: buildIngredientsFromText(form.removableIngredientsText, "removable"),
-      selectionRules: {},
+      // Conserva las reglas del Menú avanzado y pisa solo min/máx de selección.
+      selectionRules: {
+        ...form.selectionRulesBase,
+        minAddons: normalizePositiveInteger(form.minAddons) || undefined,
+        maxAddons: normalizePositiveInteger(form.maxAddons) || undefined,
+      },
       preparationMinutes: normalizePositiveInteger(form.preparationMinutes),
       requiresWaiterConfirmation: form.requiresWaiterConfirmation,
       inventoryDiscountEnabled: form.inventoryDiscountEnabled,
@@ -1385,12 +1443,11 @@ export default function LocalMenuPage() {
                     helper="Opciones simples de una sola elección (ej: tamaños). Para secciones con precio extra y obligatorias, usa Menú avanzado."
                   />
 
-                  <TagListEditor
+                  <AddonPriceListEditor
                     label="Adicionales"
-                    value={form.addonsText}
-                    onChange={(value) => updateForm("addonsText", value)}
-                    placeholder="Escribe un adicional y presiona Enter"
-                    helper="Se crean sin costo; asígnales precio propio en Menú avanzado."
+                    rows={form.addonRows}
+                    onChange={(rows) => updateForm("addonRows", rows)}
+                    helper="Cada adicional puede tener precio. Los de $0 salen como ingredientes sin costo; los que tienen precio suman al total del cliente."
                   />
 
                   <TagListEditor
@@ -1408,6 +1465,33 @@ export default function LocalMenuPage() {
                     placeholder="Escribe un ingrediente y presiona Enter"
                     helper="El cliente podrá pedir el producto sin estos ingredientes."
                   />
+
+                  <div className="lg:col-span-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                      Regla de selección de adicionales
+                    </p>
+                    <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
+                      Como hacen algunos negocios: obliga al cliente a elegir una
+                      cantidad mínima de adicionales/ingredientes antes de poder
+                      agregar el producto, o limita el máximo. Vacío o 0 = sin regla.
+                    </p>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <InputField
+                        label="Mínimo a elegir"
+                        value={form.minAddons}
+                        onChange={(value) => updateForm("minAddons", value)}
+                        placeholder="Ej: 2"
+                        inputMode="numeric"
+                      />
+                      <InputField
+                        label="Máximo permitido"
+                        value={form.maxAddons}
+                        onChange={(value) => updateForm("maxAddons", value)}
+                        placeholder="Ej: 4"
+                        inputMode="numeric"
+                      />
+                    </div>
+                  </div>
 
                   <div className="lg:col-span-2 grid gap-2 sm:grid-cols-2">
                     <ToggleCard
@@ -1901,6 +1985,124 @@ function TagListEditor({
             type="button"
             onClick={commitDraft}
             disabled={!draft.trim()}
+            className="inline-flex shrink-0 items-center gap-1 rounded-xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3 py-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:brightness-105 disabled:opacity-40"
+          >
+            <Plus size={14} /> Agregar
+          </button>
+        </div>
+      </div>
+      {helper ? (
+        <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/58">
+          {helper}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+// Igual que TagListEditor pero cada entrada lleva nombre + precio opcional:
+// para adicionales tipo "Tocineta extra +$1.50" que suman al precio final.
+function AddonPriceListEditor({
+  label,
+  rows,
+  onChange,
+  helper,
+}: {
+  label: string
+  rows: { name: string; price: string }[]
+  onChange: (rows: { name: string; price: string }[]) => void
+  helper?: string
+}) {
+  const [draftName, setDraftName] = useState("")
+  const [draftPrice, setDraftPrice] = useState("")
+
+  function commitDraft() {
+    const name = draftName.trim()
+    if (!name) return
+
+    const exists = rows.some(
+      (row) => row.name.trim().toLowerCase() === name.toLowerCase(),
+    )
+    setDraftName("")
+    setDraftPrice("")
+
+    if (exists) return
+
+    const price = Number(draftPrice)
+    onChange([
+      ...rows,
+      { name, price: Number.isFinite(price) && price > 0 ? draftPrice.trim() : "" },
+    ])
+  }
+
+  function removeRow(target: string) {
+    onChange(rows.filter((row) => row.name !== target))
+  }
+
+  return (
+    <div>
+      <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+        {label}
+      </label>
+      <div className="mt-2 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-2.5 transition focus-within:border-[var(--brand-primary)]">
+        {rows.length > 0 ? (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {rows.map((row) => (
+              <span
+                key={row.name}
+                className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-1 text-xs font-black text-[var(--brand-ink)]"
+              >
+                {row.name}
+                {Number(row.price) > 0 ? (
+                  <span className="text-[var(--brand-primary)]">
+                    +{formatUSD(Number(row.price))}
+                  </span>
+                ) : (
+                  <span className="text-[var(--brand-ink-2)]/55">$0</span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => removeRow(row.name)}
+                  aria-label={`Quitar ${row.name}`}
+                  className="text-[var(--brand-primary)] transition hover:scale-110"
+                >
+                  <XCircle size={14} />
+                </button>
+              </span>
+            ))}
+          </div>
+        ) : null}
+        <div className="flex flex-wrap gap-2">
+          <input
+            value={draftName}
+            onChange={(event) => setDraftName(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault()
+                commitDraft()
+              }
+            }}
+            placeholder="Escribe un adicional"
+            className="min-w-0 flex-1 basis-40 rounded-xl border-2 border-transparent bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]/40"
+          />
+          <input
+            value={draftPrice}
+            onChange={(event) => setDraftPrice(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault()
+                commitDraft()
+              }
+            }}
+            placeholder="Precio $"
+            inputMode="decimal"
+            aria-label={`Precio del adicional de ${label}`}
+            className="w-24 shrink-0 rounded-xl border-2 border-transparent bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]/40"
+          />
+          <button
+            type="button"
+            onClick={commitDraft}
+            disabled={!draftName.trim()}
             className="inline-flex shrink-0 items-center gap-1 rounded-xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3 py-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:brightness-105 disabled:opacity-40"
           >
             <Plus size={14} /> Agregar
