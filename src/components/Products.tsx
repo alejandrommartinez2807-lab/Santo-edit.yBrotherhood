@@ -463,10 +463,14 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
   return (
     <section
       id="menu"
-      className="bg-[var(--brand-cream)] px-4 py-12 sm:px-6 lg:px-8"
+      className="relative overflow-hidden bg-[var(--brand-cream)] px-4 py-12 sm:px-6 lg:px-8"
       style={productCardStyle}
     >
-      <div className="mx-auto max-w-7xl">
+      {/* Brillos ambientales de la marca: dan profundidad sin tocar el contenido. */}
+      <div className="pointer-events-none absolute -left-36 top-24 h-80 w-80 rounded-full bg-[rgba(var(--brand-primary-rgb),0.09)] blur-3xl" />
+      <div className="pointer-events-none absolute -right-36 bottom-44 h-96 w-96 rounded-full bg-[rgba(var(--brand-primary-rgb),0.06)] blur-3xl" />
+
+      <div className="relative mx-auto max-w-7xl">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand-primary-rgb),0.45)] bg-black/50 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--brand-primary)]">
@@ -476,6 +480,7 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
             <h2 className="font-display mt-4 text-[3.4rem] uppercase leading-[0.88] text-[var(--brand-ink-3)] [text-shadow:0_8px_40px_rgba(var(--brand-primary-rgb),0.25)] sm:text-7xl">
               {publicMenuConfig.publicMenuTitle}
             </h2>
+            <div className="mt-4 h-1.5 w-28 rounded-full bg-[linear-gradient(90deg,var(--brand-primary),rgba(var(--brand-primary-rgb),0.05))]" />
             <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-[var(--brand-ink-2)] sm:text-base">
               {publicMenuConfig.publicMenuText}
             </p>
@@ -548,16 +553,6 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
           <div className="flex gap-2.5 overflow-x-auto pb-1 sm:flex-wrap sm:pb-0">
             {visibleMenuCategories.map((category) => {
               const isActive = selectedCategory === category
-              const count =
-                category === "Todos"
-                  ? menuProducts.length
-                  : category === "Favoritos"
-                    ? menuProducts.filter((product) =>
-                        favoriteProductIds.includes(product.id),
-                      ).length
-                    : menuProducts.filter(
-                        (product) => product.category === category,
-                      ).length
 
               return (
                 <button
@@ -574,13 +569,6 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
                   }`}
                 >
                   {category}
-                  <span
-                    className={`ml-2 rounded-full px-2 py-0.5 text-[0.62rem] ${
-                      isActive ? "bg-black/25" : "bg-black/40 text-[var(--brand-ink-2)]"
-                    }`}
-                  >
-                    {count}
-                  </span>
                 </button>
               )
             })}

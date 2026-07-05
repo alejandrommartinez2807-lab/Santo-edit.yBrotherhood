@@ -604,6 +604,9 @@ export default function ProductCard({
 
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/20" />
 
+          {/* Destello que recorre la foto al pasar el mouse (solo decorativo). */}
+          <span className="pointer-events-none absolute inset-y-0 left-[-60%] w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent opacity-0 transition-all duration-700 ease-out group-hover:left-[120%] group-hover:opacity-100" />
+
           <span className="absolute left-4 top-4 rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--product-card-button)] backdrop-blur-sm">
             {category}
           </span>
