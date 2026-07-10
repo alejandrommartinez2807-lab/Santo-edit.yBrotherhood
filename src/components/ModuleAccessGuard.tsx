@@ -451,10 +451,14 @@ export default function ModuleAccessGuard({
   moduleKey,
   moduleName,
   children,
+  chromeless = false,
 }: {
   moduleKey: ModuleKey
   moduleName: string
   children: ReactNode
+  // Pantallas de cara al cliente (ej. /local-santo/pantalla en el TV del
+  // stand): valida el acceso igual pero no envuelve con la barra del staff.
+  chromeless?: boolean
 }) {
   const [state, setState] = useState<GuardState>("loading")
   const [businessName, setBusinessName] = useState<string>(BRAND.name)
@@ -545,6 +549,8 @@ export default function ModuleAccessGuard({
   }, [moduleKey, retryKey])
 
   if (state === "available") {
+    if (chromeless) return <>{children}</>
+
     return (
       <LocalStaffShell
         moduleKey={moduleKey}

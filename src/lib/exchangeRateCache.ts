@@ -1,11 +1,13 @@
 export type ExchangeRateCacheableResponse = {
   rate: number
-  currency: "EUR"
-  source: "BCV" | "DolarApi" | "Fallback local"
+  currency: "USD"
+  source: "BCV" | "DolarApi" | "Fallback local" | "Negocio"
   name: string
   valueDate?: string
   updatedAt: string
   fallback: boolean
+  // true cuando la tasa la fijó el dueño en Configuración (modo manual).
+  manual?: boolean
   warning?: string
   error?: string
 }

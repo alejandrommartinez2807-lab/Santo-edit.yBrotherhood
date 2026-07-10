@@ -10,11 +10,12 @@ export type PublicNavButton = {
 }
 
 export const DEFAULT_PUBLIC_CATEGORY_ORDER = [
+  "Burgers",
   "Combos",
-  "Perritos",
-  "Salchipapas",
-  "Raciones",
+  "Papas",
+  "Chicken",
   "Bebidas",
+  "Postres",
 ]
 
 export const DEFAULT_PUBLIC_NAV_BUTTONS: PublicNavButton[] = [
@@ -140,6 +141,46 @@ export function normalizePublicCategoryList(value: unknown): string[] {
 
 export function normalizePublicHiddenCategoryList(value: unknown): string[] {
   return normalizePublicCategoryList(value)
+}
+
+// Métodos de pago que el carrito público ofrece al cliente. El dueño los edita
+// en Configuración; una lista vacía cae a estos valores para que el select
+// nunca quede sin opciones.
+export const DEFAULT_PUBLIC_PAYMENT_METHODS = [
+  "Pago móvil",
+  "Efectivo en divisas",
+  "Efectivo en Bs",
+  "Punto de venta",
+  "Transferencia",
+  "Por confirmar",
+]
+
+export function normalizePublicPaymentMethods(value: unknown): string[] {
+  const rawList = Array.isArray(value)
+    ? value
+    : typeof value === "string" && value.trim()
+      ? (() => {
+          try {
+            const parsedValue = JSON.parse(value)
+            return Array.isArray(parsedValue) ? parsedValue : value.split(/[;,|\n]/g)
+          } catch {
+            return value.split(/[;,|\n]/g)
+          }
+        })()
+      : []
+  const seen = new Set<string>()
+
+  const methods = rawList
+    .map((item) => cleanText(item).slice(0, 40))
+    .filter((item) => {
+      const key = normalizeComparableText(item)
+      if (!item || !key || seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+    .slice(0, 12)
+
+  return methods.length ? methods : [...DEFAULT_PUBLIC_PAYMENT_METHODS]
 }
 
 export function normalizePublicNavButtons(value: unknown): PublicNavButton[] {

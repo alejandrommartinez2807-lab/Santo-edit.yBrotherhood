@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   copyBranchConfigInRawBusinessConfig,
   getBranchConfig,
+  getExpiredEventBranchIds,
   mergeRawBusinessConfigWithBranchConfig,
   normalizeBranchScopedConfig,
 } from "@/lib/branch";
@@ -89,6 +90,29 @@ describe("branch scoped business config", () => {
     expect(getBranchConfig(next, "feria").isEvent).toBe(true)
     expect(getBranchConfig(next, "centro").isEvent).toBeUndefined()
   })
+
+  it("los eventos vencen al día SIGUIENTE de su fecha de fin (inclusive)", () => {
+    const branches = [
+      { id: "feria-vencida", name: "Feria vieja", is_active: true },
+      { id: "feria-hoy", name: "Feria de hoy", is_active: true },
+      { id: "feria-ya-cerrada", name: "Cerrada", is_active: false },
+      { id: "sede-normal", name: "Principal", is_active: true },
+      { id: "feria-sin-fecha", name: "Sin fecha", is_active: true },
+    ];
+    const raw = {
+      branchConfigs: {
+        "feria-vencida": { isEvent: true, eventEndDate: "2026-07-08" },
+        "feria-hoy": { isEvent: true, eventEndDate: "2026-07-09" },
+        "feria-ya-cerrada": { isEvent: true, eventEndDate: "2026-07-01" },
+        "sede-normal": { eventEndDate: "2026-07-01" },
+        "feria-sin-fecha": { isEvent: true },
+      },
+    };
+
+    expect(getExpiredEventBranchIds(branches, raw, "2026-07-09")).toEqual([
+      "feria-vencida",
+    ]);
+  });
 
   it("copia configuración de una sede a otra", () => {
     const raw = {

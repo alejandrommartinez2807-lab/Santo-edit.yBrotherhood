@@ -69,10 +69,12 @@ const DEFAULT_PUBLIC_MENU_CONFIG: Required<PublicMenuConfig> = {
   publicComboButtonText: "Ver combos",
   publicCustomizeButtonText: "Elige tus ingredientes",
   publicCustomizerTitle: "Elige tus ingredientes",
-  productCardBackgroundColor: "#ffffff",
-  productCardTextColor: "#4a0000",
-  productCardBorderColor: "#a00000",
-  productCardButtonColor: "#ffd23c",
+  // Defaults alineados al tema oscuro Brotherhood; la config del admin
+  // (business_config) sigue mandando si trae valores propios.
+  productCardBackgroundColor: "#141414",
+  productCardTextColor: "#fafaf9",
+  productCardBorderColor: "#2a2a2a",
+  productCardButtonColor: "#f5a623",
   publicCategoryOrder: DEFAULT_PUBLIC_CATEGORY_ORDER,
   publicHiddenCategories: [],
 }
@@ -461,42 +463,47 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
   return (
     <section
       id="menu"
-      className="bg-[var(--brand-cream)] px-4 py-12 sm:px-6 lg:px-8"
+      className="relative overflow-hidden bg-[var(--brand-cream)] px-4 py-12 sm:px-6 lg:px-8"
       style={productCardStyle}
     >
-      <div className="mx-auto max-w-7xl">
-        <div className="flex flex-col gap-4">
+      {/* Brillos ambientales de la marca: dan profundidad sin tocar el contenido. */}
+      <div className="pointer-events-none absolute -left-36 top-24 h-80 w-80 rounded-full bg-[rgba(var(--brand-primary-rgb),0.09)] blur-3xl" />
+      <div className="pointer-events-none absolute -right-36 bottom-44 h-96 w-96 rounded-full bg-[rgba(var(--brand-primary-rgb),0.06)] blur-3xl" />
+
+      <div className="relative mx-auto max-w-7xl">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+            <p className="inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand-primary-rgb),0.45)] bg-black/50 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--brand-primary)]">
               <Sparkles size={16} />
               {publicMenuConfig.publicMenuEyebrow}
             </p>
-            <h2 className="mt-4 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.7)] sm:text-5xl">
+            <h2 className="font-display mt-4 text-[3.4rem] uppercase leading-[0.88] text-[var(--brand-ink-3)] [text-shadow:0_8px_40px_rgba(var(--brand-primary-rgb),0.25)] sm:text-7xl">
               {publicMenuConfig.publicMenuTitle}
             </h2>
-            <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70 sm:text-base">
+            <div className="mt-4 h-1.5 w-28 rounded-full bg-[linear-gradient(90deg,var(--brand-primary),rgba(var(--brand-primary-rgb),0.05))]" />
+            <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-[var(--brand-ink-2)] sm:text-base">
               {publicMenuConfig.publicMenuText}
             </p>
           </div>
 
-          <div className="rounded-[1.35rem] border-2 border-[var(--brand-primary)] bg-white p-2 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)] sm:max-w-3xl">
+          <div className="w-full lg:max-w-md">
             <div className="relative">
               <Search
-                size={21}
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--brand-primary)]"
+                size={20}
+                className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-[var(--brand-primary)]"
               />
               <input
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder={publicMenuConfig.publicMenuSearchPlaceholder}
-                className="h-[3.25rem] w-full rounded-[1rem] bg-[var(--brand-cream)] px-12 py-4 text-base font-black text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:bg-white"
+                className="h-14 w-full rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] pl-12 pr-12 text-sm font-bold text-[var(--brand-ink-3)] outline-none transition placeholder:text-[var(--brand-ink-2)]/70 focus:border-[var(--brand-primary)] focus:bg-black sm:text-base"
               />
               {searchTerm.trim() ? (
                 <button
                   type="button"
                   onClick={() => setSearchTerm("")}
                   aria-label="Limpiar búsqueda"
-                  className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white text-[var(--brand-primary)] shadow-sm transition hover:bg-[var(--brand-accent-100)]"
+                  className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--brand-surface-2)] text-[var(--brand-primary)] transition hover:bg-black"
                 >
                   <X size={18} />
                 </button>
@@ -506,21 +513,27 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
         </div>
 
         {menuWarning && (
-          <div className="mt-5 rounded-2xl border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3 text-sm font-black leading-6 text-[var(--brand-amber)]">
+          <div className="mt-5 rounded-2xl border border-[rgba(var(--brand-primary-rgb),0.4)] bg-[var(--brand-surface)] px-4 py-3 text-sm font-semibold leading-6 text-[var(--brand-accent)]">
             {menuWarning}
           </div>
         )}
 
         {comboProducts.length > 0 && (
-          <div className="mt-8 rounded-[1.6rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                  {publicMenuConfig.publicComboTitle}
-                </p>
-                <p className="mt-1 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/65">
-                  {publicMenuConfig.publicComboText}
-                </p>
+          <div className="relative mt-10 overflow-hidden rounded-[1.4rem] border border-[rgba(var(--brand-primary-rgb),0.45)] bg-[linear-gradient(100deg,rgba(var(--brand-primary-rgb),0.16),rgba(var(--brand-primary-rgb),0.03)_55%,transparent)]">
+            <div className="pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full bg-[rgba(var(--brand-primary-rgb),0.18)] blur-3xl" />
+            <div className="relative flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              <div className="flex items-center gap-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-primary)] text-black">
+                  <Sparkles size={22} />
+                </span>
+                <div>
+                  <p className="font-display text-xl uppercase leading-none text-[var(--brand-primary)] sm:text-2xl">
+                    {publicMenuConfig.publicComboTitle}
+                  </p>
+                  <p className="mt-1.5 text-sm font-medium leading-5 text-[var(--brand-ink-2)]">
+                    {publicMenuConfig.publicComboText}
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
@@ -528,7 +541,7 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
                   setSelectedCategory("Combos")
                   setSelectedQuickFilter("all")
                 }}
-                className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]"
+                className="shrink-0 rounded-full bg-[var(--brand-primary)] px-6 py-3.5 text-xs font-black uppercase tracking-[0.12em] text-black shadow-[0_12px_30px_-12px_rgba(var(--brand-primary-rgb),0.8)] transition hover:bg-[var(--brand-accent)] active:scale-95"
               >
                 {publicMenuConfig.publicComboButtonText}
               </button>
@@ -536,54 +549,35 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
           </div>
         )}
 
-        <div className="mt-8 rounded-[1.6rem] border-2 border-[var(--brand-primary)]/15 bg-white p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.08)]">
-          <div>
-            <p className="mb-2 px-2 text-[0.68rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]/70">
-              Categorías
-            </p>
-            <div className="flex gap-3 overflow-x-auto pb-2">
-              {visibleMenuCategories.map((category) => {
-                const isActive = selectedCategory === category
-                const count =
-                  category === "Todos"
-                    ? menuProducts.length
-                    : category === "Favoritos"
-                      ? menuProducts.filter((product) =>
-                          favoriteProductIds.includes(product.id),
-                        ).length
-                      : menuProducts.filter(
-                          (product) => product.category === category,
-                        ).length
+        <div className="sticky top-[8.4rem] z-30 -mx-4 mt-8 bg-[var(--brand-cream)]/95 px-4 py-3 backdrop-blur-sm sm:static sm:z-auto sm:m-0 sm:bg-transparent sm:p-0 sm:pt-8 sm:backdrop-blur-none">
+          <div className="flex gap-2.5 overflow-x-auto pb-1 sm:flex-wrap sm:pb-0">
+            {visibleMenuCategories.map((category) => {
+              const isActive = selectedCategory === category
 
-                return (
-                  <button
-                    key={category}
-                    type="button"
-                    onClick={() => {
-                      setSelectedCategory(category)
-                      setSelectedQuickFilter("all")
-                    }}
-                    className={`shrink-0 rounded-full border-2 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] transition ${
-                      isActive
-                        ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.16)]"
-                        : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-primary)] hover:border-[var(--brand-primary)]"
-                    }`}
-                  >
-                    {category}
-                    <span className="ml-2 rounded-full bg-white/80 px-2 py-0.5 text-[0.62rem]">
-                      {count}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
+              return (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory(category)
+                    setSelectedQuickFilter("all")
+                  }}
+                  className={`shrink-0 rounded-full border px-4 py-2.5 text-xs font-bold uppercase tracking-[0.1em] transition active:scale-95 sm:px-5 sm:py-3 ${
+                    isActive
+                      ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-black shadow-[0_10px_26px_-12px_rgba(var(--brand-primary-rgb),0.8)]"
+                      : "border-[var(--brand-border)] bg-[var(--brand-surface)] text-[var(--brand-ink)] hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+                  }`}
+                >
+                  {category}
+                </button>
+              )
+            })}
           </div>
-
         </div>
 
         {filteredProducts.length === 0 ? (
-          <div className="mt-8 rounded-[1.5rem] border-2 border-[var(--brand-primary)]/20 bg-white px-5 py-10 text-center">
-            <p className="text-lg font-black uppercase text-[var(--brand-primary)]">
+          <div className="mt-8 rounded-[1.5rem] border border-[var(--brand-border)] bg-[var(--brand-surface)] px-5 py-10 text-center">
+            <p className="font-display text-2xl text-[var(--brand-primary)]">
               No encontramos productos con ese filtro
             </p>
             <p className="mt-2 text-sm font-bold text-[var(--brand-ink-2)]/65">
@@ -594,7 +588,7 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
             <button
               type="button"
               onClick={clearFilters}
-              className="mt-5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]"
+              className="mt-5 rounded-full bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-black"
             >
               Ver todo el menú
             </button>

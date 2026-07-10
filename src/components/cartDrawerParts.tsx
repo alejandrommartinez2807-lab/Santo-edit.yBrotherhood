@@ -59,8 +59,8 @@ export function OptionPicker({
         onClick={onToggle}
         className={`mt-2 flex w-full items-center justify-between gap-3 rounded-2xl border-2 px-4 py-4 text-left text-sm font-black outline-none transition ${
           isOpen
-            ? "border-[var(--brand-primary)] bg-white shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.12)]"
-            : "border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] hover:border-[var(--brand-primary)]/60"
+            ? "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.12)]"
+            : "border-[var(--brand-border)] bg-[var(--brand-cream)] hover:border-[var(--brand-primary)]/60"
         }`}
       >
         <span
@@ -75,14 +75,14 @@ export function OptionPicker({
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.45rem)] z-[180] overflow-hidden rounded-[1.25rem] border-2 border-[var(--brand-primary)] bg-white shadow-[0_16px_34px_rgba(74,0,0,0.22)]">
+        <div className="absolute left-0 right-0 top-[calc(100%+0.45rem)] z-[180] overflow-hidden rounded-[1.25rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] shadow-[0_16px_34px_rgba(74,0,0,0.22)]">
           <div className="max-h-72 overflow-y-auto p-2">
             <button
               type="button"
               onClick={() => onSelect("")}
               className={`flex w-full flex-col rounded-2xl px-4 py-3 text-left transition ${
                 !value
-                  ? "bg-[var(--brand-accent)] text-[var(--brand-ink)]"
+                  ? "bg-[var(--brand-accent)] text-black"
                   : "text-[var(--brand-ink)] hover:bg-[var(--brand-cream)]"
               }`}
             >
@@ -104,7 +104,7 @@ export function OptionPicker({
                   onClick={() => onSelect(option.value)}
                   className={`mt-1 flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left transition ${
                     selected
-                      ? "bg-[var(--brand-accent)] text-[var(--brand-ink)]"
+                      ? "bg-[var(--brand-accent)] text-black"
                       : "text-[var(--brand-ink)] hover:bg-[var(--brand-cream)]"
                   }`}
                 >
@@ -137,11 +137,20 @@ export function OptionPicker({
 type EmptyCartStateProps = {
   businessName: string;
   onClose: () => void;
+  title?: string;
+  text?: string;
+  buttonText?: string;
 };
 
-export function EmptyCartState({ businessName, onClose }: EmptyCartStateProps) {
+export function EmptyCartState({
+  businessName,
+  onClose,
+  title,
+  text,
+  buttonText,
+}: EmptyCartStateProps) {
   return (
-    <div className="flex min-h-[calc(100vh-210px)] flex-col items-center justify-center rounded-[2rem] border-2 border-[var(--brand-primary)] bg-white px-6 py-12 text-center shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
+    <div className="flex min-h-[calc(100vh-210px)] flex-col items-center justify-center rounded-[2rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-6 py-12 text-center shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
       <Image
         src={BRAND.logoUrl || "/logoremovebg.png"}
         alt={businessName}
@@ -152,19 +161,19 @@ export function EmptyCartState({ businessName, onClose }: EmptyCartStateProps) {
       />
 
       <h3 className="text-3xl font-black uppercase leading-tight text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
-        Tu carrito está vacío
+        {title || "Tu carrito está vacío"}
       </h3>
 
       <p className="mt-4 max-w-sm text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
-        Agrega productos del menú para preparar tu pedido.
+        {text || "Agrega productos del menú para preparar tu pedido."}
       </p>
 
       <a
         href="#menu"
         onClick={onClose}
-        className="mt-7 inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-7 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-105"
+        className="mt-7 inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-7 py-4 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-105"
       >
-        Ver menú
+        {buttonText || "Ver menú"}
       </a>
     </div>
   );
@@ -179,6 +188,8 @@ type CartLineItemProps = {
   decreaseQuantity: (cartLineId: string) => void;
   updateItemNote?: (cartLineId: string, note: string) => void;
   updateItemNoteEnabled?: (cartLineId: string, enabled: boolean) => void;
+  availabilityLabel?: string;
+  divisaOnlyBadge?: string;
 };
 
 export function CartLineItem({
@@ -190,6 +201,8 @@ export function CartLineItem({
   decreaseQuantity,
   updateItemNote,
   updateItemNoteEnabled,
+  availabilityLabel,
+  divisaOnlyBadge,
 }: CartLineItemProps) {
   const itemSubtotal = item.price * item.quantity;
   const itemSubtotalVES = itemSubtotal * exchangeRate;
@@ -235,11 +248,11 @@ export function CartLineItem({
               <p
                 className={`mt-2 rounded-2xl px-3 py-2 text-[0.68rem] font-black uppercase leading-4 tracking-[0.1em] ${
                   itemSupportsOrderType(item, orderType)
-                    ? "bg-white/75 text-[var(--product-card-text)]/70"
-                    : "bg-red-100 text-red-800"
+                    ? "bg-[var(--brand-surface-2)]/75 text-[var(--product-card-text)]/70"
+                    : "bg-red-500/15 text-red-300"
                 }`}
               >
-                Disponible: {formatItemSalesChannels(item)}
+                {availabilityLabel || "Disponible"}: {formatItemSalesChannels(item)}
               </p>
             </div>
 
@@ -247,7 +260,7 @@ export function CartLineItem({
               type="button"
               onClick={() => removeItem(cartLineId)}
               aria-label={`Eliminar ${item.name}`}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[var(--product-card-border)] bg-white text-[var(--product-card-border)] transition hover:bg-[var(--product-card-border)] hover:text-white"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[var(--product-card-border)] bg-[var(--brand-surface-2)] text-[var(--product-card-border)] transition hover:bg-[var(--product-card-border)] hover:text-white"
             >
               <Trash2 size={18} />
             </button>
@@ -291,7 +304,7 @@ export function CartLineItem({
 
               {isCombo ? (
                 <p className="mt-1 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[var(--product-card-border)]">
-                  Solo divisas
+                  {divisaOnlyBadge || "Solo divisas"}
                 </p>
               ) : (
                 <p className="mt-1 text-xs font-black text-[var(--product-card-text)]/65">
@@ -322,7 +335,7 @@ export function CartLineItem({
               value={item.note || ""}
               onChange={(event) => updateItemNote(cartLineId, event.target.value)}
               placeholder="Ejemplo: sin cebolla, extra salsa, sin picante..."
-              className="mt-3 min-h-20 w-full resize-none rounded-2xl border-2 border-[var(--product-card-border)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--product-card-text)] outline-none placeholder:text-[var(--product-card-text)]/45 focus:border-[var(--product-card-border)]"
+              className="mt-3 min-h-20 w-full resize-none rounded-2xl border-2 border-[var(--product-card-border)]/25 bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--product-card-text)] outline-none placeholder:text-[var(--product-card-text)]/45 focus:border-[var(--product-card-border)]"
             />
           )}
         </div>
@@ -340,6 +353,7 @@ type CartSummaryFooterProps = {
   comboTotalPrice: number;
   regularTotalPrice: number;
   regularTotalVES: number;
+  totalVES: number;
   isOfficialBcv: boolean;
   sourceLabel: string;
   exchangeValueDate?: string;
@@ -360,6 +374,7 @@ export function CartSummaryFooter({
   comboTotalPrice,
   regularTotalPrice,
   regularTotalVES,
+  totalVES,
   isOfficialBcv,
   sourceLabel,
   exchangeValueDate,
@@ -371,7 +386,7 @@ export function CartSummaryFooter({
   whatsappButtonLabel,
 }: CartSummaryFooterProps) {
   return (
-    <div className="shrink-0 border-t-4 border-[var(--brand-primary)] bg-white px-4 py-2.5 sm:px-6">
+    <div className="shrink-0 border-t-4 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2.5 sm:px-6">
       {publicConfig.fiscalEnabled && (
         <div className="mb-2.5">
           <FiscalBreakdown items={items} config={publicConfig} />
@@ -381,10 +396,10 @@ export function CartSummaryFooter({
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[0.64rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
-              Total a cobrar
+              {publicConfig.publicCartTotalLabel || "Total a cobrar"}
             </p>
             <p className="text-[0.68rem] font-black leading-4 text-[var(--brand-ink-2)]/60">
-              Total general en divisas
+              {publicConfig.publicCartTotalHint || "Total general en divisas"}
             </p>
           </div>
 
@@ -393,11 +408,17 @@ export function CartSummaryFooter({
           </p>
         </div>
 
+        {exchangeRate > 0 && (
+          <p className="mt-1 text-right text-xs font-black text-[var(--brand-ink-2)]/75">
+            ≈ Bs {formatVES(totalVES)}
+          </p>
+        )}
+
         {hasCombos && hasRegularProducts ? (
-          <div className="mt-2 grid grid-cols-2 overflow-hidden rounded-[1rem] border border-[var(--brand-primary)]/20 bg-white">
-            <div className="border-r border-[var(--brand-primary)]/15 px-3 py-2">
+          <div className="mt-2 grid grid-cols-2 overflow-hidden rounded-[1rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)]">
+            <div className="border-r border-[var(--brand-border)] px-3 py-2">
               <p className="text-[0.6rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
-                Combos
+                {publicConfig.publicDivisaGroupTitle || "Combos"}
               </p>
 
               <strong className="block text-sm font-black leading-5 text-[var(--brand-ink-3)]">
@@ -405,13 +426,13 @@ export function CartSummaryFooter({
               </strong>
 
               <p className="text-[0.6rem] font-bold leading-3 text-[var(--brand-ink-2)]/55">
-                Solo divisas
+                {publicConfig.publicDivisaOnlyBadge || "Solo divisas"}
               </p>
             </div>
 
             <div className="px-3 py-2">
               <p className="text-[0.6rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
-                Normales
+                {publicConfig.publicRegularGroupTitle || "Normales"}
               </p>
 
               <strong className="block text-sm font-black leading-5 text-[var(--brand-ink-3)]">
@@ -424,16 +445,16 @@ export function CartSummaryFooter({
             </div>
           </div>
         ) : (
-          <div className="mt-2 rounded-[1rem] border border-[var(--brand-primary)]/20 bg-white px-3 py-2">
+          <div className="mt-2 rounded-[1rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-3 py-2">
             {hasCombos && (
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
-                    Combos
+                    {publicConfig.publicDivisaGroupTitle || "Combos"}
                   </p>
 
                   <p className="text-[0.62rem] font-bold text-[var(--brand-ink-2)]/55">
-                    Pago solo en divisas
+                    {publicConfig.publicDivisaOnlyNote || "Pago solo en divisas"}
                   </p>
                 </div>
 
@@ -447,7 +468,7 @@ export function CartSummaryFooter({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
-                    Productos normales
+                    {publicConfig.publicRegularGroupTitle || "Productos normales"}
                   </p>
 
                   <p className="text-[0.62rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
@@ -463,8 +484,8 @@ export function CartSummaryFooter({
           </div>
         )}
 
-        {hasRegularProducts && (
-          <div className="mt-1.5 flex items-center justify-between gap-3 rounded-[1rem] border border-[var(--brand-primary)]/20 bg-white/70 px-3 py-1.5">
+        {exchangeRate > 0 && (
+          <div className="mt-1.5 flex items-center justify-between gap-3 rounded-[1rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)]/70 px-3 py-1.5">
             <div className="min-w-0">
               <p className="inline-flex items-center gap-1 text-[0.58rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                 {isOfficialBcv ? (
@@ -472,7 +493,7 @@ export function CartSummaryFooter({
                 ) : (
                   <AlertTriangle size={11} />
                 )}
-                Tasa {sourceLabel}
+                {sourceLabel}
               </p>
 
               {exchangeValueDate && (
@@ -488,7 +509,7 @@ export function CartSummaryFooter({
           </div>
         )}
 
-        {exchangeWarning && hasRegularProducts && (
+        {exchangeWarning && (
           <div className="mt-1.5 rounded-xl border border-orange-400/35 bg-orange-100 px-3 py-1.5">
             <p className="text-[0.62rem] font-bold leading-4 text-[#7a2e00]">
               {exchangeWarning}
@@ -502,10 +523,10 @@ export function CartSummaryFooter({
           <button
             type="button"
             onClick={onOpenOrderModal}
-            className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:bg-[var(--brand-accent-200)] active:translate-y-1 active:shadow-none"
+            className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-black shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)] active:translate-y-1 active:shadow-none"
           >
             <Store size={17} />
-            Registrar pedido local
+            {publicConfig.publicCartLocalOrderButtonText || "Registrar pedido local"}
           </button>
         )}
 
@@ -519,7 +540,7 @@ export function CartSummaryFooter({
           }}
           className={`flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none ${
             whatsappHref
-              ? "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-accent)] hover:text-[var(--brand-ink)]"
+              ? "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-accent)] hover:text-black"
               : "cursor-not-allowed bg-[#ddd3c4] text-[var(--brand-ink-2)]/45"
           }`}
         >

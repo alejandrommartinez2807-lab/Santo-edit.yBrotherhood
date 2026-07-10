@@ -190,7 +190,7 @@ export function CashOrderCard({
                   type="button"
                   onClick={onConfirmStaffItems}
                   disabled={isConfirmingStaff}
-                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-red-800 disabled:opacity-50"
+                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)] disabled:opacity-50"
                 >
                   {isConfirmingStaff ? <Loader2 size={17} className="animate-spin" /> : <CheckCircle2 size={17} />}
                   Confirmar revisión
@@ -298,7 +298,7 @@ export function CashOrderCard({
           )}
 
           {order.status === "Nuevo" && !hasPendingStaffConfirmation && (
-            <button type="button" onClick={onSendToKitchen} className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-red-800">
+            <button type="button" onClick={onSendToKitchen} className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)]">
               <Send size={17} /> Pedido confirmado / enviar a cocina
             </button>
           )}
@@ -361,7 +361,7 @@ export function WhatsAppButton({ href, label, dark, green }: { href: string; lab
   const className = green
     ? "border-green-600 bg-green-500 text-white hover:bg-green-400"
     : dark
-      ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white hover:bg-red-800"
+      ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark)]"
       : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
 
   return (

@@ -1620,7 +1620,7 @@ function WhatsAppButton({
   const className = success
     ? "border-green-600 bg-green-500 text-white hover:bg-green-400"
     : strong
-      ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white hover:bg-red-800"
+      ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark)]"
       : "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[var(--brand-accent-200)]"
 
   return (

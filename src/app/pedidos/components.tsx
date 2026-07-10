@@ -31,7 +31,7 @@ export function ModuleAccessCard({
   disabled?: boolean
 }) {
   const className =
-    "group flex min-h-[180px] flex-col justify-between rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 text-left shadow-[0_7px_0_rgba(var(--brand-primary-rgb),0.10)] transition hover:-translate-y-0.5 hover:bg-yellow-50"
+    "group flex min-h-[180px] flex-col justify-between rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] p-4 text-left shadow-[0_7px_0_rgba(var(--brand-primary-rgb),0.10)] transition hover:-translate-y-0.5 hover:bg-[rgba(var(--brand-primary-rgb),0.08)]"
 
   const content = (
     <>
@@ -41,7 +41,7 @@ export function ModuleAccessCard({
             {icon}
           </div>
 
-          <span className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-3 py-1 text-[0.58rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+          <span className="rounded-full border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-3 py-1 text-[0.58rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
             {metric}
           </span>
         </div>
@@ -106,7 +106,7 @@ export function ModuleAccessCard({
 
 export function PanelMiniMetric({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-3 py-2">
+    <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-3 py-2">
       <p className="text-[0.58rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
         {label}
       </p>
@@ -128,7 +128,7 @@ export function MetricCard({
 }) {
   const style =
     tone === "yellow"
-      ? "border-yellow-400 bg-[var(--brand-accent-100)] text-[var(--brand-amber)]"
+      ? "border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] text-[var(--brand-amber)]"
       : "border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-primary)]"
 
   return (
@@ -145,7 +145,7 @@ export function MetricCard({
 
 export function InfoBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3">
+    <div className="rounded-[1.2rem] border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-3">
       <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
         {label}
       </p>
@@ -170,7 +170,7 @@ export function CloseDetailSection({
   return (
     <details
       open={defaultOpen}
-      className="group rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4"
+      className="group rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-4"
     >
       <summary className="flex cursor-pointer list-none flex-col gap-2 sm:flex-row sm:items-center sm:justify-between [&::-webkit-details-marker]:hidden">
         <div>
@@ -184,13 +184,13 @@ export function CloseDetailSection({
           )}
         </div>
 
-        <span className="inline-flex w-fit rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] group-open:bg-[var(--brand-accent)] group-open:text-[var(--brand-ink)]">
+        <span className="inline-flex w-fit rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] group-open:bg-[var(--brand-accent)] group-open:text-[var(--brand-ink)]">
           <span className="group-open:hidden">Mostrar</span>
           <span className="hidden group-open:inline">Ocultar</span>
         </span>
       </summary>
 
-      <div className="mt-4 border-t-2 border-[var(--brand-primary)]/15 pt-4">
+      <div className="mt-4 border-t-2 border-[var(--brand-border)] pt-4">
         {children}
       </div>
     </details>
@@ -207,7 +207,7 @@ export function ExpenseSummaryList({
   items: ExpenseSummaryItem[]
 }) {
   return (
-    <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
+    <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
       <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
         {title}
       </p>
@@ -221,7 +221,7 @@ export function ExpenseSummaryList({
           {items.map((item) => (
             <div
               key={item.label}
-              className="rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3"
+              className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -271,7 +271,7 @@ export function PaymentSummaryList({
   showDelivery?: boolean
 }) {
   return (
-    <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
+    <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
       <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
         {title}
       </p>
@@ -285,7 +285,7 @@ export function PaymentSummaryList({
           {items.map((item) => (
             <div
               key={item.label}
-              className="rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3"
+              className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -336,7 +336,7 @@ export function SummaryList({
   showDelivery?: boolean
 }) {
   return (
-    <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
+    <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
       <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
         {title}
       </p>
@@ -350,7 +350,7 @@ export function SummaryList({
           {items.map((item) => (
             <div
               key={item.label}
-              className="rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3"
+              className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -393,7 +393,7 @@ export function ProductGroup({
   onlyCurrency?: boolean
 }) {
   return (
-    <div className="rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3">
+    <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] p-3">
       <p className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
         {title}
       </p>
@@ -406,7 +406,7 @@ export function ProductGroup({
           return (
             <div
               key={`${item.id}-${item.name}-${index}`}
-              className="rounded-xl bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)]"
+              className="rounded-xl bg-[var(--brand-surface-2)] px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)]"
             >
               <div className="flex items-start justify-between gap-3">
                 <p>{item.name} x{item.quantity}</p>
@@ -441,16 +441,16 @@ export function ProductGroup({
 export function getCloseReviewItemClasses(tone: CloseReviewTone) {
   if (tone === "danger") {
     return {
-      wrapper: "border-red-500/45 bg-red-50",
-      icon: "border-red-600 bg-white text-red-700",
-      title: "text-red-800",
-      value: "text-red-700",
+      wrapper: "border-red-500/45 bg-red-500/10",
+      icon: "border-red-600 bg-[var(--brand-surface-2)] text-red-300",
+      title: "text-red-300",
+      value: "text-red-300",
     }
   }
 
   if (tone === "warning") {
     return {
-      wrapper: "border-yellow-400 bg-[var(--brand-accent-100)]",
+      wrapper: "border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)]",
       icon: "border-[var(--brand-amber)] bg-[var(--brand-accent)] text-[var(--brand-amber)]",
       title: "text-[var(--brand-amber)]",
       value: "text-[var(--brand-primary)]",
@@ -459,15 +459,15 @@ export function getCloseReviewItemClasses(tone: CloseReviewTone) {
 
   if (tone === "success") {
     return {
-      wrapper: "border-green-500/45 bg-green-50",
-      icon: "border-green-700 bg-green-500 text-white",
-      title: "text-green-800",
-      value: "text-green-700",
+      wrapper: "border-green-500/45 bg-green-500/10",
+      icon: "border-green-700 bg-green-500/100 text-white",
+      title: "text-green-300",
+      value: "text-green-300",
     }
   }
 
   return {
-    wrapper: "border-[var(--brand-primary)]/25 bg-white",
+    wrapper: "border-[var(--brand-border)] bg-[var(--brand-surface-2)]",
     icon: "border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-primary)]",
     title: "text-[var(--brand-primary)]",
     value: "text-[var(--brand-ink-3)]",
@@ -484,7 +484,7 @@ export function CloseReviewPanel({
   onToggle: () => void
 }) {
   return (
-    <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
+    <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
@@ -505,7 +505,7 @@ export function CloseReviewPanel({
           <button
             type="button"
             onClick={onToggle}
-            className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+            className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
           >
             {isVisible ? <EyeOff size={16} /> : <Eye size={16} />}
             {isVisible ? "Ocultar revisión" : "Mostrar revisión"}
@@ -520,7 +520,7 @@ export function CloseReviewPanel({
           ))}
         </div>
       ) : (
-        <div className="mt-4 rounded-2xl border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3">
+        <div className="mt-4 rounded-2xl border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3">
           <p className="text-sm font-black uppercase text-[var(--brand-amber)]">
             Revisión oculta
           </p>
@@ -581,10 +581,10 @@ export function ModalShell({
   onClose: () => void
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[var(--brand-ink-3)]/60 px-4 py-4 backdrop-blur-sm sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 px-4 py-4 backdrop-blur-sm sm:items-center">
       <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border-4 border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-ink-3)] shadow-2xl shadow-black/45">
-        <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
-        <div className="flex items-start justify-between gap-4 border-b-2 border-[var(--brand-primary)] bg-white px-6 py-5">
+        <div className="h-1.5 shrink-0 bg-[linear-gradient(90deg,var(--brand-primary),var(--brand-accent))]" />
+        <div className="flex items-start justify-between gap-4 border-b-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-6 py-5">
           <h2 className="text-3xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
             {title}
           </h2>

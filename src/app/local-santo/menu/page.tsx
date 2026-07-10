@@ -35,7 +35,7 @@ const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
 const EMPTY_FORM = {
   id: "",
   name: "",
-  category: "Perritos",
+  category: "Burgers",
   customCategory: "",
   description: "",
   price: "",
@@ -47,9 +47,16 @@ const EMPTY_FORM = {
   productType: "normal" as ProductType,
   salesChannels: ["local", "takeaway", "delivery"] as ProductSalesChannel[],
   variationText: "",
-  addonsText: "",
+  addonRows: [] as { name: string; price: string }[],
   includedIngredientsText: "",
   removableIngredientsText: "",
+  // Regla "elige al menos N / máximo N" sobre adicionales e ingredientes
+  // (la aplica el customizer público). "" o 0 = sin límite.
+  minAddons: "",
+  maxAddons: "",
+  // Resto de selectionRules (notas internas, revisión del mesonero…) que se
+  // editan en Menú avanzado: se conservan tal cual al guardar desde aquí.
+  selectionRulesBase: {} as Record<string, unknown>,
   preparationMinutes: "",
   requiresWaiterConfirmation: false,
   inventoryDiscountEnabled: true,
@@ -273,14 +280,50 @@ function buildVariationGroupsFromText(value: string) {
   ]
 }
 
-function buildAddonsFromText(value: string) {
-  return splitNamesFromText(value).map((name, index) => ({
-    name,
-    price: 0,
-    isActive: true,
-    maxQuantity: 1,
-    sortOrder: index + 1,
-  }))
+// Filas de adicionales {nombre, precio} desde lo guardado (acepta price,
+// priceDelta o extraPrice según la época en que se guardó el producto).
+function extractAddonRows(value: unknown): { name: string; price: string }[] {
+  return normalizeUnknownArray(value)
+    .map((item) => {
+      if (!item || typeof item !== "object") {
+        const name = String(item || "").trim()
+        return name ? { name, price: "" } : null
+      }
+
+      const source = item as { name?: unknown; price?: unknown; priceDelta?: unknown; extraPrice?: unknown }
+      const name = String(source.name || "").trim()
+      if (!name) return null
+
+      const price = Number(source.price ?? source.priceDelta ?? source.extraPrice ?? 0)
+      return { name, price: Number.isFinite(price) && price > 0 ? String(price) : "" }
+    })
+    .filter((row): row is { name: string; price: string } => Boolean(row))
+}
+
+function buildAddonsFromRows(rows: { name: string; price: string }[]) {
+  const seen = new Set<string>()
+
+  return rows
+    .map((row) => ({ name: row.name.trim(), price: Number(row.price) }))
+    .filter((row) => {
+      if (!row.name) return false
+      const normalized = row.name.toLowerCase()
+      if (seen.has(normalized)) return false
+      seen.add(normalized)
+      return true
+    })
+    .map((row, index) => ({
+      name: row.name,
+      price: Number.isFinite(row.price) && row.price > 0 ? row.price : 0,
+      isActive: true,
+      maxQuantity: 1,
+      sortOrder: index + 1,
+    }))
+}
+
+function readRulePositiveInteger(value: unknown): string {
+  const parsed = Math.floor(Number(value))
+  return Number.isFinite(parsed) && parsed > 0 ? String(parsed) : ""
 }
 
 function buildIngredientsFromText(value: string, mode: "included" | "removable") {
@@ -402,9 +445,19 @@ function buildFormFromProduct(product: MenuProduct): MenuForm {
     productType: normalizeProductType(product.productType),
     salesChannels: normalizeSalesChannels(product.salesChannels),
     variationText: extractNamesFromUnknownArray(product.variations),
-    addonsText: extractNamesFromUnknownArray(product.addons),
+    addonRows: extractAddonRows(product.addons),
     includedIngredientsText: extractNamesFromUnknownArray(product.includedIngredients),
     removableIngredientsText: extractNamesFromUnknownArray(product.removableIngredients),
+    minAddons: readRulePositiveInteger(
+      (product.selectionRules as { minAddons?: unknown } | undefined)?.minAddons,
+    ),
+    maxAddons: readRulePositiveInteger(
+      (product.selectionRules as { maxAddons?: unknown } | undefined)?.maxAddons,
+    ),
+    selectionRulesBase:
+      product.selectionRules && typeof product.selectionRules === "object"
+        ? (product.selectionRules as Record<string, unknown>)
+        : {},
     preparationMinutes: product.preparationMinutes ? String(product.preparationMinutes) : "",
     requiresWaiterConfirmation: product.requiresWaiterConfirmation === true,
     inventoryDiscountEnabled: product.inventoryDiscountEnabled !== false,
@@ -823,10 +876,15 @@ export default function LocalMenuPage() {
       productType: normalizeProductType(form.productType),
       salesChannels: normalizeSalesChannels(form.salesChannels),
       variations: buildVariationGroupsFromText(form.variationText),
-      addons: buildAddonsFromText(form.addonsText),
+      addons: buildAddonsFromRows(form.addonRows),
       includedIngredients: buildIngredientsFromText(form.includedIngredientsText, "included"),
       removableIngredients: buildIngredientsFromText(form.removableIngredientsText, "removable"),
-      selectionRules: {},
+      // Conserva las reglas del Menú avanzado y pisa solo min/máx de selección.
+      selectionRules: {
+        ...form.selectionRulesBase,
+        minAddons: normalizePositiveInteger(form.minAddons) || undefined,
+        maxAddons: normalizePositiveInteger(form.maxAddons) || undefined,
+      },
       preparationMinutes: normalizePositiveInteger(form.preparationMinutes),
       requiresWaiterConfirmation: form.requiresWaiterConfirmation,
       inventoryDiscountEnabled: form.inventoryDiscountEnabled,
@@ -1210,7 +1268,7 @@ export default function LocalMenuPage() {
                 Crear o editar producto
               </p>
               <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-                Los productos activos son los que podrá cargar la página pública desde Supabase. Si no hay productos activos, la página mantiene el menú base como respaldo.
+                Los productos activos son los que se muestran en el menú de la página pública. Desactiva un producto para ocultarlo sin borrarlo.
               </p>
             </div>
 
@@ -1224,21 +1282,23 @@ export default function LocalMenuPage() {
                 {isFormVisible ? "Ocultar formulario" : "Mostrar formulario"}
               </button>
 
-              <button
-                type="button"
-                onClick={importBaseMenu}
-                disabled={isImporting || isSaving}
-                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
-              >
-                {isImporting ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                Cargar menú actual
-              </button>
+              {baseProducts.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={importBaseMenu}
+                  disabled={isImporting || isSaving}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                >
+                  {isImporting ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                  Cargar menú de plantilla
+                </button>
+              ) : null}
             </div>
           </div>
 
           {isFormVisible && (
             <div className="mt-4 grid gap-3 lg:grid-cols-2">
-              <InputField label="Nombre" value={form.name} onChange={(value) => updateForm("name", value)} placeholder="Ej: Salchicha polaca especial" full />
+              <InputField label="Nombre" value={form.name} onChange={(value) => updateForm("name", value)} placeholder="Ej: Smash burger doble" full />
 
               <div>
                 <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
@@ -1283,15 +1343,17 @@ export default function LocalMenuPage() {
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                      Configuración premium del producto
+                      Opciones del producto
                     </p>
                     <p className="mt-1 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/65">
-                      Esta información queda guardada para las siguientes fases. Por ahora no cambia el carrito público actual.
+                      Variaciones, adicionales e ingredientes que el cliente verá
+                      al personalizar este producto en el menú público. Para
+                      secciones obligatorias y precios extra, usa Menú avanzado.
                     </p>
                   </div>
 
                   <span className="w-fit rounded-full border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-                    Base segura
+                    Se ve en el menú público
                   </span>
                 </div>
 
@@ -1373,37 +1435,63 @@ export default function LocalMenuPage() {
                     </div>
                   </div>
 
-                  <PremiumTextArea
+                  <TagListEditor
                     label="Variaciones"
                     value={form.variationText}
                     onChange={(value) => updateForm("variationText", value)}
-                    placeholder="Ej: Pequeña, Mediana, Grande"
-                    helper="Escribe opciones separadas por coma o por línea."
+                    placeholder="Escribe una opción y presiona Enter"
+                    helper="Opciones simples de una sola elección (ej: tamaños). Para secciones con precio extra y obligatorias, usa Menú avanzado."
                   />
 
-                  <PremiumTextArea
+                  <AddonPriceListEditor
                     label="Adicionales"
-                    value={form.addonsText}
-                    onChange={(value) => updateForm("addonsText", value)}
-                    placeholder="Ej: Tocineta, Queso extra, Papas extra"
-                    helper="En esta fase se guardan con precio 0 para configurarlos después con precio propio."
+                    rows={form.addonRows}
+                    onChange={(rows) => updateForm("addonRows", rows)}
+                    helper="Cada adicional puede tener precio. Los de $0 salen como ingredientes sin costo; los que tienen precio suman al total del cliente."
                   />
 
-                  <PremiumTextArea
+                  <TagListEditor
                     label="Ingredientes incluidos"
                     value={form.includedIngredientsText}
                     onChange={(value) => updateForm("includedIngredientsText", value)}
-                    placeholder="Ej: Pan, salchicha, cebolla, papas, salsas"
-                    helper="Sirve para mostrar o preparar recetas del producto más adelante."
+                    placeholder="Escribe un ingrediente y presiona Enter"
+                    helper="Lo que trae el producto. Sirve para recetas y para informar al cliente."
                   />
 
-                  <PremiumTextArea
+                  <TagListEditor
                     label="Ingredientes removibles"
                     value={form.removableIngredientsText}
                     onChange={(value) => updateForm("removableIngredientsText", value)}
-                    placeholder="Ej: Sin cebolla, sin ensalada, sin salsas"
-                    helper="Esto prepara la opción para que el cliente o mesonero quite ingredientes."
+                    placeholder="Escribe un ingrediente y presiona Enter"
+                    helper="El cliente podrá pedir el producto sin estos ingredientes."
                   />
+
+                  <div className="lg:col-span-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                      Regla de selección de adicionales
+                    </p>
+                    <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
+                      Como hacen algunos negocios: obliga al cliente a elegir una
+                      cantidad mínima de adicionales/ingredientes antes de poder
+                      agregar el producto, o limita el máximo. Vacío o 0 = sin regla.
+                    </p>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <InputField
+                        label="Mínimo a elegir"
+                        value={form.minAddons}
+                        onChange={(value) => updateForm("minAddons", value)}
+                        placeholder="Ej: 2"
+                        inputMode="numeric"
+                      />
+                      <InputField
+                        label="Máximo permitido"
+                        value={form.maxAddons}
+                        onChange={(value) => updateForm("maxAddons", value)}
+                        placeholder="Ej: 4"
+                        inputMode="numeric"
+                      />
+                    </div>
+                  </div>
 
                   <div className="lg:col-span-2 grid gap-2 sm:grid-cols-2">
                     <ToggleCard
@@ -1792,40 +1880,6 @@ export default function LocalMenuPage() {
   )
 }
 
-function PremiumTextArea({
-  label,
-  value,
-  onChange,
-  placeholder,
-  helper,
-}: {
-  label: string
-  value: string
-  onChange: (value: string) => void
-  placeholder?: string
-  helper?: string
-}) {
-  return (
-    <div>
-      <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-        {label}
-      </label>
-      <textarea
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        rows={3}
-        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
-      />
-      {helper && (
-        <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/58">
-          {helper}
-        </p>
-      )}
-    </div>
-  )
-}
-
 function InputField({
   label,
   value,
@@ -1853,6 +1907,213 @@ function InputField({
         inputMode={inputMode}
         className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
       />
+    </div>
+  )
+}
+
+// Editor de listas tipo "chips": el dueño escribe una opción, presiona Enter
+// (o el botón Agregar) y la ve como etiqueta con su X para quitarla. Por
+// debajo el valor se sigue guardando como texto multilínea, así el guardado
+// existente (splitNamesFromText) no cambia.
+function TagListEditor({
+  label,
+  value,
+  onChange,
+  placeholder,
+  helper,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  helper?: string
+}) {
+  const [draft, setDraft] = useState("")
+  const items = splitNamesFromText(value)
+
+  function commitDraft() {
+    if (!draft.trim()) return
+    const nextItems = splitNamesFromText(`${value}\n${draft}`)
+    setDraft("")
+    onChange(nextItems.join("\n"))
+  }
+
+  function removeItem(target: string) {
+    onChange(items.filter((item) => item !== target).join("\n"))
+  }
+
+  return (
+    <div>
+      <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+        {label}
+      </label>
+      <div className="mt-2 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-2.5 transition focus-within:border-[var(--brand-primary)]">
+        {items.length > 0 ? (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {items.map((item) => (
+              <span
+                key={item}
+                className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-1 text-xs font-black text-[var(--brand-ink)]"
+              >
+                {item}
+                <button
+                  type="button"
+                  onClick={() => removeItem(item)}
+                  aria-label={`Quitar ${item}`}
+                  className="text-[var(--brand-primary)] transition hover:scale-110"
+                >
+                  <XCircle size={14} />
+                </button>
+              </span>
+            ))}
+          </div>
+        ) : null}
+        <div className="flex gap-2">
+          <input
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === ",") {
+                event.preventDefault()
+                commitDraft()
+              }
+            }}
+            placeholder={placeholder}
+            className="min-w-0 flex-1 rounded-xl border-2 border-transparent bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]/40"
+          />
+          <button
+            type="button"
+            onClick={commitDraft}
+            disabled={!draft.trim()}
+            className="inline-flex shrink-0 items-center gap-1 rounded-xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3 py-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:brightness-105 disabled:opacity-40"
+          >
+            <Plus size={14} /> Agregar
+          </button>
+        </div>
+      </div>
+      {helper ? (
+        <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/58">
+          {helper}
+        </p>
+      ) : null}
+    </div>
+  )
+}
+
+// Igual que TagListEditor pero cada entrada lleva nombre + precio opcional:
+// para adicionales tipo "Tocineta extra +$1.50" que suman al precio final.
+function AddonPriceListEditor({
+  label,
+  rows,
+  onChange,
+  helper,
+}: {
+  label: string
+  rows: { name: string; price: string }[]
+  onChange: (rows: { name: string; price: string }[]) => void
+  helper?: string
+}) {
+  const [draftName, setDraftName] = useState("")
+  const [draftPrice, setDraftPrice] = useState("")
+
+  function commitDraft() {
+    const name = draftName.trim()
+    if (!name) return
+
+    const exists = rows.some(
+      (row) => row.name.trim().toLowerCase() === name.toLowerCase(),
+    )
+    setDraftName("")
+    setDraftPrice("")
+
+    if (exists) return
+
+    const price = Number(draftPrice)
+    onChange([
+      ...rows,
+      { name, price: Number.isFinite(price) && price > 0 ? draftPrice.trim() : "" },
+    ])
+  }
+
+  function removeRow(target: string) {
+    onChange(rows.filter((row) => row.name !== target))
+  }
+
+  return (
+    <div>
+      <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+        {label}
+      </label>
+      <div className="mt-2 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-2.5 transition focus-within:border-[var(--brand-primary)]">
+        {rows.length > 0 ? (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {rows.map((row) => (
+              <span
+                key={row.name}
+                className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-1 text-xs font-black text-[var(--brand-ink)]"
+              >
+                {row.name}
+                {Number(row.price) > 0 ? (
+                  <span className="text-[var(--brand-primary)]">
+                    +{formatUSD(Number(row.price))}
+                  </span>
+                ) : (
+                  <span className="text-[var(--brand-ink-2)]/55">$0</span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => removeRow(row.name)}
+                  aria-label={`Quitar ${row.name}`}
+                  className="text-[var(--brand-primary)] transition hover:scale-110"
+                >
+                  <XCircle size={14} />
+                </button>
+              </span>
+            ))}
+          </div>
+        ) : null}
+        <div className="flex flex-wrap gap-2">
+          <input
+            value={draftName}
+            onChange={(event) => setDraftName(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault()
+                commitDraft()
+              }
+            }}
+            placeholder="Escribe un adicional"
+            className="min-w-0 flex-1 basis-40 rounded-xl border-2 border-transparent bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]/40"
+          />
+          <input
+            value={draftPrice}
+            onChange={(event) => setDraftPrice(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault()
+                commitDraft()
+              }
+            }}
+            placeholder="Precio $"
+            inputMode="decimal"
+            aria-label={`Precio del adicional de ${label}`}
+            className="w-24 shrink-0 rounded-xl border-2 border-transparent bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]/40"
+          />
+          <button
+            type="button"
+            onClick={commitDraft}
+            disabled={!draftName.trim()}
+            className="inline-flex shrink-0 items-center gap-1 rounded-xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3 py-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:brightness-105 disabled:opacity-40"
+          >
+            <Plus size={14} /> Agregar
+          </button>
+        </div>
+      </div>
+      {helper ? (
+        <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/58">
+          {helper}
+        </p>
+      ) : null}
     </div>
   )
 }

@@ -34,6 +34,7 @@ import {
   normalizePublicCategoryList,
   normalizePublicHiddenCategoryList,
   normalizePublicNavButtons,
+  normalizePublicPaymentMethods,
 } from "@/lib/publicPageConfig"
 import { writeAuditLog } from "@/lib/audit"
 
@@ -323,6 +324,19 @@ function normalizeBusinessConfigPayload(
     "publicComboButtonText",
     "publicCustomizeButtonText",
     "publicCustomizerTitle",
+    "publicCartTitle",
+    "publicCartEmptyTitle",
+    "publicCartEmptyText",
+    "publicCartEmptyButtonText",
+    "publicCartTotalLabel",
+    "publicCartTotalHint",
+    "publicCartLocalOrderButtonText",
+    "publicCartWhatsappButtonText",
+    "publicDivisaGroupTitle",
+    "publicDivisaOnlyNote",
+    "publicDivisaOnlyBadge",
+    "publicRegularGroupTitle",
+    "publicAvailabilityLabel",
     "locationButtonText",
     "googleMapsUrl",
     "instagramUrl",
@@ -353,6 +367,14 @@ function normalizeBusinessConfigPayload(
   if (hasOwn(source, "publicNavButtons") && canEditAdvancedPublicConfig) {
     ;(config as Record<string, unknown>).publicNavButtons = normalizePublicNavButtons(
       source.publicNavButtons
+    )
+  }
+
+  // Métodos de pago del carrito: config operativa (no requiere el plan de
+  // personalización avanzada, igual que los toggles de delivery).
+  if (hasOwn(source, "publicPaymentMethods")) {
+    ;(config as Record<string, unknown>).publicPaymentMethods = normalizePublicPaymentMethods(
+      source.publicPaymentMethods
     )
   }
 

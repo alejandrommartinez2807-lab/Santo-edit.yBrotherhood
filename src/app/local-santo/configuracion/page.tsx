@@ -59,9 +59,11 @@ import { products as fallbackProducts, type Product } from "@/data/products";
 import {
   DEFAULT_PUBLIC_CATEGORY_ORDER,
   DEFAULT_PUBLIC_NAV_BUTTONS,
+  DEFAULT_PUBLIC_PAYMENT_METHODS,
   normalizePublicCategoryList,
   normalizePublicHiddenCategoryList,
   normalizePublicNavButtons,
+  normalizePublicPaymentMethods,
   type PublicNavButton,
   type PublicNavButtonKind,
 } from "@/lib/publicPageConfig";
@@ -120,6 +122,21 @@ type BusinessConfig = {
   publicComboButtonText: string;
   publicCustomizeButtonText: string;
   publicCustomizerTitle: string;
+  publicCartTitle: string;
+  publicCartEmptyTitle: string;
+  publicCartEmptyText: string;
+  publicCartEmptyButtonText: string;
+  publicCartTotalLabel: string;
+  publicCartTotalHint: string;
+  publicCartLocalOrderButtonText: string;
+  publicCartWhatsappButtonText: string;
+  publicDivisaGroupTitle: string;
+  publicDivisaOnlyNote: string;
+  publicDivisaOnlyBadge: string;
+  publicRegularGroupTitle: string;
+  publicAvailabilityLabel: string;
+  // Métodos de pago del carrito público (uno por línea en el editor).
+  publicPaymentMethods: string[];
   locationButtonText: string;
   googleMapsUrl: string;
   instagramUrl: string;
@@ -240,23 +257,23 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   pricesIncludeIva: true,
   igtfEnabled: true,
   igtfRate: 3,
-  themePrimaryColor: "#a00000",
-  themeCreamColor: "#fff7e8",
-  themeAccentColor: "#ffd23c",
-  productCardBackgroundColor: "#ffffff",
-  productCardTextColor: "#4a0000",
-  productCardBorderColor: "#a00000",
-  productCardButtonColor: "#ffd23c",
-  publicTagline: "Los Mejores Perros De Valencia",
+  themePrimaryColor: "#f5a623",
+  themeCreamColor: "#0d0d0d",
+  themeAccentColor: "#ffb340",
+  productCardBackgroundColor: "#141414",
+  productCardTextColor: "#ffffff",
+  productCardBorderColor: "#f5a623",
+  productCardButtonColor: "#f5a623",
+  publicTagline: "Smash Burgers, Combos y Sides",
   publicInfoTitle: `Visita ${BRAND.name}`,
   publicInfoText:
-    "Estamos listos para recibirte con perritos, salchipapas, raciones y bebidas frías. Abre nuestra ubicación en Google Maps o escribe por WhatsApp para coordinar tu pedido.",
+    "Somos simples: porque nos gustan las buenas burgers. Ingredientes de calidad y mucho sabor. Abre nuestra ubicación en Google Maps o escribe por WhatsApp para coordinar tu pedido. Delivery & Pick Up en Valencia y San Diego.",
   scheduleTitle: "Horario",
-  scheduleLine1: "Lunes a jueves: 6:00 p.m. a 12:00 a.m.",
-  scheduleLine2: "Viernes a domingos: 6:00 p.m. a 1:00 a.m.",
+  scheduleLine1: "Martes a domingo: 5:00 p.m. a 11:30 p.m.",
+  scheduleLine2: "Lunes: cerrado",
   reviewsTitle: "Reseñas",
   reviewsText:
-    "Después de probar tu pedido, puedes apoyar el negocio dejando tu reseña o compartiendo la página.",
+    "Después de probar tu pedido, puedes apoyar el negocio dejando tu reseña o compartiendo la página. Gracias por el apoyo, frater.",
   quickOrderTitle: "Pedido rápido",
   quickOrderText:
     "Agrega productos al carrito y registra el pedido en el local o envíalo directamente por WhatsApp.",
@@ -271,6 +288,20 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicComboButtonText: "Ver combos",
   publicCustomizeButtonText: "Elige tus ingredientes",
   publicCustomizerTitle: "Elige tus ingredientes",
+  publicCartTitle: "Tu pedido",
+  publicCartEmptyTitle: "Tu carrito está vacío",
+  publicCartEmptyText: "Agrega productos del menú para preparar tu pedido.",
+  publicCartEmptyButtonText: "Ver menú",
+  publicCartTotalLabel: "Total a cobrar",
+  publicCartTotalHint: "Total general en divisas",
+  publicCartLocalOrderButtonText: "Registrar pedido local",
+  publicCartWhatsappButtonText: "Enviar por WhatsApp",
+  publicDivisaGroupTitle: "Combos",
+  publicDivisaOnlyNote: "Pago solo en divisas",
+  publicDivisaOnlyBadge: "Solo divisas",
+  publicRegularGroupTitle: "Productos normales",
+  publicAvailabilityLabel: "Disponible",
+  publicPaymentMethods: [...DEFAULT_PUBLIC_PAYMENT_METHODS],
   locationButtonText: "Abrir ubicación",
   googleMapsUrl: "",
   instagramUrl: "",
@@ -921,6 +952,46 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
       String(source.publicCustomizerTitle || "").trim() ||
       String(source.publicCustomizeButtonText || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.publicCustomizerTitle,
+    publicCartTitle:
+      String(source.publicCartTitle || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartTitle,
+    publicCartEmptyTitle:
+      String(source.publicCartEmptyTitle || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartEmptyTitle,
+    publicCartEmptyText:
+      String(source.publicCartEmptyText || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartEmptyText,
+    publicCartEmptyButtonText:
+      String(source.publicCartEmptyButtonText || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartEmptyButtonText,
+    publicCartTotalLabel:
+      String(source.publicCartTotalLabel || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartTotalLabel,
+    publicCartTotalHint:
+      String(source.publicCartTotalHint || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartTotalHint,
+    publicCartLocalOrderButtonText:
+      String(source.publicCartLocalOrderButtonText || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartLocalOrderButtonText,
+    publicCartWhatsappButtonText:
+      String(source.publicCartWhatsappButtonText || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartWhatsappButtonText,
+    publicPaymentMethods: normalizePublicPaymentMethods(source.publicPaymentMethods),
+    publicDivisaGroupTitle:
+      String(source.publicDivisaGroupTitle || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicDivisaGroupTitle,
+    publicDivisaOnlyNote:
+      String(source.publicDivisaOnlyNote || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicDivisaOnlyNote,
+    publicDivisaOnlyBadge:
+      String(source.publicDivisaOnlyBadge || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicDivisaOnlyBadge,
+    publicRegularGroupTitle:
+      String(source.publicRegularGroupTitle || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicRegularGroupTitle,
+    publicAvailabilityLabel:
+      String(source.publicAvailabilityLabel || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicAvailabilityLabel,
     locationButtonText:
       String(source.locationButtonText || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.locationButtonText,
@@ -4094,7 +4165,7 @@ export default function BusinessConfigPage() {
                 label="Frase principal pública"
                 value={businessConfig.publicTagline}
                 onChange={(value) => updateConfig("publicTagline", value)}
-                placeholder="Los Mejores Perros De Valencia"
+                placeholder="Smash Burgers, Combos y Sides"
                 disabled={!canEditAdvancedPublic}
               />
               <TextInput
@@ -4220,6 +4291,148 @@ export default function BusinessConfigPage() {
                   />
                 </div>
               </div>
+
+              <div className="rounded-[1.5rem] border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4 sm:col-span-2">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+                  Textos del carrito
+                </p>
+                <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
+                  Título, totales, botones y etiquetas que ve el cliente dentro
+                  del carrito público.
+                </p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <TextInput
+                    label="Título del carrito"
+                    value={businessConfig.publicCartTitle}
+                    onChange={(value) => updateConfig("publicCartTitle", value)}
+                    placeholder="Tu pedido"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Etiqueta del total"
+                    value={businessConfig.publicCartTotalLabel}
+                    onChange={(value) => updateConfig("publicCartTotalLabel", value)}
+                    placeholder="Total a cobrar"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Texto bajo el total"
+                    value={businessConfig.publicCartTotalHint}
+                    onChange={(value) => updateConfig("publicCartTotalHint", value)}
+                    placeholder="Total general en divisas"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Botón de pedido local"
+                    value={businessConfig.publicCartLocalOrderButtonText}
+                    onChange={(value) =>
+                      updateConfig("publicCartLocalOrderButtonText", value)
+                    }
+                    placeholder="Registrar pedido local"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Botón de WhatsApp"
+                    value={businessConfig.publicCartWhatsappButtonText}
+                    onChange={(value) =>
+                      updateConfig("publicCartWhatsappButtonText", value)
+                    }
+                    placeholder="Enviar por WhatsApp"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Etiqueta de disponibilidad"
+                    value={businessConfig.publicAvailabilityLabel}
+                    onChange={(value) =>
+                      updateConfig("publicAvailabilityLabel", value)
+                    }
+                    placeholder="Disponible"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <div className="sm:col-span-2 lg:col-span-3">
+                    <label className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/70">
+                      Métodos de pago del carrito (uno por línea)
+                    </label>
+                    <textarea
+                      value={businessConfig.publicPaymentMethods.join("\n")}
+                      onChange={(event) =>
+                        updateConfig(
+                          "publicPaymentMethods",
+                          event.target.value.split("\n"),
+                        )
+                      }
+                      rows={4}
+                      placeholder={DEFAULT_PUBLIC_PAYMENT_METHODS.join("\n")}
+                      className="mt-2 w-full rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+                    />
+                    <p className="mt-1 text-[0.68rem] font-bold text-[var(--brand-ink-2)]/55">
+                      Opciones que el cliente elige al pagar en el carrito público
+                      (ej. Pago móvil, Zelle, Efectivo). Si lo dejas vacío se usan
+                      las opciones estándar.
+                    </p>
+                  </div>
+                  <TextInput
+                    label="Título del grupo en divisas"
+                    value={businessConfig.publicDivisaGroupTitle}
+                    onChange={(value) =>
+                      updateConfig("publicDivisaGroupTitle", value)
+                    }
+                    placeholder="Combos"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Nota del grupo en divisas"
+                    value={businessConfig.publicDivisaOnlyNote}
+                    onChange={(value) =>
+                      updateConfig("publicDivisaOnlyNote", value)
+                    }
+                    placeholder="Pago solo en divisas"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Etiqueta corta en divisas"
+                    value={businessConfig.publicDivisaOnlyBadge}
+                    onChange={(value) =>
+                      updateConfig("publicDivisaOnlyBadge", value)
+                    }
+                    placeholder="Solo divisas"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Título de productos normales"
+                    value={businessConfig.publicRegularGroupTitle}
+                    onChange={(value) =>
+                      updateConfig("publicRegularGroupTitle", value)
+                    }
+                    placeholder="Productos normales"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Título de carrito vacío"
+                    value={businessConfig.publicCartEmptyTitle}
+                    onChange={(value) => updateConfig("publicCartEmptyTitle", value)}
+                    placeholder="Tu carrito está vacío"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Texto de carrito vacío"
+                    value={businessConfig.publicCartEmptyText}
+                    onChange={(value) => updateConfig("publicCartEmptyText", value)}
+                    placeholder="Agrega productos del menú para preparar tu pedido."
+                    disabled={!canEditAdvancedPublic}
+                  />
+                  <TextInput
+                    label="Botón de carrito vacío"
+                    value={businessConfig.publicCartEmptyButtonText}
+                    onChange={(value) =>
+                      updateConfig("publicCartEmptyButtonText", value)
+                    }
+                    placeholder="Ver menú"
+                    disabled={!canEditAdvancedPublic}
+                  />
+                </div>
+              </div>
+
               <div className="rounded-[1.5rem] border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4 sm:col-span-2">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
@@ -4912,13 +5125,13 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<DollarSign size={22} />}
             title="Tasa y moneda"
-            description="Se mantiene la lógica actual del sistema. No cambia la fuente ni la regla de conversión por modificar esta pantalla."
+            description="En Automática, el sitio público usa la tasa oficial USD del BCV. En Manual, usa la tasa que fijes aquí (el carrito le dice al cliente cuál está activa)."
           >
             <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
               <div className="grid gap-3 sm:grid-cols-2">
                 <ModeButton
-                  label="Automática"
-                  description="Usar la tasa calculada por el sistema actual."
+                  label="Automática (BCV)"
+                  description="Seguir la tasa oficial del dólar publicada por el BCV."
                   active={businessConfig.exchangeRateMode === "automatic"}
                   onClick={() => updateConfig("exchangeRateMode", "automatic")}
                 />
@@ -4931,7 +5144,7 @@ export default function BusinessConfigPage() {
               </div>
 
               <TextInput
-                label="Tasa manual de referencia"
+                label="Tasa manual (Bs por dólar)"
                 type="number"
                 value={businessConfig.manualExchangeRate || ""}
                 onChange={(value) =>
@@ -4942,10 +5155,14 @@ export default function BusinessConfigPage() {
                       : 0,
                   )
                 }
-                placeholder="Ej: 645.68"
+                placeholder="Ej: 667.05"
                 helper="Solo se usa si el modo de tasa está en Manual."
               />
             </div>
+
+            <LiveBcvRateHint
+              manualActive={businessConfig.exchangeRateMode === "manual"}
+            />
           </SectionCard>
 
           <SectionCard
@@ -5256,6 +5473,55 @@ function ModeButton({
       <p className="text-sm font-black uppercase">{label}</p>
       <p className="mt-2 text-xs font-bold leading-5">{description}</p>
     </button>
+  );
+}
+
+// Muestra la tasa BCV vigente (la que usaría el modo Automática) para que el
+// dueño decida con contexto si necesita una tasa manual.
+function LiveBcvRateHint({ manualActive }: { manualActive: boolean }) {
+  const [bcvText, setBcvText] = useState("Consultando tasa BCV…");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const response = await fetch("/api/exchange-rate", { cache: "no-store" });
+        const data = await response.json();
+        if (cancelled) return;
+        const rate = Number(data.rate);
+        if (!Number.isFinite(rate) || rate <= 0) {
+          setBcvText("No se pudo consultar la tasa BCV ahora mismo.");
+          return;
+        }
+        // Si el modo manual está activo, la API devuelve la tasa del negocio;
+        // igual sirve como referencia de lo que está viendo el cliente.
+        const label = data.manual
+          ? "Tasa activa (manual del negocio)"
+          : `Tasa BCV oficial${data.valueDate ? ` · ${data.valueDate}` : ""}`;
+        setBcvText(`${label}: Bs ${rate.toFixed(2)} por dólar`);
+      } catch {
+        if (!cancelled) setBcvText("No se pudo consultar la tasa BCV ahora mismo.");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <div className="mt-3 rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3">
+      <p className="text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+        Referencia en vivo
+      </p>
+      <p className="mt-1 text-sm font-bold text-[var(--brand-ink)]">{bcvText}</p>
+      <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
+        {manualActive
+          ? "El sitio público está usando la tasa manual. Vuelve a Automática para seguir al BCV."
+          : "El sitio público sigue al BCV automáticamente. Cada sede puede fijar su propia tasa en Sucursales → Configuración por sede."}
+      </p>
+    </div>
   );
 }
 

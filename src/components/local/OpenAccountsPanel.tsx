@@ -1458,7 +1458,7 @@ export function OpenAccountsPanel({
                           openAccountPayment(account, accountOrders)
                         }
                         disabled={isSaving || totals.pendingUSD <= 0.01}
-                        className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-red-800 disabled:opacity-50"
+                        className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)] disabled:opacity-50"
                       >
                         <CreditCard size={15} />
                         Cobrar cuenta
@@ -1672,7 +1672,7 @@ export function OpenAccountsPanel({
                         type="button"
                         onClick={() => saveAccountPayment(account)}
                         disabled={isSaving}
-                        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-red-800 disabled:opacity-50"
+                        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)] disabled:opacity-50"
                       >
                         {isSaving ? (
                           <Loader2 size={16} className="animate-spin" />

@@ -10,7 +10,12 @@ type BranchScopedConfig = {
   mainWhatsapp?: string
   deliveryWhatsapp?: string
   localTables?: { name?: string; area?: string }[]
+  exchangeRateMode?: "automatic" | "manual"
+  manualExchangeRate?: number
 }
+
+// "" = heredar lo definido en Configuración → "Tasa y moneda".
+type BranchRateMode = "" | "automatic" | "manual"
 
 const EMPTY_TABLE: BranchTable = { name: "", area: "" }
 
@@ -32,6 +37,8 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
   const [useOwnTables, setUseOwnTables] = useState(false)
   const [tables, setTables] = useState<BranchTable[]>([])
   const [copyFrom, setCopyFrom] = useState("")
+  const [rateMode, setRateMode] = useState<BranchRateMode>("")
+  const [manualRate, setManualRate] = useState("")
 
   // Descarta respuestas viejas si el usuario cambia de sede a mitad de carga.
   const seqRef = useRef(0)
@@ -42,6 +49,14 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
   const applyConfig = useCallback((config: BranchScopedConfig) => {
     setMainWhatsapp(config.mainWhatsapp || "")
     setDeliveryWhatsapp(config.deliveryWhatsapp || "")
+    setRateMode(
+      config.exchangeRateMode === "automatic" || config.exchangeRateMode === "manual"
+        ? config.exchangeRateMode
+        : "",
+    )
+    setManualRate(
+      Number(config.manualExchangeRate) > 0 ? String(config.manualExchangeRate) : "",
+    )
     const ownTables = Array.isArray(config.localTables)
     setUseOwnTables(ownTables)
     setTables(
@@ -113,9 +128,17 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
     }
   }
 
+  const manualRateValue = Number(manualRate)
+  const manualRateInvalid =
+    rateMode === "manual" && (!Number.isFinite(manualRateValue) || manualRateValue <= 0)
+
   function save() {
     if (tablesInvalid) {
       setError("Agrega al menos una mesa con nombre, o vuelve a usar las mesas globales.")
+      return
+    }
+    if (manualRateInvalid) {
+      setError("Pon la tasa manual de esta sede (Bs por dólar), o elige otra opción de tasa.")
       return
     }
     patchConfig(
@@ -124,6 +147,8 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
           mainWhatsapp: mainWhatsapp.trim() || null,
           deliveryWhatsapp: deliveryWhatsapp.trim() || null,
           localTables: useOwnTables ? cleanedTables.map((t) => (t.area ? t : { name: t.name })) : null,
+          exchangeRateMode: rateMode || null,
+          manualExchangeRate: rateMode === "manual" ? manualRateValue : null,
         },
       },
       "Configuración de la sede guardada.",
@@ -135,7 +160,7 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
     if (!source || !selectedBranch || source.id === selectedBranch.id) return
     if (
       !window.confirm(
-        `¿Copiar la configuración de "${source.name}" a "${selectedBranch.name}"?\n\nSe reemplaza TODA la configuración propia de "${selectedBranch.name}" (mesas, whatsapps y textos públicos).`,
+        `¿Copiar la configuración de "${source.name}" a "${selectedBranch.name}"?\n\nSe reemplaza TODA la configuración propia de "${selectedBranch.name}" (mesas, whatsapps, tasa y textos públicos).`,
       )
     )
       return
@@ -214,6 +239,58 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
                 className={`mt-1 ${inputClass}`}
               />
             </div>
+          </div>
+
+          <div className="mt-5">
+            <p className={labelClass}>Tasa de cambio de esta sede</p>
+            <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
+              Por defecto la sede hereda la tasa del negocio (Configuración →
+              Tasa y moneda). Aquí puedes fijar una tasa propia solo para esta
+              sucursal.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {([
+                { value: "" as BranchRateMode, label: "Heredar del negocio" },
+                { value: "automatic" as BranchRateMode, label: "Automática (BCV)" },
+                { value: "manual" as BranchRateMode, label: "Manual de esta sede" },
+              ]).map((option) => (
+                <button
+                  key={option.value || "inherit"}
+                  type="button"
+                  onClick={() => setRateMode(option.value)}
+                  className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${
+                    rateMode === option.value
+                      ? "border-green-600/30 bg-green-50 text-green-700"
+                      : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]/60"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+
+            {rateMode === "manual" ? (
+              <div className="mt-3 max-w-xs">
+                <label className={labelClass} htmlFor="branch-config-manual-rate">
+                  Tasa manual (Bs por dólar)
+                </label>
+                <input
+                  id="branch-config-manual-rate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={manualRate}
+                  onChange={(e) => setManualRate(e.target.value)}
+                  placeholder="Ej: 667.05"
+                  className={`mt-1 ${inputClass}`}
+                />
+                {manualRateInvalid ? (
+                  <p className="mt-1 text-xs font-bold text-red-600">
+                    Pon un valor mayor que cero.
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
           <div className="mt-5">

@@ -9,7 +9,7 @@ describe("publicProductCategories", () => {
 
   it("mezcla categorías base, categorías API y categorías de productos sin duplicar", () => {
     const categories = buildPublicProductCategories(
-      [{ category: "Perritos" }, { category: "Promos" }, { category: "Promos" }],
+      [{ category: "Burgers" }, { category: "Promos" }, { category: "Promos" }],
       [" Promos ", "Bebidas", "", null]
     )
 

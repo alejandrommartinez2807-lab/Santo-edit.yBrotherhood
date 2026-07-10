@@ -1,4 +1,5 @@
 import { cleanText } from "@/components/cartUtils";
+import { DEFAULT_PUBLIC_PAYMENT_METHODS } from "@/lib/publicPageConfig";
 
 export type DeliveryZone = {
   name: string;
@@ -8,6 +9,8 @@ export type DeliveryZone = {
 
 export const LOCATIONS_STORAGE_KEY = "santo_perrito_order_locations";
 
+// Semilla del editor de zonas en Configuración (panel privado). El carrito
+// público ya NO las usa: ahí solo valen las zonas reales de /api/delivery-zones.
 export const DEFAULT_DELIVERY_ZONES: DeliveryZone[] = [
   { name: "La Trigaleña", costUSD: 2, isActive: true },
   { name: "Centro", costUSD: 1, isActive: true },
@@ -17,14 +20,9 @@ export const DEFAULT_DELIVERY_ZONES: DeliveryZone[] = [
   { name: "San Diego", costUSD: 4, isActive: true },
 ];
 
-export const PAYMENT_METHOD_OPTIONS = [
-  "Pago móvil",
-  "Efectivo en divisas",
-  "Efectivo en Bs",
-  "Punto de venta",
-  "Transferencia",
-  "Por confirmar",
-];
+// Fallback cuando el dueño no ha personalizado sus métodos en Configuración
+// (la lista editable viaja en businessConfig.publicPaymentMethods).
+export const PAYMENT_METHOD_OPTIONS = DEFAULT_PUBLIC_PAYMENT_METHODS;
 
 export const ADDRESS_HELPERS = [
   "Urb.",

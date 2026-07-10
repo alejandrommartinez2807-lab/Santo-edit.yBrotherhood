@@ -19,15 +19,15 @@ import type { ProductToAdd } from "@/hooks/useCart";
 import type { Product } from "@/data/products";
 import {
   type SelectableOption,
+  type VariationGroupView,
   cleanNumber,
   getProductType,
   getSalesChannels,
   normalizeSelectionRules,
   formatSelectedOption,
-  flattenVariationOptions,
   flattenAddonOptions,
   flattenIngredientOptions,
-  hasRequiredVariation,
+  readVariationGroups,
 } from "@/components/productCardHelpers";
 
 type ProductCardPublicLabels = {
@@ -69,23 +69,25 @@ function ChoiceButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex min-h-12 items-center justify-between gap-2 rounded-2xl border-2 px-3 py-2 text-left text-xs font-black transition ${
+      className={`flex min-h-12 items-center justify-between gap-2 rounded-2xl border px-3 py-2 text-left text-xs font-black transition ${
         selected
-          ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.12)]"
+          ? "border-[var(--brand-primary)] bg-[rgba(var(--brand-primary-rgb),0.14)] text-[var(--brand-ink-3)]"
           : disabled
-            ? "cursor-not-allowed border-[var(--brand-primary)]/10 bg-white/60 text-[var(--brand-primary-dark)]/35"
-            : "border-[var(--brand-primary)]/15 bg-white text-[var(--brand-ink)] hover:border-[var(--brand-primary)]/60"
+            ? "cursor-not-allowed border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-ink-2)]/40"
+            : "border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-ink)] hover:border-[rgba(var(--brand-primary-rgb),0.6)]"
       }`}
     >
       <span>
         <span className="block uppercase leading-tight">{label}</span>
         {detail ? (
-          <span className="mt-0.5 block text-[0.68rem] font-bold uppercase tracking-normal text-[var(--brand-primary)]/70">
+          <span className="mt-0.5 block text-[0.68rem] font-bold uppercase tracking-normal text-[var(--brand-primary)]">
             {detail}
           </span>
         ) : null}
       </span>
-      {selected ? <Check size={16} className="shrink-0" /> : null}
+      {selected ? (
+        <Check size={16} className="shrink-0 text-[var(--brand-primary)]" />
+      ) : null}
     </button>
   );
 }
@@ -112,12 +114,12 @@ function AddonChoice({
 
   return (
     <div
-      className={`rounded-2xl border-2 p-3 transition ${
+      className={`rounded-2xl border p-3 transition ${
         selected
-          ? "border-[var(--brand-primary)] bg-white shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.08)]"
+          ? "border-[var(--brand-primary)] bg-[rgba(var(--brand-primary-rgb),0.1)]"
           : disabled
-            ? "border-[var(--brand-primary)]/10 bg-white/60 opacity-70"
-            : "border-[var(--brand-primary)]/15 bg-white"
+            ? "border-[var(--brand-border)] bg-[var(--brand-surface-2)] opacity-50"
+            : "border-[var(--brand-border)] bg-[var(--brand-surface-2)] hover:border-[rgba(var(--brand-primary-rgb),0.6)]"
       }`}
     >
       <button
@@ -131,16 +133,16 @@ function AddonChoice({
             {option.name}
           </span>
           {option.detail ? (
-            <span className="mt-1 block text-[0.68rem] font-bold uppercase tracking-normal text-[var(--brand-primary)]/70">
+            <span className="mt-1 block text-[0.68rem] font-bold uppercase tracking-normal text-[var(--brand-primary)]">
               {option.detail}
             </span>
           ) : null}
         </span>
         <span
-          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
+          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${
             selected
-              ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
-              : "border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] text-transparent"
+              ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-black"
+              : "border-[var(--brand-border)] bg-black/40 text-transparent"
           }`}
         >
           <Check size={14} />
@@ -148,30 +150,30 @@ function AddonChoice({
       </button>
 
       {selected ? (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-[var(--brand-cream)] px-3 py-2">
-          <span className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary-dark)]">
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-black/40 px-3 py-2">
+          <span className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]">
             Cantidad
           </span>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onDecrease}
-              className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-white text-[var(--brand-primary)]"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)]"
               aria-label={`Bajar cantidad de ${option.name}`}
             >
               <Minus size={14} />
             </button>
-            <span className="min-w-6 text-center text-sm font-black text-[var(--brand-ink)]">
+            <span className="min-w-6 text-center text-sm font-black text-[var(--brand-ink-3)]">
               {quantity}
             </span>
             <button
               type="button"
               onClick={onIncrease}
               disabled={!canIncrease}
-              className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${
+              className={`flex h-8 w-8 items-center justify-center rounded-full border ${
                 canIncrease
-                  ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
-                  : "cursor-not-allowed border-[var(--brand-primary)]/15 bg-white text-[var(--brand-primary)]/30"
+                  ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-black"
+                  : "cursor-not-allowed border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-ink-2)]/30"
               }`}
               aria-label={`Subir cantidad de ${option.name}`}
             >
@@ -211,7 +213,11 @@ export default function ProductCard({
   const [added, setAdded] = useState(false);
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
   const [formMessage, setFormMessage] = useState("");
-  const [selectedVariationKey, setSelectedVariationKey] = useState("");
+  // Selección por grupo de variaciones (estilo BOMBASTYC: burger, tipo de
+  // molla, refresco…). key del grupo → keys de opciones elegidas.
+  const [selectedVariationKeys, setSelectedVariationKeys] = useState<
+    Record<string, string[]>
+  >({});
   const [selectedAddonKeys, setSelectedAddonKeys] = useState<string[]>([]);
   const [addonQuantities, setAddonQuantities] = useState<
     Record<string, number>
@@ -238,8 +244,8 @@ export default function ProductCard({
     paymentMode === "divisa" ||
     productType === "combo" ||
     category === "Combos";
-  const selectableVariations = useMemo(
-    () => flattenVariationOptions(variations),
+  const variationGroups = useMemo(
+    () => readVariationGroups(variations),
     [variations],
   );
   const selectableAddons = useMemo(() => flattenAddonOptions(addons), [addons]);
@@ -247,13 +253,30 @@ export default function ProductCard({
     () => flattenIngredientOptions(removableIngredients),
     [removableIngredients],
   );
-  const variationRequired = hasRequiredVariation(variations);
   const maxAddons = ruleSettings.maxAddons;
   const minAddons = ruleSettings.minAddons;
+  const selectedVariationOptions = variationGroups.flatMap((group) =>
+    group.options.filter((option) =>
+      (selectedVariationKeys[group.key] || []).includes(option.key),
+    ),
+  );
+  const variationsPrice = selectedVariationOptions.reduce(
+    (sum, option) => sum + Number(option.priceDelta || 0),
+    0,
+  );
+  // Compatibilidad con el carrito/pedidos: una sola "variación" que resume
+  // todas las secciones elegidas (el detalle por grupo va en selectionSummary).
   const selectedVariation =
-    selectableVariations.find(
-      (option) => option.key === selectedVariationKey,
-    ) || null;
+    selectedVariationOptions.length === 0
+      ? null
+      : selectedVariationOptions.length === 1
+        ? selectedVariationOptions[0]
+        : {
+            name: selectedVariationOptions
+              .map((option) => option.name)
+              .join(" · "),
+            priceDelta: variationsPrice,
+          };
   const selectedAddons = selectableAddons
     .filter((option) => selectedAddonKeys.includes(option.key))
     .map((option) => ({
@@ -277,8 +300,7 @@ export default function ProductCard({
         Math.max(1, Number(option.quantity || 1)),
     0,
   );
-  const optionsPrice =
-    Number(selectedVariation?.priceDelta || 0) + selectedAddonTotalPrice;
+  const optionsPrice = variationsPrice + selectedAddonTotalPrice;
   const finalUnitPrice = Math.max(0, price + optionsPrice);
   const finalVES = finalUnitPrice * exchangeRate;
   const hasAddonLimit = maxAddons > 0;
@@ -301,7 +323,7 @@ export default function ProductCard({
     ? Math.max(0, maxAddons - selectedAddonUnitCount)
     : 0;
   const hasSelectableOptions =
-    selectableVariations.length > 0 ||
+    variationGroups.length > 0 ||
     selectableAddons.length > 0 ||
     selectableRemovableIngredients.length > 0;
 
@@ -400,6 +422,47 @@ export default function ProductCard({
     }));
   }
 
+  function toggleVariationOption(
+    group: VariationGroupView,
+    option: SelectableOption,
+  ) {
+    resetMessage();
+
+    setSelectedVariationKeys((current) => {
+      const keys = current[group.key] || [];
+      const isSelected = keys.includes(option.key);
+
+      if (group.multiple) {
+        if (isSelected) {
+          return {
+            ...current,
+            [group.key]: keys.filter((key) => key !== option.key),
+          };
+        }
+
+        if (group.maxSelections > 0 && keys.length >= group.maxSelections) {
+          return current;
+        }
+
+        return { ...current, [group.key]: [...keys, option.key] };
+      }
+
+      if (isSelected) {
+        // En grupos obligatorios de una sola opción no se permite quedar vacío.
+        return group.required
+          ? current
+          : { ...current, [group.key]: [] };
+      }
+
+      return { ...current, [group.key]: [option.key] };
+    });
+  }
+
+  function clearVariationGroup(group: VariationGroupView) {
+    resetMessage();
+    setSelectedVariationKeys((current) => ({ ...current, [group.key]: [] }));
+  }
+
   function toggleRemovedIngredient(key: string) {
     resetMessage();
 
@@ -413,9 +476,19 @@ export default function ProductCard({
   function buildSelectionSummary() {
     const parts: string[] = [];
 
-    if (selectedVariation) {
-      parts.push(`Variación: ${formatSelectedOption(selectedVariation)}`);
-    }
+    variationGroups.forEach((group) => {
+      const chosen = group.options.filter((option) =>
+        (selectedVariationKeys[group.key] || []).includes(option.key),
+      );
+
+      if (chosen.length > 0) {
+        parts.push(
+          `${group.name || "Variación"}: ${chosen
+            .map(formatSelectedOption)
+            .join(", ")}`,
+        );
+      }
+    });
 
     if (selectedAddons.length > 0) {
       parts.push(
@@ -437,13 +510,20 @@ export default function ProductCard({
   }
 
   function handleAddToCart() {
-    if (
-      variationRequired &&
-      selectableVariations.length > 0 &&
-      !selectedVariation
-    ) {
-      setFormMessage("Elige una variación antes de agregar este producto.");
-      return;
+    for (const group of variationGroups) {
+      const selectedCount = (selectedVariationKeys[group.key] || []).length;
+      const requiredCount = group.required
+        ? Math.max(1, group.minSelections)
+        : 0;
+
+      if (selectedCount < requiredCount) {
+        setFormMessage(
+          group.name
+            ? `Elige ${group.name} antes de agregar este producto.`
+            : "Elige una variación antes de agregar este producto.",
+        );
+        return;
+      }
     }
 
     if (minAddons > 0 && selectedAddonUnitCount < minAddons) {
@@ -508,9 +588,9 @@ export default function ProductCard({
         viewport={{ once: true, margin: "-80px" }}
         transition={{ duration: 0.35, delay: Math.min(index * 0.04, 0.2) }}
         whileHover={{ y: -6 }}
-        className="group overflow-hidden rounded-[1.8rem] border-2 border-[var(--product-card-border)] bg-[var(--product-card-bg)] shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]"
+        className="group relative flex flex-col overflow-hidden rounded-[1.6rem] border border-[var(--product-card-border)] bg-[var(--product-card-bg)] transition-colors duration-300 hover:border-[rgba(var(--brand-primary-rgb),0.6)] hover:shadow-[0_24px_60px_-30px_rgba(var(--brand-primary-rgb),0.5)]"
       >
-        <div className="relative h-64 overflow-hidden bg-[var(--brand-cream)] sm:h-72">
+        <div className="relative h-56 overflow-hidden bg-black sm:h-64">
           <motion.img
             src={image || BRAND.logoUrl || "/logoremovebg.png"}
             alt={name}
@@ -522,79 +602,38 @@ export default function ProductCard({
             }}
           />
 
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-black/20" />
 
-          <span className="absolute left-4 top-4 rounded-full border-2 border-[var(--product-card-button)] bg-[var(--product-card-border)] px-3 py-2 text-xs font-black uppercase tracking-[0.18em] text-white shadow-md">
+          {/* Destello que recorre la foto al pasar el mouse (solo decorativo). */}
+          <span className="pointer-events-none absolute inset-y-0 left-[-60%] w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent opacity-0 transition-all duration-700 ease-out group-hover:left-[120%] group-hover:opacity-100" />
+
+          <span className="absolute left-4 top-4 rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--product-card-button)] backdrop-blur-sm">
             {category}
           </span>
 
           <div className="absolute right-4 top-4 flex max-w-[58%] flex-col items-end gap-2">
             {isFeatured ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--product-card-border)] bg-[var(--product-card-button)] px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--product-card-text)] shadow-md">
-                <Sparkles size={14} />
-                Destacado
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--product-card-button)] px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-black shadow-lg shadow-black/40">
+                <Sparkles size={13} />
+                Top ventas
               </span>
             ) : null}
 
             {isCombo ? (
-              <span className="rounded-full border-2 border-[var(--product-card-border)] bg-[var(--product-card-button)] px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--product-card-text)] shadow-md">
+              <span className="rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--product-card-button)] backdrop-blur-sm">
                 Solo divisas
               </span>
             ) : null}
           </div>
 
-          <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-3">
-            <div className="max-w-[58%]">
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-[var(--brand-accent)]">
-                {BRAND.name}
-              </p>
-
-              <h3 className="mt-1 text-[1.95rem] font-black uppercase leading-[0.95] tracking-[-0.05em] text-white drop-shadow-md sm:text-[2.2rem]">
-                {name}
-              </h3>
-            </div>
-
-            <div className="min-w-[112px] rounded-[1.4rem] border-2 border-[var(--product-card-border)] bg-[var(--product-card-button)] px-4 py-3 text-right text-[var(--product-card-text)] shadow-xl shadow-black/20">
-              <p className="text-2xl font-black leading-none">
-                {formatUSD(finalUnitPrice)}
-              </p>
-
-              {optionsPrice !== 0 ? (
-                <p className="mt-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[#6b2500]">
-                  Base {formatUSD(price)}
-                </p>
-              ) : null}
-
-              {isCombo ? (
-                <div className="mt-2 border-t border-[#6b4a00]/20 pt-2">
-                  <p className="text-[0.65rem] font-black uppercase tracking-[0.12em] text-[#6b2500]">
-                    Pago en divisas
-                  </p>
-                </div>
-              ) : (
-                <div className="mt-2 border-t border-[#6b4a00]/20 pt-2">
-                  <p className="text-sm font-black leading-none sm:text-base">
-                    Bs {formatVES(finalVES)}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="p-5 sm:p-6">
-          <p className="min-h-[56px] text-sm font-bold leading-relaxed text-[var(--product-card-text)] sm:text-base">
-            {description}
-          </p>
-
           {onToggleFavorite ? (
             <button
               type="button"
               onClick={() => onToggleFavorite(id)}
-              className={`mt-4 inline-flex items-center gap-2 rounded-full border-2 px-3 py-2 text-[0.68rem] font-black uppercase tracking-[0.12em] transition ${
+              className={`absolute bottom-3 right-4 flex h-10 w-10 items-center justify-center rounded-full border backdrop-blur-sm transition active:scale-90 ${
                 isFavorite
-                  ? "border-[var(--product-card-border)] bg-[var(--product-card-button)] text-[var(--product-card-text)] shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.12)]"
-                  : "border-[var(--product-card-border)]/20 bg-[var(--brand-cream)] text-[var(--product-card-text)] hover:border-[var(--product-card-border)]/60"
+                  ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-black"
+                  : "border-white/25 bg-black/60 text-white hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
               }`}
               aria-pressed={isFavorite}
               aria-label={
@@ -603,28 +642,44 @@ export default function ProductCard({
                   : `Guardar ${name} como favorito`
               }
             >
-              <Heart size={14} fill={isFavorite ? "currentColor" : "none"} />
-              {isFavorite ? "Favorito guardado" : "Guardar favorito"}
+              <Heart size={17} fill={isFavorite ? "currentColor" : "none"} />
             </button>
           ) : null}
+        </div>
 
+        <div className="flex flex-1 flex-col p-5">
+          <h3 className="font-display text-[1.6rem] uppercase leading-[0.95] text-[var(--product-card-text)] sm:text-3xl">
+            {name}
+          </h3>
 
+          <p className="mt-2 min-h-[44px] flex-1 text-sm font-medium leading-relaxed text-[var(--product-card-text)] opacity-65">
+            {description}
+          </p>
 
-          {isCombo && (
-            <div className="mt-4 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3">
-              <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-                Este combo se paga únicamente en dólares.
+          <div className="mt-4 flex items-end justify-between gap-3 border-t border-[var(--product-card-border)] pt-4">
+            <div>
+              <p className="text-[1.7rem] font-black leading-none text-[var(--product-card-button)]">
+                {formatUSD(finalUnitPrice)}
               </p>
+              {optionsPrice !== 0 ? (
+                <p className="mt-1 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--product-card-text)] opacity-55">
+                  Base {formatUSD(price)}
+                </p>
+              ) : null}
             </div>
-          )}
+
+            <p className="pb-0.5 text-right text-xs font-black uppercase tracking-[0.08em] text-[var(--product-card-text)] opacity-55 sm:text-sm">
+              {isCombo ? "Pago en divisas" : `Bs ${formatVES(finalVES)}`}
+            </p>
+          </div>
 
           <button
             type="button"
             onClick={handleMainAction}
-            className={`mt-6 flex w-full items-center justify-center gap-3 rounded-xl border-2 border-[var(--brand-primary)] px-4 py-4 font-black uppercase transition active:scale-[0.98] ${
+            className={`mt-4 flex w-full items-center justify-center gap-2.5 rounded-xl px-4 py-3.5 text-sm font-black uppercase tracking-[0.06em] transition active:scale-[0.98] ${
               added
                 ? "bg-green-500 text-white"
-                : "bg-[var(--product-card-button)] text-[var(--product-card-text)] shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.14)] hover:brightness-105"
+                : "bg-[var(--product-card-button)] text-black shadow-[0_12px_30px_-12px_rgba(var(--brand-primary-rgb),0.7)] hover:brightness-110"
             }`}
           >
             {added ? (
@@ -637,11 +692,11 @@ export default function ProductCard({
                 {hasSelectableOptions ? (
                   <SlidersHorizontal size={18} />
                 ) : (
-                  <Plus size={18} />
+                  <ShoppingCart size={18} />
                 )}
                 {hasSelectableOptions
                   ? customizeActionLabel
-                  : `Agregar ${formatUSD(finalUnitPrice)}`}
+                  : `Agregar · ${formatUSD(finalUnitPrice)}`}
               </>
             )}
           </button>
@@ -649,21 +704,21 @@ export default function ProductCard({
       </motion.article>
 
       {hasSelectableOptions && isCustomizerOpen ? (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-[#120000]/75 px-3 py-4 backdrop-blur-sm sm:items-center">
-          <div className="relative flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-[2rem] border-2 border-[var(--product-card-border)] bg-[var(--brand-cream)] shadow-2xl">
-            <div className="flex items-start justify-between gap-4 border-b-2 border-[var(--product-card-border)]/15 bg-[var(--product-card-bg)] px-5 py-4 sm:px-6">
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/80 px-3 py-4 backdrop-blur-sm sm:items-center">
+          <div className="relative flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-[1.8rem] border border-[var(--brand-border)] bg-[var(--brand-surface)] shadow-2xl shadow-black/60">
+            <div className="flex items-start justify-between gap-4 border-b border-[var(--brand-border)] bg-black/40 px-5 py-4 sm:px-6">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--product-card-border)]">
+                <p className="text-[0.65rem] font-black uppercase tracking-[0.22em] text-[var(--brand-primary)]">
                   {customizerTitle}
                 </p>
-                <h3 className="mt-1 text-2xl font-black uppercase leading-none text-[var(--product-card-text)] sm:text-3xl">
+                <h3 className="font-display mt-1 text-2xl uppercase leading-none text-[var(--brand-ink-3)] sm:text-3xl">
                   {name}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={closeCustomizer}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[var(--product-card-border)] bg-[var(--product-card-button)] text-[var(--product-card-text)] shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.12)]"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
                 aria-label="Cerrar personalización"
               >
                 <X size={22} />
@@ -671,8 +726,8 @@ export default function ProductCard({
             </div>
 
             <div className="grid overflow-y-auto lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
-              <div className="border-b-2 border-[var(--product-card-border)]/15 bg-[var(--product-card-bg)] p-5 lg:border-b-0 lg:border-r-2 sm:p-6">
-                <div className="overflow-hidden rounded-[1.5rem] border-2 border-[var(--product-card-border)]/15 bg-[var(--brand-cream)]">
+              <div className="border-b border-[var(--brand-border)] p-5 sm:p-6 lg:border-b-0 lg:border-r">
+                <div className="overflow-hidden rounded-[1.4rem] border border-[var(--brand-border)] bg-black">
                   <Image
                     src={image || BRAND.logoUrl || "/logoremovebg.png"}
                     alt={name}
@@ -685,25 +740,25 @@ export default function ProductCard({
                     }}
                   />
                   <div className="p-4">
-                    <span className="inline-flex rounded-full bg-[var(--product-card-border)] px-3 py-1.5 text-[0.68rem] font-black uppercase tracking-[0.12em] text-white">
+                    <span className="inline-flex rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/60 px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                       {customizerTitle}
                     </span>
-                    <p className="mt-3 text-sm font-bold leading-6 text-[var(--product-card-text)]/72">
+                    <p className="mt-3 text-sm font-medium leading-6 text-[var(--brand-ink-2)]">
                       {description}
                     </p>
                   </div>
                 </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border-2 border-[var(--product-card-border)]/15 bg-[var(--brand-cream)] px-4 py-3">
-                    <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--product-card-border)]">
+                  <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
+                    <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]">
                       Base
                     </p>
-                    <p className="mt-1 text-2xl font-black text-[var(--product-card-text)]">
+                    <p className="mt-1 text-2xl font-black text-[var(--brand-ink-3)]">
                       {formatUSD(price)}
                     </p>
                   </div>
-                  <div className="rounded-2xl border-2 border-[var(--product-card-border)] bg-[var(--product-card-button)] px-4 py-3 text-right text-[var(--product-card-text)]">
+                  <div className="rounded-2xl bg-[var(--brand-primary)] px-4 py-3 text-right text-black">
                     <p className="text-[0.68rem] font-black uppercase tracking-[0.14em]">
                       Final
                     </p>
@@ -720,55 +775,63 @@ export default function ProductCard({
               </div>
 
               <div className="space-y-4 p-5 sm:p-6">
-                {selectableVariations.length > 0 && (
-                  <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/15 bg-white p-4">
-                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <p className="text-sm font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-                          Elige presentación
-                        </p>
-                        {variationRequired ? (
-                          <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
-                            Esta selección es obligatoria.
+                {variationGroups.map((group) => {
+                  const groupKeys = selectedVariationKeys[group.key] || [];
+
+                  return (
+                    <div
+                      key={group.key}
+                      className="rounded-[1.4rem] border border-[var(--brand-border)] bg-black/30 p-4"
+                    >
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                            {group.name || "Elige presentación"}
                           </p>
+                          {group.required ? (
+                            <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
+                              {group.multiple && group.minSelections > 1
+                                ? `Elige al menos ${group.minSelections}.`
+                                : "Esta selección es obligatoria."}
+                            </p>
+                          ) : null}
+                          {group.multiple && group.maxSelections > 0 ? (
+                            <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
+                              Elegidos: {groupKeys.length}/{group.maxSelections}
+                            </p>
+                          ) : null}
+                        </div>
+                        {group.required ? (
+                          <span className="rounded-full bg-[var(--brand-cream)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                            Obligatoria
+                          </span>
                         ) : null}
                       </div>
-                      {variationRequired ? (
-                        <span className="rounded-full bg-[var(--brand-cream)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-                          Obligatoria
-                        </span>
-                      ) : null}
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {!group.required && !group.multiple ? (
+                          <ChoiceButton
+                            label="Base"
+                            detail="Sin cambio"
+                            selected={groupKeys.length === 0}
+                            onClick={() => clearVariationGroup(group)}
+                          />
+                        ) : null}
+                        {group.options.map((option) => (
+                          <ChoiceButton
+                            key={option.key}
+                            label={option.name}
+                            detail={option.detail}
+                            selected={groupKeys.includes(option.key)}
+                            onClick={() => toggleVariationOption(group, option)}
+                          />
+                        ))}
+                      </div>
                     </div>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      {!variationRequired ? (
-                        <ChoiceButton
-                          label="Base"
-                          detail="Sin cambio"
-                          selected={!selectedVariationKey}
-                          onClick={() => {
-                            resetMessage();
-                            setSelectedVariationKey("");
-                          }}
-                        />
-                      ) : null}
-                      {selectableVariations.map((option) => (
-                        <ChoiceButton
-                          key={option.key}
-                          label={option.name}
-                          detail={option.detail}
-                          selected={selectedVariationKey === option.key}
-                          onClick={() => {
-                            resetMessage();
-                            setSelectedVariationKey(option.key);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
+                  );
+                })}
 
                 {includedAddons.length > 0 && (
-                  <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/15 bg-white p-4">
+                  <div className="rounded-[1.4rem] border border-[var(--brand-border)] bg-black/30 p-4">
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <p className="text-sm font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
@@ -818,7 +881,7 @@ export default function ProductCard({
                 )}
 
                 {paidAddons.length > 0 && (
-                  <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/15 bg-white p-4">
+                  <div className="rounded-[1.4rem] border border-[var(--brand-border)] bg-black/30 p-4">
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                       <div>
                         <p className="text-sm font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
@@ -860,7 +923,7 @@ export default function ProductCard({
                 )}
 
                 {selectableRemovableIngredients.length > 0 && (
-                  <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/15 bg-white p-4">
+                  <div className="rounded-[1.4rem] border border-[var(--brand-border)] bg-black/30 p-4">
                     <p className="mb-3 text-sm font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
                       Ingredientes que puedes quitar
                     </p>
@@ -881,7 +944,7 @@ export default function ProductCard({
                   selectedAddons.length > 0 ||
                   removedIngredientsForCart.length > 0 ||
                   optionsPrice !== 0) && (
-                  <div className="space-y-2 rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-white px-4 py-3 text-sm font-black text-[var(--brand-ink)]">
+                  <div className="space-y-2 rounded-2xl border border-[rgba(var(--brand-primary-rgb),0.4)] bg-black/30 px-4 py-3 text-sm font-black text-[var(--brand-ink-3)]">
                     <div className="flex items-center justify-between gap-3">
                       <span>Resumen</span>
                       <span>{formatUSD(finalUnitPrice)}</span>
@@ -909,7 +972,7 @@ export default function ProductCard({
                 )}
 
                 {formMessage ? (
-                  <p className="rounded-xl border border-[var(--brand-primary)]/15 bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                  <p className="rounded-xl border border-[rgba(var(--brand-primary-rgb),0.4)] bg-[rgba(var(--brand-primary-rgb),0.08)] px-3 py-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                     {formMessage}
                   </p>
                 ) : null}
@@ -917,10 +980,10 @@ export default function ProductCard({
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  className={`flex w-full items-center justify-center gap-3 rounded-xl border-2 border-[var(--brand-primary)] px-4 py-4 font-black uppercase transition active:scale-[0.98] ${
+                  className={`flex w-full items-center justify-center gap-3 rounded-xl px-4 py-4 font-black uppercase transition active:scale-[0.98] ${
                     added
                       ? "bg-green-500 text-white"
-                      : "bg-[var(--product-card-button)] text-[var(--product-card-text)] shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.14)] hover:brightness-105"
+                      : "bg-[var(--brand-primary)] text-black shadow-[0_12px_30px_-12px_rgba(var(--brand-primary-rgb),0.7)] hover:brightness-110"
                   }`}
                 >
                   {added ? (

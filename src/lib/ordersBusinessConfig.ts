@@ -2,9 +2,11 @@ import { BRAND } from "./brand"
 import {
   DEFAULT_PUBLIC_CATEGORY_ORDER,
   DEFAULT_PUBLIC_NAV_BUTTONS,
+  DEFAULT_PUBLIC_PAYMENT_METHODS,
   normalizePublicCategoryList,
   normalizePublicHiddenCategoryList,
   normalizePublicNavButtons,
+  normalizePublicPaymentMethods,
   type PublicNavButton,
 } from "./publicPageConfig"
 import { getSupabaseAdmin } from "./supabaseServer"
@@ -82,6 +84,21 @@ export type BusinessConfig = {
   publicComboButtonText: string
   publicCustomizeButtonText: string
   publicCustomizerTitle: string
+  publicCartTitle: string
+  publicCartEmptyTitle: string
+  publicCartEmptyText: string
+  publicCartEmptyButtonText: string
+  publicCartTotalLabel: string
+  publicCartTotalHint: string
+  publicCartLocalOrderButtonText: string
+  publicCartWhatsappButtonText: string
+  publicDivisaGroupTitle: string
+  publicDivisaOnlyNote: string
+  publicDivisaOnlyBadge: string
+  publicRegularGroupTitle: string
+  publicAvailabilityLabel: string
+  // Métodos de pago del carrito público, editables por el dueño.
+  publicPaymentMethods: string[]
   locationButtonText: string
   googleMapsUrl: string
   instagramUrl: string
@@ -176,21 +193,21 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   pricesIncludeIva: true,
   igtfEnabled: true,
   igtfRate: 3,
-  themePrimaryColor: "#a00000",
-  themeAccentColor: "#ffd23c",
-  themeCreamColor: "#fff7e8",
-  productCardBackgroundColor: "#ffffff",
-  productCardTextColor: "#4a0000",
-  productCardBorderColor: "#a00000",
-  productCardButtonColor: "#ffd23c",
+  themePrimaryColor: "#f5a623",
+  themeAccentColor: "#ffb340",
+  themeCreamColor: "#0d0d0d",
+  productCardBackgroundColor: "#141414",
+  productCardTextColor: "#ffffff",
+  productCardBorderColor: "#f5a623",
+  productCardButtonColor: "#f5a623",
   publicTagline: BRAND.tagline,
   publicInfoTitle: `Visita ${BRAND.name}`,
-  publicInfoText: "Estamos listos para recibirte con perritos, salchipapas, raciones y bebidas frías. Abre nuestra ubicación en Google Maps o escribe por WhatsApp para coordinar tu pedido.",
+  publicInfoText: "Somos simples: porque nos gustan las buenas burgers. Ingredientes de calidad y mucho sabor. Abre nuestra ubicación en Google Maps o escribe por WhatsApp para coordinar tu pedido. Delivery & Pick Up en Valencia y San Diego.",
   scheduleTitle: "Horario",
-  scheduleLine1: "Lunes a jueves: 6:00 p.m. a 12:00 a.m.",
-  scheduleLine2: "Viernes a domingos: 6:00 p.m. a 1:00 a.m.",
+  scheduleLine1: "Martes a domingo: 5:00 p.m. a 11:30 p.m.",
+  scheduleLine2: "Lunes: cerrado",
   reviewsTitle: "Reseñas",
-  reviewsText: "Después de probar tu pedido, puedes apoyar el negocio dejando tu reseña o compartiendo la página.",
+  reviewsText: "Después de probar tu pedido, puedes apoyar el negocio dejando tu reseña o compartiendo la página. Gracias por el apoyo, frater.",
   quickOrderTitle: "Pedido rápido",
   quickOrderText: "Agrega productos al carrito y registra el pedido en el local o envíalo directamente por WhatsApp.",
   publicMenuEyebrow: `Menú ${BRAND.name}`,
@@ -202,6 +219,20 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicComboButtonText: "Ver combos",
   publicCustomizeButtonText: "Elige tus ingredientes",
   publicCustomizerTitle: "Elige tus ingredientes",
+  publicCartTitle: "Tu pedido",
+  publicCartEmptyTitle: "Tu carrito está vacío",
+  publicCartEmptyText: "Agrega productos del menú para preparar tu pedido.",
+  publicCartEmptyButtonText: "Ver menú",
+  publicCartTotalLabel: "Total a cobrar",
+  publicCartTotalHint: "Total general en divisas",
+  publicCartLocalOrderButtonText: "Registrar pedido local",
+  publicCartWhatsappButtonText: "Enviar por WhatsApp",
+  publicDivisaGroupTitle: "Combos",
+  publicDivisaOnlyNote: "Pago solo en divisas",
+  publicDivisaOnlyBadge: "Solo divisas",
+  publicRegularGroupTitle: "Productos normales",
+  publicAvailabilityLabel: "Disponible",
+  publicPaymentMethods: [...DEFAULT_PUBLIC_PAYMENT_METHODS],
   locationButtonText: "Abrir ubicación",
   googleMapsUrl: "",
   instagramUrl: "",
@@ -545,6 +576,46 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     publicCustomizerTitle:
       String(source.publicCustomizerTitle || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.publicCustomizerTitle,
+    publicCartTitle:
+      String(source.publicCartTitle || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartTitle,
+    publicCartEmptyTitle:
+      String(source.publicCartEmptyTitle || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartEmptyTitle,
+    publicCartEmptyText:
+      String(source.publicCartEmptyText || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartEmptyText,
+    publicCartEmptyButtonText:
+      String(source.publicCartEmptyButtonText || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartEmptyButtonText,
+    publicCartTotalLabel:
+      String(source.publicCartTotalLabel || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartTotalLabel,
+    publicCartTotalHint:
+      String(source.publicCartTotalHint || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartTotalHint,
+    publicCartLocalOrderButtonText:
+      String(source.publicCartLocalOrderButtonText || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartLocalOrderButtonText,
+    publicCartWhatsappButtonText:
+      String(source.publicCartWhatsappButtonText || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicCartWhatsappButtonText,
+    publicDivisaGroupTitle:
+      String(source.publicDivisaGroupTitle || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicDivisaGroupTitle,
+    publicDivisaOnlyNote:
+      String(source.publicDivisaOnlyNote || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicDivisaOnlyNote,
+    publicDivisaOnlyBadge:
+      String(source.publicDivisaOnlyBadge || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicDivisaOnlyBadge,
+    publicRegularGroupTitle:
+      String(source.publicRegularGroupTitle || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicRegularGroupTitle,
+    publicAvailabilityLabel:
+      String(source.publicAvailabilityLabel || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.publicAvailabilityLabel,
+    publicPaymentMethods: normalizePublicPaymentMethods(source.publicPaymentMethods),
     locationButtonText:
       String(source.locationButtonText || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.locationButtonText,

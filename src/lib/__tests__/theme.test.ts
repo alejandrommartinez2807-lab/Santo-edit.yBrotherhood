@@ -12,7 +12,9 @@ describe("buildBrandThemeCss", () => {
     expect(css).toContain("--brand-primary:#1d4ed8")
     expect(css).toContain("--brand-primary-rgb:29, 78, 216")
     expect(css).toContain("--brand-primary-dark:")
-    expect(css).toContain("--brand-ink:")
+    // Tema oscuro: los --brand-ink* (texto claro) ya NO se derivan del primary;
+    // viven fijos en globals.css para no oscurecer el texto sobre el fondo negro.
+    expect(css).not.toContain("--brand-ink:")
   })
 
   it("incluye acento y fondo cuando se proveen", () => {

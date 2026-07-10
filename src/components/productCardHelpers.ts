@@ -424,6 +424,104 @@ export function flattenVariationOptions(
   return options;
 }
 
+// Vista por GRUPO de variaciones para el customizer público (estilo
+// BOMBASTYC: "Burger", "Tipo de molla", "Refresco" como secciones separadas,
+// cada una con su propia obligatoriedad y límites). Las entradas legadas sin
+// values[] se agrupan en un grupo sin nombre ("Elige presentación").
+export type VariationGroupView = {
+  key: string;
+  name: string;
+  required: boolean;
+  multiple: boolean;
+  minSelections: number;
+  maxSelections: number;
+  options: SelectableOption[];
+};
+
+export function readVariationGroups(
+  value: unknown[] | undefined,
+): VariationGroupView[] {
+  if (!Array.isArray(value)) return [];
+
+  const groups: VariationGroupView[] = [];
+  const legacyOptions: SelectableOption[] = [];
+
+  value.forEach((item, itemIndex) => {
+    if (readBoolean(item, ["isActive", "active", "activo"]) === false) {
+      return;
+    }
+
+    const groupName = readText(item, [
+      "name",
+      "nombre",
+      "title",
+      "titulo",
+      "label",
+      "etiqueta",
+    ]);
+    const values = readArray(item, ["values", "opciones", "options", "items"]);
+
+    if (values.length > 0) {
+      const options = values
+        .map((valueItem, valueIndex) =>
+          normalizeSelectableOption(
+            valueItem,
+            valueIndex,
+            `variation-${itemIndex}`,
+            groupName,
+          ),
+        )
+        .filter((option): option is SelectableOption => Boolean(option));
+
+      if (!options.length) return;
+
+      const required =
+        readBoolean(item, ["required", "obligatorio", "isRequired"]) === true;
+      const minSelections = readPositiveInteger(item, [
+        "minSelections",
+        "min",
+        "minimo",
+      ]);
+      const maxSelections = readPositiveInteger(item, [
+        "maxSelections",
+        "max",
+        "maximo",
+      ]);
+      const multiple =
+        readText(item, ["type", "tipo"]).toLowerCase() === "multiple";
+
+      groups.push({
+        key: `variation-group-${itemIndex}`,
+        name: groupName,
+        required: required || minSelections > 0,
+        multiple,
+        minSelections: required ? Math.max(1, minSelections) : minSelections,
+        maxSelections: multiple ? maxSelections : 1,
+        options,
+      });
+      return;
+    }
+
+    const option = normalizeSelectableOption(item, itemIndex, "variation");
+
+    if (option) legacyOptions.push(option);
+  });
+
+  if (legacyOptions.length > 0) {
+    groups.push({
+      key: "variation-group-legacy",
+      name: "",
+      required: false,
+      multiple: false,
+      minSelections: 0,
+      maxSelections: 1,
+      options: legacyOptions,
+    });
+  }
+
+  return groups;
+}
+
 export function flattenAddonOptions(value: unknown[] | undefined): SelectableOption[] {
   if (!Array.isArray(value)) return [];
 

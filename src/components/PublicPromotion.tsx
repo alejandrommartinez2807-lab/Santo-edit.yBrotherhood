@@ -22,11 +22,13 @@ type PublicPromotionConfig = {
   productCardButtonColor?: string
 }
 
+// Defaults alineados al tema oscuro Brotherhood; los valores que el admin
+// guarde en business_config siguen teniendo prioridad.
 const DEFAULT_PROMOTION_COLORS = {
-  productCardBackgroundColor: "#ffffff",
-  productCardTextColor: "#4a0000",
-  productCardBorderColor: "#a00000",
-  productCardButtonColor: "#ffd23c",
+  productCardBackgroundColor: "#141414",
+  productCardTextColor: "#fafaf9",
+  productCardBorderColor: "#2a2a2a",
+  productCardButtonColor: "#f5a623",
 }
 
 function normalizeText(value: unknown) {
@@ -192,36 +194,76 @@ export default function PublicPromotion() {
 
   return (
     <section
-      className="bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-3)] sm:px-6 lg:px-8"
+      className="bg-[var(--brand-cream)] px-4 py-10 text-[var(--brand-ink-3)] sm:px-6 lg:px-8"
       style={colorStyle}
     >
-      <div className="mx-auto max-w-7xl overflow-hidden rounded-[2rem] border-4 border-[var(--promo-card-border)] bg-[var(--promo-card-bg)] text-[var(--promo-card-text)] shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.14)]">
-        <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,-16px_0] bg-[var(--brand-cream)]" />
+      <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[1.8rem] border border-[rgba(var(--brand-primary-rgb),0.45)] bg-[var(--promo-card-bg)] text-[var(--promo-card-text)]">
+        {/* Resplandor y marca de agua */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_85%_0%,rgba(var(--brand-primary-rgb),0.18),transparent_55%)]"
+        />
+        <Image
+          src="/brotherhood-logo-transparente.png"
+          alt=""
+          width={480}
+          height={480}
+          unoptimized
+          className="pointer-events-none absolute -bottom-16 -left-16 w-64 -rotate-12 opacity-[0.05]"
+        />
 
-        <div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-stretch lg:p-10">
-          <div className="flex flex-col justify-between gap-5">
-            <div className="flex items-start gap-4">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.6rem] border-4 border-[var(--promo-card-border)] bg-[var(--promo-card-button)] text-[var(--promo-card-text)] shadow-[0_7px_0_rgba(var(--brand-primary-rgb),0.14)]">
-                <Sparkles size={38} />
-              </div>
-
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.24em] text-[var(--promo-card-border)]">
-                  Promoción activa
-                </p>
-                <h2 className="mt-2 text-4xl font-black uppercase leading-none tracking-[-0.05em] text-[var(--promo-card-border)] drop-shadow-[0_4px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl">
-                  {title}
-                </h2>
-                {productName && productName !== title && (
-                  <p className="mt-3 text-sm font-black uppercase tracking-[0.14em] opacity-75">
-                    Producto: {productName}
-                  </p>
-                )}
-              </div>
+        <div className="relative grid gap-6 p-6 sm:p-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:p-10">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-[var(--promo-card-button)] px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.2em] text-black">
+              <Sparkles size={15} />
+              Promoción activa
             </div>
 
-            {imageUrl && !imageFailed && (
-              <div className="overflow-hidden rounded-[1.6rem] border-2 border-[var(--promo-card-border)] bg-[var(--brand-cream)]">
+            <h2 className="font-display mt-5 text-[2.8rem] uppercase leading-[0.9] text-[var(--brand-primary)] [text-shadow:0_8px_40px_rgba(var(--brand-primary-rgb),0.35)] sm:text-6xl">
+              {title}
+            </h2>
+
+            {productName && productName !== title && (
+              <p className="mt-3 text-xs font-black uppercase tracking-[0.16em] opacity-70">
+                Producto: {productName}
+              </p>
+            )}
+
+            <p className="mt-5 max-w-xl text-xl font-black leading-7 sm:text-2xl">
+              {highlight}
+            </p>
+            <p className="mt-3 max-w-xl text-sm font-medium leading-6 opacity-70">
+              {text}
+            </p>
+
+            <div className="mt-6 flex flex-wrap items-center gap-4">
+              {promotionPriceUSD > 0 && (
+                <div className="rounded-2xl border border-[rgba(var(--brand-primary-rgb),0.45)] bg-black/40 px-5 py-3">
+                  <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] opacity-70">
+                    Precio promo
+                  </p>
+                  <p className="text-3xl font-black leading-none text-[var(--promo-card-button)]">
+                    {formatPromoPrice(promotionPriceUSD)}
+                  </p>
+                </div>
+              )}
+
+              <a
+                href={buttonHref}
+                className="inline-flex items-center justify-center rounded-full bg-[var(--promo-card-button)] px-7 py-4 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_14px_36px_-12px_rgba(var(--brand-primary-rgb),0.8)] transition hover:brightness-110 active:scale-95"
+              >
+                {buttonText}
+              </a>
+            </div>
+          </div>
+
+          {imageUrl && !imageFailed && (
+            <div className="relative">
+              <div
+                aria-hidden
+                className="absolute -inset-3 rounded-[2rem] bg-[rgba(var(--brand-primary-rgb),0.16)] blur-2xl"
+              />
+              <div className="relative overflow-hidden rounded-[1.5rem] border border-[rgba(var(--brand-primary-rgb),0.45)] bg-black">
                 <Image
                   src={imageUrl}
                   alt={title}
@@ -229,44 +271,11 @@ export default function PublicPromotion() {
                   height={360}
                   unoptimized
                   onError={() => setImageFailed(true)}
-                  className="h-[240px] w-full object-cover object-center sm:h-[320px] lg:h-[360px]"
+                  className="h-[240px] w-full object-cover object-center sm:h-[320px] lg:h-[380px]"
                 />
               </div>
-            )}
-          </div>
-
-          <div className="flex flex-col justify-between rounded-[1.5rem] border-2 border-[var(--promo-card-border)]/30 bg-[var(--brand-cream)] p-5">
-            <div>
-              <div className="inline-flex rounded-full border-2 border-[var(--promo-card-border)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--promo-card-border)]">
-                Oferta destacada
-              </div>
-
-              <p className="mt-5 text-2xl font-black leading-8 text-[var(--promo-card-text)]">
-                {highlight}
-              </p>
-              <p className="mt-3 text-sm font-bold leading-7 text-[var(--promo-card-text)]/75">
-                {text}
-              </p>
-
-              {promotionPriceUSD > 0 && (
-                <div className="mt-5 rounded-[1.3rem] border-2 border-[var(--promo-card-border)]/30 bg-white p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--promo-card-border)]">
-                    Precio promocional
-                  </p>
-                  <p className="mt-1 text-4xl font-black text-[var(--promo-card-border)]">
-                    {formatPromoPrice(promotionPriceUSD)}
-                  </p>
-                </div>
-              )}
             </div>
-
-            <a
-              href={buttonHref}
-              className="mt-6 inline-flex w-full items-center justify-center rounded-full border-2 border-[var(--promo-card-border)] bg-[var(--promo-card-button)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--promo-card-text)] transition hover:brightness-105"
-            >
-              {buttonText}
-            </a>
-          </div>
+          )}
         </div>
       </div>
     </section>

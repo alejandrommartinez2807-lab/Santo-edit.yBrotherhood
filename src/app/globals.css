@@ -10,26 +10,44 @@
   --bambucha-cream: #fff1cf;
   --bambucha-muted: #c9a875;
 
-  /* ===== TEMA DE MARCA (white-label) =====
+  /* ===== TEMA DE MARCA (white-label · Brotherhood = oscuro) =====
      El dueño puede sobrescribir estos colores desde el panel de Personalización
      (se inyectan en runtime desde business_config). Aquí están los valores por
-     defecto. Para cambiarlos por código, edita solo estos valores. */
-  --brand-primary: #a00000;
-  --brand-primary-dark: #7a0000;
-  --brand-primary-rgb: 160, 0, 0;
-  --brand-cream: #fff7e8;
-  --brand-ink: #4a0000;
-  --brand-ink-2: #3a0000;
-  --brand-ink-3: #220000;
-  --brand-amber: #8a5a00;
-  --brand-accent: #ffd23c;
-  --brand-accent-200: #ffe07a;
-  --brand-accent-100: #fff3c4;
-  --brand-accent-rgb: 255, 211, 0;
+     defecto. Para cambiarlos por código, edita solo estos valores.
+
+     Tema OSCURO: `--brand-cream` es la superficie (fondo) y ahora es casi negra;
+     los `--brand-ink*` son el texto y ahora son claros (ink-3 = el más brillante,
+     para títulos/texto principal). Así, cualquier combo `bg-cream + text-ink`
+     mantiene contraste pero invertido a oscuro sin tocar cada componente. */
+  --brand-primary: #f5a623;
+  --brand-primary-dark: #d4820a;
+  --brand-primary-rgb: 245, 166, 35;
+  --brand-cream: #0d0d0d;
+  --brand-ink: #e7e5e4;
+  --brand-ink-2: #a8a29e;
+  --brand-ink-3: #fafaf9;
+  --brand-amber: #ffb340;
+  --brand-accent: #ffb340;
+  --brand-accent-200: #ffc766;
+  --brand-accent-100: #ffe1b0;
+  --brand-accent-rgb: 255, 179, 64;
+
+  /* Superficies oscuras auxiliares para tarjetas/paneles del sitio público. */
+  --brand-surface: #141414;
+  --brand-surface-2: #1c1c1c;
+  --brand-border: #2a2a2a;
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* Fuente display condensada para títulos/hero (estilo grunge de la marca).
+   Se aplica con la clase .font-display; el cuerpo mantiene la sans. */
+.font-display {
+  font-family: var(--font-display), "Arial Narrow", system-ui, sans-serif;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
 }
 
 html {
@@ -39,8 +57,8 @@ html {
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top, rgba(255, 122, 0, 0.18), transparent 35%),
-    linear-gradient(180deg, #120404 0%, #050101 45%, #000000 100%);
+    radial-gradient(circle at top, rgba(245, 166, 35, 0.16), transparent 35%),
+    linear-gradient(180deg, #141414 0%, #0a0a0a 45%, #000000 100%);
   color: white;
 }
 

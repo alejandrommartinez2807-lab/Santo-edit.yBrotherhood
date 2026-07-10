@@ -12,7 +12,7 @@ function makeMenuProduct(overrides: Partial<MenuProduct> = {}): MenuProduct {
   return {
     id: 101,
     name: "Perro especial",
-    category: "Perritos",
+    category: "Burgers",
     description: "Con todo",
     price: 4.5,
     image: "/perro.png",
@@ -33,7 +33,7 @@ describe("publicProductsResponse", () => {
     expect(menuProductToPublicProduct(product)).toMatchObject({
       id: 101,
       name: "Perro especial",
-      category: "Perritos",
+      category: "Burgers",
       description: "Con todo",
       price: 4.5,
       image: "/perro.png",
@@ -61,7 +61,7 @@ describe("publicProductsResponse", () => {
 
   it("mezcla categorías base con categorías de productos sin duplicar", () => {
     const categories = buildCategories([
-      menuProductToPublicProduct(makeMenuProduct({ category: "Perritos" })),
+      menuProductToPublicProduct(makeMenuProduct({ category: "Burgers" })),
       menuProductToPublicProduct(makeMenuProduct({ category: "Promos" })),
       menuProductToPublicProduct(makeMenuProduct({ category: "Promos" })),
     ])
