@@ -460,6 +460,7 @@ export async function PATCH(
 
         if (addUSD <= 0 && addVES <= 0) continue;
 
+        const actor = getLocalAccessAuditActor(access.access);
         const updatedOrder = await updateOrderPayment(
           order.id,
           {
@@ -469,6 +470,7 @@ export async function PATCH(
             paymentMethodVES,
             deliveryPaymentIn,
             paymentNote,
+            chargedBy: { id: actor.id, name: actor.label, role: actor.role },
           },
           branchId,
         );
@@ -500,7 +502,12 @@ export async function PATCH(
       ) {
         openAccount = await closeOpenAccount(
           cleanAccountId,
-          { closedBy: cleanText(body.closedBy) || access.roleLabel || "Caja" },
+          {
+            closedBy:
+              cleanText(body.closedBy) ||
+              getLocalAccessAuditActor(access.access).label ||
+              "Caja",
+          },
           branchId,
         );
       }
@@ -541,7 +548,10 @@ export async function PATCH(
       const openAccount = await closeOpenAccount(
         cleanAccountId,
         {
-          closedBy: cleanText(body.closedBy) || access.roleLabel || "Caja",
+          closedBy:
+            cleanText(body.closedBy) ||
+            getLocalAccessAuditActor(access.access).label ||
+            "Caja",
         },
         branchId,
       );

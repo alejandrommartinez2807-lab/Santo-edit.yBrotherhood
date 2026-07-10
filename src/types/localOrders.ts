@@ -155,6 +155,15 @@ export type LocalOrder = {
   // Pedido de práctica (Modo entrenamiento): excluido de reportes/inventario/cierre.
   isTraining?: boolean
 
+  // Atribución de ventas (0022): quién registró y quién cobró el pedido.
+  // registeredBy* vacío = pedido hecho por el cliente desde la web/QR.
+  registeredById?: string
+  registeredByName?: string
+  registeredByRole?: string
+  chargedById?: string
+  chargedByName?: string
+  chargedByRole?: string
+
   deliveryReportStatus?: DeliveryReportStatus
   deliveryReportedAt?: string
   deliveryReportedBy?: string

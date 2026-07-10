@@ -335,10 +335,14 @@ export async function PATCH(
     const branchId = await resolveBranchId(request)
     const body = (await request.json()) as Record<string, unknown>
     const payment = getPaymentInput(body)
+    const actor = getLocalAccessAuditActor(access.access)
 
     const order = await updateOrderPayment(
       orderId,
-      payment as Parameters<typeof updateOrderPayment>[1],
+      {
+        ...(payment as Parameters<typeof updateOrderPayment>[1]),
+        chargedBy: { id: actor.id, name: actor.label, role: actor.role },
+      },
       branchId
     )
 
@@ -347,7 +351,7 @@ export async function PATCH(
       branchId,
       entityType: "order",
       entityId: orderId,
-      actor: getLocalAccessAuditActor(access.access),
+      actor,
       request,
       metadata: {
         amountReceivedUSD: payment.amountReceivedUSD,
