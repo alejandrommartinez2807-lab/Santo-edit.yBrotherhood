@@ -18,7 +18,12 @@ import {
   isValidOrderType,
   normalizeItems,
 } from "@/lib/localOrderHelpers"
-import { canLocalAccessUseModule, getRequestAccess, type LocalRole } from "@/lib/localAccess"
+import {
+  canLocalAccessUseModule,
+  getLocalAccessAuditActor,
+  getRequestAccess,
+  type LocalRole,
+} from "@/lib/localAccess"
 import { getModulePlanAccess, type LocalModuleKey } from "@/lib/localPlans"
 import { resolveBranchId, resolveScopedBranchId } from "@/lib/branch"
 import { enforceRateLimit } from "@/lib/rateLimit"
@@ -149,6 +154,7 @@ function getReadModuleForRole(role: LocalRole): LocalModuleKey {
   if (role === "kitchen") return "kitchen"
   if (role === "delivery") return "delivery"
   if (role === "waiter") return "mainPanel"
+  if (role === "promoter") return "cashier"
 
   return "mainPanel"
 }
@@ -173,6 +179,7 @@ export async function GET(request: NextRequest) {
       "kitchen",
       "delivery",
       "waiter",
+      "promoter",
     ])
 
     if (!access.ok) {
@@ -541,8 +548,18 @@ export async function POST(request: NextRequest) {
 
     const totals = calculateOrderTotalsFromItems(items, exchangeRate, deliveryCostUSD)
 
+    // Atribución de ventas (0022): si el pedido lo registra staff con sesión,
+    // guardamos quién fue. Pedidos del cliente web/QR no traen sesión y quedan
+    // sin actor (el reporte los agrupa como "Cliente (web/QR)").
+    const staffAccess = getAccess(request)
+    const staffActor = staffAccess.ok ? getLocalAccessAuditActor(staffAccess) : null
+    const registeredBy = staffActor?.label
+      ? { id: staffActor.id, name: staffActor.label, role: staffActor.role }
+      : undefined
+
     const orderPayload = {
       clientOrderId,
+      registeredBy,
       customerName,
       customerPhone,
       tableNumber,

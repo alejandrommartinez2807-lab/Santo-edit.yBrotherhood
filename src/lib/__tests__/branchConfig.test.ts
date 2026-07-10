@@ -76,6 +76,20 @@ describe("branch scoped business config", () => {
     expect(config.localTables).toEqual([]);
   });
 
+  it("la marca de evento (modo evento) se normaliza y persiste por sede", () => {
+    const config = normalizeBranchScopedConfig({ isEvent: "si" })
+    expect(config.isEvent).toBe(true)
+
+    const next = mergeRawBusinessConfigWithBranchConfig(
+      { branchConfigs: { centro: { publicName: "Centro" } } },
+      "feria",
+      { isEvent: true, publicName: "Feria La Candelaria" },
+    )
+
+    expect(getBranchConfig(next, "feria").isEvent).toBe(true)
+    expect(getBranchConfig(next, "centro").isEvent).toBeUndefined()
+  })
+
   it("copia configuración de una sede a otra", () => {
     const raw = {
       branchConfigs: {

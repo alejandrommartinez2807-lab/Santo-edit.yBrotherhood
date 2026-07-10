@@ -4,6 +4,14 @@ import type {
   OrderType,
 } from "@/types/localOrders"
 
+// Atribución de ventas: staff que registró/cobró el pedido (ver migración
+// 0022_order_attribution). name vacío = sin atribución (cliente web).
+export type OrderActorInput = {
+  id?: string | null
+  name?: string | null
+  role?: string | null
+}
+
 export type CreateOrderInput = {
   customerName: string
   customerPhone?: string
@@ -19,6 +27,10 @@ export type CreateOrderInput = {
   // Pedido de práctica (Modo entrenamiento). Lo decide el servidor según el
   // flag global del negocio; no se toma del cliente. Ver 0021_training_mode.
   isTraining?: boolean
+
+  // Staff que registró el pedido. Lo decide el servidor según la sesión;
+  // ausente en pedidos hechos por el cliente desde la web/QR.
+  registeredBy?: OrderActorInput
 
   deliveryAddress?: string
   deliveryReference?: string
@@ -50,6 +62,9 @@ export type UpdateOrderPaymentInput = {
   paymentMethodVES?: string
   deliveryPaymentIn: DeliveryPaymentIn
   paymentNote?: string
+
+  // Staff que registró el cobro. Lo decide el servidor según la sesión.
+  chargedBy?: OrderActorInput
 }
 
 export type ConfirmStaffItemsInput = {

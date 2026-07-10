@@ -9,6 +9,7 @@ import type { LocalOrder } from "@/types/localOrders"
 import type { CreateOrderInput } from "./ordersCoreTypes"
 import {
   buildItemsText,
+  isMissingColumnError,
   num,
   orderItemToRow,
   type Row,
@@ -106,8 +107,26 @@ export async function createOrderInStore(
     ;(orderRow as Record<string, unknown>).is_training = true
   }
 
+  // Atribución de ventas (0022): quién registró el pedido. Solo se tocan las
+  // columnas cuando hay staff identificado (pedidos del cliente web no).
+  const registeredByName = cleanText(input.registeredBy?.name)
+  const attributionKeys = ["registered_by_id", "registered_by_name", "registered_by_role"]
+  if (registeredByName) {
+    orderRow.registered_by_id = cleanText(input.registeredBy?.id) || null
+    orderRow.registered_by_name = registeredByName
+    orderRow.registered_by_role = cleanText(input.registeredBy?.role) || null
+  }
+
   // branch-exempt: orderRow incluye branch_id (asignado arriba).
-  const { error: insertError } = await supabase.from("orders").insert(orderRow)
+  let { error: insertError } = await supabase.from("orders").insert(orderRow)
+
+  // Migración 0022 sin aplicar: reintenta sin atribución (la venta no se pierde).
+  if (insertError && registeredByName && isMissingColumnError(insertError)) {
+    attributionKeys.forEach((key) => delete orderRow[key])
+    // branch-exempt: orderRow incluye branch_id (asignado arriba).
+    ;({ error: insertError } = await supabase.from("orders").insert(orderRow))
+  }
+
   if (insertError) {
     // Carrera de idempotencia: otro reintento concurrente ganó la inserción
     // (viola el índice único de client_order_id). Devolvemos el ya creado.

@@ -23,6 +23,15 @@ export function iso(value: unknown): string {
   return String(value)
 }
 
+// Columnas de migraciones recientes (p.ej. 0022_order_attribution) que el
+// usuario aplica a mano en Supabase: si aún no existen, el insert/update se
+// reintenta sin ellas en vez de romper la venta o el cobro.
+// 42703 = undefined_column (Postgres); PGRST204 = columna fuera del schema
+// cache (PostgREST).
+export function isMissingColumnError(error: { code?: string | null } | null | undefined) {
+  return error?.code === "42703" || error?.code === "PGRST204"
+}
+
 // ---------- Mapeo de ítems ----------
 
 export function itemRowToOrderItem(row: Row): OrderItem {
@@ -138,6 +147,13 @@ export function orderRowToLocalOrder(row: Row, items: OrderItem[]): LocalOrder {
     exchangeValueDate: cleanText(row.exchange_value_date) || undefined,
     status: (cleanText(row.status) || "Nuevo") as OrderStatus,
     isTraining: row.is_training === true,
+
+    registeredById: cleanText(row.registered_by_id) || undefined,
+    registeredByName: cleanText(row.registered_by_name) || undefined,
+    registeredByRole: cleanText(row.registered_by_role) || undefined,
+    chargedById: cleanText(row.charged_by_id) || undefined,
+    chargedByName: cleanText(row.charged_by_name) || undefined,
+    chargedByRole: cleanText(row.charged_by_role) || undefined,
 
     deliveryReportStatus: (row.delivery_report_status as LocalOrder["deliveryReportStatus"]) || undefined,
     deliveryReportedAt: cleanText(row.delivery_reported_at) || undefined,

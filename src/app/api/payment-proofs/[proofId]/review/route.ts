@@ -4,7 +4,7 @@ import {
   reviewPaymentProof,
   type PaymentProofStatus,
 } from "@/lib/orders"
-import { getRequestAccess, type LocalRole } from "@/lib/localAccess"
+import { getLocalAccessAuditActor, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import { writeAuditLog } from "@/lib/audit"
@@ -55,7 +55,7 @@ function checkRole(request: NextRequest, allowedRoles: LocalRole[]) {
     }
   }
 
-  return { ok: true as const, response: null, role: access.role, roleLabel: access.roleLabel }
+  return { ok: true as const, response: null, role: access.role, roleLabel: access.roleLabel, access }
 }
 
 async function checkPaymentProofsModule() {
@@ -111,7 +111,7 @@ export async function PATCH(
 
 
   try {
-    const access = checkRole(request, ["owner", "manager", "cashier"])
+    const access = checkRole(request, ["owner", "manager", "cashier", "promoter"])
     if (!access.ok) return access.response
 
     const moduleCheck = await checkPaymentProofsModule()
@@ -123,10 +123,12 @@ export async function PATCH(
     const status = normalizeStatus(body.status)
     const internalNote = cleanText(body.internalNote)
 
+    const actor = getLocalAccessAuditActor(access.access)
+
     const paymentProof = await reviewPaymentProof(proofId, {
       status,
       internalNote,
-      reviewedBy: access.roleLabel || "Caja",
+      reviewedBy: actor.label || access.roleLabel || "Caja",
     }, branchId)
 
     await writeAuditLog({
@@ -134,7 +136,7 @@ export async function PATCH(
       branchId,
       entityType: "payment_proof",
       entityId: proofId,
-      actor: { role: access.role, label: access.roleLabel },
+      actor,
       request,
       metadata: { status, internalNote },
     })

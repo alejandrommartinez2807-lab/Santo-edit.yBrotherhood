@@ -30,6 +30,7 @@ const VALID_ROLES: LocalRole[] = [
   "waiter",
   "kitchen",
   "delivery",
+  "promoter",
   "support",
 ]
 
@@ -40,6 +41,7 @@ const ROLE_LABELS: Record<LocalRole, string> = {
   waiter: "Mesonero",
   kitchen: "Cocina",
   delivery: "Delivery",
+  promoter: "Promotor",
   support: "Soporte",
 }
 

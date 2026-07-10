@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { getRequestAccess } from "@/lib/localAccess"
+import { getBranchConfigsFromRawBusinessConfig } from "@/lib/branch"
+import { getRawBusinessConfig, saveBusinessConfig } from "@/lib/orders"
 
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 
@@ -88,5 +90,20 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
   // ON DELETE CASCADE borra los datos de esa sucursal. Confirmación en el panel.
   const { error } = await supabase.from("branches").delete().eq("id", id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Sin la sede, su override en business_config (marca de evento, textos, mesas)
+  // quedaría huérfano; se limpia aquí. Si falla no bloquea el borrado.
+  try {
+    const rawBusinessConfig = await getRawBusinessConfig()
+    const branchConfigs = getBranchConfigsFromRawBusinessConfig(rawBusinessConfig)
+    const branchKey = cleanText(id)
+    if (branchKey in branchConfigs) {
+      delete branchConfigs[branchKey]
+      await saveBusinessConfig({ ...rawBusinessConfig, branchConfigs } as never)
+    }
+  } catch {
+    /* limpieza best-effort */
+  }
+
   return NextResponse.json({ ok: true })
 }

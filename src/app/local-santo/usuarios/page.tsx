@@ -69,6 +69,7 @@ const ROLES: { value: string; label: string; defaultModules: LocalModuleKey[] }[
   },
   { value: "cashier", label: "Caja", defaultModules: ["mainPanel", "cashier", "paymentProofs", "tickets", "openAccounts"] },
   { value: "waiter", label: "Mesonero", defaultModules: ["mainPanel", "openAccounts", "tables", "qrTables", "waiterConfirmation", "tickets"] },
+  { value: "promoter", label: "Promotor (eventos/ferias)", defaultModules: ["mainPanel", "cashier", "paymentProofs", "tickets"] },
   { value: "kitchen", label: "Cocina", defaultModules: ["kitchen", "kitchenItems", "tickets"] },
   { value: "delivery", label: "Delivery", defaultModules: ["delivery"] },
   { value: "support", label: "Soporte", defaultModules: ["support", "roles", "branches", "settings"] },

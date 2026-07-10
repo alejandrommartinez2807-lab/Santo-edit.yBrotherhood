@@ -4,7 +4,7 @@ import {
   saveDayClose,
   type SaveDayCloseInput,
 } from "@/lib/orders"
-import { getRequestAccess, type LocalRole } from "@/lib/localAccess"
+import { getLocalAccessAuditActor, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import { writeAuditLog } from "@/lib/audit"
@@ -76,6 +76,7 @@ function checkRole(request: NextRequest, allowedRoles: LocalRole[]) {
     ok: true as const,
     response: null,
     role: access.role,
+    access,
   }
 }
 
@@ -363,6 +364,10 @@ export async function POST(request: NextRequest) {
       deliveryByPaymentIn: canIncludeDeliveryAudit
         ? normalizeSummaryItems(rawDayClose.deliveryByPaymentIn)
         : [],
+      salesBySeller: canIncludeCashierAudit
+        ? normalizeSummaryItems(rawDayClose.salesBySeller)
+        : [],
+      ordersByRegistrar: normalizeSummaryItems(rawDayClose.ordersByRegistrar),
       productsSold: normalizeProductsSold(rawDayClose.productsSold),
     }
 
@@ -374,7 +379,7 @@ export async function POST(request: NextRequest) {
       branchId,
       entityType: "day_close",
       entityId: savedDayClose.id,
-      actor: { role: access.role, label: access.role || "Dueño" },
+      actor: getLocalAccessAuditActor(access.access),
       request,
       metadata: {
         realCollectedUSD: dayClose.realCollectedUSD,

@@ -26,6 +26,7 @@ import {
   PAYMENT_FILTERS,
   REPORT_VIEW_MODES,
   buildDayClosesCsv,
+  buildSingleCloseDetailedCsv,
   combineExpensesByField,
   createSafeFileName,
   formatDate,
@@ -78,6 +79,15 @@ function downloadCloseSummary(close: SavedDayClose) {
 
 function downloadSingleCloseCsv(close: SavedDayClose) {
   downloadDayClosesCsv([close], `${close.id}-${getCloseTitle(close)}`)
+}
+
+// Excel con TODO el detalle del cierre (vendedores, cobros, productos,
+// gastos), listo para abrir sin transcribir nada a mano.
+function downloadSingleCloseDetailedCsv(close: SavedDayClose) {
+  const csv = buildSingleCloseDetailedCsv(close)
+  const fileName = `${createSafeFileName(`${close.id}-${getCloseTitle(close)}-detallado`)}.csv`
+
+  downloadExcelFriendlyCsv(fileName, csv)
 }
 
 function escapeHtml(value: string) {
@@ -1068,7 +1078,7 @@ function CloseDetailModal({
       onClose={onClose}
       title="Detalle del cierre"
       footer={
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           <button
             type="button"
             onClick={onCopy}
@@ -1096,6 +1106,15 @@ function CloseDetailModal({
           >
             <FileText size={17} />
             CSV
+          </button>
+
+          <button
+            type="button"
+            onClick={() => downloadSingleCloseDetailedCsv(close)}
+            className="flex items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] outline-none transition hover:bg-[var(--brand-accent-100)] focus-visible:ring-4 focus-visible:ring-[var(--brand-accent)]/70"
+          >
+            <FileText size={17} />
+            Excel completo
           </button>
 
           <button
@@ -1225,6 +1244,17 @@ function CloseDetailModal({
 
           {showBusinessSections && (
             <div className="mt-4 grid gap-4 xl:grid-cols-2">
+              <SummaryList
+                title="Ventas por vendedor (cobrado por)"
+                emptyText="Sin cobros con vendedor guardados."
+                items={close.salesBySeller}
+                showVES
+              />
+              <SummaryList
+                title="Pedidos por registrador"
+                emptyText="Sin registradores guardados."
+                items={close.ordersByRegistrar}
+              />
               <SummaryList
                 title="Cobros por estado"
                 emptyText="Sin cobros por estado guardados."
@@ -1944,6 +1974,17 @@ function RangeReport({
 
         {showAdvancedSections && (
           <div className="grid gap-4 xl:grid-cols-2">
+            <SummaryList
+              title="Ventas por vendedor en el rango"
+              emptyText="Sin cobros con vendedor en este rango."
+              items={report.salesBySeller}
+              showVES
+            />
+            <SummaryList
+              title="Pedidos por registrador en el rango"
+              emptyText="Sin registradores en este rango."
+              items={report.ordersByRegistrar}
+            />
             <SummaryList
               title="Cobros acumulados por estado"
               emptyText="Sin cobros por estado en este rango."

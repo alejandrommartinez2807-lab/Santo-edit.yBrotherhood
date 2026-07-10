@@ -1682,6 +1682,10 @@ export default function PedidosPage() {
     const paymentByUSDMethodMap = new Map<string, PaymentSummaryTotals>()
     const paymentByVESMethodMap = new Map<string, PaymentSummaryTotals>()
     const deliveryByPaymentInMap = new Map<string, PaymentSummaryTotals>()
+    // Ventas por vendedor: lo cobrado agrupado por quién registró el cobro y
+    // los pedidos agrupados por quién los registró (cliente web = sin actor).
+    const salesBySellerMap = new Map<string, PaymentSummaryTotals>()
+    const ordersByRegistrarMap = new Map<string, DaySummaryTotals>()
 
     const fiscalMap = new Map<number, FiscalIvaBucket>()
     const fiscalTotalsRaw = billableToday.reduce(
@@ -1765,6 +1769,21 @@ export default function PedidosPage() {
           payment.status,
           payment.receivedEquivalentUSD
         )
+
+        addOrderToSummaryMap(
+          ordersByRegistrarMap,
+          order.registeredByName || "Cliente (web/QR)",
+          order
+        )
+
+        if (payment.receivedEquivalentUSD > 0) {
+          addPaymentToSummaryMap(
+            salesBySellerMap,
+            order.chargedByName || "Sin registrar",
+            payment.receivedEquivalentUSD,
+            payment.amountReceivedVES
+          )
+        }
 
         if (payment.amountReceivedUSD > 0) {
           addPaymentToSummaryMap(
@@ -1898,6 +1917,8 @@ export default function PedidosPage() {
       paymentByUSDMethod: paymentSummaryMapToArray(paymentByUSDMethodMap),
       paymentByVESMethod: paymentSummaryMapToArray(paymentByVESMethodMap),
       deliveryByPaymentIn: paymentSummaryMapToArray(deliveryByPaymentInMap),
+      salesBySeller: paymentSummaryMapToArray(salesBySellerMap),
+      ordersByRegistrar: summaryMapToArray(ordersByRegistrarMap),
       productsSold,
       topProduct,
     }
@@ -1958,6 +1979,30 @@ export default function PedidosPage() {
               )}`
           )
         : ["- Sin cobros registrados"]
+
+    const sellerLines =
+      dayStats.salesBySeller.length > 0
+        ? dayStats.salesBySeller.map(
+            (item) =>
+              `- ${item.label}: ${item.count} cobro(s) | ${formatUSD(
+                item.totalUSD
+              )}${
+                item.totalVES && item.totalVES > 0
+                  ? ` | Bs ${formatVES(item.totalVES)}`
+                  : ""
+              }`
+          )
+        : ["- Sin cobros registrados"]
+
+    const registrarLines =
+      dayStats.ordersByRegistrar.length > 0
+        ? dayStats.ordersByRegistrar.map(
+            (item) =>
+              `- ${item.label}: ${item.count} pedido(s) | ${formatUSD(
+                item.totalUSD
+              )}`
+          )
+        : ["- Sin pedidos registrados"]
 
     const usdMethodLines =
       dayStats.paymentByUSDMethod.length > 0
@@ -2114,6 +2159,12 @@ export default function PedidosPage() {
       `Delivery mixto marcado: ${formatUSD(
         dayStats.realPaymentTotals.deliveryPaidMixedUSD
       )}`,
+      "",
+      "VENTAS POR VENDEDOR (COBRADO POR)",
+      ...sellerLines,
+      "",
+      "PEDIDOS POR REGISTRADOR",
+      ...registrarLines,
       "",
       "COBROS POR ESTADO",
       ...paymentStatusLines,
@@ -2443,6 +2494,8 @@ export default function PedidosPage() {
       paymentByUSDMethod: dayStats.paymentByUSDMethod,
       paymentByVESMethod: dayStats.paymentByVESMethod,
       deliveryByPaymentIn: dayStats.deliveryByPaymentIn,
+      salesBySeller: dayStats.salesBySeller,
+      ordersByRegistrar: dayStats.ordersByRegistrar,
       productsSold: dayStats.productsSold,
     }
   }
@@ -4724,6 +4777,12 @@ export default function PedidosPage() {
               </div>
 
               <div className="mt-3 grid gap-3 lg:grid-cols-3">
+                <PaymentSummaryList
+                  title="Ventas por vendedor"
+                  emptyText="Todavía no hay cobros con vendedor."
+                  items={dayStats.salesBySeller}
+                />
+
                 <PaymentSummaryList
                   title="Cobros por estado"
                   emptyText="Todavía no hay cobros registrados."
