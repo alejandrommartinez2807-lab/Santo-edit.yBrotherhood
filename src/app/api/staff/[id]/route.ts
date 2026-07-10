@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
-import { getRequestAccess, type LocalRole } from "@/lib/localAccess"
+import { getLocalAccessAuditActor, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 import {
   createStaffAccessConfig,
@@ -209,7 +209,7 @@ export async function PATCH(
     action: "staff.updated",
     entityType: "staff_user",
     entityId: id,
-    actor: { role: auth.access.role, label: auth.access.role || "Dueño" },
+    actor: getLocalAccessAuditActor(auth.access),
     request,
     metadata: { changedKeys: Object.keys(body), role: saved.role, isActive: saved.is_active },
   })
@@ -267,7 +267,7 @@ export async function DELETE(
     action: "staff.deleted",
     entityType: "staff_user",
     entityId: id,
-    actor: { role: auth.access.role, label: auth.access.role || "Dueño" },
+    actor: getLocalAccessAuditActor(auth.access),
     request,
     metadata: { deactivated: true },
   })

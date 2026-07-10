@@ -9,7 +9,7 @@ import {
   updateOrderStatus,
   type OrderStatus,
 } from "@/lib/orders";
-import { getRequestAccess, type LocalRole } from "@/lib/localAccess";
+import { getLocalAccessAuditActor, getRequestAccess, type LocalRole } from "@/lib/localAccess";
 import { getModulePlanAccess } from "@/lib/localPlans";
 import { resolveBranchId } from "@/lib/branch";
 import { writeAuditLog } from "@/lib/audit";
@@ -69,6 +69,7 @@ function checkRole(request: NextRequest, allowedRoles: LocalRole[]) {
     response: null,
     role: access.role,
     roleLabel: access.roleLabel,
+    access,
   };
 }
 
@@ -305,7 +306,7 @@ export async function PATCH(
         branchId,
         entityType: "open_account",
         entityId: cleanAccountId,
-        actor: { role: access.role, label: access.roleLabel },
+        actor: getLocalAccessAuditActor(access.access),
         request,
         metadata: { orderId },
       });
@@ -369,7 +370,7 @@ export async function PATCH(
         branchId,
         entityType: "open_account",
         entityId: cleanAccountId,
-        actor: { role: access.role, label: access.roleLabel },
+        actor: getLocalAccessAuditActor(access.access),
         request,
         metadata: { orderId, status },
       });
@@ -509,7 +510,7 @@ export async function PATCH(
         branchId,
         entityType: "open_account",
         entityId: cleanAccountId,
-        actor: { role: access.role, label: access.roleLabel },
+        actor: getLocalAccessAuditActor(access.access),
         request,
         metadata: {
           amountReceivedUSD,
@@ -550,7 +551,7 @@ export async function PATCH(
         branchId,
         entityType: "open_account",
         entityId: cleanAccountId,
-        actor: { role: access.role, label: access.roleLabel },
+        actor: getLocalAccessAuditActor(access.access),
         request,
       });
 

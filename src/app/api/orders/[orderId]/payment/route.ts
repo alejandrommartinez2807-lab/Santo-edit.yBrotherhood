@@ -3,7 +3,12 @@ import {
   getBusinessConfig,
   updateOrderPayment,
 } from "@/lib/orders"
-import { canLocalAccessUseModule, getRequestAccess, type LocalRole } from "@/lib/localAccess"
+import {
+  canLocalAccessUseModule,
+  getLocalAccessAuditActor,
+  getRequestAccess,
+  type LocalRole,
+} from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import { writeAuditLog } from "@/lib/audit"
@@ -342,7 +347,7 @@ export async function PATCH(
       branchId,
       entityType: "order",
       entityId: orderId,
-      actor: { role: access.role, label: access.role || "Caja" },
+      actor: getLocalAccessAuditActor(access.access),
       request,
       metadata: {
         amountReceivedUSD: payment.amountReceivedUSD,

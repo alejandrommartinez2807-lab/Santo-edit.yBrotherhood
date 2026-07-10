@@ -227,6 +227,25 @@ export function getLocalRoleLabel(role: LocalRole) {
   return ROLE_LABELS[role]
 }
 
+// Actor para la bitácora de auditoría: prioriza a la persona (nombre visible o
+// usuario) sobre el rol, para que la auditoría registre quién exactamente hizo
+// la acción. Con claves por rol (.env) no hay identidad y cae al rol legible.
+export function getLocalAccessAuditActor(access: LocalAccessResult) {
+  if (!access.ok) {
+    return { role: null, label: null, source: null, id: null }
+  }
+
+  const person =
+    String(access.displayName || "").trim() || String(access.username || "").trim()
+
+  return {
+    role: access.role,
+    label: person || access.roleLabel || ROLE_LABELS[access.role],
+    source: access.passwordSource || null,
+    id: access.staffId || null,
+  }
+}
+
 export function getAllowedModulesForLocalRole(role: LocalRole) {
   return ROLE_ACCESS[role] || []
 }

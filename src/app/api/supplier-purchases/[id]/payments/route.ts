@@ -7,6 +7,7 @@ import { resolveBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 import { enforceApiReadGuards } from "@/lib/apiReadGuards"
 import { writeAuditLog } from "@/lib/audit"
+import { getLocalAccessAuditActor } from "@/lib/localAccess"
 
 import { checkSuppliersAccess } from "../../../suppliers/guard"
 
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       branchId,
       entityType: "supplier_purchase",
       entityId: id,
-      actor: { role: access.role, label: access.role || "Dueño" },
+      actor: getLocalAccessAuditActor(access.access),
       request,
       metadata: {
         amountUSD,

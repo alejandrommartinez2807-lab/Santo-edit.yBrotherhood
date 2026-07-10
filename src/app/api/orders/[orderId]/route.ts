@@ -8,7 +8,13 @@ import {
   updateOrderStatus,
   type OrderStatus,
 } from "@/lib/orders"
-import { canLocalAccessUseModule, getRequestAccess, type LocalModuleKey, type LocalRole } from "@/lib/localAccess"
+import {
+  canLocalAccessUseModule,
+  getLocalAccessAuditActor,
+  getRequestAccess,
+  type LocalModuleKey,
+  type LocalRole,
+} from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import { writeAuditLog } from "@/lib/audit"
@@ -229,7 +235,9 @@ export async function PATCH(
       }
 
       const order = await confirmOrderStaffItems(orderId, {
-        confirmedBy: String(body.confirmedBy || getRoleLabel(access.role)).trim(),
+        confirmedBy: String(
+          body.confirmedBy || getLocalAccessAuditActor(access).label || getRoleLabel(access.role)
+        ).trim(),
         confirmedRole: String(body.confirmedRole || getRoleLabel(access.role)).trim(),
       }, branchId)
 
@@ -238,7 +246,7 @@ export async function PATCH(
         branchId,
         entityType: "order",
         entityId: orderId,
-        actor: { role: access.role, label: getRoleLabel(access.role) },
+        actor: getLocalAccessAuditActor(access),
         request,
       })
 
@@ -275,7 +283,9 @@ export async function PATCH(
       }
 
       const order = await resetOrderStaffItems(orderId, {
-        resetBy: String(body.resetBy || getRoleLabel(access.role)).trim(),
+        resetBy: String(
+          body.resetBy || getLocalAccessAuditActor(access).label || getRoleLabel(access.role)
+        ).trim(),
         resetRole: String(body.resetRole || getRoleLabel(access.role)).trim(),
       }, branchId)
 
@@ -284,7 +294,7 @@ export async function PATCH(
         branchId,
         entityType: "order",
         entityId: orderId,
-        actor: { role: access.role, label: getRoleLabel(access.role) },
+        actor: getLocalAccessAuditActor(access),
         request,
       })
 
@@ -319,7 +329,7 @@ export async function PATCH(
         branchId,
         entityType: "order",
         entityId: orderId,
-        actor: { role: access.role, label: getRoleLabel(access.role) },
+        actor: getLocalAccessAuditActor(access),
         request,
       })
 
@@ -374,7 +384,7 @@ export async function PATCH(
       branchId,
       entityType: "order",
       entityId: orderId,
-      actor: { role: access.role, label: getRoleLabel(access.role) },
+      actor: getLocalAccessAuditActor(access),
       request,
       metadata: { status },
     })
@@ -441,7 +451,7 @@ export async function DELETE(
       branchId,
       entityType: "order",
       entityId: orderId,
-      actor: { role: access.role, label: access.role || "Dueño" },
+      actor: getLocalAccessAuditActor(access.access),
       request,
     })
 

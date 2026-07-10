@@ -9,6 +9,9 @@ export type AuditActor = {
   role?: string | null;
   label?: string | null;
   source?: string | null;
+  // id del usuario de personal (staff_users). Se guarda en metadata para no
+  // exigir migración; la tabla audit_logs no tiene columna actor_id.
+  id?: string | null;
 };
 
 export type AuditLogInput = {
@@ -125,7 +128,10 @@ export async function writeAuditLog(input: AuditLogInput) {
       actor_source: cleanText(input.actor?.source) || null,
       ip_address: getClientIp(input.request) || null,
       user_agent: input.request?.headers.get("user-agent") || null,
-      metadata: input.metadata ?? {},
+      metadata: {
+        ...(input.metadata ?? {}),
+        ...(cleanText(input.actor?.id) ? { actorStaffId: cleanText(input.actor?.id) } : {}),
+      },
       created_at: new Date().toISOString(),
     });
 

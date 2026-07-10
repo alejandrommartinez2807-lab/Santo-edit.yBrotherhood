@@ -240,6 +240,11 @@ export async function POST(request: NextRequest) {
       branchId,
       entityType: "payment_proof",
       entityId: paymentProof.id,
+      actor: {
+        role: "cliente",
+        label: paymentProof.customerName || "Cliente",
+        source: "public",
+      },
       request,
       metadata: { orderId: input.orderId, amountReportedUSD: input.amountReportedUSD, amountReportedVES: input.amountReportedVES },
     })
