@@ -163,7 +163,7 @@ function normalizeCreatePaymentProofInput(body: PublicProofBody): CreatePaymentP
 
 export async function GET(request: NextRequest) {
   try {
-    const access = checkRole(request, ["owner", "manager", "cashier"])
+    const access = checkRole(request, ["owner", "manager", "cashier", "promoter"])
     if (!access.ok) return access.response
 
     const moduleCheck = await checkPaymentProofsModule()

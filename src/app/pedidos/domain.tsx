@@ -300,7 +300,7 @@ export type PanelSoundKind =
   | "success"
   | "warning"
 
-export type LocalAccessRole = "owner" | "manager" | "cashier" | "waiter" | "kitchen" | "delivery" | "support"
+export type LocalAccessRole = "owner" | "manager" | "cashier" | "waiter" | "kitchen" | "delivery" | "promoter" | "support"
 
 export type LocalAccessData = {
   ok?: boolean
@@ -359,6 +359,7 @@ export const LOCAL_ROLE_HOME_PATHS: Record<LocalAccessRole, string> = {
   waiter: "/local-santo/mesonero",
   kitchen: "/local-santo/cocina",
   delivery: "/local-santo/delivery",
+  promoter: "/local-santo/caja",
   support: "/local-santo/soporte",
 }
 
@@ -369,11 +370,19 @@ export const LOCAL_ROLE_LABELS: Record<LocalAccessRole, string> = {
   waiter: "Mesonero",
   kitchen: "Cocina",
   delivery: "Delivery",
+  promoter: "Promotor",
   support: "Soporte",
 }
 
 export function isWorkerOnlyRole(role: LocalAccessRole | null) {
-  return role === "cashier" || role === "waiter" || role === "kitchen" || role === "delivery" || role === "support"
+  return (
+    role === "cashier" ||
+    role === "waiter" ||
+    role === "kitchen" ||
+    role === "delivery" ||
+    role === "promoter" ||
+    role === "support"
+  )
 }
 
 export type BusinessConfig = {

@@ -111,7 +111,7 @@ export async function PATCH(
 
 
   try {
-    const access = checkRole(request, ["owner", "manager", "cashier"])
+    const access = checkRole(request, ["owner", "manager", "cashier", "promoter"])
     if (!access.ok) return access.response
 
     const moduleCheck = await checkPaymentProofsModule()

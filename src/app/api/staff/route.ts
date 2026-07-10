@@ -28,6 +28,7 @@ const ASSIGNABLE_ROLES: LocalRole[] = [
   "waiter",
   "kitchen",
   "delivery",
+  "promoter",
   "support",
 ]
 

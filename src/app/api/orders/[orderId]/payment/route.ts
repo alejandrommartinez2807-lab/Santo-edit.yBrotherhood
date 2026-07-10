@@ -315,7 +315,7 @@ export async function PATCH(
   if (guardResponse) return guardResponse
 
   try {
-    const access = checkRole(request, ["owner", "manager", "cashier"])
+    const access = checkRole(request, ["owner", "manager", "cashier", "promoter"])
 
     if (!access.ok) {
       return access.response

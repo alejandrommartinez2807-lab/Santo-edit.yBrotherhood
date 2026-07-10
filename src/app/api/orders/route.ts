@@ -154,6 +154,7 @@ function getReadModuleForRole(role: LocalRole): LocalModuleKey {
   if (role === "kitchen") return "kitchen"
   if (role === "delivery") return "delivery"
   if (role === "waiter") return "mainPanel"
+  if (role === "promoter") return "cashier"
 
   return "mainPanel"
 }
@@ -178,6 +179,7 @@ export async function GET(request: NextRequest) {
       "kitchen",
       "delivery",
       "waiter",
+      "promoter",
     ])
 
     if (!access.ok) {

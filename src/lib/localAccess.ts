@@ -13,6 +13,9 @@ export type LocalRole =
   | "waiter"
   | "kitchen"
   | "delivery"
+  // Vendedor de eventos/ferias: registra pedidos y cobra en su carrito;
+  // sus ventas quedan atribuidas para el reporte por vendedor del cierre.
+  | "promoter"
   | "support"
 
 export type StaffPermissionsMode = "role" | "custom"
@@ -45,6 +48,7 @@ const ROLE_LABELS: Record<LocalRole, string> = {
   waiter: "Mesonero",
   kitchen: "Cocina",
   delivery: "Delivery",
+  promoter: "Promotor",
   support: "Soporte",
 }
 
@@ -89,6 +93,7 @@ const ROLE_ACCESS: Record<LocalRole, LocalModuleKey[]> = {
   ],
   kitchen: ["kitchen", "kitchenItems", "tickets"],
   delivery: ["delivery"],
+  promoter: ["mainPanel", "cashier", "paymentProofs", "tickets"],
   support: OWNER_ALLOWED_MODULES,
 }
 
@@ -169,6 +174,11 @@ export function getLocalAccessPasswordEntries() {
       role: "delivery",
       password: readEnvPassword("ORDERS_DELIVERY_PASSWORD"),
       passwordSource: "ORDERS_DELIVERY_PASSWORD",
+    },
+    {
+      role: "promoter",
+      password: readEnvPassword("ORDERS_PROMOTER_PASSWORD"),
+      passwordSource: "ORDERS_PROMOTER_PASSWORD",
     },
     {
       role: "support",
@@ -261,6 +271,7 @@ const STAFF_ROLES: LocalRole[] = [
   "waiter",
   "kitchen",
   "delivery",
+  "promoter",
   "support",
 ]
 

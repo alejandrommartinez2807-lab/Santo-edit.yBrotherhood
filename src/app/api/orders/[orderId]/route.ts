@@ -150,12 +150,18 @@ function canRoleUpdateStatus(role: LocalRole, status: OrderStatus) {
     return status === "Preparando" || status === "Listo"
   }
 
+  // El promotor de eventos entrega lo que vende, pero no cancela pedidos.
+  if (role === "promoter") {
+    return status === "Nuevo" || status === "Preparando" || status === "Entregado"
+  }
+
   return false
 }
 
 function getStatusModuleForRole(role: LocalRole): LocalModuleKey {
   if (role === "cashier") return "cashier"
   if (role === "kitchen") return "kitchen"
+  if (role === "promoter") return "cashier"
 
   return "mainPanel"
 }
@@ -178,6 +184,7 @@ function getRoleLabel(role: LocalRole) {
   if (role === "waiter") return "Mesonero"
   if (role === "kitchen") return "Cocina"
   if (role === "delivery") return "Delivery"
+  if (role === "promoter") return "Promotor"
 
   return "Personal"
 }
