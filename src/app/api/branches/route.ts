@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { getRequestAccess } from "@/lib/localAccess"
-import { filterBranchesForAccess } from "@/lib/branch"
+import {
+  filterBranchesForAccess,
+  getBranchConfigsFromRawBusinessConfig,
+  mergeRawBusinessConfigWithBranchConfig,
+} from "@/lib/branch"
+import { getRawBusinessConfig, saveBusinessConfig } from "@/lib/orders"
 
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 
@@ -32,7 +37,16 @@ export async function GET(request: NextRequest) {
     .order("sort_order", { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true, branches: filterBranchesForAccess(data ?? [], access) })
+
+  // Anota cada sede con su marca de evento (modo evento) desde business_config.
+  const rawBusinessConfig = await getRawBusinessConfig().catch(() => ({}))
+  const branchConfigs = getBranchConfigsFromRawBusinessConfig(rawBusinessConfig)
+  const branches = (data ?? []).map((branch) => ({
+    ...branch,
+    isEvent: Boolean(branchConfigs[String(branch.id)]?.isEvent),
+  }))
+
+  return NextResponse.json({ ok: true, branches: filterBranchesForAccess(branches, access) })
 }
 
 // Crear sucursal: solo dueño.
@@ -57,6 +71,7 @@ export async function POST(request: NextRequest) {
 
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
   const name = cleanText(body.name)
+  const isEvent = body.isEvent === true
   if (!name) return NextResponse.json({ error: "Indica el nombre de la sucursal" }, { status: 400 })
 
   const supabase = getSupabaseAdmin()
@@ -68,5 +83,17 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true, branch: data }, { status: 201 })
+
+  // Modo evento: la sede nueva queda marcada como evento/feria en business_config
+  // (sede temporal con QR propio; se finaliza desactivándola).
+  if (isEvent && data?.id) {
+    const rawBusinessConfig = await getRawBusinessConfig().catch(() => ({}))
+    await saveBusinessConfig(
+      mergeRawBusinessConfigWithBranchConfig(rawBusinessConfig, String(data.id), {
+        isEvent: true,
+      }) as never,
+    )
+  }
+
+  return NextResponse.json({ ok: true, branch: { ...data, isEvent } }, { status: 201 })
 }

@@ -353,6 +353,9 @@ export type BranchScopedConfig = {
   deliveryWhatsapp?: string
   ordersPaused?: boolean
   temporarilyClosed?: boolean
+  // Sede temporal creada como evento/feria (modo evento): tiene su propio QR
+  // y se finaliza desactivando la sede, conservando sus ventas y cierres.
+  isEvent?: boolean
   localTables?: BranchScopedTable[]
   [key: string]: unknown
 }
@@ -366,7 +369,7 @@ const BRANCH_SCOPED_TEXT_FIELDS = [
   "deliveryWhatsapp",
 ] as const
 
-const BRANCH_SCOPED_BOOLEAN_FIELDS = ["ordersPaused", "temporarilyClosed"] as const
+const BRANCH_SCOPED_BOOLEAN_FIELDS = ["ordersPaused", "temporarilyClosed", "isEvent"] as const
 
 function normalizeBranchScopedTables(value: unknown): BranchScopedTable[] {
   const rawList = Array.isArray(value)

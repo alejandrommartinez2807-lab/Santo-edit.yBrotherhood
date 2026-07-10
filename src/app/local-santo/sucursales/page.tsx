@@ -2,7 +2,20 @@
 
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Check, Copy, Link2, Loader2, Plus, Trash2, Building2 } from "lucide-react"
+import Image from "next/image"
+import {
+  ArrowLeft,
+  Check,
+  Copy,
+  ExternalLink,
+  Link2,
+  Loader2,
+  PartyPopper,
+  Plus,
+  QrCode,
+  Trash2,
+  Building2,
+} from "lucide-react"
 import BranchConfigPanel from "./BranchConfigPanel"
 import { authHeaders, type Branch } from "./shared"
 
@@ -78,6 +91,212 @@ function BranchLinksPanel({ branches }: { branches: Branch[] }) {
   )
 }
 
+// Modo evento: cada evento/feria es una sede temporal con su propio QR. El
+// cliente escanea y pide desde el menú público ya fijado a esa sede; al
+// finalizarlo se desactiva (el QR deja de aplicar) pero sus ventas, cierres y
+// reportes se conservan como los de cualquier sede.
+function EventsPanel({
+  events,
+  busy,
+  onCreate,
+  onPatch,
+  onRemove,
+}: {
+  events: Branch[]
+  busy: boolean
+  onCreate: (name: string) => Promise<boolean>
+  onPatch: (id: string, body: Record<string, unknown>) => Promise<void>
+  onRemove: (branch: Branch) => Promise<void>
+}) {
+  const [newEventName, setNewEventName] = useState("")
+  const [copied, setCopied] = useState("")
+
+  const origin = typeof window !== "undefined" ? window.location.origin : ""
+
+  function buildEventLink(branch: Branch) {
+    return `${origin}/?branch=${encodeURIComponent(branch.id)}`
+  }
+
+  function buildQrImageUrl(link: string, size = 240) {
+    return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=16&data=${encodeURIComponent(link)}`
+  }
+
+  async function copyLink(url: string) {
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(url)
+      setTimeout(() => setCopied(""), 1500)
+    } catch {
+      /* sin permiso de portapapeles */
+    }
+  }
+
+  async function create() {
+    const name = newEventName.trim()
+    if (!name) return
+    if (await onCreate(name)) setNewEventName("")
+  }
+
+  function finishEvent(branch: Branch) {
+    if (
+      !window.confirm(
+        `¿Finalizar el evento "${branch.name}"?\n\nEl QR dejará de funcionar y el evento se ocultará del menú público. Sus ventas, cierres y reportes se conservan.`,
+      )
+    )
+      return
+    onPatch(branch.id, { is_active: false })
+  }
+
+  return (
+    <section className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5">
+      <h2 className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+        <PartyPopper size={16} /> Modo evento
+      </h2>
+      <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
+        Crea un evento (feria, festival, pop-up) como sede temporal: tiene su propio menú,
+        caja y cierre, y un QR para que los clientes pidan desde el sitio. Asigna a tus
+        promotores a esta sede en Usuarios y, al terminar, finalízalo: los números quedan
+        guardados en reportes y cierres.
+      </p>
+
+      <div className="mt-4 flex gap-2">
+        <input
+          value={newEventName}
+          onChange={(e) => setNewEventName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && create()}
+          placeholder="Nombre del evento (ej. Feria La Candelaria)"
+          className="flex-1 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
+        />
+        <button
+          onClick={create}
+          disabled={busy || !newEventName.trim()}
+          className="inline-flex items-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50"
+        >
+          <Plus size={16} /> Crear evento
+        </button>
+      </div>
+
+      {events.length === 0 ? (
+        <p className="mt-4 rounded-xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4 text-xs font-bold text-[var(--brand-ink-2)]/60">
+          Sin eventos todavía. Crea uno y comparte su QR el día de la feria.
+        </p>
+      ) : (
+        <ul className="mt-4 space-y-3">
+          {events.map((event) => {
+            const link = buildEventLink(event)
+            return (
+              <li
+                key={event.id}
+                className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <input
+                    defaultValue={event.name}
+                    onBlur={(e) => {
+                      const v = e.target.value.trim()
+                      if (v && v !== event.name) onPatch(event.id, { name: v })
+                    }}
+                    className="min-w-0 flex-1 rounded-lg border-2 border-transparent bg-transparent px-2 py-1 text-lg font-black text-[var(--brand-ink-3)] outline-none hover:border-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)]"
+                  />
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${
+                        event.is_active
+                          ? "border-green-600/30 bg-green-50 text-green-700"
+                          : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]/60"
+                      }`}
+                    >
+                      {event.is_active ? "En curso" : "Finalizado"}
+                    </span>
+                    {event.is_active ? (
+                      <button
+                        onClick={() => finishEvent(event)}
+                        disabled={busy}
+                        className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-3 py-1.5 text-xs font-black uppercase text-[var(--brand-primary)] disabled:opacity-50"
+                      >
+                        Finalizar
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => onPatch(event.id, { is_active: true })}
+                        disabled={busy}
+                        className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-xs font-black uppercase text-[var(--brand-ink-2)]/70 disabled:opacity-50"
+                      >
+                        Reactivar
+                      </button>
+                    )}
+                    <button
+                      onClick={() => onRemove(event)}
+                      disabled={busy}
+                      title="Eliminar evento y todos sus datos"
+                      className="inline-flex items-center justify-center rounded-full border-2 border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                {event.is_active ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-4">
+                    <div className="rounded-xl border-2 border-[var(--brand-primary)]/15 bg-white p-2">
+                      <Image
+                        src={buildQrImageUrl(link)}
+                        alt={`QR del evento ${event.name}`}
+                        width={120}
+                        height={120}
+                        unoptimized
+                        className="h-28 w-28 rounded-lg object-contain"
+                        loading="lazy"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="inline-flex items-center gap-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">
+                        <QrCode size={13} /> QR del evento
+                      </p>
+                      <p className="mt-1 break-all text-xs font-bold text-[var(--brand-ink-2)]/80">{link}</p>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => copyLink(link)}
+                          className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+                        >
+                          {copied === link ? <Check size={12} className="text-green-600" /> : <Copy size={12} />}
+                          Copiar enlace
+                        </button>
+                        <a
+                          href={buildQrImageUrl(link, 600)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+                        >
+                          <QrCode size={12} /> QR grande (imprimir)
+                        </a>
+                        <a
+                          href={link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+                        >
+                          <ExternalLink size={12} /> Abrir menú
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="mt-3 text-xs font-bold text-[var(--brand-ink-2)]/55">
+                    Evento finalizado: el QR ya no aplica. Sus ventas y cierres siguen
+                    disponibles en Reportes y Cierres. Reactívalo si vuelves a la feria.
+                  </p>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </section>
+  )
+}
+
 export default function SucursalesPage() {
   const [branches, setBranches] = useState<Branch[]>([])
   const [loading, setLoading] = useState(true)
@@ -112,26 +331,31 @@ export default function SucursalesPage() {
     return () => clearTimeout(timer)
   }, [load])
 
-  async function create() {
-    const name = newName.trim()
-    if (!name) return
+  async function createBranch(name: string, isEvent: boolean) {
     setBusy(true)
     setError("")
     try {
       const res = await fetch("/api/branches", {
         method: "POST",
         headers: authHeaders(),
-        body: JSON.stringify({ name }),
+        body: JSON.stringify(isEvent ? { name, isEvent: true } : { name }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "No se pudo crear")
-      setNewName("")
       await load()
+      return true
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
+      return false
     } finally {
       setBusy(false)
     }
+  }
+
+  async function create() {
+    const name = newName.trim()
+    if (!name) return
+    if (await createBranch(name, false)) setNewName("")
   }
 
   async function patch(id: string, body: Record<string, unknown>) {
@@ -227,7 +451,7 @@ export default function SucursalesPage() {
               </p>
             ) : (
               <ul className="mt-6 space-y-3">
-                {branches.map((b) => (
+                {branches.filter((b) => !b.isEvent).map((b) => (
                   <li
                     key={b.id}
                     className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4"
@@ -265,6 +489,16 @@ export default function SucursalesPage() {
                 ))}
               </ul>
             )}
+
+            {!loading ? (
+              <EventsPanel
+                events={branches.filter((b) => b.isEvent)}
+                busy={busy}
+                onCreate={(name) => createBranch(name, true)}
+                onPatch={patch}
+                onRemove={remove}
+              />
+            ) : null}
 
             {!loading ? <BranchConfigPanel branches={branches} /> : null}
 
