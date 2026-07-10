@@ -12,6 +12,7 @@ import {
   ExternalLink,
   Link2,
   Loader2,
+  MonitorPlay,
   PartyPopper,
   Plus,
   QrCode,
@@ -31,6 +32,7 @@ const LINKABLE_MODULES = [
   { path: "mesas", label: "Mesas y QR" },
   { path: "delivery", label: "Delivery" },
   { path: "inventario", label: "Inventario" },
+  { path: "pantalla", label: "Pantalla listos" },
 ] as const
 
 function BranchLinksPanel({ branches }: { branches: Branch[] }) {
@@ -528,6 +530,15 @@ function EventsPanel({
                           className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
                         >
                           <ExternalLink size={12} /> Abrir menú
+                        </a>
+                        <a
+                          href={`/local-santo/pantalla?sede=${encodeURIComponent(event.id)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="Pantalla de números para el TV/tablet del stand"
+                          className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+                        >
+                          <MonitorPlay size={12} /> Pantalla del stand
                         </a>
                       </div>
                       <EventInventoryTools event={event} sedes={sedes} />
