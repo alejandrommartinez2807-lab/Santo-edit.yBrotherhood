@@ -9,5 +9,8 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    // Los worktrees en .claude/ son otras ramas (marca/tema distintos); sus
+    // tests corren en su propio worktree, no desde el repo principal.
+    exclude: ["**/node_modules/**", "**/.claude/**"],
   },
 })
