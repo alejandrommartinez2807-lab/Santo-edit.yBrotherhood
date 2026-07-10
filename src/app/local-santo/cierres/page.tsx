@@ -1226,6 +1226,17 @@ function CloseDetailModal({
           {showBusinessSections && (
             <div className="mt-4 grid gap-4 xl:grid-cols-2">
               <SummaryList
+                title="Ventas por vendedor (cobrado por)"
+                emptyText="Sin cobros con vendedor guardados."
+                items={close.salesBySeller}
+                showVES
+              />
+              <SummaryList
+                title="Pedidos por registrador"
+                emptyText="Sin registradores guardados."
+                items={close.ordersByRegistrar}
+              />
+              <SummaryList
                 title="Cobros por estado"
                 emptyText="Sin cobros por estado guardados."
                 items={close.paymentByStatus}
@@ -1944,6 +1955,17 @@ function RangeReport({
 
         {showAdvancedSections && (
           <div className="grid gap-4 xl:grid-cols-2">
+            <SummaryList
+              title="Ventas por vendedor en el rango"
+              emptyText="Sin cobros con vendedor en este rango."
+              items={report.salesBySeller}
+              showVES
+            />
+            <SummaryList
+              title="Pedidos por registrador en el rango"
+              emptyText="Sin registradores en este rango."
+              items={report.ordersByRegistrar}
+            />
             <SummaryList
               title="Cobros acumulados por estado"
               emptyText="Sin cobros por estado en este rango."

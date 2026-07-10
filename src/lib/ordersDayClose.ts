@@ -134,6 +134,10 @@ export type SaveDayCloseInput = {
   paymentByUSDMethod?: DayCloseSummaryItem[]
   paymentByVESMethod?: DayCloseSummaryItem[]
   deliveryByPaymentIn?: DayCloseSummaryItem[]
+  // Ventas por vendedor (0022): cobros agrupados por quién los registró y
+  // pedidos agrupados por quién los registró (cliente web = sin actor).
+  salesBySeller?: DayCloseSummaryItem[]
+  ordersByRegistrar?: DayCloseSummaryItem[]
   productsSold: DayCloseProductSold[]
 }
 

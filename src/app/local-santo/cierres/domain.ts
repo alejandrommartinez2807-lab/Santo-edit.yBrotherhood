@@ -117,6 +117,10 @@ export type SavedDayClose = {
   paymentByUSDMethod: SummaryItem[]
   paymentByVESMethod: SummaryItem[]
   deliveryByPaymentIn: SummaryItem[]
+  // Ventas por vendedor: cobros por quién los registró y pedidos por quién
+  // los registró. Cierres viejos no traen estos campos (quedan vacíos).
+  salesBySeller: SummaryItem[]
+  ordersByRegistrar: SummaryItem[]
   productsSold: ProductSold[]
 }
 
@@ -413,6 +417,8 @@ export function normalizeDayClose(value: unknown): SavedDayClose | null {
     paymentByUSDMethod: normalizeSummaryArray(close.paymentByUSDMethod),
     paymentByVESMethod: normalizeSummaryArray(close.paymentByVESMethod),
     deliveryByPaymentIn: normalizeSummaryArray(close.deliveryByPaymentIn),
+    salesBySeller: normalizeSummaryArray(close.salesBySeller),
+    ordersByRegistrar: normalizeSummaryArray(close.ordersByRegistrar),
     productsSold: normalizeProductsSold(close.productsSold),
   }
 }
@@ -824,6 +830,12 @@ export function getRangeReport(dayCloses: SavedDayClose[]) {
   const salesByType = combineSummaryItems(
     dayCloses.flatMap((close) => close.salesByType)
   )
+  const salesBySeller = combineSummaryItems(
+    dayCloses.flatMap((close) => close.salesBySeller)
+  )
+  const ordersByRegistrar = combineSummaryItems(
+    dayCloses.flatMap((close) => close.ordersByRegistrar)
+  )
   const allExpenses = dayCloses.flatMap((close) => close.expenses)
   const expensesByCategory = combineExpensesByField(allExpenses, "category")
   const expensesByMethod = combineExpensesByField(allExpenses, "method")
@@ -889,6 +901,9 @@ export function getRangeReport(dayCloses: SavedDayClose[]) {
     deliveryByPaymentIn,
     topDeliveryPaymentIn: deliveryByPaymentIn[0],
     salesByType,
+    salesBySeller,
+    topSeller: salesBySeller[0],
+    ordersByRegistrar,
     allExpenses,
     expensesByCategory,
     topExpenseCategory: expensesByCategory[0],

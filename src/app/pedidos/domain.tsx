@@ -117,6 +117,14 @@ export type LocalOrder = {
   exchangeValueDate?: string
   status: OrderStatus
 
+  // Atribución de ventas (0022): quién registró y quién cobró el pedido.
+  registeredById?: string
+  registeredByName?: string
+  registeredByRole?: string
+  chargedById?: string
+  chargedByName?: string
+  chargedByRole?: string
+
   payment?: OrderPayment
   paymentStatus?: PaymentStatus
   amountReceivedUSD?: number

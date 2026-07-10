@@ -364,6 +364,10 @@ export async function POST(request: NextRequest) {
       deliveryByPaymentIn: canIncludeDeliveryAudit
         ? normalizeSummaryItems(rawDayClose.deliveryByPaymentIn)
         : [],
+      salesBySeller: canIncludeCashierAudit
+        ? normalizeSummaryItems(rawDayClose.salesBySeller)
+        : [],
+      ordersByRegistrar: normalizeSummaryItems(rawDayClose.ordersByRegistrar),
       productsSold: normalizeProductsSold(rawDayClose.productsSold),
     }
 
