@@ -123,6 +123,7 @@ export async function createOrderInStore(
   // Migración 0022 sin aplicar: reintenta sin atribución (la venta no se pierde).
   if (insertError && registeredByName && isMissingColumnError(insertError)) {
     attributionKeys.forEach((key) => delete orderRow[key])
+    // branch-exempt: orderRow incluye branch_id (asignado arriba).
     ;({ error: insertError } = await supabase.from("orders").insert(orderRow))
   }
 
