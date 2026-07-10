@@ -1,6 +1,10 @@
 // Normalizadores y caché de la configuración pública del negocio, extraídos de CartDrawer.
 import { BRAND } from "@/lib/brand";
 import { cleanText, cleanWhatsappNumber } from "@/components/cartUtils";
+import {
+  DEFAULT_PUBLIC_PAYMENT_METHODS,
+  normalizePublicPaymentMethods,
+} from "@/lib/publicPageConfig";
 import type {
   MembershipPlan,
   PublicLocalTable,
@@ -45,6 +49,7 @@ export const DEFAULT_PUBLIC_CONFIG: PublicBusinessConfig = {
   publicDivisaOnlyBadge: "Solo divisas",
   publicRegularGroupTitle: "Productos normales",
   publicAvailabilityLabel: "Disponible",
+  publicPaymentMethods: [...DEFAULT_PUBLIC_PAYMENT_METHODS],
   themePrimaryColor: "#a00000",
   themeAccentColor: "#ffd23c",
   themeCreamColor: "#fff7e8",
@@ -490,6 +495,9 @@ export function normalizePublicBusinessConfig(value: unknown): PublicBusinessCon
     publicAvailabilityLabel:
       cleanText(businessConfig.publicAvailabilityLabel) ||
       DEFAULT_PUBLIC_CONFIG.publicAvailabilityLabel,
+    publicPaymentMethods: normalizePublicPaymentMethods(
+      businessConfig.publicPaymentMethods,
+    ),
     themePrimaryColor:
       cleanText(businessConfig.themePrimaryColor) ||
       DEFAULT_PUBLIC_CONFIG.themePrimaryColor,

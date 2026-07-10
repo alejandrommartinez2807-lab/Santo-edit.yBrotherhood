@@ -2,9 +2,11 @@ import { BRAND } from "./brand"
 import {
   DEFAULT_PUBLIC_CATEGORY_ORDER,
   DEFAULT_PUBLIC_NAV_BUTTONS,
+  DEFAULT_PUBLIC_PAYMENT_METHODS,
   normalizePublicCategoryList,
   normalizePublicHiddenCategoryList,
   normalizePublicNavButtons,
+  normalizePublicPaymentMethods,
   type PublicNavButton,
 } from "./publicPageConfig"
 import { getSupabaseAdmin } from "./supabaseServer"
@@ -95,6 +97,8 @@ export type BusinessConfig = {
   publicDivisaOnlyBadge: string
   publicRegularGroupTitle: string
   publicAvailabilityLabel: string
+  // Métodos de pago del carrito público, editables por el dueño.
+  publicPaymentMethods: string[]
   locationButtonText: string
   googleMapsUrl: string
   instagramUrl: string
@@ -228,6 +232,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicDivisaOnlyBadge: "Solo divisas",
   publicRegularGroupTitle: "Productos normales",
   publicAvailabilityLabel: "Disponible",
+  publicPaymentMethods: [...DEFAULT_PUBLIC_PAYMENT_METHODS],
   locationButtonText: "Abrir ubicación",
   googleMapsUrl: "",
   instagramUrl: "",
@@ -610,6 +615,7 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     publicAvailabilityLabel:
       String(source.publicAvailabilityLabel || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.publicAvailabilityLabel,
+    publicPaymentMethods: normalizePublicPaymentMethods(source.publicPaymentMethods),
     locationButtonText:
       String(source.locationButtonText || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.locationButtonText,

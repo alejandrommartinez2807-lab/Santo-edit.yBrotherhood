@@ -95,6 +95,8 @@ export type PublicBusinessConfig = {
   publicDivisaOnlyBadge?: string;
   publicRegularGroupTitle?: string;
   publicAvailabilityLabel?: string;
+  // Métodos de pago del carrito editables por el dueño (Configuración).
+  publicPaymentMethods: string[];
   themePrimaryColor?: string;
   themeAccentColor?: string;
   themeCreamColor?: string;

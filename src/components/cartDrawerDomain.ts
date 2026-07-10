@@ -1,4 +1,5 @@
 import { cleanText } from "@/components/cartUtils";
+import { DEFAULT_PUBLIC_PAYMENT_METHODS } from "@/lib/publicPageConfig";
 
 export type DeliveryZone = {
   name: string;
@@ -19,14 +20,9 @@ export const DEFAULT_DELIVERY_ZONES: DeliveryZone[] = [
   { name: "San Diego", costUSD: 4, isActive: true },
 ];
 
-export const PAYMENT_METHOD_OPTIONS = [
-  "Pago móvil",
-  "Efectivo en divisas",
-  "Efectivo en Bs",
-  "Punto de venta",
-  "Transferencia",
-  "Por confirmar",
-];
+// Fallback cuando el dueño no ha personalizado sus métodos en Configuración
+// (la lista editable viaja en businessConfig.publicPaymentMethods).
+export const PAYMENT_METHOD_OPTIONS = DEFAULT_PUBLIC_PAYMENT_METHODS;
 
 export const ADDRESS_HELPERS = [
   "Urb.",

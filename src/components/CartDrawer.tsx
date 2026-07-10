@@ -759,7 +759,11 @@ export default function CartDrawer({
     value: zone.name,
     helper: `Delivery ${formatUSD(zone.costUSD)}`,
   }));
-  const paymentMethodOptions = PAYMENT_METHOD_OPTIONS.map((method) => ({
+  // Métodos de pago que definió el dueño en Configuración (con fallback fijo).
+  const availablePaymentMethods = publicConfig.publicPaymentMethods?.length
+    ? publicConfig.publicPaymentMethods
+    : PAYMENT_METHOD_OPTIONS;
+  const paymentMethodOptions = availablePaymentMethods.map((method) => ({
     label: method,
     value: method,
   }));
@@ -1695,7 +1699,7 @@ export default function CartDrawer({
                               className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                             >
                               <option value="">Selecciona método</option>
-                              {PAYMENT_METHOD_OPTIONS.map((method) => (
+                              {availablePaymentMethods.map((method) => (
                                 <option key={method} value={method}>
                                   {method}
                                 </option>

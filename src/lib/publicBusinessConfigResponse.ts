@@ -8,6 +8,7 @@ import {
   normalizePublicCategoryList,
   normalizePublicHiddenCategoryList,
   normalizePublicNavButtons,
+  normalizePublicPaymentMethods,
 } from "@/lib/publicPageConfig"
 
 type MembershipPlan = "menuDigital" | "basic" | "operational" | "pro" | "complete"
@@ -351,6 +352,7 @@ export function buildPublicBusinessConfigResponse(
       cleanText(config.publicDivisaOnlyBadge) || "Solo divisas",
     publicRegularGroupTitle:
       cleanText(config.publicRegularGroupTitle) || "Productos normales",
+    publicPaymentMethods: normalizePublicPaymentMethods(config.publicPaymentMethods),
     publicAvailabilityLabel:
       cleanText(config.publicAvailabilityLabel) || "Disponible",
     locationButtonText: cleanText(config.locationButtonText),

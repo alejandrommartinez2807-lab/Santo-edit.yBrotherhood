@@ -59,9 +59,11 @@ import { products as fallbackProducts, type Product } from "@/data/products";
 import {
   DEFAULT_PUBLIC_CATEGORY_ORDER,
   DEFAULT_PUBLIC_NAV_BUTTONS,
+  DEFAULT_PUBLIC_PAYMENT_METHODS,
   normalizePublicCategoryList,
   normalizePublicHiddenCategoryList,
   normalizePublicNavButtons,
+  normalizePublicPaymentMethods,
   type PublicNavButton,
   type PublicNavButtonKind,
 } from "@/lib/publicPageConfig";
@@ -133,6 +135,8 @@ type BusinessConfig = {
   publicDivisaOnlyBadge: string;
   publicRegularGroupTitle: string;
   publicAvailabilityLabel: string;
+  // Métodos de pago del carrito público (uno por línea en el editor).
+  publicPaymentMethods: string[];
   locationButtonText: string;
   googleMapsUrl: string;
   instagramUrl: string;
@@ -297,6 +301,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicDivisaOnlyBadge: "Solo divisas",
   publicRegularGroupTitle: "Productos normales",
   publicAvailabilityLabel: "Disponible",
+  publicPaymentMethods: [...DEFAULT_PUBLIC_PAYMENT_METHODS],
   locationButtonText: "Abrir ubicación",
   googleMapsUrl: "",
   instagramUrl: "",
@@ -971,6 +976,7 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     publicCartWhatsappButtonText:
       String(source.publicCartWhatsappButtonText || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.publicCartWhatsappButtonText,
+    publicPaymentMethods: normalizePublicPaymentMethods(source.publicPaymentMethods),
     publicDivisaGroupTitle:
       String(source.publicDivisaGroupTitle || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.publicDivisaGroupTitle,
@@ -4343,6 +4349,28 @@ export default function BusinessConfigPage() {
                     placeholder="Disponible"
                     disabled={!canEditAdvancedPublic}
                   />
+                  <div className="sm:col-span-2 lg:col-span-3">
+                    <label className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/70">
+                      Métodos de pago del carrito (uno por línea)
+                    </label>
+                    <textarea
+                      value={businessConfig.publicPaymentMethods.join("\n")}
+                      onChange={(event) =>
+                        updateConfig(
+                          "publicPaymentMethods",
+                          event.target.value.split("\n"),
+                        )
+                      }
+                      rows={4}
+                      placeholder={DEFAULT_PUBLIC_PAYMENT_METHODS.join("\n")}
+                      className="mt-2 w-full rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+                    />
+                    <p className="mt-1 text-[0.68rem] font-bold text-[var(--brand-ink-2)]/55">
+                      Opciones que el cliente elige al pagar en el carrito público
+                      (ej. Pago móvil, Zelle, Efectivo). Si lo dejas vacío se usan
+                      las opciones estándar.
+                    </p>
+                  </div>
                   <TextInput
                     label="Título del grupo en divisas"
                     value={businessConfig.publicDivisaGroupTitle}
