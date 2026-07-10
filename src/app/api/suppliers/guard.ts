@@ -54,5 +54,5 @@ export async function checkSuppliersAccess(request: NextRequest, allowedRoles: L
     }
   }
 
-  return { ok: true as const, response: null, role: access.role, businessConfig }
+  return { ok: true as const, response: null, role: access.role, access, businessConfig }
 }

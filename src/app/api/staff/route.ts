@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
-import { getRequestAccess, type LocalRole } from "@/lib/localAccess"
+import { getLocalAccessAuditActor, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 import { filterBranchesForAccess } from "@/lib/branch"
 import {
@@ -28,6 +28,7 @@ const ASSIGNABLE_ROLES: LocalRole[] = [
   "waiter",
   "kitchen",
   "delivery",
+  "promoter",
   "support",
 ]
 
@@ -197,7 +198,7 @@ export async function POST(request: NextRequest) {
     action: "staff.created",
     entityType: "staff_user",
     entityId: created.data.user.id,
-    actor: { role: auth.access.role, label: auth.access.role || "Dueño" },
+    actor: getLocalAccessAuditActor(auth.access),
     request,
     metadata: { username, role, fullName },
   })

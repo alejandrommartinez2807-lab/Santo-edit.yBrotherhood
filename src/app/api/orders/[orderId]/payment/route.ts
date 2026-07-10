@@ -3,7 +3,12 @@ import {
   getBusinessConfig,
   updateOrderPayment,
 } from "@/lib/orders"
-import { canLocalAccessUseModule, getRequestAccess, type LocalRole } from "@/lib/localAccess"
+import {
+  canLocalAccessUseModule,
+  getLocalAccessAuditActor,
+  getRequestAccess,
+  type LocalRole,
+} from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import { writeAuditLog } from "@/lib/audit"
@@ -310,7 +315,7 @@ export async function PATCH(
   if (guardResponse) return guardResponse
 
   try {
-    const access = checkRole(request, ["owner", "manager", "cashier"])
+    const access = checkRole(request, ["owner", "manager", "cashier", "promoter"])
 
     if (!access.ok) {
       return access.response
@@ -330,10 +335,14 @@ export async function PATCH(
     const branchId = await resolveBranchId(request)
     const body = (await request.json()) as Record<string, unknown>
     const payment = getPaymentInput(body)
+    const actor = getLocalAccessAuditActor(access.access)
 
     const order = await updateOrderPayment(
       orderId,
-      payment as Parameters<typeof updateOrderPayment>[1],
+      {
+        ...(payment as Parameters<typeof updateOrderPayment>[1]),
+        chargedBy: { id: actor.id, name: actor.label, role: actor.role },
+      },
       branchId
     )
 
@@ -342,7 +351,7 @@ export async function PATCH(
       branchId,
       entityType: "order",
       entityId: orderId,
-      actor: { role: access.role, label: access.role || "Caja" },
+      actor,
       request,
       metadata: {
         amountReceivedUSD: payment.amountReceivedUSD,

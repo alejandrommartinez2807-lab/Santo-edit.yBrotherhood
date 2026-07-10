@@ -117,6 +117,10 @@ export type SavedDayClose = {
   paymentByUSDMethod: SummaryItem[]
   paymentByVESMethod: SummaryItem[]
   deliveryByPaymentIn: SummaryItem[]
+  // Ventas por vendedor: cobros por quién los registró y pedidos por quién
+  // los registró. Cierres viejos no traen estos campos (quedan vacíos).
+  salesBySeller: SummaryItem[]
+  ordersByRegistrar: SummaryItem[]
   productsSold: ProductSold[]
 }
 
@@ -413,6 +417,8 @@ export function normalizeDayClose(value: unknown): SavedDayClose | null {
     paymentByUSDMethod: normalizeSummaryArray(close.paymentByUSDMethod),
     paymentByVESMethod: normalizeSummaryArray(close.paymentByVESMethod),
     deliveryByPaymentIn: normalizeSummaryArray(close.deliveryByPaymentIn),
+    salesBySeller: normalizeSummaryArray(close.salesBySeller),
+    ordersByRegistrar: normalizeSummaryArray(close.ordersByRegistrar),
     productsSold: normalizeProductsSold(close.productsSold),
   }
 }
@@ -824,6 +830,12 @@ export function getRangeReport(dayCloses: SavedDayClose[]) {
   const salesByType = combineSummaryItems(
     dayCloses.flatMap((close) => close.salesByType)
   )
+  const salesBySeller = combineSummaryItems(
+    dayCloses.flatMap((close) => close.salesBySeller)
+  )
+  const ordersByRegistrar = combineSummaryItems(
+    dayCloses.flatMap((close) => close.ordersByRegistrar)
+  )
   const allExpenses = dayCloses.flatMap((close) => close.expenses)
   const expensesByCategory = combineExpensesByField(allExpenses, "category")
   const expensesByMethod = combineExpensesByField(allExpenses, "method")
@@ -889,6 +901,9 @@ export function getRangeReport(dayCloses: SavedDayClose[]) {
     deliveryByPaymentIn,
     topDeliveryPaymentIn: deliveryByPaymentIn[0],
     salesByType,
+    salesBySeller,
+    topSeller: salesBySeller[0],
+    ordersByRegistrar,
     allExpenses,
     expensesByCategory,
     topExpenseCategory: expensesByCategory[0],
@@ -1197,6 +1212,8 @@ export function buildDayClosesCsv(dayCloses: SavedDayClose[]) {
     "Pedidos pagados",
     "Pedidos pago parcial",
     "Pedidos pendientes",
+    "Vendedor principal",
+    "Vendedores (cobrado)",
   ]
 
   const rows = dayCloses.map((close) => {
@@ -1242,12 +1259,187 @@ export function buildDayClosesCsv(dayCloses: SavedDayClose[]) {
     close.paidOrders,
     close.partialPaymentOrders,
     close.pendingPaymentOrders,
+    close.salesBySeller[0]?.label || "",
+    close.salesBySeller
+      .map((seller) => `${seller.label}: ${seller.totalUSD} USD (${seller.count})`)
+      .join(" | "),
   ]
   })
 
   const csvRows = [headers, ...rows]
     .map((row) => row.map(escapeCsvValue).join(";"))
     .join("\r\n")
+
+  return `sep=;\r\n${csvRows}`
+}
+
+// Excel detallado de UN cierre: todas las secciones del cierre en un solo
+// archivo por bloques (resumen, vendedores, cobros, delivery, productos y
+// gastos), para no transcribir nada a mano a Excel después del evento/día.
+export function buildSingleCloseDetailedCsv(close: SavedDayClose) {
+  const rows: (string | number)[][] = []
+
+  const addSection = (title: string) => {
+    if (rows.length) rows.push([])
+    rows.push([title])
+  }
+
+  const addSummaryItems = (
+    items: SummaryItem[],
+    headers: (string | number)[],
+    emptyText: string,
+    toRow: (item: SummaryItem) => (string | number)[],
+  ) => {
+    if (!items.length) {
+      rows.push([emptyText])
+      return
+    }
+    rows.push(headers)
+    items.forEach((item) => rows.push(toRow(item)))
+  }
+
+  addSection(`CIERRE ${getCloseTitle(close)}`)
+  rows.push(["ID del cierre", close.id])
+  rows.push(["Guardado", formatDate(close.createdAt)])
+  rows.push(["Estado de cobros", getClosePaymentState(close).label])
+
+  addSection("RESUMEN DE PEDIDOS")
+  rows.push(["Pedidos registrados", close.ordersRegistered])
+  rows.push(["Pedidos entregados", close.deliveredOrders])
+  rows.push(["Pedidos activos", close.activeOrders])
+  rows.push(["Pedidos cancelados", close.canceledOrders])
+  rows.push(["Delivery registrados", close.deliveryRegistered])
+  rows.push(["Delivery entregados", close.deliveryDelivered])
+
+  addSection("COBROS REALES")
+  rows.push(["Total vendido USD", close.totalSoldUSD])
+  rows.push(["Total cobrado real USD", close.realCollectedUSD])
+  rows.push(["Divisas recibidas USD", close.realCashUSD])
+  rows.push(["Bolívares recibidos Bs", close.realVES])
+  rows.push(["Equivalente Bs en USD", close.realVESEquivalentUSD])
+  rows.push(["Pendiente de cobro USD", close.realPendingUSD])
+  rows.push(["Pedidos pagados", close.paidOrders])
+  rows.push(["Pedidos pago parcial", close.partialPaymentOrders])
+  rows.push(["Pedidos pendientes", close.pendingPaymentOrders])
+
+  addSection("VENTAS POR VENDEDOR (COBRADO POR)")
+  addSummaryItems(
+    close.salesBySeller,
+    ["Vendedor", "Cobros", "Total USD", "Total Bs"],
+    "Sin datos de vendedor en este cierre (cierres viejos no los traen).",
+    (item) => [item.label, item.count, item.totalUSD, item.totalVES || 0],
+  )
+
+  addSection("PEDIDOS POR REGISTRADOR")
+  addSummaryItems(
+    close.ordersByRegistrar,
+    ["Registrado por", "Pedidos", "Total USD"],
+    "Sin datos de registrador en este cierre.",
+    (item) => [item.label, item.count, item.totalUSD],
+  )
+
+  addSection("COBROS POR ESTADO")
+  addSummaryItems(
+    close.paymentByStatus,
+    ["Estado", "Pedidos", "Cobrado USD"],
+    "Sin cobros por estado guardados.",
+    (item) => [item.label, item.count, item.totalUSD],
+  )
+
+  addSection("COBROS EN DIVISAS POR MÉTODO")
+  addSummaryItems(
+    close.paymentByUSDMethod,
+    ["Método", "Pagos", "Total USD"],
+    "Sin cobros en divisas guardados.",
+    (item) => [item.label, item.count, item.totalUSD],
+  )
+
+  addSection("COBROS EN BOLÍVARES POR MÉTODO")
+  addSummaryItems(
+    close.paymentByVESMethod,
+    ["Método", "Pagos", "Total Bs", "Equivalente USD"],
+    "Sin cobros en bolívares guardados.",
+    (item) => [item.label, item.count, item.totalVES || 0, item.totalUSD],
+  )
+
+  addSection("VENTAS POR TIPO")
+  addSummaryItems(
+    close.salesByType,
+    ["Tipo", "Pedidos", "Total USD"],
+    "Sin ventas por tipo guardadas.",
+    (item) => [item.label, item.count, item.totalUSD],
+  )
+
+  addSection("DELIVERY POR FORMA DE COBRO")
+  addSummaryItems(
+    close.deliveryByPaymentIn,
+    ["Forma", "Deliveries", "Delivery USD", "Bs"],
+    "Sin delivery cobrado guardado.",
+    (item) => [item.label, item.count, item.deliveryCostUSD || item.totalUSD, item.totalVES || 0],
+  )
+
+  addSection("DELIVERY POR ZONA")
+  addSummaryItems(
+    close.deliveryByZone,
+    ["Zona", "Deliveries", "Total USD", "Delivery cobrado USD"],
+    "Sin delivery por zona guardado.",
+    (item) => [item.label, item.count, item.totalUSD, item.deliveryCostUSD || 0],
+  )
+
+  addSection("DESGLOSE FISCAL")
+  rows.push(["Pedidos con fiscal", close.fiscalOrders])
+  rows.push(["Base imponible USD", close.fiscalSubtotalUSD])
+  rows.push(["IVA total USD", close.fiscalIvaTotalUSD])
+  rows.push(["Base IGTF USD", close.fiscalIgtfBaseUSD])
+  rows.push(["IGTF USD", close.fiscalIgtfUSD])
+  rows.push(["Total fiscal USD", close.fiscalTotalUSD])
+  close.fiscalIvaByRate.forEach((bucket) => {
+    rows.push([
+      bucket.rate === 0 ? "Exento 0%" : `IVA ${bucket.rate}%`,
+      `Base ${bucket.baseUSD}`,
+      `Impuesto ${bucket.ivaUSD}`,
+    ])
+  })
+
+  addSection("PRODUCTOS VENDIDOS")
+  if (close.productsSold.length) {
+    rows.push(["Producto", "Cantidad", "Total USD", "Total Bs"])
+    close.productsSold.forEach((product) => {
+      rows.push([
+        product.name,
+        product.quantity,
+        product.totalUSD,
+        product.onlyCurrency ? "Solo divisas" : product.totalVES,
+      ])
+    })
+  } else {
+    rows.push(["Sin productos vendidos guardados."])
+  }
+
+  addSection("GASTOS DEL DÍA")
+  rows.push(["Gastos registrados", close.expensesCount])
+  rows.push(["Total gastos USD", close.expensesTotalUSD])
+  rows.push(["Neto estimado USD", getCloseNetEstimatedUSD(close)])
+  rows.push(["Salidas a proveedores USD", toNumber(close.supplierPaymentsEquivalentUSD)])
+  rows.push(["Neto después de compras USD", getCloseNetAfterPurchasesUSD(close)])
+  if (close.expenses.length) {
+    rows.push(["Concepto", "Tipo", "Categoría", "Método", "USD", "Bs", "Equivalente USD", "Proveedor", "Nota"])
+    close.expenses.forEach((expense) => {
+      rows.push([
+        expense.concept || "Gasto",
+        expense.expenseType || "Gasto operativo",
+        expense.category || "Otros",
+        expense.method || "Sin registrar",
+        expense.amountUSD,
+        expense.amountVES,
+        expense.equivalentUSD,
+        expense.provider || "",
+        expense.note || "",
+      ])
+    })
+  }
+
+  const csvRows = rows.map((row) => row.map(escapeCsvValue).join(";")).join("\r\n")
 
   return `sep=;\r\n${csvRows}`
 }

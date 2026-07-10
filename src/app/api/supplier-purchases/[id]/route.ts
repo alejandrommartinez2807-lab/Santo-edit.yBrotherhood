@@ -3,6 +3,7 @@ import { deleteSupplierPurchase, updateSupplierPurchase } from "@/lib/orders"
 import { resolveBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 import { writeAuditLog } from "@/lib/audit"
+import { getLocalAccessAuditActor } from "@/lib/localAccess"
 
 import { checkSuppliersAccess } from "../../suppliers/guard"
 
@@ -70,7 +71,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       branchId,
       entityType: "supplier_purchase",
       entityId: updated.id,
-      actor: { role: access.role, label: access.role || "Dueño" },
+      actor: getLocalAccessAuditActor(access.access),
       request,
       metadata: { changes: patch, totalUSD: updated.totalUSD, totalVES: updated.totalVES },
     })
@@ -111,7 +112,7 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
       branchId,
       entityType: "supplier_purchase",
       entityId: id,
-      actor: { role: access.role, label: access.role || "Dueño" },
+      actor: getLocalAccessAuditActor(access.access),
       request,
     })
 

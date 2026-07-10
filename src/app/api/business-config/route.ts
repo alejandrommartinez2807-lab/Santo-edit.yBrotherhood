@@ -7,7 +7,12 @@ import {
   type ExchangeRateMode,
   type SaveBusinessConfigInput,
 } from "@/lib/orders"
-import { canLocalAccessUseModule, getRequestAccess, type LocalRole } from "@/lib/localAccess"
+import {
+  canLocalAccessUseModule,
+  getLocalAccessAuditActor,
+  getRequestAccess,
+  type LocalRole,
+} from "@/lib/localAccess"
 import {
   SIMPLE_BUSINESS_CONFIG_FIELDS,
   coerceSimpleConfigValue,
@@ -134,6 +139,7 @@ function checkRole(request: NextRequest, allowedRoles: LocalRole[]) {
     ok: true as const,
     response: null,
     role: access.role,
+    access,
   }
 }
 
@@ -572,7 +578,7 @@ export async function POST(request: NextRequest) {
     await writeAuditLog({
       action: "business_config.updated",
       entityType: "business_config",
-      actor: { role: access.role, label: access.role || "Dueño" },
+      actor: getLocalAccessAuditActor(access.access),
       request,
       metadata: { changedKeys: Object.keys(businessConfigInput) },
     })

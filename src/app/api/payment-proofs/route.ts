@@ -163,7 +163,7 @@ function normalizeCreatePaymentProofInput(body: PublicProofBody): CreatePaymentP
 
 export async function GET(request: NextRequest) {
   try {
-    const access = checkRole(request, ["owner", "manager", "cashier"])
+    const access = checkRole(request, ["owner", "manager", "cashier", "promoter"])
     if (!access.ok) return access.response
 
     const moduleCheck = await checkPaymentProofsModule()
@@ -240,6 +240,11 @@ export async function POST(request: NextRequest) {
       branchId,
       entityType: "payment_proof",
       entityId: paymentProof.id,
+      actor: {
+        role: "cliente",
+        label: paymentProof.customerName || "Cliente",
+        source: "public",
+      },
       request,
       metadata: { orderId: input.orderId, amountReportedUSD: input.amountReportedUSD, amountReportedVES: input.amountReportedVES },
     })

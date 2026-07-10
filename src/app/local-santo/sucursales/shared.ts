@@ -1,6 +1,13 @@
 export const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
 
-export type Branch = { id: string; name: string; is_active: boolean; sort_order: number }
+export type Branch = {
+  id: string
+  name: string
+  is_active: boolean
+  sort_order: number
+  // Marca de "modo evento": sede temporal (feria/evento) con QR propio.
+  isEvent?: boolean
+}
 
 export function authHeaders(): HeadersInit {
   const password =
