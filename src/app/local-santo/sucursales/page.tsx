@@ -5,6 +5,8 @@ import Link from "next/link"
 import Image from "next/image"
 import {
   ArrowLeft,
+  ArrowRightLeft,
+  Boxes,
   Check,
   Copy,
   ExternalLink,
@@ -15,6 +17,7 @@ import {
   QrCode,
   Trash2,
   Building2,
+  UtensilsCrossed,
 } from "lucide-react"
 import BranchConfigPanel from "./BranchConfigPanel"
 import { authHeaders, type Branch } from "./shared"
@@ -95,20 +98,247 @@ function BranchLinksPanel({ branches }: { branches: Branch[] }) {
 // cliente escanea y pide desde el menú público ya fijado a esa sede; al
 // finalizarlo se desactiva (el QR deja de aplicar) pero sus ventas, cierres y
 // reportes se conservan como los de cualquier sede.
+type InventoryApiItem = {
+  id: string
+  name: string
+  quantity: number
+  unit: string
+  category?: string
+}
+
+// Traslado de inventario del evento: enviar stock desde una sede (descuenta
+// allá, suma aquí, con movimiento registrado en ambos lados) y devolver el
+// sobrante al finalizar. Si el dueño prefiere un inventario propio del evento,
+// no traslada nada y carga los insumos directo en el módulo Inventario con la
+// sede del evento seleccionada.
+function EventInventoryTools({ event, sedes }: { event: Branch; sedes: Branch[] }) {
+  const [open, setOpen] = useState(false)
+  const [sourceId, setSourceId] = useState(sedes[0]?.id || "")
+  const [items, setItems] = useState<InventoryApiItem[]>([])
+  const [quantities, setQuantities] = useState<Record<string, string>>({})
+  const [loadingItems, setLoadingItems] = useState(false)
+  const [working, setWorking] = useState(false)
+  const [notice, setNotice] = useState("")
+  const [problem, setProblem] = useState("")
+
+  async function loadSourceItems(branchId: string) {
+    setLoadingItems(true)
+    setProblem("")
+    setItems([])
+    setQuantities({})
+    try {
+      const res = await fetch("/api/inventory", {
+        headers: { ...authHeaders(), "x-branch-id": branchId },
+        cache: "no-store",
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "No se pudo cargar el inventario de la sede")
+      const list = (Array.isArray(data.inventory) ? data.inventory : []) as InventoryApiItem[]
+      setItems(list.filter((item) => Number(item.quantity) > 0))
+    } catch (e) {
+      setProblem(e instanceof Error ? e.message : "Error cargando inventario")
+    } finally {
+      setLoadingItems(false)
+    }
+  }
+
+  function toggleOpen() {
+    const next = !open
+    setOpen(next)
+    setNotice("")
+    if (next && sourceId) loadSourceItems(sourceId)
+  }
+
+  function changeSource(branchId: string) {
+    setSourceId(branchId)
+    if (branchId) loadSourceItems(branchId)
+  }
+
+  async function transfer(direction: "in" | "out", counterpartBranchId: string, payload: unknown) {
+    setWorking(true)
+    setProblem("")
+    setNotice("")
+    try {
+      const res = await fetch(`/api/branches/${event.id}/inventory-transfer`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ direction, counterpartBranchId, items: payload }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "No se pudo completar el traslado")
+      setNotice(data.message || "Traslado listo.")
+      return true
+    } catch (e) {
+      setProblem(e instanceof Error ? e.message : "Error en el traslado")
+      return false
+    } finally {
+      setWorking(false)
+    }
+  }
+
+  async function sendToEvent() {
+    const lines = items
+      .map((item) => ({ itemId: item.id, quantity: Number(quantities[item.id] || 0) }))
+      .filter((line) => line.quantity > 0)
+    if (!lines.length) {
+      setProblem("Indica la cantidad a enviar en al menos un insumo.")
+      return
+    }
+    if (await transfer("in", sourceId, lines)) {
+      await loadSourceItems(sourceId)
+    }
+  }
+
+  async function returnLeftover() {
+    const target = sedes.find((s) => s.id === sourceId) || sedes[0]
+    if (!target) return
+    if (
+      !window.confirm(
+        `¿Devolver TODO el stock del evento "${event.name}" a "${target.name}"?\n\nSe traslada todo lo que quede disponible y ambos lados registran el movimiento.`,
+      )
+    )
+      return
+    await transfer("out", target.id, "all")
+  }
+
+  return (
+    <div className="mt-3 rounded-xl border border-[var(--brand-primary)]/15 bg-white px-3 py-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="inline-flex items-center gap-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">
+          <Boxes size={13} /> Inventario del evento
+        </p>
+        <button
+          type="button"
+          onClick={toggleOpen}
+          className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+        >
+          {open ? "Cerrar traslado" : "Trasladar stock"}
+        </button>
+      </div>
+
+      <p className="mt-1.5 text-[0.68rem] font-bold leading-5 text-[var(--brand-ink-2)]/60">
+        Envía insumos desde una sede y devuelve el sobrante al finalizar. ¿Prefieres un
+        inventario propio solo del evento? Cárgalo directo en{" "}
+        <a
+          href={`/local-santo/inventario?sede=${encodeURIComponent(event.id)}`}
+          className="font-black text-[var(--brand-primary)] underline"
+        >
+          Inventario con esta sede
+        </a>{" "}
+        sin trasladar nada.
+      </p>
+
+      {open && (
+        <div className="mt-3 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/60">
+              Sede origen
+            </label>
+            <select
+              value={sourceId}
+              onChange={(e) => changeSource(e.target.value)}
+              className="rounded-lg border-2 border-[var(--brand-primary)]/25 bg-white px-2 py-1.5 text-xs font-bold outline-none focus:border-[var(--brand-primary)]"
+            >
+              {sedes.map((sede) => (
+                <option key={sede.id} value={sede.id}>
+                  {sede.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {loadingItems ? (
+            <p className="inline-flex items-center gap-2 text-xs font-bold text-[var(--brand-ink-2)]/60">
+              <Loader2 className="animate-spin" size={14} /> Cargando inventario…
+            </p>
+          ) : items.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-3 py-2 text-xs font-bold text-[var(--brand-ink-2)]/60">
+              Esa sede no tiene stock disponible para enviar.
+            </p>
+          ) : (
+            <div className="max-h-56 space-y-1.5 overflow-y-auto pr-1">
+              {items.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between gap-2 rounded-lg border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-3 py-1.5"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-black text-[var(--brand-ink-3)]">{item.name}</p>
+                    <p className="text-[0.62rem] font-bold text-[var(--brand-ink-2)]/55">
+                      Disponible: {item.quantity} {item.unit}
+                    </p>
+                  </div>
+                  <input
+                    type="number"
+                    min={0}
+                    max={item.quantity}
+                    step="any"
+                    value={quantities[item.id] ?? ""}
+                    onChange={(e) =>
+                      setQuantities((prev) => ({ ...prev, [item.id]: e.target.value }))
+                    }
+                    placeholder="0"
+                    className="w-20 rounded-lg border-2 border-[var(--brand-primary)]/25 bg-white px-2 py-1 text-right text-xs font-bold outline-none focus:border-[var(--brand-primary)]"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={sendToEvent}
+              disabled={working || loadingItems || items.length === 0}
+              className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-primary)] px-4 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-white disabled:opacity-50"
+            >
+              {working ? <Loader2 className="animate-spin" size={13} /> : <ArrowRightLeft size={13} />}
+              Enviar al evento
+            </button>
+            <button
+              type="button"
+              onClick={returnLeftover}
+              disabled={working}
+              className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)] disabled:opacity-50"
+            >
+              <ArrowRightLeft size={13} />
+              Devolver sobrante a la sede
+            </button>
+          </div>
+        </div>
+      )}
+
+      {notice && (
+        <p className="mt-2 rounded-lg border border-green-600/25 bg-green-50 px-3 py-1.5 text-xs font-bold text-green-700">
+          {notice}
+        </p>
+      )}
+      {problem && (
+        <p className="mt-2 rounded-lg border border-red-300 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700">
+          {problem}
+        </p>
+      )}
+    </div>
+  )
+}
+
 function EventsPanel({
   events,
+  sedes,
   busy,
   onCreate,
   onPatch,
   onRemove,
 }: {
   events: Branch[]
+  sedes: Branch[]
   busy: boolean
-  onCreate: (name: string) => Promise<boolean>
+  onCreate: (name: string, copyMenuFromBranchId: string) => Promise<boolean>
   onPatch: (id: string, body: Record<string, unknown>) => Promise<void>
   onRemove: (branch: Branch) => Promise<void>
 }) {
   const [newEventName, setNewEventName] = useState("")
+  const [menuSourceId, setMenuSourceId] = useState(sedes[0]?.id || "")
   const [copied, setCopied] = useState("")
 
   const origin = typeof window !== "undefined" ? window.location.origin : ""
@@ -134,7 +364,7 @@ function EventsPanel({
   async function create() {
     const name = newEventName.trim()
     if (!name) return
-    if (await onCreate(name)) setNewEventName("")
+    if (await onCreate(name, menuSourceId)) setNewEventName("")
   }
 
   function finishEvent(branch: Branch) {
@@ -159,21 +389,41 @@ function EventsPanel({
         guardados en reportes y cierres.
       </p>
 
-      <div className="mt-4 flex gap-2">
-        <input
-          value={newEventName}
-          onChange={(e) => setNewEventName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && create()}
-          placeholder="Nombre del evento (ej. Feria La Candelaria)"
-          className="flex-1 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
-        />
-        <button
-          onClick={create}
-          disabled={busy || !newEventName.trim()}
-          className="inline-flex items-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50"
-        >
-          <Plus size={16} /> Crear evento
-        </button>
+      <div className="mt-4 space-y-2">
+        <div className="flex gap-2">
+          <input
+            value={newEventName}
+            onChange={(e) => setNewEventName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && create()}
+            placeholder="Nombre del evento (ej. Feria La Candelaria)"
+            className="flex-1 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
+          />
+          <button
+            onClick={create}
+            disabled={busy || !newEventName.trim()}
+            className="inline-flex items-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50"
+          >
+            <Plus size={16} /> Crear evento
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="inline-flex items-center gap-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/60">
+            <UtensilsCrossed size={13} /> Menú inicial
+          </label>
+          <select
+            value={menuSourceId}
+            onChange={(e) => setMenuSourceId(e.target.value)}
+            className="rounded-lg border-2 border-[var(--brand-primary)]/25 bg-white px-2 py-1.5 text-xs font-bold outline-none focus:border-[var(--brand-primary)]"
+          >
+            {sedes.map((sede) => (
+              <option key={sede.id} value={sede.id}>
+                Copiar menú de {sede.name}
+              </option>
+            ))}
+            <option value="">Empezar con menú vacío</option>
+          </select>
+        </div>
       </div>
 
       {events.length === 0 ? (
@@ -280,6 +530,7 @@ function EventsPanel({
                           <ExternalLink size={12} /> Abrir menú
                         </a>
                       </div>
+                      <EventInventoryTools event={event} sedes={sedes} />
                     </div>
                   </div>
                 ) : (
@@ -331,17 +582,26 @@ export default function SucursalesPage() {
     return () => clearTimeout(timer)
   }, [load])
 
-  async function createBranch(name: string, isEvent: boolean) {
+  async function createBranch(name: string, isEvent: boolean, copyMenuFromBranchId = "") {
     setBusy(true)
     setError("")
     try {
       const res = await fetch("/api/branches", {
         method: "POST",
         headers: authHeaders(),
-        body: JSON.stringify(isEvent ? { name, isEvent: true } : { name }),
+        body: JSON.stringify({
+          name,
+          ...(isEvent ? { isEvent: true } : {}),
+          ...(copyMenuFromBranchId ? { copyMenuFromBranchId } : {}),
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "No se pudo crear")
+      // La sede quedó creada aunque el clonado del menú fallara: se avisa para
+      // reintentar desde Menú o cargarlo a mano.
+      if (data.menuCloneWarning) {
+        setError(`Sede creada, pero el menú no se pudo clonar: ${data.menuCloneWarning}`)
+      }
       await load()
       return true
     } catch (e) {
@@ -493,8 +753,11 @@ export default function SucursalesPage() {
             {!loading ? (
               <EventsPanel
                 events={branches.filter((b) => b.isEvent)}
+                sedes={branches.filter((b) => !b.isEvent && b.is_active)}
                 busy={busy}
-                onCreate={(name) => createBranch(name, true)}
+                onCreate={(name, copyMenuFromBranchId) =>
+                  createBranch(name, true, copyMenuFromBranchId)
+                }
                 onPatch={patch}
                 onRemove={remove}
               />

@@ -7,6 +7,7 @@ import {
   mergeRawBusinessConfigWithBranchConfig,
 } from "@/lib/branch"
 import { getRawBusinessConfig, saveBusinessConfig } from "@/lib/orders"
+import { cloneMenuToBranch } from "@/lib/branchProvisioning"
 
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 
@@ -95,5 +96,29 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  return NextResponse.json({ ok: true, branch: { ...data, isEvent } }, { status: 201 })
+  // Clonado opcional del menú de otra sede (productos + recetas). Si falla, la
+  // sede ya quedó creada: se devuelve ok con la advertencia para que el dueño
+  // pueda reintentar o cargar el menú a mano.
+  const copyMenuFromBranchId = cleanText(body.copyMenuFromBranchId)
+  let menuClone: { productsCloned: number; recipesCloned: number } | null = null
+  let menuCloneWarning = ""
+
+  if (copyMenuFromBranchId && data?.id) {
+    try {
+      menuClone = await cloneMenuToBranch(copyMenuFromBranchId, String(data.id))
+    } catch (cloneError) {
+      menuCloneWarning =
+        cloneError instanceof Error ? cloneError.message : "No se pudo clonar el menú"
+    }
+  }
+
+  return NextResponse.json(
+    {
+      ok: true,
+      branch: { ...data, isEvent },
+      menuClone,
+      ...(menuCloneWarning ? { menuCloneWarning } : {}),
+    },
+    { status: 201 },
+  )
 }
