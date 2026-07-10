@@ -326,6 +326,110 @@ function EventInventoryTools({ event, sedes }: { event: Branch; sedes: Branch[] 
   )
 }
 
+type EventSummary = {
+  branchId: string
+  name: string
+  isActive: boolean
+  eventEndDate?: string
+  ordersCount: number
+  salesUSD: number
+  collectedUSD: number
+  days: number
+  averageTicketUSD: number
+  salesPerDayUSD: number
+}
+
+// Comparativo de ferias: cuánto vendió cada evento (incluye finalizados) para
+// decidir a cuáles volver. Ordenado por vendido, el mejor lleva corona.
+function EventsComparison({ refreshKey }: { refreshKey: string }) {
+  const [events, setEvents] = useState<EventSummary[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadSummary() {
+      setLoading(true)
+      try {
+        const res = await fetch("/api/branches/events-summary", {
+          headers: authHeaders(),
+          cache: "no-store",
+        })
+        const data = await res.json()
+        if (!cancelled && res.ok) setEvents(data.events || [])
+      } catch {
+        /* la tabla simplemente no se muestra */
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    loadSummary()
+    return () => {
+      cancelled = true
+    }
+  }, [refreshKey])
+
+  if (loading || events.length === 0) return null
+
+  const money = (value: number) =>
+    `$${Number(value || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
+  return (
+    <div className="mt-5">
+      <p className="text-[0.65rem] font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/60">
+        Comparativo de eventos
+      </p>
+      <div className="mt-2 overflow-x-auto rounded-xl border-2 border-[var(--brand-primary)]/15">
+        <table className="w-full min-w-[560px] border-collapse bg-white text-xs">
+          <thead>
+            <tr className="border-b-2 border-[var(--brand-primary)]/15 text-left text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/55">
+              <th className="px-3 py-2">Evento</th>
+              <th className="px-3 py-2 text-right">Pedidos</th>
+              <th className="px-3 py-2 text-right">Vendido</th>
+              <th className="px-3 py-2 text-right">Cobrado</th>
+              <th className="px-3 py-2 text-right">Días</th>
+              <th className="px-3 py-2 text-right">Vendido/día</th>
+              <th className="px-3 py-2 text-right">Ticket prom.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {events.map((event, index) => (
+              <tr
+                key={event.branchId}
+                className="border-b border-[var(--brand-primary)]/10 font-bold text-[var(--brand-ink-2)] last:border-b-0"
+              >
+                <td className="px-3 py-2">
+                  <span className="font-black text-[var(--brand-ink-3)]">
+                    {index === 0 && event.salesUSD > 0 ? "👑 " : ""}
+                    {event.name}
+                  </span>
+                  <span
+                    className={`ml-2 rounded-full px-2 py-0.5 text-[0.58rem] font-black uppercase ${
+                      event.isActive ? "bg-green-50 text-green-700" : "bg-[var(--brand-cream)] text-[var(--brand-ink-2)]/50"
+                    }`}
+                  >
+                    {event.isActive ? "En curso" : "Finalizado"}
+                  </span>
+                </td>
+                <td className="px-3 py-2 text-right">{event.ordersCount}</td>
+                <td className="px-3 py-2 text-right font-black text-[var(--brand-ink-3)]">{money(event.salesUSD)}</td>
+                <td className="px-3 py-2 text-right">{money(event.collectedUSD)}</td>
+                <td className="px-3 py-2 text-right">{event.days}</td>
+                <td className="px-3 py-2 text-right">{money(event.salesPerDayUSD)}</td>
+                <td className="px-3 py-2 text-right">{money(event.averageTicketUSD)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-1.5 text-[0.62rem] font-bold text-[var(--brand-ink-2)]/45">
+        Pedidos sin cancelados. &quot;Vendido&quot; = total de los pedidos; &quot;Cobrado&quot; = pagos registrados en caja.
+      </p>
+    </div>
+  )
+}
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")
@@ -637,6 +741,10 @@ function EventsPanel({
           })}
         </ul>
       )}
+
+      <EventsComparison
+        refreshKey={events.map((event) => `${event.id}:${event.is_active}`).join("|")}
+      />
     </section>
   )
 }

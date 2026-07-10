@@ -1,5 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
-import { getExpiredEventBranchIds } from "@/lib/branch"
+import { getCaracasDayKey, getExpiredEventBranchIds } from "@/lib/branch"
 
 // Aprovisionamiento de sedes/eventos: clonar el menú de otra sede al crear un
 // evento y trasladar inventario entre sedes (enviar stock a la feria y devolver
@@ -28,6 +28,47 @@ function randomSuffix() {
 
 function nowLabel() {
   return new Date().toLocaleString("es-VE", { timeZone: "America/Caracas" })
+}
+
+// --- Comparativo de eventos --------------------------------------------------
+
+export type EventOrderRow = {
+  total_usd: unknown
+  payment_received_equiv_usd: unknown
+  created_at: unknown
+}
+
+// Agrega los pedidos (ya sin cancelados) de un evento a las métricas del
+// comparativo de ferias: totales, días con ventas y promedios.
+export function summarizeEventOrders(rows: EventOrderRow[]) {
+  let salesUSD = 0
+  let collectedUSD = 0
+  const dayKeys = new Set<string>()
+  let lastOrderAt = ""
+
+  for (const row of rows) {
+    salesUSD += toNumber(row.total_usd)
+    collectedUSD += toNumber(row.payment_received_equiv_usd)
+    const createdAt = String(row.created_at || "")
+    if (createdAt) {
+      dayKeys.add(getCaracasDayKey(new Date(createdAt)))
+      if (createdAt > lastOrderAt) lastOrderAt = createdAt
+    }
+  }
+
+  const round2 = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100
+  const ordersCount = rows.length
+  const days = dayKeys.size
+
+  return {
+    ordersCount,
+    salesUSD: round2(salesUSD),
+    collectedUSD: round2(collectedUSD),
+    days,
+    averageTicketUSD: ordersCount ? round2(salesUSD / ordersCount) : 0,
+    salesPerDayUSD: days ? round2(salesUSD / days) : 0,
+    lastOrderAt,
+  }
 }
 
 // --- Auto-finalización de eventos vencidos ----------------------------------
