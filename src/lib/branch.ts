@@ -356,6 +356,9 @@ export type BranchScopedConfig = {
   // Sede temporal creada como evento/feria (modo evento): tiene su propio QR
   // y se finaliza desactivando la sede, conservando sus ventas y cierres.
   isEvent?: boolean
+  // Último día del evento (YYYY-MM-DD, hora de Caracas, inclusive): al terminar
+  // ese día el evento se auto-finaliza y su QR deja de aplicar.
+  eventEndDate?: string
   localTables?: BranchScopedTable[]
   // Tasa propia de la sede: pisa el modo/valor global solo para esta sucursal.
   // Ausente = hereda lo definido en Configuración → "Tasa y moneda".
@@ -371,6 +374,7 @@ const BRANCH_SCOPED_TEXT_FIELDS = [
   "estimatedTimeText",
   "mainWhatsapp",
   "deliveryWhatsapp",
+  "eventEndDate",
 ] as const
 
 const BRANCH_SCOPED_BOOLEAN_FIELDS = ["ordersPaused", "temporarilyClosed", "isEvent"] as const
@@ -560,4 +564,35 @@ export function buildSafePublicBranches(
     .filter((branch) => normalizeBoolean(branch.is_active ?? branch.isActive, true))
     .map((branch) => buildSafePublicBranch(branch, rawBusinessConfig))
     .filter((branch): branch is UnknownRecord => Boolean(branch))
+}
+
+export function getCaracasDayKey(date: Date = new Date()): string {
+  try {
+    return date.toLocaleDateString("en-CA", { timeZone: "America/Caracas" })
+  } catch {
+    return date.toISOString().slice(0, 10)
+  }
+}
+
+// Eventos (modo evento) activos cuya fecha de fin ya pasó: el último día es
+// inclusive, así que vencen cuando el día actual (Caracas) es POSTERIOR a
+// eventEndDate. Los llamadores auto-finalizan estas sedes (is_active=false)
+// para que el QR de la feria no siga recibiendo pedidos días después.
+export function getExpiredEventBranchIds(
+  branches: unknown[],
+  rawBusinessConfig: unknown,
+  todayKey: string = getCaracasDayKey(),
+): string[] {
+  const branchConfigs = getBranchConfigsFromRawBusinessConfig(rawBusinessConfig)
+
+  return normalizeBranchList(branches)
+    .filter((branch) => {
+      if (!normalizeBoolean(branch.is_active ?? branch.isActive, true)) return false
+      const config = branchConfigs[branch.id]
+      if (!config || config.isEvent !== true) return false
+      const endDate = cleanText(config.eventEndDate)
+      // Comparación de texto: ambas son fechas ISO (YYYY-MM-DD).
+      return /^\d{4}-\d{2}-\d{2}$/.test(endDate) && endDate < todayKey
+    })
+    .map((branch) => branch.id)
 }

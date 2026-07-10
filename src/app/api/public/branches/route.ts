@@ -7,6 +7,7 @@ import {
   getActiveBranches,
   buildSafePublicBranch,
 } from "@/lib/branch"
+import { autoFinalizeExpiredEvents } from "@/lib/branchProvisioning"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
 
@@ -28,10 +29,18 @@ export async function GET(request: NextRequest) {
   if (rateLimitResponse) return rateLimitResponse
 
   try {
-    const [activeBranches, rawBusinessConfig] = await Promise.all([
+    const [loadedBranches, rawBusinessConfig] = await Promise.all([
       getActiveBranches(),
       getRawBusinessConfig(),
     ])
+
+    // Eventos con fecha de fin vencida: se finalizan solos y salen del público
+    // (el QR de la feria deja de aplicar sin que el dueño tenga que acordarse).
+    const expiredEventIds = await autoFinalizeExpiredEvents(loadedBranches, rawBusinessConfig)
+    const activeBranches = expiredEventIds.length
+      ? loadedBranches.filter((branch) => !expiredEventIds.includes(String(branch.id)))
+      : loadedBranches
+
     const explicitBranchId = getExplicitBranchIdFromRequest(request)
     const selectedBranch = getBranchById(activeBranches, explicitBranchId) || activeBranches[0] || null
     const publicBranches = buildSafePublicBranches(activeBranches, rawBusinessConfig)

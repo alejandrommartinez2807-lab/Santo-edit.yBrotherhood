@@ -11,10 +11,12 @@ import {
   Copy,
   ExternalLink,
   Link2,
+  CalendarClock,
   Loader2,
   MonitorPlay,
   PartyPopper,
   Plus,
+  Printer,
   QrCode,
   Trash2,
   Building2,
@@ -324,12 +326,21 @@ function EventInventoryTools({ event, sedes }: { event: Branch; sedes: Branch[] 
   )
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+}
+
 function EventsPanel({
   events,
   sedes,
   busy,
   onCreate,
   onPatch,
+  onSetEndDate,
   onRemove,
 }: {
   events: Branch[]
@@ -337,6 +348,7 @@ function EventsPanel({
   busy: boolean
   onCreate: (name: string, copyMenuFromBranchId: string) => Promise<boolean>
   onPatch: (id: string, body: Record<string, unknown>) => Promise<void>
+  onSetEndDate: (id: string, endDate: string) => Promise<void>
   onRemove: (branch: Branch) => Promise<void>
 }) {
   const [newEventName, setNewEventName] = useState("")
@@ -349,8 +361,52 @@ function EventsPanel({
     return `${origin}/?branch=${encodeURIComponent(branch.id)}`
   }
 
+  // ecc=H: corrección de errores alta para que el logo centrado (hasta ~30%
+  // del área) no dañe la lectura del QR.
   function buildQrImageUrl(link: string, size = 240) {
-    return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=16&data=${encodeURIComponent(link)}`
+    return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=16&ecc=H&data=${encodeURIComponent(link)}`
+  }
+
+  // Tarjeta imprimible del QR con la marca (para el stand de la feria).
+  function printEventQr(event: Branch, link: string) {
+    const win = window.open("", "_blank", "width=720,height=860")
+    if (!win) return
+
+    const name = escapeHtml(event.name)
+    win.document.write(`<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>QR · ${name}</title>
+<style>
+  body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #fff; color: #111; }
+  .card { max-width: 640px; margin: 24px auto; padding: 32px 24px; text-align: center; border: 4px solid #111; border-radius: 28px; }
+  .logo { height: 72px; object-fit: contain; }
+  h1 { margin: 14px 0 2px; font-size: 30px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .sub { margin: 0 0 18px; font-size: 14px; font-weight: bold; color: #b45309; text-transform: uppercase; letter-spacing: 0.18em; }
+  .qr { position: relative; display: inline-block; }
+  .qr > img.code { width: 380px; height: 380px; }
+  .qr > img.mark { position: absolute; top: 50%; left: 50%; width: 84px; height: 84px; transform: translate(-50%, -50%); border-radius: 14px; border: 4px solid #fff; }
+  .hint { margin: 18px 0 4px; font-size: 17px; font-weight: bold; }
+  .link { font-size: 11px; color: #666; word-break: break-all; }
+  @media print { .card { border-color: #000; } }
+</style>
+</head>
+<body>
+  <div class="card">
+    <img class="logo" src="${origin}/brotherhood-logo.png" alt="" />
+    <h1>${name}</h1>
+    <p class="sub">Pide desde tu teléfono</p>
+    <div class="qr">
+      <img class="code" src="${buildQrImageUrl(link, 600)}" alt="QR" onload="setTimeout(function(){window.print()},400)" />
+      <img class="mark" src="${origin}/brotherhood-logo.png" alt="" />
+    </div>
+    <p class="hint">Escanea, arma tu pedido y paga sin hacer fila</p>
+    <p class="link">${escapeHtml(link)}</p>
+  </div>
+</body>
+</html>`)
+    win.document.close()
   }
 
   async function copyLink(url: string) {
@@ -490,7 +546,7 @@ function EventsPanel({
 
                 {event.is_active ? (
                   <div className="mt-3 flex flex-wrap items-center gap-4">
-                    <div className="rounded-xl border-2 border-[var(--brand-primary)]/15 bg-white p-2">
+                    <div className="relative rounded-xl border-2 border-[var(--brand-primary)]/15 bg-white p-2">
                       <Image
                         src={buildQrImageUrl(link)}
                         alt={`QR del evento ${event.name}`}
@@ -499,6 +555,14 @@ function EventsPanel({
                         unoptimized
                         className="h-28 w-28 rounded-lg object-contain"
                         loading="lazy"
+                      />
+                      <Image
+                        src="/brotherhood-logo.png"
+                        alt=""
+                        width={28}
+                        height={28}
+                        unoptimized
+                        className="absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-md border-2 border-white"
                       />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -515,14 +579,14 @@ function EventsPanel({
                           {copied === link ? <Check size={12} className="text-green-600" /> : <Copy size={12} />}
                           Copiar enlace
                         </button>
-                        <a
-                          href={buildQrImageUrl(link, 600)}
-                          target="_blank"
-                          rel="noreferrer"
+                        <button
+                          type="button"
+                          onClick={() => printEventQr(event, link)}
+                          title="Tarjeta imprimible con logo para el stand"
                           className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
                         >
-                          <QrCode size={12} /> QR grande (imprimir)
-                        </a>
+                          <Printer size={12} /> Imprimir QR
+                        </button>
                         <a
                           href={link}
                           target="_blank"
@@ -541,6 +605,24 @@ function EventsPanel({
                           <MonitorPlay size={12} /> Pantalla del stand
                         </a>
                       </div>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <label className="inline-flex items-center gap-1 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/60">
+                          <CalendarClock size={13} /> Último día
+                        </label>
+                        <input
+                          type="date"
+                          defaultValue={event.eventEndDate || ""}
+                          onChange={(e) => onSetEndDate(event.id, e.target.value)}
+                          className="rounded-lg border-2 border-[var(--brand-primary)]/25 bg-white px-2 py-1.5 text-xs font-bold outline-none focus:border-[var(--brand-primary)]"
+                        />
+                        <span className="text-[0.62rem] font-bold text-[var(--brand-ink-2)]/50">
+                          {event.eventEndDate
+                            ? "Al terminar ese día el evento se finaliza solo y el QR deja de aplicar."
+                            : "Sin fecha: se finaliza a mano con el botón."}
+                        </span>
+                      </div>
+
                       <EventInventoryTools event={event} sedes={sedes} />
                     </div>
                   </div>
@@ -627,6 +709,27 @@ export default function SucursalesPage() {
     const name = newName.trim()
     if (!name) return
     if (await createBranch(name, false)) setNewName("")
+  }
+
+  // Fecha de fin del evento: vive en la config por sede (branchConfigs),
+  // no en la tabla branches. Vacío = quitar la fecha (finalización manual).
+  async function saveEventEndDate(id: string, endDate: string) {
+    setBusy(true)
+    setError("")
+    try {
+      const res = await fetch(`/api/branches/${id}/config`, {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: JSON.stringify({ branchConfig: { eventEndDate: endDate || null } }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "No se pudo guardar la fecha")
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error")
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function patch(id: string, body: Record<string, unknown>) {
@@ -770,6 +873,7 @@ export default function SucursalesPage() {
                   createBranch(name, true, copyMenuFromBranchId)
                 }
                 onPatch={patch}
+                onSetEndDate={saveEventEndDate}
                 onRemove={remove}
               />
             ) : null}

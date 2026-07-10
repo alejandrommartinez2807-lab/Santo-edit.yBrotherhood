@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
+import { getExpiredEventBranchIds } from "@/lib/branch"
 
 // Aprovisionamiento de sedes/eventos: clonar el menú de otra sede al crear un
 // evento y trasladar inventario entre sedes (enviar stock a la feria y devolver
@@ -27,6 +28,26 @@ function randomSuffix() {
 
 function nowLabel() {
   return new Date().toLocaleString("es-VE", { timeZone: "America/Caracas" })
+}
+
+// --- Auto-finalización de eventos vencidos ----------------------------------
+
+// Desactiva los eventos cuya fecha de fin ya pasó (evaluación perezosa: se
+// llama desde los listados de sedes, no hace falta un cron). Devuelve los ids
+// finalizados para que el llamador ajuste su respuesta sin re-consultar.
+export async function autoFinalizeExpiredEvents(
+  branches: unknown[],
+  rawBusinessConfig: unknown,
+): Promise<string[]> {
+  const expiredIds = getExpiredEventBranchIds(branches, rawBusinessConfig)
+  if (!expiredIds.length) return []
+
+  const supabase = getSupabaseAdmin()
+  // Si el update falla igual se tratan como vencidos en la respuesta: el
+  // próximo listado lo reintenta.
+  await supabase.from("branches").update({ is_active: false }).in("id", expiredIds)
+
+  return expiredIds
 }
 
 // --- Clonado de menú -------------------------------------------------------

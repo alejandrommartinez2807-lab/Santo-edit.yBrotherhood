@@ -7,6 +7,8 @@ export type Branch = {
   sort_order: number
   // Marca de "modo evento": sede temporal (feria/evento) con QR propio.
   isEvent?: boolean
+  // Último día del evento (YYYY-MM-DD): al terminar ese día se finaliza solo.
+  eventEndDate?: string
 }
 
 export function authHeaders(): HeadersInit {

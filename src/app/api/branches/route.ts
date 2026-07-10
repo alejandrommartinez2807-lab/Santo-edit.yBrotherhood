@@ -7,7 +7,7 @@ import {
   mergeRawBusinessConfigWithBranchConfig,
 } from "@/lib/branch"
 import { getRawBusinessConfig, saveBusinessConfig } from "@/lib/orders"
-import { cloneMenuToBranch } from "@/lib/branchProvisioning"
+import { autoFinalizeExpiredEvents, cloneMenuToBranch } from "@/lib/branchProvisioning"
 
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 
@@ -42,9 +42,16 @@ export async function GET(request: NextRequest) {
   // Anota cada sede con su marca de evento (modo evento) desde business_config.
   const rawBusinessConfig = await getRawBusinessConfig().catch(() => ({}))
   const branchConfigs = getBranchConfigsFromRawBusinessConfig(rawBusinessConfig)
+
+  // Eventos con fecha de fin vencida: quedan finalizados aquí mismo (el panel
+  // los muestra ya como "Finalizado" sin esperar otra visita).
+  const expiredEventIds = await autoFinalizeExpiredEvents(data ?? [], rawBusinessConfig)
+
   const branches = (data ?? []).map((branch) => ({
     ...branch,
+    is_active: expiredEventIds.includes(String(branch.id)) ? false : branch.is_active,
     isEvent: Boolean(branchConfigs[String(branch.id)]?.isEvent),
+    eventEndDate: cleanText(branchConfigs[String(branch.id)]?.eventEndDate) || undefined,
   }))
 
   return NextResponse.json({ ok: true, branches: filterBranchesForAccess(branches, access) })
