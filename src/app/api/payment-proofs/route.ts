@@ -34,7 +34,18 @@ type PublicProofBody = {
   dataUrl?: unknown
   fileName?: unknown
   mimeType?: unknown
+  // El cliente confirma a propósito que quiere enviar OTRO comprobante para
+  // un pedido que ya tiene uno activo (por ejemplo, un segundo abono).
+  confirmDuplicate?: unknown
 }
+
+// Estados de comprobante que cuentan como "ya hay un pago reportado": si el
+// cliente vuelve días después y reintenta, se le avisa antes de duplicar.
+const ACTIVE_PROOF_STATUSES = new Set([
+  "Comprobante enviado",
+  "En revisión",
+  "Confirmado por caja",
+])
 
 function getRequestPassword(request: NextRequest) {
   return request.headers.get("x-local-password") || request.headers.get("x-admin-password") || ""
@@ -227,6 +238,33 @@ export async function POST(request: NextRequest) {
 
     if (order.status === "Cancelado") {
       return NextResponse.json({ error: "Este pedido está cancelado y no puede recibir comprobantes" }, { status: 409 })
+    }
+
+    // Anti-duplicado: si el pedido ya tiene un comprobante activo (enviado,
+    // en revisión o confirmado), no se acepta otro sin confirmación expresa.
+    if (body.confirmDuplicate !== true) {
+      const existingProofs = await getPaymentProofs({ orderId: input.orderId }, branchId)
+      const activeProof = existingProofs.find((proof) => ACTIVE_PROOF_STATUSES.has(proof.status))
+
+      if (activeProof) {
+        const isConfirmed = activeProof.status === "Confirmado por caja"
+
+        return NextResponse.json(
+          {
+            error: isConfirmed
+              ? "El pago de este pedido ya fue confirmado por caja. Si estás abonando un monto adicional, confirma el envío."
+              : "Ya reportaste un pago para este pedido y está pendiente por revisar. No hace falta enviarlo otra vez; si es un pago distinto, confirma el envío.",
+            duplicate: true,
+            existingProof: {
+              createdAt: activeProof.createdAt,
+              status: activeProof.status,
+              amountReportedUSD: activeProof.amountReportedUSD,
+              amountReportedVES: activeProof.amountReportedVES,
+            },
+          },
+          { status: 409 },
+        )
+      }
     }
 
     const paymentProof = await createPaymentProof({

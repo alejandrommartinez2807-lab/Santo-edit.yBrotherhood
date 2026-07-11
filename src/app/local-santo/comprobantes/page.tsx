@@ -224,6 +224,20 @@ export default function PaymentProofsPage() {
     })
   }, [proofs, query, statusFilter])
 
+  // Comprobantes por pedido: si un pedido tiene más de uno, se marca como
+  // posible duplicado (el cliente pudo reenviarlo días después sin recordar
+  // que ya lo había reportado).
+  const proofCountByOrderId = useMemo(() => {
+    const counts = new Map<string, number>()
+
+    proofs.forEach((proof) => {
+      if (!proof.orderId) return
+      counts.set(proof.orderId, (counts.get(proof.orderId) || 0) + 1)
+    })
+
+    return counts
+  }, [proofs])
+
   async function reviewProof(proof: PaymentProof, status: PaymentProofStatus) {
     setIsReviewingId(proof.id)
     setError(null)
@@ -387,6 +401,8 @@ export default function PaymentProofsPage() {
             <section className="mt-5 grid gap-4">
               {filteredProofs.map((proof) => {
                 const isReviewing = isReviewingId === proof.id
+                const hasSiblingProofs =
+                  (proofCountByOrderId.get(proof.orderId) || 0) > 1
 
                 return (
                   <article
@@ -427,6 +443,13 @@ export default function PaymentProofsPage() {
                               <span className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-3 py-1 text-[0.68rem] font-black uppercase text-[var(--brand-ink)]">
                                 {proof.id}
                               </span>
+                              {hasSiblingProofs && (
+                                <span className="rounded-full border-2 border-orange-500 bg-orange-100 px-3 py-1 text-[0.68rem] font-black uppercase text-orange-800">
+                                  ⚠ Este pedido tiene{" "}
+                                  {proofCountByOrderId.get(proof.orderId)}{" "}
+                                  comprobantes
+                                </span>
+                              )}
                             </div>
                             <h2 className="mt-3 text-2xl font-black uppercase text-[var(--brand-primary)]">
                               Pedido {proof.orderId}

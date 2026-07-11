@@ -10,6 +10,7 @@ import {
   useOrderReadyAlert,
   usePublicOrderStatus,
 } from "@/components/PublicOrderStatusNotifier";
+import PublicOrderPaymentSection from "@/components/PublicOrderPaymentSection";
 
 // Página pública de seguimiento reabrible: el cliente la guarda desde la
 // confirmación (o la recibe por WhatsApp) y ve su pedido avanzar en vivo.
@@ -202,6 +203,12 @@ export default function PedidoSeguimientoPage({
             </>
           )}
         </div>
+
+        {/* Pagos: reportar la captura después y ver cuándo caja la confirma.
+            Solo cuando el pedido existe y no está cancelado. */}
+        {!notFound && status && !isCancelled ? (
+          <PublicOrderPaymentSection orderId={orderId} />
+        ) : null}
       </section>
     </main>
   );
