@@ -5,6 +5,7 @@ import {
   DEFAULT_PUBLIC_PAYMENT_METHODS,
   normalizePublicCategoryList,
   normalizePublicHiddenCategoryList,
+  normalizePublicCoupons,
   normalizePublicNavButtons,
   normalizePublicPaymentMethods,
   type PublicNavButton,
@@ -99,8 +100,12 @@ export type BusinessConfig = {
   publicAvailabilityLabel: string
   // Métodos de pago del carrito público, editables por el dueño.
   publicPaymentMethods: string[]
+  // Cupones del carrito ("CODIGO 10" por línea); nunca se exponen al público.
+  publicCoupons: string[]
   locationButtonText: string
   googleMapsUrl: string
+  // Link "escríbenos una reseña" de Google (ficha del negocio), opcional.
+  googleReviewUrl: string
   instagramUrl: string
   mainWhatsapp: string
   deliveryWhatsapp: string
@@ -233,8 +238,10 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicRegularGroupTitle: "Productos normales",
   publicAvailabilityLabel: "Disponible",
   publicPaymentMethods: [...DEFAULT_PUBLIC_PAYMENT_METHODS],
+  publicCoupons: [],
   locationButtonText: "Abrir ubicación",
   googleMapsUrl: "",
+  googleReviewUrl: "",
   instagramUrl: "",
   mainWhatsapp: "",
   deliveryWhatsapp: "",
@@ -616,10 +623,12 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       String(source.publicAvailabilityLabel || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.publicAvailabilityLabel,
     publicPaymentMethods: normalizePublicPaymentMethods(source.publicPaymentMethods),
+    publicCoupons: normalizePublicCoupons(source.publicCoupons),
     locationButtonText:
       String(source.locationButtonText || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.locationButtonText,
     googleMapsUrl: String(source.googleMapsUrl || "").trim(),
+    googleReviewUrl: String(source.googleReviewUrl || "").trim(),
     instagramUrl: String(source.instagramUrl || "").trim(),
     mainWhatsapp: String(source.mainWhatsapp || "").trim(),
     deliveryWhatsapp: String(source.deliveryWhatsapp || "").trim(),

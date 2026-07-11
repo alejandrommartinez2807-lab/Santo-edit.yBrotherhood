@@ -60,6 +60,7 @@ export default function Home() {
         decreaseQuantity={cart.decreaseQuantity}
         updateItemNote={cart.updateItemNote}
         updateItemNoteEnabled={cart.updateItemNoteEnabled}
+        onRestoreLastOrder={cart.restoreLastOrder}
         exchangeRate={exchange.rate}
         exchangeSource={exchange.source}
         exchangeValueDate={exchange.valueDate}

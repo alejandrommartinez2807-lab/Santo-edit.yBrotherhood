@@ -32,6 +32,7 @@ import {
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 import {
   normalizePublicCategoryList,
+  normalizePublicCoupons,
   normalizePublicHiddenCategoryList,
   normalizePublicNavButtons,
   normalizePublicPaymentMethods,
@@ -339,6 +340,7 @@ function normalizeBusinessConfigPayload(
     "publicAvailabilityLabel",
     "locationButtonText",
     "googleMapsUrl",
+    "googleReviewUrl",
     "instagramUrl",
   ]
 
@@ -375,6 +377,14 @@ function normalizeBusinessConfigPayload(
   if (hasOwn(source, "publicPaymentMethods")) {
     ;(config as Record<string, unknown>).publicPaymentMethods = normalizePublicPaymentMethods(
       source.publicPaymentMethods
+    )
+  }
+
+  // Cupones del carrito ("CODIGO 10" por línea): config operativa. No viajan
+  // en la respuesta pública; el cliente valida el suyo en /api/public/coupons.
+  if (hasOwn(source, "publicCoupons")) {
+    ;(config as Record<string, unknown>).publicCoupons = normalizePublicCoupons(
+      source.publicCoupons
     )
   }
 

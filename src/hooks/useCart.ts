@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 
 const CART_STORAGE_KEY = "santo_perrito_cart_v5_channels"
+const LAST_ORDER_STORAGE_KEY = "santo_last_order_items_v1"
 
 export type CartProductType =
   | "normal"
@@ -239,6 +240,28 @@ function normalizeCartItems(items: unknown): CartItem[] {
     .filter((item) => item.id && item.name && item.price >= 0)
 }
 
+// Snapshot del último pedido enviado ("repetir mi último pedido"). Se guarda
+// justo antes de vaciar el carrito al confirmar; los precios se re-normalizan
+// al restaurar, pero igual el staff revisa el pedido como siempre.
+export function saveLastOrderSnapshot(items: readonly unknown[]) {
+  if (!items.length) return
+
+  try {
+    localStorage.setItem(LAST_ORDER_STORAGE_KEY, JSON.stringify(items))
+  } catch {
+    // Sin storage no hay "repetir pedido"; el flujo normal sigue igual.
+  }
+}
+
+export function readLastOrderSnapshot(): CartItem[] {
+  try {
+    const raw = localStorage.getItem(LAST_ORDER_STORAGE_KEY)
+    return raw ? normalizeCartItems(JSON.parse(raw)) : []
+  } catch {
+    return []
+  }
+}
+
 export function useCart() {
   const [items, setItems] = useState<CartItem[]>([])
 
@@ -378,6 +401,16 @@ export function useCart() {
     setItems([])
   }
 
+  // Restaura el snapshot del último pedido en el carrito (lo reemplaza).
+  // Devuelve cuántas líneas restauró para que la UI reaccione.
+  function restoreLastOrder() {
+    const lastItems = readLastOrderSnapshot()
+
+    if (lastItems.length) setItems(lastItems)
+
+    return lastItems.length
+  }
+
   const totalItems = useMemo(
     () => items.reduce((sum, item) => sum + item.quantity, 0),
     [items]
@@ -397,6 +430,7 @@ export function useCart() {
     updateItemNote,
     updateItemNoteEnabled,
     clearCart,
+    restoreLastOrder,
     totalItems,
     totalPrice,
   }

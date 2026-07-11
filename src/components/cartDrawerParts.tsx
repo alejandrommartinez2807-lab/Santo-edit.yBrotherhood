@@ -140,6 +140,7 @@ type EmptyCartStateProps = {
   title?: string;
   text?: string;
   buttonText?: string;
+  onRestoreLastOrder?: () => void;
 };
 
 export function EmptyCartState({
@@ -148,6 +149,7 @@ export function EmptyCartState({
   title,
   text,
   buttonText,
+  onRestoreLastOrder,
 }: EmptyCartStateProps) {
   return (
     <div className="flex min-h-[calc(100vh-210px)] flex-col items-center justify-center rounded-[2rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-6 py-12 text-center shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
@@ -175,6 +177,16 @@ export function EmptyCartState({
       >
         {buttonText || "Ver menú"}
       </a>
+
+      {onRestoreLastOrder ? (
+        <button
+          type="button"
+          onClick={onRestoreLastOrder}
+          className="mt-3 inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-transparent px-7 py-3.5 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-primary)] hover:text-black"
+        >
+          Repetir mi último pedido
+        </button>
+      ) : null}
     </div>
   );
 }

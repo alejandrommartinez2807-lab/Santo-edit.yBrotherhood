@@ -183,6 +183,70 @@ export function normalizePublicPaymentMethods(value: unknown): string[] {
   return methods.length ? methods : [...DEFAULT_PUBLIC_PAYMENT_METHODS]
 }
 
+// Cupones del carrito público. El dueño escribe uno por línea como
+// "BROTHER10 10" (código + porcentaje de descuento). Se guardan normalizados
+// ("CODIGO 10") y NUNCA viajan en la respuesta pública: el cliente valida su
+// código contra /api/public/coupons y solo recibe el porcentaje del suyo.
+export type PublicCoupon = {
+  code: string
+  percent: number
+}
+
+export function parsePublicCouponLine(value: unknown): PublicCoupon | null {
+  const parts = cleanText(value).split(/\s+/)
+
+  if (parts.length < 2) return null
+
+  const code = parts[0]
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9-]/g, "")
+    .slice(0, 20)
+  const percent = Math.round(Number(parts[1].replace(/%$/, "")))
+
+  if (code.length < 3 || !Number.isFinite(percent) || percent < 1 || percent > 99) {
+    return null
+  }
+
+  return { code, percent }
+}
+
+export function normalizePublicCoupons(value: unknown): string[] {
+  const rawList = Array.isArray(value)
+    ? value
+    : typeof value === "string" && value.trim()
+      ? value.split(/[;\n]/g)
+      : []
+  const seen = new Set<string>()
+
+  return rawList
+    .map(parsePublicCouponLine)
+    .filter((coupon): coupon is PublicCoupon => {
+      if (!coupon || seen.has(coupon.code)) return false
+      seen.add(coupon.code)
+      return true
+    })
+    .slice(0, 20)
+    .map((coupon) => `${coupon.code} ${coupon.percent}`)
+}
+
+export function findPublicCoupon(lines: unknown, code: unknown): PublicCoupon | null {
+  const wanted = cleanText(code)
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9-]/g, "")
+
+  if (!wanted) return null
+
+  return (
+    normalizePublicCoupons(lines)
+      .map(parsePublicCouponLine)
+      .find((coupon) => coupon?.code === wanted) || null
+  )
+}
+
 export function normalizePublicNavButtons(value: unknown): PublicNavButton[] {
   const rawList = Array.isArray(value) ? value : []
   const fallbackById = new Map(DEFAULT_PUBLIC_NAV_BUTTONS.map((item) => [item.id, item]))

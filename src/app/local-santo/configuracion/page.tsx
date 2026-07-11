@@ -61,6 +61,7 @@ import {
   DEFAULT_PUBLIC_NAV_BUTTONS,
   DEFAULT_PUBLIC_PAYMENT_METHODS,
   normalizePublicCategoryList,
+  normalizePublicCoupons,
   normalizePublicHiddenCategoryList,
   normalizePublicNavButtons,
   normalizePublicPaymentMethods,
@@ -137,8 +138,11 @@ type BusinessConfig = {
   publicAvailabilityLabel: string;
   // Métodos de pago del carrito público (uno por línea en el editor).
   publicPaymentMethods: string[];
+  // Cupones del carrito: "CODIGO 10" por línea (código + % de descuento).
+  publicCoupons: string[];
   locationButtonText: string;
   googleMapsUrl: string;
+  googleReviewUrl: string;
   instagramUrl: string;
   mainWhatsapp: string;
   deliveryWhatsapp: string;
@@ -302,8 +306,10 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicRegularGroupTitle: "Productos normales",
   publicAvailabilityLabel: "Disponible",
   publicPaymentMethods: [...DEFAULT_PUBLIC_PAYMENT_METHODS],
+  publicCoupons: [],
   locationButtonText: "Abrir ubicación",
   googleMapsUrl: "",
+  googleReviewUrl: "",
   instagramUrl: "",
   mainWhatsapp: "",
   deliveryWhatsapp: "",
@@ -977,6 +983,7 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
       String(source.publicCartWhatsappButtonText || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.publicCartWhatsappButtonText,
     publicPaymentMethods: normalizePublicPaymentMethods(source.publicPaymentMethods),
+    publicCoupons: normalizePublicCoupons(source.publicCoupons),
     publicDivisaGroupTitle:
       String(source.publicDivisaGroupTitle || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.publicDivisaGroupTitle,
@@ -996,6 +1003,7 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
       String(source.locationButtonText || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.locationButtonText,
     googleMapsUrl: String(source.googleMapsUrl || "").trim(),
+    googleReviewUrl: String(source.googleReviewUrl || "").trim(),
     instagramUrl: String(source.instagramUrl || "").trim(),
     mainWhatsapp: String(source.mainWhatsapp || "").trim(),
     deliveryWhatsapp: String(source.deliveryWhatsapp || "").trim(),
@@ -4371,6 +4379,26 @@ export default function BusinessConfigPage() {
                       las opciones estándar.
                     </p>
                   </div>
+                  <div className="sm:col-span-2 lg:col-span-3">
+                    <label className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/70">
+                      Cupones de descuento (código y porcentaje por línea)
+                    </label>
+                    <textarea
+                      value={businessConfig.publicCoupons.join("\n")}
+                      onChange={(event) =>
+                        updateConfig("publicCoupons", event.target.value.split("\n"))
+                      }
+                      rows={3}
+                      placeholder={"BIENVENIDO10 10\nFERIA15 15"}
+                      className="mt-2 w-full rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+                    />
+                    <p className="mt-1 text-[0.68rem] font-bold text-[var(--brand-ink-2)]/55">
+                      El cliente escribe el código en el carrito y se le descuenta ese
+                      porcentaje del pedido. Borra la línea para desactivar un cupón.
+                      Los códigos no se muestran en el sitio: compártelos tú (Instagram,
+                      volantes, ferias).
+                    </p>
+                  </div>
                   <TextInput
                     label="Título del grupo en divisas"
                     value={businessConfig.publicDivisaGroupTitle}
@@ -4661,6 +4689,13 @@ export default function BusinessConfigPage() {
                 value={businessConfig.googleMapsUrl}
                 onChange={(value) => updateConfig("googleMapsUrl", value)}
                 placeholder="https://maps.google.com/..."
+                disabled={!canEditAdvancedPublic}
+              />
+              <TextInput
+                label="Link de reseñas de Google"
+                value={businessConfig.googleReviewUrl}
+                onChange={(value) => updateConfig("googleReviewUrl", value)}
+                placeholder="https://g.page/r/.../review"
                 disabled={!canEditAdvancedPublic}
               />
               <TextInput

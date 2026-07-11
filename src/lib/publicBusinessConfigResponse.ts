@@ -357,6 +357,7 @@ export function buildPublicBusinessConfigResponse(
       cleanText(config.publicAvailabilityLabel) || "Disponible",
     locationButtonText: cleanText(config.locationButtonText),
     googleMapsUrl: cleanUrl(config.googleMapsUrl),
+    googleReviewUrl: cleanUrl(config.googleReviewUrl),
     instagramUrl: cleanUrl(config.instagramUrl),
     mainWhatsapp: cleanWhatsappNumber(config.mainWhatsapp),
     deliveryWhatsapp: cleanWhatsappNumber(config.deliveryWhatsapp),

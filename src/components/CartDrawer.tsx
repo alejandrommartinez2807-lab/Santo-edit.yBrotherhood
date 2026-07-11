@@ -5,6 +5,7 @@ import {
   type ChangeEvent,
   useEffect,
   useEffectEvent,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -68,6 +69,7 @@ import {
 } from "@/components/cartDrawerParts";
 import { enqueueOrder, newClientOrderId } from "@/lib/offlineQueue";
 import PublicOrderStatusNotifier from "@/components/PublicOrderStatusNotifier";
+import { readLastOrderSnapshot, saveLastOrderSnapshot } from "@/hooks/useCart";
 import PublicBranchPicker, {
   usePublicBranchSelection,
 } from "@/components/PublicBranchPicker";
@@ -94,6 +96,7 @@ type CartDrawerProps = {
   decreaseQuantity: (cartLineId: string) => void;
   updateItemNote?: (cartLineId: string, note: string) => void;
   updateItemNoteEnabled?: (cartLineId: string, enabled: boolean) => void;
+  onRestoreLastOrder?: () => number;
   exchangeRate: number;
   exchangeSource?: string;
   exchangeValueDate?: string;
@@ -281,6 +284,7 @@ export default function CartDrawer({
   decreaseQuantity,
   updateItemNote,
   updateItemNoteEnabled,
+  onRestoreLastOrder,
   exchangeRate,
   exchangeSource,
   exchangeValueDate,
@@ -313,8 +317,16 @@ export default function CartDrawer({
   const [deliveryZone, setDeliveryZone] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [customerNote, setCustomerNote] = useState("");
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    percent: number;
+  } | null>(null);
+  const [couponError, setCouponError] = useState("");
+  const [isCheckingCoupon, setIsCheckingCoupon] = useState(false);
   const [lastCreatedOrder, setLastCreatedOrder] =
     useState<CreatedOrderSummary | null>(null);
+  const [hasLastOrderSnapshot, setHasLastOrderSnapshot] = useState(false);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
   const [isPaymentProofFormOpen, setIsPaymentProofFormOpen] = useState(false);
@@ -415,6 +427,17 @@ export default function CartDrawer({
     setTableAccountNotice(null);
     setAttachToTableOpenAccount(false);
   }, [branchSelection.selectedBranchId]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // ¿Hay un pedido anterior guardado para "repetir"? Se re-chequea al abrir
+    // el carrito (difiere el setState un tick: react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => {
+      setHasLastOrderSnapshot(readLastOrderSnapshot().length > 0);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [isOpen]);
 
   useEffect(() => {
     // Difiere los setState un tick para no hacerlos síncronos dentro del
@@ -736,8 +759,27 @@ export default function CartDrawer({
 
   const hasItems = items.length > 0;
 
-  const comboItems = items.filter(isComboItem);
-  const regularItems = items.filter((item) => !isComboItem(item));
+  // Cupón aplicado: se descuenta el % en el precio de cada línea. Todo lo
+  // demás (totales, payload, tickets, cierres) hereda el precio ya descontado,
+  // así el pedido cuadra sin tocar el esquema de dinero. basePrice y
+  // unitOptionsPrice se escalan igual para mantener price = base + opciones.
+  const effectiveItems = useMemo(() => {
+    if (!appliedCoupon) return items;
+
+    const factor = 1 - appliedCoupon.percent / 100;
+    const discount = (value: number) =>
+      Math.round((Number(value || 0) * factor + Number.EPSILON) * 100) / 100;
+
+    return items.map((item) => ({
+      ...item,
+      price: discount(item.price),
+      basePrice: discount(Number(item.basePrice ?? item.price)),
+      unitOptionsPrice: discount(Number(item.unitOptionsPrice ?? 0)),
+    }));
+  }, [items, appliedCoupon]);
+
+  const comboItems = effectiveItems.filter(isComboItem);
+  const regularItems = effectiveItems.filter((item) => !isComboItem(item));
 
   const comboTotalPrice = comboItems.reduce(
     (total, item) => total + item.price * item.quantity,
@@ -1136,6 +1178,40 @@ export default function CartDrawer({
     }
   }
 
+  async function handleApplyCoupon() {
+    const code = couponInput.trim();
+
+    if (!code || isCheckingCoupon) return;
+
+    setIsCheckingCoupon(true);
+    setCouponError("");
+
+    try {
+      const response = await fetch("/api/public/coupons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const data = await readApiResponse(response);
+
+      if (!response.ok || !data.ok) {
+        setAppliedCoupon(null);
+        setCouponError(cleanText(data.error) || "Cupón no válido");
+        return;
+      }
+
+      setAppliedCoupon({
+        code: cleanText(data.code) || code.toUpperCase(),
+        percent: Math.min(99, Math.max(1, Math.round(Number(data.percent) || 0))),
+      });
+      setCouponInput("");
+    } catch {
+      setCouponError("No se pudo validar el cupón. Revisa tu conexión.");
+    } finally {
+      setIsCheckingCoupon(false);
+    }
+  }
+
   async function handleRegisterLocalOrder() {
     if (hasUnavailableItemsForOrderType) {
       setOrderError(unavailableItemsMessage);
@@ -1152,7 +1228,7 @@ export default function CartDrawer({
     let pendingPayload: unknown = null;
 
     try {
-      const normalizedItems = items.map((item) => ({
+      const normalizedItems = effectiveItems.map((item) => ({
         cartLineId: getCartLineId(item),
         id: item.id,
         name: item.name,
@@ -1175,8 +1251,18 @@ export default function CartDrawer({
         ivaRate: item.ivaRate ?? null,
       }));
 
+      // El cupón queda registrado en la nota: caja ve por qué los precios
+      // vienen rebajados (los montos del pedido ya llegan con el descuento).
+      const couponNote = appliedCoupon
+        ? `Cupón ${appliedCoupon.code} aplicado (-${appliedCoupon.percent}%)`
+        : "";
+      const noteWithCoupon = couponNote
+        ? customerNote.trim()
+          ? `${customerNote.trim()} | ${couponNote}`
+          : couponNote
+        : customerNote;
       const finalCustomerNote = cleanCustomerNoteWithStaffConfirmation(
-        customerNote,
+        noteWithCoupon,
         staffConfirmationProductNames,
       );
 
@@ -1255,6 +1341,8 @@ export default function CartDrawer({
           ? tableNumber.trim()
           : "";
 
+      saveLastOrderSnapshot(items);
+      setHasLastOrderSnapshot(true);
       items.forEach((item) => {
         removeItem(getCartLineId(item));
       });
@@ -1273,6 +1361,9 @@ export default function CartDrawer({
       setDeliveryZone("");
       setPaymentMethod("");
       setCustomerNote("");
+      setCouponInput("");
+      setAppliedCoupon(null);
+      setCouponError("");
       clearOrderAttachment();
       setOrderAttachmentError("");
       setOrderType("Comer aquí");
@@ -1292,6 +1383,8 @@ export default function CartDrawer({
         // Sin conexión: guardamos el pedido localmente; OfflineSync lo enviará
         // al reconectar. No perdemos la venta.
         await enqueueOrder(pendingPayload);
+        saveLastOrderSnapshot(items);
+        setHasLastOrderSnapshot(true);
         items.forEach((item) => removeItem(getCartLineId(item)));
         setLastCreatedOrder({
           id: "Guardado sin conexión",
@@ -1310,6 +1403,9 @@ export default function CartDrawer({
         setDeliveryZone("");
         setPaymentMethod("");
         setCustomerNote("");
+        setCouponInput("");
+        setAppliedCoupon(null);
+        setCouponError("");
         clearOrderAttachment();
         setOrderType("Comer aquí");
       } else {
@@ -1474,10 +1570,15 @@ export default function CartDrawer({
               title={publicConfig.publicCartEmptyTitle}
               text={publicConfig.publicCartEmptyText}
               buttonText={publicConfig.publicCartEmptyButtonText}
+              onRestoreLastOrder={
+                hasLastOrderSnapshot && onRestoreLastOrder
+                  ? () => onRestoreLastOrder()
+                  : undefined
+              }
             />
           ) : (
             <div className="space-y-4">
-              {items.map((item) => (
+              {effectiveItems.map((item) => (
                 <CartLineItem
                   key={getCartLineId(item)}
                   item={item}
@@ -1494,6 +1595,60 @@ export default function CartDrawer({
               ))}
             </div>
           )}
+
+          {hasItems ? (
+            <div className="mt-4 rounded-[1.25rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-black text-[var(--brand-primary)]">
+                    Cupón {appliedCoupon.code}: −{appliedCoupon.percent}% aplicado
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAppliedCoupon(null);
+                      setCouponError("");
+                    }}
+                    className="text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/60 underline underline-offset-2 transition hover:text-red-300"
+                  >
+                    Quitar
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/70">
+                    ¿Tienes un cupón?
+                  </p>
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      value={couponInput}
+                      onChange={(event) => setCouponInput(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          handleApplyCoupon();
+                        }
+                      }}
+                      placeholder="Escribe tu código"
+                      maxLength={20}
+                      className="w-full rounded-xl border-2 border-[var(--brand-border)] bg-transparent px-3 py-2 text-sm font-bold uppercase text-[var(--brand-ink-3)] outline-none transition focus:border-[var(--brand-primary)] placeholder:normal-case placeholder:text-[var(--brand-ink-2)]/40"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      disabled={isCheckingCoupon || !couponInput.trim()}
+                      className="shrink-0 rounded-xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90 disabled:opacity-50"
+                    >
+                      {isCheckingCoupon ? "..." : "Aplicar"}
+                    </button>
+                  </div>
+                </>
+              )}
+              {couponError ? (
+                <p className="mt-2 text-xs font-bold text-red-300">{couponError}</p>
+              ) : null}
+            </div>
+          ) : null}
 
           {hasItems && hasUnavailableItemsForOrderType ? (
             <div className="mt-4 rounded-[1.25rem] border-2 border-red-500/30 bg-red-500/15 px-4 py-3">
@@ -1528,7 +1683,7 @@ export default function CartDrawer({
 
         {hasItems && (
           <CartSummaryFooter
-            items={items}
+            items={effectiveItems}
             publicConfig={publicConfig}
             totalUSD={totalUSD}
             hasCombos={hasCombos}
