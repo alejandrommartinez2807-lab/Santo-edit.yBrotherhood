@@ -515,7 +515,10 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      if (!deliveryAddress) {
+      // Con cotización por distancia, el link de Maps ES la dirección (viaja
+      // dentro de deliveryAddress); la dirección escrita solo se exige en el
+      // flujo viejo sin ubicación.
+      if (!deliveryAddress && !distanceQuoted) {
         return NextResponse.json(
           {
             error: "Falta la dirección para delivery",

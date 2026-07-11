@@ -7,7 +7,9 @@ const API_SECURITY_HEADERS = {
   "Referrer-Policy": "no-referrer",
   "X-Frame-Options": "DENY",
   "X-Robots-Tag": "noindex, nofollow",
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  // geolocation=(self): el carrito público usa "Usar mi ubicación" para
+  // cotizar el delivery por distancia; cámara y micrófono siguen bloqueados.
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(self)",
   "Cross-Origin-Resource-Policy": "same-origin",
 } as const
 
