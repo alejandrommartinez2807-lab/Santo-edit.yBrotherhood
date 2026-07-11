@@ -9,22 +9,68 @@ const displayFont = Anton({
   variable: "--font-display",
   display: "swap",
 });
+import { Analytics } from "@vercel/analytics/react";
 import AuthBridge from "@/components/AuthBridge";
 import BranchSwitcher from "@/components/BranchSwitcher";
 import OfflineSync from "@/components/OfflineSync";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { getRawBusinessConfig } from "@/lib/orders";
 import { buildBrandThemeCss } from "@/lib/theme";
+import { getSiteUrl } from "@/lib/siteUrl";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: {
-    default: `${BRAND.name} | Menú y pedidos`,
-    template: `%s | ${BRAND.name}`,
-  },
-  description: `Menú digital, pedidos y panel privado de ${BRAND.name}.`,
-  manifest: "/manifest.webmanifest",
-};
+function cleanConfigText(value: unknown) {
+  return String(value || "").trim();
+}
+
+// Descripción del negocio configurada por el dueño; el valor semilla del
+// template ("Menú y pedidos") cuenta como no configurado.
+function readBusinessDescription(config: Record<string, unknown>) {
+  const description = cleanConfigText(config.businessShortDescription);
+
+  return description && description !== "Menú y pedidos"
+    ? description
+    : `Menú digital y pedidos en línea de ${BRAND.name}.`;
+}
+
+// Metadata dinámica por cliente: el nombre sale de BRAND (fijo por código en
+// cada copia del template, regla del rebrand) y la descripción de
+// business_config. Open Graph/Twitter hacen que el link compartido por
+// WhatsApp o Instagram muestre logo + nombre + descripción en vez de un link
+// pelado.
+export async function generateMetadata(): Promise<Metadata> {
+  const config = await getRawBusinessConfig().catch(
+    () => ({}) as Record<string, unknown>,
+  );
+  const businessName = BRAND.name;
+  const description = readBusinessDescription(config);
+  const title = `${businessName} | Menú y pedidos`;
+
+  return {
+    metadataBase: new URL(getSiteUrl()),
+    title: {
+      default: title,
+      template: `%s | ${businessName}`,
+    },
+    description,
+    manifest: "/manifest.webmanifest",
+    openGraph: {
+      type: "website",
+      siteName: businessName,
+      title,
+      description,
+      url: "/",
+      locale: "es_VE",
+      images: [{ url: "/logo.png", alt: businessName }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["/logo.png"],
+    },
+  };
+}
 
 // Tema de marca: el dueño define los colores en Personalización (business_config)
 // y aquí los inyectamos en el servidor (sin parpadeo). Si no hay colores
@@ -38,17 +84,57 @@ async function getThemeCss(): Promise<string> {
   });
 }
 
+// JSON-LD de restaurante (schema.org): con esto Google entiende que el sitio
+// es un negocio de comida y puede mostrarlo con ficha en resultados locales.
+// Solo incluye campos con valor real; todo sale de business_config.
+async function getRestaurantJsonLd(): Promise<string> {
+  try {
+    const config = (await getRawBusinessConfig()) as Record<string, unknown>;
+    const siteUrl = getSiteUrl();
+    const phoneDigits = cleanConfigText(config.mainWhatsapp).replace(/\D+/g, "");
+    const instagramUrl = cleanConfigText(config.instagramUrl);
+    const locationLabel = cleanConfigText(config.locationLabel);
+
+    const jsonLd: Record<string, unknown> = {
+      "@context": "https://schema.org",
+      "@type": "Restaurant",
+      name: BRAND.name,
+      url: siteUrl,
+      image: `${siteUrl}/logo.png`,
+      menu: siteUrl,
+      description: readBusinessDescription(config),
+    };
+
+    if (phoneDigits) jsonLd.telephone = `+${phoneDigits}`;
+    // El valor semilla del template ("Mesa") no es una dirección real.
+    if (locationLabel.length >= 6 && locationLabel !== "Mesa") {
+      jsonLd.address = locationLabel;
+    }
+    if (instagramUrl) jsonLd.sameAs = [instagramUrl];
+
+    return JSON.stringify(jsonLd);
+  } catch {
+    return "";
+  }
+}
+
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const themeCss = await getThemeCss();
+  const [themeCss, restaurantJsonLd] = await Promise.all([
+    getThemeCss(),
+    getRestaurantJsonLd(),
+  ]);
 
   return (
     <html lang="es" className={`h-full antialiased ${displayFont.variable}`}>
       <head>
         {themeCss ? <style id="brand-theme" dangerouslySetInnerHTML={{ __html: themeCss }} /> : null}
+        {restaurantJsonLd ? (
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: restaurantJsonLd }} />
+        ) : null}
       </head>
       <body className="min-h-full flex flex-col font-sans">
         <AuthBridge />
@@ -56,6 +142,7 @@ export default async function RootLayout({
         <OfflineSync />
         <BranchSwitcher />
         {children}
+        <Analytics />
       </body>
     </html>
   );
