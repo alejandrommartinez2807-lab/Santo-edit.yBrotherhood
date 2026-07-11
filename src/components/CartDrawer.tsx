@@ -20,6 +20,7 @@ import {
   AlertTriangle,
   ClipboardList,
   CheckCircle2,
+  Crosshair,
   Loader2,
   MapPin,
   Table2,
@@ -59,7 +60,11 @@ import {
   normalizeFormMoney,
   readApiResponse,
 } from "@/components/cartDrawerDomain";
-import { looksLikeMapsLink } from "@/lib/deliveryDistance";
+import {
+  looksLikeMapsLink,
+  parseCoordsFromText,
+} from "@/lib/deliveryDistance";
+import DeliveryMapPicker from "@/components/DeliveryMapPicker";
 import {
   CartLineItem,
   CartSummaryFooter,
@@ -363,6 +368,12 @@ export default function CartDrawer({
     { upToKm: number; costUSD: number }[]
   >([]);
   const [customerMapsUrl, setCustomerMapsUrl] = useState("");
+  // Punto del negocio: centra el mapa "elige tu punto" (plan A sin permisos).
+  const [distanceOrigin, setDistanceOrigin] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [isMapPickerOpen, setIsMapPickerOpen] = useState(false);
   const [distanceQuote, setDistanceQuote] = useState<{
     distanceKm: number;
     costUSD: number;
@@ -723,6 +734,7 @@ export default function CartDrawer({
         setIsDistancePricingEnabled(false);
         setDistanceMaxKm(0);
         setDistanceTiers([]);
+        setDistanceOrigin(null);
       }, 0);
       return () => clearTimeout(resetTimer);
     }
@@ -758,12 +770,23 @@ export default function CartDrawer({
                   )
               : [],
           );
+
+          const originLat = Number(data.originLat);
+          const originLng = Number(data.originLng);
+          setDistanceOrigin(
+            Number.isFinite(originLat) &&
+              Number.isFinite(originLng) &&
+              (originLat !== 0 || originLng !== 0)
+              ? { lat: originLat, lng: originLng }
+              : null,
+          );
         }
       } catch {
         if (!ignore) {
           setIsDistancePricingEnabled(false);
           setDistanceMaxKm(0);
           setDistanceTiers([]);
+          setDistanceOrigin(null);
         }
       }
     }
@@ -907,7 +930,7 @@ export default function CartDrawer({
         customerName.trim() ? "" : "tu nombre",
         customerPhone.trim() ? "" : "tu teléfono",
         isDistancePricingEnabled && !distanceQuote
-          ? "tu ubicación (GPS o link de Maps)"
+          ? "tu ubicación (elígela en el mapa, con GPS o pega tu link de Maps)"
           : "",
         paymentMethod.trim() ? "" : "el método de pago",
       ].filter(Boolean)
@@ -1009,8 +1032,9 @@ export default function CartDrawer({
       return;
     }
 
-    const blockedMessage =
-      "Tu navegador tiene bloqueada la ubicación para esta página, por eso no aparece la pregunta. Toca el candado (o el ícono ⓘ) junto a la dirección web → Permisos → Ubicación → Permitir, y vuelve a intentar. Si abriste desde WhatsApp o Instagram, usa “Abrir en el navegador”. También puedes pegar tu link de Google Maps aquí abajo.";
+    const blockedMessage = distanceOrigin
+      ? "Tu navegador tiene bloqueada la ubicación, pero no la necesitas: toca “Elegir mi punto en el mapa” y mueve el pin hasta tu casa. (Para desbloquear el GPS: candado o ⓘ junto a la dirección web → Permisos → Ubicación → Permitir.)"
+      : "Tu navegador tiene bloqueada la ubicación para esta página, por eso no aparece la pregunta. Toca el candado (o el ícono ⓘ) junto a la dirección web → Permisos → Ubicación → Permitir, y vuelve a intentar. Si abriste desde WhatsApp o Instagram, usa “Abrir en el navegador”. También puedes pegar tu link de Google Maps aquí abajo.";
 
     const startGpsRequest = () => {
       setIsQuotingDistance(true);
@@ -1032,7 +1056,9 @@ export default function CartDrawer({
           setDistanceQuoteError(
             gpsError?.code === 1
               ? blockedMessage
-              : "No se pudo leer tu ubicación. Pega el link de Google Maps de tu punto de entrega.",
+              : distanceOrigin
+                ? "No se pudo leer tu ubicación. Elige tu punto en el mapa o pega tu link de Google Maps."
+                : "No se pudo leer tu ubicación. Pega el link de Google Maps de tu punto de entrega.",
           );
         },
         { enableHighAccuracy: true, timeout: 12_000 },
@@ -1060,6 +1086,17 @@ export default function CartDrawer({
         // Navegadores sin soporte de la consulta: se intenta directo.
         startGpsRequest();
       });
+  }
+
+  function handleMapPickerConfirm(coords: { lat: number; lng: number }) {
+    setIsMapPickerOpen(false);
+
+    const lat = Number(coords.lat.toFixed(6));
+    const lng = Number(coords.lng.toFixed(6));
+
+    // Mismo formato que el GPS: el repartidor abre el punto directo en Maps.
+    setCustomerMapsUrl(`https://www.google.com/maps?q=${lat},${lng}`);
+    void requestDistanceQuote({ lat, lng });
   }
 
   function buildWhatsAppMessage() {
@@ -2482,18 +2519,40 @@ export default function CartDrawer({
                           ¿A dónde te lo llevamos?
                         </label>
 
+                        {/* El mapa va primero: no pide permisos y funciona
+                            hasta en el navegador de WhatsApp/Instagram. */}
+                        {distanceOrigin && (
+                          <button
+                            type="button"
+                            onClick={() => setIsMapPickerOpen(true)}
+                            disabled={isQuotingDistance}
+                            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-3.5 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {isQuotingDistance ? (
+                              <Loader2 size={16} className="animate-spin" />
+                            ) : (
+                              <MapPin size={16} />
+                            )}
+                            Elegir mi punto en el mapa
+                          </button>
+                        )}
+
                         <button
                           type="button"
                           onClick={handleQuoteFromGps}
                           disabled={isQuotingDistance}
-                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-3.5 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                          className={`mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 px-4 py-3.5 text-xs font-black uppercase tracking-[0.1em] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 ${
+                            distanceOrigin
+                              ? "border-[var(--brand-primary)] bg-transparent text-[var(--brand-primary)]"
+                              : "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-black"
+                          }`}
                         >
                           {isQuotingDistance ? (
                             <Loader2 size={16} className="animate-spin" />
                           ) : (
-                            <MapPin size={16} />
+                            <Crosshair size={16} />
                           )}
-                          Usar mi ubicación actual
+                          Usar mi ubicación actual (GPS)
                         </button>
 
                         <p className="mt-3 text-center text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/45">
@@ -2829,6 +2888,21 @@ export default function CartDrawer({
             )}
           </div>
         </div>
+      )}
+
+      {isMapPickerOpen && distanceOrigin && (
+        <DeliveryMapPicker
+          // Si ya eligió un punto (GPS, link o mapa), se reabre ahí; si no,
+          // arranca en el local del negocio.
+          initialLat={
+            parseCoordsFromText(customerMapsUrl)?.lat ?? distanceOrigin.lat
+          }
+          initialLng={
+            parseCoordsFromText(customerMapsUrl)?.lng ?? distanceOrigin.lng
+          }
+          onConfirm={handleMapPickerConfirm}
+          onClose={() => setIsMapPickerOpen(false)}
+        />
       )}
     </div>
   );

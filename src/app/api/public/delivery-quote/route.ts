@@ -44,6 +44,10 @@ export async function GET(request: NextRequest) {
       enabled: ready,
       tiers: ready ? settings.tiers : [],
       maxKm: ready ? getDeliveryDistanceMaxKm(settings) : 0,
+      // Punto de partida del negocio: centra el mapa "elige tu punto" del
+      // carrito. Es información pública (la landing ya enlaza la ubicación).
+      originLat: ready ? settings.originLat : null,
+      originLng: ready ? settings.originLng : null,
     })
   } catch (error) {
     return NextResponse.json(
