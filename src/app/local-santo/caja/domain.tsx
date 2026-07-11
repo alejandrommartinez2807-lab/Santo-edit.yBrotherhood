@@ -216,7 +216,7 @@ export const EMPTY_PAYMENT_FORM: PaymentForm = {
   paymentNote: "",
 }
 
-export type DeliveryWhatsAppMessageType = "confirm" | "preparing" | "onTheWay" | "arrived"
+export type DeliveryWhatsAppMessageType = "confirm" | "preparing" | "onTheWay" | "arrived" | "ready"
 
 export function readApiResponse(response: Response) {
   return response.text().then((text) => {
@@ -695,6 +695,20 @@ export function buildDeliveryWhatsAppMessage(order: LocalOrder, messageType: Del
       `Dirección: ${deliveryAddress}`,
       `Referencia: ${deliveryReference}`,
       `Zona: ${zone}`,
+      "",
+      `Gracias por comprar en ${BRAND.name}.`,
+    ].join("\n")
+  }
+
+  if (messageType === "ready") {
+    return [
+      `Hola, somos ${BRAND.name}.`,
+      "",
+      `${customerName}, ¡tu pedido ${displayNumber} ya está listo!`,
+      "Puedes pasar a retirarlo indicando tu número de pedido.",
+      "",
+      `Pedido: ${displayNumber}`,
+      `Total: ${formatUSD(orderTotals.totalUSD)}`,
       "",
       `Gracias por comprar en ${BRAND.name}.`,
     ].join("\n")

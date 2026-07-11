@@ -67,6 +67,7 @@ import {
   OptionPicker,
 } from "@/components/cartDrawerParts";
 import { enqueueOrder, newClientOrderId } from "@/lib/offlineQueue";
+import PublicOrderStatusNotifier from "@/components/PublicOrderStatusNotifier";
 import PublicBranchPicker, {
   usePublicBranchSelection,
 } from "@/components/PublicBranchPicker";
@@ -1612,6 +1613,10 @@ export default function CartDrawer({
                     Referencia interna: {lastCreatedOrder.id}
                   </p>
                 </div>
+
+                {!lastOrderAttachedToOpenAccount && !lastCreatedOrder.offline ? (
+                  <PublicOrderStatusNotifier orderId={lastCreatedOrder.id} />
+                ) : null}
 
                 {lastOrderCanReportPayment &&
                   publicConfig.onlinePaymentsEnabled &&

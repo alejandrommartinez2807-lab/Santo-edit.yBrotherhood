@@ -4445,6 +4445,18 @@ export default function PedidosPage() {
                       </div>
                     )}
 
+                    {!isDelivery && order.status === "Listo" && normalizePhoneForWhatsApp(order.customerPhone || "") ? (
+                      <a
+                        href={buildDeliveryWhatsAppUrl(order, "ready")}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-green-600 bg-green-500 px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.1em] text-white transition hover:bg-green-400"
+                      >
+                        <MessageCircle size={16} />
+                        Avisar por WhatsApp que está listo
+                      </a>
+                    ) : null}
+
                     <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
                       <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                         Productos

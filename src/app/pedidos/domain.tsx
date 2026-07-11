@@ -1675,7 +1675,7 @@ export function getProductsSoldFromOrders(orders: LocalOrder[]) {
 }
 
 
-export type DeliveryWhatsAppMessageType = "confirm" | "preparing" | "onTheWay" | "arrived"
+export type DeliveryWhatsAppMessageType = "confirm" | "preparing" | "onTheWay" | "arrived" | "ready"
 
 export function normalizePhoneForWhatsApp(value: string) {
   const digits = String(value || "").replace(/\D/g, "")
@@ -1793,6 +1793,20 @@ export function buildDeliveryWhatsAppMessage(
       `Dirección: ${deliveryAddress}`,
       `Referencia: ${deliveryReference}`,
       `Zona: ${zone}`,
+      "",
+      `Gracias por comprar en ${BRAND.name}.`,
+    ].join("\n")
+  }
+
+  if (messageType === "ready") {
+    return [
+      `Hola, somos ${BRAND.name}.`,
+      "",
+      `${customerName}, ¡tu pedido ${displayNumber} ya está listo!`,
+      "Puedes pasar a retirarlo indicando tu número de pedido.",
+      "",
+      `Pedido: ${displayNumber}`,
+      `Total: ${formatUSD(orderTotals.totalUSD)}`,
       "",
       `Gracias por comprar en ${BRAND.name}.`,
     ].join("\n")
