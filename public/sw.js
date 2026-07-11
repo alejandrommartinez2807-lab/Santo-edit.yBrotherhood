@@ -89,3 +89,41 @@ self.addEventListener("fetch", (event) => {
     }),
   )
 })
+
+// Web push del seguimiento de pedido ("¡tu pedido está listo!"). El payload
+// llega como JSON {title, body, url} desde el servidor (lib/orderPushNotifications).
+self.addEventListener("push", (event) => {
+  let data = {}
+  try {
+    data = event.data ? event.data.json() : {}
+  } catch {
+    data = {}
+  }
+
+  const title = data.title || "Tu pedido"
+  const options = {
+    body: data.body || "Hay novedades de tu pedido.",
+    icon: "/icon-192.png",
+    badge: "/icon-192.png",
+    vibrate: [200, 100, 200],
+    data: { url: data.url || "/" },
+  }
+
+  event.waitUntil(self.registration.showNotification(title, options))
+})
+
+// Tocar la notificación abre (o enfoca) la página de seguimiento del pedido.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close()
+
+  const targetUrl = (event.notification.data && event.notification.data.url) || "/"
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if (client.url.includes(targetUrl) && "focus" in client) return client.focus()
+      }
+      return self.clients.openWindow(targetUrl)
+    }),
+  )
+})

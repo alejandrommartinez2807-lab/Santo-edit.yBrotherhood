@@ -1799,6 +1799,11 @@ export function buildDeliveryWhatsAppMessage(
   }
 
   if (messageType === "ready") {
+    // El builder corre en el navegador del staff: el link de seguimiento usa
+    // el mismo host desde el que atiende (sirve en prod y en previews).
+    const trackingUrl =
+      typeof window !== "undefined" ? `${window.location.origin}/pedido/${order.id}` : ""
+
     return [
       `Hola, somos ${BRAND.name}.`,
       "",
@@ -1807,6 +1812,7 @@ export function buildDeliveryWhatsAppMessage(
       "",
       `Pedido: ${displayNumber}`,
       `Total: ${formatUSD(orderTotals.totalUSD)}`,
+      ...(trackingUrl ? ["", `Sigue tu pedido aquí: ${trackingUrl}`] : []),
       "",
       `Gracias por comprar en ${BRAND.name}.`,
     ].join("\n")

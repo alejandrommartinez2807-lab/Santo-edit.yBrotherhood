@@ -15,20 +15,18 @@ function canUseNotifications() {
   return typeof window !== "undefined" && "Notification" in window;
 }
 
-// Seguimiento en vivo del pedido en la confirmación pública: muestra el estado
-// (Preparando / ¡Listo!) mientras el cliente mantiene la página abierta y, si
-// lo pide, dispara notificación del navegador + vibración al pasar a "Listo".
-// El aviso con la página cerrada lo cubre el staff con el botón de WhatsApp.
-export default function PublicOrderStatusNotifier({ orderId }: { orderId: string }) {
+// Estado del pedido en vivo (polling contra /api/public/order-status). Lo usan
+// la confirmación del carrito y la página pública /pedido/[id].
+export function usePublicOrderStatus(orderId: string) {
   const [status, setStatus] = useState("");
   const [displayNumber, setDisplayNumber] = useState("");
-  const [notifyEnabled, setNotifyEnabled] = useState(false);
-  const [notifyBlocked, setNotifyBlocked] = useState(false);
-  const previousStatus = useRef("");
-  const alreadyAnnounced = useRef(false);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    if (!orderId) return;
+    if (!orderId) {
+      setNotFound(true);
+      return;
+    }
 
     let cancelled = false;
     let timer: number | undefined;
@@ -44,6 +42,13 @@ export default function PublicOrderStatusNotifier({ orderId }: { orderId: string
         if (!cancelled && response.ok && data.ok) {
           setStatus(String(data.status || ""));
           setDisplayNumber(String(data.displayNumber || ""));
+          setNotFound(false);
+        }
+
+        // 404/400: el pedido no existe (o el link está mal). Dejar de sondear.
+        if (!cancelled && (response.status === 404 || response.status === 400)) {
+          setNotFound(true);
+          return;
         }
       } catch {
         // Silencioso: la confirmación sigue siendo válida sin seguimiento.
@@ -61,6 +66,26 @@ export default function PublicOrderStatusNotifier({ orderId }: { orderId: string
       if (timer) window.clearTimeout(timer);
     };
   }, [orderId]);
+
+  return { status, displayNumber, notFound };
+}
+
+// Vibración + notificación del navegador la primera vez que el pedido pasa a
+// "Listo". Prefiere la notificación vía service worker (funciona en Android
+// aunque la pestaña esté en segundo plano); cae a Notification directa.
+export function useOrderReadyAlert({
+  orderId,
+  status,
+  displayNumber,
+  notifyEnabled,
+}: {
+  orderId: string;
+  status: string;
+  displayNumber: string;
+  notifyEnabled: boolean;
+}) {
+  const previousStatus = useRef("");
+  const alreadyAnnounced = useRef(false);
 
   useEffect(() => {
     if (status !== "Listo" || previousStatus.current === "Listo") {
@@ -81,35 +106,110 @@ export default function PublicOrderStatusNotifier({ orderId }: { orderId: string
       // vibrate puede no estar disponible; el banner visual ya avisa.
     }
 
-    if (notifyEnabled && canUseNotifications() && Notification.permission === "granted") {
-      try {
-        new Notification("¡Tu pedido está listo!", {
-          body: `Pasa a retirar tu pedido ${displayNumber || orderId} en el mostrador.`,
-          icon: "/icon-192.png",
-        });
-      } catch {
-        // Algunos navegadores móviles bloquean Notification directa; el banner cubre.
-      }
-    }
-  }, [status, notifyEnabled, displayNumber, orderId]);
-
-  async function enableNotifications() {
-    if (!canUseNotifications()) {
-      setNotifyBlocked(true);
+    if (!notifyEnabled || !canUseNotifications() || Notification.permission !== "granted") {
       return;
     }
 
-    try {
-      const permission = await Notification.requestPermission();
+    const title = "¡Tu pedido está listo!";
+    const options = {
+      body: `Pasa a retirar tu pedido ${displayNumber || orderId} en el mostrador.`,
+      icon: "/icon-192.png",
+    };
 
-      if (permission === "granted") {
-        setNotifyEnabled(true);
-        setNotifyBlocked(false);
-      } else {
-        setNotifyBlocked(true);
-      }
-    } catch {
-      setNotifyBlocked(true);
+    navigator.serviceWorker?.ready
+      .then((registration) => registration.showNotification(title, options))
+      .catch(() => {
+        try {
+          new Notification(title, options);
+        } catch {
+          // Algunos navegadores móviles bloquean Notification directa; el banner cubre.
+        }
+      });
+  }, [status, notifyEnabled, displayNumber, orderId]);
+}
+
+export async function requestNotificationPermission(): Promise<boolean> {
+  if (!canUseNotifications()) return false;
+
+  try {
+    return (await Notification.requestPermission()) === "granted";
+  } catch {
+    return false;
+  }
+}
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; i += 1) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+
+  return outputArray;
+}
+
+// Suscripción web push para el aviso "listo" de este pedido: funciona con la
+// página cerrada y el teléfono bloqueado (requiere claves VAPID en el servidor
+// y la migración 0023). Si algo falla devuelve false y queda el polling.
+export async function subscribeToPushForOrder(orderId: string): Promise<boolean> {
+  try {
+    if (
+      typeof navigator === "undefined" ||
+      !("serviceWorker" in navigator) ||
+      typeof window === "undefined" ||
+      !("PushManager" in window)
+    ) {
+      return false;
+    }
+
+    const keyResponse = await fetch("/api/public/push", { cache: "no-store" });
+    const keyData = await keyResponse.json().catch(() => ({}));
+
+    if (!keyResponse.ok || !keyData?.enabled || !keyData.publicKey) return false;
+
+    const registration = await navigator.serviceWorker.ready;
+    const subscription =
+      (await registration.pushManager.getSubscription()) ||
+      (await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(String(keyData.publicKey)),
+      }));
+
+    const saveResponse = await fetch("/api/public/push", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId, subscription: subscription.toJSON() }),
+    });
+
+    return saveResponse.ok;
+  } catch {
+    return false;
+  }
+}
+
+// Seguimiento en vivo del pedido en la confirmación pública: muestra el estado
+// (Preparando / ¡Listo!) mientras el cliente mantiene la página abierta y, si
+// lo pide, dispara notificación del navegador + vibración al pasar a "Listo".
+// El aviso con la página cerrada lo cubre el staff con el botón de WhatsApp.
+export default function PublicOrderStatusNotifier({ orderId }: { orderId: string }) {
+  const { status, displayNumber } = usePublicOrderStatus(orderId);
+  const [notifyEnabled, setNotifyEnabled] = useState(false);
+  const [notifyBlocked, setNotifyBlocked] = useState(false);
+
+  useOrderReadyAlert({ orderId, status, displayNumber, notifyEnabled });
+
+  async function enableNotifications() {
+    const granted = await requestNotificationPermission();
+
+    setNotifyEnabled(granted);
+    setNotifyBlocked(!granted);
+
+    if (granted) {
+      // Mejor esfuerzo: con push el aviso llega incluso con la página cerrada.
+      void subscribeToPushForOrder(orderId);
     }
   }
 
@@ -184,6 +284,15 @@ export default function PublicOrderStatusNotifier({ orderId }: { orderId: string
         Mantén esta página abierta para ver tu pedido avanzar.
         {notifyBlocked ? " Tu navegador bloqueó las notificaciones; igual verás el aviso aquí." : ""}
       </p>
+
+      <a
+        href={`/pedido/${encodeURIComponent(orderId)}`}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-2 inline-block text-[0.7rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] underline underline-offset-2"
+      >
+        Abrir mi página de seguimiento
+      </a>
     </div>
   );
 }

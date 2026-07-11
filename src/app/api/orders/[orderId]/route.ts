@@ -19,6 +19,8 @@ import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import { writeAuditLog } from "@/lib/audit"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
+import { sendOrderReadyPush } from "@/lib/orderPushNotifications"
+import { getDisplayOrderNumber } from "@/lib/localOrderHelpers"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -385,6 +387,12 @@ export async function PATCH(
     }
 
     const order = await updateOrderStatus(orderId, status, branchId)
+
+    if (status === "Listo") {
+      // Aviso web push al cliente suscrito. Nunca lanza: un fallo de push no
+      // puede tumbar el cambio de estado de caja/cocina.
+      await sendOrderReadyPush(orderId, getDisplayOrderNumber(order))
+    }
 
     await writeAuditLog({
       action: "order.status.updated",
