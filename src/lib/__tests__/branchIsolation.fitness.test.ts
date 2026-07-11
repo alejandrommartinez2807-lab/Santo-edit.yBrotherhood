@@ -27,6 +27,7 @@ const SCOPED_TABLES = [
   "day_closes",
   "day_expenses",
   "delivery_zones",
+  "delivery_distance_settings",
   "payment_proofs",
   "open_accounts",
   "tables",

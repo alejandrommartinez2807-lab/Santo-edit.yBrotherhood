@@ -72,6 +72,7 @@ import {
   DEFAULT_DELIVERY_ZONES,
   type DeliveryZone,
 } from "@/components/cartDrawerDomain";
+import DeliveryDistanceConfigCard from "@/components/config/DeliveryDistanceConfigCard";
 import {
   DEFAULT_LOCAL_TABLES as DEFAULT_CONFIG_LOCAL_TABLES,
   normalizeLocalTablesForMap,
@@ -3912,6 +3913,8 @@ export default function BusinessConfigPage() {
                   </button>
                 </div>
               </div>
+
+              <DeliveryDistanceConfigCard canEdit={canEditDeliveryZones} />
             </div>
           </SectionCard>
         </section>

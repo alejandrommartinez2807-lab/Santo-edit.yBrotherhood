@@ -21,6 +21,7 @@ import {
   ClipboardList,
   CheckCircle2,
   Loader2,
+  MapPin,
   Table2,
 } from "lucide-react";
 import { formatUSD, formatVES } from "@/utils/formatCurrency";
@@ -356,6 +357,20 @@ export default function CartDrawer({
   const [deliveryZonesError, setDeliveryZonesError] = useState<string | null>(
     null,
   );
+  // Envío por distancia: el cliente pega su link de Google Maps y el costo
+  // sale por km (cotizado en el servidor con las tarifas del negocio).
+  const [isDistancePricingEnabled, setIsDistancePricingEnabled] =
+    useState(false);
+  const [distanceMaxKm, setDistanceMaxKm] = useState(0);
+  const [customerMapsUrl, setCustomerMapsUrl] = useState("");
+  const [distanceQuote, setDistanceQuote] = useState<{
+    distanceKm: number;
+    costUSD: number;
+  } | null>(null);
+  const [isQuotingDistance, setIsQuotingDistance] = useState(false);
+  const [distanceQuoteError, setDistanceQuoteError] = useState<string | null>(
+    null,
+  );
   const [publicConfig, setPublicConfig] = useState<PublicBusinessConfig>(() =>
     readCachedPublicBusinessConfig(),
   );
@@ -426,6 +441,9 @@ export default function CartDrawer({
     setQrTableNotice(null);
     setTableAccountNotice(null);
     setAttachToTableOpenAccount(false);
+    // La cotización por km depende de la sede (cada una tiene su ubicación).
+    setDistanceQuote(null);
+    setDistanceQuoteError(null);
   }, [branchSelection.selectedBranchId]);
 
   useEffect(() => {
@@ -659,6 +677,9 @@ export default function CartDrawer({
         setDeliveryAddress("");
         setDeliveryReference("");
         setDeliveryZone("");
+        setCustomerMapsUrl("");
+        setDistanceQuote(null);
+        setDistanceQuoteError(null);
         setPaymentMethod("");
         setIsZonePickerOpen(false);
         setIsPaymentPickerOpen(false);
@@ -704,6 +725,8 @@ export default function CartDrawer({
         setDeliveryZones([]);
         setDeliveryZonesError(null);
         setIsLoadingDeliveryZones(false);
+        setIsDistancePricingEnabled(false);
+        setDistanceMaxKm(0);
       }, 0);
       return () => clearTimeout(resetTimer);
     }
@@ -749,7 +772,32 @@ export default function CartDrawer({
       }
     }
 
-    const timer = setTimeout(loadDeliveryZones, 0);
+    async function loadDistancePricing() {
+      // Si el negocio activó el envío por distancia, el carrito muestra el
+      // campo para pegar el link de Maps. Si esta consulta falla, el flujo
+      // por zonas sigue funcionando igual.
+      try {
+        const response = await fetch("/api/public/delivery-quote", {
+          cache: "no-store",
+        });
+        const data = await readApiResponse(response);
+
+        if (!ignore && response.ok) {
+          setIsDistancePricingEnabled(data.enabled === true);
+          setDistanceMaxKm(Number(data.maxKm || 0));
+        }
+      } catch {
+        if (!ignore) {
+          setIsDistancePricingEnabled(false);
+          setDistanceMaxKm(0);
+        }
+      }
+    }
+
+    const timer = setTimeout(() => {
+      loadDeliveryZones();
+      loadDistancePricing();
+    }, 0);
 
     return () => {
       ignore = true;
@@ -810,8 +858,15 @@ export default function CartDrawer({
     label: method,
     value: method,
   }));
-  const deliveryCostValue =
-    isDeliveryOrder && selectedDeliveryZone ? selectedDeliveryZone.costUSD : 0;
+  // La cotización por km (si existe) manda sobre la zona: es el costo exacto
+  // de la dirección del cliente. La zona queda como respaldo sin link.
+  const deliveryCostValue = isDeliveryOrder
+    ? distanceQuote
+      ? distanceQuote.costUSD
+      : selectedDeliveryZone
+        ? selectedDeliveryZone.costUSD
+        : 0
+    : 0;
   const totalUSD = productsTotalUSD + deliveryCostValue;
 
   const hasCombos = comboTotalPrice > 0;
@@ -884,7 +939,7 @@ export default function CartDrawer({
         customerPhone.trim().length > 0 &&
         deliveryAddress.trim().length > 0 &&
         deliveryReference.trim().length > 0 &&
-        deliveryZone.trim().length > 0 &&
+        (Boolean(distanceQuote) || deliveryZone.trim().length > 0) &&
         paymentMethod.trim().length > 0
       : tableNumber.trim().length > 0 && !isTableReservedNow);
   const paymentProofReportedUSD = normalizeFormMoney(paymentProofAmountUSD);
@@ -896,6 +951,89 @@ export default function CartDrawer({
     !isSubmittingPaymentProof &&
     (paymentProofReportedUSD > 0 || paymentProofReportedVES > 0),
   );
+
+  async function requestDistanceQuote(input: {
+    mapsUrl?: string;
+    lat?: number;
+    lng?: number;
+  }) {
+    try {
+      setIsQuotingDistance(true);
+      setDistanceQuoteError(null);
+      setDistanceQuote(null);
+
+      const response = await fetch("/api/public/delivery-quote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      const data = await readApiResponse(response);
+
+      if (!response.ok || data.ok !== true) {
+        throw new Error(
+          data.error ||
+            "No se pudo calcular el costo del delivery con esa ubicación.",
+        );
+      }
+
+      setDistanceQuote({
+        distanceKm: Number(data.distanceKm || 0),
+        costUSD: Number(data.costUSD || 0),
+      });
+    } catch (error) {
+      setDistanceQuote(null);
+      setDistanceQuoteError(
+        error instanceof Error
+          ? error.message
+          : "No se pudo calcular el costo del delivery con esa ubicación.",
+      );
+    } finally {
+      setIsQuotingDistance(false);
+    }
+  }
+
+  function handleQuoteFromMapsUrl() {
+    const cleanUrl = customerMapsUrl.trim();
+
+    if (!cleanUrl) {
+      setDistanceQuoteError(
+        "Pega el link de Google Maps de tu punto de entrega.",
+      );
+      return;
+    }
+
+    void requestDistanceQuote({ mapsUrl: cleanUrl });
+  }
+
+  function handleQuoteFromGps() {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setDistanceQuoteError(
+        "Tu navegador no permite compartir la ubicación. Pega el link de Google Maps.",
+      );
+      return;
+    }
+
+    setIsQuotingDistance(true);
+    setDistanceQuoteError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        // Se guarda como link para que el repartidor pueda abrirlo en Maps.
+        setCustomerMapsUrl(`https://www.google.com/maps?q=${lat},${lng}`);
+        void requestDistanceQuote({ lat, lng });
+      },
+      () => {
+        setIsQuotingDistance(false);
+        setDistanceQuoteError(
+          "No se pudo leer tu ubicación. Pega el link de Google Maps de tu punto de entrega.",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 12_000 },
+    );
+  }
 
   function appendAddressHelper(text: string) {
     setDeliveryAddress((current) => {
@@ -983,7 +1121,16 @@ export default function CartDrawer({
       messageParts.push(
         `Punto de referencia: ${deliveryReference.trim() || "Por confirmar"}`,
       );
-      messageParts.push(`Zona: ${deliveryZone.trim() || "Por confirmar"}`);
+      if (customerMapsUrl.trim()) {
+        messageParts.push(`Ubicación (Maps): ${customerMapsUrl.trim()}`);
+      }
+      if (distanceQuote) {
+        messageParts.push(
+          `Distancia: ~${distanceQuote.distanceKm.toFixed(1)} km`,
+        );
+      } else {
+        messageParts.push(`Zona: ${deliveryZone.trim() || "Por confirmar"}`);
+      }
       messageParts.push(
         `Método de pago: ${paymentMethod.trim() || "Por confirmar"}`,
       );
@@ -1266,6 +1413,16 @@ export default function CartDrawer({
         staffConfirmationProductNames,
       );
 
+      // Con cotización por km, el link de Maps y la distancia viajan dentro
+      // de la dirección: el repartidor lo abre directo sin tocar el esquema.
+      const deliveryAddressWithLocation =
+        isDeliveryOrder && distanceQuote && customerMapsUrl.trim()
+          ? `${deliveryAddress.trim()}\nUbicación (Maps): ${customerMapsUrl.trim()} · ~${distanceQuote.distanceKm.toFixed(1)} km`
+          : deliveryAddress.trim();
+      const deliveryZoneLabel = distanceQuote
+        ? `~${distanceQuote.distanceKm.toFixed(1)} km`
+        : deliveryZone.trim();
+
       const orderPayload = {
         // Clave de idempotencia: si el envío se reintenta (cola offline), el
         // servidor reconoce este id y no duplica el pedido. Ver 0018.
@@ -1273,13 +1430,13 @@ export default function CartDrawer({
         customerName: customerName.trim() || "Cliente",
         customerPhone: customerPhone.trim(),
         tableNumber: isDeliveryOrder
-          ? `Delivery${deliveryZone.trim() ? ` - ${deliveryZone.trim()}` : ""}`
+          ? `Delivery${deliveryZoneLabel ? ` - ${deliveryZoneLabel}` : ""}`
           : tableNumber.trim(),
         orderType,
         customerNote: finalCustomerNote,
-        deliveryAddress: deliveryAddress.trim(),
+        deliveryAddress: deliveryAddressWithLocation,
         deliveryReference: deliveryReference.trim(),
-        deliveryZone: deliveryZone.trim(),
+        deliveryZone: deliveryZoneLabel,
         paymentMethod: paymentMethod.trim(),
         deliveryCostUSD: deliveryCostValue,
         totalBeforeDeliveryUSD: productsTotalUSD,
@@ -1359,6 +1516,9 @@ export default function CartDrawer({
       setDeliveryAddress("");
       setDeliveryReference("");
       setDeliveryZone("");
+      setCustomerMapsUrl("");
+      setDistanceQuote(null);
+      setDistanceQuoteError(null);
       setPaymentMethod("");
       setCustomerNote("");
       setCouponInput("");
@@ -1401,6 +1561,9 @@ export default function CartDrawer({
         setDeliveryAddress("");
         setDeliveryReference("");
         setDeliveryZone("");
+        setCustomerMapsUrl("");
+        setDistanceQuote(null);
+        setDistanceQuoteError(null);
         setPaymentMethod("");
         setCustomerNote("");
         setCouponInput("");
@@ -2334,26 +2497,108 @@ export default function CartDrawer({
                       />
                     </div>
 
+                    {isDistancePricingEnabled && (
+                      <div className="rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] px-4 py-4">
+                        <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                          Tu ubicación en Google Maps
+                        </label>
+                        <p className="mt-1 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/60">
+                          Pega el link de tu punto de entrega (Compartir en
+                          Maps) y el costo del delivery se calcula solo por
+                          distancia.
+                        </p>
+
+                        <div className="mt-3 flex gap-2">
+                          <input
+                            value={customerMapsUrl}
+                            onChange={(event) => {
+                              setCustomerMapsUrl(event.target.value);
+                              setDistanceQuote(null);
+                              setDistanceQuoteError(null);
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.preventDefault();
+                                handleQuoteFromMapsUrl();
+                              }
+                            }}
+                            placeholder="https://maps.app.goo.gl/..."
+                            inputMode="url"
+                            className="w-full min-w-0 rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleQuoteFromMapsUrl}
+                            disabled={isQuotingDistance}
+                            className="shrink-0 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-3 text-xs font-black uppercase tracking-[0.08em] text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {isQuotingDistance ? (
+                              <Loader2 size={16} className="animate-spin" />
+                            ) : (
+                              "Calcular"
+                            )}
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleQuoteFromGps}
+                          disabled={isQuotingDistance}
+                          className="mt-2 inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-border)] bg-white px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <MapPin size={14} />
+                          Usar mi ubicación actual
+                        </button>
+
+                        {distanceQuote && (
+                          <p className="mt-3 rounded-2xl border-2 border-green-600 bg-green-600/15 px-4 py-3 text-sm font-black leading-5 text-green-500">
+                            Estás a ~{distanceQuote.distanceKm.toFixed(1)} km ·
+                            Delivery {formatUSD(distanceQuote.costUSD)}
+                          </p>
+                        )}
+
+                        {distanceQuoteError && (
+                          <p className="mt-3 rounded-2xl border-2 border-orange-400/40 bg-orange-100 px-4 py-3 text-sm font-bold leading-5 text-orange-800">
+                            {distanceQuoteError}
+                          </p>
+                        )}
+
+                        {!distanceQuote &&
+                          !distanceQuoteError &&
+                          distanceMaxKm > 0 && (
+                            <p className="mt-2 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
+                              Cobertura hasta {distanceMaxKm} km a la redonda.
+                            </p>
+                          )}
+                      </div>
+                    )}
+
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <OptionPicker
-                        label="Zona"
-                        value={deliveryZone}
-                        placeholder={
-                          isLoadingDeliveryZones
-                            ? "Cargando zonas..."
-                            : "Selecciona una zona"
-                        }
-                        options={deliveryZoneOptions}
-                        isOpen={isZonePickerOpen}
-                        onToggle={() => {
-                          setIsZonePickerOpen((current) => !current);
-                          setIsPaymentPickerOpen(false);
-                        }}
-                        onSelect={(value) => {
-                          setDeliveryZone(value);
-                          setIsZonePickerOpen(false);
-                        }}
-                      />
+                      {!distanceQuote && deliveryZones.length > 0 && (
+                        <OptionPicker
+                          label={
+                            isDistancePricingEnabled
+                              ? "Zona (si no tienes link)"
+                              : "Zona"
+                          }
+                          value={deliveryZone}
+                          placeholder={
+                            isLoadingDeliveryZones
+                              ? "Cargando zonas..."
+                              : "Selecciona una zona"
+                          }
+                          options={deliveryZoneOptions}
+                          isOpen={isZonePickerOpen}
+                          onToggle={() => {
+                            setIsZonePickerOpen((current) => !current);
+                            setIsPaymentPickerOpen(false);
+                          }}
+                          onSelect={(value) => {
+                            setDeliveryZone(value);
+                            setIsZonePickerOpen(false);
+                          }}
+                        />
+                      )}
 
                       <OptionPicker
                         label="Método de pago"
@@ -2374,6 +2619,7 @@ export default function CartDrawer({
 
                     {!isLoadingDeliveryZones &&
                       !deliveryZonesError &&
+                      !isDistancePricingEnabled &&
                       deliveryZones.length === 0 && (
                         <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3">
                           <p className="inline-flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-amber-800">
@@ -2402,13 +2648,21 @@ export default function CartDrawer({
                         Costo de delivery
                       </p>
                       <p className="mt-1 text-2xl font-black text-[var(--brand-ink-3)]">
-                        {selectedDeliveryZone
-                          ? formatUSD(deliveryCostValue)
-                          : "Selecciona zona"}
+                        {distanceQuote
+                          ? `${formatUSD(deliveryCostValue)} · ~${distanceQuote.distanceKm.toFixed(1)} km`
+                          : selectedDeliveryZone
+                            ? formatUSD(deliveryCostValue)
+                            : isDistancePricingEnabled
+                              ? "Pega tu ubicación"
+                              : "Selecciona zona"}
                       </p>
                       <p className="mt-2 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
                         El cliente no puede escribir este monto. El costo se
-                        calcula automáticamente según la zona.
+                        calcula automáticamente según{" "}
+                        {isDistancePricingEnabled
+                          ? "la distancia (o la zona)"
+                          : "la zona"}
+                        .
                       </p>
                     </div>
                   </div>

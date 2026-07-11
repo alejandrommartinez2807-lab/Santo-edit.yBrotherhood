@@ -128,6 +128,11 @@ export {
 } from "./ordersDeliveryZones"
 
 export {
+  getDeliveryDistanceSettings,
+  saveDeliveryDistanceSettings,
+} from "./ordersStoreDeliveryDistance"
+
+export {
   deleteReservation,
   getReservations,
   saveReservation,
