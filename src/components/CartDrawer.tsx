@@ -11,6 +11,7 @@ import {
 } from "react";
 import { BRAND } from "@/lib/brand";
 import {
+  ArrowLeft,
   CreditCard,
   ImagePlus,
   ShoppingCart,
@@ -1932,17 +1933,29 @@ export default function CartDrawer({
         // En el teléfono el formulario ocupa toda la pantalla (como una página
         // más, estilo apps grandes); la tarjeta flotante queda para escritorio.
         <div className="fixed inset-0 z-[110] flex items-stretch justify-center bg-black/75 backdrop-blur-sm sm:items-center sm:px-4 sm:py-4">
-          <div className="h-full max-h-full w-full overflow-y-auto bg-[var(--brand-cream)] text-[var(--brand-ink-3)] shadow-2xl shadow-black/45 sm:h-auto sm:max-h-[94vh] sm:max-w-lg sm:rounded-[2rem] sm:border-4 sm:border-[var(--brand-primary)]">
-            <div className="h-1.5 shrink-0 bg-[linear-gradient(90deg,var(--brand-primary),var(--brand-accent))]" />
+          <div className="h-full max-h-full w-full overflow-y-auto bg-[var(--brand-cream)] text-[var(--brand-ink-3)] shadow-none sm:h-auto sm:max-h-[94vh] sm:max-w-lg sm:rounded-[2rem] sm:border-4 sm:border-[var(--brand-primary)] sm:shadow-2xl sm:shadow-black/45">
+            <div className="hidden h-1.5 shrink-0 bg-[linear-gradient(90deg,var(--brand-primary),var(--brand-accent))] sm:block" />
 
-            <div className="relative bg-[var(--brand-surface-2)] px-6 py-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
+            {/* Barra superior tipo app: fija arriba mientras se hace scroll,
+                con flecha de volver en el teléfono. */}
+            <div className="sticky top-0 z-20 border-b-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3.5 sm:relative sm:border-b-0 sm:px-6 sm:py-5">
+              <div className="flex items-center justify-between gap-3 sm:items-start sm:gap-4">
+                <button
+                  type="button"
+                  onClick={closeOrderModal}
+                  disabled={isSubmittingOrder || isSubmittingPaymentProof}
+                  aria-label="Volver"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] text-[var(--brand-ink)] disabled:opacity-50 sm:hidden"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+
+                <div className="min-w-0 flex-1">
                   <p className="text-xs font-black uppercase tracking-[0.28em] text-[var(--brand-primary)]">
                     Pedido del cliente
                   </p>
 
-                  <h3 className="mt-2 text-3xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+                  <h3 className="mt-1 text-2xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:mt-2 sm:text-3xl">
                     Identificar pedido
                   </h3>
                 </div>
@@ -1951,9 +1964,9 @@ export default function CartDrawer({
                   type="button"
                   onClick={closeOrderModal}
                   disabled={isSubmittingOrder || isSubmittingPaymentProof}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black disabled:opacity-50"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black disabled:opacity-50 sm:h-11 sm:w-11"
                 >
-                  <X size={24} />
+                  <X size={22} />
                 </button>
               </div>
             </div>
@@ -2243,7 +2256,7 @@ export default function CartDrawer({
                 </p>
               </div>
             ) : (
-              <div className="space-y-4 px-6 py-6">
+              <div className="space-y-5 px-4 py-6 sm:space-y-4 sm:px-6">
                 <PublicBranchPicker
                   selection={branchSelection}
                   label="¿En qué sede estás pidiendo?"
@@ -2277,13 +2290,15 @@ export default function CartDrawer({
                     Tipo de pedido
                   </label>
 
-                  <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  {/* Las tres opciones lado a lado también en el teléfono:
+                      aprovecha el ancho y se ve de un vistazo. */}
+                  <div className="mt-2 grid grid-cols-3 gap-2 sm:gap-3">
                     {orderTypes.map((type) => (
                       <button
                         key={type}
                         type="button"
                         onClick={() => selectOrderType(type)}
-                        className={`rounded-2xl border-2 px-4 py-4 text-sm font-black uppercase transition ${
+                        className={`rounded-2xl border-2 px-1.5 py-4 text-[0.72rem] font-black uppercase leading-tight transition sm:px-4 sm:text-sm ${
                           orderType === type
                             ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
                             : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)]"
@@ -2502,11 +2517,11 @@ export default function CartDrawer({
                 )}
 
                 {isDeliveryOrder && (
-                  <div className="space-y-4 rounded-[1.5rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4">
+                  <div className="space-y-5 rounded-[1.5rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-5 sm:space-y-4 sm:py-4">
                     {/* 1. Ubicación primero (como las apps grandes): define el
                         costo del envío y la cobertura antes de pedir datos. */}
                     {isDistancePricingEnabled && (
-                      <div className="rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] px-4 py-4">
+                      <div className="rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] px-4 py-5 sm:py-4">
                         <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                           ¿A dónde te lo llevamos?
                         </label>
