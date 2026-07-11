@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server"
-import { getMenuProducts, type MenuProduct } from "@/lib/orders"
+import type { MenuProduct } from "@/lib/orders"
 import { resolveBranchId } from "@/lib/branch"
+import { getPublicMenuProductsForBranch } from "@/lib/publicBranchMenu"
 import {
   buildPublicProductsFallbackResponse,
   buildPublicProductsResponse,
@@ -26,7 +27,11 @@ export async function GET(request: NextRequest) {
   if (rateLimitResponse) return rateLimitResponse
 
   try {
-    const menuProducts: MenuProduct[] = await getMenuProducts({}, await resolveBranchId(request))
+    // Sede sin menú propio (o id de sede viejo guardado en el navegador):
+    // hereda el menú de la sede por defecto en vez de mostrar el menú base.
+    const menuProducts: MenuProduct[] = await getPublicMenuProductsForBranch(
+      await resolveBranchId(request),
+    )
 
     return NextResponse.json(buildPublicProductsResponse(menuProducts), {
       headers: NO_STORE_HEADERS,
