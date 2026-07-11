@@ -83,8 +83,12 @@ export function usePublicBranchSelection(): PublicBranchSelection {
         setBranches(activeBranches);
         setSelectedBranchIdState(preferred);
 
-        if (preferred && preferred !== cleanText(getSelectedBranchId())) {
-          setSelectedBranchId(preferred);
+        // Sanea la sede guardada en este dispositivo: si ya no existe o está
+        // inactiva (p. ej. un id viejo de otro despliegue), se limpia para que
+        // AuthBridge no la siga adjuntando a cada /api con el menú equivocado.
+        const storedBranchId = cleanText(getSelectedBranchId());
+        if (preferred !== storedBranchId) {
+          setSelectedBranchId(preferred || null);
         }
         if (preferred) updateUrlBranch(preferred);
       } finally {

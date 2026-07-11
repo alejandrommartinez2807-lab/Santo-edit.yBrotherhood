@@ -11,6 +11,7 @@ import {
 } from "@/data/products"
 import { buildPublicProductCategories } from "@/lib/publicProductCategories"
 import { normalizePublicProducts } from "@/lib/publicProductNormalization"
+import { BRANCH_CHANGE_EVENT } from "@/lib/branchClient"
 import type { ProductToAdd } from "@/hooks/useCart"
 import {
   DEFAULT_PUBLIC_CATEGORY_ORDER,
@@ -337,8 +338,16 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
 
     loadPublicProducts()
 
+    // Al cambiar la sede elegida (picker público o saneo de una sede vieja),
+    // el menú se recarga: AuthBridge adjunta la nueva x-branch-id al fetch.
+    function handleBranchChange() {
+      loadPublicProducts()
+    }
+    window.addEventListener(BRANCH_CHANGE_EVENT, handleBranchChange)
+
     return () => {
       isMounted = false
+      window.removeEventListener(BRANCH_CHANGE_EVENT, handleBranchChange)
     }
   }, [])
 
