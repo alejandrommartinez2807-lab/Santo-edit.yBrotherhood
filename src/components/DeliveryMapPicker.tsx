@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, MapPin, X } from "lucide-react";
+import { Crosshair, Loader2, MapPin, X } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import type { Map as LeafletMap } from "leaflet";
 
@@ -27,6 +27,8 @@ export default function DeliveryMapPicker({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [gpsNotice, setGpsNotice] = useState<string | null>(null);
 
   useEffect(() => {
     let disposed = false;
@@ -71,6 +73,37 @@ export default function DeliveryMapPicker({
 
     const center = map.getCenter();
     onConfirm({ lat: center.lat, lng: center.lng });
+  }
+
+  // Centra el mapa en el GPS del cliente (como "Usar mi ubicación actual" de
+  // las apps grandes). Si el permiso está bloqueado no pasa nada grave: el
+  // mapa sigue siendo la salida, solo se avisa que lo mueva a mano.
+  function handleCenterOnGps() {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setGpsNotice("El GPS no está disponible aquí: mueve el mapa a mano.");
+      return;
+    }
+
+    setIsLocating(true);
+    setGpsNotice(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setIsLocating(false);
+        mapRef.current?.setView(
+          [position.coords.latitude, position.coords.longitude],
+          17,
+          { animate: true },
+        );
+      },
+      () => {
+        setIsLocating(false);
+        setGpsNotice(
+          "No se pudo usar el GPS (permiso bloqueado): mueve el mapa a mano hasta tu punto.",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 12_000 },
+    );
   }
 
   return (
@@ -118,15 +151,35 @@ export default function DeliveryMapPicker({
         <div className="space-y-2 px-4 py-3">
           <button
             type="button"
+            onClick={handleCenterOnGps}
+            disabled={!isMapReady || isLocating}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-transparent px-4 py-3 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isLocating ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Crosshair size={16} />
+            )}
+            Usar mi ubicación actual
+          </button>
+
+          {gpsNotice && (
+            <p className="rounded-xl bg-orange-100 px-3 py-2 text-center text-[0.68rem] font-bold leading-4 text-orange-800">
+              {gpsNotice}
+            </p>
+          )}
+
+          <button
+            type="button"
             onClick={handleConfirm}
             disabled={!isMapReady}
             className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-3.5 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <MapPin size={16} />
-            Entregar en este punto
+            Confirmar ubicación
           </button>
           <p className="text-center text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
-            Acerca el mapa y deja el pin justo sobre tu casa o edificio.
+            Deja el pin sobre tu casa o edificio; no tiene que ser exacto.
           </p>
         </div>
       </div>

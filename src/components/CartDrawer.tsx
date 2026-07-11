@@ -1939,8 +1939,10 @@ export default function CartDrawer({
       </aside>
 
       {isOrderModalOpen && canRegisterOrdersInPanel && (
-        <div className="fixed inset-0 z-[110] flex items-end justify-center bg-black/75 px-4 py-4 backdrop-blur-sm sm:items-center">
-          <div className="max-h-[94vh] w-full max-w-lg overflow-y-auto rounded-[2rem] border-4 border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-ink-3)] shadow-2xl shadow-black/45">
+        // En el teléfono el formulario ocupa toda la pantalla (como una página
+        // más, estilo apps grandes); la tarjeta flotante queda para escritorio.
+        <div className="fixed inset-0 z-[110] flex items-stretch justify-center bg-black/75 backdrop-blur-sm sm:items-center sm:px-4 sm:py-4">
+          <div className="h-full max-h-full w-full overflow-y-auto bg-[var(--brand-cream)] text-[var(--brand-ink-3)] shadow-2xl shadow-black/45 sm:h-auto sm:max-h-[94vh] sm:max-w-lg sm:rounded-[2rem] sm:border-4 sm:border-[var(--brand-primary)]">
             <div className="h-1.5 shrink-0 bg-[linear-gradient(90deg,var(--brand-primary),var(--brand-accent))]" />
 
             <div className="relative bg-[var(--brand-surface-2)] px-6 py-5">
@@ -2519,41 +2521,36 @@ export default function CartDrawer({
                           ¿A dónde te lo llevamos?
                         </label>
 
-                        {/* El mapa va primero: no pide permisos y funciona
-                            hasta en el navegador de WhatsApp/Instagram. */}
-                        {distanceOrigin && (
-                          <button
-                            type="button"
-                            onClick={() => setIsMapPickerOpen(true)}
-                            disabled={isQuotingDistance}
-                            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-3.5 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {isQuotingDistance ? (
-                              <Loader2 size={16} className="animate-spin" />
-                            ) : (
-                              <MapPin size={16} />
-                            )}
-                            Elegir mi punto en el mapa
-                          </button>
-                        )}
-
+                        {/* Un toque y listo (estilo Yummy): el GPS pone la
+                            ubicación solo. El mapa queda para ajustar el
+                            marcador o cuando el GPS está bloqueado. */}
                         <button
                           type="button"
                           onClick={handleQuoteFromGps}
                           disabled={isQuotingDistance}
-                          className={`mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 px-4 py-3.5 text-xs font-black uppercase tracking-[0.1em] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 ${
-                            distanceOrigin
-                              ? "border-[var(--brand-primary)] bg-transparent text-[var(--brand-primary)]"
-                              : "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-black"
-                          }`}
+                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-3.5 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {isQuotingDistance ? (
                             <Loader2 size={16} className="animate-spin" />
                           ) : (
                             <Crosshair size={16} />
                           )}
-                          Usar mi ubicación actual (GPS)
+                          Usar mi ubicación actual
                         </button>
+
+                        {distanceOrigin && (
+                          <button
+                            type="button"
+                            onClick={() => setIsMapPickerOpen(true)}
+                            disabled={isQuotingDistance}
+                            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-transparent px-4 py-3.5 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <MapPin size={16} />
+                            {distanceQuote
+                              ? "Ajustar marcador en el mapa"
+                              : "Elegir mi punto en el mapa"}
+                          </button>
+                        )}
 
                         <p className="mt-3 text-center text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/45">
                           o pega tu link de Google Maps
