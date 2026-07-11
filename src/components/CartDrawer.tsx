@@ -352,6 +352,11 @@ export default function CartDrawer({
   const [isDistancePricingEnabled, setIsDistancePricingEnabled] =
     useState(false);
   const [distanceMaxKm, setDistanceMaxKm] = useState(0);
+  // Rangos publicados ("hasta 10 km → $6"): dan el precio de referencia que
+  // ve el cliente antes de compartir su ubicación.
+  const [distanceTiers, setDistanceTiers] = useState<
+    { upToKm: number; costUSD: number }[]
+  >([]);
   const [customerMapsUrl, setCustomerMapsUrl] = useState("");
   const [distanceQuote, setDistanceQuote] = useState<{
     distanceKm: number;
@@ -713,6 +718,7 @@ export default function CartDrawer({
       const resetTimer = setTimeout(() => {
         setIsDistancePricingEnabled(false);
         setDistanceMaxKm(0);
+        setDistanceTiers([]);
       }, 0);
       return () => clearTimeout(resetTimer);
     }
@@ -732,11 +738,28 @@ export default function CartDrawer({
         if (!ignore && response.ok) {
           setIsDistancePricingEnabled(data.enabled === true);
           setDistanceMaxKm(Number(data.maxKm || 0));
+          setDistanceTiers(
+            Array.isArray(data.tiers)
+              ? data.tiers
+                  .map((tier: { upToKm?: unknown; costUSD?: unknown }) => ({
+                    upToKm: Number(tier?.upToKm || 0),
+                    costUSD: Number(tier?.costUSD || 0),
+                  }))
+                  .filter(
+                    (tier: { upToKm: number; costUSD: number }) =>
+                      Number.isFinite(tier.upToKm) &&
+                      tier.upToKm > 0 &&
+                      Number.isFinite(tier.costUSD) &&
+                      tier.costUSD >= 0,
+                  )
+              : [],
+          );
         }
       } catch {
         if (!ignore) {
           setIsDistancePricingEnabled(false);
           setDistanceMaxKm(0);
+          setDistanceTiers([]);
         }
       }
     }
@@ -2446,8 +2469,15 @@ export default function CartDrawer({
                           !distanceQuoteError &&
                           distanceMaxKm > 0 && (
                             <p className="mt-2 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
-                              Llegamos hasta {distanceMaxKm} km a la redonda. El
-                              costo se calcula solo, según la distancia.
+                              Llegamos hasta {distanceMaxKm} km a la redonda
+                              {distanceTiers.length > 0
+                                ? ` · Referencia: hasta ${distanceTiers[distanceTiers.length - 1].upToKm} km ${formatUSD(distanceTiers[distanceTiers.length - 1].costUSD)}${
+                                    distanceTiers.length > 1
+                                      ? ` (desde ${formatUSD(distanceTiers[0].costUSD)})`
+                                      : ""
+                                  }`
+                                : ""}
+                              . Tu costo exacto se calcula con tu ubicación.
                             </p>
                           )}
                       </div>
@@ -2544,7 +2574,9 @@ export default function CartDrawer({
                         {distanceQuote
                           ? `${formatUSD(deliveryCostValue)} · ~${distanceQuote.distanceKm.toFixed(1)} km`
                           : isDistancePricingEnabled
-                            ? "Comparte tu ubicación arriba"
+                            ? distanceTiers.length > 0
+                              ? `Referencia: hasta ${distanceTiers[distanceTiers.length - 1].upToKm} km ${formatUSD(distanceTiers[distanceTiers.length - 1].costUSD)}`
+                              : "Comparte tu ubicación arriba"
                             : "Se confirma por WhatsApp"}
                       </p>
                       <p className="mt-2 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
