@@ -337,6 +337,8 @@ type EventSummary = {
   days: number
   averageTicketUSD: number
   salesPerDayUSD: number
+  expensesUSD: number
+  netUSD: number
 }
 
 // Comparativo de ferias: cuánto vendió cada evento (incluye finalizados) para
@@ -381,13 +383,15 @@ function EventsComparison({ refreshKey }: { refreshKey: string }) {
         Comparativo de eventos
       </p>
       <div className="mt-2 overflow-x-auto rounded-xl border-2 border-[var(--brand-primary)]/15">
-        <table className="w-full min-w-[560px] border-collapse bg-white text-xs">
+        <table className="w-full min-w-[720px] border-collapse bg-white text-xs">
           <thead>
             <tr className="border-b-2 border-[var(--brand-primary)]/15 text-left text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/55">
               <th className="px-3 py-2">Evento</th>
               <th className="px-3 py-2 text-right">Pedidos</th>
               <th className="px-3 py-2 text-right">Vendido</th>
               <th className="px-3 py-2 text-right">Cobrado</th>
+              <th className="px-3 py-2 text-right">Gastos</th>
+              <th className="px-3 py-2 text-right">Neto</th>
               <th className="px-3 py-2 text-right">Días</th>
               <th className="px-3 py-2 text-right">Vendido/día</th>
               <th className="px-3 py-2 text-right">Ticket prom.</th>
@@ -415,6 +419,14 @@ function EventsComparison({ refreshKey }: { refreshKey: string }) {
                 <td className="px-3 py-2 text-right">{event.ordersCount}</td>
                 <td className="px-3 py-2 text-right font-black text-[var(--brand-ink-3)]">{money(event.salesUSD)}</td>
                 <td className="px-3 py-2 text-right">{money(event.collectedUSD)}</td>
+                <td className="px-3 py-2 text-right">{money(event.expensesUSD)}</td>
+                <td
+                  className={`px-3 py-2 text-right font-black ${
+                    event.netUSD < 0 ? "text-red-600" : "text-green-700"
+                  }`}
+                >
+                  {money(event.netUSD)}
+                </td>
                 <td className="px-3 py-2 text-right">{event.days}</td>
                 <td className="px-3 py-2 text-right">{money(event.salesPerDayUSD)}</td>
                 <td className="px-3 py-2 text-right">{money(event.averageTicketUSD)}</td>
@@ -425,6 +437,7 @@ function EventsComparison({ refreshKey }: { refreshKey: string }) {
       </div>
       <p className="mt-1.5 text-[0.62rem] font-bold text-[var(--brand-ink-2)]/45">
         Pedidos sin cancelados. &quot;Vendido&quot; = total de los pedidos; &quot;Cobrado&quot; = pagos registrados en caja.
+        &quot;Gastos&quot; = Control de gastos con la sede del evento; &quot;Neto&quot; = vendido − gastos.
       </p>
     </div>
   )

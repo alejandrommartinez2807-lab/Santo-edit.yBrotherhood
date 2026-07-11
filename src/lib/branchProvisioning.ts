@@ -71,6 +71,26 @@ export function summarizeEventOrders(rows: EventOrderRow[]) {
   }
 }
 
+export type EventExpenseRow = {
+  data: unknown
+}
+
+// Suma en USD los gastos registrados en el evento (Control de gastos con la
+// sede del evento seleccionada): alquiler del puesto, hielo, transporte...
+// El equivalente en USD viene calculado al registrar el gasto; amountUSD es
+// el fallback de gastos viejos sin equivalente.
+export function sumEventExpensesUSD(rows: EventExpenseRow[]) {
+  let total = 0
+
+  for (const row of rows) {
+    const data = (row?.data ?? {}) as UnknownRecord
+    const equivalent = toNumber(data.equivalentUSD)
+    total += equivalent > 0 ? equivalent : toNumber(data.amountUSD)
+  }
+
+  return Math.round((total + Number.EPSILON) * 100) / 100
+}
+
 // --- Auto-finalización de eventos vencidos ----------------------------------
 
 // Desactiva los eventos cuya fecha de fin ya pasó (evaluación perezosa: se

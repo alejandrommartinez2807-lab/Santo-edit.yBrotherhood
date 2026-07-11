@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { summarizeEventOrders } from "@/lib/branchProvisioning"
+import { summarizeEventOrders, sumEventExpensesUSD } from "@/lib/branchProvisioning"
 
 describe("comparativo de eventos · summarizeEventOrders", () => {
   it("suma ventas/cobrado y calcula días y promedios", () => {
@@ -39,5 +39,22 @@ describe("comparativo de eventos · summarizeEventOrders", () => {
     expect(summary.salesUSD).toBe(12.25)
     expect(summary.collectedUSD).toBe(0)
     expect(summary.days).toBe(1)
+  })
+})
+
+describe("comparativo de eventos · sumEventExpensesUSD", () => {
+  it("suma el equivalente USD y cae a amountUSD cuando falta", () => {
+    const total = sumEventExpensesUSD([
+      { data: { equivalentUSD: 25.5, amountUSD: 0 } }, // alquiler del puesto
+      { data: { equivalentUSD: 0, amountUSD: 4.25 } }, // gasto viejo sin equivalente
+      { data: { amountVES: 500 } }, // gasto solo en Bs sin equivalente: no suma
+    ])
+
+    expect(total).toBe(29.75)
+  })
+
+  it("sin gastos (o data corrupta) devuelve 0", () => {
+    expect(sumEventExpensesUSD([])).toBe(0)
+    expect(sumEventExpensesUSD([{ data: null }, { data: "texto" }])).toBe(0)
   })
 })

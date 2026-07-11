@@ -3,7 +3,12 @@ import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { getRequestAccess } from "@/lib/localAccess"
 import { getRawBusinessConfig } from "@/lib/orders"
 import { getBranchConfigsFromRawBusinessConfig } from "@/lib/branch"
-import { summarizeEventOrders, type EventOrderRow } from "@/lib/branchProvisioning"
+import {
+  summarizeEventOrders,
+  sumEventExpensesUSD,
+  type EventExpenseRow,
+  type EventOrderRow,
+} from "@/lib/branchProvisioning"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -46,18 +51,26 @@ export async function GET(request: NextRequest) {
     const events = await Promise.all(
       eventBranches.map(async (branch) => {
         const branchId = String(branch.id)
-        const { data: orderRows } = await supabase
-          .from("orders")
-          .select("total_usd, payment_received_equiv_usd, created_at")
-          .eq("branch_id", branchId)
-          .neq("status", "Cancelado")
+        const [{ data: orderRows }, { data: expenseRows }] = await Promise.all([
+          supabase
+            .from("orders")
+            .select("total_usd, payment_received_equiv_usd, created_at")
+            .eq("branch_id", branchId)
+            .neq("status", "Cancelado"),
+          supabase.from("day_expenses").select("data").eq("branch_id", branchId),
+        ])
+
+        const summary = summarizeEventOrders((orderRows ?? []) as EventOrderRow[])
+        const expensesUSD = sumEventExpensesUSD((expenseRows ?? []) as EventExpenseRow[])
 
         return {
           branchId,
           name: String(branch.name || branchId),
           isActive: branch.is_active !== false,
           eventEndDate: String(branchConfigs[branchId]?.eventEndDate || ""),
-          ...summarizeEventOrders((orderRows ?? []) as EventOrderRow[]),
+          ...summary,
+          expensesUSD,
+          netUSD: Math.round((summary.salesUSD - expensesUSD + Number.EPSILON) * 100) / 100,
         }
       }),
     )
