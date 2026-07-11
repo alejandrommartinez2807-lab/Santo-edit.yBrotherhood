@@ -28,6 +28,8 @@ import {
   type LocalTableMapItem,
 } from "@/components/local/LocalTablesMap"
 import { useOperationalSounds, useOrderSoundAlerts } from "@/hooks/useOperationalSounds"
+import { usePaymentProofAlerts } from "@/hooks/usePaymentProofAlerts"
+import PaymentProofAlertToast from "@/components/PaymentProofAlertToast"
 import {
   getOrderItemDetailLines,
   getOrderStaffConfirmationSummary,
@@ -121,6 +123,13 @@ function CajaPageContent() {
     module: "cashier",
     enabled: isLoggedIn && soundControls.isSoundEnabled,
     playSound: soundControls.playSound,
+  })
+
+  // Aviso notorio cuando un cliente reporta un pago: sonido tipo caja
+  // registradora + toast verde con acceso directo a la revisión.
+  const paymentProofAlerts = usePaymentProofAlerts(paymentProofs, {
+    enabled: isLoggedIn,
+    onNewProof: () => void soundControls.playSound("paymentProof"),
   })
 
   async function loadLocalTables() {
@@ -703,6 +712,10 @@ function CajaPageContent() {
 
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-3 py-4 text-[var(--brand-ink-3)] sm:px-6 lg:px-8">
+      <PaymentProofAlertToast
+        alert={paymentProofAlerts.newProofAlert}
+        onDismiss={paymentProofAlerts.dismissNewProofAlert}
+      />
       <div className="mx-auto max-w-7xl">
         <header className="overflow-hidden rounded-[1.6rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
           <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />

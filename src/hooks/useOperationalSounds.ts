@@ -11,6 +11,7 @@ type SoundKind =
   | "cancelled"
   | "alert"
   | "success"
+  | "paymentProof"
 
 type ModuleSoundContext = "cashier" | "kitchen" | "delivery"
 
@@ -180,6 +181,15 @@ async function playSoundPattern(kind: SoundKind) {
   if (kind === "cancelled" || kind === "alert") {
     scheduleTone(audioContext, 260, 0, 0.16, 0.09)
     scheduleTone(audioContext, 220, 0.2, 0.18, 0.09)
+    return
+  }
+
+  if (kind === "paymentProof") {
+    // "Caja registradora": distinta a los demás avisos para que un pago
+    // reportado por un cliente se reconozca de oído.
+    scheduleTone(audioContext, 1047, 0, 0.1, 0.09)
+    scheduleTone(audioContext, 1319, 0.12, 0.1, 0.09)
+    scheduleTone(audioContext, 1568, 0.24, 0.3, 0.09)
     return
   }
 

@@ -169,6 +169,8 @@ import {
   ModalShell
 } from "./components"
 import CurrentBranchBanner from "@/components/local/CurrentBranchBanner"
+import PaymentProofAlertToast from "@/components/PaymentProofAlertToast"
+import { usePaymentProofAlerts } from "@/hooks/usePaymentProofAlerts"
 
 export default function PedidosPage() {
   const [adminPassword, setAdminPassword] = useState("")
@@ -279,6 +281,13 @@ export default function PedidosPage() {
   const audioContextRef = useRef<AudioContext | null>(null)
 
   const isLoggedIn = adminPassword.length > 0
+
+  // Aviso notorio cuando un cliente reporta un pago: sonido tipo caja
+  // registradora + toast verde con acceso directo a la revisión.
+  const paymentProofAlerts = usePaymentProofAlerts(paymentProofs, {
+    enabled: isLoggedIn,
+    onNewProof: () => playPanelSound("payment"),
+  })
 
   function getPanelAudioContext() {
     try {
@@ -3448,6 +3457,10 @@ export default function PedidosPage() {
 
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-3 py-4 text-[var(--brand-ink-3)] sm:px-6 lg:px-8">
+      <PaymentProofAlertToast
+        alert={paymentProofAlerts.newProofAlert}
+        onDismiss={paymentProofAlerts.dismissNewProofAlert}
+      />
       {newOrderToast && (
         <div className="fixed right-4 top-4 z-50 max-w-sm rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] p-4 shadow-2xl shadow-black/20">
           <div className="flex gap-3">

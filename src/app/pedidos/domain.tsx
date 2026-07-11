@@ -297,6 +297,7 @@ export type PanelSoundKind =
   | "sent-kitchen"
   | "ready"
   | "delivery"
+  | "payment"
   | "success"
   | "warning"
 
@@ -1597,6 +1598,16 @@ export function getPanelSoundPattern(kind: PanelSoundKind) {
       { frequency: 523, delay: 0, duration: 0.14, volume: 0.07 },
       { frequency: 659, delay: 0.16, duration: 0.14, volume: 0.07 },
       { frequency: 784, delay: 0.32, duration: 0.16, volume: 0.07 },
+    ]
+  }
+
+  if (kind === "payment") {
+    // "Caja registradora": dos campanadas agudas y una nota larga de cierre,
+    // distinta a los demás avisos para que el cobro se reconozca de oído.
+    return [
+      { frequency: 1047, delay: 0, duration: 0.1, volume: 0.09 },
+      { frequency: 1319, delay: 0.12, duration: 0.1, volume: 0.09 },
+      { frequency: 1568, delay: 0.24, duration: 0.3, volume: 0.09 },
     ]
   }
 
