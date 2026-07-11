@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { useState } from "react";
 import {
   AlertTriangle,
   BadgeCheck,
@@ -397,6 +400,12 @@ export function CartSummaryFooter({
   whatsappHref,
   whatsappButtonLabel,
 }: CartSummaryFooterProps) {
+  // En el teléfono el desglose (combos/normales/tasa) hacía muy alto el pie:
+  // por defecto solo se ve el total y los botones; el detalle se expande con
+  // "Ver detalle". En pantallas sm+ el detalle siempre está visible.
+  const [showMobileDetails, setShowMobileDetails] = useState(false);
+  const detailsVisibilityClass = showMobileDetails ? "block" : "hidden sm:block";
+
   return (
     <div className="shrink-0 border-t-4 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2.5 sm:px-6">
       {publicConfig.fiscalEnabled && (
@@ -410,12 +419,12 @@ export function CartSummaryFooter({
             <p className="text-[0.64rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
               {publicConfig.publicCartTotalLabel || "Total a cobrar"}
             </p>
-            <p className="text-[0.68rem] font-black leading-4 text-[var(--brand-ink-2)]/60">
+            <p className="hidden text-[0.68rem] font-black leading-4 text-[var(--brand-ink-2)]/60 sm:block">
               {publicConfig.publicCartTotalHint || "Total general en divisas"}
             </p>
           </div>
 
-          <p className="shrink-0 text-[1.75rem] font-black leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+          <p className="shrink-0 text-2xl font-black leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-[1.75rem]">
             {formatUSD(totalUSD)}
           </p>
         </div>
@@ -426,6 +435,19 @@ export function CartSummaryFooter({
           </p>
         )}
 
+        <button
+          type="button"
+          onClick={() => setShowMobileDetails((current) => !current)}
+          className="mt-1 inline-flex items-center gap-1 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/55 underline underline-offset-2 sm:hidden"
+        >
+          <ChevronDown
+            size={12}
+            className={`transition-transform ${showMobileDetails ? "rotate-180" : ""}`}
+          />
+          {showMobileDetails ? "Ocultar detalle" : "Ver detalle de precios"}
+        </button>
+
+        <div className={detailsVisibilityClass}>
         {hasCombos && hasRegularProducts ? (
           <div className="mt-2 grid grid-cols-2 overflow-hidden rounded-[1rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)]">
             <div className="border-r border-[var(--brand-border)] px-3 py-2">
@@ -520,6 +542,7 @@ export function CartSummaryFooter({
             </strong>
           </div>
         )}
+        </div>
 
         {exchangeWarning && (
           <div className="mt-1.5 rounded-xl border border-orange-400/35 bg-orange-100 px-3 py-1.5">

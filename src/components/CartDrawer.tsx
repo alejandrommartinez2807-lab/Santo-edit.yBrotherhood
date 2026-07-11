@@ -316,6 +316,9 @@ export default function CartDrawer({
   const [deliveryReference, setDeliveryReference] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [customerNote, setCustomerNote] = useState("");
+  // El cupón vive plegado: solo un enlace discreto, para no estorbar a la
+  // mayoría que no tiene código.
+  const [isCouponOpen, setIsCouponOpen] = useState(false);
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<{
     code: string;
@@ -1732,57 +1735,79 @@ export default function CartDrawer({
           )}
 
           {hasItems ? (
-            <div className="mt-4 rounded-[1.25rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
-              {appliedCoupon ? (
+            appliedCoupon ? (
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-[1.25rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-2.5">
+                <p className="text-sm font-black text-[var(--brand-primary)]">
+                  Cupón {appliedCoupon.code}: −{appliedCoupon.percent}% aplicado
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAppliedCoupon(null);
+                    setCouponError("");
+                  }}
+                  className="text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/60 underline underline-offset-2 transition hover:text-red-300"
+                >
+                  Quitar
+                </button>
+              </div>
+            ) : !isCouponOpen ? (
+              // Plegado: un enlace discreto en vez de una caja completa.
+              <button
+                type="button"
+                onClick={() => setIsCouponOpen(true)}
+                className="mt-3 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/55 underline underline-offset-4 transition hover:text-[var(--brand-primary)]"
+              >
+                ¿Tienes un cupón?
+              </button>
+            ) : (
+              <div className="mt-4 rounded-[1.25rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-black text-[var(--brand-primary)]">
-                    Cupón {appliedCoupon.code}: −{appliedCoupon.percent}% aplicado
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/70">
+                    ¿Tienes un cupón?
                   </p>
                   <button
                     type="button"
                     onClick={() => {
-                      setAppliedCoupon(null);
+                      setIsCouponOpen(false);
+                      setCouponInput("");
                       setCouponError("");
                     }}
-                    className="text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/60 underline underline-offset-2 transition hover:text-red-300"
+                    className="text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/50 underline underline-offset-2 transition hover:text-[var(--brand-primary)]"
                   >
-                    Quitar
+                    Ocultar
                   </button>
                 </div>
-              ) : (
-                <>
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/70">
-                    ¿Tienes un cupón?
+                <div className="mt-2 flex gap-2">
+                  <input
+                    value={couponInput}
+                    onChange={(event) => setCouponInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        handleApplyCoupon();
+                      }
+                    }}
+                    placeholder="Escribe tu código"
+                    maxLength={20}
+                    className="w-full rounded-xl border-2 border-[var(--brand-border)] bg-transparent px-3 py-2 text-sm font-bold uppercase text-[var(--brand-ink-3)] outline-none transition focus:border-[var(--brand-primary)] placeholder:normal-case placeholder:text-[var(--brand-ink-2)]/40"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    disabled={isCheckingCoupon || !couponInput.trim()}
+                    className="shrink-0 rounded-xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90 disabled:opacity-50"
+                  >
+                    {isCheckingCoupon ? "..." : "Aplicar"}
+                  </button>
+                </div>
+                {couponError ? (
+                  <p className="mt-2 text-xs font-bold text-red-300">
+                    {couponError}
                   </p>
-                  <div className="mt-2 flex gap-2">
-                    <input
-                      value={couponInput}
-                      onChange={(event) => setCouponInput(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") {
-                          event.preventDefault();
-                          handleApplyCoupon();
-                        }
-                      }}
-                      placeholder="Escribe tu código"
-                      maxLength={20}
-                      className="w-full rounded-xl border-2 border-[var(--brand-border)] bg-transparent px-3 py-2 text-sm font-bold uppercase text-[var(--brand-ink-3)] outline-none transition focus:border-[var(--brand-primary)] placeholder:normal-case placeholder:text-[var(--brand-ink-2)]/40"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleApplyCoupon}
-                      disabled={isCheckingCoupon || !couponInput.trim()}
-                      className="shrink-0 rounded-xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90 disabled:opacity-50"
-                    >
-                      {isCheckingCoupon ? "..." : "Aplicar"}
-                    </button>
-                  </div>
-                </>
-              )}
-              {couponError ? (
-                <p className="mt-2 text-xs font-bold text-red-300">{couponError}</p>
-              ) : null}
-            </div>
+                ) : null}
+              </div>
+            )
           ) : null}
 
           {hasItems && hasUnavailableItemsForOrderType ? (
