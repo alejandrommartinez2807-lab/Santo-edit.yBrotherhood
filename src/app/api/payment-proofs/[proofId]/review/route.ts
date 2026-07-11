@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server"
 import {
   getBusinessConfig,
   reviewPaymentProof,
+  updateOrderPayment,
   type PaymentProofStatus,
 } from "@/lib/orders"
+import { buildPaymentFromProof, type OrderPaymentSnapshot } from "@/lib/paymentProofRegistration"
+import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { getLocalAccessAuditActor, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
@@ -17,6 +20,7 @@ export const dynamic = "force-dynamic"
 type ReviewBody = {
   status?: unknown
   internalNote?: unknown
+  registerPayment?: unknown
 }
 
 const VALID_STATUSES: PaymentProofStatus[] = [
@@ -94,6 +98,33 @@ function normalizeStatus(value: unknown): PaymentProofStatus {
   throw new Error("Estado de comprobante no válido")
 }
 
+// Cobro actual del pedido del comprobante, para decidir si el cobro se puede
+// registrar automáticamente sin pisar nada (null = pedido no encontrado).
+async function getOrderPaymentSnapshot(
+  orderId: string,
+  branchId: string | null,
+): Promise<OrderPaymentSnapshot | null> {
+  if (!orderId) return null
+
+  const supabase = getSupabaseAdmin()
+  let query = supabase
+    .from("orders")
+    .select("amount_received_usd, amount_received_ves")
+    .eq("id", orderId)
+  if (branchId) query = query.eq("branch_id", branchId)
+  const { data, error } = await query.maybeSingle()
+
+  if (error) throw new Error(error.message)
+  if (!data) return null
+
+  const row = data as Record<string, unknown>
+
+  return {
+    amountReceivedUSD: Number(row.amount_received_usd || 0),
+    amountReceivedVES: Number(row.amount_received_ves || 0),
+  }
+}
+
 export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ proofId: string }> }
@@ -122,6 +153,7 @@ export async function PATCH(
     const body = (await request.json()) as ReviewBody
     const status = normalizeStatus(body.status)
     const internalNote = cleanText(body.internalNote)
+    const shouldRegisterPayment = body.registerPayment === true && status === "Confirmado por caja"
 
     const actor = getLocalAccessAuditActor(access.access)
 
@@ -141,7 +173,56 @@ export async function PATCH(
       metadata: { status, internalNote },
     })
 
-    return NextResponse.json({ ok: true, paymentProof })
+    // Al confirmar, registra el cobro reportado en el pedido (si se puede sin
+    // pisar un cobro previo). Si falla, la confirmación del comprobante vale
+    // igual: se devuelve el motivo para que Caja lo registre a mano.
+    let paymentRegistered = false
+    let paymentSkippedReason = ""
+
+    if (shouldRegisterPayment) {
+      try {
+        const snapshot = await getOrderPaymentSnapshot(paymentProof.orderId, branchId)
+        const decision = buildPaymentFromProof(paymentProof, snapshot)
+
+        if (decision.ok) {
+          const order = await updateOrderPayment(
+            paymentProof.orderId,
+            {
+              ...decision.payment,
+              chargedBy: { id: actor.id, name: actor.label, role: actor.role },
+            },
+            branchId,
+          )
+
+          paymentRegistered = true
+
+          await writeAuditLog({
+            action: "order.payment.updated",
+            branchId,
+            entityType: "order",
+            entityId: paymentProof.orderId,
+            actor,
+            request,
+            metadata: {
+              source: "payment_proof",
+              proofId,
+              amountReceivedUSD: decision.payment.amountReceivedUSD,
+              amountReceivedVES: decision.payment.amountReceivedVES,
+              paymentStatus: order.paymentStatus,
+            },
+          })
+        } else {
+          paymentSkippedReason = decision.reason
+        }
+      } catch (registerError) {
+        paymentSkippedReason =
+          registerError instanceof Error
+            ? `No se pudo registrar el cobro: ${registerError.message}`
+            : "No se pudo registrar el cobro; hazlo desde Caja."
+      }
+    }
+
+    return NextResponse.json({ ok: true, paymentProof, paymentRegistered, paymentSkippedReason })
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "No se pudo revisar el comprobante" },

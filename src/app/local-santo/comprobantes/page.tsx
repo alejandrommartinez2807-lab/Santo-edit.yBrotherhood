@@ -53,6 +53,8 @@ type ApiResponse = {
   error?: string
   paymentProofs?: PaymentProof[]
   paymentProof?: PaymentProof
+  paymentRegistered?: boolean
+  paymentSkippedReason?: string
 }
 
 type StatusFilter = PaymentProofStatus | "Todos"
@@ -239,6 +241,9 @@ export default function PaymentProofsPage() {
         body: JSON.stringify({
           status,
           internalNote: notesByProofId[proof.id] || "",
+          // Al confirmar, el servidor registra el cobro reportado en el pedido
+          // (solo si el pedido no tiene un cobro previo, para no pisarlo).
+          registerPayment: status === "Confirmado por caja",
         }),
       })
       const data = await readApiResponse(response)
@@ -254,11 +259,16 @@ export default function PaymentProofsPage() {
           currentProof.id === updatedProof.id ? updatedProof : currentProof
         )
       )
-      setMessage(
-        status === "Confirmado por caja"
-          ? "Comprobante marcado como confirmado. Recuerda registrar el cobro real en Caja."
-          : "Comprobante actualizado correctamente."
-      )
+
+      if (status !== "Confirmado por caja") {
+        setMessage("Comprobante actualizado correctamente.")
+      } else if (data.paymentRegistered) {
+        setMessage("Comprobante confirmado y cobro registrado en el pedido. Revísalo en Caja.")
+      } else {
+        setMessage(
+          `Comprobante confirmado. ${data.paymentSkippedReason || "Registra el cobro real en Caja."}`
+        )
+      }
     } catch (reviewError) {
       setError(
         reviewError instanceof Error
@@ -294,7 +304,7 @@ export default function PaymentProofsPage() {
                   Comprobantes
                 </h1>
                 <p className="mt-3 max-w-3xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
-                  Aquí caja y dueño revisan capturas enviadas por clientes. Confirmar un comprobante no cambia el pedido a pagado: el cobro real se sigue registrando desde Caja para que el cierre no se descuadre.
+                  Aquí caja y dueño revisan capturas enviadas por clientes. Al confirmar un comprobante, el cobro reportado se registra automáticamente en el pedido (solo si no tenía un cobro previo; en ese caso se ajusta desde Caja para que el cierre no se descuadre).
                 </p>
               </div>
 
@@ -370,7 +380,7 @@ export default function PaymentProofsPage() {
               <UploadCloud className="mx-auto text-[var(--brand-primary)]" size={44} />
               <h2 className="mt-4 text-2xl font-black uppercase text-[var(--brand-primary)]">Sin comprobantes</h2>
               <p className="mx-auto mt-2 max-w-lg text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-                Cuando un cliente reporte un pago, aparecerá aquí para revisión. El pago real se confirma después desde Caja.
+                Cuando un cliente reporte un pago, aparecerá aquí para revisión. Al confirmarlo, el cobro queda registrado en el pedido.
               </p>
             </section>
           ) : (
@@ -501,7 +511,7 @@ export default function PaymentProofsPage() {
                             className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-emerald-700 bg-emerald-100 px-4 py-3 text-xs font-black uppercase text-emerald-800 transition hover:bg-emerald-200 disabled:opacity-60"
                           >
                             {isReviewing ? <Loader2 className="animate-spin" size={15} /> : <CheckCircle2 size={15} />}
-                            Confirmar
+                            Confirmar y cobrar
                           </button>
                           <button
                             type="button"
