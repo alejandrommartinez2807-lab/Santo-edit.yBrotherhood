@@ -52,7 +52,6 @@ import {
 } from "@/components/cartItemHelpers";
 import { cleanText } from "@/components/cartUtils";
 import {
-  ADDRESS_HELPERS,
   LOCATIONS_STORAGE_KEY,
   PAYMENT_METHOD_OPTIONS,
   cleanCustomerNoteWithStaffConfirmation,
@@ -316,7 +315,6 @@ export default function CartDrawer({
   const [isStartingPayment, setIsStartingPayment] = useState(false);
   const [paymentStartError, setPaymentStartError] = useState("");
   const [orderType, setOrderType] = useState<OrderType>("Comer aquí");
-  const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryReference, setDeliveryReference] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [customerNote, setCustomerNote] = useState("");
@@ -677,7 +675,6 @@ export default function CartDrawer({
         setOrderType("Comer aquí");
         setTableNumber("");
         setAttachToTableOpenAccount(false);
-        setDeliveryAddress("");
         setDeliveryReference("");
         setCustomerMapsUrl("");
         setDistanceQuote(null);
@@ -900,14 +897,21 @@ export default function CartDrawer({
     (isDeliveryOrder
       ? customerName.trim().length > 0 &&
         customerPhone.trim().length > 0 &&
-        // Con envío por distancia, la ubicación de Maps ES la dirección (el
-        // detalle escrito es opcional); sin distancia, la dirección escrita
-        // sigue siendo obligatoria. Teléfono y método de pago siempre.
-        (isDistancePricingEnabled
-          ? Boolean(distanceQuote)
-          : deliveryAddress.trim().length > 0) &&
+        // La ubicación de Maps ES la dirección; el punto de referencia es
+        // opcional. Nombre, teléfono y método de pago siempre obligatorios.
+        (!isDistancePricingEnabled || Boolean(distanceQuote)) &&
         paymentMethod.trim().length > 0
       : tableNumber.trim().length > 0 && !isTableReservedNow);
+  const missingDeliveryFields = isDeliveryOrder
+    ? [
+        customerName.trim() ? "" : "tu nombre",
+        customerPhone.trim() ? "" : "tu teléfono",
+        isDistancePricingEnabled && !distanceQuote
+          ? "tu ubicación (GPS o link de Maps)"
+          : "",
+        paymentMethod.trim() ? "" : "el método de pago",
+      ].filter(Boolean)
+    : [];
   const paymentProofReportedUSD = normalizeFormMoney(paymentProofAmountUSD);
   const paymentProofReportedVES = normalizeFormMoney(paymentProofAmountVES);
   const canSubmitPaymentProof = Boolean(
@@ -1005,42 +1009,57 @@ export default function CartDrawer({
       return;
     }
 
-    setIsQuotingDistance(true);
-    setDistanceQuoteError(null);
+    const blockedMessage =
+      "Tu navegador tiene bloqueada la ubicación para esta página, por eso no aparece la pregunta. Toca el candado (o el ícono ⓘ) junto a la dirección web → Permisos → Ubicación → Permitir, y vuelve a intentar. Si abriste desde WhatsApp o Instagram, usa “Abrir en el navegador”. También puedes pegar tu link de Google Maps aquí abajo.";
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
+    const startGpsRequest = () => {
+      setIsQuotingDistance(true);
+      setDistanceQuoteError(null);
 
-        // Se guarda como link para que el repartidor pueda abrirlo en Maps.
-        setCustomerMapsUrl(`https://www.google.com/maps?q=${lat},${lng}`);
-        void requestDistanceQuote({ lat, lng });
-      },
-      (gpsError) => {
-        setIsQuotingDistance(false);
-        // 1 = permiso denegado (o navegador dentro de WhatsApp/Instagram que
-        // no deja pedirlo): la salida siempre es pegar el link de Maps.
-        setDistanceQuoteError(
-          gpsError?.code === 1
-            ? "Tu navegador bloqueó el permiso de ubicación (pasa seguido dentro de WhatsApp/Instagram). Abre Google Maps, comparte tu punto de entrega y pega aquí el link."
-            : "No se pudo leer tu ubicación. Pega el link de Google Maps de tu punto de entrega.",
-        );
-      },
-      { enableHighAccuracy: true, timeout: 12_000 },
-    );
-  }
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
 
-  function appendAddressHelper(text: string) {
-    setDeliveryAddress((current) => {
-      const cleanCurrent = current.trimEnd();
+          // Se guarda como link para que el repartidor pueda abrirlo en Maps.
+          setCustomerMapsUrl(`https://www.google.com/maps?q=${lat},${lng}`);
+          void requestDistanceQuote({ lat, lng });
+        },
+        (gpsError) => {
+          setIsQuotingDistance(false);
+          // 1 = permiso denegado: el navegador ya no vuelve a preguntar, así
+          // que se explica cómo desbloquearlo (más el plan B del link).
+          setDistanceQuoteError(
+            gpsError?.code === 1
+              ? blockedMessage
+              : "No se pudo leer tu ubicación. Pega el link de Google Maps de tu punto de entrega.",
+          );
+        },
+        { enableHighAccuracy: true, timeout: 12_000 },
+      );
+    };
 
-      if (!cleanCurrent) {
-        return `${text} `;
-      }
+    // Si el permiso ya quedó bloqueado, el navegador ni muestra la pregunta
+    // ("este sitio no puede solicitar el permiso"): se detecta antes para dar
+    // instrucciones claras en vez de fallar en silencio.
+    if (!navigator.permissions?.query) {
+      startGpsRequest();
+      return;
+    }
 
-      return `${cleanCurrent} ${text} `;
-    });
+    void navigator.permissions
+      .query({ name: "geolocation" })
+      .then((status) => {
+        if (status.state === "denied") {
+          setDistanceQuoteError(blockedMessage);
+          return;
+        }
+        startGpsRequest();
+      })
+      .catch(() => {
+        // Navegadores sin soporte de la consulta: se intenta directo.
+        startGpsRequest();
+      });
   }
 
   function buildWhatsAppMessage() {
@@ -1111,17 +1130,10 @@ export default function CartDrawer({
 
     if (orderType === "Delivery") {
       messageParts.push(`Teléfono: ${customerPhone.trim() || "Por confirmar"}`);
-      // En modo distancia la dirección es el link de Maps (línea de abajo);
-      // solo se agregan las líneas que aportan algo.
-      if (!isDistancePricingEnabled || deliveryAddress.trim()) {
-        messageParts.push(
-          `Dirección: ${deliveryAddress.trim() || "Por confirmar"}`,
-        );
-      }
+      // La ubicación es el link de Maps (línea de abajo); el punto de
+      // referencia solo se agrega si el cliente escribió algo.
       if (deliveryReference.trim()) {
-        messageParts.push(
-          `${isDistancePricingEnabled ? "Detalle de entrega" : "Punto de referencia"}: ${deliveryReference.trim()}`,
-        );
+        messageParts.push(`Punto de referencia: ${deliveryReference.trim()}`);
       }
       if (customerMapsUrl.trim()) {
         messageParts.push(`Ubicación (Maps): ${customerMapsUrl.trim()}`);
@@ -1415,18 +1427,13 @@ export default function CartDrawer({
         staffConfirmationProductNames,
       );
 
-      // Con cotización por km, el link de Maps y la distancia viajan dentro
-      // de la dirección: el repartidor lo abre directo sin tocar el esquema.
-      // En modo distancia la dirección escrita no existe (solo el detalle,
-      // que viaja como referencia).
-      const deliveryAddressWithLocation = [
-        isDistancePricingEnabled ? "" : deliveryAddress.trim(),
+      // El link de Maps y la distancia viajan dentro de la dirección: el
+      // repartidor lo abre directo sin tocar el esquema. Ya no hay dirección
+      // escrita; el punto de referencia viaja aparte como referencia.
+      const deliveryAddressWithLocation =
         isDeliveryOrder && distanceQuote && customerMapsUrl.trim()
           ? `Ubicación (Maps): ${customerMapsUrl.trim()} · ~${distanceQuote.distanceKm.toFixed(1)} km`
-          : "",
-      ]
-        .filter(Boolean)
-        .join("\n");
+          : "";
       const deliveryZoneLabel = distanceQuote
         ? `~${distanceQuote.distanceKm.toFixed(1)} km`
         : "";
@@ -1524,7 +1531,6 @@ export default function CartDrawer({
       setCustomerName("");
       setCustomerPhone("");
       setTableNumber(nextTableNumberAfterSubmit);
-      setDeliveryAddress("");
       setDeliveryReference("");
       setCustomerMapsUrl("");
       setDistanceQuote(null);
@@ -1567,7 +1573,6 @@ export default function CartDrawer({
         setCustomerName("");
         setCustomerPhone("");
         setTableNumber("");
-        setDeliveryAddress("");
         setDeliveryReference("");
         setCustomerMapsUrl("");
         setDistanceQuote(null);
@@ -2217,9 +2222,16 @@ export default function CartDrawer({
 
                 <div>
                   <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                    {isDeliveryOrder
-                      ? "Nombre del cliente"
-                      : "Nombre del cliente opcional"}
+                    {isDeliveryOrder ? (
+                      <>
+                        Nombre del cliente{" "}
+                        <span className="text-[var(--brand-ink-2)]/45">
+                          (obligatorio)
+                        </span>
+                      </>
+                    ) : (
+                      "Nombre del cliente opcional"
+                    )}
                   </label>
 
                   <input
@@ -2539,82 +2551,32 @@ export default function CartDrawer({
                       </div>
                     )}
 
-                    {isDistancePricingEnabled ? (
-                      // Con el link de Maps la ubicación ya está exacta: solo
-                      // se pide un detalle corto (apto, piso, nota).
-                      <div>
-                        <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                          Detalle de entrega{" "}
-                          <span className="text-[var(--brand-ink-2)]/45">
-                            (opcional)
-                          </span>
-                        </label>
-                        <input
-                          value={deliveryReference}
-                          onChange={(event) =>
-                            setDeliveryReference(event.target.value)
-                          }
-                          placeholder="Ejemplo: Torre Azul apto 4B, portón negro, dejar en recepción..."
-                          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
-                        />
-                      </div>
-                    ) : (
-                      <>
-                        <div>
-                          <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                            Dirección
-                          </label>
-                          <textarea
-                            value={deliveryAddress}
-                            onChange={(event) =>
-                              setDeliveryAddress(event.target.value)
-                            }
-                            placeholder="Ejemplo: Urb. La Trigaleña, calle 3, edificio Torre Azul, apto 4B"
-                            autoComplete="street-address"
-                            className="mt-2 min-h-24 w-full resize-none rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
-                          />
-                          <div className="mt-2 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                            {ADDRESS_HELPERS.map((helper) => (
-                              <button
-                                key={helper}
-                                type="button"
-                                onClick={() => appendAddressHelper(helper)}
-                                className="shrink-0 rounded-full border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-3 py-1.5 text-[0.68rem] font-black uppercase text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)] hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
-                              >
-                                + {helper}
-                              </button>
-                            ))}
-                          </div>
-
-                          <p className="mt-2 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
-                            Usa los botones rápidos para armar la dirección y
-                            luego completa los datos faltantes.
-                          </p>
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                            Punto de referencia{" "}
-                            <span className="text-[var(--brand-ink-2)]/45">
-                              (opcional)
-                            </span>
-                          </label>
-                          <input
-                            value={deliveryReference}
-                            onChange={(event) =>
-                              setDeliveryReference(event.target.value)
-                            }
-                            placeholder="Ejemplo: frente a la farmacia, portón negro, al lado del colegio..."
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
-                          />
-                        </div>
-                      </>
-                    )}
+                    {/* La ubicación exacta viene del GPS o del link de Maps:
+                        aquí solo un mensaje corto para el repartidor. */}
+                    <div>
+                      <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                        Punto de referencia o mensaje{" "}
+                        <span className="text-[var(--brand-ink-2)]/45">
+                          (opcional)
+                        </span>
+                      </label>
+                      <input
+                        value={deliveryReference}
+                        onChange={(event) =>
+                          setDeliveryReference(event.target.value)
+                        }
+                        placeholder="Ejemplo: Torre Azul apto 4B, portón negro, frente a la farmacia..."
+                        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                      />
+                    </div>
 
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
                         <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                          Teléfono
+                          Teléfono{" "}
+                          <span className="text-[var(--brand-ink-2)]/45">
+                            (obligatorio)
+                          </span>
                         </label>
                         <input
                           type="tel"
@@ -2630,7 +2592,14 @@ export default function CartDrawer({
                       </div>
 
                       <OptionPicker
-                        label="Método de pago"
+                        label={
+                          <>
+                            Método de pago{" "}
+                            <span className="text-[var(--brand-ink-2)]/45">
+                              (obligatorio)
+                            </span>
+                          </>
+                        }
                         value={paymentMethod}
                         placeholder="Selecciona método"
                         options={paymentMethodOptions}
@@ -2660,8 +2629,8 @@ export default function CartDrawer({
                       </p>
                       <p className="mt-2 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
                         {isDistancePricingEnabled
-                          ? "El costo se calcula automáticamente según la distancia; nadie lo escribe a mano."
-                          : "El negocio te confirma el costo del envío al recibir el pedido."}
+                          ? "Se calcula solo con tu ubicación y ya queda incluido en el total del pedido."
+                          : "Te confirmamos el costo del envío por WhatsApp al recibir tu pedido."}
                       </p>
                     </div>
                   </div>
@@ -2804,6 +2773,15 @@ export default function CartDrawer({
                     <p className="text-sm font-bold leading-6 text-[var(--brand-ink)]/80">
                       Para registrar el pedido, primero elige la sede donde
                       estás.
+                    </p>
+                  </div>
+                )}
+
+                {hasItems && missingDeliveryFields.length > 0 && (
+                  <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3">
+                    <p className="text-sm font-bold leading-6 text-[var(--brand-ink)]/80">
+                      Para registrar el pedido falta:{" "}
+                      {missingDeliveryFields.join(", ")}.
                     </p>
                   </div>
                 )}

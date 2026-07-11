@@ -31,7 +31,7 @@ type PickerOption = {
 };
 
 type OptionPickerProps = {
-  label: string;
+  label: React.ReactNode;
   value: string;
   placeholder: string;
   options: PickerOption[];

@@ -24,17 +24,6 @@ export const DEFAULT_DELIVERY_ZONES: DeliveryZone[] = [
 // (la lista editable viaja en businessConfig.publicPaymentMethods).
 export const PAYMENT_METHOD_OPTIONS = DEFAULT_PUBLIC_PAYMENT_METHODS;
 
-export const ADDRESS_HELPERS = [
-  "Urb.",
-  "Calle",
-  "Casa",
-  "Apto",
-  "Edificio",
-  "Conjunto",
-  "Frente a",
-  "Al lado de",
-];
-
 export function cleanCustomerNoteWithStaffConfirmation(
   customerNote: string,
   productNames: string[],

@@ -515,22 +515,10 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // Con cotización por distancia, el link de Maps ES la dirección (viaja
-      // dentro de deliveryAddress); la dirección escrita solo se exige en el
-      // flujo viejo sin ubicación.
-      if (!deliveryAddress && !distanceQuoted) {
-        return NextResponse.json(
-          {
-            error: "Falta la dirección para delivery",
-          },
-          {
-            status: 400,
-          }
-        )
-      }
-
-      // El punto de referencia es opcional (como en las apps grandes): la
-      // ubicación exacta ya viene con el link de Maps o la dirección escrita.
+      // La ubicación viaja como link de Maps dentro de deliveryAddress cuando
+      // hay cotización por distancia. La dirección escrita ya no se exige: el
+      // punto de referencia o mensaje es opcional y, si falta, el negocio
+      // coordina la entrega por WhatsApp (el teléfono sí es obligatorio).
 
       // Validación de zona: solo aplica al flujo viejo por zonas (negocios
       // sin envío por distancia configurado). Con cotización por km la zona
