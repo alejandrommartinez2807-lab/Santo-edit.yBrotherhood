@@ -219,7 +219,7 @@ function KitchenTicket({ order }: { order: LocalOrder }) {
   const productsToConfirmText = buildStaffConfirmationText(order);
 
   return (
-    <TicketShell title="Ticket de cocina" subtitle="Preparación sin precios">
+    <TicketShell title="Ticket de cocina" subtitle="Preparación sin precios" orderNumber={getDisplayOrderNumber(order)}>
       <TicketLine label="Pedido" value={getDisplayOrderNumber(order)} />
       <TicketLine label="Hora" value={getOrderCreatedLabel(order)} />
       <TicketLine label="Tipo" value={getDisplayOrderType(order)} />
@@ -264,7 +264,7 @@ function CashierTicket({ order }: { order: LocalOrder }) {
   const productsToConfirmText = buildStaffConfirmationText(order);
 
   return (
-    <TicketShell title="Ticket de caja" subtitle="Resumen para cobro y entrega">
+    <TicketShell title="Ticket de caja" subtitle="Resumen para cobro y entrega" orderNumber={getDisplayOrderNumber(order)}>
       <TicketLine label="Pedido" value={getDisplayOrderNumber(order)} />
       <TicketLine label="Hora" value={getOrderCreatedLabel(order)} />
       <TicketLine label="Tipo" value={getDisplayOrderType(order)} />
@@ -321,7 +321,7 @@ function DeliveryTicket({ order }: { order: LocalOrder }) {
   const productsToConfirmText = buildStaffConfirmationText(order);
 
   return (
-    <TicketShell title="Ticket de delivery" subtitle="Datos para entrega a domicilio">
+    <TicketShell title="Ticket de delivery" subtitle="Datos para entrega a domicilio" orderNumber={getDisplayOrderNumber(order)}>
       <TicketLine label="Pedido" value={getDisplayOrderNumber(order)} />
       <TicketLine label="Hora" value={getOrderCreatedLabel(order)} />
       <TicketLine label="Cliente" value={order.customerName || "Cliente"} />
@@ -444,10 +444,12 @@ function TicketSectionTitle({ children }: { children: ReactNode }) {
 function TicketShell({
   title,
   subtitle,
+  orderNumber,
   children,
 }: {
   title: string;
   subtitle: string;
+  orderNumber?: string;
   children: ReactNode;
 }) {
   return (
@@ -460,6 +462,15 @@ function TicketShell({
           Generado: {formatDate(new Date().toISOString())}
         </p>
       </div>
+
+      {orderNumber ? (
+        <div className="border-b-2 border-dashed border-[var(--brand-ink-3)] py-3 text-center">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--brand-ink-3)]/60">
+            Número de pedido
+          </p>
+          <p className="mt-1 text-[34px] font-black uppercase leading-none">{orderNumber}</p>
+        </div>
+      ) : null}
 
       <div className="py-3">{children}</div>
 
@@ -603,6 +614,35 @@ function AccountTicketCard({ account, onSelect }: { account: OpenAccount; onSele
   );
 }
 
+type PendingAutoTicket = {
+  orderId: string;
+  kind: Exclude<TicketKind, "account">;
+  autoPrint: boolean;
+};
+
+// Lee ?pedido=<id>&tipo=caja|cocina|delivery&auto=1 (deep-link desde Caja)
+// sin useSearchParams para no obligar a envolver la página en <Suspense>.
+function readPendingAutoTicket(): PendingAutoTicket | null {
+  if (typeof window === "undefined") return null;
+
+  const params = new URLSearchParams(window.location.search);
+  const orderId = String(params.get("pedido") || "").trim().toLowerCase();
+
+  if (!orderId) return null;
+
+  const kindByParam: Record<string, Exclude<TicketKind, "account">> = {
+    caja: "cashier",
+    cocina: "kitchen",
+    delivery: "delivery",
+  };
+
+  return {
+    orderId,
+    kind: kindByParam[String(params.get("tipo") || "").trim().toLowerCase()] || "cashier",
+    autoPrint: params.get("auto") === "1",
+  };
+}
+
 function TicketsPageContent() {
   const [adminPassword, setAdminPassword] = useState("");
   const [orders, setOrders] = useState<LocalOrder[]>([]);
@@ -611,15 +651,50 @@ function TicketsPageContent() {
   const [message, setMessage] = useState<string | null>(null);
   const [searchText, setSearchText] = useState("");
   const [selectedTarget, setSelectedTarget] = useState<TicketTarget | null>(null);
+  const [pendingAutoTicket, setPendingAutoTicket] = useState<PendingAutoTicket | null>(null);
 
   useEffect(() => {
     // Difiere la restauración de sesión un tick para no hacer setState
     // síncrono dentro del efecto (react-hooks/set-state-in-effect).
     const timer = setTimeout(() => {
       setAdminPassword(getStoredPassword());
+      setPendingAutoTicket(readPendingAutoTicket());
     }, 0);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!pendingAutoTicket || !orders.length) return;
+
+    // Difiere un tick para no hacer setState síncrono dentro del efecto
+    // (react-hooks/set-state-in-effect), igual que la restauración de sesión.
+    const timer = setTimeout(() => {
+      const order = orders.find(
+        (candidate) =>
+          String(candidate.id || "").trim().toLowerCase() === pendingAutoTicket.orderId ||
+          getDisplayOrderNumber(candidate).trim().toLowerCase() === pendingAutoTicket.orderId,
+      );
+
+      setPendingAutoTicket(null);
+
+      if (!order) {
+        setMessage(`No se encontró el pedido "${pendingAutoTicket.orderId}" para el ticket.`);
+        return;
+      }
+
+      const kind: Exclude<TicketKind, "account"> =
+        pendingAutoTicket.kind === "delivery" && !isDeliveryOrder(order) ? "cashier" : pendingAutoTicket.kind;
+
+      setSelectedTarget({ kind, order });
+
+      if (pendingAutoTicket.autoPrint) {
+        // Deja respirar al modal antes de abrir el diálogo de impresión.
+        window.setTimeout(() => window.print(), 650);
+      }
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [pendingAutoTicket, orders]);
 
   const ordersById = useMemo(() => {
     const map = new Map<string, LocalOrder>();
