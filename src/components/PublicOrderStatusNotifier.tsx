@@ -23,10 +23,7 @@ export function usePublicOrderStatus(orderId: string) {
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    if (!orderId) {
-      setNotFound(true);
-      return;
-    }
+    if (!orderId) return;
 
     let cancelled = false;
     let timer: number | undefined;
@@ -67,7 +64,9 @@ export function usePublicOrderStatus(orderId: string) {
     };
   }, [orderId]);
 
-  return { status, displayNumber, notFound };
+  // Sin id de pedido no hay nada que sondear: cuenta como "no encontrado"
+  // derivado, sin setState síncrono dentro del efecto.
+  return { status, displayNumber, notFound: notFound || !orderId };
 }
 
 // Vibración + notificación del navegador la primera vez que el pedido pasa a
