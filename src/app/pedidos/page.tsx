@@ -51,7 +51,6 @@ import type {
   PaymentForm,
   LocalOrder,
   NewOrderToast,
-  DeliveryZone,
   DaySummaryTotals,
   PaymentSummaryTotals,
   FiscalIvaBucket,
@@ -81,7 +80,6 @@ import {
   CUSTOM_EXPENSE_CONCEPT_ID,
   DEFAULT_ORDER_LOCATIONS,
   DEFAULT_BUSINESS_CONFIG,
-  DEFAULT_DELIVERY_ZONES,
   DELIVERY_PAYMENT_OPTIONS,
   PAYMENT_METHOD_USD_OPTIONS,
   PAYMENT_METHOD_VES_OPTIONS,
@@ -104,7 +102,6 @@ import {
   createExpenseQuickConceptId,
   normalizeExpenseQuickConcepts,
   mergeExpenseQuickConceptsWithInventory,
-  normalizeDeliveryZones,
   getDisplayTableNumber,
   getOrderTotals,
   roundMoney,
@@ -203,15 +200,6 @@ export default function PedidosPage() {
   const [newLocationName, setNewLocationName] = useState("")
   const [locationsMessage, setLocationsMessage] = useState<string | null>(null)
   const [isSavingLocations, setIsSavingLocations] = useState(false)
-  const [isDeliveryZonesModalOpen, setIsDeliveryZonesModalOpen] = useState(false)
-  const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>(
-    DEFAULT_DELIVERY_ZONES
-  )
-  const [newDeliveryZoneName, setNewDeliveryZoneName] = useState("")
-  const [newDeliveryZoneCost, setNewDeliveryZoneCost] = useState("")
-  const [deliveryZonesMessage, setDeliveryZonesMessage] = useState<string | null>(null)
-  const [isLoadingDeliveryZones, setIsLoadingDeliveryZones] = useState(false)
-  const [isSavingDeliveryZones, setIsSavingDeliveryZones] = useState(false)
   const [selectedPaymentOrder, setSelectedPaymentOrder] =
     useState<LocalOrder | null>(null)
   const [paymentForm, setPaymentForm] =
@@ -417,11 +405,6 @@ export default function PedidosPage() {
         setIsExpensesModalOpen(false)
       }
 
-      if (!isBusinessModuleEffective(nextConfig, "delivery")) {
-        setDeliveryZones([])
-        setIsDeliveryZonesModalOpen(false)
-      }
-
       if (!isBusinessModuleEffective(nextConfig, "paymentProofs")) {
         setPaymentProofs([])
         setPaymentProofsMessage(null)
@@ -562,44 +545,6 @@ export default function PedidosPage() {
     )
     setNewLocationName("")
   }
-
-  async function loadDeliveryZones(silent = false) {
-    if (!isBusinessModuleEffective(businessConfigRef.current, "delivery")) {
-      setDeliveryZones([])
-      return
-    }
-
-    if (!silent) {
-      setIsLoadingDeliveryZones(true)
-    }
-
-    try {
-      const response = await fetch("/api/delivery-zones", {
-        cache: "no-store",
-      })
-
-      const data = await readApiResponse(response)
-
-      if (!response.ok) {
-        throw new Error(data.error || "No se pudieron cargar las zonas de delivery")
-      }
-
-      const cleanZones = normalizeDeliveryZones(data.deliveryZones)
-
-      setDeliveryZones(cleanZones.length ? cleanZones : DEFAULT_DELIVERY_ZONES)
-    } catch (error) {
-      setDeliveryZonesMessage(
-        error instanceof Error
-          ? error.message
-          : "No se pudieron cargar las zonas de delivery"
-      )
-    } finally {
-      if (!silent) {
-        setIsLoadingDeliveryZones(false)
-      }
-    }
-  }
-
 
   async function loadPaymentProofs(password = adminPassword, silent = false) {
     if (!password) return
@@ -767,140 +712,6 @@ export default function PedidosPage() {
       if (!silent) {
         setIsLoadingExpenses(false)
       }
-    }
-  }
-
-  function updateDeliveryZoneName(index: number, name: string) {
-    setDeliveryZones((currentZones) =>
-      currentZones.map((zone, zoneIndex) =>
-        zoneIndex === index
-          ? {
-              ...zone,
-              name,
-            }
-          : zone
-      )
-    )
-    setDeliveryZonesMessage("Cambio pendiente por guardar.")
-  }
-
-  function updateDeliveryZoneCost(index: number, cost: string) {
-    const normalizedCost = cost.replace(",", ".")
-
-    setDeliveryZones((currentZones) =>
-      currentZones.map((zone, zoneIndex) =>
-        zoneIndex === index
-          ? {
-              ...zone,
-              costUSD: Number(normalizedCost),
-            }
-          : zone
-      )
-    )
-    setDeliveryZonesMessage("Cambio pendiente por guardar.")
-  }
-
-  function addDeliveryZone() {
-    const name = newDeliveryZoneName.trim()
-    const costUSD = Number(newDeliveryZoneCost.replace(",", "."))
-
-    if (!name) {
-      setDeliveryZonesMessage("Escribe el nombre de la zona.")
-      return
-    }
-
-    if (!Number.isFinite(costUSD) || costUSD < 0) {
-      setDeliveryZonesMessage("Escribe un precio de delivery válido.")
-      return
-    }
-
-    const alreadyExists = deliveryZones.some(
-      (zone) => normalizeComparableText(zone.name) === normalizeComparableText(name)
-    )
-
-    if (alreadyExists) {
-      setDeliveryZonesMessage("Esa zona ya existe.")
-      return
-    }
-
-    setDeliveryZones((currentZones) => [
-      ...currentZones,
-      {
-        name,
-        costUSD,
-        isActive: true,
-      },
-    ])
-    setNewDeliveryZoneName("")
-    setNewDeliveryZoneCost("")
-    setDeliveryZonesMessage("Zona agregada. Presiona guardar para publicarla.")
-  }
-
-  function removeDeliveryZone(indexToRemove: number) {
-    if (deliveryZones.length <= 1) {
-      setDeliveryZonesMessage("Debe quedar al menos una zona de delivery.")
-      return
-    }
-
-    setDeliveryZones((currentZones) =>
-      currentZones.filter((_, index) => index !== indexToRemove)
-    )
-    setDeliveryZonesMessage("Zona eliminada. Presiona guardar para publicar el cambio.")
-  }
-
-  function restoreDefaultDeliveryZones() {
-    setDeliveryZones(DEFAULT_DELIVERY_ZONES)
-    setDeliveryZonesMessage("Zonas base restauradas. Presiona guardar para publicarlas.")
-  }
-
-  async function saveDeliveryZones() {
-    if (!adminPassword) return
-
-    if (!isBusinessModuleEffective(businessConfigRef.current, "delivery")) {
-      setDeliveryZonesMessage("Delivery no está activo en este plan.")
-      return
-    }
-
-    const cleanZones = normalizeDeliveryZones(deliveryZones)
-
-    if (!cleanZones.length) {
-      setDeliveryZonesMessage("Debes dejar al menos una zona de delivery.")
-      return
-    }
-
-    try {
-      setIsSavingDeliveryZones(true)
-      setDeliveryZonesMessage(null)
-
-      const response = await fetch("/api/delivery-zones", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-password": adminPassword,
-        },
-        body: JSON.stringify({
-          deliveryZones: cleanZones,
-        }),
-      })
-
-      const data = await readApiResponse(response)
-
-      if (!response.ok) {
-        throw new Error(data.error || "No se pudieron guardar las zonas de delivery")
-      }
-
-      const savedZones = normalizeDeliveryZones(data.deliveryZones)
-
-      setDeliveryZones(savedZones.length ? savedZones : cleanZones)
-      setDeliveryZonesMessage("Zonas de delivery guardadas correctamente.")
-    } catch (error) {
-      setDeliveryZonesMessage(
-        error instanceof Error
-          ? error.message
-          : "No se pudieron guardar las zonas de delivery"
-      )
-    } finally {
-      setIsSavingDeliveryZones(false)
     }
   }
 
@@ -1136,12 +947,6 @@ export default function PedidosPage() {
       setPaymentProofsMessage(null)
     }
 
-    if (isBusinessModuleEffective(activeConfig, "delivery")) {
-      loadDeliveryZones(true)
-    } else {
-      setDeliveryZones([])
-    }
-
     if (isBusinessModuleEffective(activeConfig, "expenses")) {
       loadDayExpenses(password, true)
     } else {
@@ -1251,11 +1056,6 @@ export default function PedidosPage() {
         setExpenseQuickConcepts(DEFAULT_EXPENSE_QUICK_CONCEPTS)
       }
     }, 0)
-    return () => clearTimeout(timer)
-  }, [])
-
-  useEffect(() => {
-    const timer = setTimeout(() => loadDeliveryZones(true), 0)
     return () => clearTimeout(timer)
   }, [])
 
@@ -1432,7 +1232,6 @@ export default function PedidosPage() {
   const reservationsAccess = getModulePlanAccess(businessConfig, "reservations")
   const soundsAccess = getModulePlanAccess(businessConfig, "sounds")
 
-  const canEditDeliveryZones = isOwnerAccess && deliveryAccess.effectiveEnabled
   const canDeleteExpenses = isOwnerAccess && expensesAccess.effectiveEnabled
 
   const isOwnerDashboardModuleVisible =
@@ -3578,21 +3377,6 @@ export default function PedidosPage() {
                     <MapPin size={16} />
                     Mesas
                   </button>
-
-                  {canEditDeliveryZones && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDeliveryZonesMessage(null)
-                        setIsDeliveryZonesModalOpen(true)
-                        loadDeliveryZones(true)
-                      }}
-                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
-                    >
-                      <Truck size={16} />
-                      Zonas delivery
-                    </button>
-                  )}
 
                   {canEditSensitiveSettings && (
                     <button
@@ -6187,130 +5971,6 @@ export default function PedidosPage() {
         </ModalShell>
       )}
 
-
-      {isDeliveryZonesModalOpen && (
-        <ModalShell
-          onClose={() => {
-            if (!isSavingDeliveryZones) {
-              setIsDeliveryZonesModalOpen(false)
-              setNewDeliveryZoneName("")
-              setNewDeliveryZoneCost("")
-            }
-          }}
-          title="Zonas de delivery"
-        >
-          <div className="space-y-4">
-            <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                Precios publicados en el carrito
-              </p>
-              <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-                Cada zona guardada aquí aparecerá en el carrito del cliente. El cliente selecciona la zona y el costo se calcula automáticamente.
-              </p>
-            </div>
-
-            <div className="grid gap-3">
-              {deliveryZones.map((zone, index) => (
-                <div
-                  key={`${zone.name}-${index}`}
-                  className="grid gap-2 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-3 sm:grid-cols-[1fr_140px_auto] sm:items-center"
-                >
-                  <input
-                    value={zone.name}
-                    onChange={(event) =>
-                      updateDeliveryZoneName(index, event.target.value)
-                    }
-                    placeholder="Nombre de la zona"
-                    className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3 text-sm font-black text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
-                  />
-
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={Number.isFinite(zone.costUSD) ? zone.costUSD : ""}
-                    onChange={(event) =>
-                      updateDeliveryZoneCost(index, event.target.value)
-                    }
-                    placeholder="USD"
-                    className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3 text-sm font-black text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => removeDeliveryZone(index)}
-                    className="inline-flex items-center justify-center rounded-full bg-red-500/100/15 p-3 text-red-300 transition hover:bg-red-200"
-                    aria-label={`Eliminar ${zone.name}`}
-                  >
-                    <Trash2 size={17} />
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-4">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                Agregar zona
-              </p>
-
-              <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_130px_auto]">
-                <input
-                  value={newDeliveryZoneName}
-                  onChange={(event) => setNewDeliveryZoneName(event.target.value)}
-                  placeholder="Ejemplo: Las Chimeneas"
-                  className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
-                />
-
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={newDeliveryZoneCost}
-                  onChange={(event) => setNewDeliveryZoneCost(event.target.value)}
-                  placeholder="USD"
-                  className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
-                />
-
-                <button
-                  type="button"
-                  onClick={addDeliveryZone}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase text-[var(--brand-ink)]"
-                >
-                  <Plus size={18} />
-                  Agregar
-                </button>
-              </div>
-            </div>
-
-            {deliveryZonesMessage && (
-              <p className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]">
-                {deliveryZonesMessage}
-              </p>
-            )}
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={saveDeliveryZones}
-                disabled={isSavingDeliveryZones || isLoadingDeliveryZones}
-                className="flex items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50"
-              >
-                {isSavingDeliveryZones && <Loader2 size={18} className="animate-spin" />}
-                Guardar zonas
-              </button>
-
-              <button
-                type="button"
-                onClick={restoreDefaultDeliveryZones}
-                disabled={isSavingDeliveryZones}
-                className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
-              >
-                Restaurar base
-              </button>
-            </div>
-          </div>
-        </ModalShell>
-      )}
 
       {paymentModalOrder && paymentDraft && (
         <ModalShell

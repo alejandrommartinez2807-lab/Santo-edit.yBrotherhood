@@ -267,7 +267,7 @@ export default function PublicCustomerConfidence() {
       key: "delivery",
       icon: <Truck size={24} />,
       title: "Delivery disponible",
-      text: "El cliente puede revisar el menú y coordinar la entrega según las zonas activas del negocio.",
+      text: "El cliente puede revisar el menú y coordinar la entrega compartiendo su ubicación de Google Maps.",
       href: whatsappUrl || "#menu",
       label: whatsappUrl ? "Coordinar" : "Ver menú",
       external: Boolean(whatsappUrl),

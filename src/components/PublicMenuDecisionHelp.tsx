@@ -52,7 +52,7 @@ const DECISION_CARDS = [
   },
   {
     title: "Necesito delivery",
-    text: "Revisa productos disponibles para enviar y luego confirma zona.",
+    text: "Revisa productos disponibles para enviar y comparte tu ubicación.",
     action: "Ver delivery",
     icon: MapPin,
     detail: { quickFilter: "delivery" },

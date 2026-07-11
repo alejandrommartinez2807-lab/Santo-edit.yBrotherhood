@@ -259,7 +259,7 @@ export default function PublicOrderModeGuide() {
       nextCards.push({
         key: "delivery",
         title: "Delivery",
-        text: "Elige delivery al confirmar y revisa las zonas configuradas por el negocio.",
+        text: "Elige delivery al confirmar y comparte tu ubicación de Google Maps: el costo se calcula por distancia.",
         label: whatsappUrl ? "Coordinar delivery" : "Ver menú",
         href: whatsappUrl || "#menu",
         icon: MessageCircle,

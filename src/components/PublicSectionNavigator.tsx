@@ -137,7 +137,7 @@ export default function PublicSectionNavigator() {
       {
         id: "zonas-delivery",
         label: "Delivery",
-        detail: "Zonas y costo",
+        detail: "Costo por distancia",
         icon: Truck,
         visible: deliveryIsVisible,
       },

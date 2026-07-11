@@ -205,7 +205,7 @@ export default function PublicOrderFaq() {
       icon: Truck,
       question: hasDelivery ? "¿Tienen delivery?" : "¿Cómo retiro mi pedido?",
       answer: hasDelivery
-        ? "Puedes pedir delivery si tu zona está activa. Revisa la sección de zonas para ver el costo antes de cerrar el pedido."
+        ? "Puedes pedir delivery compartiendo tu ubicación de Google Maps en el carrito: el costo se calcula por distancia antes de cerrar el pedido."
         : "El pedido se puede organizar para retirar o consumir en el local, según las opciones activas del negocio.",
     },
     {

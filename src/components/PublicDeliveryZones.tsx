@@ -1,13 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Bike, MapPin, PackageCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Bike, MapPin, PackageCheck, Route } from "lucide-react";
 import { formatUSD } from "@/utils/formatCurrency";
 
-type DeliveryZone = {
-  name: string;
+// Sección pública "Delivery por distancia": muestra los rangos de km y su
+// costo ("hasta 10 km → $6") que el negocio configuró. Reemplaza a la vieja
+// lista de zonas: el costo real lo calcula el carrito con la ubicación del
+// cliente (link de Google Maps o GPS).
+
+type DeliveryTier = {
+  upToKm: number;
   costUSD: number;
-  isActive?: boolean;
 };
 
 type PublicBusinessConfig = {
@@ -25,13 +29,10 @@ type PublicBusinessConfigResponse = {
   config?: PublicBusinessConfig;
 };
 
-type DeliveryZonesResponse = {
-  deliveryZones?: DeliveryZone[];
-  module?: {
-    effectiveEnabled?: boolean;
-    lockedByPlan?: boolean;
-    message?: string;
-  };
+type DeliveryQuoteSettingsResponse = {
+  enabled?: boolean;
+  maxKm?: number;
+  tiers?: DeliveryTier[];
 };
 
 const DEFAULT_STYLE_CONFIG: Required<
@@ -96,40 +97,33 @@ function normalizeConfig(value: PublicBusinessConfigResponse) {
   };
 }
 
-function normalizeDeliveryZones(value: unknown): DeliveryZone[] {
+function normalizeTiers(value: unknown): DeliveryTier[] {
   if (!Array.isArray(value)) return [];
 
-  const seen = new Set<string>();
-
   return value
-    .map((zone) => ({
-      name: cleanText(zone?.name),
-      costUSD: Number(zone?.costUSD || 0),
-      isActive: zone?.isActive !== false,
+    .map((tier) => ({
+      upToKm: Number((tier as DeliveryTier)?.upToKm || 0),
+      costUSD: Number((tier as DeliveryTier)?.costUSD || 0),
     }))
-    .filter((zone) => {
-      const key = zone.name
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase();
-
-      if (!zone.name || seen.has(key) || !Number.isFinite(zone.costUSD)) {
-        return false;
-      }
-
-      seen.add(key);
-      return zone.isActive !== false;
-    })
-    .sort((first, second) => first.costUSD - second.costUSD);
+    .filter(
+      (tier) =>
+        Number.isFinite(tier.upToKm) &&
+        tier.upToKm > 0 &&
+        Number.isFinite(tier.costUSD) &&
+        tier.costUSD >= 0,
+    )
+    .sort((first, second) => first.upToKm - second.upToKm)
+    .slice(0, 8);
 }
 
 export default function PublicDeliveryZones() {
   const [config, setConfig] = useState(() =>
     normalizeConfig({ businessConfig: DEFAULT_STYLE_CONFIG }),
   );
-  const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
+  const [tiers, setTiers] = useState<DeliveryTier[]>([]);
+  const [maxKm, setMaxKm] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [moduleEnabled, setModuleEnabled] = useState(true);
+  const [isDistanceEnabled, setIsDistanceEnabled] = useState(false);
 
   useEffect(() => {
     let ignore = false;
@@ -138,9 +132,9 @@ export default function PublicDeliveryZones() {
       try {
         setIsLoading(true);
 
-        const [configResponse, zonesResponse] = await Promise.all([
+        const [configResponse, quoteResponse] = await Promise.all([
           fetch("/api/public/business-config", { cache: "no-store" }),
-          fetch("/api/delivery-zones", { cache: "no-store" }),
+          fetch("/api/public/delivery-quote", { cache: "no-store" }),
         ]);
 
         const configData = configResponse.ok
@@ -148,20 +142,20 @@ export default function PublicDeliveryZones() {
           : ({
               businessConfig: DEFAULT_STYLE_CONFIG,
             } as PublicBusinessConfigResponse);
-        const zonesData = zonesResponse.ok
-          ? ((await zonesResponse.json()) as DeliveryZonesResponse)
-          : ({ deliveryZones: [] } as DeliveryZonesResponse);
+        const quoteData = quoteResponse.ok
+          ? ((await quoteResponse.json()) as DeliveryQuoteSettingsResponse)
+          : ({} as DeliveryQuoteSettingsResponse);
 
         if (ignore) return;
 
-        const cleanConfig = normalizeConfig(configData);
-        setConfig(cleanConfig);
-        setModuleEnabled(zonesData.module?.effectiveEnabled !== false);
-        setDeliveryZones(normalizeDeliveryZones(zonesData.deliveryZones));
+        setConfig(normalizeConfig(configData));
+        setIsDistanceEnabled(quoteData.enabled === true);
+        setTiers(normalizeTiers(quoteData.tiers));
+        setMaxKm(Number(quoteData.maxKm || 0));
       } catch {
         if (!ignore) {
-          setDeliveryZones([]);
-          setModuleEnabled(false);
+          setIsDistanceEnabled(false);
+          setTiers([]);
         }
       } finally {
         if (!ignore) setIsLoading(false);
@@ -176,14 +170,10 @@ export default function PublicDeliveryZones() {
   }, []);
 
   const isDeliveryVisible =
-    config.deliveryEnabled && config.deliveryModuleEnabled && moduleEnabled;
+    config.deliveryEnabled && config.deliveryModuleEnabled && isDistanceEnabled;
 
-  const cheapestZone = useMemo(() => {
-    return deliveryZones.length ? deliveryZones[0] : null;
-  }, [deliveryZones]);
-
-  if (!isDeliveryVisible && !isLoading) return null;
-  if (!isLoading && deliveryZones.length === 0) return null;
+  if (!isLoading && (!isDeliveryVisible || tiers.length === 0)) return null;
+  if (isLoading) return null;
 
   return (
     <section
@@ -217,118 +207,90 @@ export default function PublicDeliveryZones() {
                 className="mt-4 text-3xl font-black uppercase leading-none sm:text-4xl"
                 style={{ color: config.productCardBorderColor }}
               >
-                Zonas y costos antes de pedir
+                Te lo llevamos hasta {maxKm} km a la redonda
               </h2>
 
               <p className="mt-3 max-w-xl text-sm font-bold leading-6 opacity-75 sm:text-base">
-                Revisa las zonas activas de delivery. El costo se suma al total
-                cuando eliges delivery en el carrito.
+                Comparte tu ubicación de Google Maps en el carrito y el costo
+                del envío se calcula solo, según la distancia. Sin sorpresas.
               </p>
 
-              {cheapestZone ? (
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-[1.25rem] border-2 border-current/10 bg-white/70 px-4 py-3">
-                    <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] opacity-65">
-                      Desde
-                    </p>
-                    <p className="mt-1 text-2xl font-black">
-                      {formatUSD(cheapestZone.costUSD)}
-                    </p>
-                  </div>
-                  <a
-                    href="#menu"
-                    className="flex items-center justify-center rounded-[1.25rem] border-2 px-4 py-3 text-center text-xs font-black uppercase tracking-[0.12em] transition hover:brightness-105"
-                    style={{
-                      backgroundColor: config.productCardButtonColor,
-                      borderColor: config.productCardBorderColor,
-                      color: config.productCardTextColor,
-                    }}
-                  >
-                    Ver menú
-                  </a>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[1.25rem] border-2 border-current/10 bg-white/70 px-4 py-3">
+                  <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] opacity-65">
+                    Desde
+                  </p>
+                  <p className="mt-1 text-2xl font-black">
+                    {formatUSD(tiers[0].costUSD)}
+                  </p>
                 </div>
-              ) : null}
+                <a
+                  href="#menu"
+                  className="flex items-center justify-center rounded-[1.25rem] border-2 px-4 py-3 text-center text-xs font-black uppercase tracking-[0.12em] transition hover:brightness-105"
+                  style={{
+                    backgroundColor: config.productCardButtonColor,
+                    borderColor: config.productCardBorderColor,
+                    color: config.productCardTextColor,
+                  }}
+                >
+                  Ver menú
+                </a>
+              </div>
             </div>
 
             <div className="border-t-2 border-[var(--brand-primary)]/10 bg-[var(--brand-cream)] p-4 sm:p-5 lg:border-l-2 lg:border-t-0">
-              {isLoading ? (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {[
-                    "Cargando zonas",
-                    "Calculando costos",
-                    "Preparando delivery",
-                    "Revisando cobertura",
-                  ].map((label) => (
-                    <div
-                      key={label}
-                      className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/10 bg-white px-4 py-4"
-                    >
-                      <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-                        {label}
-                      </p>
-                      <div className="mt-3 h-3 w-2/3 rounded-full bg-[var(--brand-primary)]/10" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {deliveryZones.slice(0, 8).map((zone) => (
-                    <div
-                      key={zone.name}
-                      className="flex items-center justify-between gap-3 rounded-[1.2rem] border-2 bg-white px-4 py-4"
-                      style={{
-                        borderColor: `${config.productCardBorderColor}22`,
-                      }}
-                    >
-                      <span className="flex min-w-0 items-center gap-3">
-                        <span
-                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2"
-                          style={{
-                            backgroundColor: config.productCardButtonColor,
-                            borderColor: config.productCardBorderColor,
-                            color: config.productCardTextColor,
-                          }}
-                        >
-                          <MapPin size={16} />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block truncate text-sm font-black uppercase">
-                            {zone.name}
-                          </span>
-                          <span className="mt-0.5 block text-[0.68rem] font-bold uppercase tracking-[0.1em] opacity-60">
-                            Zona activa
-                          </span>
-                        </span>
-                      </span>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {tiers.map((tier) => (
+                  <div
+                    key={tier.upToKm}
+                    className="flex items-center justify-between gap-3 rounded-[1.2rem] border-2 bg-white px-4 py-4"
+                    style={{
+                      borderColor: `${config.productCardBorderColor}22`,
+                    }}
+                  >
+                    <span className="flex min-w-0 items-center gap-3">
                       <span
-                        className="shrink-0 rounded-full border-2 px-3 py-1.5 text-xs font-black"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2"
                         style={{
+                          backgroundColor: config.productCardButtonColor,
                           borderColor: config.productCardBorderColor,
-                          color: config.productCardBorderColor,
+                          color: config.productCardTextColor,
                         }}
                       >
-                        {formatUSD(zone.costUSD)}
+                        <Route size={16} />
                       </span>
-                    </div>
-                  ))}
-                </div>
-              )}
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-black uppercase">
+                          Hasta {tier.upToKm} km
+                        </span>
+                        <span className="mt-0.5 block text-[0.68rem] font-bold uppercase tracking-[0.1em] opacity-60">
+                          A la redonda
+                        </span>
+                      </span>
+                    </span>
+                    <span
+                      className="shrink-0 rounded-full border-2 px-3 py-1.5 text-xs font-black"
+                      style={{
+                        borderColor: config.productCardBorderColor,
+                        color: config.productCardBorderColor,
+                      }}
+                    >
+                      {formatUSD(tier.costUSD)}
+                    </span>
+                  </div>
+                ))}
+              </div>
 
-              {!isLoading && deliveryZones.length > 8 ? (
-                <p className="mt-3 rounded-full bg-white px-4 py-2 text-center text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-                  +{deliveryZones.length - 8} zona
-                  {deliveryZones.length - 8 === 1 ? "" : "s"} más disponible
-                  {deliveryZones.length - 8 === 1 ? "" : "s"} en el carrito
-                </p>
-              ) : null}
+              <p className="mt-4 flex items-center gap-2 text-xs font-bold leading-5 opacity-70">
+                <MapPin size={15} className="shrink-0" />
+                En el carrito pegas tu link de Google Maps (o usas tu GPS) y ves
+                tu costo exacto al instante.
+              </p>
 
-              {!isLoading && deliveryZones.length > 0 ? (
-                <p className="mt-4 flex items-center gap-2 text-xs font-bold leading-5 opacity-70">
-                  <PackageCheck size={15} className="shrink-0" />
-                  El delivery se confirma con la dirección y referencia al
-                  cerrar el pedido.
-                </p>
-              ) : null}
+              <p className="mt-2 flex items-center gap-2 text-xs font-bold leading-5 opacity-70">
+                <PackageCheck size={15} className="shrink-0" />
+                ¿Más lejos? Escríbenos por WhatsApp y lo coordinamos.
+              </p>
             </div>
           </div>
         </div>

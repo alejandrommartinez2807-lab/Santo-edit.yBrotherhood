@@ -4,11 +4,19 @@ import {
   createOrder,
   findOrderByClientOrderId,
   getBusinessConfig,
+  getDeliveryDistanceSettings,
   getDeliveryZones,
   getOpenAccounts,
   getOrders,
   isTrainingModeActive,
 } from "@/lib/orders"
+import {
+  isDeliveryDistanceReady,
+  isShortMapsLink,
+  parseCoordsFromText,
+  quoteDeliveryByDistance,
+} from "@/lib/deliveryDistance"
+import { expandShortMapsLink } from "@/lib/deliveryDistanceServer"
 import type { OrderType } from "@/types/localOrders"
 import { calculateOrderTotalsFromItems } from "@/lib/localOrderMoney"
 import {
@@ -339,15 +347,43 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const deliveryZones = isDeliveryOrder
-      ? await getDeliveryZones(await resolveBranchId(request))
-      : []
+    // Precio del envío: SIEMPRE lo decide el servidor (el cliente no puede
+    // mandar el monto). Primero se intenta el envío por distancia con la
+    // ubicación del cliente; si el negocio no lo configuró, se cae al match
+    // por zonas guardadas (flujo viejo, aún usado por otras marcas).
+    let deliveryZone = rawDeliveryZone
+    let deliveryCostUSD = 0
+    let distanceQuoted = false
+    let legacyDeliveryZones: Awaited<ReturnType<typeof getDeliveryZones>> = []
+    let selectedDeliveryZone: ReturnType<typeof getDeliveryZoneOption> = undefined
 
-    const selectedDeliveryZone = getDeliveryZoneOption(rawDeliveryZone, deliveryZones)
-    const deliveryZone = selectedDeliveryZone?.name || rawDeliveryZone
-    const deliveryCostUSD = isDeliveryOrder
-      ? Number(selectedDeliveryZone?.costUSD || 0)
-      : 0
+    if (isDeliveryOrder) {
+      const branchId = await resolveBranchId(request)
+      const distanceSettings = await getDeliveryDistanceSettings(branchId)
+
+      if (isDeliveryDistanceReady(distanceSettings)) {
+        const mapsUrl = cleanText(body.deliveryMapsUrl)
+        const link = isShortMapsLink(mapsUrl)
+          ? await expandShortMapsLink(mapsUrl)
+          : mapsUrl
+        const coords = link ? parseCoordsFromText(link) : null
+        const quote = coords ? quoteDeliveryByDistance(distanceSettings, coords) : null
+
+        if (quote?.ok) {
+          deliveryCostUSD = quote.costUSD
+          deliveryZone = `~${quote.distanceKm.toFixed(1)} km`
+          distanceQuoted = true
+        }
+      }
+
+      if (!distanceQuoted) {
+        legacyDeliveryZones = await getDeliveryZones(branchId)
+        selectedDeliveryZone = getDeliveryZoneOption(rawDeliveryZone, legacyDeliveryZones)
+
+        deliveryZone = selectedDeliveryZone?.name || rawDeliveryZone
+        deliveryCostUSD = Number(selectedDeliveryZone?.costUSD || 0)
+      }
+    }
 
     const tableNumber = isDeliveryOrder
       ? `Delivery${deliveryZone ? ` - ${deliveryZone}` : ""}`
@@ -490,29 +526,19 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      if (!deliveryReference) {
-        return NextResponse.json(
-          {
-            error: "Falta el punto de referencia",
-          },
-          {
-            status: 400,
-          }
-        )
-      }
+      // El punto de referencia es opcional (como en las apps grandes): la
+      // ubicación exacta ya viene con el link de Maps o la dirección escrita.
 
-      if (!deliveryZone) {
-        return NextResponse.json(
-          {
-            error: "Falta la zona de delivery",
-          },
-          {
-            status: 400,
-          }
-        )
-      }
-
-      if (!selectedDeliveryZone) {
+      // Validación de zona: solo aplica al flujo viejo por zonas (negocios
+      // sin envío por distancia configurado). Con cotización por km la zona
+      // es la etiqueta "~X km" que asignó el servidor; y sin zonas cargadas
+      // el costo queda en 0 y se confirma por WhatsApp.
+      if (
+        !distanceQuoted &&
+        legacyDeliveryZones.length > 0 &&
+        rawDeliveryZone &&
+        !selectedDeliveryZone
+      ) {
         return NextResponse.json(
           {
             error: "Selecciona una zona de delivery válida",
