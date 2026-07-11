@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import { BRAND } from "@/lib/brand"
-import { AtSign, Bike, Clock, MapPin, MessageCircle } from "lucide-react"
+import { AtSign, Bike, CalendarCheck, Clock, MapPin, MessageCircle } from "lucide-react"
 
 type PublicBusinessConfig = {
   businessName: string
@@ -187,6 +187,7 @@ export default function BottomInfoSections() {
   const [businessConfig, setBusinessConfig] = useState<PublicBusinessConfig>(
     DEFAULT_PUBLIC_CONFIG,
   )
+  const [reservationsEnabled, setReservationsEnabled] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -201,6 +202,17 @@ export default function BottomInfoSections() {
         if (isMounted) {
           setBusinessConfig(DEFAULT_PUBLIC_CONFIG)
         }
+      })
+
+    // El botón "Reservar mesa" solo aparece si el dueño tiene el módulo
+    // Reservas activo (y mesas configuradas); si el fetch falla, no se muestra.
+    fetch("/api/public/reservations", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => {
+        if (isMounted) setReservationsEnabled(Boolean(data?.enabled))
+      })
+      .catch(() => {
+        if (isMounted) setReservationsEnabled(false)
       })
 
     return () => {
@@ -275,6 +287,16 @@ export default function BottomInfoSections() {
                 <MapPin size={17} />
                 {businessConfig.locationButtonText}
               </a>
+
+              {reservationsEnabled ? (
+                <a
+                  href="/reservar"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] px-6 py-3.5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95"
+                >
+                  <CalendarCheck size={17} />
+                  Reservar mesa
+                </a>
+              ) : null}
 
               {instagramUrl ? (
                 <a
