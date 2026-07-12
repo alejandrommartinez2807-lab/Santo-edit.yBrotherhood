@@ -3,6 +3,7 @@ import { BRAND } from "@/lib/brand";
 import { cleanText, cleanWhatsappNumber } from "@/components/cartUtils";
 import {
   DEFAULT_PUBLIC_PAYMENT_METHODS,
+  normalizePublicPaymentMethodDetails,
   normalizePublicPaymentMethods,
 } from "@/lib/publicPageConfig";
 import type {
@@ -50,6 +51,7 @@ export const DEFAULT_PUBLIC_CONFIG: PublicBusinessConfig = {
   publicRegularGroupTitle: "Productos normales",
   publicAvailabilityLabel: "Disponible",
   publicPaymentMethods: [...DEFAULT_PUBLIC_PAYMENT_METHODS],
+  publicPaymentMethodDetails: {},
   themePrimaryColor: "#a00000",
   themeAccentColor: "#ffd23c",
   themeCreamColor: "#fff7e8",
@@ -497,6 +499,9 @@ export function normalizePublicBusinessConfig(value: unknown): PublicBusinessCon
       DEFAULT_PUBLIC_CONFIG.publicAvailabilityLabel,
     publicPaymentMethods: normalizePublicPaymentMethods(
       businessConfig.publicPaymentMethods,
+    ),
+    publicPaymentMethodDetails: normalizePublicPaymentMethodDetails(
+      businessConfig.publicPaymentMethodDetails,
     ),
     themePrimaryColor:
       cleanText(businessConfig.themePrimaryColor) ||

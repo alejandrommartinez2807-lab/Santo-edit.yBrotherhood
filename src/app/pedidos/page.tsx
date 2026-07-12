@@ -167,6 +167,7 @@ import {
 } from "./components"
 import CurrentBranchBanner from "@/components/local/CurrentBranchBanner"
 import PaymentProofAlertToast from "@/components/PaymentProofAlertToast"
+import OrderPaymentProofsList from "@/components/OrderPaymentProofsList"
 import { usePaymentProofAlerts } from "@/hooks/usePaymentProofAlerts"
 
 export default function PedidosPage() {
@@ -4396,6 +4397,12 @@ export default function PedidosPage() {
                         </span>
                       </a>
                     )}
+
+                    <OrderPaymentProofsList
+                      proofs={paymentProofs.filter(
+                        (proof) => proof.orderId === order.id,
+                      )}
+                    />
 
                     <div className="grid gap-2 sm:grid-cols-2">
                       {primaryAction && (

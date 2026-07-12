@@ -7,6 +7,7 @@ import {
   normalizePublicHiddenCategoryList,
   normalizePublicCoupons,
   normalizePublicNavButtons,
+  normalizePublicPaymentMethodDetails,
   normalizePublicPaymentMethods,
   type PublicNavButton,
 } from "./publicPageConfig"
@@ -100,6 +101,8 @@ export type BusinessConfig = {
   publicAvailabilityLabel: string
   // Métodos de pago del carrito público, editables por el dueño.
   publicPaymentMethods: string[]
+  // Datos de cada método (pago móvil, Zelle…) que el cliente ve y copia.
+  publicPaymentMethodDetails: Record<string, string>
   // Cupones del carrito ("CODIGO 10" por línea); nunca se exponen al público.
   publicCoupons: string[]
   locationButtonText: string
@@ -238,6 +241,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicRegularGroupTitle: "Productos normales",
   publicAvailabilityLabel: "Disponible",
   publicPaymentMethods: [...DEFAULT_PUBLIC_PAYMENT_METHODS],
+  publicPaymentMethodDetails: {},
   publicCoupons: [],
   locationButtonText: "Abrir ubicación",
   googleMapsUrl: "",
@@ -623,6 +627,9 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       String(source.publicAvailabilityLabel || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.publicAvailabilityLabel,
     publicPaymentMethods: normalizePublicPaymentMethods(source.publicPaymentMethods),
+    publicPaymentMethodDetails: normalizePublicPaymentMethodDetails(
+      source.publicPaymentMethodDetails
+    ),
     publicCoupons: normalizePublicCoupons(source.publicCoupons),
     locationButtonText:
       String(source.locationButtonText || "").trim() ||

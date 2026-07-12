@@ -35,6 +35,7 @@ import {
   normalizePublicCoupons,
   normalizePublicHiddenCategoryList,
   normalizePublicNavButtons,
+  normalizePublicPaymentMethodDetails,
   normalizePublicPaymentMethods,
 } from "@/lib/publicPageConfig"
 import { writeAuditLog } from "@/lib/audit"
@@ -378,6 +379,13 @@ function normalizeBusinessConfigPayload(
     ;(config as Record<string, unknown>).publicPaymentMethods = normalizePublicPaymentMethods(
       source.publicPaymentMethods
     )
+  }
+
+  // Datos de cada método (pago móvil, Zelle…): config operativa; el carrito
+  // los muestra desplegables para que el cliente copie y pague directo.
+  if (hasOwn(source, "publicPaymentMethodDetails")) {
+    ;(config as Record<string, unknown>).publicPaymentMethodDetails =
+      normalizePublicPaymentMethodDetails(source.publicPaymentMethodDetails)
   }
 
   // Cupones del carrito ("CODIGO 10" por línea): config operativa. No viajan

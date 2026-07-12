@@ -1013,6 +1013,9 @@ function CajaPageContent() {
               <CashOrderCard
                 key={order.id}
                 order={order}
+                paymentProofs={paymentProofs.filter(
+                  (proof) => proof.orderId === order.id,
+                )}
                 onOpenPayment={() => openPaymentModal(order)}
                 onSendToKitchen={() => updateStatus(order.id, "Preparando")}
                 onMarkDelivered={() => updateStatus(order.id, "Entregado")}

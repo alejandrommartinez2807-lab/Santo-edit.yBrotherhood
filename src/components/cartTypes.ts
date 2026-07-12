@@ -97,6 +97,8 @@ export type PublicBusinessConfig = {
   publicAvailabilityLabel?: string;
   // Métodos de pago del carrito editables por el dueño (Configuración).
   publicPaymentMethods: string[];
+  // Datos de cada método (pago móvil, Zelle…) que el cliente ve y copia.
+  publicPaymentMethodDetails?: Record<string, string>;
   themePrimaryColor?: string;
   themeAccentColor?: string;
   themeCreamColor?: string;

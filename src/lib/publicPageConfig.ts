@@ -183,6 +183,47 @@ export function normalizePublicPaymentMethods(value: unknown): string[] {
   return methods.length ? methods : [...DEFAULT_PUBLIC_PAYMENT_METHODS]
 }
 
+// Datos de cada método de pago (número de pago móvil, correo de Zelle, etc.),
+// escritos por el dueño en Configuración. El carrito los muestra en botones
+// desplegables ("Ver datos de Pago móvil") con copiado línea a línea, así el
+// cliente paga sin preguntar por WhatsApp. Mapa método → líneas de datos.
+export function normalizePublicPaymentMethodDetails(
+  value: unknown,
+): Record<string, string> {
+  let raw: unknown = value
+
+  if (typeof value === "string" && value.trim()) {
+    try {
+      raw = JSON.parse(value)
+    } catch {
+      raw = null
+    }
+  }
+
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {}
+
+  const result: Record<string, string> = {}
+
+  for (const [key, entry] of Object.entries(raw as Record<string, unknown>)) {
+    if (Object.keys(result).length >= 12) break
+
+    const method = cleanText(key).slice(0, 40)
+    if (!method || typeof entry !== "string") continue
+
+    const details = entry
+      .replace(/\r/g, "")
+      .split("\n")
+      .map((line) => cleanText(line).slice(0, 90))
+      .filter(Boolean)
+      .slice(0, 8)
+      .join("\n")
+
+    if (details) result[method] = details
+  }
+
+  return result
+}
+
 // Cupones del carrito público. El dueño escribe uno por línea como
 // "BROTHER10 10" (código + porcentaje de descuento). Se guardan normalizados
 // ("CODIGO 10") y NUNCA viajan en la respuesta pública: el cliente valida su

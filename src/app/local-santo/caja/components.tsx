@@ -21,7 +21,8 @@ import {
   XCircle,
 } from "lucide-react"
 import { formatUSD, formatVES } from "@/utils/formatCurrency"
-import type { OpenAccount } from "@/types/localOrders"
+import type { OpenAccount, PaymentProof } from "@/types/localOrders"
+import OrderPaymentProofsList from "@/components/OrderPaymentProofsList"
 import {
   getOrderItemDetailLines,
   getOrderStaffConfirmationSummary,
@@ -61,6 +62,7 @@ export function CashOrderCard({
   onResetStaffItems,
   isConfirmingStaff,
   isAttachingToOpenAccount,
+  paymentProofs = [],
 }: {
   order: LocalOrder
   suggestedOpenAccount: OpenAccount | null
@@ -73,6 +75,7 @@ export function CashOrderCard({
   onResetStaffItems: () => void
   isConfirmingStaff: boolean
   isAttachingToOpenAccount: boolean
+  paymentProofs?: PaymentProof[]
 }) {
   const orderTotals = getOrderTotals(order)
   const payment = getOrderPayment(order)
@@ -155,6 +158,8 @@ export function CashOrderCard({
             </span>
           </a>
         )}
+
+        <OrderPaymentProofsList proofs={paymentProofs} />
 
         {hasRequiredStaffConfirmation && (
           <div

@@ -67,8 +67,11 @@ body {
   color: black;
 }
 
+/* Fina y discreta: la de 10px con degradado llamaba más la atención que el
+   contenido, sobre todo en el checkout del teléfono. */
 ::-webkit-scrollbar {
-  width: 10px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {

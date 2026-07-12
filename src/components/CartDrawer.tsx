@@ -61,6 +61,12 @@ import {
   readApiResponse,
 } from "@/components/cartDrawerDomain";
 import { looksLikeMapsLink } from "@/lib/deliveryDistance";
+import PaymentMethodDetailsList from "@/components/PaymentMethodDetailsList";
+import {
+  readRecentPublicOrders,
+  saveRecentPublicOrder,
+  type RecentPublicOrder,
+} from "@/components/recentPublicOrders";
 import {
   CartLineItem,
   CartSummaryFooter,
@@ -317,6 +323,9 @@ export default function CartDrawer({
   const [paymentStartError, setPaymentStartError] = useState("");
   const [orderType, setOrderType] = useState<OrderType>("Comer aquí");
   const [deliveryReference, setDeliveryReference] = useState("");
+  // El campo de referencia vive oculto tras una casilla: la mayoría no lo
+  // necesita (la ubicación ya es exacta) y así el formulario respira más.
+  const [wantsDeliveryReference, setWantsDeliveryReference] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("");
   const [customerNote, setCustomerNote] = useState("");
   // El cupón vive plegado: solo un enlace discreto, para no estorbar a la
@@ -364,6 +373,11 @@ export default function CartDrawer({
     { upToKm: number; costUSD: number }[]
   >([]);
   const [customerMapsUrl, setCustomerMapsUrl] = useState("");
+  // Pedidos previos guardados en este dispositivo: camino de vuelta al
+  // seguimiento (y al reporte de pago) si el cliente cerró la página.
+  const [recentPublicOrders, setRecentPublicOrders] = useState<
+    RecentPublicOrder[]
+  >([]);
   const [distanceQuote, setDistanceQuote] = useState<{
     distanceKm: number;
     costUSD: number;
@@ -677,6 +691,7 @@ export default function CartDrawer({
         setTableNumber("");
         setAttachToTableOpenAccount(false);
         setDeliveryReference("");
+        setWantsDeliveryReference(false);
         setCustomerMapsUrl("");
         setDistanceQuote(null);
         setDistanceQuoteError(null);
@@ -778,6 +793,12 @@ export default function CartDrawer({
       clearTimeout(timer);
     };
   }, [isOpen, isPublicDeliveryAvailable]);
+
+  // Al abrir el carrito se refrescan los pedidos recientes del dispositivo.
+  useEffect(() => {
+    if (!isOpen) return;
+    setRecentPublicOrders(readRecentPublicOrders());
+  }, [isOpen]);
 
   // Al entrar al paso de Delivery se pide la ubicación de una vez (como las
   // páginas que preguntan al abrir): si el cliente ya dio el permiso antes,
@@ -1550,6 +1571,15 @@ export default function CartDrawer({
         removeItem(getCartLineId(item));
       });
 
+      // Se guarda en el dispositivo del cliente: si cierra la página puede
+      // volver al seguimiento y reportar su pago desde "Pedidos recientes".
+      saveRecentPublicOrder({
+        id: orderId,
+        totalUSD: createdOrder.totalUSD,
+        label: `${orderType} · ${createdOrder.customerName}`,
+      });
+      setRecentPublicOrders(readRecentPublicOrders());
+
       setLastCreatedOrder(createdOrder);
       resetPaymentProofForm();
       setPaymentProofMethod(paymentMethod.trim());
@@ -1560,6 +1590,7 @@ export default function CartDrawer({
       setCustomerPhone("");
       setTableNumber(nextTableNumberAfterSubmit);
       setDeliveryReference("");
+      setWantsDeliveryReference(false);
       setCustomerMapsUrl("");
       setDistanceQuote(null);
       setDistanceQuoteError(null);
@@ -1602,6 +1633,7 @@ export default function CartDrawer({
         setCustomerPhone("");
         setTableNumber("");
         setDeliveryReference("");
+        setWantsDeliveryReference(false);
         setCustomerMapsUrl("");
         setDistanceQuote(null);
         setDistanceQuoteError(null);
@@ -1903,6 +1935,48 @@ export default function CartDrawer({
               compact
             />
           ) : null}
+
+          {/* Pedidos hechos desde este dispositivo (últimos 7 días): el
+              cliente vuelve al seguimiento y puede reportar su pago aunque
+              haya cerrado la página de confirmación. */}
+          {recentPublicOrders.length > 0 && (
+            <div className="mx-5 mb-5 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+                Tus pedidos recientes
+              </p>
+              <p className="mt-1 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
+                Entra a tu pedido para ver cómo va o enviar tu comprobante de
+                pago.
+              </p>
+              <div className="mt-2 space-y-1.5">
+                {recentPublicOrders.map((recentOrder) => (
+                  <a
+                    key={recentOrder.id}
+                    href={`/pedido/${encodeURIComponent(recentOrder.id)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-between gap-2 rounded-xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-3 py-2.5 transition hover:border-[var(--brand-primary)]"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-xs font-black text-[var(--brand-ink)]">
+                        {recentOrder.label || "Pedido"}
+                      </span>
+                      <span className="mt-0.5 block text-[0.66rem] font-bold text-[var(--brand-ink-2)]/55">
+                        {new Date(recentOrder.createdAt).toLocaleDateString(
+                          "es-VE",
+                          { day: "2-digit", month: "short" },
+                        )}{" "}
+                        · {formatUSD(recentOrder.totalUSD)}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                      Ver →
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {hasItems && (
@@ -2011,6 +2085,19 @@ export default function CartDrawer({
                   <PublicOrderStatusNotifier orderId={lastCreatedOrder.id} />
                 ) : null}
 
+                {/* Camino de vuelta: aunque cierre esta página, el pedido
+                    queda en "Pedidos recientes" y en este link directo. */}
+                {!lastCreatedOrder.offline && (
+                  <a
+                    href={`/pedido/${encodeURIComponent(lastCreatedOrder.id)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-transparent px-5 py-3.5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:opacity-80"
+                  >
+                    Ver mi pedido / pagar después
+                  </a>
+                )}
+
                 {lastOrderCanReportPayment &&
                   publicConfig.onlinePaymentsEnabled &&
                   lastCreatedOrder.totalUSD > 0 &&
@@ -2032,6 +2119,23 @@ export default function CartDrawer({
                           {paymentStartError}
                         </p>
                       ) : null}
+                    </div>
+                  )}
+
+                {/* Datos del negocio para pagar (pago móvil, Zelle…): el
+                    cliente los copia aquí mismo y luego reporta su pago. */}
+                {!lastOrderAttachedToOpenAccount &&
+                  Object.keys(publicConfig.publicPaymentMethodDetails || {})
+                    .length > 0 && (
+                    <div className="text-left">
+                      <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                        Datos para pagar
+                      </p>
+                      <div className="mt-2">
+                        <PaymentMethodDetailsList
+                          details={publicConfig.publicPaymentMethodDetails}
+                        />
+                      </div>
                     </div>
                   )}
 
@@ -2599,22 +2703,36 @@ export default function CartDrawer({
                     )}
 
                     {/* La ubicación exacta viene del GPS o del link de Maps:
-                        aquí solo un mensaje corto para el repartidor. */}
+                        el mensaje para el repartidor es raro, así que vive
+                        oculto tras esta casilla. */}
                     <div>
-                      <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                        Punto de referencia o mensaje{" "}
-                        <span className="text-[var(--brand-ink-2)]/45">
-                          (opcional)
+                      <label className="flex cursor-pointer items-center gap-2.5">
+                        <input
+                          type="checkbox"
+                          checked={wantsDeliveryReference}
+                          onChange={(event) => {
+                            setWantsDeliveryReference(event.target.checked);
+                            if (!event.target.checked) {
+                              setDeliveryReference("");
+                            }
+                          }}
+                          className="h-5 w-5 shrink-0 accent-[var(--brand-primary)]"
+                        />
+                        <span className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                          Agregar punto de referencia o mensaje
                         </span>
                       </label>
-                      <input
-                        value={deliveryReference}
-                        onChange={(event) =>
-                          setDeliveryReference(event.target.value)
-                        }
-                        placeholder="Ejemplo: Torre Azul apto 4B, portón negro, frente a la farmacia..."
-                        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
-                      />
+
+                      {wantsDeliveryReference && (
+                        <input
+                          value={deliveryReference}
+                          onChange={(event) =>
+                            setDeliveryReference(event.target.value)
+                          }
+                          placeholder="Ejemplo: Torre Azul apto 4B, portón negro, frente a la farmacia..."
+                          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                        />
+                      )}
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -2660,6 +2778,21 @@ export default function CartDrawer({
                         }}
                       />
                     </div>
+
+                    {Object.keys(
+                      publicConfig.publicPaymentMethodDetails || {},
+                    ).length > 0 && (
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                          Datos para pagar
+                        </p>
+                        <div className="mt-2">
+                          <PaymentMethodDetailsList
+                            details={publicConfig.publicPaymentMethodDetails}
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3">
                       <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">

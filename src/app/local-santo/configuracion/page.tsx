@@ -64,6 +64,7 @@ import {
   normalizePublicCoupons,
   normalizePublicHiddenCategoryList,
   normalizePublicNavButtons,
+  normalizePublicPaymentMethodDetails,
   normalizePublicPaymentMethods,
   type PublicNavButton,
   type PublicNavButtonKind,
@@ -135,6 +136,8 @@ type BusinessConfig = {
   publicAvailabilityLabel: string;
   // Métodos de pago del carrito público (uno por línea en el editor).
   publicPaymentMethods: string[];
+  // Datos de cada método (pago móvil, Zelle…) que el cliente ve y copia.
+  publicPaymentMethodDetails: Record<string, string>;
   // Cupones del carrito: "CODIGO 10" por línea (código + % de descuento).
   publicCoupons: string[];
   locationButtonText: string;
@@ -292,6 +295,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicRegularGroupTitle: "Productos normales",
   publicAvailabilityLabel: "Disponible",
   publicPaymentMethods: [...DEFAULT_PUBLIC_PAYMENT_METHODS],
+  publicPaymentMethodDetails: {},
   publicCoupons: [],
   locationButtonText: "Abrir ubicación",
   googleMapsUrl: "",
@@ -923,6 +927,9 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
       String(source.publicCartWhatsappButtonText || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.publicCartWhatsappButtonText,
     publicPaymentMethods: normalizePublicPaymentMethods(source.publicPaymentMethods),
+    publicPaymentMethodDetails: normalizePublicPaymentMethodDetails(
+      source.publicPaymentMethodDetails,
+    ),
     publicCoupons: normalizePublicCoupons(source.publicCoupons),
     publicDivisaGroupTitle:
       String(source.publicDivisaGroupTitle || "").trim() ||
@@ -3916,6 +3923,51 @@ export default function BusinessConfigPage() {
                       (ej. Pago móvil, Zelle, Efectivo). Si lo dejas vacío se usan
                       las opciones estándar.
                     </p>
+                  </div>
+                  <div className="sm:col-span-2 lg:col-span-3">
+                    <label className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/70">
+                      Datos de pago que ve el cliente (opcional)
+                    </label>
+                    <p className="mt-1 text-[0.68rem] font-bold text-[var(--brand-ink-2)]/55">
+                      Escribe los datos de los métodos que quieras (número de pago
+                      móvil, correo de Zelle…), una línea por dato. El cliente los
+                      verá en botones desplegables &quot;Ver datos de…&quot; con
+                      opción de copiar, en el carrito y al registrar su pedido.
+                    </p>
+                    <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                      {businessConfig.publicPaymentMethods.map((method) => (
+                        <div key={method}>
+                          <label className="text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/60">
+                            Datos de {method}
+                          </label>
+                          <textarea
+                            value={
+                              businessConfig.publicPaymentMethodDetails?.[
+                                method
+                              ] || ""
+                            }
+                            onChange={(event) => {
+                              const nextDetails = {
+                                ...(businessConfig.publicPaymentMethodDetails ||
+                                  {}),
+                              };
+                              if (event.target.value.trim()) {
+                                nextDetails[method] = event.target.value;
+                              } else {
+                                delete nextDetails[method];
+                              }
+                              updateConfig(
+                                "publicPaymentMethodDetails",
+                                nextDetails,
+                              );
+                            }}
+                            rows={3}
+                            placeholder={"Banco: Banesco\nTeléfono: 0412-0000000\nCI: V-12.345.678"}
+                            className="mt-1.5 w-full rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   <div className="sm:col-span-2 lg:col-span-3">
                     <label className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/70">

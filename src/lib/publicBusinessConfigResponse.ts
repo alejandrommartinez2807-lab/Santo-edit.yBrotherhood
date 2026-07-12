@@ -8,6 +8,7 @@ import {
   normalizePublicCategoryList,
   normalizePublicHiddenCategoryList,
   normalizePublicNavButtons,
+  normalizePublicPaymentMethodDetails,
   normalizePublicPaymentMethods,
 } from "@/lib/publicPageConfig"
 
@@ -353,6 +354,9 @@ export function buildPublicBusinessConfigResponse(
     publicRegularGroupTitle:
       cleanText(config.publicRegularGroupTitle) || "Productos normales",
     publicPaymentMethods: normalizePublicPaymentMethods(config.publicPaymentMethods),
+    publicPaymentMethodDetails: normalizePublicPaymentMethodDetails(
+      config.publicPaymentMethodDetails,
+    ),
     publicAvailabilityLabel:
       cleanText(config.publicAvailabilityLabel) || "Disponible",
     locationButtonText: cleanText(config.locationButtonText),
