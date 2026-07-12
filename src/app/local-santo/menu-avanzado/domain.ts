@@ -75,6 +75,16 @@ export type InventoryOption = {
   unit: string
 }
 
+// Artículo que compone un combo. productId referencia al producto del menú;
+// name queda denormalizado para que cocina/caja lo vean aunque el menú cambie.
+export type ComboItemRow = {
+  id?: string
+  productId?: number
+  name: string
+  quantity?: number
+  sortOrder?: number
+}
+
 export type VariationGroup = {
   id?: string
   name: string
@@ -106,6 +116,7 @@ export type AdvancedForm = {
   salesChannels: ProductSalesChannel[]
   variations: VariationGroup[]
   addons: OptionValue[]
+  comboItems: ComboItemRow[]
   includedIngredients: OptionValue[]
   removableIngredients: OptionValue[]
   preparationMinutes: string
@@ -134,6 +145,7 @@ export const EMPTY_FORM: AdvancedForm = {
   salesChannels: ["local", "takeaway", "delivery"],
   variations: [],
   addons: [],
+  comboItems: [],
   includedIngredients: [],
   removableIngredients: [],
   preparationMinutes: "",
@@ -243,6 +255,7 @@ export function normalizeMenuProduct(value: unknown): MenuProduct | null {
     addons: normalizeUnknownArray(source.addons),
     includedIngredients: normalizeUnknownArray(source.includedIngredients),
     removableIngredients: normalizeUnknownArray(source.removableIngredients),
+    comboItems: normalizeUnknownArray(source.comboItems),
     selectionRules: normalizeSelectionRules(source.selectionRules),
     preparationMinutes: normalizePositiveInteger(source.preparationMinutes),
     requiresWaiterConfirmation: source.requiresWaiterConfirmation === true,
@@ -373,6 +386,30 @@ export function normalizeIngredientRows(value: unknown, mode: "included" | "remo
     .filter((item): item is OptionValue => Boolean(item))
 }
 
+export function normalizeComboRows(value: unknown): ComboItemRow[] {
+  return normalizeUnknownArray(value)
+    .map((raw, index): ComboItemRow | null => {
+      if (!raw || typeof raw !== "object") return null
+
+      const source = raw as Partial<ComboItemRow>
+      const name = normalizeTextName(source.name)
+      const productId = Number(source.productId || 0)
+
+      return {
+        id: normalizeTextName(source.id) || optionId("combo", index, name || "articulo"),
+        productId: Number.isFinite(productId) && productId > 0 ? Math.round(productId) : undefined,
+        name,
+        quantity: normalizePositiveInteger(source.quantity) || 1,
+        sortOrder: index + 1,
+      }
+    })
+    .filter((item): item is ComboItemRow => Boolean(item))
+}
+
+export function cleanComboRowsForSave(rows: ComboItemRow[]): ComboItemRow[] {
+  return rows.filter((row) => normalizeTextName(row.name))
+}
+
 // Limpia el estado del editor antes de guardar: descarta filas sin nombre y
 // mantiene min ≤ máx coherente por grupo.
 export function cleanVariationGroupsForSave(groups: VariationGroup[]): VariationGroup[] {
@@ -405,6 +442,7 @@ export function buildPremiumSummary(input: {
   salesChannels: ProductSalesChannel[]
   variations: VariationGroup[]
   addons: OptionValue[]
+  comboItems: ComboItemRow[]
   removableIngredients: OptionValue[]
   preparationMinutes: number
   requiresWaiterConfirmation: boolean
@@ -419,6 +457,10 @@ export function buildPremiumSummary(input: {
   }
   if (input.variations.length) details.push(`Variaciones: ${input.variations.reduce((total, group) => total + group.values.length, 0)}`)
   if (input.addons.length) details.push(`Adicionales: ${input.addons.length}`)
+  if (input.comboItems.length) {
+    const totalArticles = input.comboItems.reduce((total, item) => total + (item.quantity || 1), 0)
+    details.push(`Combo: ${totalArticles} artículo(s)`)
+  }
   if (input.removableIngredients.length) details.push(`Removibles: ${input.removableIngredients.length}`)
   if (input.preparationMinutes > 0) details.push(`${input.preparationMinutes} min`)
   if (input.requiresWaiterConfirmation) details.push("Confirma mesonero")
@@ -435,6 +477,7 @@ export function buildFormFromProduct(product: MenuProduct): AdvancedForm {
     salesChannels: normalizeSalesChannels(product.salesChannels),
     variations: normalizeVariationGroups(product.variations),
     addons: normalizeAddonRows(product.addons),
+    comboItems: normalizeComboRows(product.comboItems),
     includedIngredients: normalizeIngredientRows(product.includedIngredients, "included"),
     removableIngredients: normalizeIngredientRows(product.removableIngredients, "removable"),
     preparationMinutes: product.preparationMinutes ? String(product.preparationMinutes) : "",
@@ -467,8 +510,8 @@ export function buildConfigWarnings(form: AdvancedForm): string[] {
   if (form.productType === "buildable" && form.includedIngredients.length === 0 && form.addons.length === 0) {
     warnings.push("Un producto armable debería tener ingredientes, adicionales o reglas para el personal.")
   }
-  if (form.productType === "combo" && form.variations.length === 0 && form.addons.length === 0) {
-    warnings.push("Un combo debería tener variaciones o adicionales que definan sus artículos.")
+  if (form.productType === "combo" && form.comboItems.length === 0) {
+    warnings.push("Un combo debería tener artículos del menú asignados.")
   }
   if (form.salesChannels.length === 0) {
     warnings.push("Selecciona al menos un canal de venta.")

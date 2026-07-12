@@ -25,6 +25,7 @@ import {
   buildConfigWarnings,
   buildFormFromProduct,
   buildPremiumSummary,
+  cleanComboRowsForSave,
   cleanRowsForSave,
   cleanVariationGroupsForSave,
   formatDate,
@@ -39,6 +40,7 @@ import {
   randomRowId,
   readApiResponse,
   type AdvancedForm,
+  type ComboItemRow,
   type InventoryOption,
   type MenuProduct,
   type OptionValue,
@@ -48,6 +50,7 @@ import {
 import {
   AddonsBuilder,
   AdvancedTextArea,
+  ComboBuilder,
   IngredientsBuilder,
   InputField,
   MetricCard,
@@ -103,6 +106,7 @@ export default function AdvancedMenuPage() {
     salesChannels: form.salesChannels,
     variations: form.variations,
     addons: form.addons,
+    comboItems: form.comboItems,
     removableIngredients: form.removableIngredients,
     preparationMinutes,
     requiresWaiterConfirmation: form.requiresWaiterConfirmation,
@@ -235,6 +239,25 @@ export default function AdvancedMenuPage() {
 
   function removeAddon(index: number) {
     updateForm("addons", form.addons.filter((_, addonIndex) => addonIndex !== index))
+  }
+
+  // --- Artículos del combo ---
+  function addComboItem() {
+    updateForm("comboItems", [
+      ...form.comboItems,
+      { id: randomRowId("combo"), name: "", productId: undefined, quantity: 1 },
+    ])
+  }
+
+  function updateComboItem(index: number, patch: Partial<ComboItemRow>) {
+    updateForm(
+      "comboItems",
+      form.comboItems.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)),
+    )
+  }
+
+  function removeComboItem(index: number) {
+    updateForm("comboItems", form.comboItems.filter((_, itemIndex) => itemIndex !== index))
   }
 
   // --- Ingredientes (incluidos / removibles) ---
@@ -488,6 +511,7 @@ export default function AdvancedMenuPage() {
           salesChannels: normalizeSalesChannels(form.salesChannels),
           variations: cleanVariationGroupsForSave(form.variations),
           addons: cleanRowsForSave(form.addons),
+          comboItems: cleanComboRowsForSave(form.comboItems),
           includedIngredients: cleanRowsForSave(form.includedIngredients),
           removableIngredients: cleanRowsForSave(form.removableIngredients),
           selectionRules,
@@ -879,6 +903,20 @@ export default function AdvancedMenuPage() {
                     </div>
                   </div>
 
+                  {form.productType === "combo" && (
+                    <div className="xl:col-span-2">
+                      <ComboBuilder
+                        rows={form.comboItems}
+                        productOptions={products
+                          .filter((product) => product.id !== selectedProduct.id)
+                          .map((product) => ({ id: product.id, name: product.name, price: product.price }))}
+                        onAdd={addComboItem}
+                        onUpdate={updateComboItem}
+                        onRemove={removeComboItem}
+                      />
+                    </div>
+                  )}
+
                   <div className="xl:col-span-2">
                     <VariationsBuilder
                       groups={form.variations}
@@ -1020,6 +1058,7 @@ export default function AdvancedMenuPage() {
     salesChannels: form.salesChannels,
     variations: form.variations,
     addons: form.addons,
+    comboItems: form.comboItems,
     includedIngredients: form.includedIngredients,
     removableIngredients: form.removableIngredients,
     selectionRules: {

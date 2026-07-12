@@ -21,6 +21,8 @@ export type Product = {
   addons?: unknown[]
   includedIngredients?: unknown[]
   removableIngredients?: unknown[]
+  // Artículos que componen un producto tipo "combo" (referencias al menú).
+  comboItems?: unknown[]
   selectionRules?: Record<string, unknown>
   preparationMinutes?: number
   requiresWaiterConfirmation?: boolean

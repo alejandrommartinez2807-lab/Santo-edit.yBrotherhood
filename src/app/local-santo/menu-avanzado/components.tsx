@@ -7,6 +7,7 @@ import { type ReactNode } from "react"
 import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react"
 import {
   numberFromInput,
+  type ComboItemRow,
   type InventoryOption,
   type OptionValue,
   type VariationGroup,
@@ -510,6 +511,89 @@ export function IngredientsBuilder({
             )}
 
             <IconButton onClick={() => onRemove(index)} label="Eliminar ingrediente">
+              <Trash2 size={15} />
+            </IconButton>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export type ComboProductOption = {
+  id: number
+  name: string
+  price: number
+}
+
+export function ComboBuilder({
+  rows,
+  productOptions,
+  onAdd,
+  onUpdate,
+  onRemove,
+}: {
+  rows: ComboItemRow[]
+  productOptions: ComboProductOption[]
+  onAdd: () => void
+  onUpdate: (index: number, patch: Partial<ComboItemRow>) => void
+  onRemove: (index: number) => void
+}) {
+  return (
+    <div className={SECTION_CLASS}>
+      <SectionHeader
+        title="Artículos del combo"
+        helper="Define qué productos del menú componen este combo y en qué cantidad. El precio del combo sigue siendo el precio fijo del producto."
+        onAdd={onAdd}
+        addLabel="Agregar artículo"
+      />
+
+      {rows.length === 0 && (
+        <p className="mt-3 text-sm font-bold text-[var(--brand-ink-2)]/55">
+          Sin artículos. Agrega los productos que incluye el combo para que cocina y caja vean su composición.
+        </p>
+      )}
+
+      <div className="mt-3 space-y-2">
+        {rows.map((row, index) => (
+          <div key={row.id || index} className="flex flex-wrap items-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white p-2">
+            <select
+              value={row.productId ? String(row.productId) : ""}
+              onChange={(event) => {
+                const product = productOptions.find(
+                  (option) => String(option.id) === event.target.value,
+                )
+                onUpdate(index, {
+                  productId: product ? product.id : undefined,
+                  name: product ? product.name : row.name,
+                })
+              }}
+              className={`${ROW_INPUT_CLASS} w-56`}
+            >
+              <option value="">Artículo libre (sin vínculo)</option>
+              {productOptions.map((option) => (
+                <option key={option.id} value={String(option.id)}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+            <input
+              value={row.name}
+              onChange={(event) => onUpdate(index, { name: event.target.value })}
+              placeholder="Nombre visible (ej: Hamburguesa clásica)"
+              className={`${ROW_INPUT_CLASS} flex-1 min-w-[150px]`}
+            />
+            <label className="inline-flex items-center gap-1 text-[0.62rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]">
+              Cant.
+              <input
+                value={row.quantity ? String(row.quantity) : ""}
+                onChange={(event) => onUpdate(index, { quantity: Math.round(numberFromInput(event.target.value)) })}
+                inputMode="numeric"
+                placeholder="1"
+                className={`${ROW_INPUT_CLASS} w-16`}
+              />
+            </label>
+            <IconButton onClick={() => onRemove(index)} label="Eliminar artículo">
               <Trash2 size={15} />
             </IconButton>
           </div>

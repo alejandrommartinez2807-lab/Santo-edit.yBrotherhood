@@ -53,6 +53,16 @@ export type MenuProductIngredient = {
   inventoryUnit?: string
 }
 
+// Artículo que compone un combo. Guarda el nombre denormalizado para que
+// cocina/caja vean la composición aunque el producto original cambie.
+export type MenuProductComboItem = {
+  id?: string
+  productId?: number
+  name: string
+  quantity?: number
+  sortOrder?: number
+}
+
 export type MenuProductSelectionRules = Record<string, unknown>
 
 export type MenuProduct = {
@@ -76,6 +86,7 @@ export type MenuProduct = {
   addons?: MenuProductAddon[]
   includedIngredients?: MenuProductIngredient[]
   removableIngredients?: MenuProductIngredient[]
+  comboItems?: MenuProductComboItem[]
   selectionRules?: MenuProductSelectionRules
   preparationMinutes?: number
   requiresWaiterConfirmation?: boolean
@@ -102,6 +113,7 @@ export type SaveMenuProductInput = {
   addons?: MenuProductAddon[]
   includedIngredients?: MenuProductIngredient[]
   removableIngredients?: MenuProductIngredient[]
+  comboItems?: MenuProductComboItem[]
   selectionRules?: MenuProductSelectionRules
   preparationMinutes?: number
   requiresWaiterConfirmation?: boolean
@@ -281,6 +293,7 @@ function normalizeMenuProduct(value: unknown): MenuProduct {
     addons: normalizeMenuProductArray<MenuProductAddon>(source.addons),
     includedIngredients: normalizeMenuProductArray<MenuProductIngredient>(source.includedIngredients),
     removableIngredients: normalizeMenuProductArray<MenuProductIngredient>(source.removableIngredients),
+    comboItems: normalizeMenuProductArray<MenuProductComboItem>(source.comboItems),
     selectionRules: normalizeMenuProductRecord(source.selectionRules),
     preparationMinutes: normalizeMenuProductPositiveInteger(source.preparationMinutes),
     requiresWaiterConfirmation: source.requiresWaiterConfirmation === true,
@@ -408,6 +421,7 @@ export async function saveMenuProduct(
       addons: normalized.addons ?? [],
       includedIngredients: normalized.includedIngredients ?? [],
       removableIngredients: normalized.removableIngredients ?? [],
+      comboItems: normalized.comboItems ?? [],
       selectionRules: normalized.selectionRules ?? {},
       preparationMinutes: normalized.preparationMinutes ?? 0,
       requiresWaiterConfirmation: normalized.requiresWaiterConfirmation === true,

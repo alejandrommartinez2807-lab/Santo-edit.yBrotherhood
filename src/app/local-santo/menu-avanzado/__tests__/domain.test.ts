@@ -3,8 +3,10 @@ import {
   buildConfigWarnings,
   buildFormFromProduct,
   buildPremiumSummary,
+  cleanComboRowsForSave,
   cleanRowsForSave,
   cleanVariationGroupsForSave,
+  normalizeComboRows,
   isFormDirty,
   normalizeAddonRows,
   normalizeIngredientRows,
@@ -163,6 +165,7 @@ describe("buildPremiumSummary", () => {
         { name: "Tamaño", type: "single", required: true, minSelections: 1, maxSelections: 1, values: [{ name: "G" }, { name: "P" }] },
       ],
       addons: [{ name: "Tocineta" }],
+      comboItems: [],
       removableIngredients: [],
       preparationMinutes: 10,
       requiresWaiterConfirmation: true,
@@ -184,6 +187,7 @@ describe("buildPremiumSummary", () => {
       salesChannels: ["local", "takeaway", "delivery"],
       variations: [],
       addons: [],
+      comboItems: [],
       removableIngredients: [],
       preparationMinutes: 0,
       requiresWaiterConfirmation: false,
@@ -216,6 +220,42 @@ describe("isFormDirty", () => {
 
   it("sin producto seleccionado nunca está sucio", () => {
     expect(isFormDirty(buildFormFromProduct(baseProduct()), null)).toBe(false)
+  })
+})
+
+describe("normalizeComboRows", () => {
+  it("normaliza filas de combo con cantidad mínima 1 y vínculo opcional", () => {
+    const rows = normalizeComboRows([
+      { name: "Hamburguesa", productId: 4, quantity: 2 },
+      { name: "Bebida a elección", quantity: 0 },
+      { name: "" },
+      "basura",
+    ])
+
+    expect(rows).toHaveLength(3)
+    expect(rows[0]).toMatchObject({ name: "Hamburguesa", productId: 4, quantity: 2 })
+    expect(rows[1]).toMatchObject({ name: "Bebida a elección", quantity: 1 })
+    expect(rows[1].productId).toBeUndefined()
+    expect(cleanComboRowsForSave(rows)).toHaveLength(2)
+  })
+
+  it("el resumen cuenta los artículos del combo sumando cantidades", () => {
+    const summary = buildPremiumSummary({
+      productType: "combo",
+      salesChannels: ["local", "takeaway", "delivery"],
+      variations: [],
+      addons: [],
+      comboItems: [
+        { name: "Hamburguesa", quantity: 2 },
+        { name: "Papas" },
+      ],
+      removableIngredients: [],
+      preparationMinutes: 0,
+      requiresWaiterConfirmation: false,
+      inventoryDiscountEnabled: true,
+    })
+
+    expect(summary).toContain("Combo: 3 artículo(s)")
   })
 })
 
