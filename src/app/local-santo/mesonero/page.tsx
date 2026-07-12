@@ -595,6 +595,7 @@ function MesoneroContent() {
         <OpenAccountsPanel
           adminPassword={adminPassword}
           orders={orders}
+          externalOpenAccounts={openAccounts}
           canManage={true}
           canCloseAccounts={false}
           compact

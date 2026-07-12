@@ -42,6 +42,12 @@ type OpenAccountsPanelProps = {
   closeRoleLabel?: string;
   tableOptions?: string[];
   preferredTableName?: string;
+  // Cuentas abiertas ya cargadas por la página (por ejemplo, el sondeo de caja).
+  // Si se pasan, el panel las usa como fuente en la vista "Abiertas" y evita
+  // duplicar el fetch de /api/open-accounts; el historial sigue cargándose aquí.
+  externalOpenAccounts?: OpenAccount[];
+  // Permite plegar el panel para que caja recupere espacio en pantalla.
+  collapsible?: boolean;
   onOrdersShouldRefresh?: () => void;
 };
 
@@ -193,6 +199,7 @@ function buildOrderSummaryFromLocalOrder(
     status: order.status,
     paymentStatus: payment.status,
     totalUSD: totals.totalUSD,
+    exchangeRate: Number(order.exchangeRate || 0),
     receivedEquivalentUSD: payment.receivedEquivalentUSD,
     pendingUSD: payment.pendingUSD,
     createdAt: order.createdAt,
@@ -408,9 +415,12 @@ export function OpenAccountsPanel({
   closeRoleLabel = "Caja",
   tableOptions = [],
   preferredTableName = "",
+  externalOpenAccounts,
+  collapsible = false,
   onOrdersShouldRefresh,
 }: OpenAccountsPanelProps) {
   const [openAccounts, setOpenAccounts] = useState<OpenAccount[]>([]);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -429,14 +439,26 @@ export function OpenAccountsPanel({
     useState(false);
   const [splitOpen, setSplitOpen] = useState(false);
 
+  const hasExternalAccounts = Array.isArray(externalOpenAccounts);
+
+  // En la vista "Abiertas" prioriza las cuentas que ya sondea la página; el
+  // historial ("all") siempre viene del fetch interno con status=all.
+  const accountsSource = useMemo(
+    () =>
+      hasExternalAccounts && viewMode === "open"
+        ? (externalOpenAccounts as OpenAccount[])
+        : openAccounts,
+    [externalOpenAccounts, hasExternalAccounts, openAccounts, viewMode],
+  );
+
   const activeAccounts = useMemo(
-    () => openAccounts.filter((account) => account.status === "Abierta"),
-    [openAccounts],
+    () => accountsSource.filter((account) => account.status === "Abierta"),
+    [accountsSource],
   );
 
   const visibleAccounts = useMemo(
-    () => (viewMode === "all" ? openAccounts : activeAccounts),
-    [activeAccounts, openAccounts, viewMode],
+    () => (viewMode === "all" ? accountsSource : activeAccounts),
+    [accountsSource, activeAccounts, viewMode],
   );
 
   const eligibleOrders = useMemo(
@@ -574,7 +596,20 @@ export function OpenAccountsPanel({
 
   async function changeViewMode(nextViewMode: AccountViewMode) {
     setViewMode(nextViewMode);
+
+    // Con cuentas externas la vista "Abiertas" ya está al día por la página.
+    if (nextViewMode === "open" && hasExternalAccounts) return;
+
     await loadOpenAccounts(false, nextViewMode);
+  }
+
+  // Tras crear/asociar/cobrar/cerrar: si la página provee las cuentas, basta
+  // con onOrdersShouldRefresh (el caller lo dispara); solo el historial
+  // necesita recargarse aquí.
+  async function refreshAccountsAfterAction() {
+    if (!hasExternalAccounts || viewMode === "all") {
+      await refreshAccountsAfterAction();
+    }
   }
 
   async function createOpenAccount() {
@@ -619,7 +654,7 @@ export function OpenAccountsPanel({
         [data.openAccount?.id || ""]: true,
       }));
       setMessage("Cuenta abierta correctamente.");
-      await loadOpenAccounts(true);
+      await refreshAccountsAfterAction();
       onOrdersShouldRefresh?.();
     } catch (error) {
       setMessage(
@@ -666,7 +701,7 @@ export function OpenAccountsPanel({
       setSelectedOrderByAccount((current) => ({ ...current, [accountId]: "" }));
       setExpandedAccounts((current) => ({ ...current, [accountId]: true }));
       setMessage("Pedido asociado a la cuenta abierta.");
-      await loadOpenAccounts(true);
+      await refreshAccountsAfterAction();
       onOrdersShouldRefresh?.();
     } catch (error) {
       setMessage(
@@ -717,7 +752,7 @@ export function OpenAccountsPanel({
           ? "Pedido marcado como entregado en la cuenta."
           : "Pedido reabierto como listo/no entregado.",
       );
-      await loadOpenAccounts(true);
+      await refreshAccountsAfterAction();
       onOrdersShouldRefresh?.();
     } catch (error) {
       setMessage(
@@ -778,7 +813,7 @@ export function OpenAccountsPanel({
       setMessage(
         "Cuenta cerrada correctamente. Los cobros reales no fueron modificados.",
       );
-      await loadOpenAccounts(true);
+      await refreshAccountsAfterAction();
       onOrdersShouldRefresh?.();
     } catch (error) {
       setMessage(
@@ -885,7 +920,7 @@ export function OpenAccountsPanel({
       setMessage(
         `Cobro aplicado a la cuenta de ${account.tableNumber}.${unusedMessage}`,
       );
-      await loadOpenAccounts(true);
+      await refreshAccountsAfterAction();
       onOrdersShouldRefresh?.();
     } catch (error) {
       setMessage(
@@ -904,11 +939,15 @@ export function OpenAccountsPanel({
   }
 
   useEffect(() => {
-    if (!adminPassword) return;
+    // Con cuentas externas no hace falta el fetch propio: la página dueña
+    // del sondeo ya mantiene la lista al día.
+    if (!adminPassword || hasExternalAccounts) return;
     const timer = setTimeout(() => loadOpenAccounts(true), 0);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adminPassword, orders.length]);
+  }, [adminPassword, hasExternalAccounts, orders.length]);
+
+  const collapsed = collapsible && isCollapsed;
 
   const wrapperClass = compact
     ? "mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]"
@@ -931,6 +970,16 @@ export function OpenAccountsPanel({
         </div>
 
         <div className="flex flex-wrap gap-2">
+          {collapsible && (
+            <button
+              type="button"
+              onClick={() => setIsCollapsed((value) => !value)}
+              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+            >
+              {collapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+              {collapsed ? "Mostrar cuentas" : "Ocultar cuentas"}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => changeViewMode("open")}
@@ -969,6 +1018,25 @@ export function OpenAccountsPanel({
         </div>
       )}
 
+      {collapsed && (
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <MiniStat label="Abiertas" value={activeAccounts.length} small />
+          <MiniStat
+            label="Pedidos en cuenta"
+            value={activeTotals.ordersCount}
+            small
+          />
+          <MiniStat
+            label="Pendiente total"
+            value={formatUSD(activeTotals.pendingUSD)}
+            small
+            tone={activeTotals.pendingUSD > 0 ? "warning" : "success"}
+          />
+        </div>
+      )}
+
+      {!collapsed && (
+        <>
       {canManage && cleanPreferredTableName && (
         <div className="mt-4 flex flex-col gap-2 rounded-[1.2rem] border-2 border-yellow-400 bg-yellow-50 p-3 text-xs font-bold text-[var(--brand-ink)] sm:flex-row sm:items-center sm:justify-between">
           <span>
@@ -1688,6 +1756,8 @@ export function OpenAccountsPanel({
           })
         )}
       </div>
+        </>
+      )}
     </section>
   );
 }

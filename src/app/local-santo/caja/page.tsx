@@ -900,6 +900,8 @@ function CajaPageContent() {
         <OpenAccountsPanel
           adminPassword={adminPassword}
           orders={orders as unknown as StoredLocalOrder[]}
+          externalOpenAccounts={openAccounts}
+          collapsible
           canManage
           canCloseAccounts
           canRegisterPayments
