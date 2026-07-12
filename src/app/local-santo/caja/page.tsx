@@ -60,11 +60,13 @@ import {
   getPendingPaymentProofs,
   isDeliveryOrder,
   isDeliveryReported,
+  normalizeKitchenFlowMode,
   parseMoneyInput,
   readApiResponse,
   roundMoney,
   type CashFilter,
   type DeliveryPaymentIn,
+  type KitchenFlowMode,
   type LocalOrder,
   type OrderStatus,
   type PaymentForm,
@@ -116,6 +118,8 @@ function CajaPageContent() {
   const [confirmingStaffOrderId, setConfirmingStaffOrderId] = useState<string | null>(null)
   const [attachingOpenAccountOrderId, setAttachingOpenAccountOrderId] = useState<string | null>(null)
   const [canSplitBill, setCanSplitBill] = useState(false)
+  // Flujo de caja→cocina elegido por el dueño en Configuración.
+  const [kitchenFlowMode, setKitchenFlowMode] = useState<KitchenFlowMode>("kitchen")
 
   const pendingStatusRef = useRef<Map<string, OrderStatus>>(new Map())
   const isLoggedIn = adminPassword.length > 0
@@ -146,6 +150,7 @@ function CajaPageContent() {
 
       setLocalTables(normalizeLocalTablesForMap(businessConfig.localTables))
       setCanSplitBill(Boolean(businessConfig.splitBillEnabled))
+      setKitchenFlowMode(normalizeKitchenFlowMode(businessConfig.kitchenFlowMode))
     } catch {
       setLocalTables(DEFAULT_LOCAL_TABLES)
     }
@@ -427,7 +432,7 @@ function CajaPageContent() {
   function handleLogin() {
     const password = passwordInput.trim()
     if (!password) return
-    window.sessionStorage.setItem(ADMIN_STORAGE_KEY, password)
+    window.localStorage.setItem(ADMIN_STORAGE_KEY, password)
     setAdminPassword(password)
     loadLocalTables()
     loadOrders(password)
@@ -436,7 +441,7 @@ function CajaPageContent() {
   }
 
   function handleLogout() {
-    window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
+    window.localStorage.removeItem(ADMIN_STORAGE_KEY)
     setAdminPassword("")
     setPasswordInput("")
     setOrders([])
@@ -509,7 +514,7 @@ function CajaPageContent() {
   }
 
   const restoreSession = useEffectEvent(() => {
-    const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
+    const savedPassword = window.localStorage.getItem(ADMIN_STORAGE_KEY)
 
     loadLocalTables()
 
@@ -561,6 +566,11 @@ function CajaPageContent() {
         const payment = getOrderPayment(order)
 
         if (activeFilter === "Por confirmar") {
+          // Modo mixto: el pedido enviado a cocina (Preparando) sigue siendo
+          // responsabilidad de caja, así que no se va de este filtro.
+          if (kitchenFlowMode === "mixed") {
+            return order.status === "Nuevo" || order.status === "Preparando"
+          }
           return order.status === "Nuevo"
         }
 
@@ -651,7 +661,7 @@ function CajaPageContent() {
           .toLowerCase()
         return searchableText.includes(query)
       })
-  }, [activeFilter, orders, searchText, selectedCashTableKey])
+  }, [activeFilter, kitchenFlowMode, orders, searchText, selectedCashTableKey])
 
   const pendingPaymentCount = orders.filter((order) => getOrderPayment(order).status === "Pendiente" && order.status !== "Cancelado").length
   const partialPaymentCount = orders.filter((order) => getOrderPayment(order).status === "Pago parcial" && order.status !== "Cancelado").length
@@ -1020,8 +1030,10 @@ function CajaPageContent() {
                 paymentProofs={paymentProofs.filter(
                   (proof) => proof.orderId === order.id,
                 )}
+                kitchenFlowMode={kitchenFlowMode}
                 onOpenPayment={() => openPaymentModal(order)}
                 onSendToKitchen={() => updateStatus(order.id, "Preparando")}
+                onMarkReady={() => updateStatus(order.id, "Listo")}
                 onMarkDelivered={() => updateStatus(order.id, "Entregado")}
                 onCancelOrder={() => updateStatus(order.id, "Cancelado")}
                 suggestedOpenAccount={findSuggestedOpenAccountForOrder(order, openAccounts)}

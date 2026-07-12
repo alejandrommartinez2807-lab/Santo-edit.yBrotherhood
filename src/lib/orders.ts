@@ -30,6 +30,7 @@ export type {
   BusinessConfig,
   BusinessViewMode,
   ExchangeRateMode,
+  KitchenFlowMode,
   LocalTable,
   SaveBusinessConfigInput,
 } from "./ordersBusinessConfig"
@@ -42,6 +43,7 @@ export {
   getRawBusinessConfig,
   isTrainingModeActive,
   normalizeBusinessConfig,
+  normalizeKitchenFlowMode,
   normalizeLocalTablesConfig,
   saveBusinessConfig,
 } from "./ordersBusinessConfig"

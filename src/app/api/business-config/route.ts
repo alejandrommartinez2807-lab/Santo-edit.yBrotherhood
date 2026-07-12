@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import {
   getBusinessConfig,
+  normalizeKitchenFlowMode,
   normalizeLocalTablesConfig,
   saveBusinessConfig,
   type BusinessViewMode,
@@ -475,6 +476,11 @@ function normalizeBusinessConfigPayload(
 
   if (hasOwn(source, "exchangeRateMode")) {
     config.exchangeRateMode = readExchangeRateMode(source, "exchangeRateMode")
+  }
+
+  // Flujo de caja→cocina (actual / mixto / sin cocina): config operativa.
+  if (hasOwn(source, "kitchenFlowMode")) {
+    config.kitchenFlowMode = normalizeKitchenFlowMode(source.kitchenFlowMode)
   }
 
   if (hasOwn(source, "manualExchangeRate")) {

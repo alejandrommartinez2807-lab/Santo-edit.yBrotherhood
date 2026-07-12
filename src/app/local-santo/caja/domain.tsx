@@ -9,6 +9,19 @@ export const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
 
 export type ProductPaymentMode = "divisa" | "mixto"
 export type OrderStatus = "Nuevo" | "Preparando" | "Listo" | "Entregado" | "Cancelado"
+
+// Flujo de caja→cocina (espejo cliente del tipo canónico en
+// lib/ordersBusinessConfig; no se importa de ahí porque ese módulo trae
+// código de servidor). kitchen = actual; mixed = Listo directo + cocina
+// opcional sin salir de caja; direct = sin cocina.
+export type KitchenFlowMode = "kitchen" | "mixed" | "direct"
+
+export function normalizeKitchenFlowMode(value: unknown): KitchenFlowMode {
+  const mode = String(value || "").trim().toLowerCase()
+  if (mode === "mixed") return "mixed"
+  if (mode === "direct") return "direct"
+  return "kitchen"
+}
 export type PaymentStatus = "Pendiente" | "Pago parcial" | "Pagado"
 export type DeliveryPaymentIn = "Divisas" | "Bolívares" | "Mixto" | "Sin registrar"
 export type DeliveryReportStatus = "Sin reportar" | "Entrega reportada"
