@@ -23,6 +23,8 @@ import {
   CheckCircle2,
   Crosshair,
   Loader2,
+  MapPin,
+  Pencil,
   Table2,
 } from "lucide-react";
 import { formatUSD, formatVES } from "@/utils/formatCurrency";
@@ -60,8 +62,13 @@ import {
   normalizeFormMoney,
   readApiResponse,
 } from "@/components/cartDrawerDomain";
-import { looksLikeMapsLink } from "@/lib/deliveryDistance";
+import {
+  looksLikeMapsLink,
+  parseCoordsFromText,
+} from "@/lib/deliveryDistance";
 import PaymentMethodDetailsList from "@/components/PaymentMethodDetailsList";
+import DeliveryMapPicker from "@/components/DeliveryMapPicker";
+import DeliveryPointPreviewMap from "@/components/DeliveryPointPreviewMap";
 import {
   readRecentPublicOrders,
   saveRecentPublicOrder,
@@ -378,6 +385,16 @@ export default function CartDrawer({
   const [recentPublicOrders, setRecentPublicOrders] = useState<
     RecentPublicOrder[]
   >([]);
+  // Confirmación de dirección antes de registrar (estilo apps grandes):
+  // mapa de solo lectura + "Ajustar" que abre el mapa interactivo.
+  const [isAddressConfirmOpen, setIsAddressConfirmOpen] = useState(false);
+  const [isAdjustMapOpen, setIsAdjustMapOpen] = useState(false);
+  // Pago mixto: una parte en bolívares y otra en divisas, cada una con su
+  // método y monto (los botones "Completar" rellenan lo que falta).
+  const [mixedBsMethod, setMixedBsMethod] = useState("");
+  const [mixedBsAmount, setMixedBsAmount] = useState("");
+  const [mixedUsdMethod, setMixedUsdMethod] = useState("");
+  const [mixedUsdAmount, setMixedUsdAmount] = useState("");
   const [distanceQuote, setDistanceQuote] = useState<{
     distanceKm: number;
     costUSD: number;
@@ -696,6 +713,10 @@ export default function CartDrawer({
         setDistanceQuote(null);
         setDistanceQuoteError(null);
         setPaymentMethod("");
+        setMixedBsMethod("");
+        setMixedBsAmount("");
+        setMixedUsdMethod("");
+        setMixedUsdAmount("");
         setIsPaymentPickerOpen(false);
       }, 0);
       return () => clearTimeout(timer);
@@ -797,7 +818,10 @@ export default function CartDrawer({
   // Al abrir el carrito se refrescan los pedidos recientes del dispositivo.
   useEffect(() => {
     if (!isOpen) return;
-    setRecentPublicOrders(readRecentPublicOrders());
+    const timer = setTimeout(() => {
+      setRecentPublicOrders(readRecentPublicOrders());
+    }, 0);
+    return () => clearTimeout(timer);
   }, [isOpen]);
 
   // Al entrar al paso de Delivery se pide la ubicación de una vez (como las
@@ -867,10 +891,18 @@ export default function CartDrawer({
   const availablePaymentMethods = publicConfig.publicPaymentMethods?.length
     ? publicConfig.publicPaymentMethods
     : PAYMENT_METHOD_OPTIONS;
-  const paymentMethodOptions = availablePaymentMethods.map((method) => ({
-    label: method,
-    value: method,
-  }));
+  const paymentMethodOptions = [
+    ...availablePaymentMethods.map((method) => ({
+      label: method,
+      value: method,
+    })),
+    // Pago dividido: una parte en bolívares y otra en divisas.
+    {
+      label: "Mixto (Bs + divisas)",
+      value: "Mixto",
+      helper: "Paga una parte en bolívares y otra en divisas",
+    },
+  ];
   // El costo del envío sale de la cotización por km. Si el negocio no tiene
   // configurado el envío por distancia, va en 0 y se confirma por WhatsApp.
   const deliveryCostValue =
@@ -937,6 +969,23 @@ export default function CartDrawer({
     (exchangeSource === "BCV" && !exchangeFallback) || isManualRate;
   const totalVES = totalUSD * exchangeRate;
 
+  // Pago mixto: parte en Bs + parte en divisas. El método que viaja al
+  // pedido es la composición legible de ambas partes.
+  const isMixedPayment = paymentMethod === "Mixto";
+  const mixedBsValue = normalizeFormMoney(mixedBsAmount);
+  const mixedUsdValue = normalizeFormMoney(mixedUsdAmount);
+  const isMixedPaymentComplete =
+    mixedBsMethod.trim().length > 0 &&
+    mixedUsdMethod.trim().length > 0 &&
+    mixedBsValue > 0 &&
+    mixedUsdValue > 0;
+  const effectivePaymentMethod = isMixedPayment
+    ? `Mixto: ${mixedBsMethod} Bs ${formatVES(mixedBsValue)} + ${mixedUsdMethod} ${formatUSD(mixedUsdValue)}`
+    : paymentMethod.trim();
+  // Punto de entrega ya elegido (GPS, link o mapa): coordenadas para el
+  // mini-mapa de la sección y la confirmación de dirección.
+  const deliveryPointCoords = parseCoordsFromText(customerMapsUrl);
+
   const canRegisterLocalOrder =
     hasItems &&
     !hasUnavailableItemsForOrderType &&
@@ -948,7 +997,8 @@ export default function CartDrawer({
         // La ubicación de Maps ES la dirección; el punto de referencia es
         // opcional. Nombre, teléfono y método de pago siempre obligatorios.
         (!isDistancePricingEnabled || Boolean(distanceQuote)) &&
-        paymentMethod.trim().length > 0
+        paymentMethod.trim().length > 0 &&
+        (!isMixedPayment || isMixedPaymentComplete)
       : tableNumber.trim().length > 0 && !isTableReservedNow);
   const missingDeliveryFields = isDeliveryOrder
     ? [
@@ -958,6 +1008,9 @@ export default function CartDrawer({
           ? "tu ubicación (toca “Usar mi ubicación actual” o pega tu link de Maps)"
           : "",
         paymentMethod.trim() ? "" : "el método de pago",
+        isMixedPayment && !isMixedPaymentComplete
+          ? "los dos montos del pago mixto"
+          : "",
       ].filter(Boolean)
     : [];
   const paymentProofReportedUSD = normalizeFormMoney(paymentProofAmountUSD);
@@ -1111,6 +1164,37 @@ export default function CartDrawer({
   }
 
 
+  // "Completar" del pago mixto: rellena lo que falta de esa parte según lo
+  // ya escrito en la otra, usando la tasa activa.
+  function completeMixedBsAmount() {
+    const remainingUSD = Math.max(
+      0,
+      totalUSD - normalizeFormMoney(mixedUsdAmount),
+    );
+    setMixedBsAmount((remainingUSD * exchangeRate).toFixed(2));
+  }
+
+  function completeMixedUsdAmount() {
+    const bsPart = normalizeFormMoney(mixedBsAmount);
+    const remainingUSD = Math.max(
+      0,
+      totalUSD - (exchangeRate > 0 ? bsPart / exchangeRate : 0),
+    );
+    setMixedUsdAmount(remainingUSD.toFixed(2));
+  }
+
+  // Ajustar el marcador desde la vista previa o la confirmación: reabre el
+  // mapa interactivo y re-cotiza con el punto nuevo.
+  function handleAdjustMapConfirm(coords: { lat: number; lng: number }) {
+    setIsAdjustMapOpen(false);
+
+    const lat = Number(coords.lat.toFixed(6));
+    const lng = Number(coords.lng.toFixed(6));
+
+    setCustomerMapsUrl(`https://www.google.com/maps?q=${lat},${lng}`);
+    void requestDistanceQuote({ lat, lng });
+  }
+
   function buildWhatsAppMessage() {
     function buildWhatsAppProductLine(item: CartItem, baseLine: string) {
       const detailLines: string[] = [];
@@ -1193,7 +1277,7 @@ export default function CartDrawer({
         );
       }
       messageParts.push(
-        `Método de pago: ${paymentMethod.trim() || "Por confirmar"}`,
+        `Método de pago: ${effectivePaymentMethod || "Por confirmar"}`,
       );
       messageParts.push(
         `Costo delivery: ${distanceQuote ? formatUSD(deliveryCostValue) : "Por confirmar"}`,
@@ -1504,7 +1588,7 @@ export default function CartDrawer({
         // El servidor re-cotiza el envío con esta ubicación (el precio nunca
         // viaja del cliente): mismo link que ya se cotizó en el carrito.
         deliveryMapsUrl: customerMapsUrl.trim(),
-        paymentMethod: paymentMethod.trim(),
+        paymentMethod: effectivePaymentMethod,
         deliveryCostUSD: deliveryCostValue,
         totalBeforeDeliveryUSD: productsTotalUSD,
         items: normalizedItems,
@@ -1582,7 +1666,7 @@ export default function CartDrawer({
 
       setLastCreatedOrder(createdOrder);
       resetPaymentProofForm();
-      setPaymentProofMethod(paymentMethod.trim());
+      setPaymentProofMethod(isMixedPayment ? "" : paymentMethod.trim());
       setPaymentProofAmountUSD(
         createdOrder.totalUSD > 0 ? createdOrder.totalUSD.toFixed(2) : "",
       );
@@ -1595,6 +1679,10 @@ export default function CartDrawer({
       setDistanceQuote(null);
       setDistanceQuoteError(null);
       setPaymentMethod("");
+      setMixedBsMethod("");
+      setMixedBsAmount("");
+      setMixedUsdMethod("");
+      setMixedUsdAmount("");
       setCustomerNote("");
       setCouponInput("");
       setAppliedCoupon(null);
@@ -1638,6 +1726,10 @@ export default function CartDrawer({
         setDistanceQuote(null);
         setDistanceQuoteError(null);
         setPaymentMethod("");
+        setMixedBsMethod("");
+        setMixedBsAmount("");
+        setMixedUsdMethod("");
+        setMixedUsdAmount("");
         setCustomerNote("");
         setCouponInput("");
         setAppliedCoupon(null);
@@ -2625,80 +2717,120 @@ export default function CartDrawer({
                     {/* 1. Ubicación primero (como las apps grandes): define el
                         costo del envío y la cobertura antes de pedir datos. */}
                     {isDistancePricingEnabled && (
-                      <div className="rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] px-4 py-5 sm:py-4">
-                        <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                          ¿A dónde te lo llevamos?
-                        </label>
+                      <div className="overflow-hidden rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-[var(--brand-cream)]">
+                        {/* Encabezado con ícono: la sección más importante
+                            del delivery merece verse como tarjeta, no como
+                            un campo más. */}
+                        <div className="flex items-center gap-3 border-b-2 border-[var(--brand-primary)]/15 bg-[rgba(var(--brand-primary-rgb),0.09)] px-4 py-3">
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary)] text-black shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.6)]">
+                            <MapPin size={18} />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+                              ¿A dónde te lo llevamos?
+                            </span>
+                            <span className="mt-0.5 block text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
+                              Con tu ubicación calculamos el costo exacto del
+                              envío
+                            </span>
+                          </span>
+                        </div>
 
-                        {/* Un toque y listo: el GPS pide el permiso al momento
-                            (también se intenta solo al entrar a Delivery) y
-                            el link de Maps queda como plan B. */}
-                        <button
-                          type="button"
-                          onClick={handleQuoteFromGps}
-                          disabled={isQuotingDistance}
-                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-3.5 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          {isQuotingDistance ? (
-                            <Loader2 size={16} className="animate-spin" />
-                          ) : (
-                            <Crosshair size={16} />
+                        <div className="px-4 py-4">
+                          {/* Un toque y listo: el GPS pide el permiso al
+                              momento (también se intenta solo al entrar a
+                              Delivery) y el link de Maps queda como plan B. */}
+                          <button
+                            type="button"
+                            onClick={handleQuoteFromGps}
+                            disabled={isQuotingDistance}
+                            className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-3.5 text-xs font-black uppercase tracking-[0.1em] text-black shadow-[0_4px_0_rgba(var(--brand-accent-rgb),0.5)] transition hover:opacity-90 active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {isQuotingDistance ? (
+                              <Loader2 size={16} className="animate-spin" />
+                            ) : (
+                              <Crosshair size={16} />
+                            )}
+                            Usar mi ubicación actual
+                          </button>
+
+                          <div className="my-3 flex items-center gap-3">
+                            <span className="h-0.5 flex-1 rounded bg-[var(--brand-border)]" />
+                            <span className="text-[0.66rem] font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/45">
+                              o pega tu link de Google Maps
+                            </span>
+                            <span className="h-0.5 flex-1 rounded bg-[var(--brand-border)]" />
+                          </div>
+
+                          <input
+                            value={customerMapsUrl}
+                            onChange={(event) => {
+                              const nextValue = event.target.value;
+                              setCustomerMapsUrl(nextValue);
+                              setDistanceQuote(null);
+                              setDistanceQuoteError(null);
+                              scheduleAutoQuote(nextValue);
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.preventDefault();
+                                handleQuoteFromMapsUrl();
+                              }
+                            }}
+                            placeholder="https://maps.app.goo.gl/..."
+                            inputMode="url"
+                            className="w-full min-w-0 rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                          />
+
+                          {/* Punto elegido: mini mapa de confirmación visual
+                              con el chip "Ajustar" (como las apps grandes). */}
+                          {distanceQuote && deliveryPointCoords && (
+                            <div className="relative mt-3">
+                              <DeliveryPointPreviewMap
+                                lat={deliveryPointCoords.lat}
+                                lng={deliveryPointCoords.lng}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setIsAdjustMapOpen(true)}
+                                className="absolute right-2 top-2 z-[600] flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-3 py-1.5 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] shadow-md transition hover:bg-[var(--brand-accent)] hover:text-black"
+                              >
+                                <Pencil size={12} />
+                                Ajustar
+                              </button>
+                            </div>
                           )}
-                          Usar mi ubicación actual
-                        </button>
 
-                        <p className="mt-3 text-center text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/45">
-                          o pega tu link de Google Maps
-                        </p>
-
-                        <input
-                          value={customerMapsUrl}
-                          onChange={(event) => {
-                            const nextValue = event.target.value;
-                            setCustomerMapsUrl(nextValue);
-                            setDistanceQuote(null);
-                            setDistanceQuoteError(null);
-                            scheduleAutoQuote(nextValue);
-                          }}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter") {
-                              event.preventDefault();
-                              handleQuoteFromMapsUrl();
-                            }
-                          }}
-                          placeholder="https://maps.app.goo.gl/..."
-                          inputMode="url"
-                          className="mt-2 w-full min-w-0 rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
-                        />
-
-                        {distanceQuote && (
-                          <p className="mt-3 rounded-2xl border-2 border-green-600 bg-green-600/15 px-4 py-3 text-sm font-black leading-5 text-green-500">
-                            Estás a ~{distanceQuote.distanceKm.toFixed(1)} km ·
-                            Envío {formatUSD(distanceQuote.costUSD)}
-                          </p>
-                        )}
-
-                        {distanceQuoteError && (
-                          <p className="mt-3 rounded-2xl border-2 border-orange-400/40 bg-orange-100 px-4 py-3 text-sm font-bold leading-5 text-orange-800">
-                            {distanceQuoteError}
-                          </p>
-                        )}
-
-                        {!distanceQuote &&
-                          !distanceQuoteError &&
-                          distanceMaxKm > 0 && (
-                            <p className="mt-2 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
-                              Llegamos hasta {distanceMaxKm} km a la redonda
-                              {distanceTiers.length > 0
-                                ? ` · Referencia: hasta ${distanceTiers[distanceTiers.length - 1].upToKm} km ${formatUSD(distanceTiers[distanceTiers.length - 1].costUSD)}${
-                                    distanceTiers.length > 1
-                                      ? ` (desde ${formatUSD(distanceTiers[0].costUSD)})`
-                                      : ""
-                                  }`
-                                : ""}
-                              . Tu costo exacto se calcula con tu ubicación.
+                          {distanceQuote && (
+                            <p className="mt-3 flex items-center gap-2 rounded-2xl border-2 border-green-600 bg-green-600/15 px-4 py-3 text-sm font-black leading-5 text-green-600">
+                              <CheckCircle2 size={17} className="shrink-0" />
+                              Estás a ~{distanceQuote.distanceKm.toFixed(1)} km
+                              · Envío {formatUSD(distanceQuote.costUSD)}
                             </p>
                           )}
+
+                          {distanceQuoteError && (
+                            <p className="mt-3 rounded-2xl border-2 border-orange-400/40 bg-orange-100 px-4 py-3 text-sm font-bold leading-5 text-orange-800">
+                              {distanceQuoteError}
+                            </p>
+                          )}
+
+                          {!distanceQuote &&
+                            !distanceQuoteError &&
+                            distanceMaxKm > 0 && (
+                              <p className="mt-2 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
+                                Llegamos hasta {distanceMaxKm} km a la redonda
+                                {distanceTiers.length > 0
+                                  ? ` · Referencia: hasta ${distanceTiers[distanceTiers.length - 1].upToKm} km ${formatUSD(distanceTiers[distanceTiers.length - 1].costUSD)}${
+                                      distanceTiers.length > 1
+                                        ? ` (desde ${formatUSD(distanceTiers[0].costUSD)})`
+                                        : ""
+                                    }`
+                                  : ""}
+                                . Tu costo exacto se calcula con tu ubicación.
+                              </p>
+                            )}
+                        </div>
                       </div>
                     )}
 
@@ -2779,6 +2911,107 @@ export default function CartDrawer({
                       />
                     </div>
 
+                    {/* Pago mixto: el cliente reparte el total entre una
+                        parte en bolívares y otra en divisas; "Completar"
+                        rellena lo que falta con la tasa activa. */}
+                    {isMixedPayment && (
+                      <div className="rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] px-4 py-4">
+                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+                          Pago mixto
+                        </p>
+                        <p className="mt-1 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
+                          Divide el total ({formatUSD(totalUSD)} ≈ Bs{" "}
+                          {formatVES(totalVES)}) entre dos métodos. Escribe un
+                          monto y toca “Completar” en el otro para rellenar lo
+                          que falta.
+                        </p>
+
+                        <div className="mt-3">
+                          <label className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/60">
+                            Parte en bolívares
+                          </label>
+                          <select
+                            value={mixedBsMethod}
+                            onChange={(event) =>
+                              setMixedBsMethod(event.target.value)
+                            }
+                            className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                          >
+                            <option value="">Método para los bolívares…</option>
+                            {availablePaymentMethods.map((method) => (
+                              <option key={method} value={method}>
+                                {method}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="mt-2 flex gap-2">
+                            <input
+                              inputMode="decimal"
+                              value={mixedBsAmount}
+                              onChange={(event) =>
+                                setMixedBsAmount(event.target.value)
+                              }
+                              placeholder="Monto en Bs"
+                              className="min-w-0 flex-1 rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                            />
+                            <button
+                              type="button"
+                              onClick={completeMixedBsAmount}
+                              className="shrink-0 rounded-2xl border-2 border-[var(--brand-primary)] bg-transparent px-3.5 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black"
+                            >
+                              Completar
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="mt-4">
+                          <label className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/60">
+                            Parte en divisas
+                          </label>
+                          <select
+                            value={mixedUsdMethod}
+                            onChange={(event) =>
+                              setMixedUsdMethod(event.target.value)
+                            }
+                            className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                          >
+                            <option value="">Método para las divisas…</option>
+                            {availablePaymentMethods.map((method) => (
+                              <option key={method} value={method}>
+                                {method}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="mt-2 flex gap-2">
+                            <input
+                              inputMode="decimal"
+                              value={mixedUsdAmount}
+                              onChange={(event) =>
+                                setMixedUsdAmount(event.target.value)
+                              }
+                              placeholder="Monto en $"
+                              className="min-w-0 flex-1 rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                            />
+                            <button
+                              type="button"
+                              onClick={completeMixedUsdAmount}
+                              className="shrink-0 rounded-2xl border-2 border-[var(--brand-primary)] bg-transparent px-3.5 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black"
+                            >
+                              Completar
+                            </button>
+                          </div>
+                        </div>
+
+                        {isMixedPaymentComplete && (
+                          <p className="mt-3 rounded-xl bg-white/70 px-3 py-2 text-[0.7rem] font-bold leading-4 text-[var(--brand-ink-2)]/70">
+                            Vas a pagar Bs {formatVES(mixedBsValue)} con{" "}
+                            {mixedBsMethod} y {formatUSD(mixedUsdValue)} con{" "}
+                            {mixedUsdMethod}.
+                          </p>
+                        )}
+                      </div>
+                    )}
+
                     {Object.keys(
                       publicConfig.publicPaymentMethodDetails || {},
                     ).length > 0 && (
@@ -2846,7 +3079,8 @@ export default function CartDrawer({
                         Delivery:{" "}
                         <span className="text-[var(--brand-primary)]">
                           {formatUSD(deliveryCostValue)}
-                        </span>
+                        </span>{" "}
+                        / Bs {formatVES(deliveryCostValue * exchangeRate)}
                       </p>
                     )}
 
@@ -2854,6 +3088,13 @@ export default function CartDrawer({
                       Total final en divisas:{" "}
                       <span className="text-[var(--brand-primary)]">
                         {formatUSD(totalUSD)}
+                      </span>
+                    </p>
+
+                    <p>
+                      Total en bolívares (referencia):{" "}
+                      <span className="text-[var(--brand-primary)]">
+                        Bs {formatVES(totalVES)}
                       </span>
                     </p>
                   </div>
@@ -2977,7 +3218,16 @@ export default function CartDrawer({
                 <button
                   type="button"
                   disabled={!canRegisterLocalOrder}
-                  onClick={handleRegisterLocalOrder}
+                  onClick={() => {
+                    // Con ubicación elegida, primero se confirma la dirección
+                    // en el mapa (estilo apps grandes); sin ubicación va
+                    // directo.
+                    if (isDeliveryOrder && distanceQuote && deliveryPointCoords) {
+                      setIsAddressConfirmOpen(true);
+                      return;
+                    }
+                    void handleRegisterLocalOrder();
+                  }}
                   className={`mt-2 flex w-full items-center justify-center gap-3 rounded-full border-2 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none ${
                     canRegisterLocalOrder
                       ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
@@ -3011,6 +3261,80 @@ export default function CartDrawer({
         </div>
       )}
 
+      {/* Confirmación de dirección antes de registrar: mapa de solo lectura
+          con el pin en el punto elegido, "Ajustar" para moverlo y el botón
+          que registra de verdad. */}
+      {isAddressConfirmOpen && deliveryPointCoords && (
+        <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/80 p-4 backdrop-blur-sm sm:items-center">
+          <div className="w-full max-w-md rounded-[1.8rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] p-5 text-[var(--brand-ink-3)]">
+            <h4 className="text-center text-lg font-black leading-6 text-[var(--brand-ink-3)]">
+              Antes de continuar, ¿es esta la ubicación donde quieres que
+              llegue tu pedido?
+            </h4>
+
+            <div className="relative mt-4">
+              <DeliveryPointPreviewMap
+                lat={deliveryPointCoords.lat}
+                lng={deliveryPointCoords.lng}
+                heightClassName="h-52"
+              />
+              <button
+                type="button"
+                onClick={() => setIsAdjustMapOpen(true)}
+                className="absolute right-2 top-2 z-[600] flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-3 py-1.5 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] shadow-md transition hover:bg-[var(--brand-accent)] hover:text-black"
+              >
+                <Pencil size={12} />
+                Ajustar
+              </button>
+            </div>
+
+            <p className="mt-3 text-center text-sm font-bold text-[var(--brand-ink-2)]/70">
+              {isQuotingDistance ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 size={15} className="animate-spin" />
+                  Recalculando el envío…
+                </span>
+              ) : distanceQuote ? (
+                <>
+                  Estás a ~{distanceQuote.distanceKm.toFixed(1)} km · Envío{" "}
+                  {formatUSD(distanceQuote.costUSD)}
+                </>
+              ) : (
+                "Confirma tu punto de entrega."
+              )}
+            </p>
+
+            <button
+              type="button"
+              disabled={isQuotingDistance || !distanceQuote}
+              onClick={() => {
+                setIsAddressConfirmOpen(false);
+                void handleRegisterLocalOrder();
+              }}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-4 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              La ubicación es correcta →
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsAddressConfirmOpen(false)}
+              className="mt-2 w-full rounded-full px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/60 transition hover:text-[var(--brand-primary)]"
+            >
+              Volver y revisar mis datos
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isAdjustMapOpen && deliveryPointCoords && (
+        <DeliveryMapPicker
+          initialLat={deliveryPointCoords.lat}
+          initialLng={deliveryPointCoords.lng}
+          onConfirm={handleAdjustMapConfirm}
+          onClose={() => setIsAdjustMapOpen(false)}
+        />
+      )}
     </div>
   );
 }

@@ -3933,6 +3933,8 @@ export default function BusinessConfigPage() {
                       móvil, correo de Zelle…), una línea por dato. El cliente los
                       verá en botones desplegables &quot;Ver datos de…&quot; con
                       opción de copiar, en el carrito y al registrar su pedido.
+                      Tú decides cuáles se muestran: los métodos que dejes vacíos
+                      (ej. Efectivo) no muestran ningún botón.
                     </p>
                     <div className="mt-2 grid gap-3 sm:grid-cols-2">
                       {businessConfig.publicPaymentMethods.map((method) => (
