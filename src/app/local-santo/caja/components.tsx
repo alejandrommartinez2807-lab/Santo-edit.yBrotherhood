@@ -1,9 +1,11 @@
-import type { ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 import Image from "next/image"
 import { BRAND } from "@/lib/brand"
 import {
   ArrowLeft,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Clock,
   CreditCard,
   Eye,
@@ -89,56 +91,97 @@ export function CashOrderCard({
   const hasPendingStaffConfirmation = staffConfirmationSummary.pendingCount > 0
   const staffConfirmationLabel = getStaffConfirmationStatusLabel(staffConfirmationSummary.status)
   const hasOpenAccount = Boolean(getOrderOpenAccountId(order))
+  // Plegada por defecto: la cabecera compacta trae lo esencial (estado, total,
+  // pendiente y la acción del momento) para que en una laptop entren varios
+  // pedidos por pantalla; el detalle completo se abre solo cuando hace falta.
+  const [isExpanded, setIsExpanded] = useState(false)
 
   return (
     <article className="overflow-hidden rounded-[1.6rem] border-2 border-[var(--brand-primary)] bg-white shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]">
-      <div className="border-b-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-4 py-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-4xl font-black leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">{getDisplayOrderNumber(order)}</p>
-              <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-black uppercase ${getStatusStyle(order.status)}`}>{getStatusIcon(order.status)}{order.status === "Nuevo" ? "Por confirmar" : order.status}</span>
-              <span className={`inline-flex rounded-full px-3 py-1.5 text-xs font-black uppercase ${getPaymentStatusStyle(payment.status)}`}>{payment.status}</span>
-              {isDelivery && <span className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-black uppercase text-white"><Truck size={15} />Delivery</span>}
-              {deliveryReported && <span className="inline-flex items-center gap-2 rounded-full bg-green-100 px-3 py-1.5 text-xs font-black uppercase text-green-700"><PackageCheck size={15} />Entrega reportada</span>}
-              {hasRequiredStaffConfirmation && (
-                <span
-                  className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-black uppercase ${
-                    hasPendingStaffConfirmation
-                      ? "bg-[var(--brand-accent-100)] text-[var(--brand-amber)]"
-                      : "bg-green-100 text-green-700"
-                  }`}
-                >
-                  {hasPendingStaffConfirmation ? <Clock size={15} /> : <CheckCircle2 size={15} />}
-                  {staffConfirmationLabel}
-                </span>
-              )}
-              {!isDelivery && (
-                <span
-                  className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-black uppercase ${
-                    hasOpenAccount
-                      ? "bg-green-100 text-green-700"
-                      : suggestedOpenAccount
-                        ? "bg-[var(--brand-accent-100)] text-[var(--brand-amber)]"
-                        : "bg-[var(--brand-cream)] text-[var(--brand-primary)]"
-                  }`}
-                >
-                  <Link2 size={15} />
-                  {hasOpenAccount ? "En cuenta" : suggestedOpenAccount ? "Cuenta detectada" : "Sin cuenta"}
-                </span>
-              )}
-            </div>
-            <p className="mt-2 text-xs font-bold text-[var(--brand-ink-2)]/70">{formatDate(order.createdAt)} · {getDisplayOrderType(order)} · {getDisplayLocation(order)}</p>
-          </div>
+      <div className={`bg-[var(--brand-cream)] px-4 py-3 ${isExpanded ? "border-b-2 border-[var(--brand-primary)]" : ""}`}>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+          <p className="text-2xl font-black leading-none text-[var(--brand-primary)] drop-shadow-[0_2px_0_rgba(var(--brand-accent-rgb),0.75)]">{getDisplayOrderNumber(order)}</p>
+          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.62rem] font-black uppercase ${getStatusStyle(order.status)}`}>{getStatusIcon(order.status)}{order.status === "Nuevo" ? "Por confirmar" : order.status}</span>
+          <span className={`inline-flex rounded-full px-2.5 py-1 text-[0.62rem] font-black uppercase ${getPaymentStatusStyle(payment.status)}`}>{payment.status}</span>
+          {isDelivery && <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-primary)] px-2.5 py-1 text-[0.62rem] font-black uppercase text-white"><Truck size={13} />Delivery</span>}
+          {deliveryReported && <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-[0.62rem] font-black uppercase text-green-700"><PackageCheck size={13} />Entrega reportada</span>}
+          {hasRequiredStaffConfirmation && (
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.62rem] font-black uppercase ${
+                hasPendingStaffConfirmation
+                  ? "bg-[var(--brand-accent-100)] text-[var(--brand-amber)]"
+                  : "bg-green-100 text-green-700"
+              }`}
+            >
+              {hasPendingStaffConfirmation ? <Clock size={13} /> : <CheckCircle2 size={13} />}
+              {staffConfirmationLabel}
+            </span>
+          )}
+          {!isDelivery && (hasOpenAccount || suggestedOpenAccount) && (
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.62rem] font-black uppercase ${
+                hasOpenAccount
+                  ? "bg-green-100 text-green-700"
+                  : "bg-[var(--brand-accent-100)] text-[var(--brand-amber)]"
+              }`}
+            >
+              <Link2 size={13} />
+              {hasOpenAccount ? "En cuenta" : "Cuenta detectada"}
+            </span>
+          )}
+          {paymentProofs.length > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-accent-100)] px-2.5 py-1 text-[0.62rem] font-black uppercase text-[var(--brand-amber)]"><CreditCard size={13} />Comprobante</span>
+          )}
 
-          <div className="rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-right">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">Total</p>
-            <p className="mt-1 text-2xl font-black text-[var(--brand-ink-3)]">{formatUSD(orderTotals.totalUSD)}</p>
-            {payment.pendingUSD > 0 && <p className="mt-1 text-xs font-black text-red-700">Pendiente {formatUSD(payment.pendingUSD)}</p>}
+          <div className="ml-auto text-right">
+            <p className="text-xl font-black leading-none text-[var(--brand-ink-3)]">{formatUSD(orderTotals.totalUSD)}</p>
+            {payment.pendingUSD > 0 && <p className="mt-0.5 text-[0.62rem] font-black uppercase text-red-700">Pendiente {formatUSD(payment.pendingUSD)}</p>}
           </div>
+        </div>
+
+        <p className="mt-1.5 truncate text-xs font-bold text-[var(--brand-ink-2)]/70">{order.customerName || "Cliente"} · {getDisplayLocation(order)} · {formatDate(order.createdAt)} · {getDisplayOrderType(order)}</p>
+
+        <div className="mt-2.5 flex flex-wrap items-center gap-2">
+          <button type="button" onClick={onOpenPayment} className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3.5 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]">
+            <CreditCard size={14} /> Cobrar
+          </button>
+
+          {order.status === "Nuevo" && hasPendingStaffConfirmation && (
+            <button
+              type="button"
+              onClick={onConfirmStaffItems}
+              disabled={isConfirmingStaff}
+              className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-yellow-500 bg-[var(--brand-accent-100)] px-3.5 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-amber)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+            >
+              {isConfirmingStaff ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+              Confirmar revisión
+            </button>
+          )}
+
+          {order.status === "Nuevo" && !hasPendingStaffConfirmation && (
+            <button type="button" onClick={onSendToKitchen} className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-3.5 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] text-white transition hover:bg-[var(--brand-primary-dark)]">
+              <Send size={14} /> A cocina
+            </button>
+          )}
+
+          {order.status === "Listo" && !hasPendingStaffConfirmation && (
+            <button type="button" onClick={onMarkDelivered} className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-green-600 bg-green-500 px-3.5 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] text-white transition hover:bg-green-400">
+              <CheckCircle2 size={14} /> Entregado
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="ml-auto inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/40 bg-white px-3.5 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+          >
+            {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            {isExpanded ? "Ocultar" : "Detalles"}
+          </button>
         </div>
       </div>
 
+      {isExpanded && (
       <div className="space-y-4 p-4">
         {order.attachmentImageUrl && (
           <a
@@ -372,6 +415,7 @@ export function CashOrderCard({
           )}
         </div>
       </div>
+      )}
     </article>
   )
 }
