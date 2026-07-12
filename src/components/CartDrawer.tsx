@@ -1806,6 +1806,7 @@ export default function CartDrawer({
         id: orderId,
         totalUSD: createdOrder.totalUSD,
         label: `${getOrderTypePublicLabel(orderType)} · ${createdOrder.customerName}`,
+        paymentMethods: selectedPaymentMethods,
       });
       setRecentPublicOrders(readRecentPublicOrders());
 

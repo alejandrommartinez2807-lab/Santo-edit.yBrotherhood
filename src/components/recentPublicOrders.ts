@@ -7,6 +7,9 @@ export type RecentPublicOrder = {
   createdAt: string;
   totalUSD: number;
   label: string;
+  // Métodos de pago que eligió el cliente al pedir: la página de seguimiento
+  // los usa para volver a mostrar los datos de pago correctos.
+  paymentMethods?: string[];
 };
 
 const STORAGE_KEY = "santo_public_recent_orders_v1";
@@ -32,6 +35,9 @@ export function readRecentPublicOrders(): RecentPublicOrder[] {
           createdAt: String(record.createdAt || ""),
           totalUSD: Number(record.totalUSD || 0),
           label: String(record.label || "").trim(),
+          paymentMethods: Array.isArray(record.paymentMethods)
+            ? record.paymentMethods.map((item) => String(item || "").trim()).filter(Boolean)
+            : [],
         };
       })
       .filter(
@@ -126,6 +132,7 @@ export function saveRecentPublicOrder(order: {
   id: string;
   totalUSD: number;
   label: string;
+  paymentMethods?: string[];
 }) {
   if (typeof window === "undefined" || !order.id.trim()) return;
 
@@ -140,6 +147,7 @@ export function saveRecentPublicOrder(order: {
         createdAt: new Date().toISOString(),
         totalUSD: Number(order.totalUSD || 0),
         label: order.label.trim(),
+        paymentMethods: order.paymentMethods || [],
       },
       ...current,
     ].slice(0, MAX_ORDERS);

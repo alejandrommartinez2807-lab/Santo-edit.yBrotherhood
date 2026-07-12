@@ -87,6 +87,9 @@ function normalizeMoneyInput(value: string) {
   return Math.round((numberValue + Number.EPSILON) * 100) / 100;
 }
 
+import PaymentMethodDetailsList from "@/components/PaymentMethodDetailsList";
+import { readRecentPublicOrders } from "@/components/recentPublicOrders";
+
 export default function PublicOrderPaymentSection({
   orderId,
 }: {
@@ -98,6 +101,13 @@ export default function PublicOrderPaymentSection({
   const [paymentMethods, setPaymentMethods] = useState<string[]>(
     DEFAULT_PUBLIC_PAYMENT_METHODS,
   );
+  // Datos del negocio para pagar (pago móvil, Zelle…) y métodos que el
+  // cliente eligió al pedir (guardados en su dispositivo): con esto la página
+  // de seguimiento muestra lo mismo que la confirmación del pedido.
+  const [paymentMethodDetails, setPaymentMethodDetails] = useState<
+    Record<string, string>
+  >({});
+  const [chosenMethods, setChosenMethods] = useState<string[]>([]);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [method, setMethod] = useState("");
@@ -151,6 +161,10 @@ export default function PublicOrderPaymentSection({
               .filter(Boolean)
           : [];
         if (methods.length) setPaymentMethods(methods);
+        const details = config.publicPaymentMethodDetails;
+        if (details && typeof details === "object" && !Array.isArray(details)) {
+          setPaymentMethodDetails(details as Record<string, string>);
+        }
       })
       .catch(() => {
         // Config pública caída: se usan los métodos por defecto.
@@ -160,13 +174,17 @@ export default function PublicOrderPaymentSection({
     // (react-hooks/set-state-in-effect).
     const timer = setTimeout(() => {
       void loadInfo();
+      const recentEntry = readRecentPublicOrders().find(
+        (entry) => entry.id === orderId,
+      );
+      setChosenMethods(recentEntry?.paymentMethods || []);
     }, 0);
 
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [loadInfo]);
+  }, [loadInfo, orderId]);
 
   const activeProofs = (info?.proofs || []).filter(
     (proof) => proof.status !== "Rechazado",
@@ -315,6 +333,47 @@ export default function PublicOrderPaymentSection({
         </p>
       ) : null}
 
+      {!hasConfirmedPayment &&
+        (() => {
+          const filtered = chosenMethods.length
+            ? Object.fromEntries(
+                Object.entries(paymentMethodDetails).filter(([methodName]) =>
+                  chosenMethods.includes(methodName),
+                ),
+              )
+            : paymentMethodDetails;
+          const visibleDetails = Object.keys(filtered).length
+            ? filtered
+            : paymentMethodDetails;
+
+          if (!Object.keys(visibleDetails).length) return null;
+
+          return (
+            <div className="mt-4 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/40 px-4 py-4 text-left">
+              <span className="inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
+                Paso 1
+              </span>
+              <p className="mt-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                Paga con estos datos
+                {chosenMethods.length > 0 && (
+                  <span className="text-[var(--brand-ink-2)]/45">
+                    {" "}
+                    ({chosenMethods.join(" + ")})
+                  </span>
+                )}
+              </p>
+              {info.totalUSD > 0 ? (
+                <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/75">
+                  Total a pagar: {formatUSD(info.totalUSD)}
+                </p>
+              ) : null}
+              <div className="mt-2">
+                <PaymentMethodDetailsList details={visibleDetails} />
+              </div>
+            </div>
+          );
+        })()}
+
       {info.proofs.length > 0 && (
         <div className="mt-4 space-y-2">
           {info.proofs.map((proof, index) => {
@@ -373,6 +432,12 @@ export default function PublicOrderPaymentSection({
           {successMessage}
         </p>
       )}
+
+      {!hasConfirmedPayment && !isFormOpen && !hasPendingProof ? (
+        <span className="mt-4 inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
+          Paso 2
+        </span>
+      ) : null}
 
       {!hasConfirmedPayment && !isFormOpen ? (
         <button
