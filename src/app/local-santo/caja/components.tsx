@@ -112,52 +112,51 @@ export function CashOrderCard({
 
   return (
     <article className="overflow-hidden rounded-[1.6rem] border-2 border-[var(--brand-primary)] bg-white shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]">
-      <div className={`bg-[var(--brand-cream)] px-4 py-3 ${isExpanded ? "border-b-2 border-[var(--brand-primary)]" : ""}`}>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-          <p className="text-2xl font-black leading-none text-[var(--brand-primary)] drop-shadow-[0_2px_0_rgba(var(--brand-accent-rgb),0.75)]">{getDisplayOrderNumber(order)}</p>
-          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.62rem] font-black uppercase ${getStatusStyle(order.status)}`}>{getStatusIcon(order.status)}{order.status === "Nuevo" ? "Por confirmar" : order.status}</span>
-          <span className={`inline-flex rounded-full px-2.5 py-1 text-[0.62rem] font-black uppercase ${getPaymentStatusStyle(payment.status)}`}>{payment.status}</span>
-          {isDelivery && <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-primary)] px-2.5 py-1 text-[0.62rem] font-black uppercase text-white"><Truck size={13} />Delivery</span>}
-          {deliveryReported && <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-[0.62rem] font-black uppercase text-green-700"><PackageCheck size={13} />Entrega reportada</span>}
+      <div className={`bg-[var(--brand-cream)] px-3 py-2 ${isExpanded ? "border-b-2 border-[var(--brand-primary)]" : ""}`}>
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+          <p className="text-xl font-black leading-none text-[var(--brand-primary)] drop-shadow-[0_2px_0_rgba(var(--brand-accent-rgb),0.75)]">{getDisplayOrderNumber(order)}</p>
+          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.58rem] font-black uppercase ${getStatusStyle(order.status)}`}>{getStatusIcon(order.status)}{order.status === "Nuevo" ? "Por confirmar" : order.status}</span>
+          <span className={`inline-flex rounded-full px-2 py-0.5 text-[0.58rem] font-black uppercase ${getPaymentStatusStyle(payment.status)}`}>{payment.status}</span>
+          {isDelivery && <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-primary)] px-2 py-0.5 text-[0.58rem] font-black uppercase text-white"><Truck size={12} />Delivery</span>}
+          {deliveryReported && <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[0.58rem] font-black uppercase text-green-700"><PackageCheck size={12} />Entrega reportada</span>}
           {hasRequiredStaffConfirmation && (
             <span
-              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.62rem] font-black uppercase ${
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.58rem] font-black uppercase ${
                 hasPendingStaffConfirmation
                   ? "bg-[var(--brand-accent-100)] text-[var(--brand-amber)]"
                   : "bg-green-100 text-green-700"
               }`}
             >
-              {hasPendingStaffConfirmation ? <Clock size={13} /> : <CheckCircle2 size={13} />}
+              {hasPendingStaffConfirmation ? <Clock size={12} /> : <CheckCircle2 size={12} />}
               {staffConfirmationLabel}
             </span>
           )}
           {!isDelivery && (hasOpenAccount || suggestedOpenAccount) && (
             <span
-              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.62rem] font-black uppercase ${
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.58rem] font-black uppercase ${
                 hasOpenAccount
                   ? "bg-green-100 text-green-700"
                   : "bg-[var(--brand-accent-100)] text-[var(--brand-amber)]"
               }`}
             >
-              <Link2 size={13} />
+              <Link2 size={12} />
               {hasOpenAccount ? "En cuenta" : "Cuenta detectada"}
             </span>
           )}
           {paymentProofs.length > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-accent-100)] px-2.5 py-1 text-[0.62rem] font-black uppercase text-[var(--brand-amber)]"><CreditCard size={13} />Comprobante</span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-accent-100)] px-2 py-0.5 text-[0.58rem] font-black uppercase text-[var(--brand-amber)]"><CreditCard size={12} />Comprobante</span>
           )}
 
           <div className="ml-auto text-right">
-            <p className="text-xl font-black leading-none text-[var(--brand-ink-3)]">{formatUSD(orderTotals.totalUSD)}</p>
-            {payment.pendingUSD > 0 && <p className="mt-0.5 text-[0.62rem] font-black uppercase text-red-700">Pendiente {formatUSD(payment.pendingUSD)}</p>}
+            <p className="text-lg font-black leading-none text-[var(--brand-ink-3)]">{formatUSD(orderTotals.totalUSD)}</p>
+            {payment.pendingUSD > 0 && <p className="mt-0.5 text-[0.58rem] font-black uppercase text-red-700">Pendiente {formatUSD(payment.pendingUSD)}</p>}
           </div>
         </div>
 
-        <p className="mt-1.5 truncate text-xs font-bold text-[var(--brand-ink-2)]/70">{order.customerName || "Cliente"} · {getDisplayLocation(order)} · {formatDate(order.createdAt)} · {getDisplayOrderType(order)}</p>
-
-        <div className="mt-2.5 flex flex-wrap items-center gap-2">
-          <button type="button" onClick={onOpenPayment} className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3.5 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]">
-            <CreditCard size={14} /> Cobrar
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+          <p className="min-w-0 flex-1 basis-40 truncate text-[0.7rem] font-bold text-[var(--brand-ink-2)]/70">{order.customerName || "Cliente"} · {getDisplayLocation(order)} · {formatDate(order.createdAt)} · {getDisplayOrderType(order)}</p>
+          <button type="button" onClick={onOpenPayment} className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3 py-1 text-[0.6rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]">
+            <CreditCard size={13} /> Cobrar
           </button>
 
           {order.status === "Nuevo" && hasPendingStaffConfirmation && (
@@ -165,37 +164,37 @@ export function CashOrderCard({
               type="button"
               onClick={onConfirmStaffItems}
               disabled={isConfirmingStaff}
-              className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-yellow-500 bg-[var(--brand-accent-100)] px-3.5 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-amber)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-yellow-500 bg-[var(--brand-accent-100)] px-3 py-1 text-[0.6rem] font-black uppercase tracking-[0.08em] text-[var(--brand-amber)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
             >
-              {isConfirmingStaff ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+              {isConfirmingStaff ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={13} />}
               Confirmar revisión
             </button>
           )}
 
           {canMarkReadyFromCash && (
-            <button type="button" onClick={onMarkReady} className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-green-600 bg-green-500 px-3.5 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] text-white transition hover:bg-green-400">
-              <PackageCheck size={14} /> Listo
+            <button type="button" onClick={onMarkReady} className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-green-600 bg-green-500 px-3 py-1 text-[0.6rem] font-black uppercase tracking-[0.08em] text-white transition hover:bg-green-400">
+              <PackageCheck size={13} /> Listo
             </button>
           )}
 
           {showSendToKitchen && (
-            <button type="button" onClick={onSendToKitchen} className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-3.5 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] text-white transition hover:bg-[var(--brand-primary-dark)]">
-              <Send size={14} /> A cocina
+            <button type="button" onClick={onSendToKitchen} className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-3 py-1 text-[0.6rem] font-black uppercase tracking-[0.08em] text-white transition hover:bg-[var(--brand-primary-dark)]">
+              <Send size={13} /> A cocina
             </button>
           )}
 
           {order.status === "Listo" && !hasPendingStaffConfirmation && (
-            <button type="button" onClick={onMarkDelivered} className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-green-600 bg-green-500 px-3.5 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] text-white transition hover:bg-green-400">
-              <CheckCircle2 size={14} /> Entregado
+            <button type="button" onClick={onMarkDelivered} className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-green-600 bg-green-500 px-3 py-1 text-[0.6rem] font-black uppercase tracking-[0.08em] text-white transition hover:bg-green-400">
+              <CheckCircle2 size={13} /> Entregado
             </button>
           )}
 
           <button
             type="button"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="ml-auto inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/40 bg-white px-3.5 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+            className="ml-auto inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/40 bg-white px-3 py-1 text-[0.6rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
           >
-            {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
             {isExpanded ? "Ocultar" : "Detalles"}
           </button>
         </div>

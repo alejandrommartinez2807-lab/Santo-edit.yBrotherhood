@@ -33,6 +33,7 @@ import {
   isDeliveryOrder,
   isStaffConfirmationItemConfirmed,
   isStaffConfirmationItemRequired,
+  stripPricesFromSelectionSummary,
 } from "@/lib/localOrderHelpers";
 import { getOrderPayment, getOrderTotals, roundMoney } from "@/lib/localOrderMoney";
 
@@ -173,7 +174,11 @@ function OpenAccountTicketNotice({ order }: { order: LocalOrder }) {
 
 function TicketItemLine({ item, showPrices }: { item: OrderItem; showPrices: boolean }) {
   const subtotalUSD = getItemSubtotalUSD(item);
-  const selectionSummary = String(item.selectionSummary || "").trim();
+  // Ticket sin precios (cocina): las variaciones tampoco muestran "(+$1.00)".
+  const rawSelectionSummary = String(item.selectionSummary || "").trim();
+  const selectionSummary = showPrices
+    ? rawSelectionSummary
+    : stripPricesFromSelectionSummary(rawSelectionSummary);
   const note = item.noteEnabled && item.note ? String(item.note).trim() : "";
   const hasStaffConfirmationRequirement = isStaffConfirmationItemRequired(item);
   const staffConfirmationConfirmed = isStaffConfirmationItemConfirmed(item);

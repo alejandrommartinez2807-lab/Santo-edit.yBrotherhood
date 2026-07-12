@@ -231,6 +231,7 @@ type BusinessConfig = {
   allowCloseWithPendingOrders: boolean;
   allowCloseWithPendingPayments: boolean;
   kitchenFlowMode: KitchenFlowMode;
+  publicPaymentMethodChangeEnabled: boolean;
   updatedAt?: string;
 };
 
@@ -393,6 +394,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   allowCloseWithPendingOrders: true,
   allowCloseWithPendingPayments: true,
   kitchenFlowMode: "kitchen",
+  publicPaymentMethodChangeEnabled: true,
 };
 
 const AVAILABLE_MODULES_PATCH: Partial<BusinessConfig> = {
@@ -1248,6 +1250,10 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
       DEFAULT_BUSINESS_CONFIG.allowCloseWithPendingPayments,
     ),
     kitchenFlowMode: normalizeKitchenFlowMode(source.kitchenFlowMode),
+    publicPaymentMethodChangeEnabled: normalizeBoolean(
+      source.publicPaymentMethodChangeEnabled,
+      DEFAULT_BUSINESS_CONFIG.publicPaymentMethodChangeEnabled,
+    ),
     updatedAt: source.updatedAt ? String(source.updatedAt) : undefined,
   };
 }
@@ -5029,6 +5035,15 @@ export default function BusinessConfigPage() {
                 checked={businessConfig.allowCloseWithPendingPayments}
                 onChange={(value) =>
                   updateConfig("allowCloseWithPendingPayments", value)
+                }
+                icon={<DollarSign size={18} />}
+              />
+              <ToggleRow
+                label="Cliente puede cambiar método de pago"
+                description="Al reportar su pago puede elegir un método distinto al del pedido (con aviso). Apagado: el método queda fijo."
+                checked={businessConfig.publicPaymentMethodChangeEnabled}
+                onChange={(value) =>
+                  updateConfig("publicPaymentMethodChangeEnabled", value)
                 }
                 icon={<DollarSign size={18} />}
               />

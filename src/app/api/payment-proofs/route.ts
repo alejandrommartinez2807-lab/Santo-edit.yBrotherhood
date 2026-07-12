@@ -144,16 +144,25 @@ function normalizeCreatePaymentProofInput(body: PublicProofBody): CreatePaymentP
   const amountReportedUSD = cleanMoney(body.amountReportedUSD)
   const amountReportedVES = cleanMoney(body.amountReportedVES)
 
+  const paymentReference = cleanText(body.paymentReference)
+
   if (!orderId) throw new Error("Falta el número del pedido")
-  if (!dataUrl) throw new Error("Falta la captura del comprobante")
-  const image = assertDataUrlImage(dataUrl, {
-    label: "El comprobante",
-    maxBytes: getEnvByteLimit("PAYMENT_PROOF_IMAGE_MAX_BYTES", 5_500_000, {
-      minBytes: 512_000,
-      maxBytes: 7_000_000,
-    }),
-    fallbackMimeType: cleanText(body.mimeType) || "image/jpeg",
-  })
+  // La captura es lo ideal, pero con la referencia de la operación alcanza
+  // para que caja verifique el pago (transferencias/pago móvil).
+  if (!dataUrl && !paymentReference) {
+    throw new Error("Adjunta la captura del pago o indica la referencia de la operación")
+  }
+
+  const image = dataUrl
+    ? assertDataUrlImage(dataUrl, {
+        label: "El comprobante",
+        maxBytes: getEnvByteLimit("PAYMENT_PROOF_IMAGE_MAX_BYTES", 5_500_000, {
+          minBytes: 512_000,
+          maxBytes: 7_000_000,
+        }),
+        fallbackMimeType: cleanText(body.mimeType) || "image/jpeg",
+      })
+    : null
 
   if (amountReportedUSD <= 0 && amountReportedVES <= 0) throw new Error("Indica el monto que reportaste como pagado")
 
@@ -164,11 +173,13 @@ function normalizeCreatePaymentProofInput(body: PublicProofBody): CreatePaymentP
     reportedMethod: cleanText(body.reportedMethod),
     amountReportedUSD,
     amountReportedVES,
-    paymentReference: cleanText(body.paymentReference),
+    paymentReference,
     customerNote: cleanText(body.customerNote),
     dataUrl,
-    fileName: sanitizeUploadedImageFileName(body.fileName, `comprobante-${orderId}`, image.mimeType),
-    mimeType: image.mimeType,
+    fileName: image
+      ? sanitizeUploadedImageFileName(body.fileName, `comprobante-${orderId}`, image.mimeType)
+      : "",
+    mimeType: image ? image.mimeType : "",
   }
 }
 
