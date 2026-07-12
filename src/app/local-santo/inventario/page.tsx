@@ -1391,12 +1391,12 @@ function InventoryPageContent() {
     try {
       setIsLoading(true)
       setErrorMessage(null)
-      window.sessionStorage.setItem(ADMIN_STORAGE_KEY, password)
+      window.localStorage.setItem(ADMIN_STORAGE_KEY, password)
       setAdminPassword(password)
       setPasswordInput(password)
       await loadInventory(password)
     } catch (error) {
-      window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
+      window.localStorage.removeItem(ADMIN_STORAGE_KEY)
       setAdminPassword("")
       setErrorMessage(
         error instanceof Error ? error.message : "No se pudo validar el acceso"
@@ -1407,7 +1407,7 @@ function InventoryPageContent() {
   }
 
   function handleLogout() {
-    window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
+    window.localStorage.removeItem(ADMIN_STORAGE_KEY)
     setAdminPassword("")
     setPasswordInput("")
     setInventory([])
@@ -1431,7 +1431,7 @@ function InventoryPageContent() {
   }
 
   const restoreSession = useEffectEvent(() => {
-    const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
+    const savedPassword = window.localStorage.getItem(ADMIN_STORAGE_KEY)
 
     if (!savedPassword) return
 

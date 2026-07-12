@@ -281,7 +281,7 @@ function DayClosesPageContent() {
 
     if (!password) return
 
-    window.sessionStorage.setItem(ADMIN_STORAGE_KEY, password)
+    window.localStorage.setItem(ADMIN_STORAGE_KEY, password)
     setAdminPassword(password)
     loadDayCloses(password)
   }
@@ -300,7 +300,7 @@ function DayClosesPageContent() {
   }
 
   const restoreSession = useEffectEvent(() => {
-    const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
+    const savedPassword = window.localStorage.getItem(ADMIN_STORAGE_KEY)
 
     if (savedPassword) {
       setAdminPassword(savedPassword)

@@ -707,12 +707,12 @@ export default function LocalMenuPage() {
       setIsLoading(true)
       setErrorMessage(null)
       await validateMenuProductsAccess(password)
-      window.sessionStorage.setItem(ADMIN_STORAGE_KEY, password)
+      window.localStorage.setItem(ADMIN_STORAGE_KEY, password)
       setAdminPassword(password)
       setPasswordInput(password)
       await loadMenuProducts(password)
     } catch (error) {
-      window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
+      window.localStorage.removeItem(ADMIN_STORAGE_KEY)
       setAdminPassword("")
       setMenuProducts([])
       setErrorMessage(
@@ -724,7 +724,7 @@ export default function LocalMenuPage() {
   }
 
   function handleLogout() {
-    window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
+    window.localStorage.removeItem(ADMIN_STORAGE_KEY)
     setAdminPassword("")
     setPasswordInput("")
     setMenuProducts([])
@@ -750,7 +750,7 @@ export default function LocalMenuPage() {
   }, [adminPassword])
 
   const restoreSavedSession = useEffectEvent(() => {
-    const storedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
+    const storedPassword = window.localStorage.getItem(ADMIN_STORAGE_KEY)
     const savedPassword = typeof storedPassword === "string" ? storedPassword.trim() : ""
 
     if (!savedPassword) return
@@ -764,7 +764,7 @@ export default function LocalMenuPage() {
         setPasswordInput(savedPassword)
         await loadMenuProducts(savedPassword)
       } catch (error) {
-        window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
+        window.localStorage.removeItem(ADMIN_STORAGE_KEY)
         setAdminPassword("")
         setPasswordInput("")
         setMenuProducts([])

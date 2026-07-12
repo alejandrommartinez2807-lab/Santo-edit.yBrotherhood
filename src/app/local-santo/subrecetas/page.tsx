@@ -42,7 +42,7 @@ type IngredientRow = { itemId: string; quantity: string }
 function authHeaders(): HeadersInit {
   const password =
     typeof window !== "undefined"
-      ? window.sessionStorage.getItem(OWNER_STORAGE_KEY) || ""
+      ? window.localStorage.getItem(OWNER_STORAGE_KEY) || ""
       : ""
   return { "Content-Type": "application/json", "x-admin-password": password }
 }

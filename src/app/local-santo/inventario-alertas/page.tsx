@@ -127,7 +127,7 @@ function getStoredPassword() {
   if (typeof window === "undefined") return "";
 
   try {
-    return window.sessionStorage.getItem(ADMIN_STORAGE_KEY) || "";
+    return window.localStorage.getItem(ADMIN_STORAGE_KEY) || "";
   } catch {
     return "";
   }
@@ -661,7 +661,7 @@ function InventoryAlertsPageContent() {
       setIsLoggedIn(true);
 
       try {
-        window.sessionStorage.setItem(ADMIN_STORAGE_KEY, cleanPassword);
+        window.localStorage.setItem(ADMIN_STORAGE_KEY, cleanPassword);
       } catch {
         // El panel puede funcionar aunque sessionStorage no esté disponible.
       }
@@ -697,7 +697,7 @@ function InventoryAlertsPageContent() {
     setMessage(null);
 
     try {
-      window.sessionStorage.removeItem(ADMIN_STORAGE_KEY);
+      window.localStorage.removeItem(ADMIN_STORAGE_KEY);
     } catch {
       // No hace falta hacer nada.
     }

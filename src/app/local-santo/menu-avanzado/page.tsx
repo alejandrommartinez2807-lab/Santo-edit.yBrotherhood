@@ -417,12 +417,12 @@ export default function AdvancedMenuPage() {
       setIsLoading(true)
       setErrorMessage(null)
       await validateAccess(password)
-      window.sessionStorage.setItem(ADMIN_STORAGE_KEY, password)
+      window.localStorage.setItem(ADMIN_STORAGE_KEY, password)
       setAdminPassword(password)
       setPasswordInput(password)
       await loadProducts(password)
     } catch (error) {
-      window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
+      window.localStorage.removeItem(ADMIN_STORAGE_KEY)
       setAdminPassword("")
       setProducts([])
       setErrorMessage(
@@ -434,7 +434,7 @@ export default function AdvancedMenuPage() {
   }
 
   function handleLogout() {
-    window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
+    window.localStorage.removeItem(ADMIN_STORAGE_KEY)
     setAdminPassword("")
     setPasswordInput("")
     setProducts([])
@@ -445,7 +445,7 @@ export default function AdvancedMenuPage() {
   }
 
   const restoreSavedSession = useEffectEvent(() => {
-    const storedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
+    const storedPassword = window.localStorage.getItem(ADMIN_STORAGE_KEY)
     const savedPassword = typeof storedPassword === "string" ? storedPassword.trim() : ""
 
     if (!savedPassword) return
@@ -459,7 +459,7 @@ export default function AdvancedMenuPage() {
         setPasswordInput(savedPassword)
         await loadProducts(savedPassword)
       } catch (error) {
-        window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
+        window.localStorage.removeItem(ADMIN_STORAGE_KEY)
         setAdminPassword("")
         setPasswordInput("")
         setProducts([])

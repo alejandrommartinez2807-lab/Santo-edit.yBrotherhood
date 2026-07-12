@@ -214,7 +214,7 @@ function getModuleStatusText(
 
 function clearStoredAccess() {
   try {
-    window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
+    window.localStorage.removeItem(ADMIN_STORAGE_KEY)
   } catch {
     // Si el navegador bloquea sessionStorage, no hace falta hacer nada.
   }
@@ -478,7 +478,7 @@ export default function ModuleAccessGuard({
         // Puede autenticar por contraseña (modo .env) o por sesión de Supabase
         // (el AuthBridge adjunta el token). Si no hay ninguna, el backend
         // responde 401 y caemos a "needs-login".
-        const storedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY) || ""
+        const storedPassword = window.localStorage.getItem(ADMIN_STORAGE_KEY) || ""
 
         const response = await fetch(
           `/api/local-auth?moduleKey=${encodeURIComponent(moduleKey)}`,

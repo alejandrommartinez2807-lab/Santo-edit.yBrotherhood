@@ -80,6 +80,16 @@ import {
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session";
 
 type BusinessViewMode = "simple" | "negocio" | "avanzado";
+
+// Flujo de caja→cocina (espejo del tipo canónico en lib/ordersBusinessConfig).
+type KitchenFlowMode = "kitchen" | "mixed" | "direct";
+
+function normalizeKitchenFlowMode(value: unknown): KitchenFlowMode {
+  const mode = String(value || "").trim().toLowerCase();
+  if (mode === "mixed") return "mixed";
+  if (mode === "direct") return "direct";
+  return "kitchen";
+}
 type ExchangeRateMode = "automatic" | "automaticEur" | "manual";
 type ConfigAccessRole = "owner" | "support";
 
@@ -220,6 +230,7 @@ type BusinessConfig = {
   filtersOpenByDefault: boolean;
   allowCloseWithPendingOrders: boolean;
   allowCloseWithPendingPayments: boolean;
+  kitchenFlowMode: KitchenFlowMode;
   updatedAt?: string;
 };
 
@@ -381,6 +392,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   filtersOpenByDefault: false,
   allowCloseWithPendingOrders: true,
   allowCloseWithPendingPayments: true,
+  kitchenFlowMode: "kitchen",
 };
 
 const AVAILABLE_MODULES_PATCH: Partial<BusinessConfig> = {
@@ -441,6 +453,31 @@ const VIEW_MODE_OPTIONS: Array<{
     label: "Avanzado",
     description:
       "Más datos visibles para auditoría, análisis y revisión completa.",
+  },
+];
+
+const KITCHEN_FLOW_OPTIONS: Array<{
+  value: KitchenFlowMode;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: "kitchen",
+    label: "Cocina completa",
+    description:
+      "Caja envía cada pedido a cocina y cocina lo marca como Listo (flujo actual).",
+  },
+  {
+    value: "mixed",
+    label: "Caja + cocina opcional",
+    description:
+      "Caja puede marcar Listo directo o enviar a cocina; el pedido enviado sigue visible y manejable desde caja.",
+  },
+  {
+    value: "direct",
+    label: "Sin cocina",
+    description:
+      "Todo se maneja desde caja: el pedido se marca Listo y Entregado sin pasar por cocina.",
   },
 ];
 
@@ -1210,6 +1247,7 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.allowCloseWithPendingPayments,
       DEFAULT_BUSINESS_CONFIG.allowCloseWithPendingPayments,
     ),
+    kitchenFlowMode: normalizeKitchenFlowMode(source.kitchenFlowMode),
     updatedAt: source.updatedAt ? String(source.updatedAt) : undefined,
   };
 }
@@ -2209,7 +2247,7 @@ export default function BusinessConfigPage() {
       setIsAuthenticated(true);
       setAdminPassword(cleanPassword);
       setPasswordInput(cleanPassword);
-      window.sessionStorage.setItem(ADMIN_STORAGE_KEY, cleanPassword);
+      window.localStorage.setItem(ADMIN_STORAGE_KEY, cleanPassword);
       void loadBranches(cleanPassword, true);
 
       if (!quiet) {
@@ -2223,7 +2261,7 @@ export default function BusinessConfigPage() {
       );
       setIsAuthenticated(false);
       setAccessRole(null);
-      window.sessionStorage.removeItem(ADMIN_STORAGE_KEY);
+      window.localStorage.removeItem(ADMIN_STORAGE_KEY);
     } finally {
       if (!quiet) {
         setIsLoading(false);
@@ -2286,7 +2324,7 @@ export default function BusinessConfigPage() {
   }
 
   function handleLogout() {
-    window.sessionStorage.removeItem(ADMIN_STORAGE_KEY);
+    window.localStorage.removeItem(ADMIN_STORAGE_KEY);
     setAdminPassword("");
     setPasswordInput("");
     setIsAuthenticated(false);
@@ -2301,7 +2339,7 @@ export default function BusinessConfigPage() {
   }
 
   const restoreSession = useEffectEvent(() => {
-    const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY);
+    const savedPassword = window.localStorage.getItem(ADMIN_STORAGE_KEY);
 
     if (savedPassword) {
       loadBusinessConfig(savedPassword, true);
@@ -4944,6 +4982,26 @@ export default function BusinessConfigPage() {
                   onClick={() => updateConfig("defaultViewMode", option.value)}
                 />
               ))}
+            </div>
+
+            <div className="mt-5">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                Flujo de caja y cocina
+              </p>
+              <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
+                Decide cómo avanza un pedido: con cocina, mixto o todo desde caja.
+              </p>
+              <div className="mt-3 grid gap-3 lg:grid-cols-3">
+                {KITCHEN_FLOW_OPTIONS.map((option) => (
+                  <ModeButton
+                    key={option.value}
+                    label={option.label}
+                    description={option.description}
+                    active={businessConfig.kitchenFlowMode === option.value}
+                    onClick={() => updateConfig("kitchenFlowMode", option.value)}
+                  />
+                ))}
+              </div>
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">

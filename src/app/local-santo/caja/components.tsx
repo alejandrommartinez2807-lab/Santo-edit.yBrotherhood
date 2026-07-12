@@ -49,13 +49,16 @@ import {
   isDeliveryReported,
   normalizePhoneForWhatsApp,
   type CartItem,
+  type KitchenFlowMode,
   type LocalOrder,
 } from "./domain"
 
 export function CashOrderCard({
   order,
+  kitchenFlowMode = "kitchen",
   onOpenPayment,
   onSendToKitchen,
+  onMarkReady,
   onMarkDelivered,
   onCancelOrder,
   suggestedOpenAccount,
@@ -67,9 +70,11 @@ export function CashOrderCard({
   paymentProofs = [],
 }: {
   order: LocalOrder
+  kitchenFlowMode?: KitchenFlowMode
   suggestedOpenAccount: OpenAccount | null
   onOpenPayment: () => void
   onSendToKitchen: () => void
+  onMarkReady?: () => void
   onMarkDelivered: () => void
   onCancelOrder: () => void
   onAttachToSuggestedOpenAccount: (account: OpenAccount) => void
@@ -95,6 +100,15 @@ export function CashOrderCard({
   // pendiente y la acción del momento) para que en una laptop entren varios
   // pedidos por pantalla; el detalle completo se abre solo cuando hace falta.
   const [isExpanded, setIsExpanded] = useState(false)
+  // Según el flujo elegido por el dueño, caja puede marcar Listo directo
+  // (mixed/direct) y el botón de cocina solo existe en kitchen/mixed.
+  const canMarkReadyFromCash =
+    (kitchenFlowMode === "mixed" || kitchenFlowMode === "direct") &&
+    (order.status === "Nuevo" || order.status === "Preparando") &&
+    !hasPendingStaffConfirmation &&
+    Boolean(onMarkReady)
+  const showSendToKitchen =
+    kitchenFlowMode !== "direct" && order.status === "Nuevo" && !hasPendingStaffConfirmation
 
   return (
     <article className="overflow-hidden rounded-[1.6rem] border-2 border-[var(--brand-primary)] bg-white shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]">
@@ -158,7 +172,13 @@ export function CashOrderCard({
             </button>
           )}
 
-          {order.status === "Nuevo" && !hasPendingStaffConfirmation && (
+          {canMarkReadyFromCash && (
+            <button type="button" onClick={onMarkReady} className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-green-600 bg-green-500 px-3.5 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] text-white transition hover:bg-green-400">
+              <PackageCheck size={14} /> Listo
+            </button>
+          )}
+
+          {showSendToKitchen && (
             <button type="button" onClick={onSendToKitchen} className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-3.5 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] text-white transition hover:bg-[var(--brand-primary-dark)]">
               <Send size={14} /> A cocina
             </button>
@@ -342,17 +362,23 @@ export function CashOrderCard({
 
           {order.status === "Nuevo" && hasPendingStaffConfirmation && (
             <div className="rounded-full border-2 border-yellow-500 bg-[var(--brand-accent-100)] px-5 py-3 text-center text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-amber)]">
-              Confirma la revisión antes de enviar a cocina
+              Confirma la revisión para continuar
             </div>
           )}
 
-          {order.status === "Nuevo" && !hasPendingStaffConfirmation && (
-            <button type="button" onClick={onSendToKitchen} className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)]">
-              <Send size={17} /> Pedido confirmado / enviar a cocina
+          {canMarkReadyFromCash && (
+            <button type="button" onClick={onMarkReady} className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-green-600 bg-green-500 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-green-400">
+              <PackageCheck size={17} /> Marcar como Listo
             </button>
           )}
 
-          {order.status === "Preparando" && (
+          {showSendToKitchen && (
+            <button type="button" onClick={onSendToKitchen} className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)]">
+              <Send size={17} /> {kitchenFlowMode === "mixed" ? "Enviar a cocina" : "Pedido confirmado / enviar a cocina"}
+            </button>
+          )}
+
+          {order.status === "Preparando" && kitchenFlowMode === "kitchen" && (
             <div className="rounded-full border-2 border-orange-400 bg-orange-100 px-5 py-3 text-center text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-amber)]">
               En cocina
             </div>

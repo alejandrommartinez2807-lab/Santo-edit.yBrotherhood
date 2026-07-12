@@ -22,7 +22,7 @@ export type StaffBranch = { id: string; name: string; is_active?: boolean }
 export function getStoredPasswordHeaders(): Record<string, string> {
   if (typeof window === "undefined") return {}
   try {
-    const password = window.sessionStorage.getItem("santo_perrito_owner_session")
+    const password = window.localStorage.getItem("santo_perrito_owner_session")
     if (password) return { "x-admin-password": password }
   } catch {
     /* sin acceso a storage */
