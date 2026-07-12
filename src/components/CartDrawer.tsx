@@ -2770,8 +2770,9 @@ export default function CartDrawer({
                 />
 
                 {/* Aviso para mesas con cuenta: la segunda vez no hace falta
-                    volver a identificarse, solo indicar la misma mesa. */}
-                {orderType === "Comer aquí" && (
+                    volver a identificarse, solo indicar la misma mesa. Solo
+                    aplica si el negocio tiene cuentas abiertas activas. */}
+                {orderType === "Comer aquí" && publicConfig.openAccountsEnabled && (
                   <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.06)] px-4 py-2.5">
                     <p className="text-[0.7rem] font-bold leading-4 text-[var(--brand-ink-2)]/65">
                       ¿Ya abriste una cuenta en tu mesa? No hace falta poner

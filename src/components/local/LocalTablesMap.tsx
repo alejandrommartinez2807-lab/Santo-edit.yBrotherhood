@@ -428,53 +428,64 @@ export function LocalTablesMap({
                 {groupedTables[area].map((table) => {
                   const summary = getTableSummary(table.name, orders, openAccounts);
                   const isSelected = selectedKey === normalizeLocalTableText(table.name);
+                  const totalOrdersCount = Math.max(
+                    summary.tableOrders.length,
+                    summary.accountOrdersCount,
+                  );
+                  // Tarjeta compacta: nombre + estado + lo esencial en una
+                  // línea. El detalle (cuentas y pedidos) aparece solo al
+                  // tocar la mesa, para que el mapa no sature la pantalla.
                   const cardContent = (
                     <>
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-base font-black uppercase text-[var(--brand-ink-3)]">{table.name}</p>
-                          <p className="mt-1 inline-flex items-center gap-1 text-[0.68rem] font-black uppercase tracking-[0.12em] opacity-80">
-                            {getStatusIcon(summary.status)}
-                            {getStatusLabel(summary.status)}
-                          </p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-base font-black uppercase text-[var(--brand-ink-3)]">{table.name}</p>
+                        <p className="inline-flex shrink-0 items-center gap-1 text-[0.65rem] font-black uppercase tracking-[0.1em] opacity-80">
+                          {getStatusIcon(summary.status)}
+                          {getStatusLabel(summary.status)}
+                        </p>
+                      </div>
+
+                      {summary.status !== "free" && (
+                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.7rem] font-black">
+                          <span>{totalOrdersCount} pedido(s)</span>
+                          {summary.pendingUSD > 0 && (
+                            <span>Pendiente {formatUSD(summary.pendingUSD)}</span>
+                          )}
+                          {summary.hasOpenAccount && (
+                            <span className="inline-flex items-center gap-1">
+                              <Link2 size={12} />
+                              Cuenta abierta
+                            </span>
+                          )}
+                          {summary.pendingStaffReviewOrders.length > 0 && (
+                            <span>{summary.pendingStaffReviewOrders.length} por revisar</span>
+                          )}
                         </div>
+                      )}
 
-                        {summary.hasOpenAccount && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-white/85 px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.10em]">
-                            <Link2 size={13} />
-                            Cuenta abierta
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-black">
-                        <span className="rounded-xl bg-white/75 px-3 py-2">Activos: {summary.activeOrders.length}</span>
-                        <span className="rounded-xl bg-white/75 px-3 py-2">Pedidos: {Math.max(summary.tableOrders.length, summary.accountOrdersCount)}</span>
-                        <span className="rounded-xl bg-white/75 px-3 py-2">Por revisar: {summary.pendingStaffReviewOrders.length}</span>
-                        <span className="rounded-xl bg-white/75 px-3 py-2">Pendiente: {formatUSD(summary.pendingUSD)}</span>
-                        <span className="rounded-xl bg-white/75 px-3 py-2 sm:col-span-2">Total mesa/cuenta: {formatUSD(summary.totalUSD)}</span>
-                      </div>
-
-                      {summary.activeOpenAccounts.length > 0 && (
+                      {/* Detalle solo de la mesa seleccionada. */}
+                      {isSelected && summary.status !== "free" && (
                         <div className="mt-3 space-y-1">
+                          <p className="rounded-xl bg-white/80 px-3 py-2 text-[0.68rem] font-black text-[var(--brand-ink-2)]">
+                            Total mesa/cuenta: {formatUSD(summary.totalUSD)} · Activos: {summary.activeOrders.length}
+                          </p>
+
                           {summary.activeOpenAccounts.slice(0, 2).map((account) => (
                             <p key={account.id} className="rounded-xl bg-white/80 px-3 py-2 text-[0.68rem] font-bold text-[var(--brand-ink-2)]">
                               Cuenta abierta · {account.customerName || account.tableNumber || "Mesa"} · Pendiente {formatUSD(getAccountPendingUSD(account))}
                             </p>
                           ))}
-                        </div>
-                      )}
 
-                      {showOrderPreview && summary.tableOrders.length > 0 && (
-                        <div className="mt-3 space-y-1">
-                          {summary.tableOrders.slice(0, 2).map((order) => (
-                            <p key={order.id} className="rounded-xl bg-white/80 px-3 py-2 text-[0.68rem] font-bold text-[var(--brand-ink-2)]">
-                              {getDisplayOrderNumber(order)} · {order.customerName || "Cliente"} · {hasPendingStaffConfirmation(order) ? "Por revisar" : getOrderPaymentStatus(order)}
-                            </p>
-                          ))}
-                          {summary.tableOrders.length > 2 && (
+                          {showOrderPreview &&
+                            summary.tableOrders.slice(0, 3).map((order) => (
+                              <p key={order.id} className="rounded-xl bg-white/80 px-3 py-2 text-[0.68rem] font-bold text-[var(--brand-ink-2)]">
+                                {getDisplayOrderNumber(order)} · {order.customerName || "Cliente"} · {hasPendingStaffConfirmation(order) ? "Por revisar" : getOrderPaymentStatus(order)}
+                              </p>
+                            ))}
+
+                          {showOrderPreview && summary.tableOrders.length > 3 && (
                             <p className="rounded-xl bg-white/80 px-3 py-2 text-[0.68rem] font-black text-[var(--brand-ink-2)]/70">
-                              +{summary.tableOrders.length - 2} pedido(s) más
+                              +{summary.tableOrders.length - 3} pedido(s) más
                             </p>
                           )}
                         </div>
@@ -484,7 +495,7 @@ export function LocalTablesMap({
 
                   if (!onSelectTable) {
                     return (
-                      <article key={table.id || table.name} className={`rounded-2xl border-2 p-4 ${getCardClass(summary.status, isSelected)}`}>
+                      <article key={table.id || table.name} className={`rounded-2xl border-2 p-3 ${getCardClass(summary.status, isSelected)}`}>
                         {cardContent}
                       </article>
                     );
@@ -495,7 +506,7 @@ export function LocalTablesMap({
                       key={table.id || table.name}
                       type="button"
                       onClick={() => onSelectTable(table.name)}
-                      className={`rounded-2xl border-2 p-4 text-left transition hover:-translate-y-0.5 hover:shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.10)] ${getCardClass(summary.status, isSelected)}`}
+                      className={`rounded-2xl border-2 p-3 text-left transition hover:-translate-y-0.5 hover:shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.10)] ${getCardClass(summary.status, isSelected)}`}
                     >
                       {cardContent}
                     </button>

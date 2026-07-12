@@ -362,7 +362,7 @@ export type BranchScopedConfig = {
   localTables?: BranchScopedTable[]
   // Tasa propia de la sede: pisa el modo/valor global solo para esta sucursal.
   // Ausente = hereda lo definido en Configuración → "Tasa y moneda".
-  exchangeRateMode?: "automatic" | "manual"
+  exchangeRateMode?: "automatic" | "automaticEur" | "manual"
   manualExchangeRate?: number
   [key: string]: unknown
 }
@@ -426,6 +426,9 @@ export function normalizeBranchScopedConfig(branchConfig: unknown): BranchScoped
   if ("exchangeRateMode" in source) {
     const mode = cleanText(source.exchangeRateMode).toLowerCase()
     if (mode === "automatic" || mode === "manual") config.exchangeRateMode = mode
+    if (mode === "automaticeur" || mode === "euro") {
+      config.exchangeRateMode = "automaticEur"
+    }
   }
 
   if ("manualExchangeRate" in source) {

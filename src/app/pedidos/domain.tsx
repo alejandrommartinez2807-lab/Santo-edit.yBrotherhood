@@ -291,7 +291,7 @@ export type ExpenseQuickConcept = {
 }
 
 export type BusinessViewMode = "simple" | "negocio" | "avanzado"
-export type ExchangeRateMode = "automatic" | "manual"
+export type ExchangeRateMode = "automatic" | "automaticEur" | "manual"
 export type PanelSoundKind =
   | "new-order"
   | "sent-kitchen"
@@ -398,6 +398,9 @@ export type BusinessConfig = {
   customIncludedModules: LocalModuleKey[]
   customBlockedModules: LocalModuleKey[]
   deliveryEnabled: boolean
+  // Botones de aviso al cliente por WhatsApp (Confirmar/Preparación/Salida…)
+  // en las tarjetas de delivery del panel; el dueño puede apagarlos.
+  orderWhatsappStageButtonsEnabled: boolean
   ownerDashboardModuleEnabled: boolean
   cashierModuleEnabled: boolean
   kitchenModuleEnabled: boolean
@@ -450,6 +453,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   customIncludedModules: [],
   customBlockedModules: [],
   deliveryEnabled: true,
+  orderWhatsappStageButtonsEnabled: true,
   ownerDashboardModuleEnabled: true,
   cashierModuleEnabled: true,
   kitchenModuleEnabled: true,
@@ -1880,10 +1884,10 @@ export function buildDeliveryWhatsAppUrl(
 
 // Texto para pasarle el pedido al repartidor por WhatsApp con UN solo copiado:
 // teléfono del cliente, link de la dirección y un resumen corto de qué lleva.
-// Pensado para el flujo "lo marco listo y se lo mando al delivery".
+// Sin montos ni estado de pago: al repartidor no le interesan (pedido del
+// dueño 2026-07-12). Pensado para "lo marco listo y se lo mando al delivery".
 export function buildCourierHandoffText(order: LocalOrder) {
   const displayNumber = getDisplayOrderNumber(order)
-  const orderTotals = getOrderTotals(order)
   // La dirección guarda el link de Maps dentro del texto ("Ubicación (Maps):
   // https://... · ~2.3 km"): se extrae el link limpio para que el repartidor
   // lo abra directo; si no hay link se manda la dirección tal cual.
@@ -1901,7 +1905,6 @@ export function buildCourierHandoffText(order: LocalOrder) {
       ? [`Referencia: ${order.deliveryReference}`]
       : []),
     ...(itemsSummary ? [`Pedido: ${itemsSummary}`] : []),
-    `Total: ${formatUSD(orderTotals.totalUSD)} · Pago: ${order.paymentMethod || "Por confirmar"}`,
   ].join("\n")
 }
 
@@ -2068,7 +2071,12 @@ export function normalizeBusinessViewMode(value: unknown): BusinessViewMode {
 export function normalizeExchangeRateMode(value: unknown): ExchangeRateMode {
   const normalized = String(value || "").trim().toLowerCase()
 
-  return normalized === "manual" ? "manual" : "automatic"
+  if (normalized === "manual") return "manual"
+  if (normalized === "automaticeur" || normalized === "euro") {
+    return "automaticEur"
+  }
+
+  return "automatic"
 }
 
 
@@ -2311,6 +2319,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     membershipPlanMode: normalizeLocalPlanMode(source.membershipPlanMode),
     customIncludedModules: normalizeLocalModuleList(source.customIncludedModules),
     customBlockedModules: normalizeLocalModuleList(source.customBlockedModules),
+    orderWhatsappStageButtonsEnabled: normalizeBooleanConfig(
+      source.orderWhatsappStageButtonsEnabled,
+      DEFAULT_BUSINESS_CONFIG.orderWhatsappStageButtonsEnabled
+    ),
     deliveryEnabled: normalizeBooleanConfig(
       source.deliveryEnabled,
       DEFAULT_BUSINESS_CONFIG.deliveryEnabled

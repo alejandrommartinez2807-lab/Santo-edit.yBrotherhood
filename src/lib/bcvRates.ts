@@ -92,6 +92,34 @@ export function extractBcvUsdRate(html: string) {
   throw new Error("No se pudo extraer la tasa USD desde el HTML del BCV")
 }
 
+// Tasa oficial EUR: mismo esquema que el dólar, el bloque del euro lleva
+// id="euro" y el texto visible la palabra "EUR".
+export function extractBcvEurRate(html: string) {
+  const euroBlockMatch = html.match(/id=["']euro["'][\s\S]{0,2200}/i)
+
+  if (euroBlockMatch) {
+    const rate = extractFirstValidRateFromText(htmlToText(euroBlockMatch[0]))
+
+    if (rate) {
+      return rate
+    }
+  }
+
+  const text = htmlToText(html)
+  const eurIndex = text.search(/\bEUR\b/i)
+
+  if (eurIndex !== -1) {
+    const eurArea = text.slice(eurIndex, eurIndex + 500)
+    const rate = extractFirstValidRateFromText(eurArea)
+
+    if (rate) {
+      return rate
+    }
+  }
+
+  throw new Error("No se pudo extraer la tasa EUR desde el HTML del BCV")
+}
+
 export function extractBcvValueDate(html: string) {
   const text = htmlToText(html)
 

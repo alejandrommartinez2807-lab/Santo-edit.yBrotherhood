@@ -607,10 +607,10 @@ function buildDeliveryWhatsAppUrl(
 
 // Texto para pasarle el pedido al repartidor por WhatsApp con UN solo copiado:
 // teléfono del cliente, link de la dirección y resumen corto de qué lleva.
-// Mismo formato que el botón del panel de Pedidos.
+// Sin montos ni pago (no le interesan al repartidor). Mismo formato que el
+// botón del panel de Pedidos.
 function buildCourierHandoffText(order: LocalOrder) {
   const displayNumber = getDisplayOrderNumber(order)
-  const orderTotals = getOrderTotals(order)
   const rawAddress = String(order.deliveryAddress || "").trim()
   const mapsLink = rawAddress.match(/https?:\/\/[^\s·]+/)?.[0] || ""
   const itemsSummary = (order.items || [])
@@ -625,7 +625,6 @@ function buildCourierHandoffText(order: LocalOrder) {
       ? [`Referencia: ${order.deliveryReference}`]
       : []),
     ...(itemsSummary ? [`Pedido: ${itemsSummary}`] : []),
-    `Total: ${formatUSD(orderTotals.totalUSD)} · Pago: ${order.paymentMethod || "Por confirmar"}`,
   ].join("\n")
 }
 

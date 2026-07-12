@@ -5,9 +5,13 @@
 // módulos en la misma pestaña sin volver a iniciar sesión. El dueño ve todo
 // más el acceso rápido al panel general.
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ChevronDown, LayoutGrid, MapPin } from "lucide-react"
 import type { StaffBranch } from "@/lib/branchClient"
+
+// Preferencia del staff: barra de módulos minimizada en escritorio (en el
+// teléfono siempre arranca plegada). Se recuerda por dispositivo.
+const NAV_COLLAPSED_STORAGE_KEY = "santo_local_module_nav_collapsed"
 
 export type LocalNavModuleKey = string
 
@@ -67,6 +71,35 @@ export default function LocalModuleNav({
   onSelectBranch?: (branchId: string) => void
 }) {
   const [expanded, setExpanded] = useState(false)
+  // Minimizada en escritorio: el dueño puede plegar la nube de módulos cuando
+  // está trabajando dentro de uno y recuperar pantalla.
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false)
+
+  useEffect(() => {
+    // Difiere el setState un tick (react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => {
+      try {
+        if (window.localStorage.getItem(NAV_COLLAPSED_STORAGE_KEY) === "1") {
+          setDesktopCollapsed(true)
+        }
+      } catch {
+        // Sin almacenamiento la barra queda expandida, como siempre.
+      }
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [])
+
+  function toggleDesktopCollapsed() {
+    setDesktopCollapsed((value) => {
+      const next = !value
+      try {
+        window.localStorage.setItem(NAV_COLLAPSED_STORAGE_KEY, next ? "1" : "0")
+      } catch {
+        // Preferencia no persistida; igual aplica en esta visita.
+      }
+      return next
+    })
+  }
 
   const allowed = new Set(allowedModules)
   const entries = NAV_ENTRIES.filter((entry) => allowed.has(entry.key))
@@ -96,8 +129,26 @@ export default function LocalModuleNav({
           />
         </button>
 
+        {/* En escritorio la nube de módulos se puede minimizar para trabajar
+            dentro de un módulo con más pantalla; la preferencia se recuerda. */}
+        <button
+          type="button"
+          onClick={toggleDesktopCollapsed}
+          aria-expanded={!desktopCollapsed}
+          className="hidden items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] sm:inline-flex"
+        >
+          <LayoutGrid size={14} />
+          {desktopCollapsed ? currentEntry?.label || "Módulos" : "Minimizar"}
+          <ChevronDown
+            size={14}
+            className={desktopCollapsed ? "transition" : "rotate-180 transition"}
+          />
+        </button>
+
         <div
-          className={`${expanded ? "flex" : "hidden"} w-full flex-wrap items-center gap-1.5 sm:flex sm:w-auto sm:flex-1`}
+          className={`${expanded ? "flex" : "hidden"} w-full flex-wrap items-center gap-1.5 sm:w-auto sm:flex-1 ${
+            desktopCollapsed ? "sm:hidden" : "sm:flex"
+          }`}
         >
           {showPanelLink ? (
             <a

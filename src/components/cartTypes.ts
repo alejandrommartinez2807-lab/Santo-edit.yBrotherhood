@@ -116,6 +116,9 @@ export type PublicBusinessConfig = {
   deliveryEnabled: boolean;
   deliveryModuleEnabled: boolean;
   paymentProofsEnabled: boolean;
+  // Cuentas abiertas por mesa: si el módulo está apagado, el carrito no
+  // muestra avisos de cuenta y todo fluye como pedidos sueltos.
+  openAccountsEnabled: boolean;
   membershipPlan: MembershipPlan;
   localTables: PublicLocalTable[];
   locationLabel: string;

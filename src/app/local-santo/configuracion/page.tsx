@@ -80,7 +80,7 @@ import {
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session";
 
 type BusinessViewMode = "simple" | "negocio" | "avanzado";
-type ExchangeRateMode = "automatic" | "manual";
+type ExchangeRateMode = "automatic" | "automaticEur" | "manual";
 type ConfigAccessRole = "owner" | "support";
 
 type BusinessConfig = {
@@ -151,6 +151,8 @@ type BusinessConfig = {
   deliveryWhatsapp: string;
   // Botón público "¿Dudas con tu pedido? Escríbenos" (WhatsApp), apagable.
   orderHelpWhatsappEnabled: boolean;
+  // Botones de aviso al cliente por WhatsApp en el panel privado, apagables.
+  orderWhatsappStageButtonsEnabled: boolean;
   exchangeRateMode: ExchangeRateMode;
   manualExchangeRate: number;
   deliveryEnabled: boolean;
@@ -310,6 +312,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   mainWhatsapp: "",
   deliveryWhatsapp: "",
   orderHelpWhatsappEnabled: true,
+  orderWhatsappStageButtonsEnabled: true,
   exchangeRateMode: "automatic",
   manualExchangeRate: 0,
   deliveryEnabled: true,
@@ -557,7 +560,12 @@ function normalizeExchangeRateMode(value: unknown): ExchangeRateMode {
     .trim()
     .toLowerCase();
 
-  return normalized === "manual" ? "manual" : "automatic";
+  if (normalized === "manual") return "manual";
+  if (normalized === "automaticeur" || normalized === "euro") {
+    return "automaticEur";
+  }
+
+  return "automatic";
 }
 
 function isKnownPlan(value: unknown): value is LocalPlanKey {
@@ -967,6 +975,10 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     orderHelpWhatsappEnabled: normalizeBoolean(
       source.orderHelpWhatsappEnabled,
       DEFAULT_BUSINESS_CONFIG.orderHelpWhatsappEnabled,
+    ),
+    orderWhatsappStageButtonsEnabled: normalizeBoolean(
+      source.orderWhatsappStageButtonsEnabled,
+      DEFAULT_BUSINESS_CONFIG.orderWhatsappStageButtonsEnabled,
     ),
     exchangeRateMode: normalizeExchangeRateMode(source.exchangeRateMode),
     manualExchangeRate:
@@ -2587,6 +2599,30 @@ export default function BusinessConfigPage() {
                   Aparece junto a los pedidos recientes del cliente y en su
                   página de seguimiento: abre tu WhatsApp con un mensaje listo
                   que incluye el número de su pedido.
+                </span>
+              </span>
+            </label>
+
+            <label className="mt-3 flex items-start gap-3">
+              <input
+                type="checkbox"
+                checked={businessConfig.orderWhatsappStageButtonsEnabled}
+                onChange={(e) =>
+                  setBusinessConfig((c) => ({
+                    ...c,
+                    orderWhatsappStageButtonsEnabled: e.target.checked,
+                  }))
+                }
+                className="mt-0.5 h-5 w-5 accent-[var(--brand-primary)]"
+              />
+              <span>
+                <span className="block text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
+                  Botones de aviso por WhatsApp en el panel
+                </span>
+                <span className="mt-0.5 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                  Los botones Confirmar / Preparación / Avisar salida / Llegué
+                  de las tarjetas del panel de Pedidos. Apágalos si tu equipo
+                  no avisa por WhatsApp (el módulo Delivery los conserva).
                 </span>
               </span>
             </label>
@@ -4834,15 +4870,23 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<DollarSign size={22} />}
             title="Tasa y moneda"
-            description="En Automática, el sitio público usa la tasa oficial USD del BCV. En Manual, usa la tasa que fijes aquí (el carrito le dice al cliente cuál está activa)."
+            description="Las tasas automáticas se leen directo del BCV y se actualizan solas todos los días. En Manual, usa la tasa que fijes aquí (el carrito le dice al cliente cuál está activa)."
           >
             <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-3">
                 <ModeButton
-                  label="Automática (BCV)"
-                  description="Seguir la tasa oficial del dólar publicada por el BCV."
+                  label="Tasa BCV (dólar)"
+                  description="Seguir la tasa oficial del dólar del BCV, actualizada a diario."
                   active={businessConfig.exchangeRateMode === "automatic"}
                   onClick={() => updateConfig("exchangeRateMode", "automatic")}
+                />
+                <ModeButton
+                  label="Tasa BCV (euro)"
+                  description="Seguir la tasa oficial del euro del BCV, actualizada a diario."
+                  active={businessConfig.exchangeRateMode === "automaticEur"}
+                  onClick={() =>
+                    updateConfig("exchangeRateMode", "automaticEur")
+                  }
                 />
                 <ModeButton
                   label="Manual"

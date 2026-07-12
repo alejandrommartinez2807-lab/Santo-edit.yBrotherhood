@@ -4238,7 +4238,9 @@ export default function PedidosPage() {
                           </div>
                         </div>
 
-                        {isDeliveryModuleVisible && normalizePhoneForWhatsApp(order.customerPhone || "") ? (
+                        {isDeliveryModuleVisible &&
+                        businessConfig.orderWhatsappStageButtonsEnabled &&
+                        normalizePhoneForWhatsApp(order.customerPhone || "") ? (
                           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                             <a
                               href={buildDeliveryWhatsAppUrl(order, "confirm")}
@@ -4280,7 +4282,8 @@ export default function PedidosPage() {
                               Llegué
                             </a>
                           </div>
-                        ) : isDeliveryModuleVisible ? (
+                        ) : isDeliveryModuleVisible &&
+                          businessConfig.orderWhatsappStageButtonsEnabled ? (
                           <div className="rounded-2xl border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-3 py-2 text-xs font-black text-[var(--brand-amber)]">
                             Este delivery no tiene teléfono válido para abrir WhatsApp.
                           </div>
@@ -4288,7 +4291,10 @@ export default function PedidosPage() {
                       </div>
                     )}
 
-                    {!isDelivery && order.status === "Listo" && normalizePhoneForWhatsApp(order.customerPhone || "") ? (
+                    {!isDelivery &&
+                    businessConfig.orderWhatsappStageButtonsEnabled &&
+                    order.status === "Listo" &&
+                    normalizePhoneForWhatsApp(order.customerPhone || "") ? (
                       <a
                         href={buildDeliveryWhatsAppUrl(order, "ready")}
                         target="_blank"

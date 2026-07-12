@@ -425,7 +425,7 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
           texto (antes las palabras largas quedaban apretadas y las cortas
           estiradas). Si no caben todos, la fila se desliza a los lados. */}
       <div className="mx-auto max-w-7xl px-3 pb-3 sm:px-6 lg:hidden">
-        <nav className="overflow-x-auto rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] p-1.5">
+        <nav className="overflow-x-auto rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className="mx-auto flex w-max min-w-full items-center justify-center gap-1">
           {navItems.map((item) => {
             const linkClass =

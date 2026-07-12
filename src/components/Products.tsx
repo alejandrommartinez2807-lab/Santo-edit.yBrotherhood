@@ -583,7 +583,9 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
         )}
 
         <div className="sticky top-[8.4rem] z-30 -mx-4 mt-8 bg-[var(--brand-cream)]/95 px-4 py-3 backdrop-blur-sm sm:static sm:z-auto sm:m-0 sm:bg-transparent sm:p-0 sm:pt-8 sm:backdrop-blur-none">
-          <div className="flex gap-2.5 overflow-x-auto pb-1 sm:flex-wrap sm:pb-0">
+          {/* Sin barra de scroll visible: en el teléfono se pintaba como una
+              franja naranja gruesa bajo las categorías y desentonaba. */}
+          <div className="flex gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:pb-0">
             {visibleMenuCategories.map((category) => {
               const isActive = selectedCategory === category
 
