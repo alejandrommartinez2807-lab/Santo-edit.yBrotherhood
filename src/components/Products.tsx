@@ -61,6 +61,11 @@ type PublicBusinessConfigResponse = {
 
 const PUBLIC_MENU_FAVORITES_STORAGE_KEY = "santo-public-menu-favorites"
 
+// Banner "Ver combos" apagado por ahora (pedido del dueño 2026-07-12): llenaba
+// mucho la pantalla y los combos ya se llegan por las categorías. Poner en
+// true para volver a mostrarlo; los textos siguen editables en Configuración.
+const SHOW_COMBO_BANNER: boolean = false
+
 const DEFAULT_PUBLIC_MENU_CONFIG: Required<PublicMenuConfig> = {
   publicMenuEyebrow: `Menú ${BRAND.name}`,
   publicMenuTitle: "Elige tu pedido",
@@ -546,7 +551,7 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
           </div>
         )}
 
-        {comboProducts.length > 0 && (
+        {SHOW_COMBO_BANNER && comboProducts.length > 0 && (
           <div className="relative mt-10 overflow-hidden rounded-[1.4rem] border border-[rgba(var(--brand-primary-rgb),0.45)] bg-[linear-gradient(100deg,rgba(var(--brand-primary-rgb),0.16),rgba(var(--brand-primary-rgb),0.03)_55%,transparent)]">
             <div className="pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full bg-[rgba(var(--brand-primary-rgb),0.18)] blur-3xl" />
             <div className="relative flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">

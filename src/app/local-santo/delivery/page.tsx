@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   CheckCircle2,
+  ClipboardCopy,
   Clock,
   Eye,
   EyeOff,
@@ -604,6 +605,30 @@ function buildDeliveryWhatsAppUrl(
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
 }
 
+// Texto para pasarle el pedido al repartidor por WhatsApp con UN solo copiado:
+// teléfono del cliente, link de la dirección y resumen corto de qué lleva.
+// Mismo formato que el botón del panel de Pedidos.
+function buildCourierHandoffText(order: LocalOrder) {
+  const displayNumber = getDisplayOrderNumber(order)
+  const orderTotals = getOrderTotals(order)
+  const rawAddress = String(order.deliveryAddress || "").trim()
+  const mapsLink = rawAddress.match(/https?:\/\/[^\s·]+/)?.[0] || ""
+  const itemsSummary = (order.items || [])
+    .map((item) => `${Math.max(1, Number(item.quantity || 1))}x ${item.name}`)
+    .join(", ")
+
+  return [
+    `Pedido ${displayNumber} · ${order.customerName || "Cliente"}`,
+    `Teléfono: ${order.customerPhone || "Sin teléfono"}`,
+    `Dirección: ${mapsLink || rawAddress || "Sin dirección registrada"}`,
+    ...(order.deliveryReference
+      ? [`Referencia: ${order.deliveryReference}`]
+      : []),
+    ...(itemsSummary ? [`Pedido: ${itemsSummary}`] : []),
+    `Total: ${formatUSD(orderTotals.totalUSD)} · Pago: ${order.paymentMethod || "Por confirmar"}`,
+  ].join("\n")
+}
+
 async function readApiResponse(response: Response) {
   const text = await response.text()
 
@@ -733,6 +758,8 @@ function DeliveryPageContent() {
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [highlightedIds, setHighlightedIds] = useState<string[]>([])
   const [reportingOrderIds, setReportingOrderIds] = useState<string[]>([])
+  // Pedido cuyos datos para el repartidor se acaban de copiar (feedback breve).
+  const [copiedCourierOrderId, setCopiedCourierOrderId] = useState("")
 
   const knownReadyIdsRef = useRef<Set<string>>(new Set())
   const hasLoadedOnceRef = useRef(false)
@@ -1367,6 +1394,46 @@ function DeliveryPageContent() {
                         <MapPin size={16} />
                         Dirección de entrega
                       </p>
+
+                      {/* Un toque copia teléfono + link de dirección + resumen
+                          del pedido, listo para pegárselo al repartidor. */}
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(
+                              buildCourierHandoffText(order)
+                            )
+                            setCopiedCourierOrderId(order.id)
+                            window.setTimeout(() => {
+                              setCopiedCourierOrderId((current) =>
+                                current === order.id ? "" : current
+                              )
+                            }, 2500)
+                          } catch {
+                            // Sin permiso de portapapeles: los datos siguen a
+                            // la vista en esta misma tarjeta.
+                          }
+                        }}
+                        className={`mt-3 flex w-full items-center justify-center gap-2 rounded-full border-2 px-4 py-3 text-xs font-black uppercase tracking-[0.1em] transition ${
+                          copiedCourierOrderId === order.id
+                            ? "border-green-600 bg-green-600 text-white"
+                            : "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white hover:opacity-90"
+                        }`}
+                      >
+                        {copiedCourierOrderId === order.id ? (
+                          <>
+                            <CheckCircle2 size={16} />
+                            ¡Copiado! Pégaselo al repartidor
+                          </>
+                        ) : (
+                          <>
+                            <ClipboardCopy size={16} />
+                            Copiar datos para el repartidor
+                          </>
+                        )}
+                      </button>
+
                       <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/80">
                         <strong>Dirección:</strong> {order.deliveryAddress || "Sin dirección registrada"}
                       </p>

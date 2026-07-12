@@ -132,6 +132,19 @@ type CartDrawerProps = {
 // queda intacta; poner en true para volver a mostrar el campo en el carrito.
 const SHOW_COUPON_FIELD: boolean = false;
 
+// Etiquetas públicas de los tipos de pedido: "Para llevar" se muestra como
+// "Pick up" (pedido del dueño 2026-07-12). El valor interno NO cambia: el
+// servidor, el panel y los tickets siguen manejando "Para llevar".
+const ORDER_TYPE_PUBLIC_LABELS: Record<OrderType, string> = {
+  "Comer aquí": "Comer aquí",
+  "Para llevar": "Pick up",
+  Delivery: "Delivery",
+};
+
+function getOrderTypePublicLabel(type: OrderType) {
+  return ORDER_TYPE_PUBLIC_LABELS[type] || type;
+}
+
 
 function formatAccountOrderDate(value: string | undefined) {
   if (!value) return "";
@@ -1792,7 +1805,7 @@ export default function CartDrawer({
       saveRecentPublicOrder({
         id: orderId,
         totalUSD: createdOrder.totalUSD,
-        label: `${orderType} · ${createdOrder.customerName}`,
+        label: `${getOrderTypePublicLabel(orderType)} · ${createdOrder.customerName}`,
       });
       setRecentPublicOrders(readRecentPublicOrders());
 
@@ -2828,7 +2841,7 @@ export default function CartDrawer({
                             : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)]"
                         }`}
                       >
-                        {type}
+                        {getOrderTypePublicLabel(type)}
                       </button>
                     ))}
                   </div>

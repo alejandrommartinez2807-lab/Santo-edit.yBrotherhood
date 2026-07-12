@@ -676,24 +676,15 @@ export default function ProductCard({
           <span className="pointer-events-none absolute inset-y-0 left-[-60%] w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent opacity-0 transition-all duration-700 ease-out group-hover:left-[120%] group-hover:opacity-100" />
 
           {sizeStyles.showBadges && sizeStyles.compactBadges ? (
-            <div className="absolute left-2 top-2 flex max-w-[80%] flex-col items-start gap-1">
-              <span className="max-w-full truncate rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-2 py-1 text-[0.52rem] font-black uppercase tracking-[0.1em] text-[var(--product-card-button)] backdrop-blur-sm">
-                {category}
+            // En tarjetas angostas solo se muestra "Top ventas": la categoría
+            // ya se ve en los filtros del menú y "Solo divisas" repite el
+            // "Pago en divisas" que va junto al precio. Menos ruido en la foto.
+            isFeatured ? (
+              <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-[var(--product-card-button)] px-2 py-1 text-[0.52rem] font-black uppercase tracking-[0.08em] text-black shadow-lg shadow-black/40">
+                <Sparkles size={10} />
+                Top ventas
               </span>
-
-              {isFeatured ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--product-card-button)] px-2 py-1 text-[0.52rem] font-black uppercase tracking-[0.08em] text-black shadow-lg shadow-black/40">
-                  <Sparkles size={10} />
-                  Top ventas
-                </span>
-              ) : null}
-
-              {isCombo ? (
-                <span className="rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-2 py-1 text-[0.52rem] font-black uppercase tracking-[0.08em] text-[var(--product-card-button)] backdrop-blur-sm">
-                  Solo divisas
-                </span>
-              ) : null}
-            </div>
+            ) : null
           ) : sizeStyles.showBadges ? (
             <>
               <span className="absolute left-4 top-4 rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--product-card-button)] backdrop-blur-sm">
