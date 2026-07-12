@@ -188,25 +188,31 @@ function DayClosesPageContent() {
   const [endDate, setEndDate] = useState("")
   const [areFiltersVisible, setAreFiltersVisible] = useState(true)
   const [isGuideOpen, setIsGuideOpen] = useState(false)
+  // Consolidado: el dueño puede ver el historial de TODAS las sedes juntas
+  // (scope=all). El API clampa a la sede propia para el resto de roles.
+  const [showAllBranches, setShowAllBranches] = useState(false)
   const [reportViewMode, setReportViewMode] =
     useState<ReportViewMode>("Simple")
 
   const isLoggedIn = adminPassword.length > 0
 
-  async function loadDayCloses(password = adminPassword) {
+  async function loadDayCloses(password = adminPassword, allBranches = showAllBranches) {
     if (!password) return
 
     try {
       setIsLoading(true)
       setErrorMessage(null)
 
-      const response = await fetch("/api/day-closes", {
+      const response = await fetch(
+        allBranches ? "/api/day-closes?scope=all" : "/api/day-closes",
+        {
         method: "GET",
         headers: {
           "x-admin-password": password,
         },
         cache: "no-store",
-      })
+        },
+      )
 
       const data = await readApiResponse(response)
 
@@ -532,6 +538,18 @@ function DayClosesPageContent() {
               <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Controles del historial
               </p>
+              <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-full border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-1.5 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                <input
+                  type="checkbox"
+                  checked={showAllBranches}
+                  onChange={(event) => {
+                    setShowAllBranches(event.target.checked)
+                    loadDayCloses(adminPassword, event.target.checked)
+                  }}
+                  className="h-4 w-4 accent-[var(--brand-primary)]"
+                />
+                Ver todas las sedes (solo dueño)
+              </label>
               <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
                 {filteredDayCloses.length} cierre(s) en pantalla · Cobrado {formatUSD(filteredTotals.realCollectedUSD)} · Gastos {formatUSD(filteredTotals.expensesTotalUSD)} · Neto {formatUSD(filteredTotals.netEstimatedUSD)} · Pendiente {formatUSD(filteredTotals.realPendingUSD)} · Modo {reportViewMode}
               </p>
