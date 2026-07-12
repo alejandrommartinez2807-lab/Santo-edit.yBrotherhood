@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
+import { getDisplayOrderNumber } from "@/lib/localOrderHelpers"
+import type { LocalOrder } from "@/types/localOrders"
 import {
   ArrowLeft,
   CheckCircle2,
@@ -156,6 +158,30 @@ export default function PaymentProofsPage() {
   const [query, setQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("Todos")
   const [notesByProofId, setNotesByProofId] = useState<Record<string, string>>({})
+  // Numero visible (#NN) de cada pedido: se calcula con la lista de pedidos,
+  // igual que en caja, para que el cliente y el local hablen del mismo numero.
+  const [orderNumbersById, setOrderNumbersById] = useState<Record<string, string>>({})
+
+  async function loadOrderNumbers() {
+    try {
+      const password = readStoredPassword()
+      const response = await fetch("/api/orders", {
+        headers: { "x-admin-password": password },
+        cache: "no-store",
+      })
+      const data = (await response.json().catch(() => ({}))) as { orders?: LocalOrder[] }
+
+      if (!response.ok || !Array.isArray(data.orders)) return
+
+      const numbers: Record<string, string> = {}
+      data.orders.forEach((order) => {
+        if (order?.id) numbers[order.id] = getDisplayOrderNumber(order)
+      })
+      setOrderNumbersById(numbers)
+    } catch {
+      // Sin numeros visibles la pagina sigue funcionando con el id interno.
+    }
+  }
 
   async function loadProofs(silent = false) {
     if (!silent) {
@@ -181,6 +207,7 @@ export default function PaymentProofsPage() {
       }
 
       setProofs(Array.isArray(data.paymentProofs) ? data.paymentProofs : [])
+      void loadOrderNumbers()
     } catch (loadError) {
       setError(
         loadError instanceof Error
@@ -196,6 +223,7 @@ export default function PaymentProofsPage() {
     // Difiere la carga un tick para no hacer setState síncrono en el efecto.
     const timer = setTimeout(loadProofs, 0)
     return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const filteredProofs = useMemo(() => {
@@ -452,8 +480,13 @@ export default function PaymentProofsPage() {
                               )}
                             </div>
                             <h2 className="mt-3 text-2xl font-black uppercase text-[var(--brand-primary)]">
-                              Pedido {proof.orderId}
+                              Pedido {orderNumbersById[proof.orderId] || proof.orderId}
                             </h2>
+                            {orderNumbersById[proof.orderId] && (
+                              <p className="mt-1 text-[0.68rem] font-bold text-[var(--brand-ink-2)]/50">
+                                Id interno: {proof.orderId}
+                              </p>
+                            )}
                             <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/70">
                               {proof.customerName || "Cliente sin nombre"} · {proof.customerPhone || "Sin teléfono"}
                             </p>

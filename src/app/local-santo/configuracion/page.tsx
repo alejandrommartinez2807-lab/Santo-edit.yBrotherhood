@@ -2631,6 +2631,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<Store size={22} />}
             title="Tipo de negocio"
+            defaultCollapsed
             description="Elige un preset y activamos los módulos recomendados para tu rubro. Puedes ajustar cada módulo abajo después."
           >
             <div className="grid gap-3 sm:grid-cols-2">
@@ -2673,6 +2674,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<Receipt size={22} />}
             title="Facturación fiscal (Venezuela)"
+            defaultCollapsed
             description="IVA por producto e IGTF en divisas. El documento fiscal oficial lo emite tu máquina fiscal; aquí calculamos el desglose para el ticket."
           >
             <label className="flex items-center gap-3">
@@ -2822,6 +2824,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<Store size={22} />}
             title="Colores y vista previa"
+            defaultCollapsed
             description="Edita colores y textos visibles desde el mismo lugar. La vista previa se actualiza en vivo y los cambios se publican cuando guardas."
           >
             <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_420px]">
@@ -3181,6 +3184,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<ShieldCheck size={22} />}
             title="Plan activo"
+            defaultCollapsed
             description="El dueño ve su plan. Soporte puede cambiar el plan o activar una combinación personalizada de módulos."
           >
             <div className="grid gap-4">
@@ -3517,6 +3521,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<Truck size={22} />}
             title="Envío por distancia"
+            defaultCollapsed
             description="El cliente comparte su ubicación de Google Maps y el costo del delivery se calcula solo por kilómetros, con los rangos que definas aquí."
             locked={!canEditDeliveryZones}
             lockedText={
@@ -3539,6 +3544,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<Table2 size={22} />}
             title="Mesas y QR"
+            defaultCollapsed
             description="Edita las mesas reales que aparecen en el carrito público, el panel de mesas y las tarjetas QR por mesa."
             locked={!canEditTables}
             lockedText={`Disponible desde ${tablesAccess.minimumPlanLabel}. La lista se muestra para revisión, pero solo se guarda si el plan incluye mesas.`}
@@ -3781,6 +3787,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<Store size={22} />}
             title="Información pública avanzada"
+            defaultCollapsed
             description="Edita lo que sí se ve hoy en la página pública: textos principales, menú, botones superiores, categorías, destacados y contacto."
             locked={!canEditAdvancedPublic}
             lockedText={`Disponible desde ${advancedPublicAccess.minimumPlanLabel}. Solicita activación para editar títulos, horarios, ubicación y textos públicos desde aquí.`}
@@ -4423,6 +4430,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<Grid2X2 size={22} />}
             title="Promoción pública"
+            defaultCollapsed
             description="Configura una promoción visible en la página pública. Puede ser una oferta general o estar relacionada con un producto o combo del menú editable."
             locked={!canEditPromotion}
             lockedText={`Disponible desde ${promotionAccess.minimumPlanLabel}. La sección queda visible para que el negocio sepa que puede desbloquear promociones al subir de plan.`}
@@ -4701,6 +4709,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<Store size={22} />}
             title="Destacados públicos"
+            defaultCollapsed
             description="Selecciona productos o combos para mostrarlos como recomendados en la página pública. El editor completo del menú está en Productos del menú."
             locked={!canEditFeaturedProducts}
             lockedText={`Disponible desde ${featuredProductsAccess.minimumPlanLabel}. La sección queda visible para que el negocio sepa que puede desbloquear productos destacados al subir de plan.`}
@@ -4870,6 +4879,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<DollarSign size={22} />}
             title="Tasa y moneda"
+            defaultCollapsed
             description="Las tasas automáticas se leen directo del BCV y se actualizan solas todos los días. En Manual, usa la tasa que fijes aquí (el carrito le dice al cliente cuál está activa)."
           >
             <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
@@ -4921,6 +4931,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<SlidersHorizontal size={22} />}
             title="Vista y operación"
+            defaultCollapsed
             description="Preferencias internas para adaptar la pantalla al modo de trabajo del negocio."
           >
             <div className="grid gap-3 lg:grid-cols-3">

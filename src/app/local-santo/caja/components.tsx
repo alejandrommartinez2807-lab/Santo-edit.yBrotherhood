@@ -451,7 +451,9 @@ export function SelectBox({ label, value, onChange, options, emptyLabel = "Sin r
 
 export function MetricCard({ label, value, tone = "red" }: { label: string; value: string | number; tone?: "red" | "yellow" | "soft" }) {
   const style = tone === "yellow" ? "border-yellow-400 bg-[var(--brand-accent-100)] text-[var(--brand-amber)]" : tone === "soft" ? "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]" : "border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-primary)]"
-  return <div className={`rounded-[1.2rem] border-2 p-3 ${style}`}><p className="text-[0.62rem] font-black uppercase tracking-[0.16em]">{label}</p><p className="mt-1 text-2xl font-black">{value}</p></div>
+  // min-w-0 + break-words: etiquetas largas ("Comprobantes", "Por revisar")
+  // se parten en vez de sobresalir de la tarjeta en la grilla del encabezado.
+  return <div className={`min-w-0 overflow-hidden rounded-[1.2rem] border-2 p-3 ${style}`}><p className="break-words text-[0.6rem] font-black uppercase leading-4 tracking-[0.08em]">{label}</p><p className="mt-1 text-2xl font-black">{value}</p></div>
 }
 
 export function MiniMetric({ label, value }: { label: string; value: string | number }) {

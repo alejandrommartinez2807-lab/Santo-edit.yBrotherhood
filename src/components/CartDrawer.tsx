@@ -3055,7 +3055,10 @@ export default function CartDrawer({
                 )}
 
                 {isDeliveryOrder && (
-                  <div className="space-y-5 rounded-[1.5rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-5 sm:space-y-4 sm:py-4">
+                  // Sin caja envolvente: las tarjetas internas (ubicación,
+                  // pago mixto, costo) son el único nivel de borde para que
+                  // el formulario respire y no se vea comprimido.
+                  <div className="space-y-5 sm:space-y-4">
                     {/* 1. Ubicación primero (como las apps grandes): define el
                         costo del envío y la cobertura antes de pedir datos. */}
                     {isDistancePricingEnabled && (
@@ -3584,23 +3587,6 @@ export default function CartDrawer({
                   Registrar pedido
                 </button>
 
-                <a
-                  href={whatsappHref || "#"}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-disabled={!whatsappHref}
-                  onClick={(event) => {
-                    if (!whatsappHref) event.preventDefault();
-                  }}
-                  className={`flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none ${
-                    whatsappHref
-                      ? "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-accent)] hover:text-black"
-                      : "cursor-not-allowed bg-[#ddd3c4] text-[var(--brand-ink-2)]/45"
-                  }`}
-                >
-                  <MessageCircle size={21} />
-                  {whatsappButtonLabel}
-                </a>
               </div>
             )}
           </div>

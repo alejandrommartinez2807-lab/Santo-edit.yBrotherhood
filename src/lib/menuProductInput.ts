@@ -141,6 +141,7 @@ export function normalizeMenuProductInput(value: unknown): SaveMenuProductInput 
     addons: normalizeJsonArray(source.addons),
     includedIngredients: normalizeJsonArray(source.includedIngredients),
     removableIngredients: normalizeJsonArray(source.removableIngredients),
+    comboItems: normalizeJsonArray(source.comboItems),
     selectionRules: normalizeJsonRecord(source.selectionRules),
     preparationMinutes: normalizePositiveInteger(source.preparationMinutes),
     requiresWaiterConfirmation: normalizeBoolean(source.requiresWaiterConfirmation, false),

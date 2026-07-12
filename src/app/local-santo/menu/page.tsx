@@ -21,6 +21,7 @@ import {
   XCircle,
 } from "lucide-react"
 import { formatUSD } from "@/utils/formatCurrency"
+import CurrentBranchBanner from "@/components/local/CurrentBranchBanner"
 import {
   categories as baseCategories,
   products as baseProducts,
@@ -1260,6 +1261,9 @@ export default function LocalMenuPage() {
             </div>
           </div>
         </header>
+
+        {/* Sede en edición: el menú guarda por sede (x-branch-id). */}
+        <CurrentBranchBanner />
 
         <section className="mt-4 rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">

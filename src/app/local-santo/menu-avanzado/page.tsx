@@ -16,6 +16,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react"
 import { type ProductSalesChannel } from "@/data/products"
+import CurrentBranchBanner from "@/components/local/CurrentBranchBanner"
 import { formatUSD } from "@/utils/formatCurrency"
 import {
   ADMIN_STORAGE_KEY,
@@ -709,6 +710,10 @@ export default function AdvancedMenuPage() {
           </div>
         </header>
 
+        {/* Sede en edición, bien visible: el menú avanzado guarda por sede
+            (header x-branch-id); sin esto era fácil editar la sede equivocada. */}
+        <CurrentBranchBanner />
+
         {(errorMessage || successMessage) && (
           <section className="mt-4 space-y-3">
             {errorMessage && (
@@ -754,6 +759,11 @@ export default function AdvancedMenuPage() {
                 <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4 text-center">
                   <p className="text-sm font-black text-[var(--brand-primary)]">
                     No hay productos para mostrar.
+                  </p>
+                  <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
+                    Si esta sede no tiene menú propio, el público ve el menú de
+                    la sede principal. Crea productos desde Menú editable con
+                    esta sede seleccionada para darle menú propio.
                   </p>
                 </div>
               ) : (

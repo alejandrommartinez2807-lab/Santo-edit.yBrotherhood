@@ -565,23 +565,28 @@ export function CartSummaryFooter({
           </button>
         )}
 
-        <a
-          href={whatsappHref || "#"}
-          target="_blank"
-          rel="noreferrer"
-          aria-disabled={!whatsappHref}
-          onClick={(event) => {
-            if (!whatsappHref) event.preventDefault();
-          }}
-          className={`flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none ${
-            whatsappHref
-              ? "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-accent)] hover:text-black"
-              : "cursor-not-allowed bg-[#ddd3c4] text-[var(--brand-ink-2)]/45"
-          }`}
-        >
-          <MessageCircle size={17} />
-          {whatsappButtonLabel}
-        </a>
+        {/* WhatsApp solo queda como respaldo cuando el negocio no registra
+            pedidos en el panel; con registro activo el único camino es
+            "Registrar pedido". */}
+        {!canRegisterOrdersInPanel && (
+          <a
+            href={whatsappHref || "#"}
+            target="_blank"
+            rel="noreferrer"
+            aria-disabled={!whatsappHref}
+            onClick={(event) => {
+              if (!whatsappHref) event.preventDefault();
+            }}
+            className={`flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none ${
+              whatsappHref
+                ? "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-accent)] hover:text-black"
+                : "cursor-not-allowed bg-[#ddd3c4] text-[var(--brand-ink-2)]/45"
+            }`}
+          >
+            <MessageCircle size={17} />
+            {whatsappButtonLabel}
+          </a>
+        )}
       </div>
     </div>
   );
