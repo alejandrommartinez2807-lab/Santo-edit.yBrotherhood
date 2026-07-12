@@ -1022,7 +1022,7 @@ function CajaPageContent() {
             <p className="mx-auto mt-3 max-w-md text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">Cambia el filtro o espera nuevos pedidos.</p>
           </section>
         ) : (
-          <section className="mt-5 grid gap-4 xl:grid-cols-2">
+          <section className="mt-5 grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
             {filteredOrders.map((order) => (
               <CashOrderCard
                 key={order.id}

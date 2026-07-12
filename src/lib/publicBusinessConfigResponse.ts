@@ -387,6 +387,7 @@ export function buildPublicBusinessConfigResponse(
     openAccountsEnabled: openAccountsAccess.effectiveEnabled,
     splitBillEnabled: splitBillAccess.effectiveEnabled,
     kitchenFlowMode: normalizeKitchenFlowMode(config.kitchenFlowMode),
+    publicPaymentMethodChangeEnabled: config.publicPaymentMethodChangeEnabled !== false,
     localTables: normalizePublicLocalTables(config.localTables),
     promotionActive: promotionCanShow,
     promotionTitle: promotionCanShow ? promotionTitle : "",

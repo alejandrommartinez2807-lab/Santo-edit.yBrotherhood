@@ -41,7 +41,7 @@ export default function PedidoSeguimientoPage({
 }) {
   const { orderId: rawOrderId } = use(params);
   const orderId = decodeURIComponent(String(rawOrderId || "")).trim().toLowerCase();
-  const { status, displayNumber, notFound } = usePublicOrderStatus(orderId);
+  const { status, displayNumber, items, notFound } = usePublicOrderStatus(orderId);
   const [notifyEnabled, setNotifyEnabled] = useState(false);
   const [googleReviewUrl, setGoogleReviewUrl] = useState("");
   // WhatsApp del negocio para el botón "¿Dudas con tu pedido? Escríbenos"
@@ -236,6 +236,49 @@ export default function PedidoSeguimientoPage({
                   ) : null}
                 </>
               )}
+
+              {/* Qué trae el pedido: nombre, cantidad y personalización, para
+                  que el cliente confirme que es SU pedido al reabrir el link. */}
+              {items.length > 0 ? (
+                <div className="mt-6 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/40 px-4 py-4 text-left">
+                  <p className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+                    Tu pedido trae
+                  </p>
+                  <div className="mt-2 space-y-2">
+                    {items.map((item, index) => (
+                      <div
+                        key={`${item.name}-${index}`}
+                        className="rounded-xl bg-[var(--brand-surface-2)] px-3 py-2"
+                      >
+                        <div className="flex items-start justify-between gap-3 text-sm font-black text-[var(--brand-ink-3)]">
+                          <span>
+                            {item.name} x{item.quantity}
+                          </span>
+                          {item.subtotalUSD > 0 ? (
+                            <span className="shrink-0 text-[var(--brand-primary)]">
+                              ${item.subtotalUSD.toFixed(2)}
+                            </span>
+                          ) : null}
+                        </div>
+                        {item.selectionSummary
+                          ? item.selectionSummary
+                              .split(" · ")
+                              .map((line) => line.trim())
+                              .filter(Boolean)
+                              .map((line) => (
+                                <p
+                                  key={line}
+                                  className="mt-1 text-[0.72rem] font-bold leading-4 text-[var(--brand-ink-2)]/65"
+                                >
+                                  {line}
+                                </p>
+                              ))
+                          : null}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
 
               <p className="mt-6 text-[0.7rem] font-bold leading-5 text-[var(--brand-ink-2)]/50">
                 Referencia: {orderId}. Guarda este link para volver cuando quieras.

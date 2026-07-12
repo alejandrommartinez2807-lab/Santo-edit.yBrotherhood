@@ -210,6 +210,9 @@ export type BusinessConfig = {
   allowCloseWithPendingOrders: boolean
   allowCloseWithPendingPayments: boolean
   kitchenFlowMode: KitchenFlowMode
+  // Al reportar el pago, permitir que el cliente elija un método distinto al
+  // que indicó al pedir (con aviso). false = el método queda fijo.
+  publicPaymentMethodChangeEnabled: boolean
   updatedAt?: string
 }
 
@@ -348,6 +351,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   allowCloseWithPendingOrders: true,
   allowCloseWithPendingPayments: true,
   kitchenFlowMode: "kitchen",
+  publicPaymentMethodChangeEnabled: true,
 }
 
 function normalizeBooleanConfig(value: unknown, fallback: boolean) {
@@ -913,6 +917,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       DEFAULT_BUSINESS_CONFIG.allowCloseWithPendingPayments
     ),
     kitchenFlowMode: normalizeKitchenFlowMode(source.kitchenFlowMode),
+    publicPaymentMethodChangeEnabled: normalizeBooleanConfig(
+      source.publicPaymentMethodChangeEnabled,
+      DEFAULT_BUSINESS_CONFIG.publicPaymentMethodChangeEnabled
+    ),
     updatedAt: source.updatedAt ? String(source.updatedAt) : undefined,
   }
 }

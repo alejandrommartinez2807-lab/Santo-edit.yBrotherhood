@@ -616,7 +616,24 @@ export function getStaffConfirmationStatusLabel(status: unknown) {
   return "Sin revisión requerida"
 }
 
-export function getOrderItemDetailLines(item: OrderItemLike) {
+export type OrderItemDetailLineOptions = {
+  // false = sin precios en los detalles (cocina no cobra: solo necesita saber
+  // QUÉ preparar, los "(+$1.00)" de variaciones/adicionales estorban).
+  includePrices?: boolean
+}
+
+// Quita las etiquetas de precio "(+$1.00)" de un resumen de selección.
+export function stripPricesFromSelectionSummary(summary: string) {
+  return String(summary || "")
+    .replace(/\s*\(\+\s*\$\s*[\d.,]+\)/g, "")
+    .trim()
+}
+
+export function getOrderItemDetailLines(
+  item: OrderItemLike,
+  options: OrderItemDetailLineOptions = {},
+) {
+  const includePrices = options.includePrices !== false
   const lines: string[] = []
   const selectionSummary = getOrderItemSelectionSummary(item)
   const unitOptionsPrice = cleanNumber(item.unitOptionsPrice)
@@ -624,10 +641,20 @@ export function getOrderItemDetailLines(item: OrderItemLike) {
   const note = cleanText(item.note)
 
   if (selectionSummary) {
-    lines.push(selectionSummary)
+    // Una línea por sección (Variación / Adicionales / Sin…): leído junto con
+    // "·" se vuelve un choclo difícil de seguir en las tarjetas.
+    const cleanSummary = includePrices
+      ? selectionSummary
+      : stripPricesFromSelectionSummary(selectionSummary)
+
+    cleanSummary
+      .split(" · ")
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .forEach((part) => lines.push(part))
   }
 
-  if (unitOptionsPrice > 0) {
+  if (includePrices && unitOptionsPrice > 0) {
     lines.push(`Base ${formatUSD(basePrice)} + extras`)
   }
 

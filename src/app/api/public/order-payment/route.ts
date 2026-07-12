@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     // devuelve la sede del pedido para que el reporte de pago llegue a ella.
     const { data, error } = await supabase
       .from("orders")
-      .select("id,branch_id,seq,status,total_usd,amount_received_usd,amount_received_ves")
+      .select("id,branch_id,seq,status,total_usd,amount_received_usd,amount_received_ves,exchange_rate")
       .eq("id", orderId)
       .maybeSingle()
 
@@ -73,6 +73,9 @@ export async function GET(request: NextRequest) {
       displayNumber: seq > 0 ? `#${String(seq).padStart(2, "0")}` : "",
       orderStatus: String(order.status || ""),
       totalUSD: Number(order.total_usd || 0),
+      // Tasa con la que se registró el pedido: precarga el monto en Bs cuando
+      // el método elegido es en bolívares (pago móvil, punto…).
+      exchangeRate: Number(order.exchange_rate || 0),
       paymentRegistered,
       // Subconjunto seguro: sin teléfono ni imagen (la captura puede traer
       // datos bancarios del cliente; solo caja la ve en su panel).

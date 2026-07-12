@@ -348,7 +348,7 @@ function ProductGroup({
                 </p>
               ) : null}
 
-              {getOrderItemDetailLines(item).map((line) => (
+              {getOrderItemDetailLines(item, { includePrices: false }).map((line) => (
                 <p key={line} className="mt-1 rounded-lg bg-[var(--brand-cream)] px-2 py-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/75">
                   {line}
                 </p>
