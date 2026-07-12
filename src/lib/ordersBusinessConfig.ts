@@ -27,7 +27,9 @@ import {
 
 export type BusinessViewMode = "simple" | "negocio" | "avanzado"
 
-export type ExchangeRateMode = "automatic" | "manual"
+// "automatic" = dólar oficial BCV; "automaticEur" = euro oficial BCV (se
+// actualiza igual de solo); "manual" = tasa fijada por el dueño.
+export type ExchangeRateMode = "automatic" | "automaticEur" | "manual"
 
 export type LocalTable = {
   id: string
@@ -116,6 +118,10 @@ export type BusinessConfig = {
   instagramUrl: string
   mainWhatsapp: string
   deliveryWhatsapp: string
+  // Botón público "¿Dudas con tu pedido? Escríbenos" (WhatsApp), apagable.
+  orderHelpWhatsappEnabled: boolean
+  // Botones de aviso al cliente por WhatsApp en el panel privado, apagables.
+  orderWhatsappStageButtonsEnabled: boolean
   exchangeRateMode: ExchangeRateMode
   manualExchangeRate: number
   deliveryEnabled: boolean
@@ -254,6 +260,8 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   instagramUrl: "",
   mainWhatsapp: "",
   deliveryWhatsapp: "",
+  orderHelpWhatsappEnabled: true,
+  orderWhatsappStageButtonsEnabled: true,
   exchangeRateMode: "automatic",
   manualExchangeRate: 0,
   deliveryEnabled: true,
@@ -488,6 +496,9 @@ function normalizeExchangeRateMode(value: unknown): ExchangeRateMode {
   const normalized = String(value || "").trim().toLowerCase()
 
   if (normalized === "manual") return "manual"
+  if (normalized === "automaticeur" || normalized === "euro") {
+    return "automaticEur"
+  }
 
   return "automatic"
 }
@@ -652,6 +663,14 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       Number.isFinite(manualExchangeRate) && manualExchangeRate > 0
         ? manualExchangeRate
         : 0,
+    orderHelpWhatsappEnabled: normalizeBooleanConfig(
+      source.orderHelpWhatsappEnabled,
+      DEFAULT_BUSINESS_CONFIG.orderHelpWhatsappEnabled
+    ),
+    orderWhatsappStageButtonsEnabled: normalizeBooleanConfig(
+      source.orderWhatsappStageButtonsEnabled,
+      DEFAULT_BUSINESS_CONFIG.orderWhatsappStageButtonsEnabled
+    ),
     deliveryEnabled: normalizeBooleanConfig(
       source.deliveryEnabled,
       DEFAULT_BUSINESS_CONFIG.deliveryEnabled

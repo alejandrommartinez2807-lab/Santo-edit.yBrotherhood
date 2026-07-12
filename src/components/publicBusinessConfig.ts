@@ -61,9 +61,11 @@ export const DEFAULT_PUBLIC_CONFIG: PublicBusinessConfig = {
   productCardButtonColor: "#ffd23c",
   mainWhatsapp: "",
   deliveryWhatsapp: "",
+  orderHelpWhatsappEnabled: true,
   deliveryEnabled: true,
   deliveryModuleEnabled: true,
   paymentProofsEnabled: false,
+  openAccountsEnabled: false,
   membershipPlan: "menuDigital",
   localTables: [],
   locationLabel: "Mesa",
@@ -526,6 +528,10 @@ export function normalizePublicBusinessConfig(value: unknown): PublicBusinessCon
       DEFAULT_PUBLIC_CONFIG.productCardButtonColor,
     mainWhatsapp: cleanWhatsappNumber(businessConfig.mainWhatsapp),
     deliveryWhatsapp: cleanWhatsappNumber(businessConfig.deliveryWhatsapp),
+    orderHelpWhatsappEnabled: normalizePublicBoolean(
+      businessConfig.orderHelpWhatsappEnabled,
+      true,
+    ),
     deliveryEnabled:
       normalizePublicBoolean(businessConfig.deliveryEnabled, true) &&
       doesPlanAllowDelivery(membershipPlan),
@@ -536,6 +542,10 @@ export function normalizePublicBusinessConfig(value: unknown): PublicBusinessCon
     paymentProofsEnabled:
       normalizePublicBoolean(businessConfig.paymentProofsEnabled, false) ||
       normalizePublicBoolean(businessConfig.paymentProofsModuleEnabled, false),
+    openAccountsEnabled: normalizePublicBoolean(
+      businessConfig.openAccountsEnabled,
+      false,
+    ),
     membershipPlan,
     localTables: normalizePublicLocalTables(businessConfig.localTables),
     locationLabel: cleanText(businessConfig.locationLabel) || DEFAULT_PUBLIC_CONFIG.locationLabel,

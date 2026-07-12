@@ -10,12 +10,12 @@ type BranchScopedConfig = {
   mainWhatsapp?: string
   deliveryWhatsapp?: string
   localTables?: { name?: string; area?: string }[]
-  exchangeRateMode?: "automatic" | "manual"
+  exchangeRateMode?: "automatic" | "automaticEur" | "manual"
   manualExchangeRate?: number
 }
 
 // "" = heredar lo definido en Configuración → "Tasa y moneda".
-type BranchRateMode = "" | "automatic" | "manual"
+type BranchRateMode = "" | "automatic" | "automaticEur" | "manual"
 
 const EMPTY_TABLE: BranchTable = { name: "", area: "" }
 
@@ -50,7 +50,9 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
     setMainWhatsapp(config.mainWhatsapp || "")
     setDeliveryWhatsapp(config.deliveryWhatsapp || "")
     setRateMode(
-      config.exchangeRateMode === "automatic" || config.exchangeRateMode === "manual"
+      config.exchangeRateMode === "automatic" ||
+        config.exchangeRateMode === "automaticEur" ||
+        config.exchangeRateMode === "manual"
         ? config.exchangeRateMode
         : "",
     )
@@ -251,7 +253,8 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
             <div className="mt-2 flex flex-wrap gap-2">
               {([
                 { value: "" as BranchRateMode, label: "Heredar del negocio" },
-                { value: "automatic" as BranchRateMode, label: "Automática (BCV)" },
+                { value: "automatic" as BranchRateMode, label: "BCV dólar" },
+                { value: "automaticEur" as BranchRateMode, label: "BCV euro" },
                 { value: "manual" as BranchRateMode, label: "Manual de esta sede" },
               ]).map((option) => (
                 <button

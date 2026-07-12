@@ -369,6 +369,7 @@ export function buildPublicBusinessConfigResponse(
     instagramUrl: cleanUrl(config.instagramUrl),
     mainWhatsapp: cleanWhatsappNumber(config.mainWhatsapp),
     deliveryWhatsapp: cleanWhatsappNumber(config.deliveryWhatsapp),
+    orderHelpWhatsappEnabled: config.orderHelpWhatsappEnabled !== false,
     exchangeRateMode:
       normalizeText(config.exchangeRateMode) === "manual"
         ? "manual"

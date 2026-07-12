@@ -1,6 +1,8 @@
+export type ExchangeRateCurrency = "USD" | "EUR"
+
 export type ExchangeRateCacheableResponse = {
   rate: number
-  currency: "USD"
+  currency: ExchangeRateCurrency
   source: "BCV" | "DolarApi" | "Fallback local" | "Negocio"
   name: string
   valueDate?: string
@@ -17,8 +19,12 @@ type ExchangeRateCacheEntry = {
   expiresAt: number
 }
 
+// Caché separada por moneda: el dueño puede trabajar con la tasa USD o EUR
+// del BCV, y cada una guarda su propia lectura.
 type ExchangeRateCacheGlobal = typeof globalThis & {
-  __santoExchangeRateCache?: ExchangeRateCacheEntry | null
+  __santoExchangeRateCache?: Partial<
+    Record<ExchangeRateCurrency, ExchangeRateCacheEntry | null>
+  > | null
 }
 
 const globalForExchangeRateCache = globalThis as ExchangeRateCacheGlobal
@@ -44,13 +50,18 @@ export function getExchangeRateFallbackCacheMs() {
   )
 }
 
-export function getCachedExchangeRate(now = Date.now()) {
-  const entry = globalForExchangeRateCache.__santoExchangeRateCache
+export function getCachedExchangeRate(
+  now = Date.now(),
+  currency: ExchangeRateCurrency = "USD"
+) {
+  const entry = globalForExchangeRateCache.__santoExchangeRateCache?.[currency]
 
   if (!entry) return null
 
   if (entry.expiresAt <= now) {
-    globalForExchangeRateCache.__santoExchangeRateCache = null
+    if (globalForExchangeRateCache.__santoExchangeRateCache) {
+      globalForExchangeRateCache.__santoExchangeRateCache[currency] = null
+    }
     return null
   }
 
@@ -66,8 +77,11 @@ export function setCachedExchangeRate(
     : getExchangeRateSuccessCacheMs()
 
   globalForExchangeRateCache.__santoExchangeRateCache = {
-    response,
-    expiresAt: now + cacheMs,
+    ...globalForExchangeRateCache.__santoExchangeRateCache,
+    [response.currency]: {
+      response,
+      expiresAt: now + cacheMs,
+    },
   }
 
   return response

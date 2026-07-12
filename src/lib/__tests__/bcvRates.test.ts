@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
+  extractBcvEurRate,
   extractBcvUsdRate,
   extractBcvValueDate,
   parseVenezuelanNumber,
@@ -35,6 +36,19 @@ describe("bcvRates", () => {
 
   it("lanza error si el HTML no trae una tasa USD reconocible", () => {
     expect(() => extractBcvUsdRate("<html><body>mantenimiento</body></html>")).toThrow()
+  })
+
+  it("extrae la tasa del EURO (no la del dólar) desde el bloque id=euro", () => {
+    expect(extractBcvEurRate(BCV_SAMPLE_HTML)).toBe(763.1919165)
+  })
+
+  it("extrae la tasa euro desde el texto EUR si no encuentra el bloque id=euro", () => {
+    const withoutId = BCV_SAMPLE_HTML.replace('id="euro"', 'data-x="euro"')
+    expect(extractBcvEurRate(withoutId)).toBe(763.1919165)
+  })
+
+  it("lanza error si el HTML no trae una tasa EUR reconocible", () => {
+    expect(() => extractBcvEurRate("<html><body>mantenimiento</body></html>")).toThrow()
   })
 
   it("extrae la fecha valor publicada por el BCV", () => {

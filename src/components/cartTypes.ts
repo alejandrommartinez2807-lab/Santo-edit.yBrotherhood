@@ -111,9 +111,14 @@ export type PublicBusinessConfig = {
   productCardButtonColor?: string;
   mainWhatsapp: string;
   deliveryWhatsapp: string;
+  // Botón "¿Dudas con tu pedido? Escríbenos" (WhatsApp), apagable por el dueño.
+  orderHelpWhatsappEnabled: boolean;
   deliveryEnabled: boolean;
   deliveryModuleEnabled: boolean;
   paymentProofsEnabled: boolean;
+  // Cuentas abiertas por mesa: si el módulo está apagado, el carrito no
+  // muestra avisos de cuenta y todo fluye como pedidos sueltos.
+  openAccountsEnabled: boolean;
   membershipPlan: MembershipPlan;
   localTables: PublicLocalTable[];
   locationLabel: string;

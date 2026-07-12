@@ -7,7 +7,6 @@ import {
   Beef,
   Flame,
   MapPin,
-  MessageCircle,
   Sandwich,
   Star,
   UtensilsCrossed,
@@ -171,22 +170,6 @@ function normalizeExternalUrl(value: string, fallback = "#") {
   return fallback
 }
 
-function buildWhatsappUrl(value: string) {
-  const cleanValue = String(value || "").trim()
-
-  if (!cleanValue) return "#"
-
-  if (cleanValue.startsWith("http://") || cleanValue.startsWith("https://")) {
-    return cleanValue
-  }
-
-  const digits = cleanValue.replace(/\D/g, "")
-
-  if (!digits) return "#"
-
-  return `https://wa.me/${digits}`
-}
-
 async function getPublicBusinessConfig() {
   const response = await fetch("/api/public/business-config", {
     method: "GET",
@@ -228,12 +211,6 @@ export default function Hero() {
       isMounted = false
     }
   }, [])
-
-  const whatsappUrl = useMemo(() => {
-    return buildWhatsappUrl(
-      businessConfig.mainWhatsapp || businessConfig.deliveryWhatsapp
-    )
-  }, [businessConfig.mainWhatsapp, businessConfig.deliveryWhatsapp])
 
   const googleMapsUrl = useMemo(() => {
     return normalizeExternalUrl(
@@ -331,28 +308,20 @@ export default function Hero() {
           {businessConfig.heroDescription}
         </p>
 
-        {/* CTAs primarias */}
-        <div className="mt-9 grid w-full max-w-md grid-cols-1 gap-3 sm:grid-cols-2">
+        {/* CTA primaria: un solo botón al menú. El "Pedir ahora" por WhatsApp
+            se quitó (2026-07-12): el cliente casi siempre LLEGA desde
+            WhatsApp, así que mandarlo de vuelta no tenía sentido. */}
+        <div className="mt-9 w-full max-w-md">
           <a
             href="#menu"
-            className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--brand-primary)] px-6 py-4 text-sm font-extrabold uppercase tracking-wide text-black shadow-[0_14px_38px_-10px_rgba(var(--brand-primary-rgb),0.65)] transition hover:bg-[var(--brand-accent)] active:scale-95"
+            className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--brand-primary)] px-6 py-4 text-sm font-extrabold uppercase tracking-wide text-black shadow-[0_14px_38px_-10px_rgba(var(--brand-primary-rgb),0.65)] transition hover:bg-[var(--brand-accent)] active:scale-95"
           >
             <UtensilsCrossed size={18} />
-            {businessConfig.publicMenuTitle || "Ver menú"}
+            Descubre el menú
             <ArrowRight
               size={16}
               className="transition-transform group-hover:translate-x-1"
             />
-          </a>
-
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[rgba(var(--brand-primary-rgb),0.35)] bg-[var(--brand-surface)] px-6 py-4 text-sm font-extrabold uppercase tracking-wide text-[var(--brand-ink-3)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95"
-          >
-            <MessageCircle size={18} />
-            Pedir ahora
           </a>
         </div>
 

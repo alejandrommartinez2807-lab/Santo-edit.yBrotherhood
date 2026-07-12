@@ -168,7 +168,7 @@ export default function PublicSectionNavigator() {
   return (
     <section className="sticky top-0 z-40 border-y-2 border-[var(--brand-primary)]/10 bg-[var(--brand-cream)]/95 px-3 py-3 shadow-[0_8px_22px_rgba(var(--brand-primary-rgb),0.08)] backdrop-blur md:top-0 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {items.map((item) => {
             const Icon = item.icon;
 

@@ -1,7 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server"
 import https from "node:https"
 import zlib from "node:zlib"
-import { extractBcvUsdRate, extractBcvValueDate } from "@/lib/bcvRates"
+import {
+  extractBcvEurRate,
+  extractBcvUsdRate,
+  extractBcvValueDate,
+} from "@/lib/bcvRates"
 import {
   getCachedExchangeRate,
   setCachedExchangeRate,
@@ -27,6 +31,8 @@ const DOLAR_API_USD_URL = "https://ve.dolarapi.com/v1/dolares/oficial"
 // Última tasa oficial conocida al momento de escribir esto; solo se usa si
 // fallan el BCV y DolarApi y no hay nada en caché.
 const FALLBACK_USD_RATE = 667.05
+// Euro oficial de respaldo (≈ USD × EUR/USD); solo si el BCV no responde.
+const FALLBACK_EUR_RATE = 774.0
 
 type ExchangeRateResponse = ExchangeRateCacheableResponse
 
@@ -121,6 +127,22 @@ async function getBcvUsdRate(): Promise<ExchangeRateResponse> {
   }
 }
 
+async function getBcvEurRate(): Promise<ExchangeRateResponse> {
+  const html = await fetchBcvHtml()
+  const rate = extractBcvEurRate(html)
+  const valueDate = extractBcvValueDate(html)
+
+  return {
+    rate,
+    currency: "EUR",
+    source: "BCV",
+    name: "Euro Oficial BCV",
+    valueDate,
+    updatedAt: new Date().toISOString(),
+    fallback: false,
+  }
+}
+
 async function getDolarApiUsdRate(): Promise<ExchangeRateResponse> {
   const response = await fetch(DOLAR_API_USD_URL, {
     headers: {
@@ -153,13 +175,15 @@ async function getDolarApiUsdRate(): Promise<ExchangeRateResponse> {
   }
 }
 
-// Tasa fijada por el dueño (modo manual): global en Configuración → "Tasa y
-// moneda", con override por sede en Sucursales → Configuración por sede. Se
-// resuelve en cada request (sin caché) para que un cambio del dueño se vea de
-// inmediato; si la lectura de la config falla, seguimos con el BCV.
-async function getManualRateFromConfig(
-  request: NextRequest
-): Promise<ExchangeRateResponse | null> {
+// Modo de tasa elegido por el dueño: global en Configuración → "Tasa y
+// moneda" (BCV dólar / BCV euro / manual), con override por sede en
+// Sucursales → Configuración por sede. Se resuelve en cada request (sin
+// caché) para que un cambio del dueño se vea de inmediato; si la lectura de
+// la config falla, seguimos con el dólar BCV.
+async function resolveConfiguredExchangeMode(request: NextRequest): Promise<{
+  mode: "automatic" | "automaticEur" | "manual"
+  manualResponse: ExchangeRateResponse | null
+}> {
   try {
     const rawConfig = await getRawBusinessConfig()
     const businessConfig = normalizeBusinessConfig(rawConfig)
@@ -177,6 +201,7 @@ async function getManualRateFromConfig(
 
       if (
         branchConfig.exchangeRateMode === "automatic" ||
+        branchConfig.exchangeRateMode === "automaticEur" ||
         branchConfig.exchangeRateMode === "manual"
       ) {
         mode = branchConfig.exchangeRateMode
@@ -189,27 +214,36 @@ async function getManualRateFromConfig(
       }
     }
 
-    if (mode !== "manual") return null
-
-    if (!Number.isFinite(manualRate) || manualRate <= 0) return null
-
-    return {
-      rate: manualRate,
-      currency: "USD",
-      source: "Negocio",
-      name: "Tasa fijada por el negocio",
-      valueDate: undefined,
-      updatedAt: new Date().toISOString(),
-      fallback: false,
-      manual: true,
+    if (
+      mode === "manual" &&
+      Number.isFinite(manualRate) &&
+      manualRate > 0
+    ) {
+      return {
+        mode,
+        manualResponse: {
+          rate: manualRate,
+          currency: "USD",
+          source: "Negocio",
+          name: "Tasa fijada por el negocio",
+          valueDate: undefined,
+          updatedAt: new Date().toISOString(),
+          fallback: false,
+          manual: true,
+        },
+      }
     }
+
+    // Manual sin tasa válida cae al dólar automático (mejor que quedarse sin
+    // tasa); los modos automáticos pasan tal cual.
+    return { mode: mode === "manual" ? "automatic" : mode, manualResponse: null }
   } catch (error) {
     captureError(error, {
       route: "/api/exchange-rate",
       action: "GET_MANUAL_RATE",
     })
 
-    return null
+    return { mode: "automatic", manualResponse: null }
   }
 }
 
@@ -233,10 +267,48 @@ export async function GET(request: NextRequest) {
 
   if (rateLimitResponse) return rateLimitResponse
 
-  const manualRate = await getManualRateFromConfig(request)
+  const { mode, manualResponse } = await resolveConfiguredExchangeMode(request)
 
-  if (manualRate) {
-    return jsonExchangeRate(manualRate)
+  if (manualResponse) {
+    return jsonExchangeRate(manualResponse)
+  }
+
+  // Modo euro: misma página del BCV, bloque del EUR, con su propia caché.
+  if (mode === "automaticEur") {
+    const cachedEurRate = getCachedExchangeRate(Date.now(), "EUR")
+
+    if (cachedEurRate) {
+      return jsonExchangeRate(cachedEurRate)
+    }
+
+    try {
+      const bcvEurRate = await getBcvEurRate()
+
+      return jsonExchangeRate(setCachedExchangeRate(bcvEurRate))
+    } catch (bcvError) {
+      captureError(bcvError, {
+        route: "/api/exchange-rate",
+        action: "GET_BCV_EUR_RATE",
+      })
+
+      return jsonExchangeRate(
+        setCachedExchangeRate({
+          rate: FALLBACK_EUR_RATE,
+          currency: "EUR",
+          source: "Fallback local",
+          name: "Euro Oficial BCV",
+          valueDate: undefined,
+          updatedAt: new Date().toISOString(),
+          fallback: true,
+          warning:
+            "No se pudo leer la tasa euro oficial en este momento. Se usó una tasa de respaldo local.",
+          error:
+            bcvError instanceof Error
+              ? bcvError.message
+              : "No se pudo leer el BCV",
+        })
+      )
+    }
   }
 
   const cachedRate = getCachedExchangeRate()
