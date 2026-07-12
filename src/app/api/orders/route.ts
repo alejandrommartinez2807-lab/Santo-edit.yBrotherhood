@@ -305,10 +305,19 @@ export async function POST(request: NextRequest) {
     )
     let openAccountId = explicitOpenAccountId
 
+    // La heurística por datos (teléfono/dirección/zona) solo aplica cuando el
+    // pedido llega SIN un tipo explícito válido (flujos viejos por WhatsApp).
+    // Con tipo explícito ("Comer aquí"/"Para llevar") el teléfono ya viaja
+    // siempre — el carrito lo pide también en mesa y para llevar — y no debe
+    // reclasificar el pedido como delivery.
+    const hasImplicitDeliveryData =
+      !isValidOrderType(rawOrderType) &&
+      Boolean((hasOpenAccountIntent ? false : customerPhone) || deliveryAddress || deliveryReference || rawDeliveryZone)
+
     const hasDeliveryData =
       rawOrderType === "Delivery" ||
       rawTableNumber.toLowerCase().startsWith("delivery") ||
-      Boolean((hasOpenAccountIntent ? false : customerPhone) || deliveryAddress || deliveryReference || rawDeliveryZone)
+      hasImplicitDeliveryData
 
     const orderType: OrderType = hasDeliveryData
       ? "Delivery"

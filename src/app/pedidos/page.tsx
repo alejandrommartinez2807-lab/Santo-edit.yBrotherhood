@@ -10,6 +10,7 @@ import {
   BellRing,
   CheckCircle2,
   Clock,
+  ClipboardCopy,
   CookingPot,
   Eye,
   EyeOff,
@@ -134,6 +135,7 @@ import {
   playPanelSoundWithContext,
   getProductsSoldFromOrders,
   normalizePhoneForWhatsApp,
+  buildCourierHandoffText,
   buildDeliveryWhatsAppUrl,
   matchesPanelPaymentFilter,
   matchesPanelScopeFilter,
@@ -190,6 +192,8 @@ export default function PedidosPage() {
   const [closeSummaryMessage, setCloseSummaryMessage] = useState<string | null>(
     null
   )
+  // Pedido cuyo resumen para el repartidor se acaba de copiar (feedback breve).
+  const [copiedCourierOrderId, setCopiedCourierOrderId] = useState("")
   const [isResetModalOpen, setIsResetModalOpen] = useState(false)
   const [resetConfirmationText, setResetConfirmationText] = useState("")
   const [isResetReviewVisible, setIsResetReviewVisible] = useState(true)
@@ -2195,6 +2199,23 @@ export default function PedidosPage() {
     }
   }
 
+  // Copia en un toque los datos del pedido para pasárselos al repartidor:
+  // teléfono, link de la dirección y resumen corto de qué lleva.
+  async function copyCourierHandoff(order: LocalOrder) {
+    try {
+      await navigator.clipboard.writeText(buildCourierHandoffText(order))
+      setCopiedCourierOrderId(order.id)
+      window.setTimeout(() => {
+        setCopiedCourierOrderId((current) =>
+          current === order.id ? "" : current,
+        )
+      }, 2500)
+    } catch {
+      // Sin permiso de portapapeles: el staff puede copiar manualmente de la
+      // tarjeta, que muestra los mismos datos.
+    }
+  }
+
   function buildDayClosePayload() {
     return {
       id: `CIE-${Date.now()}`,
@@ -4179,6 +4200,30 @@ export default function PedidosPage() {
                           <Truck size={16} />
                           Datos de delivery
                         </p>
+
+                        {/* Un toque copia teléfono + link de dirección + resumen
+                            del pedido, listo para pegárselo al repartidor. */}
+                        <button
+                          type="button"
+                          onClick={() => copyCourierHandoff(order)}
+                          className={`flex w-full items-center justify-center gap-2 rounded-full border-2 px-4 py-3 text-xs font-black uppercase tracking-[0.1em] transition ${
+                            copiedCourierOrderId === order.id
+                              ? "border-green-600 bg-green-600 text-white"
+                              : "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white hover:opacity-90"
+                          }`}
+                        >
+                          {copiedCourierOrderId === order.id ? (
+                            <>
+                              <CheckCircle2 size={16} />
+                              ¡Copiado! Pégaselo al repartidor
+                            </>
+                          ) : (
+                            <>
+                              <ClipboardCopy size={16} />
+                              Copiar datos para el repartidor
+                            </>
+                          )}
+                        </button>
 
                         <div className="grid gap-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/80">
                           <div className="grid gap-2 sm:grid-cols-2">

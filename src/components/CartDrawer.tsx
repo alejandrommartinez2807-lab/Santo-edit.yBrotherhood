@@ -70,9 +70,11 @@ import PaymentMethodDetailsList from "@/components/PaymentMethodDetailsList";
 import DeliveryMapPicker from "@/components/DeliveryMapPicker";
 import DeliveryPointPreviewMap from "@/components/DeliveryPointPreviewMap";
 import {
+  fetchRecentOrdersLiveInfo,
   readRecentPublicOrders,
   removeRecentPublicOrders,
   saveRecentPublicOrder,
+  type RecentOrderLiveInfo,
   type RecentPublicOrder,
 } from "@/components/recentPublicOrders";
 import {
@@ -130,15 +132,6 @@ type CartDrawerProps = {
 // queda intacta; poner en true para volver a mostrar el campo en el carrito.
 const SHOW_COUPON_FIELD: boolean = false;
 
-// Pedidos recientes que ya no le sirven al cliente: cuando el local los marca
-// listos/entregados (o los cancela) salen de la lista del carrito.
-const RECENT_ORDER_HIDDEN_STATUSES = new Set([
-  "Listo",
-  "Entregado",
-  "Cancelado",
-]);
-
-type RecentOrderLiveInfo = { status: string; displayNumber: string };
 
 function formatAccountOrderDate(value: string | undefined) {
   if (!value) return "";
@@ -869,49 +862,11 @@ export default function CartDrawer({
 
       if (orders.length === 0) return;
 
-      const results = await Promise.all(
-        orders.map(async (order) => {
-          try {
-            const response = await fetch(
-              `/api/public/order-status?pedido=${encodeURIComponent(order.id)}`,
-              { cache: "no-store" },
-            );
-            const data = await response.json().catch(() => null);
-
-            if (!response.ok || !data?.ok) return null;
-
-            return {
-              id: order.id,
-              status: String(data.status || ""),
-              displayNumber: String(data.displayNumber || ""),
-            };
-          } catch {
-            // Sin conexión no se poda nada: mejor listar de más que perder
-            // el camino de vuelta al pedido.
-            return null;
-          }
-        }),
-      );
+      const { live, finishedIds } = await fetchRecentOrdersLiveInfo(orders);
 
       if (cancelled) return;
 
-      const liveInfo: Record<string, RecentOrderLiveInfo> = {};
-      const finishedIds: string[] = [];
-
-      for (const result of results) {
-        if (!result) continue;
-
-        if (RECENT_ORDER_HIDDEN_STATUSES.has(result.status)) {
-          finishedIds.push(result.id);
-        } else {
-          liveInfo[result.id] = {
-            status: result.status,
-            displayNumber: result.displayNumber,
-          };
-        }
-      }
-
-      setRecentOrderLive(liveInfo);
+      setRecentOrderLive(live);
 
       if (finishedIds.length > 0) {
         removeRecentPublicOrders(finishedIds);
@@ -1137,33 +1092,50 @@ export default function CartDrawer({
   // mini-mapa de la sección y la confirmación de dirección.
   const deliveryPointCoords = parseCoordsFromText(customerMapsUrl);
 
+  // Datos del cliente por tipo de pedido:
+  // - Delivery: nombre y teléfono obligatorios (más ubicación y pago).
+  // - Para llevar: nombre y teléfono obligatorios (el local avisa por ahí).
+  // - Comer aquí: nombre obligatorio y teléfono opcional, SALVO que el pedido
+  //   se sume a una cuenta abierta (ahí ya se identificó la primera vez).
+  const isAttachingToOpenAccount =
+    canAttachToTableOpenAccount && attachToTableOpenAccount;
+  const isTakeawayOrder = orderType === "Para llevar";
+  const requiresCustomerName = isDeliveryOrder
+    ? true
+    : isTakeawayOrder
+      ? true
+      : !isAttachingToOpenAccount;
+  const requiresCustomerPhone = isDeliveryOrder || isTakeawayOrder;
+
   const canRegisterLocalOrder =
     hasItems &&
     !hasUnavailableItemsForOrderType &&
     !isSubmittingOrder &&
     !needsBranchSelection &&
+    (!requiresCustomerName || customerName.trim().length > 0) &&
+    (!requiresCustomerPhone || customerPhone.trim().length > 0) &&
     (isDeliveryOrder
-      ? customerName.trim().length > 0 &&
-        customerPhone.trim().length > 0 &&
-        // La ubicación de Maps ES la dirección; el punto de referencia es
-        // opcional. Nombre, teléfono y método de pago siempre obligatorios.
+      ? // La ubicación de Maps ES la dirección; el punto de referencia es
+        // opcional. El método de pago siempre obligatorio en delivery.
         (!isDistancePricingEnabled || Boolean(distanceQuote)) &&
         paymentMethod.trim().length > 0 &&
         (!isMixedPayment || isMixedPaymentComplete)
       : tableNumber.trim().length > 0 && !isTableReservedNow);
-  const missingDeliveryFields = isDeliveryOrder
-    ? [
-        customerName.trim() ? "" : "tu nombre",
-        customerPhone.trim() ? "" : "tu teléfono",
-        isDistancePricingEnabled && !distanceQuote
-          ? "tu ubicación (toca “Usar mi ubicación actual” o pega tu link de Maps)"
-          : "",
-        paymentMethod.trim() ? "" : "el método de pago",
-        isMixedPayment && !isMixedPaymentComplete
-          ? "los dos montos del pago mixto"
-          : "",
-      ].filter(Boolean)
-    : [];
+  const missingOrderFields = [
+    requiresCustomerName && !customerName.trim() ? "tu nombre" : "",
+    requiresCustomerPhone && !customerPhone.trim() ? "tu teléfono" : "",
+    ...(isDeliveryOrder
+      ? [
+          isDistancePricingEnabled && !distanceQuote
+            ? "tu ubicación (toca “Usar mi ubicación actual” o pega tu link de Maps)"
+            : "",
+          paymentMethod.trim() ? "" : "el método de pago",
+          isMixedPayment && !isMixedPaymentComplete
+            ? "los dos montos del pago mixto"
+            : "",
+        ]
+      : []),
+  ].filter(Boolean);
   const paymentProofReportedUSD = normalizeFormMoney(paymentProofAmountUSD);
   const paymentProofReportedVES = normalizeFormMoney(paymentProofAmountVES);
   const canSubmitPaymentProof = Boolean(
@@ -1733,10 +1705,9 @@ export default function CartDrawer({
         // servidor reconoce este id y no duplica el pedido. Ver 0018.
         clientOrderId: newClientOrderId(),
         customerName: customerName.trim() || "Cliente",
-        // El teléfono solo viaja en Delivery: el servidor usa este campo como
-        // señal de delivery, y con el autollenado ahora puede venir cargado
-        // aunque el pedido sea de mesa o para llevar.
-        customerPhone: isDeliveryOrder ? customerPhone.trim() : "",
+        // El teléfono viaja en todos los tipos: el servidor ya no lo usa como
+        // señal de delivery cuando el tipo llega explícito.
+        customerPhone: customerPhone.trim(),
         tableNumber: isDeliveryOrder
           ? `Delivery${deliveryZoneLabel ? ` - ${deliveryZoneLabel}` : ""}`
           : tableNumber.trim(),
@@ -2247,7 +2218,7 @@ export default function CartDrawer({
               haya cerrado la página de confirmación. Los que el local ya
               marcó listos/entregados salen solos de la lista. */}
           {recentPublicOrders.length > 0 && (
-            <div className="mx-5 mb-4 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4">
+            <div className="mx-5 mb-4 mt-8 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4">
               <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
                 Tus pedidos en curso
               </p>
@@ -2785,18 +2756,24 @@ export default function CartDrawer({
                   label="¿En qué sede estás pidiendo?"
                 />
 
+                {/* Aviso para mesas con cuenta: la segunda vez no hace falta
+                    volver a identificarse, solo indicar la misma mesa. */}
+                {orderType === "Comer aquí" && (
+                  <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.06)] px-4 py-2.5">
+                    <p className="text-[0.7rem] font-bold leading-4 text-[var(--brand-ink-2)]/65">
+                      ¿Ya abriste una cuenta en tu mesa? No hace falta poner
+                      tus datos otra vez: indica la misma mesa y tu pedido se
+                      suma solo.
+                    </p>
+                  </div>
+                )}
+
                 <div>
                   <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                    {isDeliveryOrder ? (
-                      <>
-                        Nombre del cliente{" "}
-                        <span className="text-[var(--brand-ink-2)]/45">
-                          (obligatorio)
-                        </span>
-                      </>
-                    ) : (
-                      "Nombre del cliente opcional"
-                    )}
+                    Nombre del cliente{" "}
+                    <span className="text-[var(--brand-ink-2)]/45">
+                      {requiresCustomerName ? "(obligatorio)" : "(opcional)"}
+                    </span>
                   </label>
 
                   <input
@@ -2807,6 +2784,30 @@ export default function CartDrawer({
                     className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                   />
                 </div>
+
+                {/* Teléfono para mesa y para llevar (Delivery tiene el suyo en
+                    su sección): obligatorio en Para llevar para poder avisar;
+                    en mesa ayuda a diferenciar clientes pero es opcional. */}
+                {!isDeliveryOrder && (
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                      Teléfono{" "}
+                      <span className="text-[var(--brand-ink-2)]/45">
+                        {requiresCustomerPhone ? "(obligatorio)" : "(opcional)"}
+                      </span>
+                    </label>
+
+                    <input
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      value={customerPhone}
+                      onChange={(event) => setCustomerPhone(event.target.value)}
+                      placeholder="Ejemplo: 0412-0000000"
+                      className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
@@ -3529,11 +3530,11 @@ export default function CartDrawer({
                   </div>
                 )}
 
-                {hasItems && missingDeliveryFields.length > 0 && (
+                {hasItems && missingOrderFields.length > 0 && (
                   <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3">
                     <p className="text-sm font-bold leading-6 text-[var(--brand-ink)]/80">
                       Para registrar el pedido falta:{" "}
-                      {missingDeliveryFields.join(", ")}.
+                      {missingOrderFields.join(", ")}.
                     </p>
                   </div>
                 )}

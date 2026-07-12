@@ -18,6 +18,10 @@ export const DEFAULT_PUBLIC_CATEGORY_ORDER = [
   "Postres",
 ]
 
+// Orden pensado para el cliente: primero lo suyo (inicio y sus pedidos en
+// curso), luego contacto y al final la cuenta de mesa. "Menú" salió de la
+// barra (el menú ES la portada: inicio, buscador y navegador de secciones);
+// su lugar lo ocupa "Tus pedidos" → /mis-pedidos con el avance en vivo.
 export const DEFAULT_PUBLIC_NAV_BUTTONS: PublicNavButton[] = [
   {
     id: "inicio",
@@ -28,10 +32,10 @@ export const DEFAULT_PUBLIC_NAV_BUTTONS: PublicNavButton[] = [
     sortOrder: 1,
   },
   {
-    id: "menu",
-    label: "Menú",
-    kind: "section",
-    target: "#menu",
+    id: "tus-pedidos",
+    label: "Tus pedidos",
+    kind: "url",
+    target: "/mis-pedidos",
     isVisible: true,
     sortOrder: 2,
   },
@@ -305,6 +309,18 @@ export function findPublicCoupon(lines: unknown, code: unknown): PublicCoupon | 
   )
 }
 
+// Botón "Menú" viejo tal cual venía de fábrica: si aparece guardado sin
+// personalizar se descarta (su lugar lo ocupa "Tus pedidos"). Si el dueño le
+// cambió el texto o el destino, se respeta.
+function isLegacyDefaultMenuButton(button: PublicNavButton) {
+  return (
+    button.id === "menu" &&
+    button.kind === "section" &&
+    button.target === "#menu" &&
+    button.label === "Menú"
+  )
+}
+
 export function normalizePublicNavButtons(value: unknown): PublicNavButton[] {
   const rawList = Array.isArray(value) ? value : []
   const fallbackById = new Map(DEFAULT_PUBLIC_NAV_BUTTONS.map((item) => [item.id, item]))
@@ -329,6 +345,7 @@ export function normalizePublicNavButtons(value: unknown): PublicNavButton[] {
       } satisfies PublicNavButton
     })
     .filter((item, index, list) => {
+      if (isLegacyDefaultMenuButton(item)) return false
       const firstIndex = list.findIndex((candidate) => candidate.id === item.id)
       return firstIndex === index
     })

@@ -1878,6 +1878,33 @@ export function buildDeliveryWhatsAppUrl(
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
 }
 
+// Texto para pasarle el pedido al repartidor por WhatsApp con UN solo copiado:
+// teléfono del cliente, link de la dirección y un resumen corto de qué lleva.
+// Pensado para el flujo "lo marco listo y se lo mando al delivery".
+export function buildCourierHandoffText(order: LocalOrder) {
+  const displayNumber = getDisplayOrderNumber(order)
+  const orderTotals = getOrderTotals(order)
+  // La dirección guarda el link de Maps dentro del texto ("Ubicación (Maps):
+  // https://... · ~2.3 km"): se extrae el link limpio para que el repartidor
+  // lo abra directo; si no hay link se manda la dirección tal cual.
+  const rawAddress = String(order.deliveryAddress || "").trim()
+  const mapsLink = rawAddress.match(/https?:\/\/[^\s·]+/)?.[0] || ""
+  const itemsSummary = (order.items || [])
+    .map((item) => `${Math.max(1, Number(item.quantity || 1))}x ${item.name}`)
+    .join(", ")
+
+  return [
+    `Pedido ${displayNumber} · ${order.customerName || "Cliente"}`,
+    `Teléfono: ${order.customerPhone || "Sin teléfono"}`,
+    `Dirección: ${mapsLink || rawAddress || "Sin dirección registrada"}`,
+    ...(order.deliveryReference
+      ? [`Referencia: ${order.deliveryReference}`]
+      : []),
+    ...(itemsSummary ? [`Pedido: ${itemsSummary}`] : []),
+    `Total: ${formatUSD(orderTotals.totalUSD)} · Pago: ${order.paymentMethod || "Por confirmar"}`,
+  ].join("\n")
+}
+
 export function matchesPanelPaymentFilter(order: LocalOrder, filter: PanelPaymentFilter) {
   if (filter === "Todos los cobros") return true
 
