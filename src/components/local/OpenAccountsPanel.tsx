@@ -26,7 +26,17 @@ import {
   isDeliveryOrder,
   normalizeComparableText,
 } from "@/lib/localOrderHelpers";
-import { getOrderPayment, getOrderTotals } from "@/lib/localOrderMoney";
+import {
+  formatMoneyForInput,
+  getOrderPayment,
+  getOrderTotals,
+  parseMoneyInput,
+} from "@/lib/localOrderMoney";
+import {
+  DELIVERY_PAYMENT_OPTIONS,
+  PAYMENT_METHOD_USD_OPTIONS,
+  PAYMENT_METHOD_VES_OPTIONS,
+} from "@/lib/paymentOptions";
 import { SepararCuentaModal } from "./SepararCuentaModal";
 
 type OpenAccountsPanelProps = {
@@ -85,33 +95,6 @@ const EMPTY_ACCOUNT_PAYMENT_FORM: AccountPaymentForm = {
   paymentNote: "",
 };
 
-const PAYMENT_METHOD_USD_OPTIONS = [
-  "",
-  "Efectivo divisas",
-  "Zelle",
-  "Binance",
-  "USDT",
-  "Transferencia internacional",
-  "Otro",
-];
-
-const PAYMENT_METHOD_VES_OPTIONS = [
-  "",
-  "Pago móvil",
-  "Punto",
-  "Transferencia",
-  "Efectivo Bs",
-  "Biopago",
-  "Otro",
-];
-
-const DELIVERY_PAYMENT_OPTIONS: AccountPaymentForm["deliveryPaymentIn"][] = [
-  "Sin registrar",
-  "Divisas",
-  "Bolívares",
-  "Mixto",
-];
-
 async function readApiResponse(response: Response) {
   const text = await response.text();
 
@@ -120,45 +103,6 @@ async function readApiResponse(response: Response) {
   } catch {
     return { error: text || "Respuesta inválida" };
   }
-}
-
-function roundMoney(value: unknown) {
-  const numberValue = Number(value || 0);
-  if (!Number.isFinite(numberValue)) return 0;
-  return Math.round((numberValue + Number.EPSILON) * 100) / 100;
-}
-
-function parseMoneyInput(value: string) {
-  const rawValue = String(value || "")
-    .trim()
-    .replace(/\s/g, "");
-  if (!rawValue) return 0;
-
-  const hasComma = rawValue.includes(",");
-  const hasDot = rawValue.includes(".");
-  const lastCommaIndex = rawValue.lastIndexOf(",");
-  const lastDotIndex = rawValue.lastIndexOf(".");
-  let normalizedValue = rawValue;
-
-  if (hasComma && hasDot) {
-    if (lastCommaIndex > lastDotIndex) {
-      normalizedValue = rawValue.replace(/\./g, "").replace(",", ".");
-    } else {
-      normalizedValue = rawValue.replace(/,/g, "");
-    }
-  } else if (hasComma) {
-    normalizedValue = rawValue.replace(",", ".");
-  }
-
-  const numberValue = Number(normalizedValue);
-  if (!Number.isFinite(numberValue) || numberValue <= 0) return 0;
-  return roundMoney(numberValue);
-}
-
-function formatMoneyForInput(value: number) {
-  const moneyValue = roundMoney(value);
-  if (moneyValue <= 0) return "";
-  return moneyValue.toFixed(2);
 }
 
 function isEligibleOrderForOpenAccount(order: LocalOrder) {

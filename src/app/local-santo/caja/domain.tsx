@@ -3,6 +3,7 @@ import { BRAND } from "@/lib/brand"
 import { formatUSD, formatVES } from "@/utils/formatCurrency"
 import type { OpenAccount } from "@/types/localOrders"
 import { normalizeLocalTableText } from "@/components/local/LocalTablesMap"
+import { formatMoneyForInput, parseMoneyInput, roundMoney } from "@/lib/localOrderMoney"
 
 export const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -180,32 +181,12 @@ export const CASH_FILTERS: CashFilter[] = [
   "Todos",
 ]
 
-export const PAYMENT_METHOD_USD_OPTIONS = [
-  "",
-  "Efectivo divisas",
-  "Zelle",
-  "Binance",
-  "USDT",
-  "Transferencia internacional",
-  "Otro",
-]
-
-export const PAYMENT_METHOD_VES_OPTIONS = [
-  "",
-  "Pago móvil",
-  "Punto",
-  "Transferencia",
-  "Efectivo Bs",
-  "Biopago",
-  "Otro",
-]
-
-export const DELIVERY_PAYMENT_OPTIONS: DeliveryPaymentIn[] = [
-  "Sin registrar",
-  "Divisas",
-  "Bolívares",
-  "Mixto",
-]
+// Catálogos compartidos con pedidos y cuentas abiertas (una sola fuente).
+export {
+  DELIVERY_PAYMENT_OPTIONS,
+  PAYMENT_METHOD_USD_OPTIONS,
+  PAYMENT_METHOD_VES_OPTIONS,
+} from "@/lib/paymentOptions"
 
 export const EMPTY_PAYMENT_FORM: PaymentForm = {
   amountReceivedUSD: "",
@@ -251,42 +232,8 @@ export function formatPaymentProofDate(value: string) {
   }).format(date)
 }
 
-export function roundMoney(value: unknown) {
-  const numberValue = Number(value || 0)
-  if (!Number.isFinite(numberValue)) return 0
-  return Math.round((numberValue + Number.EPSILON) * 100) / 100
-}
-
-export function parseMoneyInput(value: string) {
-  const rawValue = String(value || "").trim().replace(/\s/g, "")
-  if (!rawValue) return 0
-
-  const hasComma = rawValue.includes(",")
-  const hasDot = rawValue.includes(".")
-  const lastCommaIndex = rawValue.lastIndexOf(",")
-  const lastDotIndex = rawValue.lastIndexOf(".")
-  let normalizedValue = rawValue
-
-  if (hasComma && hasDot) {
-    if (lastCommaIndex > lastDotIndex) {
-      normalizedValue = rawValue.replace(/\./g, "").replace(",", ".")
-    } else {
-      normalizedValue = rawValue.replace(/,/g, "")
-    }
-  } else if (hasComma) {
-    normalizedValue = rawValue.replace(",", ".")
-  }
-
-  const numberValue = Number(normalizedValue)
-  if (!Number.isFinite(numberValue) || numberValue <= 0) return 0
-  return roundMoney(numberValue)
-}
-
-export function formatMoneyForInput(value: number) {
-  const moneyValue = roundMoney(value)
-  if (moneyValue <= 0) return ""
-  return moneyValue.toFixed(2)
-}
+// Aritmética de dinero compartida: la implementación vive en localOrderMoney.
+export { formatMoneyForInput, parseMoneyInput, roundMoney }
 
 export function normalizeComparableText(value: string) {
   return value

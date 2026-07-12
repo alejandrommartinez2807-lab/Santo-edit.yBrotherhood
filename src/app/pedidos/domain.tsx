@@ -10,6 +10,7 @@ import {
   type LocalPlanKey,
   type LocalPlanMode,
 } from "@/lib/localPlans"
+import { formatMoneyForInput, parseMoneyInput, roundMoney } from "@/lib/localOrderMoney"
 import type { LocalTable } from "@/lib/orders"
 import type { OpenAccount, OrderFiscalSnapshot } from "@/types/localOrders"
 import {
@@ -481,31 +482,12 @@ export const DEFAULT_DELIVERY_ZONES: DeliveryZone[] = [
   { name: "San Diego", costUSD: 4, isActive: true },
 ]
 
-export const DELIVERY_PAYMENT_OPTIONS: DeliveryPaymentIn[] = [
-  "Sin registrar",
-  "Divisas",
-  "Bolívares",
-  "Mixto",
-]
-
-export const PAYMENT_METHOD_USD_OPTIONS = [
-  "",
-  "Efectivo divisas",
-  "Zelle",
-  "Binance / USDT",
-  "Transferencia internacional",
-  "Otro",
-]
-
-export const PAYMENT_METHOD_VES_OPTIONS = [
-  "",
-  "Pago móvil",
-  "Punto",
-  "Transferencia",
-  "Efectivo Bs",
-  "Biopago",
-  "Otro",
-]
+// Catálogos compartidos con caja y cuentas abiertas (una sola fuente).
+export {
+  DELIVERY_PAYMENT_OPTIONS,
+  PAYMENT_METHOD_USD_OPTIONS,
+  PAYMENT_METHOD_VES_OPTIONS,
+} from "@/lib/paymentOptions"
 
 export const EMPTY_PAYMENT_FORM: PaymentForm = {
   amountReceivedUSD: "",
@@ -1003,63 +985,9 @@ export function getOrderTotals(order: LocalOrder) {
   }
 }
 
-export function roundMoney(value: unknown) {
-  const numberValue = Number(value || 0)
+// Aritmética de dinero compartida: la implementación vive en localOrderMoney.
+export { formatMoneyForInput, parseMoneyInput, roundMoney }
 
-  if (!Number.isFinite(numberValue)) {
-    return 0
-  }
-
-  return Math.round((numberValue + Number.EPSILON) * 100) / 100
-}
-
-export function parseMoneyInput(value: string) {
-  const rawValue = String(value || "")
-    .trim()
-    .replace(/\s/g, "")
-
-  if (!rawValue) {
-    return 0
-  }
-
-  const hasComma = rawValue.includes(",")
-  const hasDot = rawValue.includes(".")
-  const lastCommaIndex = rawValue.lastIndexOf(",")
-  const lastDotIndex = rawValue.lastIndexOf(".")
-
-  let normalizedValue = rawValue
-
-  if (hasComma && hasDot) {
-    if (lastCommaIndex > lastDotIndex) {
-      // Formato venezolano/europeo: 1.569,25
-      normalizedValue = rawValue.replace(/\./g, "").replace(",", ".")
-    } else {
-      // Formato internacional: 1,569.25
-      normalizedValue = rawValue.replace(/,/g, "")
-    }
-  } else if (hasComma) {
-    // Formato común en Venezuela sin separador de miles: 1569,25
-    normalizedValue = rawValue.replace(",", ".")
-  }
-
-  const numberValue = Number(normalizedValue)
-
-  if (!Number.isFinite(numberValue) || numberValue <= 0) {
-    return 0
-  }
-
-  return roundMoney(numberValue)
-}
-
-export function formatMoneyForInput(value: number) {
-  const moneyValue = roundMoney(value)
-
-  if (moneyValue <= 0) {
-    return ""
-  }
-
-  return moneyValue.toFixed(2)
-}
 
 export function calculatePaymentStatus(
   receivedEquivalentUSD: number,
