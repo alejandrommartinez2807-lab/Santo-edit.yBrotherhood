@@ -71,6 +71,7 @@ import DeliveryMapPicker from "@/components/DeliveryMapPicker";
 import DeliveryPointPreviewMap from "@/components/DeliveryPointPreviewMap";
 import {
   readRecentPublicOrders,
+  removeRecentPublicOrders,
   saveRecentPublicOrder,
   type RecentPublicOrder,
 } from "@/components/recentPublicOrders";
@@ -128,6 +129,16 @@ type CartDrawerProps = {
 // Cupones desactivados por ahora (pedido del dueño 2026-07-11): la lógica
 // queda intacta; poner en true para volver a mostrar el campo en el carrito.
 const SHOW_COUPON_FIELD: boolean = false;
+
+// Pedidos recientes que ya no le sirven al cliente: cuando el local los marca
+// listos/entregados (o los cancela) salen de la lista del carrito.
+const RECENT_ORDER_HIDDEN_STATUSES = new Set([
+  "Listo",
+  "Entregado",
+  "Cancelado",
+]);
+
+type RecentOrderLiveInfo = { status: string; displayNumber: string };
 
 function formatAccountOrderDate(value: string | undefined) {
   if (!value) return "";
@@ -392,6 +403,11 @@ export default function CartDrawer({
   const [recentPublicOrders, setRecentPublicOrders] = useState<
     RecentPublicOrder[]
   >([]);
+  // Estado en vivo de cada pedido reciente (número visible + avance): permite
+  // mostrar "En preparación" y sacar de la lista los que ya terminaron.
+  const [recentOrderLive, setRecentOrderLive] = useState<
+    Record<string, RecentOrderLiveInfo>
+  >({});
   // Confirmación de dirección antes de registrar (estilo apps grandes):
   // mapa de solo lectura + "Ajustar" que abre el mapa interactivo.
   const [isAddressConfirmOpen, setIsAddressConfirmOpen] = useState(false);
@@ -839,13 +855,74 @@ export default function CartDrawer({
     };
   }, [isOpen, isPublicDeliveryAvailable]);
 
-  // Al abrir el carrito se refrescan los pedidos recientes del dispositivo.
+  // Al abrir el carrito se refrescan los pedidos recientes del dispositivo y
+  // se consulta su estado: los que el local ya marcó listos/entregados (o
+  // canceló) se eliminan de la lista, y los activos muestran su avance.
   useEffect(() => {
     if (!isOpen) return;
-    const timer = setTimeout(() => {
-      setRecentPublicOrders(readRecentPublicOrders());
+
+    let cancelled = false;
+
+    const timer = setTimeout(async () => {
+      const orders = readRecentPublicOrders();
+      setRecentPublicOrders(orders);
+
+      if (orders.length === 0) return;
+
+      const results = await Promise.all(
+        orders.map(async (order) => {
+          try {
+            const response = await fetch(
+              `/api/public/order-status?pedido=${encodeURIComponent(order.id)}`,
+              { cache: "no-store" },
+            );
+            const data = await response.json().catch(() => null);
+
+            if (!response.ok || !data?.ok) return null;
+
+            return {
+              id: order.id,
+              status: String(data.status || ""),
+              displayNumber: String(data.displayNumber || ""),
+            };
+          } catch {
+            // Sin conexión no se poda nada: mejor listar de más que perder
+            // el camino de vuelta al pedido.
+            return null;
+          }
+        }),
+      );
+
+      if (cancelled) return;
+
+      const liveInfo: Record<string, RecentOrderLiveInfo> = {};
+      const finishedIds: string[] = [];
+
+      for (const result of results) {
+        if (!result) continue;
+
+        if (RECENT_ORDER_HIDDEN_STATUSES.has(result.status)) {
+          finishedIds.push(result.id);
+        } else {
+          liveInfo[result.id] = {
+            status: result.status,
+            displayNumber: result.displayNumber,
+          };
+        }
+      }
+
+      setRecentOrderLive(liveInfo);
+
+      if (finishedIds.length > 0) {
+        removeRecentPublicOrders(finishedIds);
+        setRecentPublicOrders(readRecentPublicOrders());
+      }
     }, 0);
-    return () => clearTimeout(timer);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [isOpen]);
 
   // Al abrir el formulario de pedido se rellenan solos el nombre y el
@@ -1925,6 +2002,44 @@ export default function CartDrawer({
     : whatsappHref
       ? publicConfig.publicCartWhatsappButtonText || "Enviar por WhatsApp"
       : "WhatsApp no configurado";
+  // Botón "¿Dudas con tu pedido? Escríbenos" (apagable por el dueño): abre el
+  // WhatsApp del negocio con un mensaje listo que incluye los pedidos activos
+  // del cliente (número visible y referencia) para que el local los ubique.
+  const orderHelpWhatsappNumber = (
+    publicConfig.deliveryWhatsapp ||
+    publicConfig.mainWhatsapp ||
+    BRAND.whatsapp ||
+    ""
+  ).replace(/[^0-9]/g, "");
+  const showOrderHelpButton =
+    publicConfig.orderHelpWhatsappEnabled && Boolean(orderHelpWhatsappNumber);
+  const orderHelpWhatsappHref = (() => {
+    if (!showOrderHelpButton) return "";
+
+    const lines = [
+      `Hola ${publicConfig.businessName || BRAND.name}! Tengo una duda sobre mi pedido.`,
+    ];
+
+    recentPublicOrders.slice(0, 3).forEach((order) => {
+      const live = recentOrderLive[order.id];
+      const numberLabel = live?.displayNumber
+        ? `${live.displayNumber} · `
+        : "";
+
+      lines.push(
+        `• ${numberLabel}${order.label || "Pedido"} · ${formatUSD(order.totalUSD)} (ref ${order.id})`,
+      );
+    });
+
+    if (recentPublicOrders.length === 0) {
+      const profileName = readPublicCustomerProfile().name;
+      if (profileName) lines.push(`Mi nombre: ${profileName}`);
+    }
+
+    lines.push("¿Me pueden ayudar?");
+
+    return `https://wa.me/${orderHelpWhatsappNumber}?text=${encodeURIComponent(lines.join("\n"))}`;
+  })();
   const orderTypes: OrderType[] = isPublicDeliveryAvailable
     ? ["Comer aquí", "Para llevar", "Delivery"]
     : ["Comer aquí", "Para llevar"];
@@ -2129,43 +2244,83 @@ export default function CartDrawer({
 
           {/* Pedidos hechos desde este dispositivo (últimos 7 días): el
               cliente vuelve al seguimiento y puede reportar su pago aunque
-              haya cerrado la página de confirmación. */}
+              haya cerrado la página de confirmación. Los que el local ya
+              marcó listos/entregados salen solos de la lista. */}
           {recentPublicOrders.length > 0 && (
-            <div className="mx-5 mb-5 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
+            <div className="mx-5 mb-4 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4">
               <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
-                Tus pedidos recientes
+                Tus pedidos en curso
               </p>
               <p className="mt-1 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
-                Entra a tu pedido para ver cómo va o enviar tu comprobante de
-                pago.
+                Toca tu pedido para ver cómo va o enviar tu comprobante de
+                pago. Al entregarse, sale solo de esta lista.
               </p>
-              <div className="mt-2 space-y-1.5">
-                {recentPublicOrders.map((recentOrder) => (
-                  <a
-                    key={recentOrder.id}
-                    href={`/pedido/${encodeURIComponent(recentOrder.id)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-between gap-2 rounded-xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-3 py-2.5 transition hover:border-[var(--brand-primary)]"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-xs font-black text-[var(--brand-ink)]">
-                        {recentOrder.label || "Pedido"}
+              <div className="mt-3 space-y-2">
+                {recentPublicOrders.map((recentOrder) => {
+                  const live = recentOrderLive[recentOrder.id];
+
+                  return (
+                    <a
+                      key={recentOrder.id}
+                      href={`/pedido/${encodeURIComponent(recentOrder.id)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-3 rounded-xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-3 py-3 transition hover:border-[var(--brand-primary)]"
+                    >
+                      {live?.displayNumber ? (
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-primary)] text-sm font-black text-black">
+                          {live.displayNumber}
+                        </span>
+                      ) : (
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-2 border-[var(--brand-border)] text-[var(--brand-primary)]">
+                          <ClipboardList size={18} />
+                        </span>
+                      )}
+
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-xs font-black text-[var(--brand-ink)]">
+                          {recentOrder.label || "Pedido"}
+                        </span>
+                        <span className="mt-0.5 block text-[0.66rem] font-bold text-[var(--brand-ink-2)]/55">
+                          {new Date(recentOrder.createdAt).toLocaleDateString(
+                            "es-VE",
+                            { day: "2-digit", month: "short" },
+                          )}{" "}
+                          · {formatUSD(recentOrder.totalUSD)}
+                        </span>
+                        {live?.status ? (
+                          <span
+                            className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[0.58rem] font-black uppercase tracking-[0.08em] ${getPublicOrderDeliveryClass(live.status)}`}
+                          >
+                            {getPublicOrderDeliveryLabel(live.status)}
+                          </span>
+                        ) : null}
                       </span>
-                      <span className="mt-0.5 block text-[0.66rem] font-bold text-[var(--brand-ink-2)]/55">
-                        {new Date(recentOrder.createdAt).toLocaleDateString(
-                          "es-VE",
-                          { day: "2-digit", month: "short" },
-                        )}{" "}
-                        · {formatUSD(recentOrder.totalUSD)}
+
+                      <span className="shrink-0 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                        Ver →
                       </span>
-                    </span>
-                    <span className="shrink-0 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
-                      Ver →
-                    </span>
-                  </a>
-                ))}
+                    </a>
+                  );
+                })}
               </div>
+            </div>
+          )}
+
+          {/* Camino directo para el que no quiere revisar nada: escribirle al
+              negocio con el mensaje ya armado (incluye número y referencia de
+              sus pedidos activos). El dueño lo activa/apaga en Configuración. */}
+          {showOrderHelpButton && (
+            <div className="mx-5 mb-5">
+              <a
+                href={orderHelpWhatsappHref}
+                target="_blank"
+                rel="noreferrer"
+                className="flex w-full items-center justify-center gap-2.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-5 py-3.5 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black"
+              >
+                <MessageCircle size={17} />
+                ¿Dudas con tu pedido? Escríbenos
+              </a>
             </div>
           )}
         </div>

@@ -61,6 +61,7 @@ export const DEFAULT_PUBLIC_CONFIG: PublicBusinessConfig = {
   productCardButtonColor: "#ffd23c",
   mainWhatsapp: "",
   deliveryWhatsapp: "",
+  orderHelpWhatsappEnabled: true,
   deliveryEnabled: true,
   deliveryModuleEnabled: true,
   paymentProofsEnabled: false,
@@ -526,6 +527,10 @@ export function normalizePublicBusinessConfig(value: unknown): PublicBusinessCon
       DEFAULT_PUBLIC_CONFIG.productCardButtonColor,
     mainWhatsapp: cleanWhatsappNumber(businessConfig.mainWhatsapp),
     deliveryWhatsapp: cleanWhatsappNumber(businessConfig.deliveryWhatsapp),
+    orderHelpWhatsappEnabled: normalizePublicBoolean(
+      businessConfig.orderHelpWhatsappEnabled,
+      true,
+    ),
     deliveryEnabled:
       normalizePublicBoolean(businessConfig.deliveryEnabled, true) &&
       doesPlanAllowDelivery(membershipPlan),

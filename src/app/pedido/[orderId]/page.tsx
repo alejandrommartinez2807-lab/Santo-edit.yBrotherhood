@@ -2,7 +2,16 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Bell, BellRing, CheckCircle2, CookingPot, Loader2, Star } from "lucide-react";
+import {
+  ArrowLeft,
+  Bell,
+  BellRing,
+  CheckCircle2,
+  CookingPot,
+  Loader2,
+  MessageCircle,
+  Star,
+} from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import {
   NOTIFY_READY_BUTTON_ENABLED,
@@ -35,6 +44,10 @@ export default function PedidoSeguimientoPage({
   const { status, displayNumber, notFound } = usePublicOrderStatus(orderId);
   const [notifyEnabled, setNotifyEnabled] = useState(false);
   const [googleReviewUrl, setGoogleReviewUrl] = useState("");
+  // WhatsApp del negocio para el botón "¿Dudas con tu pedido? Escríbenos"
+  // (el dueño lo activa/apaga desde Configuración).
+  const [orderHelpWhatsapp, setOrderHelpWhatsapp] = useState("");
+  const [businessName, setBusinessName] = useState("");
 
   useOrderReadyAlert({ orderId, status, displayNumber, notifyEnabled });
 
@@ -45,9 +58,22 @@ export default function PedidoSeguimientoPage({
       .then((response) => response.json())
       .then((data) => {
         if (cancelled) return;
-        const url = String(data?.businessConfig?.googleReviewUrl || "").trim();
+        const config = data?.businessConfig || {};
+        const url = String(config.googleReviewUrl || "").trim();
         if (url.startsWith("https://") || url.startsWith("http://")) {
           setGoogleReviewUrl(url);
+        }
+
+        setBusinessName(String(config.businessName || "").trim());
+
+        if (config.orderHelpWhatsappEnabled !== false) {
+          const phone = String(
+            config.deliveryWhatsapp ||
+              config.mainWhatsapp ||
+              BRAND.whatsapp ||
+              "",
+          ).replace(/[^0-9]/g, "");
+          setOrderHelpWhatsapp(phone);
         }
       })
       .catch(() => {
@@ -58,6 +84,16 @@ export default function PedidoSeguimientoPage({
       cancelled = true;
     };
   }, []);
+
+  const orderHelpHref = orderHelpWhatsapp
+    ? `https://wa.me/${orderHelpWhatsapp}?text=${encodeURIComponent(
+        [
+          `Hola ${businessName || BRAND.name}! Tengo una duda sobre mi pedido${displayNumber ? ` ${displayNumber}` : ""}.`,
+          `Ref: ${orderId}`,
+          "¿Me pueden ayudar?",
+        ].join("\n"),
+      )}`
+    : "";
 
   const isReady = status === "Listo";
   const isDelivered = status === "Entregado";
@@ -212,6 +248,20 @@ export default function PedidoSeguimientoPage({
             Solo cuando el pedido existe y no está cancelado. */}
         {!notFound && status && !isCancelled ? (
           <PublicOrderPaymentSection orderId={orderId} />
+        ) : null}
+
+        {/* Camino directo al negocio con el mensaje ya armado (número y
+            referencia del pedido). El dueño lo activa/apaga en Configuración. */}
+        {orderHelpHref ? (
+          <a
+            href={orderHelpHref}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-4 flex w-full items-center justify-center gap-2.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-5 py-3.5 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:opacity-85"
+          >
+            <MessageCircle size={17} />
+            ¿Dudas con tu pedido? Escríbenos
+          </a>
         ) : null}
       </section>
     </main>

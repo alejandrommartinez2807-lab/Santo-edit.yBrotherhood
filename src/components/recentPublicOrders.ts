@@ -46,6 +46,21 @@ export function readRecentPublicOrders(): RecentPublicOrder[] {
   }
 }
 
+// Cuando el local marca el pedido como listo/entregado (o lo cancela), deja
+// de aparecer en "Pedidos recientes": ya no le hace falta al cliente.
+export function removeRecentPublicOrders(ids: string[]) {
+  if (typeof window === "undefined" || ids.length === 0) return;
+
+  try {
+    const next = readRecentPublicOrders().filter(
+      (entry) => !ids.includes(entry.id),
+    );
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // Sin almacenamiento el flujo sigue normal.
+  }
+}
+
 export function saveRecentPublicOrder(order: {
   id: string;
   totalUSD: number;

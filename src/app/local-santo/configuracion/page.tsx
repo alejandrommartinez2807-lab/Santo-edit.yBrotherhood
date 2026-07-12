@@ -149,6 +149,8 @@ type BusinessConfig = {
   instagramUrl: string;
   mainWhatsapp: string;
   deliveryWhatsapp: string;
+  // Botón público "¿Dudas con tu pedido? Escríbenos" (WhatsApp), apagable.
+  orderHelpWhatsappEnabled: boolean;
   exchangeRateMode: ExchangeRateMode;
   manualExchangeRate: number;
   deliveryEnabled: boolean;
@@ -307,6 +309,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   instagramUrl: "",
   mainWhatsapp: "",
   deliveryWhatsapp: "",
+  orderHelpWhatsappEnabled: true,
   exchangeRateMode: "automatic",
   manualExchangeRate: 0,
   deliveryEnabled: true,
@@ -961,6 +964,10 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     instagramUrl: String(source.instagramUrl || "").trim(),
     mainWhatsapp: String(source.mainWhatsapp || "").trim(),
     deliveryWhatsapp: String(source.deliveryWhatsapp || "").trim(),
+    orderHelpWhatsappEnabled: normalizeBoolean(
+      source.orderHelpWhatsappEnabled,
+      DEFAULT_BUSINESS_CONFIG.orderHelpWhatsappEnabled,
+    ),
     exchangeRateMode: normalizeExchangeRateMode(source.exchangeRateMode),
     manualExchangeRate:
       Number.isFinite(manualExchangeRate) && manualExchangeRate > 0
@@ -2559,6 +2566,30 @@ export default function BusinessConfigPage() {
                 helper="Cambia cómo se llama la ubicación en los pedidos públicos e internos."
               />
             </div>
+
+            <label className="mt-4 flex items-start gap-3">
+              <input
+                type="checkbox"
+                checked={businessConfig.orderHelpWhatsappEnabled}
+                onChange={(e) =>
+                  setBusinessConfig((c) => ({
+                    ...c,
+                    orderHelpWhatsappEnabled: e.target.checked,
+                  }))
+                }
+                className="mt-0.5 h-5 w-5 accent-[var(--brand-primary)]"
+              />
+              <span>
+                <span className="block text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
+                  Botón “¿Dudas con tu pedido? Escríbenos”
+                </span>
+                <span className="mt-0.5 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                  Aparece junto a los pedidos recientes del cliente y en su
+                  página de seguimiento: abre tu WhatsApp con un mensaje listo
+                  que incluye el número de su pedido.
+                </span>
+              </span>
+            </label>
           </SectionCard>
 
           <SectionCard

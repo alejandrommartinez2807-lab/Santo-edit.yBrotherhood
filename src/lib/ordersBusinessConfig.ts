@@ -116,6 +116,8 @@ export type BusinessConfig = {
   instagramUrl: string
   mainWhatsapp: string
   deliveryWhatsapp: string
+  // Botón público "¿Dudas con tu pedido? Escríbenos" (WhatsApp), apagable.
+  orderHelpWhatsappEnabled: boolean
   exchangeRateMode: ExchangeRateMode
   manualExchangeRate: number
   deliveryEnabled: boolean
@@ -254,6 +256,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   instagramUrl: "",
   mainWhatsapp: "",
   deliveryWhatsapp: "",
+  orderHelpWhatsappEnabled: true,
   exchangeRateMode: "automatic",
   manualExchangeRate: 0,
   deliveryEnabled: true,
@@ -652,6 +655,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       Number.isFinite(manualExchangeRate) && manualExchangeRate > 0
         ? manualExchangeRate
         : 0,
+    orderHelpWhatsappEnabled: normalizeBooleanConfig(
+      source.orderHelpWhatsappEnabled,
+      DEFAULT_BUSINESS_CONFIG.orderHelpWhatsappEnabled
+    ),
     deliveryEnabled: normalizeBooleanConfig(
       source.deliveryEnabled,
       DEFAULT_BUSINESS_CONFIG.deliveryEnabled

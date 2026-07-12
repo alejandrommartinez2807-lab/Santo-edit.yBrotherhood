@@ -31,6 +31,9 @@ export const SIMPLE_BUSINESS_CONFIG_FIELDS: readonly SimpleConfigField[] = [
   { key: "locationLabel", type: "string", default: "Mesa" },
   { key: "mainWhatsapp", type: "string", default: "" },
   { key: "deliveryWhatsapp", type: "string", default: "" },
+  // Botón público "¿Dudas con tu pedido? Escríbenos" (WhatsApp con mensaje
+  // listo preguntando por los pedidos activos). El dueño lo prende o apaga.
+  { key: "orderHelpWhatsappEnabled", type: "boolean", default: true },
   // Apariencia (tema)
   { key: "themePrimaryColor", type: "string", default: "#a00000" },
   { key: "themeAccentColor", type: "string", default: "#ffd23c" },

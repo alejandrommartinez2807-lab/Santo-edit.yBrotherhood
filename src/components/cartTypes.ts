@@ -111,6 +111,8 @@ export type PublicBusinessConfig = {
   productCardButtonColor?: string;
   mainWhatsapp: string;
   deliveryWhatsapp: string;
+  // Botón "¿Dudas con tu pedido? Escríbenos" (WhatsApp), apagable por el dueño.
+  orderHelpWhatsappEnabled: boolean;
   deliveryEnabled: boolean;
   deliveryModuleEnabled: boolean;
   paymentProofsEnabled: boolean;
