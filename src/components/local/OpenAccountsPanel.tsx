@@ -16,6 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { formatUSD } from "@/utils/formatCurrency";
+import { usePersistedToggle } from "@/hooks/usePersistedToggle";
 import type {
   LocalOrder,
   OpenAccount,
@@ -106,7 +107,11 @@ export function OpenAccountsPanel({
   onOrdersShouldRefresh,
 }: OpenAccountsPanelProps) {
   const [openAccounts, setOpenAccounts] = useState<OpenAccount[]>([]);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  // Preferencia recordada por equipo; solo tiene efecto si collapsible=true.
+  const [isCollapsed, setIsCollapsed] = usePersistedToggle(
+    "caja_open_accounts_collapsed",
+    false,
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);

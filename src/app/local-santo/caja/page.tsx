@@ -28,6 +28,7 @@ import {
   type LocalTableMapItem,
 } from "@/components/local/LocalTablesMap"
 import { useOperationalSounds, useOrderSoundAlerts } from "@/hooks/useOperationalSounds"
+import { usePersistedToggle } from "@/hooks/usePersistedToggle"
 import { usePaymentProofAlerts } from "@/hooks/usePaymentProofAlerts"
 import PaymentProofAlertToast from "@/components/PaymentProofAlertToast"
 import {
@@ -98,9 +99,10 @@ function CajaPageContent() {
   const [activeFilter, setActiveFilter] = useState<CashFilter>("Por confirmar")
   const [searchText, setSearchText] = useState("")
   const [selectedCashTableName, setSelectedCashTableName] = useState("")
-  const [showControls, setShowControls] = useState(true)
-  const [showTablesMap, setShowTablesMap] = useState(true)
-  const [showQrLinks, setShowQrLinks] = useState(false)
+  // Preferencias de pantalla recordadas por equipo (localStorage).
+  const [showControls, setShowControls] = usePersistedToggle("caja_show_controls", true)
+  const [showTablesMap, setShowTablesMap] = usePersistedToggle("caja_show_tables_map", true)
+  const [showQrLinks, setShowQrLinks] = usePersistedToggle("caja_show_qr_links", false)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [accountMessage, setAccountMessage] = useState<string | null>(null)
