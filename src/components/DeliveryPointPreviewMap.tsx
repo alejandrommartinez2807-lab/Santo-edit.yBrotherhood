@@ -73,8 +73,10 @@ export default function DeliveryPointPreviewMap({
   }, []);
 
   return (
+    // "isolate" encierra los z-index internos de Leaflet (llegan a 400+): sin
+    // esto el mapa se pinta ENCIMA de la barra superior fija del checkout.
     <div
-      className={`pointer-events-none relative w-full overflow-hidden rounded-2xl border-2 border-[var(--brand-border)] ${heightClassName}`}
+      className={`pointer-events-none relative isolate w-full overflow-hidden rounded-2xl border-2 border-[var(--brand-border)] ${heightClassName}`}
     >
       <div ref={containerRef} className="absolute inset-0" />
 

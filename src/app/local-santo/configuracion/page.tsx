@@ -66,6 +66,7 @@ import {
   normalizePublicNavButtons,
   normalizePublicPaymentMethodDetails,
   normalizePublicPaymentMethods,
+  normalizePublicProductCardSize,
   type PublicNavButton,
   type PublicNavButtonKind,
 } from "@/lib/publicPageConfig";
@@ -138,6 +139,8 @@ type BusinessConfig = {
   publicPaymentMethods: string[];
   // Datos de cada método (pago móvil, Zelle…) que el cliente ve y copia.
   publicPaymentMethodDetails: Record<string, string>;
+  // Tamaño de las tarjetas del menú público (grande | media | compacta).
+  publicProductCardSize: string;
   // Cupones del carrito: "CODIGO 10" por línea (código + % de descuento).
   publicCoupons: string[];
   locationButtonText: string;
@@ -296,6 +299,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicAvailabilityLabel: "Disponible",
   publicPaymentMethods: [...DEFAULT_PUBLIC_PAYMENT_METHODS],
   publicPaymentMethodDetails: {},
+  publicProductCardSize: "grande",
   publicCoupons: [],
   locationButtonText: "Abrir ubicación",
   googleMapsUrl: "",
@@ -929,6 +933,9 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     publicPaymentMethods: normalizePublicPaymentMethods(source.publicPaymentMethods),
     publicPaymentMethodDetails: normalizePublicPaymentMethodDetails(
       source.publicPaymentMethodDetails,
+    ),
+    publicProductCardSize: normalizePublicProductCardSize(
+      source.publicProductCardSize,
     ),
     publicCoupons: normalizePublicCoupons(source.publicCoupons),
     publicDivisaGroupTitle:
@@ -3902,6 +3909,50 @@ export default function BusinessConfigPage() {
                     placeholder="Disponible"
                     disabled={!canEditAdvancedPublic}
                   />
+                  <div className="sm:col-span-2 lg:col-span-3">
+                    <label className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/70">
+                      Tamaño de las tarjetas del menú
+                    </label>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                      {[
+                        {
+                          value: "grande",
+                          label: "Grande",
+                          hint: "1 producto por fila en el teléfono, foto protagonista (actual)",
+                        },
+                        {
+                          value: "media",
+                          label: "Media",
+                          hint: "2 por fila en el teléfono: se ve más menú sin perder la foto",
+                        },
+                        {
+                          value: "compacta",
+                          label: "Compacta",
+                          hint: "3 por fila en el teléfono, tipo catálogo rápido",
+                        },
+                      ].map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() =>
+                            updateConfig("publicProductCardSize", option.value)
+                          }
+                          className={`rounded-xl border-2 px-3 py-3 text-left transition ${
+                            businessConfig.publicProductCardSize === option.value
+                              ? "border-[var(--brand-primary)] bg-[rgba(var(--brand-primary-rgb),0.1)]"
+                              : "border-[var(--brand-primary)]/25 bg-white hover:border-[var(--brand-primary)]/60"
+                          }`}
+                        >
+                          <span className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                            {option.label}
+                          </span>
+                          <span className="mt-1 block text-[0.66rem] font-bold leading-4 text-[var(--brand-ink-2)]/60">
+                            {option.hint}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <div className="sm:col-span-2 lg:col-span-3">
                     <label className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/70">
                       Métodos de pago del carrito (uno por línea)

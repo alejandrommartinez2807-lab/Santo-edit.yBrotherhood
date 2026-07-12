@@ -982,6 +982,21 @@ export default function CartDrawer({
   const effectivePaymentMethod = isMixedPayment
     ? `Mixto: ${mixedBsMethod} Bs ${formatVES(mixedBsValue)} + ${mixedUsdMethod} ${formatUSD(mixedUsdValue)}`
     : paymentMethod.trim();
+  // Métodos realmente elegidos (2 si es mixto): los "Datos para pagar" se
+  // filtran a estos; sin selección se muestran todos para poder comparar.
+  const selectedPaymentMethods = isMixedPayment
+    ? [mixedBsMethod.trim(), mixedUsdMethod.trim()].filter(Boolean)
+    : paymentMethod.trim() && paymentMethod !== "Mixto"
+      ? [paymentMethod.trim()]
+      : [];
+  const allPaymentMethodDetails = publicConfig.publicPaymentMethodDetails || {};
+  const checkoutPaymentMethodDetails = selectedPaymentMethods.length
+    ? Object.fromEntries(
+        Object.entries(allPaymentMethodDetails).filter(([method]) =>
+          selectedPaymentMethods.includes(method),
+        ),
+      )
+    : allPaymentMethodDetails;
   // Punto de entrega ya elegido (GPS, link o mapa): coordenadas para el
   // mini-mapa de la sección y la confirmación de dirección.
   const deliveryPointCoords = parseCoordsFromText(customerMapsUrl);
@@ -1642,6 +1657,7 @@ export default function CartDrawer({
         attachedToOpenAccount,
         openAccountTable:
           cleanText(data.order?.openAccountTable) || tableNumber.trim(),
+        paymentMethods: selectedPaymentMethods,
       };
       const nextTableNumberAfterSubmit =
         !isDeliveryOrder &&
@@ -2104,7 +2120,7 @@ export default function CartDrawer({
 
             {/* Barra superior tipo app: fija arriba mientras se hace scroll,
                 con flecha de volver en el teléfono. */}
-            <div className="sticky top-0 z-20 border-b-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3.5 sm:relative sm:border-b-0 sm:px-6 sm:py-5">
+            <div className="sticky top-0 z-30 border-b-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3.5 sm:relative sm:border-b-0 sm:px-6 sm:py-5">
               <div className="flex items-center justify-between gap-3 sm:items-start sm:gap-4">
                 <button
                   type="button"
@@ -2214,22 +2230,39 @@ export default function CartDrawer({
                     </div>
                   )}
 
-                {/* Datos del negocio para pagar (pago móvil, Zelle…): el
-                    cliente los copia aquí mismo y luego reporta su pago. */}
+                {/* Datos del negocio para pagar (pago móvil, Zelle…), ya
+                    filtrados a los métodos que el cliente eligió: los copia
+                    aquí mismo y luego reporta su pago. */}
                 {!lastOrderAttachedToOpenAccount &&
-                  Object.keys(publicConfig.publicPaymentMethodDetails || {})
-                    .length > 0 && (
-                    <div className="text-left">
-                      <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                        Datos para pagar
-                      </p>
-                      <div className="mt-2">
-                        <PaymentMethodDetailsList
-                          details={publicConfig.publicPaymentMethodDetails}
-                        />
+                  (() => {
+                    const orderMethods = lastCreatedOrder.paymentMethods || [];
+                    const details = orderMethods.length
+                      ? Object.fromEntries(
+                          Object.entries(allPaymentMethodDetails).filter(
+                            ([method]) => orderMethods.includes(method),
+                          ),
+                        )
+                      : allPaymentMethodDetails;
+
+                    if (!Object.keys(details).length) return null;
+
+                    return (
+                      <div className="text-left">
+                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                          Datos para pagar
+                          {orderMethods.length > 0 && (
+                            <span className="text-[var(--brand-ink-2)]/45">
+                              {" "}
+                              ({orderMethods.join(" + ")})
+                            </span>
+                          )}
+                        </p>
+                        <div className="mt-2">
+                          <PaymentMethodDetailsList details={details} />
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                 {lastOrderAttachedToOpenAccount ? (
                   <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-left">
@@ -2785,7 +2818,7 @@ export default function CartDrawer({
                           {/* Punto elegido: mini mapa de confirmación visual
                               con el chip "Ajustar" (como las apps grandes). */}
                           {distanceQuote && deliveryPointCoords && (
-                            <div className="relative mt-3">
+                            <div className="relative isolate mt-3">
                               <DeliveryPointPreviewMap
                                 lat={deliveryPointCoords.lat}
                                 lng={deliveryPointCoords.lng}
@@ -3012,16 +3045,20 @@ export default function CartDrawer({
                       </div>
                     )}
 
-                    {Object.keys(
-                      publicConfig.publicPaymentMethodDetails || {},
-                    ).length > 0 && (
+                    {Object.keys(checkoutPaymentMethodDetails).length > 0 && (
                       <div>
                         <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                           Datos para pagar
+                          {selectedPaymentMethods.length > 0 && (
+                            <span className="text-[var(--brand-ink-2)]/45">
+                              {" "}
+                              ({selectedPaymentMethods.join(" + ")})
+                            </span>
+                          )}
                         </p>
                         <div className="mt-2">
                           <PaymentMethodDetailsList
-                            details={publicConfig.publicPaymentMethodDetails}
+                            details={checkoutPaymentMethodDetails}
                           />
                         </div>
                       </div>
@@ -3272,7 +3309,7 @@ export default function CartDrawer({
               llegue tu pedido?
             </h4>
 
-            <div className="relative mt-4">
+            <div className="relative isolate mt-4">
               <DeliveryPointPreviewMap
                 lat={deliveryPointCoords.lat}
                 lng={deliveryPointCoords.lng}

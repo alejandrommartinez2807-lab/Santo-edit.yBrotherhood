@@ -10,6 +10,7 @@ import {
   normalizePublicNavButtons,
   normalizePublicPaymentMethodDetails,
   normalizePublicPaymentMethods,
+  normalizePublicProductCardSize,
 } from "@/lib/publicPageConfig"
 
 type MembershipPlan = "menuDigital" | "basic" | "operational" | "pro" | "complete"
@@ -356,6 +357,9 @@ export function buildPublicBusinessConfigResponse(
     publicPaymentMethods: normalizePublicPaymentMethods(config.publicPaymentMethods),
     publicPaymentMethodDetails: normalizePublicPaymentMethodDetails(
       config.publicPaymentMethodDetails,
+    ),
+    publicProductCardSize: normalizePublicProductCardSize(
+      config.publicProductCardSize,
     ),
     publicAvailabilityLabel:
       cleanText(config.publicAvailabilityLabel) || "Disponible",

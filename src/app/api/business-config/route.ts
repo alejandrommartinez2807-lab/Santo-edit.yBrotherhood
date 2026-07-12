@@ -37,6 +37,7 @@ import {
   normalizePublicNavButtons,
   normalizePublicPaymentMethodDetails,
   normalizePublicPaymentMethods,
+  normalizePublicProductCardSize,
 } from "@/lib/publicPageConfig"
 import { writeAuditLog } from "@/lib/audit"
 
@@ -386,6 +387,13 @@ function normalizeBusinessConfigPayload(
   if (hasOwn(source, "publicPaymentMethodDetails")) {
     ;(config as Record<string, unknown>).publicPaymentMethodDetails =
       normalizePublicPaymentMethodDetails(source.publicPaymentMethodDetails)
+  }
+
+  // Tamaño de las tarjetas del menú (grande | media | compacta): config
+  // operativa, cambia cuántos productos caben por fila en el teléfono.
+  if (hasOwn(source, "publicProductCardSize")) {
+    ;(config as Record<string, unknown>).publicProductCardSize =
+      normalizePublicProductCardSize(source.publicProductCardSize)
   }
 
   // Cupones del carrito ("CODIGO 10" por línea): config operativa. No viajan

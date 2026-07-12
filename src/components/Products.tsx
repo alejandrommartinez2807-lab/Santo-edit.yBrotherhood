@@ -49,6 +49,9 @@ type PublicMenuConfig = {
   productCardButtonColor?: string
   publicCategoryOrder?: string[]
   publicHiddenCategories?: string[]
+  // Tamaño de las tarjetas (grande | media | compacta): define cuántos
+  // productos caben por fila, sobre todo en el teléfono.
+  publicProductCardSize?: string
 }
 
 type PublicBusinessConfigResponse = {
@@ -78,6 +81,7 @@ const DEFAULT_PUBLIC_MENU_CONFIG: Required<PublicMenuConfig> = {
   productCardButtonColor: "#f5a623",
   publicCategoryOrder: DEFAULT_PUBLIC_CATEGORY_ORDER,
   publicHiddenCategories: [],
+  publicProductCardSize: "grande",
 }
 
 function cleanPublicText(value: unknown, fallback: string) {
@@ -150,7 +154,21 @@ function normalizePublicMenuConfig(value: unknown): Required<PublicMenuConfig> {
     publicHiddenCategories: normalizePublicHiddenCategoryList(
       source.publicHiddenCategories,
     ),
+    publicProductCardSize: ["grande", "media", "compacta"].includes(
+      String(source.publicProductCardSize || "").trim().toLowerCase(),
+    )
+      ? String(source.publicProductCardSize).trim().toLowerCase()
+      : DEFAULT_PUBLIC_MENU_CONFIG.publicProductCardSize,
   }
+}
+
+// Columnas del grid según el tamaño elegido en Configuración: "grande" es el
+// diseño original; "media" y "compacta" meten más productos por fila.
+const PRODUCT_GRID_BY_CARD_SIZE: Record<string, string> = {
+  grande: "mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3",
+  media: "mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4",
+  compacta:
+    "mt-8 grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-4 xl:grid-cols-5",
 }
 
 function getBusinessConfigPayload(
@@ -502,6 +520,7 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
                 className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-[var(--brand-primary)]"
               />
               <input
+                id="public-menu-search"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder={publicMenuConfig.publicMenuSearchPlaceholder}
@@ -603,11 +622,18 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
             </button>
           </div>
         ) : (
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          <div
+            className={
+              PRODUCT_GRID_BY_CARD_SIZE[
+                publicMenuConfig.publicProductCardSize
+              ] || PRODUCT_GRID_BY_CARD_SIZE.grande
+            }
+          >
             {filteredProducts.map((product, index) => (
               <ProductCard
                 key={product.id}
                 {...product}
+                cardSize={publicMenuConfig.publicProductCardSize}
                 exchangeRate={exchangeRate}
                 index={index}
                 onAddToCart={onAddToCart}

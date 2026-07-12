@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
-import { MapPin, MessageCircle, ShoppingCart } from "lucide-react"
+import { MapPin, MessageCircle, Search, ShoppingCart } from "lucide-react"
 import { BRAND } from "@/lib/brand"
 import {
   DEFAULT_PUBLIC_NAV_BUTTONS,
@@ -366,6 +366,40 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
               <MessageCircle size={20} strokeWidth={2.2} />
             </a>
           ) : null}
+
+          {/* Lupa junto al carrito: baja al buscador del menú y lo enfoca
+              para encontrar un producto sin recorrer toda la página. */}
+          <button
+            type="button"
+            onClick={() => {
+              const searchInput = document.getElementById("public-menu-search")
+              if (!(searchInput instanceof HTMLInputElement)) return
+
+              const targetTop = Math.max(
+                0,
+                window.scrollY +
+                  searchInput.getBoundingClientRect().top -
+                  window.innerHeight / 2,
+              )
+              window.scrollTo({ top: targetTop, behavior: "smooth" })
+
+              // Algunos navegadores dentro de apps ignoran el scroll suave:
+              // si no se movió, se salta directo y luego se enfoca.
+              window.setTimeout(() => {
+                if (Math.abs(window.scrollY - targetTop) > 200) {
+                  window.scrollTo({
+                    top: targetTop,
+                    behavior: "instant" as ScrollBehavior,
+                  })
+                }
+                searchInput.focus({ preventScroll: true })
+              }, 500)
+            }}
+            aria-label="Buscar en el menú"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+          >
+            <Search size={20} strokeWidth={2.4} />
+          </button>
 
           <button
             type="button"

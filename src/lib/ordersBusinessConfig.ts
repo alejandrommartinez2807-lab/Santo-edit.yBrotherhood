@@ -9,7 +9,9 @@ import {
   normalizePublicNavButtons,
   normalizePublicPaymentMethodDetails,
   normalizePublicPaymentMethods,
+  normalizePublicProductCardSize,
   type PublicNavButton,
+  type PublicProductCardSize,
 } from "./publicPageConfig"
 import { getSupabaseAdmin } from "./supabaseServer"
 import { normalizeBusinessComplexitySettings } from "./businessComplexity"
@@ -103,6 +105,8 @@ export type BusinessConfig = {
   publicPaymentMethods: string[]
   // Datos de cada método (pago móvil, Zelle…) que el cliente ve y copia.
   publicPaymentMethodDetails: Record<string, string>
+  // Tamaño de las tarjetas del menú público (grande | media | compacta).
+  publicProductCardSize: PublicProductCardSize
   // Cupones del carrito ("CODIGO 10" por línea); nunca se exponen al público.
   publicCoupons: string[]
   locationButtonText: string
@@ -242,6 +246,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicAvailabilityLabel: "Disponible",
   publicPaymentMethods: [...DEFAULT_PUBLIC_PAYMENT_METHODS],
   publicPaymentMethodDetails: {},
+  publicProductCardSize: "grande",
   publicCoupons: [],
   locationButtonText: "Abrir ubicación",
   googleMapsUrl: "",
@@ -629,6 +634,9 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     publicPaymentMethods: normalizePublicPaymentMethods(source.publicPaymentMethods),
     publicPaymentMethodDetails: normalizePublicPaymentMethodDetails(
       source.publicPaymentMethodDetails
+    ),
+    publicProductCardSize: normalizePublicProductCardSize(
+      source.publicProductCardSize
     ),
     publicCoupons: normalizePublicCoupons(source.publicCoupons),
     locationButtonText:

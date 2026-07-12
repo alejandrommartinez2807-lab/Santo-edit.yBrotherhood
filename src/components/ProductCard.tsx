@@ -42,7 +42,66 @@ type ProductCardProps = Product & {
   publicLabels?: ProductCardPublicLabels;
   isFavorite?: boolean;
   onToggleFavorite?: (productId: number) => void;
+  // Tamaño elegido en Configuración: "grande" (original), "media" (2 por
+  // fila en móvil) o "compacta" (3 por fila, estilo catálogo).
+  cardSize?: string;
 };
+
+// Clases por tamaño: media y compacta encogen foto, textos y botón para que
+// quepan más productos por fila sin romper el diseño.
+const CARD_SIZE_STYLES = {
+  grande: {
+    image: "h-56 sm:h-64",
+    body: "p-5",
+    title: "text-[1.6rem] leading-[0.95] sm:text-3xl",
+    showDescription: true,
+    description: "mt-2 min-h-[44px] text-sm",
+    priceRow: "mt-4 pt-4",
+    price: "text-[1.7rem]",
+    reference: "text-xs sm:text-sm",
+    button: "mt-4 gap-2.5 px-4 py-3.5 text-sm",
+    buttonIcon: 18,
+    showBadges: true,
+    showPriceInButton: true,
+    shortButtonLabels: false,
+  },
+  media: {
+    image: "h-32 sm:h-44",
+    body: "p-3",
+    title: "text-base leading-tight sm:text-xl",
+    showDescription: true,
+    description: "mt-1.5 min-h-0 line-clamp-2 text-xs",
+    priceRow: "mt-2.5 pt-2.5",
+    price: "text-xl",
+    reference: "text-[0.62rem] sm:text-xs",
+    button: "mt-2.5 gap-1.5 px-2 py-2.5 text-[0.7rem]",
+    buttonIcon: 15,
+    showBadges: true,
+    showPriceInButton: false,
+    shortButtonLabels: false,
+  },
+  compacta: {
+    image: "h-24 sm:h-32",
+    body: "p-2",
+    title: "text-[0.78rem] leading-tight sm:text-sm",
+    showDescription: false,
+    description: "",
+    priceRow: "mt-1.5 pt-1.5",
+    price: "text-sm sm:text-base",
+    reference: "hidden",
+    button: "mt-1.5 gap-1 px-1 py-2 text-[0.6rem]",
+    buttonIcon: 13,
+    showBadges: false,
+    showPriceInButton: false,
+    shortButtonLabels: true,
+  },
+} as const;
+
+function getCardSizeStyles(cardSize: string | undefined) {
+  if (cardSize === "media") return CARD_SIZE_STYLES.media;
+  if (cardSize === "compacta") return CARD_SIZE_STYLES.compacta;
+  return CARD_SIZE_STYLES.grande;
+}
 
 const DEFAULT_CUSTOMIZE_ACTION_LABEL = "Elige tus ingredientes";
 
@@ -209,7 +268,9 @@ export default function ProductCard({
   publicLabels,
   isFavorite = false,
   onToggleFavorite,
+  cardSize,
 }: ProductCardProps) {
+  const sizeStyles = getCardSizeStyles(cardSize);
   const [added, setAdded] = useState(false);
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
   const [formMessage, setFormMessage] = useState("");
@@ -590,7 +651,9 @@ export default function ProductCard({
         whileHover={{ y: -6 }}
         className="group relative flex flex-col overflow-hidden rounded-[1.6rem] border border-[var(--product-card-border)] bg-[var(--product-card-bg)] transition-colors duration-300 hover:border-[rgba(var(--brand-primary-rgb),0.6)] hover:shadow-[0_24px_60px_-30px_rgba(var(--brand-primary-rgb),0.5)]"
       >
-        <div className="relative h-56 overflow-hidden bg-black sm:h-64">
+        <div
+          className={`relative overflow-hidden bg-black ${sizeStyles.image}`}
+        >
           <motion.img
             src={image || BRAND.logoUrl || "/logoremovebg.png"}
             alt={name}
@@ -607,26 +670,30 @@ export default function ProductCard({
           {/* Destello que recorre la foto al pasar el mouse (solo decorativo). */}
           <span className="pointer-events-none absolute inset-y-0 left-[-60%] w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent opacity-0 transition-all duration-700 ease-out group-hover:left-[120%] group-hover:opacity-100" />
 
-          <span className="absolute left-4 top-4 rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--product-card-button)] backdrop-blur-sm">
-            {category}
-          </span>
+          {sizeStyles.showBadges && (
+            <span className="absolute left-4 top-4 rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--product-card-button)] backdrop-blur-sm">
+              {category}
+            </span>
+          )}
 
-          <div className="absolute right-4 top-4 flex max-w-[58%] flex-col items-end gap-2">
-            {isFeatured ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--product-card-button)] px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-black shadow-lg shadow-black/40">
-                <Sparkles size={13} />
-                Top ventas
-              </span>
-            ) : null}
+          {sizeStyles.showBadges && (
+            <div className="absolute right-4 top-4 flex max-w-[58%] flex-col items-end gap-2">
+              {isFeatured ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--product-card-button)] px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-black shadow-lg shadow-black/40">
+                  <Sparkles size={13} />
+                  Top ventas
+                </span>
+              ) : null}
 
-            {isCombo ? (
-              <span className="rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--product-card-button)] backdrop-blur-sm">
-                Solo divisas
-              </span>
-            ) : null}
-          </div>
+              {isCombo ? (
+                <span className="rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--product-card-button)] backdrop-blur-sm">
+                  Solo divisas
+                </span>
+              ) : null}
+            </div>
+          )}
 
-          {onToggleFavorite ? (
+          {onToggleFavorite && sizeStyles.showBadges ? (
             <button
               type="button"
               onClick={() => onToggleFavorite(id)}
@@ -647,18 +714,28 @@ export default function ProductCard({
           ) : null}
         </div>
 
-        <div className="flex flex-1 flex-col p-5">
-          <h3 className="font-display text-[1.6rem] uppercase leading-[0.95] text-[var(--product-card-text)] sm:text-3xl">
+        <div className={`flex flex-1 flex-col ${sizeStyles.body}`}>
+          <h3
+            className={`font-display uppercase text-[var(--product-card-text)] ${sizeStyles.title}`}
+          >
             {name}
           </h3>
 
-          <p className="mt-2 min-h-[44px] flex-1 text-sm font-medium leading-relaxed text-[var(--product-card-text)] opacity-65">
-            {description}
-          </p>
+          {sizeStyles.showDescription && (
+            <p
+              className={`flex-1 font-medium leading-relaxed text-[var(--product-card-text)] opacity-65 ${sizeStyles.description}`}
+            >
+              {description}
+            </p>
+          )}
 
-          <div className="mt-4 flex items-end justify-between gap-3 border-t border-[var(--product-card-border)] pt-4">
+          <div
+            className={`flex items-end justify-between gap-3 border-t border-[var(--product-card-border)] ${sizeStyles.priceRow}`}
+          >
             <div>
-              <p className="text-[1.7rem] font-black leading-none text-[var(--product-card-button)]">
+              <p
+                className={`font-black leading-none text-[var(--product-card-button)] ${sizeStyles.price}`}
+              >
                 {formatUSD(finalUnitPrice)}
               </p>
               {optionsPrice !== 0 ? (
@@ -668,7 +745,9 @@ export default function ProductCard({
               ) : null}
             </div>
 
-            <p className="pb-0.5 text-right text-xs font-black uppercase tracking-[0.08em] text-[var(--product-card-text)] opacity-55 sm:text-sm">
+            <p
+              className={`pb-0.5 text-right font-black uppercase tracking-[0.08em] text-[var(--product-card-text)] opacity-55 ${sizeStyles.reference}`}
+            >
               {isCombo ? "Pago en divisas" : `Bs ${formatVES(finalVES)}`}
             </p>
           </div>
@@ -676,7 +755,7 @@ export default function ProductCard({
           <button
             type="button"
             onClick={handleMainAction}
-            className={`mt-4 flex w-full items-center justify-center gap-2.5 rounded-xl px-4 py-3.5 text-sm font-black uppercase tracking-[0.06em] transition active:scale-[0.98] ${
+            className={`flex w-full items-center justify-center rounded-xl font-black uppercase tracking-[0.06em] transition active:scale-[0.98] ${sizeStyles.button} ${
               added
                 ? "bg-green-500 text-white"
                 : "bg-[var(--product-card-button)] text-black shadow-[0_12px_30px_-12px_rgba(var(--brand-primary-rgb),0.7)] hover:brightness-110"
@@ -684,19 +763,23 @@ export default function ProductCard({
           >
             {added ? (
               <>
-                <ShoppingCart size={18} />
+                <ShoppingCart size={sizeStyles.buttonIcon} />
                 Agregado
               </>
             ) : (
               <>
                 {hasSelectableOptions ? (
-                  <SlidersHorizontal size={18} />
+                  <SlidersHorizontal size={sizeStyles.buttonIcon} />
                 ) : (
-                  <ShoppingCart size={18} />
+                  <ShoppingCart size={sizeStyles.buttonIcon} />
                 )}
                 {hasSelectableOptions
-                  ? customizeActionLabel
-                  : `Agregar · ${formatUSD(finalUnitPrice)}`}
+                  ? sizeStyles.shortButtonLabels
+                    ? "Elegir"
+                    : customizeActionLabel
+                  : sizeStyles.showPriceInButton
+                    ? `Agregar · ${formatUSD(finalUnitPrice)}`
+                    : "Agregar"}
               </>
             )}
           </button>

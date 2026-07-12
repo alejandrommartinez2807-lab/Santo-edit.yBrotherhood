@@ -183,6 +183,23 @@ export function normalizePublicPaymentMethods(value: unknown): string[] {
   return methods.length ? methods : [...DEFAULT_PUBLIC_PAYMENT_METHODS]
 }
 
+// Tamaño de las tarjetas del menú público. "grande" = 1 por fila en el
+// teléfono (actual), "media" = 2 por fila, "compacta" = 3 por fila; en
+// pantallas grandes cada modo suma columnas. El dueño lo elige en
+// Configuración según cuántos productos quiera mostrar de un vistazo.
+export const PUBLIC_PRODUCT_CARD_SIZES = ["grande", "media", "compacta"] as const
+
+export type PublicProductCardSize = (typeof PUBLIC_PRODUCT_CARD_SIZES)[number]
+
+export function normalizePublicProductCardSize(
+  value: unknown,
+): PublicProductCardSize {
+  const text = cleanText(value).toLowerCase()
+  return (PUBLIC_PRODUCT_CARD_SIZES as readonly string[]).includes(text)
+    ? (text as PublicProductCardSize)
+    : "grande"
+}
+
 // Datos de cada método de pago (número de pago móvil, correo de Zelle, etc.),
 // escritos por el dueño en Configuración. El carrito los muestra en botones
 // desplegables ("Ver datos de Pago móvil") con copiado línea a línea, así el

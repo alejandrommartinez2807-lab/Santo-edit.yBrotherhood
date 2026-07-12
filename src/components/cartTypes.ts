@@ -60,6 +60,9 @@ export type CreatedOrderSummary = {
   offline?: boolean;
   attachedToOpenAccount?: boolean;
   openAccountTable?: string;
+  // Métodos con los que va a pagar (2 si fue mixto): filtra los "Datos
+  // para pagar" de la confirmación a lo que realmente eligió.
+  paymentMethods?: string[];
 };
 
 export type MembershipPlan =
