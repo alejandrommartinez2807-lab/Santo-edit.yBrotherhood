@@ -42,7 +42,11 @@ export default function Home() {
 
       <FeaturedProducts onAddToCart={cart.addItem} exchangeRate={exchange.rate} />
 
-      <Products onAddToCart={cart.addItem} exchangeRate={exchange.rate} />
+      <Products
+        onAddToCart={cart.addItem}
+        exchangeRate={exchange.rate}
+        onProductsLoaded={cart.syncItemsWithCatalog}
+      />
 
       <PublicPromotion />
 

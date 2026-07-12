@@ -123,7 +123,7 @@ type LocalOrder = {
 }
 
 function isComboItem(item: CartItem) {
-  return item.paymentMode === "divisa" || item.category === "Combos"
+  return item.paymentMode === "divisa"
 }
 
 function isDeliveryOrder(order: LocalOrder) {

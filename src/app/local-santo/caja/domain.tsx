@@ -244,7 +244,7 @@ export function normalizeComparableText(value: string) {
 }
 
 export function isComboItem(item: CartItem) {
-  return item.paymentMode === "divisa" || item.category === "Combos"
+  return item.paymentMode === "divisa"
 }
 
 export function isDeliveryOrder(order: LocalOrder) {

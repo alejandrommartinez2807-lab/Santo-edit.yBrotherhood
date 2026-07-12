@@ -8,7 +8,7 @@ import type {
 import { cleanText } from "@/components/cartUtils";
 
 export function isComboItem(item: CartItem) {
-  return item.paymentMode === "divisa" || item.category === "Combos";
+  return item.paymentMode === "divisa";
 }
 
 export function getItemPaymentMode(item: CartItem): ProductPaymentMode {

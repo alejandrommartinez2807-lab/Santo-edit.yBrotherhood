@@ -67,22 +67,28 @@ body {
   color: black;
 }
 
-/* Fina y discreta: la de 10px con degradado llamaba más la atención que el
-   contenido, sobre todo en el checkout del teléfono. */
+/* Fina, discreta y en colores de la marca: el thumb usa el primario
+   translúcido (se integra con el fondo oscuro en vez de gritar naranja) y el
+   track hereda la superficie de la página. Firefox usa scrollbar-color. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--brand-primary-rgb), 0.45) transparent;
+}
+
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #050101;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    180deg,
-    var(--bambucha-red),
-    var(--bambucha-orange)
-  );
+  background: rgba(var(--brand-primary-rgb), 0.45);
   border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--brand-primary-rgb), 0.75);
 }

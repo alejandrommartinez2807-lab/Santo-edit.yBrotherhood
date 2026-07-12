@@ -726,7 +726,7 @@ export const DEFAULT_EXPENSE_QUICK_CONCEPTS: ExpenseQuickConcept[] = [
 ]
 
 export function isComboItem(item: CartItem) {
-  return item.paymentMode === "divisa" || item.category === "Combos"
+  return item.paymentMode === "divisa"
 }
 
 export function isDeliveryOrder(order: LocalOrder) {

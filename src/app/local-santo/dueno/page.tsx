@@ -225,7 +225,7 @@ function formatShortDateKey(value: string) {
 }
 
 function isComboItem(item: OrderItem) {
-  return item.paymentMode === "divisa" || item.category === "Combos"
+  return item.paymentMode === "divisa"
 }
 
 function isDeliveryOrder(order: LocalOrder) {

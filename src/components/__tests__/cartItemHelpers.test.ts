@@ -13,11 +13,13 @@ function item(p: Partial<CartItem>): CartItem {
 }
 
 describe("isComboItem / getItemPaymentMode", () => {
-  it("combo por paymentMode o categoría", () => {
+  it("solo paymentMode decide el trato en divisas; la categoría no obliga", () => {
     expect(isComboItem(item({ paymentMode: "divisa" }))).toBe(true)
-    expect(isComboItem(item({ category: "Combos" }))).toBe(true)
+    // Un producto en la categoría Combos con pago normal se cobra normal.
+    expect(isComboItem(item({ category: "Combos" }))).toBe(false)
+    expect(isComboItem(item({ category: "Combos", paymentMode: "divisa" }))).toBe(true)
     expect(isComboItem(item({ category: "Perros" }))).toBe(false)
-    expect(getItemPaymentMode(item({ category: "Combos" }))).toBe("divisa")
+    expect(getItemPaymentMode(item({ category: "Combos" }))).toBe("mixto")
     expect(getItemPaymentMode(item({ category: "Perros" }))).toBe("mixto")
   })
 })

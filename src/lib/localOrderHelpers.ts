@@ -69,7 +69,7 @@ export function cleanBoolean(value: unknown) {
 }
 
 export function isComboItem(item: OrderItemLike) {
-  return item.paymentMode === "divisa" || cleanText(item.category) === "Combos"
+  return item.paymentMode === "divisa"
 }
 
 export function isDeliveryOrder(order: LocalOrder) {

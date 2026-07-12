@@ -401,6 +401,55 @@ export function useCart() {
     setItems([])
   }
 
+  // Refresca en los ítems guardados los campos que dependen del menú vivo
+  // (modo de pago, canales, IVA, categoría). Un carrito viejo en localStorage
+  // podía seguir mostrando "solo divisas" después de que el dueño cambiara el
+  // producto a pago normal. No toca precio ni selección configurada.
+  function syncItemsWithCatalog(
+    products: Array<{
+      id: number
+      category?: string
+      paymentMode?: "divisa" | "mixto"
+      salesChannels?: unknown
+      ivaRate?: number | null
+    }>,
+  ) {
+    if (!Array.isArray(products) || products.length === 0) return
+
+    const productsById = new Map(products.map((product) => [Number(product.id), product]))
+
+    setItems((currentItems) => {
+      let changed = false
+
+      const nextItems = currentItems.map((item) => {
+        const product = productsById.get(Number(item.id))
+        if (!product) return item
+
+        const paymentMode: "divisa" | "mixto" =
+          product.paymentMode === "divisa" ? "divisa" : "mixto"
+        const salesChannels = normalizeSalesChannels(product.salesChannels)
+        const category = cleanText(product.category) || item.category
+        const ivaRate = product.ivaRate ?? item.ivaRate ?? null
+        const sameChannels =
+          JSON.stringify(salesChannels) === JSON.stringify(item.salesChannels)
+
+        if (
+          item.paymentMode === paymentMode &&
+          sameChannels &&
+          item.category === category &&
+          (item.ivaRate ?? null) === ivaRate
+        ) {
+          return item
+        }
+
+        changed = true
+        return { ...item, paymentMode, salesChannels, category, ivaRate }
+      })
+
+      return changed ? nextItems : currentItems
+    })
+  }
+
   // Restaura el snapshot del último pedido en el carrito (lo reemplaza).
   // Devuelve cuántas líneas restauró para que la UI reaccione.
   function restoreLastOrder() {
@@ -430,6 +479,7 @@ export function useCart() {
     updateItemNote,
     updateItemNoteEnabled,
     clearCart,
+    syncItemsWithCatalog,
     restoreLastOrder,
     totalItems,
     totalPrice,

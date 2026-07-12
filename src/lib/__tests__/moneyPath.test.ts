@@ -64,10 +64,10 @@ describe("calculatePaymentStatus", () => {
 })
 
 describe("calculateOrderTotalsFromItems", () => {
-  it("separa combos (divisa) de productos normales y calcula VES", () => {
+  it("separa productos en divisas (paymentMode) de los normales y calcula VES", () => {
     const t = calculateOrderTotalsFromItems(
       [
-        item({ category: "Combos", price: 20, quantity: 1 }),
+        item({ category: "Combos", paymentMode: "divisa", price: 20, quantity: 1 }),
         item({ price: 10, quantity: 2 }),
       ],
       36,
@@ -76,6 +76,16 @@ describe("calculateOrderTotalsFromItems", () => {
     expect(t.totalRegularUSD).toBe(20)
     expect(t.totalRegularVES).toBe(720) // 20 * 36
     expect(t.totalUSD).toBe(40)
+  })
+
+  it("la categoría Combos con pago normal se cobra como producto normal", () => {
+    const t = calculateOrderTotalsFromItems(
+      [item({ category: "Combos", price: 20, quantity: 1 })],
+      36,
+    )
+    expect(t.totalCombosUSD).toBe(0)
+    expect(t.totalRegularUSD).toBe(20)
+    expect(t.totalRegularVES).toBe(720)
   })
   it("suma el delivery al total (pero no a la base)", () => {
     const t = calculateOrderTotalsFromItems([item({ price: 10, quantity: 1 })], 36, 5)

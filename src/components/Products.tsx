@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState, type CSSProperties } from "react"
+import { useEffect, useEffectEvent, useMemo, useState, type CSSProperties } from "react"
 import { Search, Sparkles, X } from "lucide-react"
 import ProductCard from "@/components/ProductCard"
 import { BRAND } from "@/lib/brand"
@@ -22,6 +22,8 @@ import {
 type ProductsProps = {
   exchangeRate: number
   onAddToCart: (product: ProductToAdd) => void
+  // Notifica el catálogo vivo (para sincronizar carritos viejos en storage).
+  onProductsLoaded?: (products: Product[]) => void
 }
 
 type QuickMenuFilter = "all" | "favorites" | "combo" | "customizable" | "delivery"
@@ -254,7 +256,7 @@ function sortPublicProducts(first: Product, second: Product) {
   )
 }
 
-export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
+export default function Products({ exchangeRate, onAddToCart, onProductsLoaded }: ProductsProps) {
   const [selectedCategory, setSelectedCategory] = useState("Todos")
   const [selectedQuickFilter, setSelectedQuickFilter] =
     useState<QuickMenuFilter>("all")
@@ -312,6 +314,11 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
     }
   }, [])
 
+  // Estable para el efecto: el callback del padre cambia en cada render.
+  const notifyProductsLoaded = useEffectEvent((loadedProducts: Product[]) => {
+    onProductsLoaded?.(loadedProducts)
+  })
+
   useEffect(() => {
     let isMounted = true
 
@@ -347,6 +354,7 @@ export default function Products({ exchangeRate, onAddToCart }: ProductsProps) {
 
         setMenuProducts(cleanProducts)
         setMenuCategories(cleanCategories)
+        notifyProductsLoaded(cleanProducts)
         setMenuWarning(data.warning || null)
         setPublicMenuConfig(nextPublicMenuConfig)
       } catch {
