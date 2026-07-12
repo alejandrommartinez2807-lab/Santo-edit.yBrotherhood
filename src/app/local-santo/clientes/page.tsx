@@ -478,13 +478,13 @@ function FrequentCustomersPageContent() {
 
     if (!password) return
 
-    window.sessionStorage.setItem(ADMIN_STORAGE_KEY, password)
+    window.localStorage.setItem(ADMIN_STORAGE_KEY, password)
     setAdminPassword(password)
     loadCustomers(password)
   }
 
   function handleLogout() {
-    window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
+    window.localStorage.removeItem(ADMIN_STORAGE_KEY)
     setAdminPassword("")
     setPasswordInput("")
     setOrders([])
@@ -493,7 +493,7 @@ function FrequentCustomersPageContent() {
   }
 
   const restoreSession = useEffectEvent(() => {
-    const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
+    const savedPassword = window.localStorage.getItem(ADMIN_STORAGE_KEY)
 
     if (!savedPassword) return
 

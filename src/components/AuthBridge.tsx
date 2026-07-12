@@ -108,11 +108,11 @@ function hasSupabaseSessionSync(): boolean {
 function syncSupabaseSentinel() {
   if (typeof window === "undefined") return
   try {
-    const current = window.sessionStorage.getItem(OWNER_SESSION_KEY)
+    const current = window.localStorage.getItem(OWNER_SESSION_KEY)
     if (hasSupabaseSessionSync()) {
-      if (!current) window.sessionStorage.setItem(OWNER_SESSION_KEY, SUPABASE_SENTINEL)
+      if (!current) window.localStorage.setItem(OWNER_SESSION_KEY, SUPABASE_SENTINEL)
     } else if (current === SUPABASE_SENTINEL) {
-      window.sessionStorage.removeItem(OWNER_SESSION_KEY)
+      window.localStorage.removeItem(OWNER_SESSION_KEY)
     }
   } catch {
     /* sin acceso a storage */

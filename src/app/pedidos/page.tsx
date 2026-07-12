@@ -921,7 +921,7 @@ export default function PedidosPage() {
 
     const access = await validateLocalAccess(password)
 
-    window.sessionStorage.setItem(ADMIN_STORAGE_KEY, password)
+    window.localStorage.setItem(ADMIN_STORAGE_KEY, password)
     setAdminPassword(password)
     setPasswordInput(password)
 
@@ -968,7 +968,7 @@ export default function PedidosPage() {
       setIsLoading(true)
       await startLocalSession(password)
     } catch (error) {
-      window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
+      window.localStorage.removeItem(ADMIN_STORAGE_KEY)
       setAdminPassword("")
       setLocalAccessRole(null)
       setLocalAccessRoleLabel("")
@@ -983,7 +983,7 @@ export default function PedidosPage() {
   }
 
   function handleLogout() {
-    window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
+    window.localStorage.removeItem(ADMIN_STORAGE_KEY)
     setAdminPassword("")
     setPasswordInput("")
     setOrders([])
@@ -1113,7 +1113,7 @@ export default function PedidosPage() {
 
   const restoreSession = useEffectEvent((savedPassword: string) => {
     startLocalSession(savedPassword).catch((error) => {
-      window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
+      window.localStorage.removeItem(ADMIN_STORAGE_KEY)
       setAdminPassword("")
       setPasswordInput("")
       setLocalAccessRole(null)
@@ -1127,7 +1127,7 @@ export default function PedidosPage() {
   })
 
   useEffect(() => {
-    const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
+    const savedPassword = window.localStorage.getItem(ADMIN_STORAGE_KEY)
 
     if (!savedPassword) return
 
