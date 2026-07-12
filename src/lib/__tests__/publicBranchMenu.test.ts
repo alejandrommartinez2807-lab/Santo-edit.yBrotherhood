@@ -10,7 +10,7 @@ const principalMenu = [product(1, "Smash Doble"), product(2, "2Pac Shakur")]
 
 function depsWith(menusByBranch: Record<string, MenuProduct[]>, defaultBranchId: string | null) {
   return {
-    getMenuProducts: async (_options: { includeInactive?: boolean }, branchId?: string | null) => {
+    getMenuProducts: async (_options?: { includeInactive?: boolean }, branchId?: string | null) => {
       if (!branchId) return Object.values(menusByBranch).flat()
       if (!(branchId in menusByBranch)) throw new Error(`invalid input syntax for type uuid: "${branchId}"`)
       return menusByBranch[branchId]
