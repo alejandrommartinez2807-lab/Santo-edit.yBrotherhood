@@ -90,6 +90,18 @@ function normalizeMoneyInput(value: string) {
 import PaymentMethodDetailsList from "@/components/PaymentMethodDetailsList";
 import { readRecentPublicOrders } from "@/components/recentPublicOrders";
 
+type PaymentEntry = {
+  method: string;
+  amountUSD: string;
+  amountVES: string;
+};
+
+const EMPTY_PAYMENT_ENTRY: PaymentEntry = {
+  method: "",
+  amountUSD: "",
+  amountVES: "",
+};
+
 export default function PublicOrderPaymentSection({
   orderId,
 }: {
@@ -110,9 +122,10 @@ export default function PublicOrderPaymentSection({
   const [chosenMethods, setChosenMethods] = useState<string[]>([]);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [method, setMethod] = useState("");
-  const [amountUSD, setAmountUSD] = useState("");
-  const [amountVES, setAmountVES] = useState("");
+  // Un bloque por método: si el cliente pagó parte con un método y parte con
+  // otro, indica cuánto fue en cada uno. Se precarga con lo que eligió al
+  // pedir (editable si al final pagó distinto).
+  const [payments, setPayments] = useState<PaymentEntry[]>([EMPTY_PAYMENT_ENTRY]);
   const [reference, setReference] = useState("");
   const [customerNote, setCustomerNote] = useState("");
   const [dataUrl, setDataUrl] = useState("");
@@ -237,9 +250,59 @@ export default function PublicOrderPaymentSection({
     reader.readAsDataURL(file);
   }
 
+  // Precarga del formulario: un bloque por método elegido al pedir; si fue
+  // uno solo, su monto en $ arranca con el total del pedido.
+  function buildInitialPayments(): PaymentEntry[] {
+    const chosen = chosenMethods.filter(Boolean);
+    if (chosen.length === 0) {
+      return [
+        {
+          ...EMPTY_PAYMENT_ENTRY,
+          amountUSD: info && info.totalUSD > 0 ? info.totalUSD.toFixed(2) : "",
+        },
+      ];
+    }
+    return chosen.map((methodName, index) => ({
+      method: methodName,
+      amountUSD:
+        chosen.length === 1 && index === 0 && info && info.totalUSD > 0
+          ? info.totalUSD.toFixed(2)
+          : "",
+      amountVES: "",
+    }));
+  }
+
+  function updatePaymentEntry(index: number, patch: Partial<PaymentEntry>) {
+    setPayments((current) =>
+      current.map((entry, entryIndex) =>
+        entryIndex === index ? { ...entry, ...patch } : entry,
+      ),
+    );
+  }
+
   async function submitProof(confirmDuplicate = false) {
-    const reportedUSD = normalizeMoneyInput(amountUSD);
-    const reportedVES = normalizeMoneyInput(amountVES);
+    const entries = payments
+      .map((entry) => ({
+        method: entry.method.trim(),
+        usd: normalizeMoneyInput(entry.amountUSD),
+        ves: normalizeMoneyInput(entry.amountVES),
+      }))
+      .filter((entry) => entry.method || entry.usd > 0 || entry.ves > 0);
+
+    const reportedUSD = entries.reduce((total, entry) => total + entry.usd, 0);
+    const reportedVES = entries.reduce((total, entry) => total + entry.ves, 0);
+
+    // Resumen por método para caja: "Zelle ($10.00) + Pago móvil (Bs 500,00)".
+    const reportedMethod = entries
+      .map((entry) => {
+        const parts: string[] = [];
+        if (entry.usd > 0) parts.push(formatUSD(entry.usd));
+        if (entry.ves > 0) parts.push(`Bs ${formatVES(entry.ves)}`);
+        if (!entry.method) return parts.join(" + ");
+        return parts.length ? `${entry.method} (${parts.join(" + ")})` : entry.method;
+      })
+      .filter(Boolean)
+      .join(" + ");
 
     if (!dataUrl) {
       setFormError("Adjunta la captura del pago (imagen).");
@@ -268,7 +331,7 @@ export default function PublicOrderPaymentSection({
         headers,
         body: JSON.stringify({
           orderId,
-          reportedMethod: method,
+          reportedMethod,
           amountReportedUSD: reportedUSD,
           amountReportedVES: reportedVES,
           paymentReference: reference,
@@ -297,9 +360,7 @@ export default function PublicOrderPaymentSection({
         "¡Pago reportado! Caja lo revisará y aquí verás cuando quede confirmado.",
       );
       setIsFormOpen(false);
-      setMethod("");
-      setAmountUSD("");
-      setAmountVES("");
+      setPayments([EMPTY_PAYMENT_ENTRY]);
       setReference("");
       setCustomerNote("");
       setDataUrl("");
@@ -445,9 +506,7 @@ export default function PublicOrderPaymentSection({
           onClick={() => {
             setIsFormOpen(true);
             setSuccessMessage(null);
-            if (!amountUSD && info.totalUSD > 0) {
-              setAmountUSD(info.totalUSD.toFixed(2));
-            }
+            setPayments(buildInitialPayments());
           }}
           className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90"
         >
@@ -460,50 +519,91 @@ export default function PublicOrderPaymentSection({
 
       {isFormOpen && (
         <div className="mt-4 space-y-3 text-left">
-          <div>
-            <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-              ¿Cómo pagaste?
-            </label>
-            <select
-              value={method}
-              onChange={(event) => setMethod(event.target.value)}
-              className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
+          {payments.map((entry, index) => (
+            <div
+              key={`payment-entry-${index}`}
+              className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/25 p-3"
             >
-              <option value="">Selecciona el método</option>
-              {paymentMethods.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </div>
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                  {payments.length > 1 ? `Método ${index + 1}` : "¿Cómo pagaste?"}
+                </label>
+                {payments.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPayments((current) =>
+                        current.filter((_, entryIndex) => entryIndex !== index),
+                      )
+                    }
+                    className="text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/50 transition hover:text-red-400"
+                  >
+                    Quitar
+                  </button>
+                )}
+              </div>
+              <select
+                value={entry.method}
+                onChange={(event) =>
+                  updatePaymentEntry(index, { method: event.target.value })
+                }
+                className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
+              >
+                <option value="">Selecciona el método</option>
+                {!paymentMethods.includes(entry.method) && entry.method ? (
+                  <option value={entry.method}>{entry.method}</option>
+                ) : null}
+                {paymentMethods.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-                Monto $
-              </label>
-              <input
-                value={amountUSD}
-                onChange={(event) => setAmountUSD(event.target.value)}
-                inputMode="decimal"
-                placeholder="0.00"
-                className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
-              />
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                    Monto $
+                  </label>
+                  <input
+                    value={entry.amountUSD}
+                    onChange={(event) =>
+                      updatePaymentEntry(index, { amountUSD: event.target.value })
+                    }
+                    inputMode="decimal"
+                    placeholder="0.00"
+                    className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
+                  />
+                </div>
+                <div>
+                  <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                    Monto Bs
+                  </label>
+                  <input
+                    value={entry.amountVES}
+                    onChange={(event) =>
+                      updatePaymentEntry(index, { amountVES: event.target.value })
+                    }
+                    inputMode="decimal"
+                    placeholder="0,00"
+                    className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
+                  />
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-                Monto Bs
-              </label>
-              <input
-                value={amountVES}
-                onChange={(event) => setAmountVES(event.target.value)}
-                inputMode="decimal"
-                placeholder="0,00"
-                className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
-              />
-            </div>
-          </div>
+          ))}
+
+          {payments.length < 3 && (
+            <button
+              type="button"
+              onClick={() =>
+                setPayments((current) => [...current, { ...EMPTY_PAYMENT_ENTRY }])
+              }
+              className="w-full rounded-full border-2 border-dashed border-[var(--brand-border)] px-4 py-2.5 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/60 transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+            >
+              + Pagué con otro método también
+            </button>
+          )}
 
           <div>
             <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
