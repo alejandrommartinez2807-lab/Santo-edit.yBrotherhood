@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Bell, BellRing, CheckCircle2, CookingPot, Loader2, Star } from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import {
+  NOTIFY_READY_BUTTON_ENABLED,
   requestNotificationPermission,
   subscribeToPushForOrder,
   useOrderReadyAlert,
@@ -173,7 +174,10 @@ export default function PedidoSeguimientoPage({
                     </div>
                   ) : null}
 
-                  {!isReady && !isDelivered && !notifyEnabled ? (
+                  {NOTIFY_READY_BUTTON_ENABLED &&
+                  !isReady &&
+                  !isDelivered &&
+                  !notifyEnabled ? (
                     <button
                       type="button"
                       onClick={async () => {

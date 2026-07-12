@@ -11,6 +11,11 @@ type PublicOrderStatus = {
 const POLL_INTERVAL_MS = 10_000;
 const FINAL_STATUSES = new Set(["Entregado", "Cancelado"]);
 
+// Botón "Avisarme al estar listo" apagado por ahora (pedido del dueño
+// 2026-07-11): la lógica de notificaciones queda intacta; poner en true para
+// volver a mostrarlo aquí y en la página de seguimiento /pedido/[id].
+export const NOTIFY_READY_BUTTON_ENABLED: boolean = false;
+
 function canUseNotifications() {
   return typeof window !== "undefined" && "Notification" in window;
 }
@@ -262,21 +267,23 @@ export default function PublicOrderStatusNotifier({ orderId }: { orderId: string
           </p>
         </div>
 
-        {notifyEnabled ? (
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-green-600 bg-green-600/15 px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.1em] text-green-400">
-            <BellRing size={13} />
-            Aviso activo
-          </span>
-        ) : (
-          <button
-            type="button"
-            onClick={enableNotifications}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90"
-          >
-            <Bell size={13} />
-            Avisarme al estar listo
-          </button>
-        )}
+        {NOTIFY_READY_BUTTON_ENABLED ? (
+          notifyEnabled ? (
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-green-600 bg-green-600/15 px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.1em] text-green-400">
+              <BellRing size={13} />
+              Aviso activo
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={enableNotifications}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90"
+            >
+              <Bell size={13} />
+              Avisarme al estar listo
+            </button>
+          )
+        ) : null}
       </div>
 
       <p className="mt-2 text-[0.7rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">

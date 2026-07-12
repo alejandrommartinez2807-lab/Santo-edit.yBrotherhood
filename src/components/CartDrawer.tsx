@@ -75,13 +75,20 @@ import {
   type RecentPublicOrder,
 } from "@/components/recentPublicOrders";
 import {
+  readPublicCustomerProfile,
+  savePublicCustomerProfile,
+} from "@/components/publicCustomerProfile";
+import {
   CartLineItem,
   CartSummaryFooter,
   EmptyCartState,
   OptionPicker,
 } from "@/components/cartDrawerParts";
 import { enqueueOrder, newClientOrderId } from "@/lib/offlineQueue";
-import PublicOrderStatusNotifier from "@/components/PublicOrderStatusNotifier";
+import {
+  useOrderReadyAlert,
+  usePublicOrderStatus,
+} from "@/components/PublicOrderStatusNotifier";
 import { readLastOrderSnapshot, saveLastOrderSnapshot } from "@/hooks/useCart";
 import PublicBranchPicker, {
   usePublicBranchSelection,
@@ -410,6 +417,23 @@ export default function CartDrawer({
   // Sede elegida por el cliente (Fase 3): scopea mesas, cuentas y el pedido.
   const branchSelection = usePublicBranchSelection();
   const needsBranchSelection = branchSelection.needsSelection;
+
+  // Estado en vivo del pedido recién creado: da el número visible (#07) y el
+  // avance (Recibido → Preparando → Listo) para la pantalla de confirmación.
+  const createdOrderTrackingId =
+    lastCreatedOrder &&
+    !lastCreatedOrder.offline &&
+    !lastCreatedOrder.attachedToOpenAccount
+      ? lastCreatedOrder.id
+      : "";
+  const createdOrderLive = usePublicOrderStatus(createdOrderTrackingId);
+  // Vibración al pasar a "Listo" mientras la confirmación siga abierta.
+  useOrderReadyAlert({
+    orderId: createdOrderTrackingId,
+    status: createdOrderLive.status,
+    displayNumber: createdOrderLive.displayNumber,
+    notifyEnabled: false,
+  });
 
   const canRegisterOrdersInPanel = doesPlanAllowLocalOrders(
     publicConfig.membershipPlan,
@@ -824,14 +848,49 @@ export default function CartDrawer({
     return () => clearTimeout(timer);
   }, [isOpen]);
 
+  // Al abrir el formulario de pedido se rellenan solos el nombre y el
+  // teléfono que el cliente usó la última vez (guardados en su dispositivo).
+  const prefillCustomerProfile = useEffectEvent(() => {
+    const profile = readPublicCustomerProfile();
+
+    if (profile.name && !customerName.trim()) setCustomerName(profile.name);
+    if (profile.phone && !customerPhone.trim()) setCustomerPhone(profile.phone);
+  });
+
+  useEffect(() => {
+    if (!isOrderModalOpen) return;
+    const timer = setTimeout(prefillCustomerProfile, 0);
+    return () => clearTimeout(timer);
+  }, [isOrderModalOpen]);
+
   // Al entrar al paso de Delivery se pide la ubicación de una vez (como las
   // páginas que preguntan al abrir): si el cliente ya dio el permiso antes,
   // el costo sale solo sin tocar nada; si no, le aparece la pregunta del
-  // navegador. Solo un intento por apertura del formulario.
+  // navegador. Solo un intento por apertura del formulario. Si el cliente ya
+  // tiene una dirección guardada de un pedido anterior, se usa esa primero
+  // (puede cambiarla con "Usar mi ubicación" o pegando otro link).
   const autoGpsAttemptedRef = useRef(false);
   const attemptAutoGpsQuote = useEffectEvent(() => {
+    const profile = readPublicCustomerProfile();
+
+    // El punto de referencia guardado también vuelve solo (y se muestra el
+    // campo para que el cliente lo vea y pueda corregirlo).
+    if (profile.deliveryReference && !deliveryReference.trim()) {
+      setDeliveryReference(profile.deliveryReference);
+      setWantsDeliveryReference(true);
+    }
+
     if (!isDistancePricingEnabled) return;
     if (distanceQuote || customerMapsUrl.trim() || isQuotingDistance) return;
+
+    const savedMapsUrl = profile.mapsUrl;
+
+    if (savedMapsUrl && looksLikeMapsLink(savedMapsUrl)) {
+      setCustomerMapsUrl(savedMapsUrl);
+      void requestDistanceQuote({ mapsUrl: savedMapsUrl });
+      return;
+    }
+
     handleQuoteFromGps();
   });
 
@@ -1532,7 +1591,13 @@ export default function CartDrawer({
     setIsSubmittingOrder(true);
     setOrderError(null);
 
-    await new Promise((resolve) => requestAnimationFrame(resolve));
+    // Deja pintar la pantalla de "enviando" antes del fetch. Con la página en
+    // segundo plano requestAnimationFrame nunca dispara, así que el setTimeout
+    // garantiza que el pedido salga igual (gana el primero que resuelva).
+    await new Promise((resolve) => {
+      requestAnimationFrame(resolve);
+      setTimeout(resolve, 150);
+    });
 
     let pendingPayload: unknown = null;
 
@@ -1591,7 +1656,10 @@ export default function CartDrawer({
         // servidor reconoce este id y no duplica el pedido. Ver 0018.
         clientOrderId: newClientOrderId(),
         customerName: customerName.trim() || "Cliente",
-        customerPhone: customerPhone.trim(),
+        // El teléfono solo viaja en Delivery: el servidor usa este campo como
+        // señal de delivery, y con el autollenado ahora puede venir cargado
+        // aunque el pedido sea de mesa o para llevar.
+        customerPhone: isDeliveryOrder ? customerPhone.trim() : "",
         tableNumber: isDeliveryOrder
           ? `Delivery${deliveryZoneLabel ? ` - ${deliveryZoneLabel}` : ""}`
           : tableNumber.trim(),
@@ -1680,6 +1748,15 @@ export default function CartDrawer({
       });
       setRecentPublicOrders(readRecentPublicOrders());
 
+      // Nombre, teléfono y ubicación quedan guardados en este dispositivo
+      // para rellenarse solos en el próximo pedido.
+      savePublicCustomerProfile({
+        name: customerName.trim(),
+        phone: customerPhone.trim(),
+        mapsUrl: isDeliveryOrder ? customerMapsUrl.trim() : "",
+        deliveryReference: isDeliveryOrder ? deliveryReference.trim() : "",
+      });
+
       setLastCreatedOrder(createdOrder);
       resetPaymentProofForm();
       setPaymentProofMethod(isMixedPayment ? "" : paymentMethod.trim());
@@ -1721,6 +1798,12 @@ export default function CartDrawer({
         // Sin conexión: guardamos el pedido localmente; OfflineSync lo enviará
         // al reconectar. No perdemos la venta.
         await enqueueOrder(pendingPayload);
+        savePublicCustomerProfile({
+          name: customerName.trim(),
+          phone: customerPhone.trim(),
+          mapsUrl: isDeliveryOrder ? customerMapsUrl.trim() : "",
+          deliveryReference: isDeliveryOrder ? deliveryReference.trim() : "",
+        });
         saveLastOrderSnapshot(items);
         setHasLastOrderSnapshot(true);
         items.forEach((item) => removeItem(getCartLineId(item)));
@@ -2138,7 +2221,11 @@ export default function CartDrawer({
                   </p>
 
                   <h3 className="mt-1 text-2xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:mt-2 sm:text-3xl">
-                    Identificar pedido
+                    {lastCreatedOrder
+                      ? "Pedido confirmado"
+                      : isSubmittingOrder
+                        ? "Enviando pedido"
+                        : "Identificar pedido"}
                   </h3>
                 </div>
 
@@ -2165,46 +2252,91 @@ export default function CartDrawer({
                   <p className="mt-5 text-sm font-black uppercase tracking-[0.24em] text-[var(--brand-primary)]">
                     {lastOrderAttachedToOpenAccount
                       ? "Agregado a la cuenta"
-                      : "Pedido registrado"}
+                      : "¡Pedido enviado!"}
                   </p>
 
                   <h4 className="mt-2 text-3xl font-black text-[var(--brand-ink-3)]">
                     {lastOrderAttachedToOpenAccount
                       ? "Cuenta actualizada"
-                      : lastCreatedOrder.hasStaffConfirmationItems
-                        ? "Pendiente de confirmación"
-                        : "Listo para preparar"}
+                      : lastCreatedOrder.offline
+                        ? "Guardado sin conexión"
+                        : lastCreatedOrder.hasStaffConfirmationItems
+                          ? "Pendiente de confirmación"
+                          : "El local ya lo recibió"}
                   </h4>
 
                   <p className="mx-auto mt-4 max-w-sm text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
                     {lastOrderAttachedToOpenAccount
                       ? `Este pedido se sumó a la cuenta abierta de ${lastCreatedOrder.openAccountTable || "la mesa"}. Caja lo verá junto con el resto de consumos cuando se cierre la cuenta.`
-                      : lastCreatedOrder.hasStaffConfirmationItems
-                        ? `El pedido fue enviado al panel interno. El personal debe confirmar ${cleanStaffConfirmationProductLabel(lastCreatedOrder.staffConfirmationProductNames || [])} antes de prepararlo.`
-                        : "El pedido fue enviado al panel interno del local."}
-                  </p>
-
-                  <p className="mt-3 text-[0.7rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]/70">
-                    Referencia interna: {lastCreatedOrder.id}
+                      : lastCreatedOrder.offline
+                        ? "Tu pedido quedó guardado en este teléfono y se enviará solo apenas vuelva el internet. No hace falta repetirlo."
+                        : lastCreatedOrder.hasStaffConfirmationItems
+                          ? `El pedido fue enviado al local. El personal debe confirmar ${cleanStaffConfirmationProductLabel(lastCreatedOrder.staffConfirmationProductNames || [])} antes de prepararlo.`
+                          : "Tu pedido ya aparece en la pantalla del local y pronto entra a cocina."}
                   </p>
                 </div>
 
-                {!lastOrderAttachedToOpenAccount && !lastCreatedOrder.offline ? (
-                  <PublicOrderStatusNotifier orderId={lastCreatedOrder.id} />
-                ) : null}
+                {/* Número visible del pedido, bien grande: es lo que el
+                    cliente menciona por WhatsApp o en el mostrador para que
+                    el local lo ubique al instante. */}
+                {createdOrderTrackingId ? (
+                  <div className="rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-5 text-center">
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-[var(--brand-primary)]">
+                      Tu número de pedido
+                    </p>
 
-                {/* Camino de vuelta: aunque cierre esta página, el pedido
-                    queda en "Pedidos recientes" y en este link directo. */}
-                {!lastCreatedOrder.offline && (
-                  <a
-                    href={`/pedido/${encodeURIComponent(lastCreatedOrder.id)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-transparent px-5 py-3.5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:opacity-80"
-                  >
-                    Ver mi pedido / pagar después
-                  </a>
-                )}
+                    <p className="mt-2 text-6xl font-black leading-none text-[var(--brand-ink-3)]">
+                      {createdOrderLive.displayNumber || "…"}
+                    </p>
+
+                    {createdOrderLive.status === "Listo" ? (
+                      <p className="mt-4 rounded-2xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase leading-tight text-black">
+                        ¡Listo! Pasa a retirarlo indicando tu número.
+                      </p>
+                    ) : createdOrderLive.status === "Entregado" ? (
+                      <p className="mt-4 rounded-2xl border-2 border-green-600 bg-green-600/15 px-4 py-3 text-sm font-black text-green-700">
+                        Pedido entregado. ¡Gracias por tu compra!
+                      </p>
+                    ) : (
+                      <p className="mt-3 flex items-center justify-center gap-2 text-sm font-bold text-[var(--brand-ink-2)]/75">
+                        {createdOrderLive.status === "Preparando" ? (
+                          <>
+                            <Loader2
+                              size={15}
+                              className="animate-spin text-[var(--brand-primary)]"
+                            />
+                            En preparación…
+                          </>
+                        ) : createdOrderLive.status ? (
+                          "Recibido, en espera de cocina"
+                        ) : (
+                          <>
+                            <Loader2
+                              size={15}
+                              className="animate-spin text-[var(--brand-primary)]"
+                            />
+                            Consultando estado…
+                          </>
+                        )}
+                      </p>
+                    )}
+
+                    <a
+                      href={`/pedido/${encodeURIComponent(lastCreatedOrder.id)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-transparent px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:opacity-80"
+                    >
+                      Ver el avance de mi pedido
+                    </a>
+
+                    <p className="mt-3 text-[0.7rem] font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                      Si cierras esta página no se pierde nada: tu pedido queda
+                      en &quot;Pedidos recientes&quot; al abrir el carrito, y con tu
+                      número o tu nombre el local lo ubica al instante.
+                    </p>
+                  </div>
+                ) : null}
 
                 {lastOrderCanReportPayment &&
                   publicConfig.onlinePaymentsEnabled &&
@@ -2230,9 +2362,9 @@ export default function CartDrawer({
                     </div>
                   )}
 
-                {/* Datos del negocio para pagar (pago móvil, Zelle…), ya
-                    filtrados a los métodos que el cliente eligió: los copia
-                    aquí mismo y luego reporta su pago. */}
+                {/* Paso 1: los datos del negocio para pagar (pago móvil,
+                    Zelle…), ya filtrados a los métodos que el cliente eligió:
+                    los copia aquí mismo y luego reporta su pago. */}
                 {!lastOrderAttachedToOpenAccount &&
                   (() => {
                     const orderMethods = lastCreatedOrder.paymentMethods || [];
@@ -2247,9 +2379,12 @@ export default function CartDrawer({
                     if (!Object.keys(details).length) return null;
 
                     return (
-                      <div className="text-left">
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                          Datos para pagar
+                      <div className="rounded-[1.5rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-left">
+                        <span className="inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
+                          Paso 1
+                        </span>
+                        <p className="mt-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                          Paga con estos datos
                           {orderMethods.length > 0 && (
                             <span className="text-[var(--brand-ink-2)]/45">
                               {" "}
@@ -2257,6 +2392,11 @@ export default function CartDrawer({
                             </span>
                           )}
                         </p>
+                        {lastCreatedOrder.totalUSD > 0 ? (
+                          <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/75">
+                            Total a pagar: {formatUSD(lastCreatedOrder.totalUSD)}
+                          </p>
+                        ) : null}
                         <div className="mt-2">
                           <PaymentMethodDetailsList details={details} />
                         </div>
@@ -2275,18 +2415,7 @@ export default function CartDrawer({
                       cuenta de la mesa.
                     </p>
                   </div>
-                ) : (
-                  <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-left">
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
-                      Importante
-                    </p>
-                    <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
-                      Enviar una captura solo reporta el pago para revisión.
-                      Caja debe confirmar el cobro real antes de marcar el
-                      pedido como pagado.
-                    </p>
-                  </div>
-                )}
+                ) : null}
 
                 {paymentProofSuccess && (
                   <div className="rounded-2xl border-2 border-emerald-600/35 bg-emerald-50 px-4 py-3 text-left">
@@ -2300,6 +2429,16 @@ export default function CartDrawer({
                   isPaymentProofPublicAvailable &&
                   !paymentProofSuccess && (
                     <div className="rounded-[1.5rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-left">
+                      <span className="inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
+                        Paso 2
+                      </span>
+                      <p className="mt-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                        Avísanos que ya pagaste
+                      </p>
+                      <p className="mb-3 mt-1 text-sm font-bold leading-5 text-[var(--brand-ink-2)]/70">
+                        Envía la captura aquí mismo y quedará pegada a tu
+                        pedido. Caja confirma el cobro real al revisarla.
+                      </p>
                       <button
                         type="button"
                         onClick={() => {
@@ -2462,7 +2601,7 @@ export default function CartDrawer({
                   onClick={finishCreatedOrderFlow}
                   className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none disabled:opacity-50"
                 >
-                  Finalizar
+                  Listo, volver al menú
                 </button>
               </div>
             ) : isSubmittingOrder ? (

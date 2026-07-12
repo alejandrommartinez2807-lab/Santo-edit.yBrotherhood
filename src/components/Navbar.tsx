@@ -421,12 +421,15 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
         </div>
       </div>
 
-      {/* Nav (móvil / tablet) */}
+      {/* Nav (móvil / tablet): los botones nunca se encogen por debajo de su
+          texto (antes las palabras largas quedaban apretadas y las cortas
+          estiradas). Si no caben todos, la fila se desliza a los lados. */}
       <div className="mx-auto max-w-7xl px-3 pb-3 sm:px-6 lg:hidden">
-        <nav className="flex gap-1.5 overflow-x-auto rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] p-1.5">
+        <nav className="overflow-x-auto rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] p-1.5">
+          <div className="mx-auto flex w-max min-w-full items-center justify-center gap-1">
           {navItems.map((item) => {
             const linkClass =
-              "flex min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-full px-3 py-2 text-center text-[0.6rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-primary)] hover:text-black sm:text-xs"
+              "flex flex-1 shrink-0 items-center justify-center whitespace-nowrap rounded-full px-2 py-2 text-center text-[0.55rem] font-bold uppercase tracking-[0.06em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-primary)] hover:text-black sm:px-3 sm:text-xs"
 
             if (item.external) {
               return (
@@ -448,6 +451,7 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
               </a>
             )
           })}
+          </div>
         </nav>
       </div>
     </header>

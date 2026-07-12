@@ -48,7 +48,9 @@ type ProductCardProps = Product & {
 };
 
 // Clases por tamaño: media y compacta encogen foto, textos y botón para que
-// quepan más productos por fila sin romper el diseño.
+// quepan más productos por fila sin romper el diseño. compactBadges apila
+// todas las etiquetas en una sola columna pequeña (en tarjetas angostas las
+// esquinas izquierda/derecha se montaban una sobre otra).
 const CARD_SIZE_STYLES = {
   grande: {
     image: "h-56 sm:h-64",
@@ -62,6 +64,7 @@ const CARD_SIZE_STYLES = {
     button: "mt-4 gap-2.5 px-4 py-3.5 text-sm",
     buttonIcon: 18,
     showBadges: true,
+    compactBadges: false,
     showPriceInButton: true,
     shortButtonLabels: false,
   },
@@ -77,6 +80,7 @@ const CARD_SIZE_STYLES = {
     button: "mt-2.5 gap-1.5 px-2 py-2.5 text-[0.7rem]",
     buttonIcon: 15,
     showBadges: true,
+    compactBadges: true,
     showPriceInButton: false,
     shortButtonLabels: false,
   },
@@ -92,6 +96,7 @@ const CARD_SIZE_STYLES = {
     button: "mt-1.5 gap-1 px-1 py-2 text-[0.6rem]",
     buttonIcon: 13,
     showBadges: false,
+    compactBadges: true,
     showPriceInButton: false,
     shortButtonLabels: true,
   },
@@ -670,34 +675,57 @@ export default function ProductCard({
           {/* Destello que recorre la foto al pasar el mouse (solo decorativo). */}
           <span className="pointer-events-none absolute inset-y-0 left-[-60%] w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent opacity-0 transition-all duration-700 ease-out group-hover:left-[120%] group-hover:opacity-100" />
 
-          {sizeStyles.showBadges && (
-            <span className="absolute left-4 top-4 rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--product-card-button)] backdrop-blur-sm">
-              {category}
-            </span>
-          )}
+          {sizeStyles.showBadges && sizeStyles.compactBadges ? (
+            <div className="absolute left-2 top-2 flex max-w-[80%] flex-col items-start gap-1">
+              <span className="max-w-full truncate rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-2 py-1 text-[0.52rem] font-black uppercase tracking-[0.1em] text-[var(--product-card-button)] backdrop-blur-sm">
+                {category}
+              </span>
 
-          {sizeStyles.showBadges && (
-            <div className="absolute right-4 top-4 flex max-w-[58%] flex-col items-end gap-2">
               {isFeatured ? (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--product-card-button)] px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-black shadow-lg shadow-black/40">
-                  <Sparkles size={13} />
+                <span className="inline-flex items-center gap-1 rounded-full bg-[var(--product-card-button)] px-2 py-1 text-[0.52rem] font-black uppercase tracking-[0.08em] text-black shadow-lg shadow-black/40">
+                  <Sparkles size={10} />
                   Top ventas
                 </span>
               ) : null}
 
               {isCombo ? (
-                <span className="rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--product-card-button)] backdrop-blur-sm">
+                <span className="rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-2 py-1 text-[0.52rem] font-black uppercase tracking-[0.08em] text-[var(--product-card-button)] backdrop-blur-sm">
                   Solo divisas
                 </span>
               ) : null}
             </div>
-          )}
+          ) : sizeStyles.showBadges ? (
+            <>
+              <span className="absolute left-4 top-4 rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--product-card-button)] backdrop-blur-sm">
+                {category}
+              </span>
+
+              <div className="absolute right-4 top-4 flex max-w-[58%] flex-col items-end gap-2">
+                {isFeatured ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--product-card-button)] px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-black shadow-lg shadow-black/40">
+                    <Sparkles size={13} />
+                    Top ventas
+                  </span>
+                ) : null}
+
+                {isCombo ? (
+                  <span className="rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--product-card-button)] backdrop-blur-sm">
+                    Solo divisas
+                  </span>
+                ) : null}
+              </div>
+            </>
+          ) : null}
 
           {onToggleFavorite && sizeStyles.showBadges ? (
             <button
               type="button"
               onClick={() => onToggleFavorite(id)}
-              className={`absolute bottom-3 right-4 flex h-10 w-10 items-center justify-center rounded-full border backdrop-blur-sm transition active:scale-90 ${
+              className={`absolute flex items-center justify-center rounded-full border backdrop-blur-sm transition active:scale-90 ${
+                sizeStyles.compactBadges
+                  ? "bottom-2 right-2 h-8 w-8"
+                  : "bottom-3 right-4 h-10 w-10"
+              } ${
                 isFavorite
                   ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-black"
                   : "border-white/25 bg-black/60 text-white hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
@@ -709,7 +737,10 @@ export default function ProductCard({
                   : `Guardar ${name} como favorito`
               }
             >
-              <Heart size={17} fill={isFavorite ? "currentColor" : "none"} />
+              <Heart
+                size={sizeStyles.compactBadges ? 14 : 17}
+                fill={isFavorite ? "currentColor" : "none"}
+              />
             </button>
           ) : null}
         </div>
