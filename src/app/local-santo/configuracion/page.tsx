@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  CookingPot,
   DollarSign,
   Eye,
   EyeOff,
@@ -4973,6 +4974,27 @@ export default function BusinessConfigPage() {
           </SectionCard>
 
           <SectionCard
+            icon={<CookingPot size={22} />}
+            title="Flujo de caja y cocina"
+            description="Cómo avanza un pedido en tu operación: con cocina, mixto, o todo desde caja (marcar Listo directo). Los botones de la caja cambian según el modo."
+          >
+            <div className="grid gap-3 lg:grid-cols-3">
+              {KITCHEN_FLOW_OPTIONS.map((option) => (
+                <ModeButton
+                  key={option.value}
+                  label={option.label}
+                  description={option.description}
+                  active={businessConfig.kitchenFlowMode === option.value}
+                  onClick={() => updateConfig("kitchenFlowMode", option.value)}
+                />
+              ))}
+            </div>
+            <p className="mt-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+              Recuerda presionar “Guardar cambios” al final de la página. La caja toma el modo nuevo al recargar.
+            </p>
+          </SectionCard>
+
+          <SectionCard
             icon={<SlidersHorizontal size={22} />}
             title="Vista y operación"
             defaultCollapsed
@@ -4988,26 +5010,6 @@ export default function BusinessConfigPage() {
                   onClick={() => updateConfig("defaultViewMode", option.value)}
                 />
               ))}
-            </div>
-
-            <div className="mt-5">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                Flujo de caja y cocina
-              </p>
-              <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
-                Decide cómo avanza un pedido: con cocina, mixto o todo desde caja.
-              </p>
-              <div className="mt-3 grid gap-3 lg:grid-cols-3">
-                {KITCHEN_FLOW_OPTIONS.map((option) => (
-                  <ModeButton
-                    key={option.value}
-                    label={option.label}
-                    description={option.description}
-                    active={businessConfig.kitchenFlowMode === option.value}
-                    onClick={() => updateConfig("kitchenFlowMode", option.value)}
-                  />
-                ))}
-              </div>
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
