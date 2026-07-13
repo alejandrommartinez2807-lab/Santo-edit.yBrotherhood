@@ -191,6 +191,7 @@ export {
 } from "./ordersInventory"
 
 export {
+  clearPaymentProofs,
   createPaymentProof,
   getPaymentProofs,
   reviewPaymentProof,

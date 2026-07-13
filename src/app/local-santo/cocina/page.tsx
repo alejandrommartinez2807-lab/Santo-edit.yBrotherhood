@@ -1073,15 +1073,9 @@ export default function CocinaPage() {
                           </div>
                         )}
 
-                        {order.status !== "Cancelado" && order.status !== "Entregado" && (
-                          <button
-                            type="button"
-                            onClick={() => updateStatus(order.id, "Cancelado")}
-                            className="rounded-full bg-red-700 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-red-800"
-                          >
-                            Cancelar
-                          </button>
-                        )}
+                        {/* Cocina no cancela pedidos: eso es decisión de caja,
+                            encargado o dueño (el servidor también lo bloquea
+                            para el rol cocina). */}
                       </div>
                     </div>
                   </article>

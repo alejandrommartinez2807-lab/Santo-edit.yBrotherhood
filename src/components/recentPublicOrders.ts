@@ -81,6 +81,13 @@ export async function fetchRecentOrdersLiveInfo(
         );
         const data = await response.json().catch(() => null);
 
+        // 404 = el pedido ya no existe (el local cerró el día y reinició sus
+        // pedidos): sale de la lista igual que un entregado. Si se dejara,
+        // los pedidos viejos se acumularían 7 días en "Pedidos recientes".
+        if (response.status === 404) {
+          return { id: order.id, status: "__gone__", displayNumber: "" };
+        }
+
         if (!response.ok || !data?.ok) return null;
 
         return {
@@ -100,7 +107,7 @@ export async function fetchRecentOrdersLiveInfo(
   for (const result of results) {
     if (!result) continue;
 
-    if (RECENT_ORDER_HIDDEN_STATUSES.has(result.status)) {
+    if (result.status === "__gone__" || RECENT_ORDER_HIDDEN_STATUSES.has(result.status)) {
       finishedIds.push(result.id);
     } else {
       live[result.id] = {

@@ -79,6 +79,21 @@ export async function getPaymentProofs(
   return (data ?? []).map((row) => paymentProofRowToProof(row as Record<string, unknown>))
 }
 
+// Limpieza al cierre del día: los comprobantes quedan fotografiados DENTRO
+// del cierre guardado, así que las filas se borran para que el panel de
+// comprobantes arranque limpio. Las imágenes en Storage se conservan (los
+// links del historial siguen funcionando).
+export async function clearPaymentProofs(branchId?: string | null) {
+  const supabase = getSupabaseAdmin()
+  let query = supabase.from("payment_proofs").delete()
+  query = branchId ? query.eq("branch_id", branchId) : query.neq("id", "")
+  const { error } = await query
+  if (error) {
+    throw new Error(error.message || "No se pudieron archivar los comprobantes")
+  }
+  return { ok: true }
+}
+
 export async function createPaymentProof(input: CreatePaymentProofInput, branchId?: string | null) {
   const supabase = getSupabaseAdmin()
   const id = `proof-${Date.now()}-${randomSuffix()}`

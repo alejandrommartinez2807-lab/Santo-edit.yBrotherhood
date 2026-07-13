@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import {
+  clearPaymentProofs,
   getBusinessConfig,
+  getOrders,
+  getPaymentProofs,
   saveDayClose,
   type SaveDayCloseInput,
 } from "@/lib/orders"
+import { getDisplayOrderNumber } from "@/lib/localOrderHelpers"
+import { getOrderPayment, getOrderTotals } from "@/lib/localOrderMoney"
 import { getLocalAccessAuditActor, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
@@ -372,7 +377,76 @@ export async function POST(request: NextRequest) {
     }
 
     const branchId = await resolveBranchId(request)
+
+    // Fotografía del día DENTRO del cierre: cada pedido con sus productos y
+    // los comprobantes con su pedido asociado. Se toma aquí (servidor) porque
+    // el reinicio que sigue al cierre borra los pedidos vivos. No-fatal: si
+    // la fotografía falla, el cierre con los totales se guarda igual.
+    try {
+      const [ordersToday, proofsToday] = await Promise.all([
+        getOrders(branchId),
+        getPaymentProofs({}, branchId),
+      ])
+
+      const realOrders = ordersToday.filter((order) => order.isTraining !== true)
+      const displayNumberByOrderId = new Map(
+        realOrders.map((order) => [order.id, getDisplayOrderNumber(order)]),
+      )
+
+      dayClose.orders = realOrders.slice(0, 500).map((order) => {
+        const payment = getOrderPayment(order)
+        const orderTotals = getOrderTotals(order)
+
+        return {
+          id: order.id,
+          displayNumber: getDisplayOrderNumber(order),
+          createdAt: String(order.createdAt || ""),
+          customerName: String(order.customerName || "Cliente"),
+          location: String(order.tableNumber || ""),
+          orderType: String(order.orderType || ""),
+          status: String(order.status || ""),
+          paymentStatus: payment.status,
+          totalUSD: orderTotals.totalUSD,
+          receivedEquivalentUSD: payment.receivedEquivalentUSD,
+          registeredBy: String(order.registeredByName || "") || undefined,
+          items: (order.items || []).map((item) => ({
+            name: String(item.name || "Producto"),
+            quantity: Number(item.quantity || 0),
+            priceUSD: Number(item.price || 0),
+            selectionSummary: String(item.selectionSummary || "") || undefined,
+          })),
+        }
+      })
+
+      dayClose.paymentProofs = proofsToday.slice(0, 500).map((proof) => ({
+        orderId: proof.orderId,
+        orderDisplayNumber: displayNumberByOrderId.get(proof.orderId) || "",
+        customerName: proof.customerName,
+        reportedMethod: proof.reportedMethod,
+        amountReportedUSD: proof.amountReportedUSD,
+        amountReportedVES: proof.amountReportedVES,
+        paymentReference: proof.paymentReference,
+        status: proof.status,
+        createdAt: proof.createdAt,
+        proofImageUrl: proof.proofImageUrl,
+      }))
+    } catch {
+      // Sin fotografía: el cierre conserva los totales de siempre.
+    }
+
     const savedDayClose = await saveDayClose(dayClose, branchId)
+
+    // Los comprobantes ya quedaron archivados dentro del cierre: se limpian
+    // del panel para que el día siguiente arranque en cero (las imágenes en
+    // Storage se conservan y los links del historial siguen funcionando).
+    if (Array.isArray(dayClose.paymentProofs)) {
+      try {
+        await clearPaymentProofs(branchId)
+      } catch {
+        // Si la limpieza falla, los comprobantes siguen visibles en el panel;
+        // nada se pierde.
+      }
+    }
 
     await writeAuditLog({
       action: "day_close.saved",
