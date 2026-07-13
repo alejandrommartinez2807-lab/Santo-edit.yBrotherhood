@@ -140,21 +140,30 @@ function canRoleUpdateStatus(role: LocalRole, status: OrderStatus) {
   }
 
   if (role === "cashier") {
+    // "Listo": en los flujos mixto/sin cocina (kitchenFlowMode) caja marca
+    // Listo directamente sin pasar por cocina.
     return (
       status === "Nuevo" ||
       status === "Preparando" ||
+      status === "Listo" ||
       status === "Entregado" ||
       status === "Cancelado"
     )
   }
 
+  // Cocina solo avanza la preparación: nunca cancela ni entrega.
   if (role === "kitchen") {
     return status === "Preparando" || status === "Listo"
   }
 
   // El promotor de eventos entrega lo que vende, pero no cancela pedidos.
   if (role === "promoter") {
-    return status === "Nuevo" || status === "Preparando" || status === "Entregado"
+    return (
+      status === "Nuevo" ||
+      status === "Preparando" ||
+      status === "Listo" ||
+      status === "Entregado"
+    )
   }
 
   return false
