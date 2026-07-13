@@ -158,6 +158,18 @@ export {
   updateRoomHousekeeping,
 } from "./ordersRooms"
 
+export type {
+  HotelReservation,
+  SaveHotelReservationInput,
+  GetHotelReservationsFilters,
+} from "./ordersHotelReservations"
+export {
+  deleteHotelReservation,
+  getHotelReservations,
+  saveHotelReservation,
+  updateHotelReservationStatus,
+} from "./ordersHotelReservations"
+
 export {
   deleteSupplier,
   getSuppliers,

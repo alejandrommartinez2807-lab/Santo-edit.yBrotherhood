@@ -52,6 +52,7 @@ type ModuleKey =
   | "qrTables"
   | "reservations"
   | "rooms"
+  | "hotelReservations"
   | "waiterConfirmation"
   | "kitchenItems"
   | "tickets"

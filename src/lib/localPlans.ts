@@ -43,6 +43,7 @@ export type LocalModuleKey =
   | "qrTables"
   | "reservations"
   | "rooms"
+  | "hotelReservations"
   | "waiterConfirmation"
   | "kitchenItems"
   | "tickets"
@@ -122,6 +123,7 @@ export type LocalPlanConfigLike = {
   qrTablesModuleEnabled?: unknown
   reservationsModuleEnabled?: unknown
   roomsModuleEnabled?: unknown
+  hotelReservationsModuleEnabled?: unknown
   waiterConfirmationModuleEnabled?: unknown
   kitchenItemsModuleEnabled?: unknown
   ticketsModuleEnabled?: unknown
@@ -204,6 +206,7 @@ export const LOCAL_MODULE_KEYS: LocalModuleKey[] = [
   "qrTables",
   "reservations",
   "rooms",
+  "hotelReservations",
   "waiterConfirmation",
   "kitchenItems",
   "tickets",
@@ -369,6 +372,7 @@ export const LOCAL_PLAN_DEFINITIONS: LocalPlanDefinition[] = [
       "qrTables",
       "reservations",
       "rooms",
+      "hotelReservations",
       "waiterConfirmation",
       "kitchenItems",
       "tickets",
@@ -766,6 +770,18 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/habitaciones",
+    comingSoon: false,
+  },
+  {
+    key: "hotelReservations",
+    label: "Reservas del hotel",
+    description: "Reservas por rango de noches: huésped, habitación, entrada/salida, tarifa y estados (pendiente → check-in → check-out) con validación de disponibilidad. Núcleo del PMS hotelero.",
+    category: "operation",
+    minimumPlan: "complete",
+    ownerConfigKey: "hotelReservationsModuleEnabled",
+    visibleForOwnerSettings: true,
+    visibleForSupport: true,
+    routePath: "/local-santo/reservas-hotel",
     comingSoon: false,
   },
   {
@@ -1178,6 +1194,10 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "rooms") {
     return normalizeBoolean(config.roomsModuleEnabled, false)
+  }
+
+  if (moduleKey === "hotelReservations") {
+    return normalizeBoolean(config.hotelReservationsModuleEnabled, false)
   }
 
   if (moduleKey === "waiterConfirmation") {
