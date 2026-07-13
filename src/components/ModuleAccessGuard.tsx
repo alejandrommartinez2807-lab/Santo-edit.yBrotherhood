@@ -56,6 +56,7 @@ type ModuleKey =
   | "folio"
   | "housekeeping"
   | "rateSeasons"
+  | "hotelReports"
   | "waiterConfirmation"
   | "kitchenItems"
   | "tickets"

@@ -74,6 +74,7 @@ const ROLE_ACCESS: Record<LocalRole, LocalModuleKey[]> = {
     "folio",
     "housekeeping",
     "rateSeasons",
+    "hotelReports",
     "waiterConfirmation",
     "kitchenItems",
     "tickets",

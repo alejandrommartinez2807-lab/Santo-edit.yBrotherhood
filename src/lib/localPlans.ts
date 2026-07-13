@@ -47,6 +47,7 @@ export type LocalModuleKey =
   | "folio"
   | "housekeeping"
   | "rateSeasons"
+  | "hotelReports"
   | "waiterConfirmation"
   | "kitchenItems"
   | "tickets"
@@ -130,6 +131,7 @@ export type LocalPlanConfigLike = {
   folioModuleEnabled?: unknown
   housekeepingModuleEnabled?: unknown
   rateSeasonsModuleEnabled?: unknown
+  hotelReportsModuleEnabled?: unknown
   waiterConfirmationModuleEnabled?: unknown
   kitchenItemsModuleEnabled?: unknown
   ticketsModuleEnabled?: unknown
@@ -216,6 +218,7 @@ export const LOCAL_MODULE_KEYS: LocalModuleKey[] = [
   "folio",
   "housekeeping",
   "rateSeasons",
+  "hotelReports",
   "waiterConfirmation",
   "kitchenItems",
   "tickets",
@@ -385,6 +388,7 @@ export const LOCAL_PLAN_DEFINITIONS: LocalPlanDefinition[] = [
       "folio",
       "housekeeping",
       "rateSeasons",
+      "hotelReports",
       "waiterConfirmation",
       "kitchenItems",
       "tickets",
@@ -833,6 +837,18 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     comingSoon: false,
   },
   {
+    key: "hotelReports",
+    label: "Reportes del hotel",
+    description: "Indicadores del hotel por periodo: ocupación, tarifa media (ADR) e ingreso por habitación disponible (RevPAR), calculados desde las reservas y las habitaciones.",
+    category: "money",
+    minimumPlan: "complete",
+    ownerConfigKey: "hotelReportsModuleEnabled",
+    visibleForOwnerSettings: true,
+    visibleForSupport: true,
+    routePath: "/local-santo/reportes-hotel",
+    comingSoon: false,
+  },
+  {
     key: "waiterConfirmation",
     label: "Confirmación por mesonero",
     description: "Revisión del personal para productos que requieren confirmación antes de avanzar en cocina o entrega.",
@@ -1258,6 +1274,10 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "rateSeasons") {
     return normalizeBoolean(config.rateSeasonsModuleEnabled, false)
+  }
+
+  if (moduleKey === "hotelReports") {
+    return normalizeBoolean(config.hotelReportsModuleEnabled, false)
   }
 
   if (moduleKey === "waiterConfirmation") {
