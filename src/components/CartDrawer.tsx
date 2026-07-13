@@ -1116,7 +1116,11 @@ export default function CartDrawer({
         (!isDistancePricingEnabled || Boolean(distanceQuote)) &&
         paymentMethod.trim().length > 0 &&
         (!isMixedPayment || isMixedPaymentComplete)
-      : tableNumber.trim().length > 0 && !isTableReservedNow);
+      : isTakeawayOrder
+        ? // Pick up: el método de pago es obligatorio igual que en delivery.
+          paymentMethod.trim().length > 0 &&
+          (!isMixedPayment || isMixedPaymentComplete)
+        : tableNumber.trim().length > 0 && !isTableReservedNow);
   const missingOrderFields = [
     requiresCustomerName && !customerName.trim() ? "tu nombre" : "",
     requiresCustomerPhone && !customerPhone.trim() ? "tu teléfono" : "",
@@ -1125,6 +1129,14 @@ export default function CartDrawer({
           isDistancePricingEnabled && !distanceQuote
             ? "tu ubicación (toca “Usar mi ubicación actual” o pega tu link de Maps)"
             : "",
+          paymentMethod.trim() ? "" : "el método de pago",
+          isMixedPayment && !isMixedPaymentComplete
+            ? "los dos montos del pago mixto"
+            : "",
+        ]
+      : []),
+    ...(isTakeawayOrder
+      ? [
           paymentMethod.trim() ? "" : "el método de pago",
           isMixedPayment && !isMixedPaymentComplete
             ? "los dos montos del pago mixto"
@@ -1291,6 +1303,143 @@ export default function CartDrawer({
       totalUSD - (exchangeRate > 0 ? bsPart / exchangeRate : 0),
     );
     setMixedUsdAmount(remainingUSD.toFixed(2));
+  }
+
+  // Sección de pago del checkout, compartida por Delivery y Pick up: método de
+  // pago (obligatorio), pago mixto con botones "Completar" y los datos para
+  // pagar (pago móvil, Zelle…) de los métodos elegidos. Así Pick up pide el
+  // método igual que Delivery y el reporte de pago luego lo pre-carga.
+  function renderCheckoutPaymentSection() {
+    return (
+      <>
+        <OptionPicker
+          label={
+            <>
+              Método de pago{" "}
+              <span className="text-[var(--brand-ink-2)]/45">(obligatorio)</span>
+            </>
+          }
+          value={paymentMethod}
+          placeholder="Selecciona método"
+          options={paymentMethodOptions}
+          isOpen={isPaymentPickerOpen}
+          onToggle={() => {
+            setIsPaymentPickerOpen((current) => !current);
+          }}
+          onSelect={(value) => {
+            setPaymentMethod(value);
+            setIsPaymentPickerOpen(false);
+          }}
+        />
+
+        {/* Pago mixto: el cliente reparte el total entre una parte en bolívares
+            y otra en divisas; "Completar" rellena lo que falta con la tasa. */}
+        {isMixedPayment && (
+          <div className="rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] px-4 py-4">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+              Pago mixto
+            </p>
+            <p className="mt-1 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
+              Divide el total ({formatUSD(totalUSD)} ≈ Bs {formatVES(totalVES)})
+              entre dos métodos. Escribe un monto y toca “Completar” en el otro
+              para rellenar lo que falta.
+            </p>
+
+            <div className="mt-3">
+              <label className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/60">
+                Parte en bolívares
+              </label>
+              <select
+                value={mixedBsMethod}
+                onChange={(event) => setMixedBsMethod(event.target.value)}
+                className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+              >
+                <option value="">Método para los bolívares…</option>
+                {availablePaymentMethods.map((method) => (
+                  <option key={method} value={method}>
+                    {method}
+                  </option>
+                ))}
+              </select>
+              <div className="mt-2 flex gap-2">
+                <input
+                  inputMode="decimal"
+                  value={mixedBsAmount}
+                  onChange={(event) => setMixedBsAmount(event.target.value)}
+                  placeholder="Monto en Bs"
+                  className="min-w-0 flex-1 rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                />
+                <button
+                  type="button"
+                  onClick={completeMixedBsAmount}
+                  className="shrink-0 rounded-2xl border-2 border-[var(--brand-primary)] bg-transparent px-3.5 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black"
+                >
+                  Completar
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/60">
+                Parte en divisas
+              </label>
+              <select
+                value={mixedUsdMethod}
+                onChange={(event) => setMixedUsdMethod(event.target.value)}
+                className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+              >
+                <option value="">Método para las divisas…</option>
+                {availablePaymentMethods.map((method) => (
+                  <option key={method} value={method}>
+                    {method}
+                  </option>
+                ))}
+              </select>
+              <div className="mt-2 flex gap-2">
+                <input
+                  inputMode="decimal"
+                  value={mixedUsdAmount}
+                  onChange={(event) => setMixedUsdAmount(event.target.value)}
+                  placeholder="Monto en $"
+                  className="min-w-0 flex-1 rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                />
+                <button
+                  type="button"
+                  onClick={completeMixedUsdAmount}
+                  className="shrink-0 rounded-2xl border-2 border-[var(--brand-primary)] bg-transparent px-3.5 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black"
+                >
+                  Completar
+                </button>
+              </div>
+            </div>
+
+            {isMixedPaymentComplete && (
+              <p className="mt-3 rounded-xl bg-white/70 px-3 py-2 text-[0.7rem] font-bold leading-4 text-[var(--brand-ink-2)]/70">
+                Vas a pagar Bs {formatVES(mixedBsValue)} con {mixedBsMethod} y{" "}
+                {formatUSD(mixedUsdValue)} con {mixedUsdMethod}.
+              </p>
+            )}
+          </div>
+        )}
+
+        {Object.keys(checkoutPaymentMethodDetails).length > 0 && (
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              Datos para pagar
+              {selectedPaymentMethods.length > 0 && (
+                <span className="text-[var(--brand-ink-2)]/45">
+                  {" "}
+                  ({selectedPaymentMethods.join(" + ")})
+                </span>
+              )}
+            </p>
+            <div className="mt-2">
+              <PaymentMethodDetailsList details={checkoutPaymentMethodDetails} />
+            </div>
+          </div>
+        )}
+      </>
+    );
   }
 
   // Ajustar el marcador desde la vista previa o la confirmación: reabre el
@@ -2696,6 +2845,15 @@ export default function CartDrawer({
                       Revisa que la mesa sea correcta antes de registrar el
                       pedido.
                     </p>
+                  </div>
+                )}
+
+                {/* Pick up: igual que Delivery, se pide el método de pago
+                    (obligatorio) con pago mixto y "Completar"; el reporte de
+                    pago luego pre-carga ese método. */}
+                {isTakeawayOrder && (
+                  <div className="space-y-5 sm:space-y-4">
+                    {renderCheckoutPaymentSection()}
                   </div>
                 )}
 
