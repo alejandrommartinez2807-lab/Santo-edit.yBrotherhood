@@ -183,6 +183,11 @@ export type BusinessConfig = {
   advancedRatesModuleEnabled: boolean
   resortServicesModuleEnabled: boolean
   resortChargesModuleEnabled: boolean
+  guestReviewsModuleEnabled: boolean
+  guestCrmModuleEnabled: boolean
+  hotelLandingModuleEnabled: boolean
+  hotelPackagesModuleEnabled: boolean
+  guestPortalModuleEnabled: boolean
   waiterConfirmationModuleEnabled: boolean
   kitchenItemsModuleEnabled: boolean
   ticketsModuleEnabled: boolean
@@ -335,6 +340,11 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   advancedRatesModuleEnabled: true,
   resortServicesModuleEnabled: true,
   resortChargesModuleEnabled: true,
+  guestReviewsModuleEnabled: true,
+  guestCrmModuleEnabled: true,
+  hotelLandingModuleEnabled: true,
+  hotelPackagesModuleEnabled: true,
+  guestPortalModuleEnabled: true,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
   ticketsModuleEnabled: true,
@@ -893,6 +903,26 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.resortChargesModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.resortChargesModuleEnabled
     ),
+    guestReviewsModuleEnabled: normalizeBooleanConfig(
+      source.guestReviewsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.guestReviewsModuleEnabled
+    ),
+    guestCrmModuleEnabled: normalizeBooleanConfig(
+      source.guestCrmModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.guestCrmModuleEnabled
+    ),
+    hotelLandingModuleEnabled: normalizeBooleanConfig(
+      source.hotelLandingModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.hotelLandingModuleEnabled
+    ),
+    hotelPackagesModuleEnabled: normalizeBooleanConfig(
+      source.hotelPackagesModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.hotelPackagesModuleEnabled
+    ),
+    guestPortalModuleEnabled: normalizeBooleanConfig(
+      source.guestPortalModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.guestPortalModuleEnabled
+    ),
     waiterConfirmationModuleEnabled: normalizeBooleanConfig(
       source.waiterConfirmationModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.waiterConfirmationModuleEnabled
@@ -1007,6 +1037,11 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
   const advancedRatesAccess = getModulePlanAccess(config, "advancedRates")
   const resortServicesAccess = getModulePlanAccess(config, "resortServices")
   const resortChargesAccess = getModulePlanAccess(config, "resortCharges")
+  const guestReviewsAccess = getModulePlanAccess(config, "guestReviews")
+  const guestCrmAccess = getModulePlanAccess(config, "guestCrm")
+  const hotelLandingAccess = getModulePlanAccess(config, "hotelLanding")
+  const hotelPackagesAccess = getModulePlanAccess(config, "hotelPackages")
+  const guestPortalAccess = getModulePlanAccess(config, "guestPortal")
   const waiterConfirmationAccess = getModulePlanAccess(config, "waiterConfirmation")
   const kitchenItemsAccess = getModulePlanAccess(config, "kitchenItems")
   const ticketsAccess = getModulePlanAccess(config, "tickets")
@@ -1138,6 +1173,19 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
       : false,
     resortChargesModuleEnabled: resortChargesAccess.includedInPlan
       ? config.resortChargesModuleEnabled
+      : false,
+    guestReviewsModuleEnabled: guestReviewsAccess.includedInPlan
+      ? config.guestReviewsModuleEnabled
+      : false,
+    guestCrmModuleEnabled: guestCrmAccess.includedInPlan ? config.guestCrmModuleEnabled : false,
+    hotelLandingModuleEnabled: hotelLandingAccess.includedInPlan
+      ? config.hotelLandingModuleEnabled
+      : false,
+    hotelPackagesModuleEnabled: hotelPackagesAccess.includedInPlan
+      ? config.hotelPackagesModuleEnabled
+      : false,
+    guestPortalModuleEnabled: guestPortalAccess.includedInPlan
+      ? config.guestPortalModuleEnabled
       : false,
     waiterConfirmationModuleEnabled: waiterConfirmationAccess.includedInPlan
       ? config.waiterConfirmationModuleEnabled

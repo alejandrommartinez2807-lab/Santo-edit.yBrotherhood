@@ -40,6 +40,13 @@ export async function getHotelReservationById(
   return store.getHotelReservationById(id, branchId)
 }
 
+export async function getHotelReservationByCode(
+  code: string,
+  branchId?: string | null,
+): Promise<HotelReservation | null> {
+  return store.getHotelReservationByCode(code, branchId)
+}
+
 export async function updateHotelReservationGuest(
   id: string,
   guestId: string,

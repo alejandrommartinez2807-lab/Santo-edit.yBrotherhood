@@ -203,6 +203,21 @@ export async function getHotelReservationById(
   return data ? mapHotelReservation(data as Row) : null
 }
 
+/** Busca una reserva por su código de confirmación (para el portal público). */
+export async function getHotelReservationByCode(
+  code: string,
+  branchId?: string | null,
+): Promise<HotelReservation | null> {
+  const clean = cleanText(code).toUpperCase()
+  if (!clean) return null
+  const supabase = getSupabaseAdmin()
+  let query = supabase.from("hotel_reservations").select("*").eq("code", clean).limit(1)
+  if (branchId) query = query.eq("branch_id", branchId)
+  const { data, error } = await query.maybeSingle()
+  if (error) throw new Error(error.message)
+  return data ? mapHotelReservation(data as Row) : null
+}
+
 export async function updateHotelReservationGuest(
   id: string,
   guestId: string,

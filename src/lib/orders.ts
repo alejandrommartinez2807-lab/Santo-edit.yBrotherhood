@@ -165,6 +165,7 @@ export type {
 } from "./ordersHotelReservations"
 export {
   deleteHotelReservation,
+  getHotelReservationByCode,
   getHotelReservationById,
   getHotelReservations,
   saveHotelReservation,
@@ -248,6 +249,31 @@ export {
   saveResortService,
   updateServiceBookingStatus,
 } from "./ordersResortServices"
+
+export type { CreateReviewInput, Review } from "./ordersReviews"
+export {
+  createReview,
+  deleteReview,
+  getReviews,
+  setReviewPublished,
+} from "./ordersReviews"
+
+export type { GuestProfile, SaveGuestProfileInput } from "./ordersGuestProfiles"
+export {
+  deleteGuestProfile,
+  getGuestProfiles,
+  saveGuestProfile,
+} from "./ordersGuestProfiles"
+
+export type { HotelProfile, SaveHotelProfileInput } from "./ordersHotelProfile"
+export { getHotelProfile, saveHotelProfile } from "./ordersHotelProfile"
+
+export type { HotelPackage, SavePackageInput } from "./ordersPackages"
+export {
+  deletePackage,
+  getPackages,
+  savePackage,
+} from "./ordersPackages"
 
 export {
   deleteSupplier,

@@ -155,6 +155,11 @@ export type LocalPlanConfigLike = {
   advancedRatesModuleEnabled?: unknown
   resortServicesModuleEnabled?: unknown
   resortChargesModuleEnabled?: unknown
+  guestReviewsModuleEnabled?: unknown
+  guestCrmModuleEnabled?: unknown
+  hotelLandingModuleEnabled?: unknown
+  hotelPackagesModuleEnabled?: unknown
+  guestPortalModuleEnabled?: unknown
   waiterConfirmationModuleEnabled?: unknown
   kitchenItemsModuleEnabled?: unknown
   ticketsModuleEnabled?: unknown
@@ -925,24 +930,26 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
   {
     key: "guestPortal",
     label: "Portal del huésped",
-    description: "El huésped ve, modifica o cancela su reserva, hace check-in online y consulta su cuenta, sin crear contraseña.",
+    description: "El huésped consulta su reserva en línea con su código y teléfono (sin crear contraseña). Página pública /hotel/mi-reserva.",
     category: "growth",
     minimumPlan: "complete",
+    ownerConfigKey: "guestPortalModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/portal-huesped",
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     key: "hotelLanding",
     label: "Página del hotel",
-    description: "Landing pública del hotel: fotos, amenidades, mapa, políticas y galería por tipo de habitación.",
+    description: "Landing pública del hotel: titular, descripción, amenidades, políticas y contacto. Se muestra en /hotel.",
     category: "growth",
     minimumPlan: "complete",
+    ownerConfigKey: "hotelLandingModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/pagina-hotel",
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     key: "onlinePayments",
@@ -969,13 +976,14 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
   {
     key: "guestReviews",
     label: "Reseñas",
-    description: "Valoración del huésped tras el check-out, con promedio y comentarios.",
+    description: "Valoración del huésped (1-5) con comentario, promedio y moderación. El huésped reseña desde /hotel/mi-reserva.",
     category: "growth",
     minimumPlan: "complete",
+    ownerConfigKey: "guestReviewsModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/resenas",
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     key: "tapeChart",
@@ -1037,13 +1045,14 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
   {
     key: "guestCrm",
     label: "CRM de huéspedes",
-    description: "Histórico y preferencias del huésped, fidelización por puntos y campañas.",
+    description: "Fichas de huéspedes con etiquetas, VIP, notas y contacto para fidelización.",
     category: "growth",
     minimumPlan: "complete",
+    ownerConfigKey: "guestCrmModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/crm",
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     key: "groupBookings",
@@ -1084,13 +1093,14 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
   {
     key: "hotelPackages",
     label: "Paquetes / todo incluido",
-    description: "Habitación + comidas + actividades vendidas como un solo producto (base para all-inclusive).",
+    description: "Paquetes (habitación + comidas + actividades) a un precio; se aplican a la estadía cargándolos al folio.",
     category: "growth",
     minimumPlan: "complete",
+    ownerConfigKey: "hotelPackagesModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/paquetes",
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     key: "waiterConfirmation",
@@ -1546,6 +1556,26 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "resortCharges") {
     return normalizeBoolean(config.resortChargesModuleEnabled, false)
+  }
+
+  if (moduleKey === "guestReviews") {
+    return normalizeBoolean(config.guestReviewsModuleEnabled, false)
+  }
+
+  if (moduleKey === "guestCrm") {
+    return normalizeBoolean(config.guestCrmModuleEnabled, false)
+  }
+
+  if (moduleKey === "hotelLanding") {
+    return normalizeBoolean(config.hotelLandingModuleEnabled, false)
+  }
+
+  if (moduleKey === "hotelPackages") {
+    return normalizeBoolean(config.hotelPackagesModuleEnabled, false)
+  }
+
+  if (moduleKey === "guestPortal") {
+    return normalizeBoolean(config.guestPortalModuleEnabled, false)
   }
 
   if (moduleKey === "waiterConfirmation") {

@@ -214,6 +214,11 @@ type BusinessConfig = {
   advancedRatesModuleEnabled: boolean;
   resortServicesModuleEnabled: boolean;
   resortChargesModuleEnabled: boolean;
+  guestReviewsModuleEnabled: boolean;
+  guestCrmModuleEnabled: boolean;
+  hotelLandingModuleEnabled: boolean;
+  hotelPackagesModuleEnabled: boolean;
+  guestPortalModuleEnabled: boolean;
   waiterConfirmationModuleEnabled: boolean;
   kitchenItemsModuleEnabled: boolean;
   ticketsModuleEnabled: boolean;
@@ -387,6 +392,11 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   advancedRatesModuleEnabled: true,
   resortServicesModuleEnabled: true,
   resortChargesModuleEnabled: true,
+  guestReviewsModuleEnabled: true,
+  guestCrmModuleEnabled: true,
+  hotelLandingModuleEnabled: true,
+  hotelPackagesModuleEnabled: true,
+  guestPortalModuleEnabled: true,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
   ticketsModuleEnabled: true,
@@ -1212,6 +1222,26 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     resortChargesModuleEnabled: normalizeBoolean(
       source.resortChargesModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.resortChargesModuleEnabled,
+    ),
+    guestReviewsModuleEnabled: normalizeBoolean(
+      source.guestReviewsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.guestReviewsModuleEnabled,
+    ),
+    guestCrmModuleEnabled: normalizeBoolean(
+      source.guestCrmModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.guestCrmModuleEnabled,
+    ),
+    hotelLandingModuleEnabled: normalizeBoolean(
+      source.hotelLandingModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.hotelLandingModuleEnabled,
+    ),
+    hotelPackagesModuleEnabled: normalizeBoolean(
+      source.hotelPackagesModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.hotelPackagesModuleEnabled,
+    ),
+    guestPortalModuleEnabled: normalizeBoolean(
+      source.guestPortalModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.guestPortalModuleEnabled,
     ),
     waiterConfirmationModuleEnabled: normalizeBoolean(
       source.waiterConfirmationModuleEnabled,
