@@ -3,6 +3,7 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import { BRAND } from "@/lib/brand"
+import { signOutLocalStaff } from "@/lib/staffSession"
 import {
   ArrowLeft,
   Eye,
@@ -436,22 +437,12 @@ function CajaPageContent() {
   }
 
   function handleLogout() {
+    // Cierra la sesión de verdad (incluye Supabase) y va al login para poder
+    // entrar como otro usuario. Ver signOutLocalStaff.
     window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
     setAdminPassword("")
     setPasswordInput("")
-    setOrders([])
-    setOpenAccounts([])
-    setErrorMessage(null)
-    setSelectedPaymentOrder(null)
-    setPaymentForm(EMPTY_PAYMENT_FORM)
-    setPaymentMessage(null)
-    setPaymentProofs([])
-    setPaymentProofsMessage(null)
-    setConfirmingStaffOrderId(null)
-    setSearchText("")
-    setActiveFilter("Por confirmar")
-    setShowControls(true)
-    pendingStatusRef.current = new Map()
+    void signOutLocalStaff()
   }
 
   function openPaymentModal(order: LocalOrder) {
@@ -758,7 +749,7 @@ function CajaPageContent() {
                         : "Sonidos desactivados por configuración"}
                   </button>
                   <button type="button" onClick={handleLogout} className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]">
-                    Salir
+                    Cambiar de usuario
                   </button>
                 </div>
 

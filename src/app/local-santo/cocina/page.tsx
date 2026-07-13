@@ -3,6 +3,7 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import { BRAND } from "@/lib/brand"
+import { signOutLocalStaff } from "@/lib/staffSession"
 import {
   ArrowLeft,
   CheckCircle2,
@@ -462,12 +463,12 @@ export default function CocinaPage() {
   }
 
   function handleLogout() {
+    // Cierra la sesión de verdad (incluye Supabase) y va al login para poder
+    // entrar como otro usuario. Ver signOutLocalStaff.
     window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
     setAdminPassword("")
     setPasswordInput("")
-    setOrders([])
-    setErrorMessage(null)
-    pendingStatusRef.current = new Map()
+    void signOutLocalStaff()
   }
 
   async function updateStatus(orderId: string, status: OrderStatus) {
@@ -735,7 +736,7 @@ export default function CocinaPage() {
                       onClick={handleLogout}
                       className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                     >
-                      Salir
+                      Cambiar de usuario
                     </button>
                   </div>
 
