@@ -58,6 +58,7 @@ type ModuleKey =
   | "rateSeasons"
   | "hotelReports"
   | "bookingEngine"
+  | "tapeChart"
   | "waiterConfirmation"
   | "kitchenItems"
   | "tickets"

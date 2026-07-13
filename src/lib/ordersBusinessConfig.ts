@@ -178,6 +178,7 @@ export type BusinessConfig = {
   rateSeasonsModuleEnabled: boolean
   hotelReportsModuleEnabled: boolean
   bookingEngineModuleEnabled: boolean
+  tapeChartModuleEnabled: boolean
   waiterConfirmationModuleEnabled: boolean
   kitchenItemsModuleEnabled: boolean
   ticketsModuleEnabled: boolean
@@ -325,6 +326,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   rateSeasonsModuleEnabled: true,
   hotelReportsModuleEnabled: true,
   bookingEngineModuleEnabled: true,
+  tapeChartModuleEnabled: true,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
   ticketsModuleEnabled: true,
@@ -863,6 +865,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.bookingEngineModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.bookingEngineModuleEnabled
     ),
+    tapeChartModuleEnabled: normalizeBooleanConfig(
+      source.tapeChartModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.tapeChartModuleEnabled
+    ),
     waiterConfirmationModuleEnabled: normalizeBooleanConfig(
       source.waiterConfirmationModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.waiterConfirmationModuleEnabled
@@ -972,6 +978,7 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
   const rateSeasonsAccess = getModulePlanAccess(config, "rateSeasons")
   const hotelReportsAccess = getModulePlanAccess(config, "hotelReports")
   const bookingEngineAccess = getModulePlanAccess(config, "bookingEngine")
+  const tapeChartAccess = getModulePlanAccess(config, "tapeChart")
   const waiterConfirmationAccess = getModulePlanAccess(config, "waiterConfirmation")
   const kitchenItemsAccess = getModulePlanAccess(config, "kitchenItems")
   const ticketsAccess = getModulePlanAccess(config, "tickets")
@@ -1088,6 +1095,9 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
       : false,
     bookingEngineModuleEnabled: bookingEngineAccess.includedInPlan
       ? config.bookingEngineModuleEnabled
+      : false,
+    tapeChartModuleEnabled: tapeChartAccess.includedInPlan
+      ? config.tapeChartModuleEnabled
       : false,
     waiterConfirmationModuleEnabled: waiterConfirmationAccess.includedInPlan
       ? config.waiterConfirmationModuleEnabled

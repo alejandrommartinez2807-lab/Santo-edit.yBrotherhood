@@ -150,6 +150,7 @@ export type LocalPlanConfigLike = {
   rateSeasonsModuleEnabled?: unknown
   hotelReportsModuleEnabled?: unknown
   bookingEngineModuleEnabled?: unknown
+  tapeChartModuleEnabled?: unknown
   waiterConfirmationModuleEnabled?: unknown
   kitchenItemsModuleEnabled?: unknown
   ticketsModuleEnabled?: unknown
@@ -975,13 +976,14 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
   {
     key: "tapeChart",
     label: "Calendario (tape chart)",
-    description: "Grilla habitaciones × días con arrastrar y soltar para ver la ocupación de un vistazo.",
+    description: "Grilla habitaciones × días para ver la ocupación de un vistazo: quién entra, quién sale y qué habitaciones quedan libres.",
     category: "operation",
     minimumPlan: "complete",
+    ownerConfigKey: "tapeChartModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/calendario",
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     key: "nightAudit",
@@ -1516,6 +1518,10 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "bookingEngine") {
     return normalizeBoolean(config.bookingEngineModuleEnabled, false)
+  }
+
+  if (moduleKey === "tapeChart") {
+    return normalizeBoolean(config.tapeChartModuleEnabled, false)
   }
 
   if (moduleKey === "waiterConfirmation") {
