@@ -252,6 +252,19 @@ function AuditoriaPageContent() {
     [logs, actorFilter],
   )
 
+  // Resumen "qué hizo cada usuario": conteo de acciones por persona, para ver de
+  // un vistazo quién estuvo más activo y saltar a su detalle con un toque.
+  const actorSummary = useMemo(() => {
+    const counts = new Map<string, number>()
+    logs.forEach((log) => {
+      const name = actorName(log)
+      counts.set(name, (counts.get(name) || 0) + 1)
+    })
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+  }, [logs])
+
   // Agrupado por día (más reciente primero) para leerlo como una línea de tiempo.
   const groups = useMemo(() => {
     const map = new Map<string, AuditLogEntry[]>()
@@ -391,6 +404,55 @@ function AuditoriaPageContent() {
               </div>
             </div>
 
+            {!loading && actorSummary.length > 0 && (
+              <div className="mt-4 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
+                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                  Qué hizo cada usuario
+                </p>
+                <div className="mt-2.5 flex flex-wrap gap-2">
+                  {actorSummary.map((actor) => {
+                    const isActive = actorFilter === actor.name
+                    return (
+                      <button
+                        key={actor.name}
+                        type="button"
+                        onClick={() => setActorFilter(isActive ? "" : actor.name)}
+                        className={`inline-flex items-center gap-2 rounded-full border-2 px-3 py-1.5 text-xs font-black transition ${
+                          isActive
+                            ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white"
+                            : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-3)] hover:border-[var(--brand-primary)]"
+                        }`}
+                      >
+                        {actor.name}
+                        <span
+                          className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-[0.62rem] ${
+                            isActive
+                              ? "bg-white/25 text-white"
+                              : "bg-[var(--brand-cream)] text-[var(--brand-primary)]"
+                          }`}
+                        >
+                          {actor.count}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+                {actorFilter && (
+                  <p className="mt-2.5 text-xs font-bold text-[var(--brand-ink-2)]/65">
+                    Mostrando solo lo que hizo{" "}
+                    <span className="font-black text-[var(--brand-primary)]">{actorFilter}</span>.{" "}
+                    <button
+                      type="button"
+                      onClick={() => setActorFilter("")}
+                      className="font-black text-[var(--brand-primary)] underline"
+                    >
+                      Ver a todos
+                    </button>
+                  </p>
+                )}
+              </div>
+            )}
+
             {error && (
               <p className="mt-3 rounded-2xl border-2 border-red-300 bg-red-50 px-4 py-3 font-bold text-red-700">
                 {error}
@@ -442,8 +504,8 @@ function AuditoriaPageContent() {
 
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-                                <p className="text-sm font-black text-[var(--brand-ink-3)]">
-                                  {log.actionLabel}
+                                <p className="text-sm font-black text-[var(--brand-primary)]">
+                                  {actorName(log)}
                                 </p>
                                 <span className="text-[0.7rem] font-bold text-[var(--brand-ink-2)]/55">
                                   {timeOnly(log.createdAt)}
@@ -451,7 +513,9 @@ function AuditoriaPageContent() {
                               </div>
 
                               <p className="mt-0.5 text-xs font-bold text-[var(--brand-ink-2)]/75">
-                                <span className="text-[var(--brand-primary)]">{actorName(log)}</span>
+                                <span className="font-black text-[var(--brand-ink-3)]">
+                                  {log.actionLabel}
+                                </span>
                                 {entityLabel ? ` · ${entityLabel}` : ""}
                                 {log.ipAddress ? ` · IP ${log.ipAddress}` : ""}
                               </p>
