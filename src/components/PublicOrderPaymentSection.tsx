@@ -90,6 +90,10 @@ function normalizeMoneyInput(value: string) {
 
 import PaymentMethodDetailsList from "@/components/PaymentMethodDetailsList";
 import { readRecentPublicOrders } from "@/components/recentPublicOrders";
+// Clasificador único de moneda del método (compartido con caja/pedidos): los
+// indicadores de divisa mandan (Zelle/Binance/"…internacional"/"…en dólares" son
+// en $); pago móvil, punto, transferencia local, efectivo Bs, biopago son en Bs.
+import { isVesPaymentMethod } from "@/lib/paymentOptions";
 
 type PaymentEntry = {
   method: string;
@@ -103,38 +107,14 @@ const EMPTY_PAYMENT_ENTRY: PaymentEntry = {
   amountVES: "",
 };
 
-// ¿El método se paga en bolívares? (pago móvil, punto, transferencia local,
-// efectivo Bs, biopago). "Transferencia internacional"/Zelle/Binance… son en
-// divisas. Con esto el monto se precarga en la moneda correcta.
-function isVesMethod(methodName: string) {
-  const normalized = String(methodName || "")
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .trim()
-    .toLowerCase();
-
-  if (!normalized) return false;
-  if (normalized.includes("internacional") || normalized.includes("wire")) return false;
-
-  return (
-    normalized.includes("movil") ||
-    normalized.includes("punto") ||
-    normalized.includes("biopago") ||
-    normalized.includes("bolivar") ||
-    normalized.includes("transferencia") ||
-    /(^|\s)bs(\s|$)/.test(normalized) ||
-    normalized.endsWith(" bs")
-  );
-}
-
 // Total del "Paso 1" en la moneda de los métodos elegidos al pedir: solo Bs si
 // todos son en bolívares, solo $ si todos son en divisas, ambos si hay mezcla.
 function formatChosenTotal(
   info: { totalUSD: number; exchangeRate: number },
   chosenMethods: string[],
 ) {
-  const vesChosen = chosenMethods.some((methodName) => isVesMethod(methodName));
-  const usdChosen = chosenMethods.some((methodName) => !isVesMethod(methodName));
+  const vesChosen = chosenMethods.some((methodName) => isVesPaymentMethod(methodName));
+  const usdChosen = chosenMethods.some((methodName) => !isVesPaymentMethod(methodName));
   const totalVES = info.totalUSD * info.exchangeRate;
   const canShowVES = vesChosen && info.exchangeRate > 0 && totalVES > 0;
 
@@ -307,7 +287,7 @@ export default function PublicOrderPaymentSection({
     }
 
     const rate = Number(info?.exchangeRate || 0);
-    if (isVesMethod(methodName) && rate > 0) {
+    if (isVesPaymentMethod(methodName) && rate > 0) {
       return {
         method: methodName,
         amountUSD: "",
@@ -382,7 +362,7 @@ export default function PublicOrderPaymentSection({
     setPayments((current) =>
       current.map((entry, entryIndex) => {
         if (entryIndex !== index) return entry;
-        if (isVesMethod(nextMethod)) return { ...entry, method: nextMethod, amountUSD: "" };
+        if (isVesPaymentMethod(nextMethod)) return { ...entry, method: nextMethod, amountUSD: "" };
         if (nextMethod.trim() !== "") return { ...entry, method: nextMethod, amountVES: "" };
         return { ...entry, method: nextMethod };
       }),
@@ -705,7 +685,7 @@ export default function PublicOrderPaymentSection({
                 // Muestra el monto en la moneda del método: bolívares → solo Bs,
                 // divisas → solo $. Sin método elegido aún, muestra ambos.
                 const methodChosen = entry.method.trim() !== "";
-                const entryIsVes = isVesMethod(entry.method);
+                const entryIsVes = isVesPaymentMethod(entry.method);
                 const showUSD = !methodChosen || !entryIsVes;
                 const showVES = !methodChosen || entryIsVes;
 
