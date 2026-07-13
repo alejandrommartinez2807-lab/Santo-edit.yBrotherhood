@@ -57,6 +57,7 @@ type ModuleKey =
   | "housekeeping"
   | "rateSeasons"
   | "hotelReports"
+  | "bookingEngine"
   | "waiterConfirmation"
   | "kitchenItems"
   | "tickets"

@@ -208,6 +208,7 @@ type BusinessConfig = {
   housekeepingModuleEnabled: boolean;
   rateSeasonsModuleEnabled: boolean;
   hotelReportsModuleEnabled: boolean;
+  bookingEngineModuleEnabled: boolean;
   waiterConfirmationModuleEnabled: boolean;
   kitchenItemsModuleEnabled: boolean;
   ticketsModuleEnabled: boolean;
@@ -375,6 +376,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   housekeepingModuleEnabled: true,
   rateSeasonsModuleEnabled: true,
   hotelReportsModuleEnabled: true,
+  bookingEngineModuleEnabled: true,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
   ticketsModuleEnabled: true,
@@ -1176,6 +1178,10 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     hotelReportsModuleEnabled: normalizeBoolean(
       source.hotelReportsModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.hotelReportsModuleEnabled,
+    ),
+    bookingEngineModuleEnabled: normalizeBoolean(
+      source.bookingEngineModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.bookingEngineModuleEnabled,
     ),
     waiterConfirmationModuleEnabled: normalizeBoolean(
       source.waiterConfirmationModuleEnabled,

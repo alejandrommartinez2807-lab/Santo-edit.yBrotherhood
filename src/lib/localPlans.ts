@@ -149,6 +149,7 @@ export type LocalPlanConfigLike = {
   housekeepingModuleEnabled?: unknown
   rateSeasonsModuleEnabled?: unknown
   hotelReportsModuleEnabled?: unknown
+  bookingEngineModuleEnabled?: unknown
   waiterConfirmationModuleEnabled?: unknown
   kitchenItemsModuleEnabled?: unknown
   ticketsModuleEnabled?: unknown
@@ -910,10 +911,11 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     description: "Motor de reservas público: el huésped elige fechas, ve disponibilidad y precio por temporada, y reserva. Reutiliza el cálculo de tarifas y la disponibilidad.",
     category: "growth",
     minimumPlan: "complete",
+    ownerConfigKey: "bookingEngineModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/reservas-online",
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     key: "guestPortal",
@@ -1510,6 +1512,10 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "hotelReports") {
     return normalizeBoolean(config.hotelReportsModuleEnabled, false)
+  }
+
+  if (moduleKey === "bookingEngine") {
+    return normalizeBoolean(config.bookingEngineModuleEnabled, false)
   }
 
   if (moduleKey === "waiterConfirmation") {

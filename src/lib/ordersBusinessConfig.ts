@@ -177,6 +177,7 @@ export type BusinessConfig = {
   housekeepingModuleEnabled: boolean
   rateSeasonsModuleEnabled: boolean
   hotelReportsModuleEnabled: boolean
+  bookingEngineModuleEnabled: boolean
   waiterConfirmationModuleEnabled: boolean
   kitchenItemsModuleEnabled: boolean
   ticketsModuleEnabled: boolean
@@ -323,6 +324,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   housekeepingModuleEnabled: true,
   rateSeasonsModuleEnabled: true,
   hotelReportsModuleEnabled: true,
+  bookingEngineModuleEnabled: true,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
   ticketsModuleEnabled: true,
@@ -857,6 +859,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.hotelReportsModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.hotelReportsModuleEnabled
     ),
+    bookingEngineModuleEnabled: normalizeBooleanConfig(
+      source.bookingEngineModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.bookingEngineModuleEnabled
+    ),
     waiterConfirmationModuleEnabled: normalizeBooleanConfig(
       source.waiterConfirmationModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.waiterConfirmationModuleEnabled
@@ -965,6 +971,7 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
   const housekeepingAccess = getModulePlanAccess(config, "housekeeping")
   const rateSeasonsAccess = getModulePlanAccess(config, "rateSeasons")
   const hotelReportsAccess = getModulePlanAccess(config, "hotelReports")
+  const bookingEngineAccess = getModulePlanAccess(config, "bookingEngine")
   const waiterConfirmationAccess = getModulePlanAccess(config, "waiterConfirmation")
   const kitchenItemsAccess = getModulePlanAccess(config, "kitchenItems")
   const ticketsAccess = getModulePlanAccess(config, "tickets")
@@ -1078,6 +1085,9 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
       : false,
     hotelReportsModuleEnabled: hotelReportsAccess.includedInPlan
       ? config.hotelReportsModuleEnabled
+      : false,
+    bookingEngineModuleEnabled: bookingEngineAccess.includedInPlan
+      ? config.bookingEngineModuleEnabled
       : false,
     waiterConfirmationModuleEnabled: waiterConfirmationAccess.includedInPlan
       ? config.waiterConfirmationModuleEnabled
