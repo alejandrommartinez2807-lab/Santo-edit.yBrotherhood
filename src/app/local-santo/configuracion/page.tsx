@@ -212,6 +212,7 @@ type BusinessConfig = {
   tapeChartModuleEnabled: boolean;
   groupBookingsModuleEnabled: boolean;
   advancedRatesModuleEnabled: boolean;
+  resortServicesModuleEnabled: boolean;
   waiterConfirmationModuleEnabled: boolean;
   kitchenItemsModuleEnabled: boolean;
   ticketsModuleEnabled: boolean;
@@ -383,6 +384,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   tapeChartModuleEnabled: true,
   groupBookingsModuleEnabled: true,
   advancedRatesModuleEnabled: true,
+  resortServicesModuleEnabled: true,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
   ticketsModuleEnabled: true,
@@ -1200,6 +1202,10 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     advancedRatesModuleEnabled: normalizeBoolean(
       source.advancedRatesModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.advancedRatesModuleEnabled,
+    ),
+    resortServicesModuleEnabled: normalizeBoolean(
+      source.resortServicesModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.resortServicesModuleEnabled,
     ),
     waiterConfirmationModuleEnabled: normalizeBoolean(
       source.waiterConfirmationModuleEnabled,

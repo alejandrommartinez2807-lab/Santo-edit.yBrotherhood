@@ -233,6 +233,22 @@ export {
   saveRateRestriction,
 } from "./ordersRateRestrictions"
 
+export type {
+  CreateServiceBookingInput,
+  ResortService,
+  SaveResortServiceInput,
+  ServiceBooking,
+} from "./ordersResortServices"
+export {
+  createServiceBooking,
+  deleteResortService,
+  deleteServiceBooking,
+  getResortServices,
+  getServiceBookings,
+  saveResortService,
+  updateServiceBookingStatus,
+} from "./ordersResortServices"
+
 export {
   deleteSupplier,
   getSuppliers,

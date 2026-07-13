@@ -153,6 +153,7 @@ export type LocalPlanConfigLike = {
   tapeChartModuleEnabled?: unknown
   groupBookingsModuleEnabled?: unknown
   advancedRatesModuleEnabled?: unknown
+  resortServicesModuleEnabled?: unknown
   waiterConfirmationModuleEnabled?: unknown
   kitchenItemsModuleEnabled?: unknown
   ticketsModuleEnabled?: unknown
@@ -1058,13 +1059,14 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
   {
     key: "resortServices",
     label: "Servicios y actividades",
-    description: "Spa, tours, restaurante con reserva, alquiler y clases reservables con cupo y horario.",
+    description: "Catálogo de servicios del resort (spa, tours, restaurante, alquiler, clases) con precio y cupo, y reservas de servicio por fecha/hora con control de cupo.",
     category: "operation",
     minimumPlan: "complete",
+    ownerConfigKey: "resortServicesModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/servicios",
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     key: "resortCharges",
@@ -1534,6 +1536,10 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "advancedRates") {
     return normalizeBoolean(config.advancedRatesModuleEnabled, false)
+  }
+
+  if (moduleKey === "resortServices") {
+    return normalizeBoolean(config.resortServicesModuleEnabled, false)
   }
 
   if (moduleKey === "waiterConfirmation") {

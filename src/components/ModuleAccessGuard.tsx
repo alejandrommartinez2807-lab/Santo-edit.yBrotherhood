@@ -61,6 +61,7 @@ type ModuleKey =
   | "tapeChart"
   | "groupBookings"
   | "advancedRates"
+  | "resortServices"
   | "waiterConfirmation"
   | "kitchenItems"
   | "tickets"

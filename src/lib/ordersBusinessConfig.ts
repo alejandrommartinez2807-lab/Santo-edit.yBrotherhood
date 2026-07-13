@@ -181,6 +181,7 @@ export type BusinessConfig = {
   tapeChartModuleEnabled: boolean
   groupBookingsModuleEnabled: boolean
   advancedRatesModuleEnabled: boolean
+  resortServicesModuleEnabled: boolean
   waiterConfirmationModuleEnabled: boolean
   kitchenItemsModuleEnabled: boolean
   ticketsModuleEnabled: boolean
@@ -331,6 +332,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   tapeChartModuleEnabled: true,
   groupBookingsModuleEnabled: true,
   advancedRatesModuleEnabled: true,
+  resortServicesModuleEnabled: true,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
   ticketsModuleEnabled: true,
@@ -881,6 +883,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.advancedRatesModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.advancedRatesModuleEnabled
     ),
+    resortServicesModuleEnabled: normalizeBooleanConfig(
+      source.resortServicesModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.resortServicesModuleEnabled
+    ),
     waiterConfirmationModuleEnabled: normalizeBooleanConfig(
       source.waiterConfirmationModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.waiterConfirmationModuleEnabled
@@ -993,6 +999,7 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
   const tapeChartAccess = getModulePlanAccess(config, "tapeChart")
   const groupBookingsAccess = getModulePlanAccess(config, "groupBookings")
   const advancedRatesAccess = getModulePlanAccess(config, "advancedRates")
+  const resortServicesAccess = getModulePlanAccess(config, "resortServices")
   const waiterConfirmationAccess = getModulePlanAccess(config, "waiterConfirmation")
   const kitchenItemsAccess = getModulePlanAccess(config, "kitchenItems")
   const ticketsAccess = getModulePlanAccess(config, "tickets")
@@ -1118,6 +1125,9 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
       : false,
     advancedRatesModuleEnabled: advancedRatesAccess.includedInPlan
       ? config.advancedRatesModuleEnabled
+      : false,
+    resortServicesModuleEnabled: resortServicesAccess.includedInPlan
+      ? config.resortServicesModuleEnabled
       : false,
     waiterConfirmationModuleEnabled: waiterConfirmationAccess.includedInPlan
       ? config.waiterConfirmationModuleEnabled
