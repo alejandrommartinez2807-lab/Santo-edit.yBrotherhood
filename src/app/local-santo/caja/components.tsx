@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
+  ClipboardCopy,
   CreditCard,
   Eye,
   EyeOff,
@@ -33,6 +34,7 @@ import {
   isStaffConfirmationItemRequired,
 } from "@/lib/localOrderHelpers"
 import {
+  buildCourierHandoffText,
   buildDeliveryWhatsAppUrl,
   formatDate,
   getDisplayLocation,
@@ -100,6 +102,35 @@ export function CashOrderCard({
   // pendiente y la acción del momento) para que en una laptop entren varios
   // pedidos por pantalla; el detalle completo se abre solo cuando hace falta.
   const [isExpanded, setIsExpanded] = useState(false)
+  // Feedback del botón "copiar datos para el repartidor".
+  const [courierCopied, setCourierCopied] = useState(false)
+
+  async function copyCourierHandoff() {
+    const handoffText = buildCourierHandoffText(order)
+
+    try {
+      await navigator.clipboard.writeText(handoffText)
+    } catch {
+      // Fallback para navegadores/WebViews sin permiso de portapapeles
+      // (teléfonos viejos del staff): textarea temporal + execCommand.
+      try {
+        const textArea = document.createElement("textarea")
+        textArea.value = handoffText
+        textArea.style.position = "fixed"
+        textArea.style.opacity = "0"
+        document.body.appendChild(textArea)
+        textArea.select()
+        document.execCommand("copy")
+        textArea.remove()
+      } catch {
+        // Sin portapapeles: los datos siguen visibles en "Datos delivery".
+        return
+      }
+    }
+
+    setCourierCopied(true)
+    window.setTimeout(() => setCourierCopied(false), 2500)
+  }
   // Según el flujo elegido por el dueño, caja puede marcar Listo directo
   // (mixed/direct) y el botón de cocina solo existe en kitchen/mixed.
   const canMarkReadyFromCash =
@@ -186,6 +217,12 @@ export function CashOrderCard({
           {order.status === "Listo" && !hasPendingStaffConfirmation && (
             <button type="button" onClick={onMarkDelivered} className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-green-600 bg-green-500 px-3 py-1 text-[0.6rem] font-black uppercase tracking-[0.08em] text-white transition hover:bg-green-400">
               <CheckCircle2 size={13} /> Entregado
+            </button>
+          )}
+
+          {isDelivery && (
+            <button type="button" onClick={copyCourierHandoff} className={`inline-flex items-center justify-center gap-1 rounded-full border-2 px-3 py-1 text-[0.6rem] font-black uppercase tracking-[0.08em] transition ${courierCopied ? "border-green-600 bg-green-100 text-green-700" : "border-[var(--brand-primary)]/50 bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"}`}>
+              <ClipboardCopy size={13} /> {courierCopied ? "Copiado" : "Repartidor"}
             </button>
           )}
 
@@ -333,6 +370,19 @@ export function CashOrderCard({
               <p className="rounded-2xl bg-white px-3 py-2"><strong>Referencia:</strong> {order.deliveryReference || "Sin referencia"}</p>
               <p className="rounded-2xl bg-white px-3 py-2"><strong>Delivery:</strong> {formatUSD(orderTotals.deliveryCostUSD)} / Bs {formatVES(orderTotals.deliveryCostUSD * Number(order.exchangeRate || 0))}</p>
             </div>
+
+            <button
+              type="button"
+              onClick={copyCourierHandoff}
+              className={`mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 px-4 py-3 text-xs font-black uppercase tracking-[0.12em] transition ${
+                courierCopied
+                  ? "border-green-600 bg-green-100 text-green-700"
+                  : "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[var(--brand-accent-200)]"
+              }`}
+            >
+              <ClipboardCopy size={16} />
+              {courierCopied ? "¡Copiado! Pégalo al repartidor" : "Copiar datos para el repartidor"}
+            </button>
 
             {phone ? (
               <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
