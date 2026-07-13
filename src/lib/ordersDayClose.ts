@@ -144,6 +144,9 @@ export type SaveDayCloseInput = {
 export type SavedDayClose = SaveDayCloseInput & {
   id: string
   createdAt: string
+  // Sede dueña del cierre (columna branch_id): el historial consolidado la
+  // usa para etiquetar de qué sede es cada cierre.
+  branchId?: string
 }
 
 export type DayExpense = {
@@ -241,6 +244,7 @@ export async function getDayCloses(branchId?: string | null) {
       ...payload,
       id: cleanText(row.id),
       createdAt: cleanText(payload.createdAt) || cleanText(row.created_at),
+      branchId: cleanText(row.branch_id) || undefined,
     } as SavedDayClose
   })
 }
