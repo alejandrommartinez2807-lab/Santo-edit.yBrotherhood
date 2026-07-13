@@ -312,7 +312,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   localTables: DEFAULT_LOCAL_TABLES,
   qrTablesModuleEnabled: true,
   reservationsModuleEnabled: false,
-  roomsModuleEnabled: false,
+  roomsModuleEnabled: true,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
   ticketsModuleEnabled: true,
