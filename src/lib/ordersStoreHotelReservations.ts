@@ -191,6 +191,34 @@ export async function updateHotelReservationStatus(
   return mapHotelReservation(data as Row)
 }
 
+export async function getHotelReservationById(
+  id: string,
+  branchId?: string | null,
+): Promise<HotelReservation | null> {
+  const supabase = getSupabaseAdmin()
+  let query = supabase.from("hotel_reservations").select("*").eq("id", id)
+  if (branchId) query = query.eq("branch_id", branchId)
+  const { data, error } = await query.maybeSingle()
+  if (error) throw new Error(error.message)
+  return data ? mapHotelReservation(data as Row) : null
+}
+
+export async function updateHotelReservationGuest(
+  id: string,
+  guestId: string,
+  branchId?: string | null,
+): Promise<HotelReservation> {
+  const supabase = getSupabaseAdmin()
+  let updateQuery = supabase
+    .from("hotel_reservations")
+    .update({ guest_id: guestId || null, updated_at: new Date().toISOString() })
+    .eq("id", id)
+  if (branchId) updateQuery = updateQuery.eq("branch_id", branchId)
+  const { data, error } = await updateQuery.select("*").single()
+  if (error) throw new Error(error.message)
+  return mapHotelReservation(data as Row)
+}
+
 export async function deleteHotelReservation(
   id: string,
   branchId?: string | null,

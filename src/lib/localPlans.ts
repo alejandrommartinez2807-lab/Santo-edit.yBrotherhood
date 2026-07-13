@@ -44,6 +44,7 @@ export type LocalModuleKey =
   | "reservations"
   | "rooms"
   | "hotelReservations"
+  | "folio"
   | "waiterConfirmation"
   | "kitchenItems"
   | "tickets"
@@ -124,6 +125,7 @@ export type LocalPlanConfigLike = {
   reservationsModuleEnabled?: unknown
   roomsModuleEnabled?: unknown
   hotelReservationsModuleEnabled?: unknown
+  folioModuleEnabled?: unknown
   waiterConfirmationModuleEnabled?: unknown
   kitchenItemsModuleEnabled?: unknown
   ticketsModuleEnabled?: unknown
@@ -207,6 +209,7 @@ export const LOCAL_MODULE_KEYS: LocalModuleKey[] = [
   "reservations",
   "rooms",
   "hotelReservations",
+  "folio",
   "waiterConfirmation",
   "kitchenItems",
   "tickets",
@@ -373,6 +376,7 @@ export const LOCAL_PLAN_DEFINITIONS: LocalPlanDefinition[] = [
       "reservations",
       "rooms",
       "hotelReservations",
+      "folio",
       "waiterConfirmation",
       "kitchenItems",
       "tickets",
@@ -782,6 +786,18 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/reservas-hotel",
+    comingSoon: false,
+  },
+  {
+    key: "folio",
+    label: "Folio del huésped",
+    description: "Cuenta de la estadía: ficha legal del huésped, check-in que publica el cargo de habitación, cargos (restaurante, extras), pagos y saldo, con check-out que cierra el folio.",
+    category: "money",
+    minimumPlan: "complete",
+    ownerConfigKey: "folioModuleEnabled",
+    visibleForOwnerSettings: true,
+    visibleForSupport: true,
+    routePath: "/local-santo/folio",
     comingSoon: false,
   },
   {
@@ -1198,6 +1214,10 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "hotelReservations") {
     return normalizeBoolean(config.hotelReservationsModuleEnabled, false)
+  }
+
+  if (moduleKey === "folio") {
+    return normalizeBoolean(config.folioModuleEnabled, false)
   }
 
   if (moduleKey === "waiterConfirmation") {

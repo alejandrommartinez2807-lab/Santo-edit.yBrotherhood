@@ -165,10 +165,32 @@ export type {
 } from "./ordersHotelReservations"
 export {
   deleteHotelReservation,
+  getHotelReservationById,
   getHotelReservations,
   saveHotelReservation,
+  updateHotelReservationGuest,
   updateHotelReservationStatus,
 } from "./ordersHotelReservations"
+
+export type {
+  AddFolioItemInput,
+  Folio,
+  FolioItem,
+  Guest,
+  SaveGuestInput,
+} from "./ordersFolios"
+export {
+  addFolioItem,
+  closeFolio,
+  deleteFolioItem,
+  folioBalance,
+  getFolioByReservation,
+  getFolioItems,
+  getGuest,
+  hasRoomCharge,
+  openFolio,
+  saveGuest,
+} from "./ordersFolios"
 
 export {
   deleteSupplier,

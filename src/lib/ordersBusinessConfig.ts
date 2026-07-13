@@ -173,6 +173,7 @@ export type BusinessConfig = {
   reservationsModuleEnabled: boolean
   roomsModuleEnabled: boolean
   hotelReservationsModuleEnabled: boolean
+  folioModuleEnabled: boolean
   waiterConfirmationModuleEnabled: boolean
   kitchenItemsModuleEnabled: boolean
   ticketsModuleEnabled: boolean
@@ -315,6 +316,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   reservationsModuleEnabled: false,
   roomsModuleEnabled: true,
   hotelReservationsModuleEnabled: true,
+  folioModuleEnabled: true,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
   ticketsModuleEnabled: true,
@@ -833,6 +835,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.hotelReservationsModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.hotelReservationsModuleEnabled
     ),
+    folioModuleEnabled: normalizeBooleanConfig(
+      source.folioModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.folioModuleEnabled
+    ),
     waiterConfirmationModuleEnabled: normalizeBooleanConfig(
       source.waiterConfirmationModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.waiterConfirmationModuleEnabled
@@ -937,6 +943,7 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
   const reservationsAccess = getModulePlanAccess(config, "reservations")
   const roomsAccess = getModulePlanAccess(config, "rooms")
   const hotelReservationsAccess = getModulePlanAccess(config, "hotelReservations")
+  const folioAccess = getModulePlanAccess(config, "folio")
   const waiterConfirmationAccess = getModulePlanAccess(config, "waiterConfirmation")
   const kitchenItemsAccess = getModulePlanAccess(config, "kitchenItems")
   const ticketsAccess = getModulePlanAccess(config, "tickets")
@@ -1038,6 +1045,9 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
       : false,
     hotelReservationsModuleEnabled: hotelReservationsAccess.includedInPlan
       ? config.hotelReservationsModuleEnabled
+      : false,
+    folioModuleEnabled: folioAccess.includedInPlan
+      ? config.folioModuleEnabled
       : false,
     waiterConfirmationModuleEnabled: waiterConfirmationAccess.includedInPlan
       ? config.waiterConfirmationModuleEnabled

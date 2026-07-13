@@ -53,6 +53,7 @@ type ModuleKey =
   | "reservations"
   | "rooms"
   | "hotelReservations"
+  | "folio"
   | "waiterConfirmation"
   | "kitchenItems"
   | "tickets"

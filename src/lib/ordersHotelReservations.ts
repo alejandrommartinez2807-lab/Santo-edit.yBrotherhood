@@ -32,3 +32,18 @@ export async function updateHotelReservationStatus(
 export async function deleteHotelReservation(id: string, branchId?: string | null) {
   return store.deleteHotelReservation(id, branchId)
 }
+
+export async function getHotelReservationById(
+  id: string,
+  branchId?: string | null,
+): Promise<HotelReservation | null> {
+  return store.getHotelReservationById(id, branchId)
+}
+
+export async function updateHotelReservationGuest(
+  id: string,
+  guestId: string,
+  branchId?: string | null,
+): Promise<HotelReservation> {
+  return store.updateHotelReservationGuest(id, guestId, branchId)
+}
