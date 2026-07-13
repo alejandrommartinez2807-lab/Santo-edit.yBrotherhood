@@ -191,6 +191,9 @@ function DayClosesPageContent() {
   // Consolidado: el dueño puede ver el historial de TODAS las sedes juntas
   // (scope=all). El API clampa a la sede propia para el resto de roles.
   const [showAllBranches, setShowAllBranches] = useState(false)
+  // Nombres de las sedes (incluye inactivas/eventos): etiqueta cada cierre
+  // en el consolidado para saber de qué sede es.
+  const [branchNames, setBranchNames] = useState<Record<string, string>>({})
   const [reportViewMode, setReportViewMode] =
     useState<ReportViewMode>("Simple")
 
@@ -229,6 +232,30 @@ function DayClosesPageContent() {
       )
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // Nombres de sede para etiquetar el consolidado. No-fatal: sin nombres el
+  // historial funciona igual (solo se pierde la etiqueta).
+  async function loadBranchNames(password = adminPassword) {
+    if (!password) return
+
+    try {
+      const response = await fetch("/api/branches", {
+        headers: { "x-admin-password": password },
+        cache: "no-store",
+      })
+      const data = await readApiResponse(response)
+      if (!response.ok || !Array.isArray(data.branches)) return
+
+      const names: Record<string, string> = {}
+      for (const branch of data.branches) {
+        const id = String(branch?.id || "").trim()
+        if (id) names[id] = String(branch?.name || "").trim() || "Sucursal"
+      }
+      setBranchNames(names)
+    } catch {
+      /* sin etiquetas de sede */
     }
   }
 
@@ -545,6 +572,7 @@ function DayClosesPageContent() {
                   onChange={(event) => {
                     setShowAllBranches(event.target.checked)
                     loadDayCloses(adminPassword, event.target.checked)
+                    if (event.target.checked) loadBranchNames(adminPassword)
                   }}
                   className="h-4 w-4 accent-[var(--brand-primary)]"
                 />
@@ -746,6 +774,11 @@ function DayClosesPageContent() {
               <CloseCard
                 key={close.id}
                 close={close}
+                branchLabel={
+                  showAllBranches && close.branchId
+                    ? branchNames[close.branchId] || "Sede sin nombre"
+                    : ""
+                }
                 onOpen={() => setSelectedClose(close)}
                 onCopy={() => copySummary(close)}
               />
@@ -965,10 +998,12 @@ function LoginBox({
 
 function CloseCard({
   close,
+  branchLabel = "",
   onOpen,
   onCopy,
 }: {
   close: SavedDayClose
+  branchLabel?: string
   onOpen: () => void
   onCopy: () => void
 }) {
@@ -990,6 +1025,12 @@ function CloseCard({
               >
                 {paymentState.label}
               </span>
+
+              {branchLabel && (
+                <span className="inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-white">
+                  {branchLabel}
+                </span>
+              )}
             </div>
 
             <h2 className="mt-2 text-3xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">

@@ -138,6 +138,14 @@ export async function GET(request: NextRequest) {
     day: "2-digit",
   })
 
+  // Hora local del negocio para "ventas por hora": getHours() usaría la hora
+  // del servidor (UTC en Vercel) y correría el gráfico 4 horas.
+  const hourFmt = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "America/Caracas",
+    hour: "2-digit",
+    hourCycle: "h23",
+  })
+
   let totalUSD = 0
   let collectedUSD = 0
   let pendingUSD = 0
@@ -183,7 +191,7 @@ export async function GET(request: NextRequest) {
     }
 
     const created = new Date(String(o.created_at))
-    const hour = created.getHours()
+    const hour = Number(hourFmt.format(created))
     if (hour >= 0 && hour < 24) byHour[hour] += t
 
     const dayKey = dayFmt.format(created)

@@ -50,6 +50,8 @@ export type DayCloseExpense = {
 export type SavedDayClose = {
   id: string
   createdAt: string
+  // Sede dueña del cierre: el consolidado la muestra para distinguirlos.
+  branchId?: string
   dateLabel: string
   summaryText: string
 
@@ -350,6 +352,7 @@ export function normalizeDayClose(value: unknown): SavedDayClose | null {
   return {
     id,
     createdAt: toText(close.createdAt),
+    branchId: toText(close.branchId).trim() || undefined,
     dateLabel: toText(close.dateLabel),
     summaryText: toText(close.summaryText),
 
