@@ -12,6 +12,7 @@ import {
   getOrders,
   hasRoomCharge,
   openFolio,
+  queueCheckoutCleaning,
   saveGuest,
   updateHotelReservationGuest,
   updateHotelReservationStatus,
@@ -283,7 +284,19 @@ export async function POST(request: NextRequest) {
       }
 
       await closeFolio(folioId, branchId)
-      if (reservationId) await updateHotelReservationStatus(reservationId, "checkout", branchId)
+      if (reservationId) {
+        await updateHotelReservationStatus(reservationId, "checkout", branchId)
+        // Al salir el huésped, la habitación queda "sucia" y se encola su
+        // limpieza de salida en el tablero de housekeeping (idempotente).
+        const reservation = await getHotelReservationById(reservationId, branchId)
+        if (reservation?.roomId) {
+          await queueCheckoutCleaning(
+            reservation.roomId,
+            branchId,
+            `Salida ${reservation.guestName || ""}`.trim(),
+          )
+        }
+      }
 
       const view = await buildFolioView(reservationId, branchId)
       return NextResponse.json({ ok: true, ...view })

@@ -193,6 +193,25 @@ export {
   saveGuest,
 } from "./ordersFolios"
 
+export type {
+  CreateHousekeepingTaskInput,
+  HousekeepingTask,
+  HousekeepingTaskStatus,
+  HousekeepingTaskType,
+  UpdateHousekeepingTaskInput,
+} from "./ordersHousekeeping"
+export {
+  HOUSEKEEPING_TASK_STATUSES,
+  HOUSEKEEPING_TASK_TYPES,
+  createHousekeepingTask,
+  deleteHousekeepingTask,
+  getHousekeepingTasks,
+  normalizeTaskStatus,
+  normalizeTaskType,
+  queueCheckoutCleaning,
+  updateHousekeepingTask,
+} from "./ordersHousekeeping"
+
 export {
   deleteSupplier,
   getSuppliers,

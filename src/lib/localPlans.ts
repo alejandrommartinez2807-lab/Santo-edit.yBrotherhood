@@ -45,6 +45,7 @@ export type LocalModuleKey =
   | "rooms"
   | "hotelReservations"
   | "folio"
+  | "housekeeping"
   | "waiterConfirmation"
   | "kitchenItems"
   | "tickets"
@@ -126,6 +127,7 @@ export type LocalPlanConfigLike = {
   roomsModuleEnabled?: unknown
   hotelReservationsModuleEnabled?: unknown
   folioModuleEnabled?: unknown
+  housekeepingModuleEnabled?: unknown
   waiterConfirmationModuleEnabled?: unknown
   kitchenItemsModuleEnabled?: unknown
   ticketsModuleEnabled?: unknown
@@ -210,6 +212,7 @@ export const LOCAL_MODULE_KEYS: LocalModuleKey[] = [
   "rooms",
   "hotelReservations",
   "folio",
+  "housekeeping",
   "waiterConfirmation",
   "kitchenItems",
   "tickets",
@@ -377,6 +380,7 @@ export const LOCAL_PLAN_DEFINITIONS: LocalPlanDefinition[] = [
       "rooms",
       "hotelReservations",
       "folio",
+      "housekeeping",
       "waiterConfirmation",
       "kitchenItems",
       "tickets",
@@ -801,6 +805,18 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     comingSoon: false,
   },
   {
+    key: "housekeeping",
+    label: "Limpieza (housekeeping)",
+    description: "Tablero de estado de limpieza por habitación (limpia, sucia, inspección, mantenimiento) con tareas asignables. El check-out marca la habitación como sucia y encola su limpieza automáticamente.",
+    category: "operation",
+    minimumPlan: "complete",
+    ownerConfigKey: "housekeepingModuleEnabled",
+    visibleForOwnerSettings: true,
+    visibleForSupport: true,
+    routePath: "/local-santo/housekeeping",
+    comingSoon: false,
+  },
+  {
     key: "waiterConfirmation",
     label: "Confirmación por mesonero",
     description: "Revisión del personal para productos que requieren confirmación antes de avanzar en cocina o entrega.",
@@ -1218,6 +1234,10 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "folio") {
     return normalizeBoolean(config.folioModuleEnabled, false)
+  }
+
+  if (moduleKey === "housekeeping") {
+    return normalizeBoolean(config.housekeepingModuleEnabled, false)
   }
 
   if (moduleKey === "waiterConfirmation") {
