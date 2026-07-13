@@ -11,6 +11,16 @@ nuevas propuestas, ruta/módulo, qué reutiliza y dependencias.
 > placeholder. Construir una fase = cambiar `comingSoon: false`, agregar
 > `ownerConfigKey` + cableado de config, y reemplazar el placeholder por la
 > pantalla real (ver checklist en [[santo-edit-hotel-pms-build]]).
+>
+> **Superficie PÚBLICA esqueletada** (placeholders `PublicComingSoon`):
+> `/hotel` (landing), `/hotel/reservar` (booking engine) y `/hotel/mi-reserva`
+> (portal del huésped). La gestión de cada una vive en su módulo staff
+> correspondiente (`/local-santo/...`).
+>
+> **Nota sobre las tablas:** el esquema propuesto en cada fase es la referencia,
+> pero las tablas NO se materializan por adelantado (evita migraciones
+> especulativas que luego se rediseñan): cada fase crea/afina su migración
+> aditiva al construirse.
 
 ## Principios (no romper)
 - **Producto separado**: Supabase (`edxbuggbqcrsaynxysuj`) + Vercel propios. No
