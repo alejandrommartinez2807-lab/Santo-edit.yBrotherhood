@@ -1197,7 +1197,10 @@ export function getModuleEnabledByOwner(
   }
 
   if (moduleKey === "auditLog") {
-    return normalizeBoolean(config.auditLogModuleEnabled, false)
+    // Default true: coincide con DEFAULT_BUSINESS_CONFIG (config del dueño). Con
+    // el default en false, el interruptor se veía encendido pero el menú escondía
+    // Auditoría (el negocio nunca había guardado la clave). Sigue gated por plan.
+    return normalizeBoolean(config.auditLogModuleEnabled, true)
   }
 
   if (moduleKey === "visualEditor") {
