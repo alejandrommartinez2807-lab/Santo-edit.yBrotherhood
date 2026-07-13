@@ -68,11 +68,34 @@ export async function GET(request: NextRequest) {
     const rawStatus = String(data.status || "").trim()
     const status = PUBLIC_STATUSES.has(rawStatus) ? rawStatus : "Pendiente"
 
+    // Contenido del pedido (nombre, cantidad y personalización): el cliente
+    // que guarda el link quiere ver QUÉ pidió, no solo el estado. Mismo modelo
+    // de confianza del resto de la respuesta: id imprevisible, sin datos
+    // personales (ni teléfono ni dirección).
+    const { data: itemRows } = await supabase
+      .from("order_items")
+      .select("name,quantity,price,selection_summary,sort_order")
+      .eq("order_id", orderId)
+      .order("sort_order", { ascending: true })
+
+    const items = (itemRows ?? []).map((raw) => {
+      const item = raw as Record<string, unknown>
+      const quantity = Number(item.quantity || 0)
+      const price = Number(item.price || 0)
+      return {
+        name: String(item.name || "").trim() || "Producto",
+        quantity,
+        selectionSummary: String(item.selection_summary || "").trim(),
+        subtotalUSD: Math.round((price * quantity + Number.EPSILON) * 100) / 100,
+      }
+    })
+
     return noStoreResponse({
       ok: true,
       orderId: String(data.id || orderId),
       displayNumber: seq > 0 ? `#${String(seq).padStart(2, "0")}` : "",
       status,
+      items,
     })
   } catch (error) {
     captureError(error, { route: "/api/public/order-status", action: "GET" })

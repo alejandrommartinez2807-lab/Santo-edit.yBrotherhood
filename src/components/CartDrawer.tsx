@@ -17,7 +17,6 @@ import {
   ShoppingCart,
   X,
   MessageCircle,
-  BadgeCheck,
   AlertTriangle,
   ClipboardList,
   CheckCircle2,
@@ -67,6 +66,7 @@ import {
   parseCoordsFromText,
 } from "@/lib/deliveryDistance";
 import PaymentMethodDetailsList from "@/components/PaymentMethodDetailsList";
+import PublicOrderPaymentSection from "@/components/PublicOrderPaymentSection";
 import DeliveryMapPicker from "@/components/DeliveryMapPicker";
 import DeliveryPointPreviewMap from "@/components/DeliveryPointPreviewMap";
 import {
@@ -374,23 +374,6 @@ export default function CartDrawer({
   const [hasLastOrderSnapshot, setHasLastOrderSnapshot] = useState(false);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
-  const [isPaymentProofFormOpen, setIsPaymentProofFormOpen] = useState(false);
-  const [isSubmittingPaymentProof, setIsSubmittingPaymentProof] =
-    useState(false);
-  const [paymentProofMethod, setPaymentProofMethod] = useState("");
-  const [paymentProofAmountUSD, setPaymentProofAmountUSD] = useState("");
-  const [paymentProofAmountVES, setPaymentProofAmountVES] = useState("");
-  const [paymentProofReference, setPaymentProofReference] = useState("");
-  const [paymentProofNote, setPaymentProofNote] = useState("");
-  const [paymentProofDataUrl, setPaymentProofDataUrl] = useState("");
-  const [paymentProofFileName, setPaymentProofFileName] = useState("");
-  const [paymentProofMimeType, setPaymentProofMimeType] = useState("");
-  const [paymentProofError, setPaymentProofError] = useState<string | null>(
-    null,
-  );
-  const [paymentProofSuccess, setPaymentProofSuccess] = useState<string | null>(
-    null,
-  );
   const [quickPlaces, setQuickPlaces] = useState(DEFAULT_QUICK_PLACES);
   const [isPaymentPickerOpen, setIsPaymentPickerOpen] = useState(false);
   // Envío por distancia: el cliente pega su link de Google Maps y el costo
@@ -1149,15 +1132,6 @@ export default function CartDrawer({
         ]
       : []),
   ].filter(Boolean);
-  const paymentProofReportedUSD = normalizeFormMoney(paymentProofAmountUSD);
-  const paymentProofReportedVES = normalizeFormMoney(paymentProofAmountVES);
-  const canSubmitPaymentProof = Boolean(
-    lastCreatedOrder?.id &&
-    isPaymentProofPublicAvailable &&
-    paymentProofDataUrl &&
-    !isSubmittingPaymentProof &&
-    (paymentProofReportedUSD > 0 || paymentProofReportedVES > 0),
-  );
 
   async function requestDistanceQuote(input: {
     mapsUrl?: string;
@@ -1481,132 +1455,8 @@ export default function CartDrawer({
     return encodeURIComponent(messageParts.join("\n"));
   }
 
-  function resetPaymentProofForm() {
-    setIsPaymentProofFormOpen(false);
-    setIsSubmittingPaymentProof(false);
-    setPaymentProofMethod("");
-    setPaymentProofAmountUSD("");
-    setPaymentProofAmountVES("");
-    setPaymentProofReference("");
-    setPaymentProofNote("");
-    setPaymentProofDataUrl("");
-    setPaymentProofFileName("");
-    setPaymentProofMimeType("");
-    setPaymentProofError(null);
-    setPaymentProofSuccess(null);
-  }
-
-  function handlePaymentProofFileChange(file: File | undefined) {
-    setPaymentProofError(null);
-    setPaymentProofSuccess(null);
-
-    if (!file) {
-      setPaymentProofDataUrl("");
-      setPaymentProofFileName("");
-      setPaymentProofMimeType("");
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      setPaymentProofError("El comprobante debe ser una imagen.");
-      setPaymentProofDataUrl("");
-      setPaymentProofFileName("");
-      setPaymentProofMimeType("");
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setPaymentProofError(
-        "La imagen es muy pesada. Usa una captura más liviana.",
-      );
-      setPaymentProofDataUrl("");
-      setPaymentProofFileName("");
-      setPaymentProofMimeType("");
-      return;
-    }
-
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-
-      if (!result.startsWith("data:image/")) {
-        setPaymentProofError("No se pudo leer la imagen del comprobante.");
-        setPaymentProofDataUrl("");
-        setPaymentProofFileName("");
-        setPaymentProofMimeType("");
-        return;
-      }
-
-      setPaymentProofDataUrl(result);
-      setPaymentProofFileName(file.name || "comprobante.jpg");
-      setPaymentProofMimeType(file.type || "image/jpeg");
-    };
-
-    reader.onerror = () => {
-      setPaymentProofError("No se pudo leer la imagen del comprobante.");
-      setPaymentProofDataUrl("");
-      setPaymentProofFileName("");
-      setPaymentProofMimeType("");
-    };
-
-    reader.readAsDataURL(file);
-  }
-
-  async function handleSubmitPaymentProof() {
-    if (!canSubmitPaymentProof || !lastCreatedOrder) return;
-
-    setIsSubmittingPaymentProof(true);
-    setPaymentProofError(null);
-    setPaymentProofSuccess(null);
-
-    try {
-      const response = await fetch("/api/payment-proofs", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          orderId: lastCreatedOrder.id,
-          customerName: lastCreatedOrder.customerName,
-          customerPhone: lastCreatedOrder.customerPhone,
-          reportedMethod: paymentProofMethod.trim(),
-          amountReportedUSD: paymentProofReportedUSD,
-          amountReportedVES: paymentProofReportedVES,
-          paymentReference: paymentProofReference.trim(),
-          customerNote: paymentProofNote.trim(),
-          dataUrl: paymentProofDataUrl,
-          fileName:
-            paymentProofFileName || `comprobante-${lastCreatedOrder.id}.jpg`,
-          mimeType: paymentProofMimeType || "image/jpeg",
-        }),
-      });
-
-      const data = await readApiResponse(response);
-
-      if (!response.ok) {
-        throw new Error(data.error || "No se pudo enviar el comprobante");
-      }
-
-      setPaymentProofSuccess(
-        "Comprobante enviado. Caja revisará la captura antes de registrar el cobro real.",
-      );
-      setIsPaymentProofFormOpen(false);
-      setPaymentProofDataUrl("");
-      setPaymentProofFileName("");
-      setPaymentProofMimeType("");
-      setPaymentProofReference("");
-      setPaymentProofNote("");
-    } catch (error) {
-      setPaymentProofError(
-        error instanceof Error
-          ? error.message
-          : "No se pudo enviar el comprobante",
-      );
-    } finally {
-      setIsSubmittingPaymentProof(false);
-    }
-  }
+  // El reporte de pago de la confirmación vive en PublicOrderPaymentSection
+  // (el mismo formulario que la página de seguimiento /pedido/[id]).
 
   async function handleApplyCoupon() {
     const code = couponInput.trim();
@@ -1820,11 +1670,6 @@ export default function CartDrawer({
       });
 
       setLastCreatedOrder(createdOrder);
-      resetPaymentProofForm();
-      setPaymentProofMethod(isMixedPayment ? "" : paymentMethod.trim());
-      setPaymentProofAmountUSD(
-        createdOrder.totalUSD > 0 ? createdOrder.totalUSD.toFixed(2) : "",
-      );
       setCustomerName("");
       setCustomerPhone("");
       setTableNumber(nextTableNumberAfterSubmit);
@@ -1933,17 +1778,16 @@ export default function CartDrawer({
   }
 
   function closeOrderModal() {
-    if (isSubmittingOrder || isSubmittingPaymentProof) return;
+    if (isSubmittingOrder) return;
 
     setIsOrderModalOpen(false);
     setLastCreatedOrder(null);
     setOrderError(null);
     setIsPaymentPickerOpen(false);
-    resetPaymentProofForm();
   }
 
   function finishCreatedOrderFlow() {
-    if (isSubmittingOrder || isSubmittingPaymentProof) return;
+    if (isSubmittingOrder) return;
 
     closeOrderModal();
     onClose();
@@ -2348,7 +2192,7 @@ export default function CartDrawer({
                 <button
                   type="button"
                   onClick={closeOrderModal}
-                  disabled={isSubmittingOrder || isSubmittingPaymentProof}
+                  disabled={isSubmittingOrder}
                   aria-label="Volver"
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] text-[var(--brand-ink)] disabled:opacity-50 sm:hidden"
                 >
@@ -2372,7 +2216,7 @@ export default function CartDrawer({
                 <button
                   type="button"
                   onClick={closeOrderModal}
-                  disabled={isSubmittingOrder || isSubmittingPaymentProof}
+                  disabled={isSubmittingOrder}
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black disabled:opacity-50 sm:h-11 sm:w-11"
                 >
                   <X size={22} />
@@ -2502,47 +2346,16 @@ export default function CartDrawer({
                     </div>
                   )}
 
-                {/* Paso 1: los datos del negocio para pagar (pago móvil,
-                    Zelle…), ya filtrados a los métodos que el cliente eligió:
-                    los copia aquí mismo y luego reporta su pago. */}
-                {!lastOrderAttachedToOpenAccount &&
-                  (() => {
-                    const orderMethods = lastCreatedOrder.paymentMethods || [];
-                    const details = orderMethods.length
-                      ? Object.fromEntries(
-                          Object.entries(allPaymentMethodDetails).filter(
-                            ([method]) => orderMethods.includes(method),
-                          ),
-                        )
-                      : allPaymentMethodDetails;
-
-                    if (!Object.keys(details).length) return null;
-
-                    return (
-                      <div className="rounded-[1.5rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-left">
-                        <span className="inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
-                          Paso 1
-                        </span>
-                        <p className="mt-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-                          Paga con estos datos
-                          {orderMethods.length > 0 && (
-                            <span className="text-[var(--brand-ink-2)]/45">
-                              {" "}
-                              ({orderMethods.join(" + ")})
-                            </span>
-                          )}
-                        </p>
-                        {lastCreatedOrder.totalUSD > 0 ? (
-                          <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/75">
-                            Total a pagar: {formatUSD(lastCreatedOrder.totalUSD)}
-                          </p>
-                        ) : null}
-                        <div className="mt-2">
-                          <PaymentMethodDetailsList details={details} />
-                        </div>
-                      </div>
-                    );
-                  })()}
+                {/* Pasos de pago unificados con la página de seguimiento
+                    (/pedido/[id]): mismos datos de pago filtrados a los
+                    métodos elegidos y mismo formulario de reporte (métodos
+                    precargados en su moneda, montos por método, Completar,
+                    aviso de cobertura y envío solo con referencia). */}
+                {!lastOrderAttachedToOpenAccount && !lastCreatedOrder.offline && (
+                  <div className="text-left">
+                    <PublicOrderPaymentSection orderId={lastCreatedOrder.id} />
+                  </div>
+                )}
 
                 {lastOrderAttachedToOpenAccount ? (
                   <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-left">
@@ -2557,174 +2370,6 @@ export default function CartDrawer({
                   </div>
                 ) : null}
 
-                {paymentProofSuccess && (
-                  <div className="rounded-2xl border-2 border-emerald-600/35 bg-emerald-50 px-4 py-3 text-left">
-                    <p className="text-sm font-black leading-6 text-emerald-800">
-                      {paymentProofSuccess}
-                    </p>
-                  </div>
-                )}
-
-                {lastOrderCanReportPayment &&
-                  isPaymentProofPublicAvailable &&
-                  !paymentProofSuccess && (
-                    <div className="rounded-[1.5rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-left">
-                      <span className="inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
-                        Paso 2
-                      </span>
-                      <p className="mt-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-                        Avísanos que ya pagaste
-                      </p>
-                      <p className="mb-3 mt-1 text-sm font-bold leading-5 text-[var(--brand-ink-2)]/70">
-                        Envía la captura aquí mismo y quedará pegada a tu
-                        pedido. Caja confirma el cobro real al revisarla.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPaymentProofError(null);
-                          setIsPaymentProofFormOpen((current) => !current);
-                        }}
-                        className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3.5 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none"
-                      >
-                        <BadgeCheck size={20} />
-                        Ya pagué / enviar comprobante
-                      </button>
-
-                      {isPaymentProofFormOpen && (
-                        <div className="mt-4 space-y-4">
-                          <div>
-                            <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                              Método reportado
-                            </label>
-                            <select
-                              value={paymentProofMethod}
-                              onChange={(event) =>
-                                setPaymentProofMethod(event.target.value)
-                              }
-                              className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
-                            >
-                              <option value="">Selecciona método</option>
-                              {availablePaymentMethods.map((method) => (
-                                <option key={method} value={method}>
-                                  {method}
-                                </option>
-                              ))}
-                              <option value="Otro">Otro</option>
-                            </select>
-                          </div>
-
-                          <div className="grid gap-4 sm:grid-cols-2">
-                            <div>
-                              <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                                Monto divisas
-                              </label>
-                              <input
-                                value={paymentProofAmountUSD}
-                                onChange={(event) =>
-                                  setPaymentProofAmountUSD(event.target.value)
-                                }
-                                inputMode="decimal"
-                                placeholder="0.00"
-                                className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                                Monto Bs
-                              </label>
-                              <input
-                                value={paymentProofAmountVES}
-                                onChange={(event) =>
-                                  setPaymentProofAmountVES(event.target.value)
-                                }
-                                inputMode="decimal"
-                                placeholder="0,00"
-                                className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
-                              />
-                            </div>
-                          </div>
-
-                          <div>
-                            <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                              Referencia opcional
-                            </label>
-                            <input
-                              value={paymentProofReference}
-                              onChange={(event) =>
-                                setPaymentProofReference(event.target.value)
-                              }
-                              placeholder="Número de referencia, banco o dato útil"
-                              className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                              Captura del pago
-                            </label>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(event) =>
-                                handlePaymentProofFileChange(
-                                  event.target.files?.[0],
-                                )
-                              }
-                              className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-sm font-bold text-[var(--brand-ink)] file:mr-4 file:rounded-full file:border-0 file:bg-[var(--brand-primary)] file:px-4 file:py-2 file:text-xs file:font-black file:uppercase file:tracking-[0.08em] file:text-white"
-                            />
-                            {paymentProofFileName && (
-                              <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
-                                Archivo seleccionado: {paymentProofFileName}
-                              </p>
-                            )}
-                          </div>
-
-                          <div>
-                            <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                              Nota opcional
-                            </label>
-                            <textarea
-                              value={paymentProofNote}
-                              onChange={(event) =>
-                                setPaymentProofNote(event.target.value)
-                              }
-                              placeholder="Aclara cualquier detalle del pago"
-                              className="mt-2 min-h-20 w-full resize-none rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
-                            />
-                          </div>
-
-                          {paymentProofError && (
-                            <div className="rounded-2xl border-2 border-red-500/35 bg-red-500/15 px-4 py-3">
-                              <p className="text-sm font-bold leading-6 text-red-300">
-                                {paymentProofError}
-                              </p>
-                            </div>
-                          )}
-
-                          <button
-                            type="button"
-                            disabled={!canSubmitPaymentProof}
-                            onClick={handleSubmitPaymentProof}
-                            className={`flex w-full items-center justify-center gap-3 rounded-full border-2 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none ${
-                              canSubmitPaymentProof
-                                ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-accent)] hover:text-black"
-                                : "border-[var(--brand-border)] bg-[#ddd3c4] text-[var(--brand-ink-2)]/35"
-                            }`}
-                          >
-                            {isSubmittingPaymentProof ? (
-                              <Loader2 size={21} className="animate-spin" />
-                            ) : (
-                              <ClipboardList size={21} />
-                            )}
-                            Enviar comprobante
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
                 {lastOrderCanReportPayment &&
                   !isPaymentProofPublicAvailable && (
                     <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-left">
@@ -2737,7 +2382,6 @@ export default function CartDrawer({
 
                 <button
                   type="button"
-                  disabled={isSubmittingPaymentProof}
                   onClick={finishCreatedOrderFlow}
                   className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none disabled:opacity-50"
                 >

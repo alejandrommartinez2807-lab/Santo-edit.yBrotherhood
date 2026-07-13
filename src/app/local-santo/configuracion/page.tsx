@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  CookingPot,
   DollarSign,
   Eye,
   EyeOff,
@@ -80,6 +81,16 @@ import {
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session";
 
 type BusinessViewMode = "simple" | "negocio" | "avanzado";
+
+// Flujo de caja→cocina (espejo del tipo canónico en lib/ordersBusinessConfig).
+type KitchenFlowMode = "kitchen" | "mixed" | "direct";
+
+function normalizeKitchenFlowMode(value: unknown): KitchenFlowMode {
+  const mode = String(value || "").trim().toLowerCase();
+  if (mode === "mixed") return "mixed";
+  if (mode === "direct") return "direct";
+  return "kitchen";
+}
 type ExchangeRateMode = "automatic" | "automaticEur" | "manual";
 type ConfigAccessRole = "owner" | "support";
 
@@ -220,6 +231,8 @@ type BusinessConfig = {
   filtersOpenByDefault: boolean;
   allowCloseWithPendingOrders: boolean;
   allowCloseWithPendingPayments: boolean;
+  kitchenFlowMode: KitchenFlowMode;
+  publicPaymentMethodChangeEnabled: boolean;
   updatedAt?: string;
 };
 
@@ -381,6 +394,8 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   filtersOpenByDefault: false,
   allowCloseWithPendingOrders: true,
   allowCloseWithPendingPayments: true,
+  kitchenFlowMode: "kitchen",
+  publicPaymentMethodChangeEnabled: true,
 };
 
 const AVAILABLE_MODULES_PATCH: Partial<BusinessConfig> = {
@@ -441,6 +456,31 @@ const VIEW_MODE_OPTIONS: Array<{
     label: "Avanzado",
     description:
       "Más datos visibles para auditoría, análisis y revisión completa.",
+  },
+];
+
+const KITCHEN_FLOW_OPTIONS: Array<{
+  value: KitchenFlowMode;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: "kitchen",
+    label: "Cocina completa",
+    description:
+      "Caja envía cada pedido a cocina y cocina lo marca como Listo (flujo actual).",
+  },
+  {
+    value: "mixed",
+    label: "Caja + cocina opcional",
+    description:
+      "Caja puede marcar Listo directo o enviar a cocina; el pedido enviado sigue visible y manejable desde caja.",
+  },
+  {
+    value: "direct",
+    label: "Sin cocina",
+    description:
+      "Todo se maneja desde caja: el pedido se marca Listo y Entregado sin pasar por cocina.",
   },
 ];
 
@@ -1209,6 +1249,11 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     allowCloseWithPendingPayments: normalizeBoolean(
       source.allowCloseWithPendingPayments,
       DEFAULT_BUSINESS_CONFIG.allowCloseWithPendingPayments,
+    ),
+    kitchenFlowMode: normalizeKitchenFlowMode(source.kitchenFlowMode),
+    publicPaymentMethodChangeEnabled: normalizeBoolean(
+      source.publicPaymentMethodChangeEnabled,
+      DEFAULT_BUSINESS_CONFIG.publicPaymentMethodChangeEnabled,
     ),
     updatedAt: source.updatedAt ? String(source.updatedAt) : undefined,
   };
@@ -2209,7 +2254,7 @@ export default function BusinessConfigPage() {
       setIsAuthenticated(true);
       setAdminPassword(cleanPassword);
       setPasswordInput(cleanPassword);
-      window.sessionStorage.setItem(ADMIN_STORAGE_KEY, cleanPassword);
+      window.localStorage.setItem(ADMIN_STORAGE_KEY, cleanPassword);
       void loadBranches(cleanPassword, true);
 
       if (!quiet) {
@@ -2223,7 +2268,7 @@ export default function BusinessConfigPage() {
       );
       setIsAuthenticated(false);
       setAccessRole(null);
-      window.sessionStorage.removeItem(ADMIN_STORAGE_KEY);
+      window.localStorage.removeItem(ADMIN_STORAGE_KEY);
     } finally {
       if (!quiet) {
         setIsLoading(false);
@@ -2286,7 +2331,7 @@ export default function BusinessConfigPage() {
   }
 
   function handleLogout() {
-    window.sessionStorage.removeItem(ADMIN_STORAGE_KEY);
+    window.localStorage.removeItem(ADMIN_STORAGE_KEY);
     setAdminPassword("");
     setPasswordInput("");
     setIsAuthenticated(false);
@@ -2301,7 +2346,7 @@ export default function BusinessConfigPage() {
   }
 
   const restoreSession = useEffectEvent(() => {
-    const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY);
+    const savedPassword = window.localStorage.getItem(ADMIN_STORAGE_KEY);
 
     if (savedPassword) {
       loadBusinessConfig(savedPassword, true);
@@ -4929,6 +4974,27 @@ export default function BusinessConfigPage() {
           </SectionCard>
 
           <SectionCard
+            icon={<CookingPot size={22} />}
+            title="Flujo de caja y cocina"
+            description="Cómo avanza un pedido en tu operación: con cocina, mixto, o todo desde caja (marcar Listo directo). Los botones de la caja cambian según el modo."
+          >
+            <div className="grid gap-3 lg:grid-cols-3">
+              {KITCHEN_FLOW_OPTIONS.map((option) => (
+                <ModeButton
+                  key={option.value}
+                  label={option.label}
+                  description={option.description}
+                  active={businessConfig.kitchenFlowMode === option.value}
+                  onClick={() => updateConfig("kitchenFlowMode", option.value)}
+                />
+              ))}
+            </div>
+            <p className="mt-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+              Recuerda presionar “Guardar cambios” al final de la página. La caja toma el modo nuevo al recargar.
+            </p>
+          </SectionCard>
+
+          <SectionCard
             icon={<SlidersHorizontal size={22} />}
             title="Vista y operación"
             defaultCollapsed
@@ -4971,6 +5037,15 @@ export default function BusinessConfigPage() {
                 checked={businessConfig.allowCloseWithPendingPayments}
                 onChange={(value) =>
                   updateConfig("allowCloseWithPendingPayments", value)
+                }
+                icon={<DollarSign size={18} />}
+              />
+              <ToggleRow
+                label="Cliente puede cambiar método de pago"
+                description="Al reportar su pago puede elegir un método distinto al del pedido (con aviso). Apagado: el método queda fijo."
+                checked={businessConfig.publicPaymentMethodChangeEnabled}
+                onChange={(value) =>
+                  updateConfig("publicPaymentMethodChangeEnabled", value)
                 }
                 icon={<DollarSign size={18} />}
               />

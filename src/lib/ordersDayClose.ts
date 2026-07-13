@@ -41,6 +41,45 @@ export type DayCloseExpense = {
   inventoryUnit?: string
 }
 
+// Fotografía de cada pedido del día al momento del cierre: el historial la
+// muestra pedido por pedido aunque el reinicio posterior borre los pedidos.
+export type DayCloseOrderItem = {
+  name: string
+  quantity: number
+  priceUSD: number
+  selectionSummary?: string
+}
+
+export type DayCloseOrder = {
+  id: string
+  displayNumber: string
+  createdAt: string
+  customerName: string
+  location: string
+  orderType: string
+  status: string
+  paymentStatus: string
+  totalUSD: number
+  receivedEquivalentUSD: number
+  registeredBy?: string
+  items: DayCloseOrderItem[]
+}
+
+// Comprobantes reportados por clientes, con su pedido asociado: al cerrar se
+// archivan aquí y salen del panel de comprobantes.
+export type DayCloseProof = {
+  orderId: string
+  orderDisplayNumber: string
+  customerName: string
+  reportedMethod: string
+  amountReportedUSD: number
+  amountReportedVES: number
+  paymentReference: string
+  status: string
+  createdAt: string
+  proofImageUrl: string
+}
+
 export type DayCloseInventoryProduct = {
   itemName: string
   quantity: number
@@ -139,11 +178,19 @@ export type SaveDayCloseInput = {
   salesBySeller?: DayCloseSummaryItem[]
   ordersByRegistrar?: DayCloseSummaryItem[]
   productsSold: DayCloseProductSold[]
+
+  // Fotografía pedido por pedido + comprobantes del día (las llena el
+  // servidor al guardar el cierre; ver /api/day-close).
+  orders?: DayCloseOrder[]
+  paymentProofs?: DayCloseProof[]
 }
 
 export type SavedDayClose = SaveDayCloseInput & {
   id: string
   createdAt: string
+  // Sede dueña del cierre (columna branch_id): el historial consolidado la
+  // usa para etiquetar de qué sede es cada cierre.
+  branchId?: string
 }
 
 export type DayExpense = {
@@ -241,6 +288,7 @@ export async function getDayCloses(branchId?: string | null) {
       ...payload,
       id: cleanText(row.id),
       createdAt: cleanText(payload.createdAt) || cleanText(row.created_at),
+      branchId: cleanText(row.branch_id) || undefined,
     } as SavedDayClose
   })
 }

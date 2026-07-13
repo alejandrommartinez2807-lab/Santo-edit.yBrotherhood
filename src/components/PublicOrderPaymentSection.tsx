@@ -34,6 +34,7 @@ type PublicProof = {
 type OrderPaymentInfo = {
   branchId: string;
   totalUSD: number;
+  exchangeRate: number;
   paymentRegistered: boolean;
   proofs: PublicProof[];
 };
@@ -90,6 +91,42 @@ function normalizeMoneyInput(value: string) {
 import PaymentMethodDetailsList from "@/components/PaymentMethodDetailsList";
 import { readRecentPublicOrders } from "@/components/recentPublicOrders";
 
+type PaymentEntry = {
+  method: string;
+  amountUSD: string;
+  amountVES: string;
+};
+
+const EMPTY_PAYMENT_ENTRY: PaymentEntry = {
+  method: "",
+  amountUSD: "",
+  amountVES: "",
+};
+
+// ¿El método se paga en bolívares? (pago móvil, punto, transferencia local,
+// efectivo Bs, biopago). "Transferencia internacional"/Zelle/Binance… son en
+// divisas. Con esto el monto se precarga en la moneda correcta.
+function isVesMethod(methodName: string) {
+  const normalized = String(methodName || "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .trim()
+    .toLowerCase();
+
+  if (!normalized) return false;
+  if (normalized.includes("internacional") || normalized.includes("wire")) return false;
+
+  return (
+    normalized.includes("movil") ||
+    normalized.includes("punto") ||
+    normalized.includes("biopago") ||
+    normalized.includes("bolivar") ||
+    normalized.includes("transferencia") ||
+    /(^|\s)bs(\s|$)/.test(normalized) ||
+    normalized.endsWith(" bs")
+  );
+}
+
 export default function PublicOrderPaymentSection({
   orderId,
 }: {
@@ -108,11 +145,15 @@ export default function PublicOrderPaymentSection({
     Record<string, string>
   >({});
   const [chosenMethods, setChosenMethods] = useState<string[]>([]);
+  // Configurable por el dueño: si está apagado, el método del pedido queda
+  // fijo al reportar el pago (cuando se conoce cuál eligió el cliente).
+  const [allowMethodChange, setAllowMethodChange] = useState(true);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [method, setMethod] = useState("");
-  const [amountUSD, setAmountUSD] = useState("");
-  const [amountVES, setAmountVES] = useState("");
+  // Un bloque por método: si el cliente pagó parte con un método y parte con
+  // otro, indica cuánto fue en cada uno. Se precarga con lo que eligió al
+  // pedir (editable si al final pagó distinto).
+  const [payments, setPayments] = useState<PaymentEntry[]>([EMPTY_PAYMENT_ENTRY]);
   const [reference, setReference] = useState("");
   const [customerNote, setCustomerNote] = useState("");
   const [dataUrl, setDataUrl] = useState("");
@@ -122,6 +163,9 @@ export default function PublicOrderPaymentSection({
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+  // Aviso suave cuando lo reportado no cubre el total: se puede enviar igual
+  // (abonos parciales existen), pero que sea a propósito y no un error.
+  const [coverageWarning, setCoverageWarning] = useState<string | null>(null);
 
   const loadInfo = useCallback(async () => {
     try {
@@ -135,6 +179,7 @@ export default function PublicOrderPaymentSection({
         setInfo({
           branchId: String(data.branchId || ""),
           totalUSD: Number(data.totalUSD || 0),
+          exchangeRate: Number(data.exchangeRate || 0),
           paymentRegistered: data.paymentRegistered === true,
           proofs: Array.isArray(data.proofs) ? data.proofs : [],
         });
@@ -155,6 +200,7 @@ export default function PublicOrderPaymentSection({
         if (cancelled) return;
         const config = data?.businessConfig || data?.config || {};
         setIsProofsEnabled(config.paymentProofsEnabled !== false);
+        setAllowMethodChange(config.publicPaymentMethodChangeEnabled !== false);
         const methods = Array.isArray(config.publicPaymentMethods)
           ? config.publicPaymentMethods
               .map((item: unknown) => String(item || "").trim())
@@ -237,12 +283,110 @@ export default function PublicOrderPaymentSection({
     reader.readAsDataURL(file);
   }
 
-  async function submitProof(confirmDuplicate = false) {
-    const reportedUSD = normalizeMoneyInput(amountUSD);
-    const reportedVES = normalizeMoneyInput(amountVES);
+  // Monto prellenado en LA MONEDA del método: pago móvil/punto → Bs (con la
+  // tasa del pedido); Zelle/efectivo divisas → $.
+  function buildPrefilledEntry(methodName: string, amountUSDToCover: number): PaymentEntry {
+    if (amountUSDToCover <= 0) {
+      return { method: methodName, amountUSD: "", amountVES: "" };
+    }
 
-    if (!dataUrl) {
-      setFormError("Adjunta la captura del pago (imagen).");
+    const rate = Number(info?.exchangeRate || 0);
+    if (isVesMethod(methodName) && rate > 0) {
+      return {
+        method: methodName,
+        amountUSD: "",
+        amountVES: (Math.round(amountUSDToCover * rate * 100) / 100).toFixed(2),
+      };
+    }
+
+    return {
+      method: methodName,
+      amountUSD: amountUSDToCover.toFixed(2),
+      amountVES: "",
+    };
+  }
+
+  // Precarga del formulario: un bloque por método elegido al pedir; si fue
+  // uno solo, su monto arranca con el total del pedido en su moneda.
+  function buildInitialPayments(): PaymentEntry[] {
+    const chosen = chosenMethods.filter(Boolean);
+    const totalUSD = Number(info?.totalUSD || 0);
+
+    if (chosen.length === 0) {
+      return [{ ...EMPTY_PAYMENT_ENTRY, amountUSD: totalUSD > 0 ? totalUSD.toFixed(2) : "" }];
+    }
+
+    if (chosen.length === 1) {
+      return [buildPrefilledEntry(chosen[0], totalUSD)];
+    }
+
+    // Varios métodos: los montos quedan vacíos para que el cliente reparta
+    // cuánto pagó con cada uno (el botón "Completar" ayuda con el faltante).
+    return chosen.map((methodName) => ({ method: methodName, amountUSD: "", amountVES: "" }));
+  }
+
+  // USD equivalente ya cargado en los demás bloques (para "Completar").
+  function getCoveredUSDExcept(excludeIndex: number) {
+    const rate = Number(info?.exchangeRate || 0);
+    return payments.reduce((total, entry, index) => {
+      if (index === excludeIndex) return total;
+      const usd = normalizeMoneyInput(entry.amountUSD);
+      const ves = normalizeMoneyInput(entry.amountVES);
+      return total + usd + (rate > 0 ? ves / rate : 0);
+    }, 0);
+  }
+
+  // "Completar": llena el bloque con lo que falta para cubrir el total,
+  // en la moneda del método elegido.
+  function completeEntryAmount(index: number) {
+    const totalUSD = Number(info?.totalUSD || 0);
+    if (totalUSD <= 0) return;
+
+    const remainingUSD = Math.max(totalUSD - getCoveredUSDExcept(index), 0);
+    const prefilled = buildPrefilledEntry(payments[index]?.method || "", remainingUSD);
+
+    updatePaymentEntry(index, {
+      amountUSD: prefilled.amountUSD,
+      amountVES: prefilled.amountVES,
+    });
+  }
+
+  function updatePaymentEntry(index: number, patch: Partial<PaymentEntry>) {
+    setPayments((current) =>
+      current.map((entry, entryIndex) =>
+        entryIndex === index ? { ...entry, ...patch } : entry,
+      ),
+    );
+  }
+
+  async function submitProof(confirmDuplicate = false, confirmPartial = false) {
+    const entries = payments
+      .map((entry) => ({
+        method: entry.method.trim(),
+        usd: normalizeMoneyInput(entry.amountUSD),
+        ves: normalizeMoneyInput(entry.amountVES),
+      }))
+      .filter((entry) => entry.method || entry.usd > 0 || entry.ves > 0);
+
+    const reportedUSD = entries.reduce((total, entry) => total + entry.usd, 0);
+    const reportedVES = entries.reduce((total, entry) => total + entry.ves, 0);
+
+    // Resumen por método para caja: "Zelle ($10.00) + Pago móvil (Bs 500,00)".
+    const reportedMethod = entries
+      .map((entry) => {
+        const parts: string[] = [];
+        if (entry.usd > 0) parts.push(formatUSD(entry.usd));
+        if (entry.ves > 0) parts.push(`Bs ${formatVES(entry.ves)}`);
+        if (!entry.method) return parts.join(" + ");
+        return parts.length ? `${entry.method} (${parts.join(" + ")})` : entry.method;
+      })
+      .filter(Boolean)
+      .join(" + ");
+
+    // La captura es lo ideal, pero la referencia de la operación alcanza para
+    // que caja verifique el pago.
+    if (!dataUrl && !reference.trim()) {
+      setFormError("Adjunta la captura del pago o escribe la referencia de la operación.");
       return;
     }
 
@@ -250,6 +394,24 @@ export default function PublicOrderPaymentSection({
       setFormError("Indica el monto que pagaste (en $ o en Bs).");
       return;
     }
+
+    // Cobertura del total: si lo reportado no alcanza, avisar antes de enviar
+    // (se puede enviar igual: los abonos parciales son válidos).
+    const rate = Number(info?.exchangeRate || 0);
+    const totalUSD = Number(info?.totalUSD || 0);
+    if (!confirmPartial && totalUSD > 0 && (reportedVES <= 0 || rate > 0)) {
+      const reportedEquivalentUSD = reportedUSD + (rate > 0 ? reportedVES / rate : 0);
+      const missingUSD = Math.round((totalUSD - reportedEquivalentUSD) * 100) / 100;
+
+      if (missingUSD > 0.01) {
+        setFormError(null);
+        setCoverageWarning(
+          `Lo reportado no cubre el total del pedido: faltan ${formatUSD(missingUSD)} (total ${formatUSD(totalUSD)}). Usa "Completar" para ajustar el monto, o envíalo así si es un abono parcial.`,
+        );
+        return;
+      }
+    }
+    setCoverageWarning(null);
 
     try {
       setIsSubmitting(true);
@@ -268,7 +430,7 @@ export default function PublicOrderPaymentSection({
         headers,
         body: JSON.stringify({
           orderId,
-          reportedMethod: method,
+          reportedMethod,
           amountReportedUSD: reportedUSD,
           amountReportedVES: reportedVES,
           paymentReference: reference,
@@ -297,9 +459,8 @@ export default function PublicOrderPaymentSection({
         "¡Pago reportado! Caja lo revisará y aquí verás cuando quede confirmado.",
       );
       setIsFormOpen(false);
-      setMethod("");
-      setAmountUSD("");
-      setAmountVES("");
+      setPayments([EMPTY_PAYMENT_ENTRY]);
+      setCoverageWarning(null);
       setReference("");
       setCustomerNote("");
       setDataUrl("");
@@ -445,9 +606,7 @@ export default function PublicOrderPaymentSection({
           onClick={() => {
             setIsFormOpen(true);
             setSuccessMessage(null);
-            if (!amountUSD && info.totalUSD > 0) {
-              setAmountUSD(info.totalUSD.toFixed(2));
-            }
+            setPayments(buildInitialPayments());
           }}
           className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90"
         >
@@ -460,54 +619,119 @@ export default function PublicOrderPaymentSection({
 
       {isFormOpen && (
         <div className="mt-4 space-y-3 text-left">
-          <div>
-            <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-              ¿Cómo pagaste?
-            </label>
-            <select
-              value={method}
-              onChange={(event) => setMethod(event.target.value)}
-              className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
+          {/* Cambió el método respecto a lo que eligió al pedir: se puede
+              (si el dueño lo permite), con la condición de cubrir el total. */}
+          {chosenMethods.length > 0 &&
+          payments.some(
+            (entry) => entry.method && !chosenMethods.includes(entry.method),
+          ) ? (
+            <p className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/40 px-4 py-3 text-[0.72rem] font-bold leading-5 text-[var(--brand-ink-2)]/70">
+              Al pedir indicaste {chosenMethods.join(" + ")}. Puedes cambiar el
+              método sin problema, siempre que el pago cubra el total del
+              pedido.
+            </p>
+          ) : null}
+          {payments.map((entry, index) => (
+            <div
+              key={`payment-entry-${index}`}
+              className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/25 p-3"
             >
-              <option value="">Selecciona el método</option>
-              {paymentMethods.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </div>
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                  {payments.length > 1 ? `Método ${index + 1}` : "¿Cómo pagaste?"}
+                </label>
+                {payments.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPayments((current) =>
+                        current.filter((_, entryIndex) => entryIndex !== index),
+                      )
+                    }
+                    className="text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/50 transition hover:text-red-400"
+                  >
+                    Quitar
+                  </button>
+                )}
+              </div>
+              <select
+                value={entry.method}
+                onChange={(event) =>
+                  updatePaymentEntry(index, { method: event.target.value })
+                }
+                disabled={!allowMethodChange && chosenMethods.length > 0}
+                className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)] disabled:opacity-60"
+              >
+                <option value="">Selecciona el método</option>
+                {!paymentMethods.includes(entry.method) && entry.method ? (
+                  <option value={entry.method}>{entry.method}</option>
+                ) : null}
+                {paymentMethods.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-                Monto $
-              </label>
-              <input
-                value={amountUSD}
-                onChange={(event) => setAmountUSD(event.target.value)}
-                inputMode="decimal"
-                placeholder="0.00"
-                className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
-              />
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                    Monto $
+                  </label>
+                  <input
+                    value={entry.amountUSD}
+                    onChange={(event) =>
+                      updatePaymentEntry(index, { amountUSD: event.target.value })
+                    }
+                    inputMode="decimal"
+                    placeholder="0.00"
+                    className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
+                  />
+                </div>
+                <div>
+                  <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                    Monto Bs
+                  </label>
+                  <input
+                    value={entry.amountVES}
+                    onChange={(event) =>
+                      updatePaymentEntry(index, { amountVES: event.target.value })
+                    }
+                    inputMode="decimal"
+                    placeholder="0,00"
+                    className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
+                  />
+                </div>
+              </div>
+
+              {info.totalUSD > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => completeEntryAmount(index)}
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)]/50 px-3.5 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-primary)]/10"
+                >
+                  <CheckCircle2 size={13} />
+                  Completar lo que falta
+                </button>
+              ) : null}
             </div>
-            <div>
-              <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-                Monto Bs
-              </label>
-              <input
-                value={amountVES}
-                onChange={(event) => setAmountVES(event.target.value)}
-                inputMode="decimal"
-                placeholder="0,00"
-                className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
-              />
-            </div>
-          </div>
+          ))}
+
+          {payments.length < 3 && (allowMethodChange || chosenMethods.length === 0) && (
+            <button
+              type="button"
+              onClick={() =>
+                setPayments((current) => [...current, { ...EMPTY_PAYMENT_ENTRY }])
+              }
+              className="w-full rounded-full border-2 border-dashed border-[var(--brand-border)] px-4 py-2.5 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/60 transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+            >
+              + Pagué con otro método también
+            </button>
+          )}
 
           <div>
             <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-              Referencia (opcional)
+              Referencia (opcional si adjuntas la captura)
             </label>
             <input
               value={reference}
@@ -519,7 +743,7 @@ export default function PublicOrderPaymentSection({
 
           <div>
             <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-              Captura del pago
+              Captura del pago (opcional si pones la referencia)
             </label>
             <label className="mt-1.5 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-sm font-bold text-[var(--brand-ink-2)]/70 transition hover:border-[var(--brand-primary)]">
               <ImagePlus size={17} />
@@ -559,10 +783,26 @@ export default function PublicOrderPaymentSection({
               <button
                 type="button"
                 disabled={isSubmitting}
-                onClick={() => submitProof(true)}
+                onClick={() => submitProof(true, true)}
                 className="mt-2 inline-flex items-center gap-2 rounded-full border-2 border-yellow-500 px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.1em] text-yellow-500 transition hover:bg-yellow-500/10 disabled:opacity-50"
               >
                 Sí, enviar de todas formas
+              </button>
+            </div>
+          )}
+
+          {coverageWarning && (
+            <div className="rounded-2xl border-2 border-yellow-500/60 bg-yellow-500/10 px-4 py-3">
+              <p className="text-sm font-bold leading-5 text-yellow-500">
+                {coverageWarning}
+              </p>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => submitProof(false, true)}
+                className="mt-2 inline-flex items-center gap-2 rounded-full border-2 border-yellow-500 px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.1em] text-yellow-500 transition hover:bg-yellow-500/10 disabled:opacity-50"
+              >
+                Es un abono parcial, enviar así
               </button>
             </div>
           )}
@@ -588,6 +828,7 @@ export default function PublicOrderPaymentSection({
                 setIsFormOpen(false);
                 setFormError(null);
                 setDuplicateWarning(null);
+                setCoverageWarning(null);
               }}
               className="rounded-full border-2 border-[var(--brand-border)] px-5 py-3 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/60 transition hover:border-[var(--brand-primary)] disabled:opacity-50"
             >

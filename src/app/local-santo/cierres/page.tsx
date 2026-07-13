@@ -191,6 +191,9 @@ function DayClosesPageContent() {
   // Consolidado: el dueño puede ver el historial de TODAS las sedes juntas
   // (scope=all). El API clampa a la sede propia para el resto de roles.
   const [showAllBranches, setShowAllBranches] = useState(false)
+  // Nombres de las sedes (incluye inactivas/eventos): etiqueta cada cierre
+  // en el consolidado para saber de qué sede es.
+  const [branchNames, setBranchNames] = useState<Record<string, string>>({})
   const [reportViewMode, setReportViewMode] =
     useState<ReportViewMode>("Simple")
 
@@ -229,6 +232,30 @@ function DayClosesPageContent() {
       )
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // Nombres de sede para etiquetar el consolidado. No-fatal: sin nombres el
+  // historial funciona igual (solo se pierde la etiqueta).
+  async function loadBranchNames(password = adminPassword) {
+    if (!password) return
+
+    try {
+      const response = await fetch("/api/branches", {
+        headers: { "x-admin-password": password },
+        cache: "no-store",
+      })
+      const data = await readApiResponse(response)
+      if (!response.ok || !Array.isArray(data.branches)) return
+
+      const names: Record<string, string> = {}
+      for (const branch of data.branches) {
+        const id = String(branch?.id || "").trim()
+        if (id) names[id] = String(branch?.name || "").trim() || "Sucursal"
+      }
+      setBranchNames(names)
+    } catch {
+      /* sin etiquetas de sede */
     }
   }
 
@@ -281,7 +308,7 @@ function DayClosesPageContent() {
 
     if (!password) return
 
-    window.sessionStorage.setItem(ADMIN_STORAGE_KEY, password)
+    window.localStorage.setItem(ADMIN_STORAGE_KEY, password)
     setAdminPassword(password)
     loadDayCloses(password)
   }
@@ -300,7 +327,7 @@ function DayClosesPageContent() {
   }
 
   const restoreSession = useEffectEvent(() => {
-    const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
+    const savedPassword = window.localStorage.getItem(ADMIN_STORAGE_KEY)
 
     if (savedPassword) {
       setAdminPassword(savedPassword)
@@ -545,6 +572,7 @@ function DayClosesPageContent() {
                   onChange={(event) => {
                     setShowAllBranches(event.target.checked)
                     loadDayCloses(adminPassword, event.target.checked)
+                    if (event.target.checked) loadBranchNames(adminPassword)
                   }}
                   className="h-4 w-4 accent-[var(--brand-primary)]"
                 />
@@ -746,6 +774,11 @@ function DayClosesPageContent() {
               <CloseCard
                 key={close.id}
                 close={close}
+                branchLabel={
+                  showAllBranches && close.branchId
+                    ? branchNames[close.branchId] || "Sede sin nombre"
+                    : ""
+                }
                 onOpen={() => setSelectedClose(close)}
                 onCopy={() => copySummary(close)}
               />
@@ -965,10 +998,12 @@ function LoginBox({
 
 function CloseCard({
   close,
+  branchLabel = "",
   onOpen,
   onCopy,
 }: {
   close: SavedDayClose
+  branchLabel?: string
   onOpen: () => void
   onCopy: () => void
 }) {
@@ -990,6 +1025,12 @@ function CloseCard({
               >
                 {paymentState.label}
               </span>
+
+              {branchLabel && (
+                <span className="inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-white">
+                  {branchLabel}
+                </span>
+              )}
             </div>
 
             <h2 className="mt-2 text-3xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
@@ -1213,6 +1254,129 @@ function CloseDetailModal({
             <InfoBox label="Delivery entregados" value={String(close.deliveryDelivered)} />
           </div>
         </DetailToggleSection>
+
+        {close.orders.length > 0 && (
+          <DetailToggleSection
+            title="Pedidos del día (uno por uno)"
+            description="Cada pedido con sus productos, estado y cobro, tal como quedaron al cerrar."
+            badge={`${close.orders.length} pedido(s)`}
+          >
+            <div className="space-y-2">
+              {close.orders.map((order) => (
+                <div
+                  key={order.id}
+                  className="rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-lg font-black leading-none text-[var(--brand-primary)]">
+                      {order.displayNumber || order.id}
+                    </p>
+                    <span className="inline-flex rounded-full bg-white px-2.5 py-1 text-[0.6rem] font-black uppercase text-[var(--brand-ink-2)]/70">
+                      {order.status}
+                    </span>
+                    <span
+                      className={`inline-flex rounded-full px-2.5 py-1 text-[0.6rem] font-black uppercase ${
+                        order.paymentStatus === "Pagado"
+                          ? "bg-green-100 text-green-700"
+                          : order.paymentStatus === "Pago parcial"
+                            ? "bg-[var(--brand-accent-100)] text-[var(--brand-amber)]"
+                            : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {order.paymentStatus || "Sin pago"}
+                    </span>
+                    <p className="ml-auto text-base font-black text-[var(--brand-ink-3)]">
+                      {formatUSD(order.totalUSD)}
+                    </p>
+                  </div>
+
+                  <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/70">
+                    {order.customerName}
+                    {order.location ? ` · ${order.location}` : ""}
+                    {order.orderType ? ` · ${order.orderType}` : ""}
+                    {order.createdAt ? ` · ${formatDate(order.createdAt)}` : ""}
+                    {order.registeredBy ? ` · Registró: ${order.registeredBy}` : ""}
+                  </p>
+
+                  {order.items.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {order.items.map((item, itemIndex) => (
+                        <div
+                          key={`${order.id}-item-${itemIndex}`}
+                          className="rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-[var(--brand-ink-3)]"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <span>
+                              {item.quantity}x {item.name}
+                            </span>
+                            <span className="shrink-0 font-black text-[var(--brand-primary)]">
+                              {formatUSD(item.priceUSD * item.quantity)}
+                            </span>
+                          </div>
+                          {item.selectionSummary && (
+                            <p className="mt-0.5 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/60">
+                              {item.selectionSummary}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </DetailToggleSection>
+        )}
+
+        {close.paymentProofs.length > 0 && (
+          <DetailToggleSection
+            title="Comprobantes archivados"
+            description="Pagos reportados por clientes ese día, con su pedido asociado."
+            badge={`${close.paymentProofs.length} comprobante(s)`}
+          >
+            <div className="space-y-2">
+              {close.paymentProofs.map((proof, proofIndex) => (
+                <div
+                  key={`proof-${proofIndex}-${proof.orderId}`}
+                  className="rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-3 py-2"
+                >
+                  <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-[var(--brand-ink-2)]/80">
+                    <span className="font-black text-[var(--brand-primary)]">
+                      Pedido {proof.orderDisplayNumber || proof.orderId || "—"}
+                    </span>
+                    <span>{proof.customerName || "Cliente"}</span>
+                    <span className="inline-flex rounded-full bg-white px-2.5 py-1 text-[0.6rem] font-black uppercase">
+                      {proof.status}
+                    </span>
+                    <span className="ml-auto font-black text-[var(--brand-ink-3)]">
+                      {proof.amountReportedUSD > 0 && formatUSD(proof.amountReportedUSD)}
+                      {proof.amountReportedUSD > 0 && proof.amountReportedVES > 0 ? " + " : ""}
+                      {proof.amountReportedVES > 0 && `Bs ${formatVES(proof.amountReportedVES)}`}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[0.68rem] font-bold text-[var(--brand-ink-2)]/60">
+                    {proof.reportedMethod || "Sin método"}
+                    {proof.paymentReference ? ` · Ref: ${proof.paymentReference}` : ""}
+                    {proof.createdAt ? ` · ${formatDate(proof.createdAt)}` : ""}
+                    {proof.proofImageUrl ? (
+                      <>
+                        {" · "}
+                        <a
+                          href={proof.proofImageUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-black text-[var(--brand-primary)] underline"
+                        >
+                          Ver captura
+                        </a>
+                      </>
+                    ) : null}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </DetailToggleSection>
+        )}
 
         <DetailToggleSection
           title="Cobros reales"

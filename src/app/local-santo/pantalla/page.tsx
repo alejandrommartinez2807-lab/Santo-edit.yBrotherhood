@@ -34,7 +34,7 @@ type OrdersResponse = {
 function getStoredPassword() {
   if (typeof window === "undefined") return ""
   try {
-    return window.sessionStorage.getItem(ADMIN_STORAGE_KEY) || ""
+    return window.localStorage.getItem(ADMIN_STORAGE_KEY) || ""
   } catch {
     return ""
   }

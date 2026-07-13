@@ -47,9 +47,48 @@ export type DayCloseExpense = {
   inventoryUnit?: string
 }
 
+// Fotografía pedido por pedido guardada dentro del cierre (espejo cliente de
+// los tipos de lib/ordersDayClose, que es módulo de servidor).
+export type DayCloseOrderItem = {
+  name: string
+  quantity: number
+  priceUSD: number
+  selectionSummary?: string
+}
+
+export type DayCloseOrder = {
+  id: string
+  displayNumber: string
+  createdAt: string
+  customerName: string
+  location: string
+  orderType: string
+  status: string
+  paymentStatus: string
+  totalUSD: number
+  receivedEquivalentUSD: number
+  registeredBy?: string
+  items: DayCloseOrderItem[]
+}
+
+export type DayCloseProof = {
+  orderId: string
+  orderDisplayNumber: string
+  customerName: string
+  reportedMethod: string
+  amountReportedUSD: number
+  amountReportedVES: number
+  paymentReference: string
+  status: string
+  createdAt: string
+  proofImageUrl: string
+}
+
 export type SavedDayClose = {
   id: string
   createdAt: string
+  // Sede dueña del cierre: el consolidado la muestra para distinguirlos.
+  branchId?: string
   dateLabel: string
   summaryText: string
 
@@ -122,6 +161,10 @@ export type SavedDayClose = {
   salesBySeller: SummaryItem[]
   ordersByRegistrar: SummaryItem[]
   productsSold: ProductSold[]
+  // Fotografía pedido por pedido + comprobantes archivados (cierres viejos
+  // no traen estos campos: quedan vacíos).
+  orders: DayCloseOrder[]
+  paymentProofs: DayCloseProof[]
 }
 
 export type LoginBoxProps = {
@@ -350,6 +393,7 @@ export function normalizeDayClose(value: unknown): SavedDayClose | null {
   return {
     id,
     createdAt: toText(close.createdAt),
+    branchId: toText(close.branchId).trim() || undefined,
     dateLabel: toText(close.dateLabel),
     summaryText: toText(close.summaryText),
 
@@ -420,7 +464,77 @@ export function normalizeDayClose(value: unknown): SavedDayClose | null {
     salesBySeller: normalizeSummaryArray(close.salesBySeller),
     ordersByRegistrar: normalizeSummaryArray(close.ordersByRegistrar),
     productsSold: normalizeProductsSold(close.productsSold),
+    orders: normalizeDayCloseOrders(close.orders),
+    paymentProofs: normalizeDayCloseProofs(close.paymentProofs),
   }
+}
+
+function normalizeDayCloseOrders(value: unknown): DayCloseOrder[] {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .map((raw): DayCloseOrder | null => {
+      if (!raw || typeof raw !== "object") return null
+      const order = raw as Record<string, unknown>
+      const id = toText(order.id).trim()
+      if (!id) return null
+
+      const items = Array.isArray(order.items)
+        ? order.items
+            .map((rawItem): DayCloseOrderItem | null => {
+              if (!rawItem || typeof rawItem !== "object") return null
+              const item = rawItem as Record<string, unknown>
+              const name = toText(item.name).trim()
+              if (!name) return null
+              return {
+                name,
+                quantity: toNumber(item.quantity),
+                priceUSD: toNumber(item.priceUSD),
+                selectionSummary: toText(item.selectionSummary).trim() || undefined,
+              }
+            })
+            .filter((item): item is DayCloseOrderItem => Boolean(item))
+        : []
+
+      return {
+        id,
+        displayNumber: toText(order.displayNumber).trim(),
+        createdAt: toText(order.createdAt),
+        customerName: toText(order.customerName).trim() || "Cliente",
+        location: toText(order.location).trim(),
+        orderType: toText(order.orderType).trim(),
+        status: toText(order.status).trim(),
+        paymentStatus: toText(order.paymentStatus).trim(),
+        totalUSD: toNumber(order.totalUSD),
+        receivedEquivalentUSD: toNumber(order.receivedEquivalentUSD),
+        registeredBy: toText(order.registeredBy).trim() || undefined,
+        items,
+      }
+    })
+    .filter((order): order is DayCloseOrder => Boolean(order))
+}
+
+function normalizeDayCloseProofs(value: unknown): DayCloseProof[] {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .map((raw): DayCloseProof | null => {
+      if (!raw || typeof raw !== "object") return null
+      const proof = raw as Record<string, unknown>
+      return {
+        orderId: toText(proof.orderId).trim(),
+        orderDisplayNumber: toText(proof.orderDisplayNumber).trim(),
+        customerName: toText(proof.customerName).trim(),
+        reportedMethod: toText(proof.reportedMethod).trim(),
+        amountReportedUSD: toNumber(proof.amountReportedUSD),
+        amountReportedVES: toNumber(proof.amountReportedVES),
+        paymentReference: toText(proof.paymentReference).trim(),
+        status: toText(proof.status).trim(),
+        createdAt: toText(proof.createdAt),
+        proofImageUrl: toText(proof.proofImageUrl).trim(),
+      }
+    })
+    .filter((proof): proof is DayCloseProof => Boolean(proof))
 }
 
 export function normalizeDayCloses(value: unknown): SavedDayClose[] {

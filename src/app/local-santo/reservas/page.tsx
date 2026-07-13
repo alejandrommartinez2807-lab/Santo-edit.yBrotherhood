@@ -36,7 +36,7 @@ type LocalTable = { id: string; name: string; area: string }
 
 function authHeaders(): HeadersInit {
   const password =
-    typeof window !== "undefined" ? window.sessionStorage.getItem(OWNER_STORAGE_KEY) || "" : ""
+    typeof window !== "undefined" ? window.localStorage.getItem(OWNER_STORAGE_KEY) || "" : ""
   return { "Content-Type": "application/json", "x-admin-password": password }
 }
 

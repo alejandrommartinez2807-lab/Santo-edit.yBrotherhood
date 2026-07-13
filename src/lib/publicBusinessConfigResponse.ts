@@ -1,5 +1,6 @@
 import { BRAND } from "@/lib/brand"
 import { normalizeBusinessComplexitySettings } from "@/lib/businessComplexity"
+import { normalizeKitchenFlowMode } from "@/lib/ordersBusinessConfig"
 import { normalizeProductIds } from "@/lib/productIdList"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { isOnlinePaymentsEnabled } from "@/lib/stripe"
@@ -385,6 +386,8 @@ export function buildPublicBusinessConfigResponse(
     paymentProofsModuleEnabled: paymentProofsAccess.effectiveEnabled,
     openAccountsEnabled: openAccountsAccess.effectiveEnabled,
     splitBillEnabled: splitBillAccess.effectiveEnabled,
+    kitchenFlowMode: normalizeKitchenFlowMode(config.kitchenFlowMode),
+    publicPaymentMethodChangeEnabled: config.publicPaymentMethodChangeEnabled !== false,
     localTables: normalizePublicLocalTables(config.localTables),
     promotionActive: promotionCanShow,
     promotionTitle: promotionCanShow ? promotionTitle : "",

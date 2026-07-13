@@ -348,7 +348,7 @@ function ProductGroup({
                 </p>
               ) : null}
 
-              {getOrderItemDetailLines(item).map((line) => (
+              {getOrderItemDetailLines(item, { includePrices: false }).map((line) => (
                 <p key={line} className="mt-1 rounded-lg bg-[var(--brand-cream)] px-2 py-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/75">
                   {line}
                 </p>
@@ -448,13 +448,13 @@ export default function CocinaPage() {
 
     if (!password) return
 
-    window.sessionStorage.setItem(ADMIN_STORAGE_KEY, password)
+    window.localStorage.setItem(ADMIN_STORAGE_KEY, password)
     setAdminPassword(password)
     loadOrders(password)
   }
 
   function handleLogout() {
-    window.sessionStorage.removeItem(ADMIN_STORAGE_KEY)
+    window.localStorage.removeItem(ADMIN_STORAGE_KEY)
     setAdminPassword("")
     setPasswordInput("")
     setOrders([])
@@ -526,7 +526,7 @@ export default function CocinaPage() {
   }
 
   const restoreSession = useEffectEvent(() => {
-    const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
+    const savedPassword = window.localStorage.getItem(ADMIN_STORAGE_KEY)
 
     if (savedPassword) {
       setAdminPassword(savedPassword)
@@ -1073,15 +1073,9 @@ export default function CocinaPage() {
                           </div>
                         )}
 
-                        {order.status !== "Cancelado" && order.status !== "Entregado" && (
-                          <button
-                            type="button"
-                            onClick={() => updateStatus(order.id, "Cancelado")}
-                            className="rounded-full bg-red-700 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-red-800"
-                          >
-                            Cancelar
-                          </button>
-                        )}
+                        {/* Cocina no cancela pedidos: eso es decisión de caja,
+                            encargado o dueño (el servidor también lo bloquea
+                            para el rol cocina). */}
                       </div>
                     </div>
                   </article>

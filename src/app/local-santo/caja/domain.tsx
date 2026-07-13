@@ -9,6 +9,19 @@ export const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
 
 export type ProductPaymentMode = "divisa" | "mixto"
 export type OrderStatus = "Nuevo" | "Preparando" | "Listo" | "Entregado" | "Cancelado"
+
+// Flujo de caja→cocina (espejo cliente del tipo canónico en
+// lib/ordersBusinessConfig; no se importa de ahí porque ese módulo trae
+// código de servidor). kitchen = actual; mixed = Listo directo + cocina
+// opcional sin salir de caja; direct = sin cocina.
+export type KitchenFlowMode = "kitchen" | "mixed" | "direct"
+
+export function normalizeKitchenFlowMode(value: unknown): KitchenFlowMode {
+  const mode = String(value || "").trim().toLowerCase()
+  if (mode === "mixed") return "mixed"
+  if (mode === "direct") return "direct"
+  return "kitchen"
+}
 export type PaymentStatus = "Pendiente" | "Pago parcial" | "Pagado"
 export type DeliveryPaymentIn = "Divisas" | "Bolívares" | "Mixto" | "Sin registrar"
 export type DeliveryReportStatus = "Sin reportar" | "Entrega reportada"
@@ -234,6 +247,29 @@ export function formatPaymentProofDate(value: string) {
 
 // Aritmética de dinero compartida: la implementación vive en localOrderMoney.
 export { formatMoneyForInput, parseMoneyInput, roundMoney }
+
+// Texto para pasarle el pedido al repartidor con UN solo copiado: teléfono
+// del cliente, link de la dirección y resumen corto de qué lleva. Sin montos
+// ni pago (no le interesan al repartidor). Mismo formato que en Pedidos y en
+// el módulo Delivery.
+export function buildCourierHandoffText(order: LocalOrder) {
+  const displayNumber = getDisplayOrderNumber(order)
+  const rawAddress = String(order.deliveryAddress || "").trim()
+  const mapsLink = rawAddress.match(/https?:\/\/[^\s·]+/)?.[0] || ""
+  const itemsSummary = (order.items || [])
+    .map((item) => `${Math.max(1, Number(item.quantity || 1))}x ${item.name}`)
+    .join(", ")
+
+  return [
+    `Pedido ${displayNumber} · ${order.customerName || "Cliente"}`,
+    `Teléfono: ${order.customerPhone || "Sin teléfono"}`,
+    `Dirección: ${mapsLink || rawAddress || "Sin dirección registrada"}`,
+    ...(order.deliveryReference
+      ? [`Referencia: ${order.deliveryReference}`]
+      : []),
+    ...(itemsSummary ? [`Pedido: ${itemsSummary}`] : []),
+  ].join("\n")
+}
 
 export function normalizeComparableText(value: string) {
   return value

@@ -31,6 +31,22 @@ export type BusinessViewMode = "simple" | "negocio" | "avanzado"
 // actualiza igual de solo); "manual" = tasa fijada por el dueño.
 export type ExchangeRateMode = "automatic" | "automaticEur" | "manual"
 
+// Flujo de caja→cocina, elegible por el dueño:
+//   kitchen = actual: todo pedido pasa por cocina y cocina lo marca Listo.
+//   mixed   = caja puede marcar Listo directo Y opcionalmente enviar a cocina;
+//             el pedido enviado sigue gestionable desde el filtro de caja.
+//   direct  = sin cocina: caja marca Listo/Entregado, sin botón de cocina.
+export type KitchenFlowMode = "kitchen" | "mixed" | "direct"
+
+export function normalizeKitchenFlowMode(value: unknown): KitchenFlowMode {
+  const mode = String(value || "").trim().toLowerCase()
+  if (mode === "mixed" || mode === "mixto") return "mixed"
+  if (mode === "direct" || mode === "directo" || mode === "none" || mode === "sincocina") {
+    return "direct"
+  }
+  return "kitchen"
+}
+
 export type LocalTable = {
   id: string
   name: string
@@ -193,6 +209,10 @@ export type BusinessConfig = {
   filtersOpenByDefault: boolean
   allowCloseWithPendingOrders: boolean
   allowCloseWithPendingPayments: boolean
+  kitchenFlowMode: KitchenFlowMode
+  // Al reportar el pago, permitir que el cliente elija un método distinto al
+  // que indicó al pedir (con aviso). false = el método queda fijo.
+  publicPaymentMethodChangeEnabled: boolean
   updatedAt?: string
 }
 
@@ -330,6 +350,8 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   filtersOpenByDefault: false,
   allowCloseWithPendingOrders: true,
   allowCloseWithPendingPayments: true,
+  kitchenFlowMode: "kitchen",
+  publicPaymentMethodChangeEnabled: true,
 }
 
 function normalizeBooleanConfig(value: unknown, fallback: boolean) {
@@ -893,6 +915,11 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     allowCloseWithPendingPayments: normalizeBooleanConfig(
       source.allowCloseWithPendingPayments,
       DEFAULT_BUSINESS_CONFIG.allowCloseWithPendingPayments
+    ),
+    kitchenFlowMode: normalizeKitchenFlowMode(source.kitchenFlowMode),
+    publicPaymentMethodChangeEnabled: normalizeBooleanConfig(
+      source.publicPaymentMethodChangeEnabled,
+      DEFAULT_BUSINESS_CONFIG.publicPaymentMethodChangeEnabled
     ),
     updatedAt: source.updatedAt ? String(source.updatedAt) : undefined,
   }

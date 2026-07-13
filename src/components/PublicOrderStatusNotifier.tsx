@@ -3,9 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Bell, BellRing, CheckCircle2, Loader2 } from "lucide-react";
 
+export type PublicOrderItem = {
+  name: string;
+  quantity: number;
+  selectionSummary: string;
+  subtotalUSD: number;
+};
+
 type PublicOrderStatus = {
   status: string;
   displayNumber: string;
+  items: PublicOrderItem[];
 };
 
 const POLL_INTERVAL_MS = 10_000;
@@ -25,6 +33,7 @@ function canUseNotifications() {
 export function usePublicOrderStatus(orderId: string) {
   const [status, setStatus] = useState("");
   const [displayNumber, setDisplayNumber] = useState("");
+  const [items, setItems] = useState<PublicOrderItem[]>([]);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
@@ -44,6 +53,7 @@ export function usePublicOrderStatus(orderId: string) {
         if (!cancelled && response.ok && data.ok) {
           setStatus(String(data.status || ""));
           setDisplayNumber(String(data.displayNumber || ""));
+          setItems(Array.isArray(data.items) ? data.items : []);
           setNotFound(false);
         }
 
@@ -71,7 +81,7 @@ export function usePublicOrderStatus(orderId: string) {
 
   // Sin id de pedido no hay nada que sondear: cuenta como "no encontrado"
   // derivado, sin setState síncrono dentro del efecto.
-  return { status, displayNumber, notFound: notFound || !orderId };
+  return { status, displayNumber, items, notFound: notFound || !orderId };
 }
 
 // Vibración + notificación del navegador la primera vez que el pedido pasa a
