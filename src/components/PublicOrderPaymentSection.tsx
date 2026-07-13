@@ -127,6 +127,22 @@ function isVesMethod(methodName: string) {
   );
 }
 
+// Total del "Paso 1" en la moneda de los métodos elegidos al pedir: solo Bs si
+// todos son en bolívares, solo $ si todos son en divisas, ambos si hay mezcla.
+function formatChosenTotal(
+  info: { totalUSD: number; exchangeRate: number },
+  chosenMethods: string[],
+) {
+  const vesChosen = chosenMethods.some((methodName) => isVesMethod(methodName));
+  const usdChosen = chosenMethods.some((methodName) => !isVesMethod(methodName));
+  const totalVES = info.totalUSD * info.exchangeRate;
+  const canShowVES = vesChosen && info.exchangeRate > 0 && totalVES > 0;
+
+  if (canShowVES && !usdChosen) return `Bs ${formatVES(totalVES)}`;
+  if (canShowVES && usdChosen) return `${formatUSD(info.totalUSD)} · Bs ${formatVES(totalVES)}`;
+  return formatUSD(info.totalUSD);
+}
+
 export default function PublicOrderPaymentSection({
   orderId,
 }: {
@@ -359,6 +375,20 @@ export default function PublicOrderPaymentSection({
     );
   }
 
+  // Cambia el método de un bloque y limpia el monto en la moneda que ya no
+  // aplica (bolívares → borra $, divisas → borra Bs), para no reportar un monto
+  // en la moneda equivocada. El botón "Completar lo que falta" rellena el resto.
+  function changePaymentEntryMethod(index: number, nextMethod: string) {
+    setPayments((current) =>
+      current.map((entry, entryIndex) => {
+        if (entryIndex !== index) return entry;
+        if (isVesMethod(nextMethod)) return { ...entry, method: nextMethod, amountUSD: "" };
+        if (nextMethod.trim() !== "") return { ...entry, method: nextMethod, amountVES: "" };
+        return { ...entry, method: nextMethod };
+      }),
+    );
+  }
+
   async function submitProof(confirmDuplicate = false, confirmPartial = false) {
     const entries = payments
       .map((entry) => ({
@@ -525,7 +555,7 @@ export default function PublicOrderPaymentSection({
               </p>
               {info.totalUSD > 0 ? (
                 <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/75">
-                  Total a pagar: {formatUSD(info.totalUSD)}
+                  Total a pagar: {formatChosenTotal(info, chosenMethods)}
                 </p>
               ) : null}
               <div className="mt-2">
@@ -656,9 +686,7 @@ export default function PublicOrderPaymentSection({
               </div>
               <select
                 value={entry.method}
-                onChange={(event) =>
-                  updatePaymentEntry(index, { method: event.target.value })
-                }
+                onChange={(event) => changePaymentEntryMethod(index, event.target.value)}
                 disabled={!allowMethodChange && chosenMethods.length > 0}
                 className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)] disabled:opacity-60"
               >
@@ -673,36 +701,51 @@ export default function PublicOrderPaymentSection({
                 ))}
               </select>
 
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-                    Monto $
-                  </label>
-                  <input
-                    value={entry.amountUSD}
-                    onChange={(event) =>
-                      updatePaymentEntry(index, { amountUSD: event.target.value })
-                    }
-                    inputMode="decimal"
-                    placeholder="0.00"
-                    className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
-                  />
-                </div>
-                <div>
-                  <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-                    Monto Bs
-                  </label>
-                  <input
-                    value={entry.amountVES}
-                    onChange={(event) =>
-                      updatePaymentEntry(index, { amountVES: event.target.value })
-                    }
-                    inputMode="decimal"
-                    placeholder="0,00"
-                    className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
-                  />
-                </div>
-              </div>
+              {(() => {
+                // Muestra el monto en la moneda del método: bolívares → solo Bs,
+                // divisas → solo $. Sin método elegido aún, muestra ambos.
+                const methodChosen = entry.method.trim() !== "";
+                const entryIsVes = isVesMethod(entry.method);
+                const showUSD = !methodChosen || !entryIsVes;
+                const showVES = !methodChosen || entryIsVes;
+
+                return (
+                  <div className={`mt-2 grid gap-2 ${methodChosen ? "grid-cols-1" : "grid-cols-2"}`}>
+                    {showUSD && (
+                      <div>
+                        <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                          Monto $
+                        </label>
+                        <input
+                          value={entry.amountUSD}
+                          onChange={(event) =>
+                            updatePaymentEntry(index, { amountUSD: event.target.value })
+                          }
+                          inputMode="decimal"
+                          placeholder="0.00"
+                          className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
+                        />
+                      </div>
+                    )}
+                    {showVES && (
+                      <div>
+                        <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                          Monto Bs
+                        </label>
+                        <input
+                          value={entry.amountVES}
+                          onChange={(event) =>
+                            updatePaymentEntry(index, { amountVES: event.target.value })
+                          }
+                          inputMode="decimal"
+                          placeholder="0,00"
+                          className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {info.totalUSD > 0 ? (
                 <button
