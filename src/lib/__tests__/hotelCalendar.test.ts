@@ -48,4 +48,15 @@ describe("hotelCalendar", () => {
     const chart = buildTapeChart({ rooms, reservations, startDate: "2026-06-10", days: 4 })
     expect(chart.occupancyByDay).toEqual([1, 2, 1, 0])
   })
+
+  it("marca las celdas bloqueadas (no ocupadas por reserva)", () => {
+    // Bloqueo de r3 el 13 (día libre); no cuenta como ocupación.
+    const blocks = [{ roomId: "r3", fromDate: "2026-06-13", toDate: "2026-06-14", reason: "Pintura" }]
+    const chart = buildTapeChart({ rooms, reservations, blocks, startDate: "2026-06-10", days: 4 })
+    const r3 = chart.rows.find((row) => row.room.id === "r3")!.cells
+    expect(r3.map((c) => c.state)).toEqual(["free", "occupied", "occupied", "blocked"])
+    expect(r3[3].reason).toBe("Pintura")
+    // La ocupación del día 13 sigue en 0 (el bloqueo no es ocupación).
+    expect(chart.occupancyByDay[3]).toBe(0)
+  })
 })

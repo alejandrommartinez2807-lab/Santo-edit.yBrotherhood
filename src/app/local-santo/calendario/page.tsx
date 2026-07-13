@@ -4,7 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, CalendarRange, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
-import { buildTapeChart, type CalendarReservation, type CalendarRoom } from "@/lib/hotelCalendar"
+import {
+  buildTapeChart,
+  type CalendarBlock,
+  type CalendarReservation,
+  type CalendarRoom,
+} from "@/lib/hotelCalendar"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -29,6 +34,8 @@ const STATE_STYLES: Record<string, string> = {
   free: "bg-white",
   occupied: "bg-[var(--brand-primary)]/85 text-white",
   out: "bg-[var(--brand-ink-2)]/15 text-[var(--brand-ink-2)]/50",
+  blocked:
+    "bg-[repeating-linear-gradient(45deg,transparent,transparent_4px,rgba(0,0,0,0.12)_4px,rgba(0,0,0,0.12)_8px)] bg-amber-100",
 }
 
 const STATUS_DOT: Record<string, string> = {
@@ -71,6 +78,7 @@ export default function CalendarioPage() {
 function CalendarioContent() {
   const [rooms, setRooms] = useState<Room[]>([])
   const [reservations, setReservations] = useState<Reservation[]>([])
+  const [blocks, setBlocks] = useState<CalendarBlock[]>([])
   const [loading, setLoading] = useState(true)
   const [denied, setDenied] = useState(false)
   const [error, setError] = useState("")
@@ -96,6 +104,18 @@ function CalendarioContent() {
       setDenied(false)
       setRooms(data.rooms || [])
       setReservations(data.reservations || [])
+
+      // Bloqueos: best-effort (si el módulo está apagado, se ignora sin romper).
+      try {
+        const bres = await fetch(`/api/room-blocks?from=${start}&to=${to}`, {
+          headers: authHeaders(),
+          cache: "no-store",
+        })
+        const bdata = await bres.json().catch(() => ({}))
+        setBlocks(bres.ok ? bdata.blocks || [] : [])
+      } catch {
+        setBlocks([])
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
     } finally {
@@ -113,10 +133,11 @@ function CalendarioContent() {
       buildTapeChart({
         rooms: rooms as CalendarRoom[],
         reservations: reservations as CalendarReservation[],
+        blocks,
         startDate: start,
         days: windowDays,
       }),
-    [rooms, reservations, start, windowDays],
+    [rooms, reservations, blocks, start, windowDays],
   )
 
   const totalRooms = useMemo(() => rooms.filter((r) => !r.outOfService).length, [rooms])
@@ -245,7 +266,9 @@ function CalendarioContent() {
                                 ? `${cell.guestName || ""} (#${cell.code || ""})`
                                 : cell.state === "out"
                                   ? "Fuera de servicio"
-                                  : "Libre"
+                                  : cell.state === "blocked"
+                                    ? `Bloqueo${cell.reason ? `: ${cell.reason}` : ""}`
+                                    : "Libre"
                             }
                             className={`relative border-b border-l border-[var(--brand-primary)]/10 px-0.5 py-2 text-center align-middle ${STATE_STYLES[cell.state]}`}
                           >
@@ -276,6 +299,9 @@ function CalendarioContent() {
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <span className="inline-block h-3 w-3 rounded bg-[var(--brand-ink-2)]/15" /> Fuera de servicio
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="inline-block h-3 w-3 rounded bg-amber-100" /> Bloqueada
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <span className="inline-block h-2 w-2 rounded-full bg-amber-300" /> Pendiente

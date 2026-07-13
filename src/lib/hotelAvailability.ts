@@ -10,8 +10,36 @@
 // (rateSeasons). Todo puro y testeable, sin DB.
 // ============================================================
 
-import { findRoomStayConflict, type ConflictCandidate } from "./hotelReservationConflicts"
+import {
+  findRoomStayConflict,
+  stayRangesOverlap,
+  type ConflictCandidate,
+} from "./hotelReservationConflicts"
 import { quoteStay, type RateSeasonLike, type StayQuote } from "./rateSeasons"
+
+export type AvailabilityBlock = {
+  roomId: string
+  fromDate: string
+  toDate: string
+}
+
+/** ¿La habitación tiene un bloqueo que solapa el rango [checkIn, checkOut)? */
+export function roomHasBlockInRange(
+  blocks: AvailabilityBlock[],
+  roomId: string,
+  checkIn: string,
+  checkOut: string,
+): boolean {
+  const id = String(roomId || "")
+  return blocks.some(
+    (block) =>
+      String(block.roomId || "") === id &&
+      stayRangesOverlap(
+        { checkIn, checkOut },
+        { checkIn: block.fromDate, checkOut: block.toDate },
+      ),
+  )
+}
 
 export type AvailabilityRoom = {
   id: string
@@ -43,18 +71,22 @@ function isBookableRoom(room: AvailabilityRoom): boolean {
   return room.active !== false && room.outOfService !== true
 }
 
-/** Habitaciones de un tipo que están libres en el rango (activas, en servicio). */
+/** Habitaciones de un tipo que están libres en el rango (activas, en servicio,
+ * sin reserva que solape y sin bloqueo). */
 export function freeRoomsOfType(params: {
   rooms: AvailabilityRoom[]
   reservations: ConflictCandidate[]
   roomTypeId: string
   checkIn: string
   checkOut: string
+  blocks?: AvailabilityBlock[]
 }): AvailabilityRoom[] {
   const type = String(params.roomTypeId || "")
+  const blocks = params.blocks ?? []
   return params.rooms.filter((room) => {
     if (String(room.roomTypeId || "") !== type) return false
     if (!isBookableRoom(room)) return false
+    if (roomHasBlockInRange(blocks, room.id, params.checkIn, params.checkOut)) return false
     const conflict = findRoomStayConflict(params.reservations, {
       roomId: room.id,
       range: { checkIn: params.checkIn, checkOut: params.checkOut },
@@ -70,6 +102,7 @@ export function pickFreeRoomOfType(params: {
   roomTypeId: string
   checkIn: string
   checkOut: string
+  blocks?: AvailabilityBlock[]
 }): AvailabilityRoom | null {
   return freeRoomsOfType(params)[0] ?? null
 }
@@ -85,6 +118,7 @@ export function availableTypesForStay(params: {
   seasons: RateSeasonLike[]
   checkIn: string
   checkOut: string
+  blocks?: AvailabilityBlock[]
 }): AvailableType[] {
   const result: AvailableType[] = []
   for (const type of params.roomTypes) {
@@ -95,6 +129,7 @@ export function availableTypesForStay(params: {
       roomTypeId: type.id,
       checkIn: params.checkIn,
       checkOut: params.checkOut,
+      blocks: params.blocks,
     })
     if (free.length === 0) continue
 

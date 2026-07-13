@@ -219,6 +219,13 @@ export {
   saveRateSeason,
 } from "./ordersRateSeasons"
 
+export type { GetRoomBlocksFilters, RoomBlock, SaveRoomBlockInput } from "./ordersRoomBlocks"
+export {
+  deleteRoomBlock,
+  getRoomBlocks,
+  saveRoomBlock,
+} from "./ordersRoomBlocks"
+
 export {
   deleteSupplier,
   getSuppliers,

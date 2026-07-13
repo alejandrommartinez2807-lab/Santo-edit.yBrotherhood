@@ -179,6 +179,7 @@ export type BusinessConfig = {
   hotelReportsModuleEnabled: boolean
   bookingEngineModuleEnabled: boolean
   tapeChartModuleEnabled: boolean
+  groupBookingsModuleEnabled: boolean
   waiterConfirmationModuleEnabled: boolean
   kitchenItemsModuleEnabled: boolean
   ticketsModuleEnabled: boolean
@@ -327,6 +328,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   hotelReportsModuleEnabled: true,
   bookingEngineModuleEnabled: true,
   tapeChartModuleEnabled: true,
+  groupBookingsModuleEnabled: true,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
   ticketsModuleEnabled: true,
@@ -869,6 +871,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.tapeChartModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.tapeChartModuleEnabled
     ),
+    groupBookingsModuleEnabled: normalizeBooleanConfig(
+      source.groupBookingsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.groupBookingsModuleEnabled
+    ),
     waiterConfirmationModuleEnabled: normalizeBooleanConfig(
       source.waiterConfirmationModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.waiterConfirmationModuleEnabled
@@ -979,6 +985,7 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
   const hotelReportsAccess = getModulePlanAccess(config, "hotelReports")
   const bookingEngineAccess = getModulePlanAccess(config, "bookingEngine")
   const tapeChartAccess = getModulePlanAccess(config, "tapeChart")
+  const groupBookingsAccess = getModulePlanAccess(config, "groupBookings")
   const waiterConfirmationAccess = getModulePlanAccess(config, "waiterConfirmation")
   const kitchenItemsAccess = getModulePlanAccess(config, "kitchenItems")
   const ticketsAccess = getModulePlanAccess(config, "tickets")
@@ -1098,6 +1105,9 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
       : false,
     tapeChartModuleEnabled: tapeChartAccess.includedInPlan
       ? config.tapeChartModuleEnabled
+      : false,
+    groupBookingsModuleEnabled: groupBookingsAccess.includedInPlan
+      ? config.groupBookingsModuleEnabled
       : false,
     waiterConfirmationModuleEnabled: waiterConfirmationAccess.includedInPlan
       ? config.waiterConfirmationModuleEnabled

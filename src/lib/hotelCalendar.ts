@@ -31,14 +31,22 @@ export type CalendarReservation = {
   status?: unknown
 }
 
+export type CalendarBlock = {
+  roomId: string
+  fromDate: string
+  toDate: string
+  reason?: string
+}
+
 export type CalendarCell = {
   date: string
-  state: "free" | "occupied" | "out"
+  state: "free" | "occupied" | "out" | "blocked"
   isStart: boolean // primer día de la reserva (para pintar la etiqueta)
   reservationId?: string
   code?: string
   guestName?: string
   status?: string
+  reason?: string
 }
 
 export type CalendarRow = {
@@ -77,12 +85,30 @@ function reservationOnDay(
   return null
 }
 
+/** Bloqueo que cubre esa habitación en ese día (o null). */
+function blockOnDay(
+  blocks: CalendarBlock[],
+  roomId: string,
+  dayISO: string,
+): CalendarBlock | null {
+  for (const b of blocks) {
+    if (String(b.roomId || "") !== roomId) continue
+    const from = normalizeStayDate(b.fromDate)
+    const to = normalizeStayDate(b.toDate)
+    if (!from || !to) continue
+    if (from <= dayISO && dayISO < to) return b
+  }
+  return null
+}
+
 export function buildTapeChart(params: {
   rooms: CalendarRoom[]
   reservations: CalendarReservation[]
   startDate: string
   days: number
+  blocks?: CalendarBlock[]
 }): TapeChart {
+  const blocks = params.blocks ?? []
   const days = calendarDays(params.startDate, params.days)
   const occupancyByDay = new Array(days.length).fill(0)
 
@@ -99,6 +125,10 @@ export function buildTapeChart(params: {
       }
       const reservation = reservationOnDay(params.reservations, room.id, date)
       if (!reservation) {
+        const block = blockOnDay(blocks, room.id, date)
+        if (block) {
+          return { date, state: "blocked", isStart: false, reason: block.reason }
+        }
         return { date, state: "free", isStart: false }
       }
       occupancyByDay[dayIndex] += 1

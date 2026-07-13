@@ -59,6 +59,7 @@ type ModuleKey =
   | "hotelReports"
   | "bookingEngine"
   | "tapeChart"
+  | "groupBookings"
   | "waiterConfirmation"
   | "kitchenItems"
   | "tickets"

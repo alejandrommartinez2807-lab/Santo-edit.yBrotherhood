@@ -151,6 +151,7 @@ export type LocalPlanConfigLike = {
   hotelReportsModuleEnabled?: unknown
   bookingEngineModuleEnabled?: unknown
   tapeChartModuleEnabled?: unknown
+  groupBookingsModuleEnabled?: unknown
   waiterConfirmationModuleEnabled?: unknown
   kitchenItemsModuleEnabled?: unknown
   ticketsModuleEnabled?: unknown
@@ -1043,13 +1044,14 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
   {
     key: "groupBookings",
     label: "Grupos y bloqueos",
-    description: "Reservas de grupo (varias habitaciones, un titular) y bloqueo de habitaciones por eventos.",
+    description: "Bloqueo de habitaciones por rango (mantenimiento, evento) que resta disponibilidad en la web y se ve en el calendario. Base para reservas de grupo.",
     category: "operation",
     minimumPlan: "complete",
+    ownerConfigKey: "groupBookingsModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/grupos",
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     key: "resortServices",
@@ -1522,6 +1524,10 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "tapeChart") {
     return normalizeBoolean(config.tapeChartModuleEnabled, false)
+  }
+
+  if (moduleKey === "groupBookings") {
+    return normalizeBoolean(config.groupBookingsModuleEnabled, false)
   }
 
   if (moduleKey === "waiterConfirmation") {

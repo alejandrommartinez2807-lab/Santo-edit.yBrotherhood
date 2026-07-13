@@ -3,6 +3,7 @@ import {
   getBusinessConfig,
   getHotelReservations,
   getRateSeasons,
+  getRoomBlocks,
   getRoomTypes,
   getRooms,
   saveHotelReservation,
@@ -81,11 +82,12 @@ export async function GET(request: NextRequest) {
     }
 
     const branchId = await resolveBranchId(request)
-    const [rooms, roomTypes, reservations, seasons] = await Promise.all([
+    const [rooms, roomTypes, reservations, seasons, blocks] = await Promise.all([
       getRooms(branchId),
       getRoomTypes(branchId),
       getHotelReservations({ from: checkIn, to: checkOut }, branchId),
       getRateSeasons(branchId),
+      getRoomBlocks({ from: checkIn, to: checkOut }, branchId),
     ])
 
     const types = availableTypesForStay({
@@ -95,6 +97,7 @@ export async function GET(request: NextRequest) {
       seasons,
       checkIn,
       checkOut,
+      blocks,
     })
 
     return noStoreResponse({ ok: true, enabled: true, nights: nightsBetween(checkIn, checkOut), types })
@@ -167,11 +170,12 @@ export async function POST(request: NextRequest) {
     }
 
     const branchId = await resolveBranchId(request)
-    const [rooms, roomTypes, reservations, seasons] = await Promise.all([
+    const [rooms, roomTypes, reservations, seasons, blocks] = await Promise.all([
       getRooms(branchId),
       getRoomTypes(branchId),
       getHotelReservations({ from: checkIn, to: checkOut }, branchId),
       getRateSeasons(branchId),
+      getRoomBlocks({ from: checkIn, to: checkOut }, branchId),
     ])
 
     const roomType = roomTypes.find((t) => t.id === roomTypeId)
@@ -186,6 +190,7 @@ export async function POST(request: NextRequest) {
       roomTypeId,
       checkIn,
       checkOut,
+      blocks,
     })
     if (!freeRoom) {
       return noStoreResponse(

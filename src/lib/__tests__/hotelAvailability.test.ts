@@ -70,4 +70,19 @@ describe("hotelAvailability", () => {
     const none = pickFreeRoomOfType({ rooms, reservations, roomTypeId: "ZZ", checkIn, checkOut })
     expect(none).toBeNull()
   })
+
+  it("un bloqueo que solapa quita la habitación de la disponibilidad", () => {
+    // Bloqueo de r2 (única Doble libre) solapando el rango -> tipo A sin libres.
+    const blocks = [{ roomId: "r2", fromDate: "2026-06-11", toDate: "2026-06-13" }]
+    const freeA = freeRoomsOfType({ rooms, reservations, roomTypeId: "A", checkIn, checkOut, blocks })
+    expect(freeA).toEqual([])
+
+    const types = availableTypesForStay({ rooms, roomTypes, reservations, seasons: [], checkIn, checkOut, blocks })
+    expect(types.map((t) => t.roomTypeId)).toEqual(["B"])
+
+    // Un bloqueo que NO solapa (otras fechas) no afecta.
+    const otherBlocks = [{ roomId: "r2", fromDate: "2026-07-01", toDate: "2026-07-05" }]
+    const stillFree = freeRoomsOfType({ rooms, reservations, roomTypeId: "A", checkIn, checkOut, blocks: otherBlocks })
+    expect(stillFree.map((r) => r.id)).toEqual(["r2"])
+  })
 })
