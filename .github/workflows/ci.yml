@@ -2,7 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    # Ramas de despliegue: además de main (Santo Perrito), brotherhood-publico
+    # (Brotherhood) y las ramas de trabajo claude/* quedan protegidas por CI.
+    branches: [main, master, brotherhood-publico, "claude/**"]
   pull_request:
 
 jobs:
