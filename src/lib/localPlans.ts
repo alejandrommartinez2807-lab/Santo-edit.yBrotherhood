@@ -152,6 +152,7 @@ export type LocalPlanConfigLike = {
   bookingEngineModuleEnabled?: unknown
   tapeChartModuleEnabled?: unknown
   groupBookingsModuleEnabled?: unknown
+  advancedRatesModuleEnabled?: unknown
   waiterConfirmationModuleEnabled?: unknown
   kitchenItemsModuleEnabled?: unknown
   ticketsModuleEnabled?: unknown
@@ -1021,14 +1022,15 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
   },
   {
     key: "advancedRates",
-    label: "Planes de tarifa",
-    description: "Planes (con desayuno, no reembolsable) y restricciones (estancia mínima, cerrado a llegada) sobre las temporadas.",
+    label: "Tarifas avanzadas",
+    description: "Restricciones de venta por fecha y tipo: estancia mínima, cerrado a llegada (CTA) y cerrado a salida (CTD). Gatean el motor de reservas online.",
     category: "money",
     minimumPlan: "complete",
+    ownerConfigKey: "advancedRatesModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/planes-tarifa",
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     key: "guestCrm",
@@ -1528,6 +1530,10 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "groupBookings") {
     return normalizeBoolean(config.groupBookingsModuleEnabled, false)
+  }
+
+  if (moduleKey === "advancedRates") {
+    return normalizeBoolean(config.advancedRatesModuleEnabled, false)
   }
 
   if (moduleKey === "waiterConfirmation") {

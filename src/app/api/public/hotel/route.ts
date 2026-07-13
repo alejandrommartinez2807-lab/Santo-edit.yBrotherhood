@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server"
 import {
   getBusinessConfig,
   getHotelReservations,
+  getRateRestrictions,
   getRateSeasons,
   getRoomBlocks,
   getRoomTypes,
   getRooms,
   saveHotelReservation,
 } from "@/lib/orders"
+import { evaluateStayRestrictions } from "@/lib/rateRestrictions"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import {
@@ -82,12 +84,13 @@ export async function GET(request: NextRequest) {
     }
 
     const branchId = await resolveBranchId(request)
-    const [rooms, roomTypes, reservations, seasons, blocks] = await Promise.all([
+    const [rooms, roomTypes, reservations, seasons, blocks, restrictions] = await Promise.all([
       getRooms(branchId),
       getRoomTypes(branchId),
       getHotelReservations({ from: checkIn, to: checkOut }, branchId),
       getRateSeasons(branchId),
       getRoomBlocks({ from: checkIn, to: checkOut }, branchId),
+      getRateRestrictions(branchId),
     ])
 
     const types = availableTypesForStay({
@@ -98,6 +101,7 @@ export async function GET(request: NextRequest) {
       checkIn,
       checkOut,
       blocks,
+      restrictions,
     })
 
     return noStoreResponse({ ok: true, enabled: true, nights: nightsBetween(checkIn, checkOut), types })
@@ -170,17 +174,24 @@ export async function POST(request: NextRequest) {
     }
 
     const branchId = await resolveBranchId(request)
-    const [rooms, roomTypes, reservations, seasons, blocks] = await Promise.all([
+    const [rooms, roomTypes, reservations, seasons, blocks, restrictions] = await Promise.all([
       getRooms(branchId),
       getRoomTypes(branchId),
       getHotelReservations({ from: checkIn, to: checkOut }, branchId),
       getRateSeasons(branchId),
       getRoomBlocks({ from: checkIn, to: checkOut }, branchId),
+      getRateRestrictions(branchId),
     ])
 
     const roomType = roomTypes.find((t) => t.id === roomTypeId)
     if (!roomType) {
       return noStoreResponse({ ok: false, error: "Ese tipo de habitación no existe" }, { status: 404 })
+    }
+
+    // Restricciones de venta (estancia mínima, cerrado a llegada/salida).
+    const restriction = evaluateStayRestrictions({ restrictions, roomTypeId, checkIn, checkOut })
+    if (!restriction.allowed) {
+      return noStoreResponse({ ok: false, error: restriction.reason }, { status: 409 })
     }
 
     // Reconfirma disponibilidad justo antes de crear (evita doble reserva).

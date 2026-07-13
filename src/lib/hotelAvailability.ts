@@ -16,6 +16,7 @@ import {
   type ConflictCandidate,
 } from "./hotelReservationConflicts"
 import { quoteStay, type RateSeasonLike, type StayQuote } from "./rateSeasons"
+import { evaluateStayRestrictions, type RateRestrictionLike } from "./rateRestrictions"
 
 export type AvailabilityBlock = {
   roomId: string
@@ -119,10 +120,27 @@ export function availableTypesForStay(params: {
   checkIn: string
   checkOut: string
   blocks?: AvailabilityBlock[]
+  restrictions?: RateRestrictionLike[]
 }): AvailableType[] {
+  const restrictions = params.restrictions ?? []
   const result: AvailableType[] = []
   for (const type of params.roomTypes) {
     if (type.active === false) continue
+
+    // Restricciones de venta (estancia mínima, CTA/CTD): si no se permite la
+    // estadía para este tipo, no se ofrece.
+    if (
+      restrictions.length > 0 &&
+      !evaluateStayRestrictions({
+        restrictions,
+        roomTypeId: type.id,
+        checkIn: params.checkIn,
+        checkOut: params.checkOut,
+      }).allowed
+    ) {
+      continue
+    }
+
     const free = freeRoomsOfType({
       rooms: params.rooms,
       reservations: params.reservations,

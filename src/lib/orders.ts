@@ -226,6 +226,13 @@ export {
   saveRoomBlock,
 } from "./ordersRoomBlocks"
 
+export type { RateRestriction, SaveRateRestrictionInput } from "./ordersRateRestrictions"
+export {
+  deleteRateRestriction,
+  getRateRestrictions,
+  saveRateRestriction,
+} from "./ordersRateRestrictions"
+
 export {
   deleteSupplier,
   getSuppliers,

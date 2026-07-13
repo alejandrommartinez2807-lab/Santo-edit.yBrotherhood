@@ -60,6 +60,7 @@ type ModuleKey =
   | "bookingEngine"
   | "tapeChart"
   | "groupBookings"
+  | "advancedRates"
   | "waiterConfirmation"
   | "kitchenItems"
   | "tickets"
