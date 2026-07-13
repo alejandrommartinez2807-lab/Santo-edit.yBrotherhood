@@ -139,6 +139,25 @@ export {
   updateReservationStatus,
 } from "./ordersReservations"
 
+export type {
+  Room,
+  RoomType,
+  RoomHousekeepingStatus,
+  SaveRoomInput,
+  SaveRoomTypeInput,
+} from "./ordersRooms"
+export {
+  ROOM_HOUSEKEEPING_STATUSES,
+  deleteRoom,
+  deleteRoomType,
+  getRooms,
+  getRoomTypes,
+  normalizeHousekeepingStatus,
+  saveRoom,
+  saveRoomType,
+  updateRoomHousekeeping,
+} from "./ordersRooms"
+
 export {
   deleteSupplier,
   getSuppliers,

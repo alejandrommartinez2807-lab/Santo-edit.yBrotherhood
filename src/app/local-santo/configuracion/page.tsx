@@ -202,6 +202,7 @@ type BusinessConfig = {
   localTables: LocalTableMapItem[];
   qrTablesModuleEnabled: boolean;
   reservationsModuleEnabled: boolean;
+  roomsModuleEnabled: boolean;
   waiterConfirmationModuleEnabled: boolean;
   kitchenItemsModuleEnabled: boolean;
   ticketsModuleEnabled: boolean;
@@ -363,6 +364,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   localTables: DEFAULT_CONFIG_LOCAL_TABLES,
   qrTablesModuleEnabled: true,
   reservationsModuleEnabled: false,
+  roomsModuleEnabled: false,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
   ticketsModuleEnabled: true,
@@ -1140,6 +1142,10 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     reservationsModuleEnabled: normalizeBoolean(
       source.reservationsModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.reservationsModuleEnabled,
+    ),
+    roomsModuleEnabled: normalizeBoolean(
+      source.roomsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.roomsModuleEnabled,
     ),
     waiterConfirmationModuleEnabled: normalizeBoolean(
       source.waiterConfirmationModuleEnabled,

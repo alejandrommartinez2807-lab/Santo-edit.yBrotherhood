@@ -42,6 +42,7 @@ export type LocalModuleKey =
   | "tables"
   | "qrTables"
   | "reservations"
+  | "rooms"
   | "waiterConfirmation"
   | "kitchenItems"
   | "tickets"
@@ -120,6 +121,7 @@ export type LocalPlanConfigLike = {
   tablesModuleEnabled?: unknown
   qrTablesModuleEnabled?: unknown
   reservationsModuleEnabled?: unknown
+  roomsModuleEnabled?: unknown
   waiterConfirmationModuleEnabled?: unknown
   kitchenItemsModuleEnabled?: unknown
   ticketsModuleEnabled?: unknown
@@ -201,6 +203,7 @@ export const LOCAL_MODULE_KEYS: LocalModuleKey[] = [
   "tables",
   "qrTables",
   "reservations",
+  "rooms",
   "waiterConfirmation",
   "kitchenItems",
   "tickets",
@@ -365,6 +368,7 @@ export const LOCAL_PLAN_DEFINITIONS: LocalPlanDefinition[] = [
       "tables",
       "qrTables",
       "reservations",
+      "rooms",
       "waiterConfirmation",
       "kitchenItems",
       "tickets",
@@ -750,6 +754,18 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/reservas",
+    comingSoon: false,
+  },
+  {
+    key: "rooms",
+    label: "Habitaciones",
+    description: "Catálogo de habitaciones y tipos (Individual, Doble, Suite) con tarifa base, capacidad y estado de limpieza. Base del PMS hotelero.",
+    category: "operation",
+    minimumPlan: "complete",
+    ownerConfigKey: "roomsModuleEnabled",
+    visibleForOwnerSettings: true,
+    visibleForSupport: true,
+    routePath: "/local-santo/habitaciones",
     comingSoon: false,
   },
   {
@@ -1158,6 +1174,10 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "reservations") {
     return normalizeBoolean(config.reservationsModuleEnabled, false)
+  }
+
+  if (moduleKey === "rooms") {
+    return normalizeBoolean(config.roomsModuleEnabled, false)
   }
 
   if (moduleKey === "waiterConfirmation") {

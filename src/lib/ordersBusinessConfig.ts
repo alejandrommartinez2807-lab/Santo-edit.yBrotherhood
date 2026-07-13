@@ -171,6 +171,7 @@ export type BusinessConfig = {
   localTables: LocalTable[]
   qrTablesModuleEnabled: boolean
   reservationsModuleEnabled: boolean
+  roomsModuleEnabled: boolean
   waiterConfirmationModuleEnabled: boolean
   kitchenItemsModuleEnabled: boolean
   ticketsModuleEnabled: boolean
@@ -311,6 +312,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   localTables: DEFAULT_LOCAL_TABLES,
   qrTablesModuleEnabled: true,
   reservationsModuleEnabled: false,
+  roomsModuleEnabled: false,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
   ticketsModuleEnabled: true,
@@ -821,6 +823,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.reservationsModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.reservationsModuleEnabled
     ),
+    roomsModuleEnabled: normalizeBooleanConfig(
+      source.roomsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.roomsModuleEnabled
+    ),
     waiterConfirmationModuleEnabled: normalizeBooleanConfig(
       source.waiterConfirmationModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.waiterConfirmationModuleEnabled
@@ -923,6 +929,7 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
   const tablesAccess = getModulePlanAccess(config, "tables")
   const qrTablesAccess = getModulePlanAccess(config, "qrTables")
   const reservationsAccess = getModulePlanAccess(config, "reservations")
+  const roomsAccess = getModulePlanAccess(config, "rooms")
   const waiterConfirmationAccess = getModulePlanAccess(config, "waiterConfirmation")
   const kitchenItemsAccess = getModulePlanAccess(config, "kitchenItems")
   const ticketsAccess = getModulePlanAccess(config, "tickets")
@@ -1018,6 +1025,9 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
       : false,
     reservationsModuleEnabled: reservationsAccess.includedInPlan
       ? config.reservationsModuleEnabled
+      : false,
+    roomsModuleEnabled: roomsAccess.includedInPlan
+      ? config.roomsModuleEnabled
       : false,
     waiterConfirmationModuleEnabled: waiterConfirmationAccess.includedInPlan
       ? config.waiterConfirmationModuleEnabled
