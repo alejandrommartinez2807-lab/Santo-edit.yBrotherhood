@@ -31,3 +31,52 @@ export const DELIVERY_PAYMENT_OPTIONS: DeliveryPaymentIn[] = [
   "Bolívares",
   "Mixto",
 ]
+
+// Palabras clave que delatan un método en bolívares (Pago móvil, Punto,
+// Transferencia, Efectivo Bs, Biopago…). Se usa para decidir en qué moneda se
+// pide/muestra el monto en el flujo público, tolerando nombres personalizados
+// que el negocio configure en `publicPaymentMethods`.
+const VES_METHOD_KEYWORDS = [
+  "pago movil",
+  "movil",
+  "punto",
+  "biopago",
+  "efectivo bs",
+  "bolivar",
+  "bolivares",
+  "transferencia",
+]
+
+// Indicadores de divisa: si aparecen, mandan (p. ej. "Transferencia
+// internacional" es en $, aunque contenga "transferencia").
+const USD_METHOD_KEYWORDS = [
+  "internacional",
+  "divisa",
+  "dolar",
+  "zelle",
+  "binance",
+  "usdt",
+  "paypal",
+  "wire",
+  "usd",
+]
+
+function normalizePaymentMethodText(value: unknown): string {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .trim()
+}
+
+// True si el método de pago es en bolívares. Los indicadores de divisa mandan
+// (una "transferencia internacional" es en $). Por defecto (no coincide con
+// ninguna palabra clave) se asume divisas ($), el comportamiento previo.
+export function isVesPaymentMethod(name: unknown): boolean {
+  const normalized = normalizePaymentMethodText(name)
+  if (!normalized) return false
+  if (USD_METHOD_KEYWORDS.some((keyword) => normalized.includes(keyword))) return false
+  // "efectivo bs" / "… bs" pero sin confundir con "efectivo divisas".
+  if (/\bbs\b/.test(normalized)) return true
+  return VES_METHOD_KEYWORDS.some((keyword) => normalized.includes(keyword))
+}

@@ -77,7 +77,7 @@ async function loadAccountOrderSummaries(
   let query = supabase
     .from("orders")
     .select(
-      "id, seq, customer_name, table_number, order_type, status, payment_status, total_usd, total_ves, exchange_rate, payment_received_equiv_usd, payment_pending_usd, created_at, items_text"
+      "id, seq, branch_seq, branch_code, customer_name, table_number, order_type, status, payment_status, total_usd, total_ves, exchange_rate, payment_received_equiv_usd, payment_pending_usd, created_at, items_text"
     )
     .eq("open_account_id", accountId)
   if (branchId) query = query.eq("branch_id", branchId)
@@ -111,13 +111,20 @@ async function loadAccountOrderSummaries(
     const row = raw
     const id = cleanText(row.id)
     const seq = num(row.seq)
+    const branchSeq = num(row.branch_seq)
+    const branchCode = cleanText(row.branch_code)
     const totalUSD = num(row.total_usd)
     const received = num(row.payment_received_equiv_usd)
     const items = itemsByOrderId.get(id) ?? []
 
     return {
       id,
-      displayNumber: seq > 0 ? `#${String(seq).padStart(2, "0")}` : undefined,
+      displayNumber:
+        branchSeq > 0
+          ? `#${String(branchSeq).padStart(2, "0")}${branchCode ? `-${branchCode}` : ""}`
+          : seq > 0
+            ? `#${String(seq).padStart(2, "0")}`
+            : undefined,
       customerName: cleanText(row.customer_name),
       tableNumber: cleanText(row.table_number),
       orderType: (cleanText(row.order_type) || "Comer aquí") as OpenAccountOrderSummary["orderType"],

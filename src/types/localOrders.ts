@@ -114,6 +114,10 @@ export type PaymentForm = {
 
 export type LocalOrder = {
   rowNumber?: number
+  // Correlativo por sede (branch_seq) e inicial de la sede (branch_code) para
+  // mostrar el número como #40-s. Ausentes antes de aplicar la migración 0025.
+  branchNumber?: number
+  branchCode?: string
   id: string
   createdAt: string
   customerName: string

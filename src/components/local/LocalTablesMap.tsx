@@ -14,6 +14,8 @@ export type LocalTableMapItem = {
 
 type LocalTableMapOrder = {
   rowNumber?: number;
+  branchNumber?: number;
+  branchCode?: string;
   id: string;
   createdAt?: string;
   customerName?: string;
@@ -219,6 +221,12 @@ function getOrderPendingUSD(order: LocalTableMapOrder) {
 }
 
 function getDisplayOrderNumber(order: LocalTableMapOrder) {
+  if (order.branchNumber && order.branchNumber > 0) {
+    return `#${String(order.branchNumber).padStart(2, "0")}${
+      order.branchCode ? `-${order.branchCode}` : ""
+    }`;
+  }
+
   if (order.rowNumber && order.rowNumber > 1) {
     return `#${order.rowNumber - 1}`;
   }

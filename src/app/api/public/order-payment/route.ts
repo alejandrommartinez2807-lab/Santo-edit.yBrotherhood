@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     // devuelve la sede del pedido para que el reporte de pago llegue a ella.
     const { data, error } = await supabase
       .from("orders")
-      .select("id,branch_id,seq,status,total_usd,amount_received_usd,amount_received_ves")
+      .select("id,branch_id,seq,branch_seq,branch_code,status,total_usd,exchange_rate,amount_received_usd,amount_received_ves")
       .eq("id", orderId)
       .maybeSingle()
 
@@ -61,6 +61,16 @@ export async function GET(request: NextRequest) {
     const order = data as Record<string, unknown>
     const branchId = String(order.branch_id || "")
     const seq = Number(order.seq || 0)
+    // Número por sede (branch_seq + inicial de la sede). Fallback al seq global
+    // si aún no se aplicó la migración 0025.
+    const branchSeq = Number(order.branch_seq || 0)
+    const branchCode = String(order.branch_code || "").trim()
+    const displayNumber =
+      branchSeq > 0
+        ? `#${String(branchSeq).padStart(2, "0")}${branchCode ? `-${branchCode}` : ""}`
+        : seq > 0
+          ? `#${String(seq).padStart(2, "0")}`
+          : ""
     const paymentRegistered =
       Number(order.amount_received_usd || 0) > 0 || Number(order.amount_received_ves || 0) > 0
 
@@ -70,9 +80,10 @@ export async function GET(request: NextRequest) {
       ok: true,
       orderId,
       branchId,
-      displayNumber: seq > 0 ? `#${String(seq).padStart(2, "0")}` : "",
+      displayNumber,
       orderStatus: String(order.status || ""),
       totalUSD: Number(order.total_usd || 0),
+      exchangeRate: Number(order.exchange_rate || 0),
       paymentRegistered,
       // Subconjunto seguro: sin teléfono ni imagen (la captura puede traer
       // datos bancarios del cliente; solo caja la ve en su panel).
