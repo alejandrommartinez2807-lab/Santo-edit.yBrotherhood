@@ -248,6 +248,29 @@ export function formatPaymentProofDate(value: string) {
 // Aritmética de dinero compartida: la implementación vive en localOrderMoney.
 export { formatMoneyForInput, parseMoneyInput, roundMoney }
 
+// Texto para pasarle el pedido al repartidor con UN solo copiado: teléfono
+// del cliente, link de la dirección y resumen corto de qué lleva. Sin montos
+// ni pago (no le interesan al repartidor). Mismo formato que en Pedidos y en
+// el módulo Delivery.
+export function buildCourierHandoffText(order: LocalOrder) {
+  const displayNumber = getDisplayOrderNumber(order)
+  const rawAddress = String(order.deliveryAddress || "").trim()
+  const mapsLink = rawAddress.match(/https?:\/\/[^\s·]+/)?.[0] || ""
+  const itemsSummary = (order.items || [])
+    .map((item) => `${Math.max(1, Number(item.quantity || 1))}x ${item.name}`)
+    .join(", ")
+
+  return [
+    `Pedido ${displayNumber} · ${order.customerName || "Cliente"}`,
+    `Teléfono: ${order.customerPhone || "Sin teléfono"}`,
+    `Dirección: ${mapsLink || rawAddress || "Sin dirección registrada"}`,
+    ...(order.deliveryReference
+      ? [`Referencia: ${order.deliveryReference}`]
+      : []),
+    ...(itemsSummary ? [`Pedido: ${itemsSummary}`] : []),
+  ].join("\n")
+}
+
 export function normalizeComparableText(value: string) {
   return value
     .normalize("NFD")
