@@ -24,7 +24,7 @@ export async function deleteResortService(id: string, branchId?: string | null) 
 }
 
 export async function getServiceBookings(
-  filters: { from?: string; to?: string; serviceId?: string } = {},
+  filters: { from?: string; to?: string; serviceId?: string; reservationId?: string } = {},
   branchId?: string | null,
 ): Promise<ServiceBooking[]> {
   return store.getServiceBookings(filters, branchId)

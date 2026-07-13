@@ -62,6 +62,14 @@ type ChargeableOrder = {
   status: string
   total: number
 }
+type ChargeableService = {
+  id: string
+  serviceName: string
+  date: string
+  time: string
+  people: number
+  amount: number
+}
 type FolioView = {
   folio: Folio | null
   items: FolioItem[]
@@ -69,11 +77,14 @@ type FolioView = {
   reservation: Reservation | null
   balance: number
   chargeableOrders?: ChargeableOrder[]
+  chargeableServices?: ChargeableService[]
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
   habitacion: "Habitación",
   restaurante: "Restaurante",
+  servicio: "Servicio",
+  resort: "Resort",
   minibar: "Minibar",
   lavanderia: "Lavandería",
   extra: "Extra",
@@ -246,6 +257,7 @@ function FolioContent() {
   const balance = view?.balance || 0
   const reservation = view?.reservation || null
   const chargeableOrders = view?.chargeableOrders || []
+  const chargeableServices = view?.chargeableServices || []
   const closed = folio?.status === "cerrado"
 
   const inputClass =
@@ -526,6 +538,41 @@ function FolioContent() {
                             </button>
                           </div>
                         </div>
+
+                        {/* Cargar servicios del resort a la habitación */}
+                        {chargeableServices.length > 0 && (
+                          <div className="mt-5 rounded-xl border-2 border-dashed border-[var(--brand-primary)]/25 p-3">
+                            <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                              <Plus size={15} /> Cargar servicios del resort
+                            </p>
+                            <ul className="mt-2 space-y-2">
+                              {chargeableServices.map((service) => (
+                                <li
+                                  key={service.id}
+                                  className="flex items-center justify-between gap-3 rounded-lg bg-[var(--brand-cream)] px-3 py-2"
+                                >
+                                  <div className="min-w-0">
+                                    <p className="font-bold text-[var(--brand-ink-3)]">{service.serviceName}</p>
+                                    <p className="text-xs font-bold uppercase tracking-wide text-[var(--brand-ink-2)]/50">
+                                      {service.date}
+                                      {service.time ? ` · ${service.time}` : ""} · {service.people}p
+                                    </p>
+                                  </div>
+                                  <span className="font-black text-[var(--brand-ink-3)]">${service.amount}</span>
+                                  <button
+                                    onClick={() =>
+                                      post({ action: "chargeService", folioId: folio.id, bookingId: service.id })
+                                    }
+                                    disabled={busy}
+                                    className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-black uppercase text-white disabled:opacity-50"
+                                  >
+                                    <Plus size={13} /> Cargar
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
 
                         {/* Cargar consumo del restaurante a la habitación */}
                         <div className="mt-5 rounded-xl border-2 border-dashed border-[var(--brand-primary)]/25 p-3">

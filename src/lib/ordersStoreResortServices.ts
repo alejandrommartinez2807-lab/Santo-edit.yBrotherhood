@@ -164,7 +164,7 @@ export async function deleteResortService(
 // ---------------- Reservas de servicio ----------------
 
 export async function getServiceBookings(
-  filters: { from?: string; to?: string; serviceId?: string } = {},
+  filters: { from?: string; to?: string; serviceId?: string; reservationId?: string } = {},
   branchId?: string | null,
 ): Promise<ServiceBooking[]> {
   const supabase = getSupabaseAdmin()
@@ -179,6 +179,7 @@ export async function getServiceBookings(
   if (from) query = query.gte("date", from)
   if (to) query = query.lte("date", to)
   if (filters.serviceId) query = query.eq("service_id", filters.serviceId)
+  if (filters.reservationId) query = query.eq("reservation_id", filters.reservationId)
 
   const { data, error } = await query
   if (error) throw new Error(error.message)

@@ -154,6 +154,7 @@ export type LocalPlanConfigLike = {
   groupBookingsModuleEnabled?: unknown
   advancedRatesModuleEnabled?: unknown
   resortServicesModuleEnabled?: unknown
+  resortChargesModuleEnabled?: unknown
   waiterConfirmationModuleEnabled?: unknown
   kitchenItemsModuleEnabled?: unknown
   ticketsModuleEnabled?: unknown
@@ -1071,13 +1072,14 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
   {
     key: "resortCharges",
     label: "Cargo resort a habitación",
-    description: "Cargo a la habitación desde cualquier punto del resort (bar, spa, tienda) con firma o pulsera/QR.",
+    description: "Estación de cargos: cualquier punto del resort (bar, spa, tienda) carga consumo a la habitación del huésped en casa, sumándolo a su folio.",
     category: "money",
     minimumPlan: "complete",
+    ownerConfigKey: "resortChargesModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/cargos-resort",
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     key: "hotelPackages",
@@ -1540,6 +1542,10 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "resortServices") {
     return normalizeBoolean(config.resortServicesModuleEnabled, false)
+  }
+
+  if (moduleKey === "resortCharges") {
+    return normalizeBoolean(config.resortChargesModuleEnabled, false)
   }
 
   if (moduleKey === "waiterConfirmation") {

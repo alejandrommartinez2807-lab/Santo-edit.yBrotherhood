@@ -10,6 +10,8 @@ import {
   getGuest,
   getHotelReservationById,
   getOrders,
+  getResortServices,
+  getServiceBookings,
   hasRoomCharge,
   openFolio,
   queueCheckoutCleaning,
@@ -58,12 +60,41 @@ async function getChargeableOrders(branchId: string | null) {
     }))
 }
 
+// Reservas de servicio del resort de esta estadía aún no cargadas al folio.
+// Se deduplican reusando source_order_id con el prefijo "svc:<bookingId>".
+async function getChargeableServices(reservationId: string, branchId: string | null) {
+  if (!reservationId) return []
+  const [bookings, services, chargedIds] = await Promise.all([
+    getServiceBookings({ reservationId }, branchId),
+    getResortServices(branchId),
+    getChargedOrderIds(branchId),
+  ])
+  const charged = new Set(chargedIds)
+  const serviceById = new Map(services.map((s) => [s.id, s]))
+  return bookings
+    .filter((b) => b.status !== "cancelada" && !charged.has(`svc:${b.id}`))
+    .slice(0, 40)
+    .map((b) => {
+      const service = serviceById.get(b.serviceId)
+      return {
+        id: b.id,
+        serviceName: service?.name || "Servicio",
+        date: b.date,
+        time: b.time,
+        people: b.people,
+        amount: Math.max(0, (service?.price || 0) * b.people),
+      }
+    })
+}
+
 async function buildFolioView(reservationId: string, branchId: string | null) {
   const folio = await getFolioByReservation(reservationId, branchId)
   const items = folio ? await getFolioItems(folio.id, branchId) : []
   const reservation = await getHotelReservationById(reservationId, branchId)
   const guest = reservation?.guestId ? await getGuest(reservation.guestId, branchId) : null
-  const chargeableOrders = folio && folio.status !== "cerrado" ? await getChargeableOrders(branchId) : []
+  const open = folio && folio.status !== "cerrado"
+  const chargeableOrders = open ? await getChargeableOrders(branchId) : []
+  const chargeableServices = open ? await getChargeableServices(reservationId, branchId) : []
   return {
     folio,
     items,
@@ -71,6 +102,7 @@ async function buildFolioView(reservationId: string, branchId: string | null) {
     reservation,
     balance: folioBalance(items),
     chargeableOrders,
+    chargeableServices,
   }
 }
 
@@ -248,6 +280,54 @@ export async function POST(request: NextRequest) {
           unitAmount: amount,
           quantity: 1,
           sourceOrderId: orderId,
+          createdBy,
+        },
+        branchId,
+      )
+
+      const view = await buildFolioView(reservationId, branchId)
+      return NextResponse.json({ ok: true, ...view })
+    }
+
+    // --- Cargar una reserva de servicio del resort a la habitación ---
+    if (action === "chargeService") {
+      const folioId = cleanText(body.folioId)
+      const bookingId = cleanText(body.bookingId)
+      const reservationId = cleanText(body.reservationId)
+      if (!folioId || !bookingId) {
+        return NextResponse.json({ error: "Folio o servicio no indicado" }, { status: 400 })
+      }
+
+      // Idempotencia: no cargar dos veces el mismo servicio.
+      const chargedIds = new Set(await getChargedOrderIds(branchId))
+      if (chargedIds.has(`svc:${bookingId}`)) {
+        return NextResponse.json({ error: "Ese servicio ya fue cargado a la habitación." }, { status: 409 })
+      }
+
+      const [bookings, services] = await Promise.all([
+        getServiceBookings({ reservationId }, branchId),
+        getResortServices(branchId),
+      ])
+      const booking = bookings.find((b) => b.id === bookingId)
+      if (!booking) {
+        return NextResponse.json({ error: "Reserva de servicio no encontrada" }, { status: 404 })
+      }
+      const service = services.find((s) => s.id === booking.serviceId)
+      const amount = Math.max(0, (service?.price || 0) * booking.people)
+      if (amount <= 0) {
+        return NextResponse.json({ error: "El servicio no tiene monto para cargar" }, { status: 400 })
+      }
+
+      await addFolioItem(
+        {
+          folioId,
+          kind: "cargo",
+          category: "servicio",
+          description: `${service?.name || "Servicio"}${booking.date ? ` · ${booking.date}` : ""}${booking.people > 1 ? ` (${booking.people}p)` : ""}`,
+          amount,
+          unitAmount: service?.price || amount,
+          quantity: booking.people,
+          sourceOrderId: `svc:${bookingId}`,
           createdBy,
         },
         branchId,

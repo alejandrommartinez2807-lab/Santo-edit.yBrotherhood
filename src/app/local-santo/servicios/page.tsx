@@ -53,6 +53,7 @@ type Booking = {
   status: string
   note: string
 }
+type ActiveReservation = { id: string; guestName: string; roomId: string; status: string }
 
 function authHeaders(): HeadersInit {
   const password =
@@ -92,6 +93,8 @@ function ServiciosContent() {
   const [bTime, setBTime] = useState("")
   const [bPeople, setBPeople] = useState("1")
   const [bGuest, setBGuest] = useState("")
+  const [bReservationId, setBReservationId] = useState("")
+  const [reservations, setReservations] = useState<ActiveReservation[]>([])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -107,6 +110,22 @@ function ServiciosContent() {
       setDenied(false)
       setServices(data.services || [])
       setBookings(data.bookings || [])
+
+      // Reservas activas (best-effort): para vincular el servicio a una estadía
+      // y poder cargarlo luego al folio. Si el módulo está apagado, se ignora.
+      try {
+        const today = toISO(new Date())
+        const to = toISO(new Date(new Date().getFullYear() + 1, 0, 1))
+        const rres = await fetch(`/api/hotel-reservations?from=${today}&to=${to}`, {
+          headers: authHeaders(),
+          cache: "no-store",
+        })
+        const rdata = await rres.json().catch(() => ({}))
+        const list: ActiveReservation[] = rres.ok ? rdata.reservations || [] : []
+        setReservations(list.filter((r) => r.status === "checkin" || r.status === "confirmada"))
+      } catch {
+        setReservations([])
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
     } finally {
@@ -171,10 +190,12 @@ function ServiciosContent() {
       time: bTime.trim(),
       people: Number(bPeople) || 1,
       guestName: bGuest.trim(),
+      reservationId: bReservationId,
     })
     if (ok) {
       setBGuest("")
       setBPeople("1")
+      setBReservationId("")
     }
   }
 
@@ -298,7 +319,27 @@ function ServiciosContent() {
                       </option>
                     ))}
                   </select>
-                  <input value={bGuest} onChange={(e) => setBGuest(e.target.value)} placeholder="Huésped (opcional)" className={inputClass} />
+                  {reservations.length > 0 ? (
+                    <select
+                      value={bReservationId}
+                      onChange={(e) => {
+                        const id = e.target.value
+                        setBReservationId(id)
+                        const r = reservations.find((x) => x.id === id)
+                        if (r) setBGuest(r.guestName)
+                      }}
+                      className={inputClass}
+                    >
+                      <option value="">Sin vincular a estadía</option>
+                      {reservations.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.guestName} (en casa)
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input value={bGuest} onChange={(e) => setBGuest(e.target.value)} placeholder="Huésped (opcional)" className={inputClass} />
+                  )}
                   <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
                     <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Fecha</span>
                     <input type="date" value={bDate} onChange={(e) => setBDate(e.target.value || toISO(new Date()))} className="w-full bg-transparent font-bold outline-none" />

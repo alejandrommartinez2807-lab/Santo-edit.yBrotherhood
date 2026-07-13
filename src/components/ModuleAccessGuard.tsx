@@ -62,6 +62,7 @@ type ModuleKey =
   | "groupBookings"
   | "advancedRates"
   | "resortServices"
+  | "resortCharges"
   | "waiterConfirmation"
   | "kitchenItems"
   | "tickets"
