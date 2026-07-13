@@ -23,6 +23,7 @@ import {
   Plus,
   RefreshCw,
   Search,
+  ShieldCheck,
   Store,
   Trash2,
   CalendarClock,
@@ -1236,6 +1237,7 @@ export default function PedidosPage() {
   const suppliersAccess = getModulePlanAccess(businessConfig, "suppliers")
   const reservationsAccess = getModulePlanAccess(businessConfig, "reservations")
   const soundsAccess = getModulePlanAccess(businessConfig, "sounds")
+  const auditLogAccess = getModulePlanAccess(businessConfig, "auditLog")
 
   const canDeleteExpenses = isOwnerAccess && expensesAccess.effectiveEnabled
 
@@ -1278,6 +1280,8 @@ export default function PedidosPage() {
   const isReservationsModuleVisible =
     canUseOperationalPanel && reservationsAccess.effectiveEnabled
   const isBranchesModuleVisible = isOwnerAccess
+  const isAuditLogModuleVisible =
+    isOwnerAccess && auditLogAccess.effectiveEnabled
   const activeOpenAccounts = openAccounts.filter(isOpenAccountActive)
   const pendingOpenAccountsCount = activeOpenAccounts.filter(
     (account) => getOpenAccountPendingUSD(account) > 0
@@ -3750,6 +3754,17 @@ export default function PedidosPage() {
               title="Negocio"
               description="Datos del local, módulos visibles, tasa, sonidos y reglas operativas."
               metric="Ajustes"
+            />
+          )}
+
+          {isAuditLogModuleVisible && (
+            <ModuleAccessCard
+              href="/local-santo/auditoria"
+              icon={<ShieldCheck size={24} />}
+              eyebrow="Auditoría"
+              title="Auditoría"
+              description="Registro de quién hizo qué, cuándo y desde dónde: cobros, cambios de estado, cierres, configuración y usuarios."
+              metric="Bitácora"
             />
           )}
         </section>
