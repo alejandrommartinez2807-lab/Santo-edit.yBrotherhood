@@ -2,7 +2,22 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Loader2, ShieldCheck, RefreshCw } from "lucide-react"
+import {
+  ArrowLeft,
+  Boxes,
+  ClipboardList,
+  CreditCard,
+  Loader2,
+  Lock,
+  Package,
+  RefreshCw,
+  Settings,
+  ShieldCheck,
+  ShoppingBag,
+  UserCog,
+  Users,
+  type LucideIcon,
+} from "lucide-react"
 import { AUDIT_ACTION_LABELS, type AuditAction } from "@/lib/auditActions"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
 
@@ -29,27 +44,140 @@ function authHeaders(): HeadersInit {
   return { "Content-Type": "application/json", "x-admin-password": password }
 }
 
-function formatDateTime(value: string) {
-  if (!value) return "—"
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString("es-VE", { timeZone: "America/Caracas" })
+// Rol en español (el actor suele traer el nombre de la persona en actorLabel y
+// el rol técnico en actorRole).
+const ROLE_LABELS: Record<string, string> = {
+  owner: "Dueño",
+  manager: "Encargado",
+  cashier: "Cajero",
+  kitchen: "Cocina",
+  delivery: "Delivery",
+  waiter: "Mesonero",
+  promoter: "Promotor",
+  support: "Soporte",
 }
 
-function summarizeMetadata(metadata: Record<string, unknown>) {
-  const keys = Object.keys(metadata || {})
-  if (keys.length === 0) return ""
-  return keys
-    .map((key) => {
-      const value = metadata[key]
+// Categoría visual (icono + color) según el prefijo de la acción. Así de un
+// vistazo se distingue un cobro de un cambio de configuración o de usuario.
+type Category = {
+  label: string
+  icon: LucideIcon
+  ring: string // borde + fondo suave + color de texto del icono
+}
+
+function getCategory(action: string): Category {
+  if (action.startsWith("order.payment") || action.startsWith("payment_proof")) {
+    return { label: "Pagos", icon: CreditCard, ring: "border-emerald-500/30 bg-emerald-50 text-emerald-700" }
+  }
+  if (action.startsWith("order")) {
+    return { label: "Pedidos", icon: ShoppingBag, ring: "border-sky-500/30 bg-sky-50 text-sky-700" }
+  }
+  if (action.startsWith("open_account")) {
+    return { label: "Cuentas abiertas", icon: Users, ring: "border-violet-500/30 bg-violet-50 text-violet-700" }
+  }
+  if (action.startsWith("day_close")) {
+    return { label: "Cierres de caja", icon: Lock, ring: "border-slate-500/30 bg-slate-100 text-slate-700" }
+  }
+  if (action.startsWith("supplier_purchase")) {
+    return { label: "Compras", icon: Package, ring: "border-orange-500/30 bg-orange-50 text-orange-700" }
+  }
+  if (action.startsWith("business_config")) {
+    return { label: "Configuración", icon: Settings, ring: "border-gray-500/30 bg-gray-100 text-gray-700" }
+  }
+  if (action.startsWith("staff")) {
+    return { label: "Usuarios", icon: UserCog, ring: "border-teal-500/30 bg-teal-50 text-teal-700" }
+  }
+  if (action.startsWith("inventory")) {
+    return { label: "Inventario", icon: Boxes, ring: "border-amber-500/30 bg-amber-50 text-amber-700" }
+  }
+  return { label: "Otras", icon: ClipboardList, ring: "border-gray-400/30 bg-gray-50 text-gray-600" }
+}
+
+const ENTITY_LABELS: Record<string, string> = {
+  order: "Pedido",
+  open_account: "Cuenta abierta",
+  payment_proof: "Comprobante",
+  day_close: "Cierre",
+  supplier_purchase: "Compra",
+  business_config: "Configuración",
+  staff: "Usuario",
+  inventory_item: "Insumo",
+}
+
+function friendlyEntity(entityType: string) {
+  if (!entityType) return ""
+  return ENTITY_LABELS[entityType] || entityType.replace(/_/g, " ")
+}
+
+function actorName(log: AuditLogEntry) {
+  const role = log.actorRole ? ROLE_LABELS[log.actorRole] || log.actorRole : ""
+  const label = (log.actorLabel || "").trim()
+  if (label && role) return `${label} · ${role}`
+  if (label) return label
+  if (role) return role
+  return "Sistema / sin identificar"
+}
+
+// camelCase → "camel case" para que las claves de detalle se lean.
+function humanizeKey(key: string) {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/_/g, " ")
+    .toLowerCase()
+}
+
+function metadataChips(metadata: Record<string, unknown>): { key: string; text: string }[] {
+  return Object.entries(metadata || {})
+    .filter(([, value]) => value !== null && value !== undefined && value !== "")
+    .slice(0, 8)
+    .map(([key, value]) => {
       const text = Array.isArray(value)
         ? value.join(", ")
         : value && typeof value === "object"
           ? JSON.stringify(value)
           : String(value)
-      return `${key}: ${text}`
+      return { key, text: `${humanizeKey(key)}: ${text}` }
     })
-    .join(" · ")
+}
+
+function caracasDayKey(value: string | Date) {
+  try {
+    return new Date(value).toLocaleDateString("en-CA", { timeZone: "America/Caracas" })
+  } catch {
+    return ""
+  }
+}
+
+function dayLabel(dayKey: string) {
+  const todayKey = caracasDayKey(new Date())
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  const yesterdayKey = caracasDayKey(yesterday)
+
+  if (dayKey === todayKey) return "Hoy"
+  if (dayKey === yesterdayKey) return "Ayer"
+  try {
+    return new Date(`${dayKey}T12:00:00`).toLocaleDateString("es-VE", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+    })
+  } catch {
+    return dayKey
+  }
+}
+
+function timeOnly(value: string) {
+  if (!value) return "—"
+  try {
+    return new Date(value).toLocaleTimeString("es-VE", {
+      timeZone: "America/Caracas",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  } catch {
+    return value
+  }
 }
 
 const ACTION_OPTIONS = Object.entries(AUDIT_ACTION_LABELS) as [AuditAction, string][]
@@ -69,6 +197,7 @@ function AuditoriaPageContent() {
   const [error, setError] = useState("")
 
   const [actionFilter, setActionFilter] = useState("")
+  const [actorFilter, setActorFilter] = useState("")
   const [fromDate, setFromDate] = useState("")
   const [toDate, setToDate] = useState("")
 
@@ -107,131 +236,247 @@ function AuditoriaPageContent() {
     return () => clearTimeout(timer)
   }, [loadLogs])
 
-  const count = useMemo(() => logs.length, [logs])
+  // El filtro por usuario es del lado del cliente (sobre lo ya cargado): así el
+  // dueño ve rápido "todo lo que hizo Fulano" sin recargar.
+  const actorOptions = useMemo(() => {
+    const seen = new Map<string, string>()
+    logs.forEach((log) => {
+      const name = actorName(log)
+      if (!seen.has(name)) seen.set(name, name)
+    })
+    return Array.from(seen.values()).sort((a, b) => a.localeCompare(b))
+  }, [logs])
+
+  const visibleLogs = useMemo(
+    () => (actorFilter ? logs.filter((log) => actorName(log) === actorFilter) : logs),
+    [logs, actorFilter],
+  )
+
+  // Agrupado por día (más reciente primero) para leerlo como una línea de tiempo.
+  const groups = useMemo(() => {
+    const map = new Map<string, AuditLogEntry[]>()
+    visibleLogs.forEach((log) => {
+      const key = caracasDayKey(log.createdAt)
+      const list = map.get(key)
+      if (list) list.push(log)
+      else map.set(key, [log])
+    })
+    return Array.from(map.entries()).sort((a, b) => b[0].localeCompare(a[0]))
+  }, [visibleLogs])
+
+  const hasActiveFilters = Boolean(actionFilter || actorFilter || fromDate || toDate)
+
+  function clearFilters() {
+    setActionFilter("")
+    setActorFilter("")
+    setFromDate("")
+    setToDate("")
+  }
+
+  const inputClass =
+    "rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
 
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
-      <div className="mx-auto w-full max-w-4xl">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link
-            href="/local-santo"
-            className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
-          >
-            <ArrowLeft size={16} /> Panel
-          </Link>
-        </div>
+      <div className="mx-auto w-full max-w-3xl">
+        <Link
+          href="/local-santo"
+          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+        >
+          <ArrowLeft size={16} /> Volver al panel
+        </Link>
 
         <div className="mt-4 flex items-center gap-3">
-          <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-accent)] text-[var(--brand-primary)]">
+          <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-accent)] text-[var(--brand-primary)]">
             <ShieldCheck size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Auditoría de acciones</h1>
-            <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
+            <h1 className="text-2xl font-black uppercase leading-none text-[var(--brand-ink-3)]">
+              Auditoría
+            </h1>
+            <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/65">
               Quién hizo qué, cuándo y desde dónde. Solo lectura.
             </p>
           </div>
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
-            Solo el dueño o soporte pueden ver la bitácora, y el módulo de auditoría debe estar activo
-            desde la configuración del negocio. Inicia sesión como dueño.
-          </p>
+          <div className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5">
+            <p className="font-bold text-[var(--brand-ink-3)]">
+              Solo el dueño o soporte pueden ver la bitácora.
+            </p>
+            <p className="mt-2 text-sm font-bold text-[var(--brand-ink-2)]/65">
+              Además, el módulo de auditoría debe estar activo en Configuración del negocio.
+              Inicia sesión como dueño e inténtalo de nuevo.
+            </p>
+          </div>
         ) : (
           <>
             {/* Filtros */}
-            <div className="mt-6 grid gap-3 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-4">
-              <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] sm:col-span-2">
-                Acción
-                <select
-                  value={actionFilter}
-                  onChange={(e) => setActionFilter(e.target.value)}
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
-                >
-                  <option value="">Todas las acciones</option>
-                  {ACTION_OPTIONS.map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
-                Desde
-                <input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
-                />
-              </label>
-              <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
-                Hasta
-                <input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
-                />
-              </label>
+            <div className="mt-6 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="flex flex-col gap-1 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                  Usuario
+                  <select
+                    value={actorFilter}
+                    onChange={(e) => setActorFilter(e.target.value)}
+                    className={inputClass}
+                  >
+                    <option value="">Todos los usuarios</option>
+                    {actorOptions.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                  Acción
+                  <select
+                    value={actionFilter}
+                    onChange={(e) => setActionFilter(e.target.value)}
+                    className={inputClass}
+                  >
+                    <option value="">Todas las acciones</option>
+                    {ACTION_OPTIONS.map(([key, label]) => (
+                      <option key={key} value={key}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                  Desde
+                  <input
+                    type="date"
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                    className={inputClass}
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                  Hasta
+                  <input
+                    type="date"
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
+                    className={inputClass}
+                  />
+                </label>
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={loadLogs}
+                    disabled={loading}
+                    className="inline-flex items-center gap-1.5 rounded-xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-3 py-2 text-xs font-black uppercase text-white disabled:opacity-50"
+                  >
+                    <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Actualizar
+                  </button>
+                  {hasActiveFilters && (
+                    <button
+                      onClick={clearFilters}
+                      className="inline-flex items-center gap-1.5 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-xs font-black uppercase text-[var(--brand-primary)]"
+                    >
+                      Limpiar filtros
+                    </button>
+                  )}
+                </div>
+                {!loading && (
+                  <span className="text-sm font-bold text-[var(--brand-ink-2)]/70">
+                    {visibleLogs.length} registro{visibleLogs.length === 1 ? "" : "s"}
+                  </span>
+                )}
+              </div>
             </div>
 
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <button
-                onClick={loadLogs}
-                disabled={loading}
-                className="inline-flex items-center gap-1 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-xs font-black uppercase text-[var(--brand-primary)] disabled:opacity-50"
-              >
-                <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Actualizar
-              </button>
-              {!loading && (
-                <span className="text-sm font-bold text-[var(--brand-ink-2)]/70">
-                  {count} registro{count === 1 ? "" : "s"}
-                </span>
-              )}
-            </div>
-
-            {error && <p className="mt-3 font-bold text-red-600">{error}</p>}
+            {error && (
+              <p className="mt-3 rounded-2xl border-2 border-red-300 bg-red-50 px-4 py-3 font-bold text-red-700">
+                {error}
+              </p>
+            )}
 
             {loading ? (
               <p className="mt-8 inline-flex items-center gap-2 font-bold">
                 <Loader2 className="animate-spin" size={18} /> Cargando…
               </p>
-            ) : logs.length === 0 ? (
-              <p className="mt-6 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
-                No hay acciones registradas con estos filtros.
-              </p>
+            ) : visibleLogs.length === 0 ? (
+              <div className="mt-6 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-6 text-center">
+                <p className="font-black uppercase tracking-[0.1em] text-[var(--brand-ink-3)]">
+                  Sin registros
+                </p>
+                <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/60">
+                  No hay acciones con estos filtros. Prueba con otro rango de fechas o usuario.
+                </p>
+              </div>
             ) : (
-              <ul className="mt-4 space-y-2">
-                {logs.map((log) => {
-                  const metadataText = summarizeMetadata(log.metadata)
-                  return (
-                    <li
-                      key={log.id}
-                      className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <p className="text-sm font-black text-[var(--brand-ink-3)]">{log.actionLabel}</p>
-                        <span className="text-xs font-bold text-[var(--brand-ink-2)]/55">
-                          {formatDateTime(log.createdAt)}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
-                        {log.actorLabel || log.actorRole || "—"}
-                        {log.entityType ? ` · ${log.entityType}` : ""}
-                        {log.entityId ? ` ${log.entityId}` : ""}
-                        {log.ipAddress ? ` · IP ${log.ipAddress}` : ""}
-                      </p>
-                      {metadataText && (
-                        <p className="mt-1 break-words text-xs font-bold text-[var(--brand-ink-2)]/80">
-                          {metadataText}
-                        </p>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
+              <div className="mt-6 space-y-6">
+                {groups.map(([dayKey, dayLogs]) => (
+                  <section key={dayKey}>
+                    <div className="sticky top-0 z-10 -mx-1 mb-2 bg-[var(--brand-cream)]/95 px-1 py-1 backdrop-blur">
+                      <h2 className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.12em] text-white">
+                        {dayLabel(dayKey)}
+                        <span className="text-white/70">· {dayLogs.length}</span>
+                      </h2>
+                    </div>
+
+                    <ul className="space-y-2">
+                      {dayLogs.map((log) => {
+                        const category = getCategory(log.action)
+                        const Icon = category.icon
+                        const chips = metadataChips(log.metadata)
+                        const entityLabel = friendlyEntity(log.entityType)
+
+                        return (
+                          <li
+                            key={log.id}
+                            className="flex gap-3 rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-white p-3.5"
+                          >
+                            <span
+                              className={`mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 ${category.ring}`}
+                              title={category.label}
+                            >
+                              <Icon size={17} />
+                            </span>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                                <p className="text-sm font-black text-[var(--brand-ink-3)]">
+                                  {log.actionLabel}
+                                </p>
+                                <span className="text-[0.7rem] font-bold text-[var(--brand-ink-2)]/55">
+                                  {timeOnly(log.createdAt)}
+                                </span>
+                              </div>
+
+                              <p className="mt-0.5 text-xs font-bold text-[var(--brand-ink-2)]/75">
+                                <span className="text-[var(--brand-primary)]">{actorName(log)}</span>
+                                {entityLabel ? ` · ${entityLabel}` : ""}
+                                {log.ipAddress ? ` · IP ${log.ipAddress}` : ""}
+                              </p>
+
+                              {chips.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                  {chips.map((chip) => (
+                                    <span
+                                      key={chip.key}
+                                      className="max-w-full truncate rounded-lg bg-[var(--brand-cream)] px-2 py-1 text-[0.66rem] font-bold text-[var(--brand-ink-2)]/70"
+                                      title={chip.text}
+                                    >
+                                      {chip.text}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </section>
+                ))}
+              </div>
             )}
           </>
         )}
