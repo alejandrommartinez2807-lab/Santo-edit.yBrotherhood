@@ -34,12 +34,14 @@ noches, folio del huésped, housekeeping, tarifas).
 - Guardar: `Project URL`, `anon key` y `service_role key`.
 
 ### 2. Aplicar el esquema
-En el **SQL Editor** de ese proyecto, aplicar en orden las migraciones de
-`supabase/migrations/` (de `0001` a la última). Las de restaurante se reutilizan
-para el POS interno del hotel (folio ↔ consumo); la del hotel es `0026`.
+Abrir **`supabase/HOTEL-SETUP.sql`**, copiar TODO y pegarlo en el **SQL Editor**
+del proyecto nuevo → Run. Es el bundle con las 25 migraciones (`0001`→`0026`) en
+orden y es idempotente (correrlo dos veces no rompe). Las de restaurante se
+reutilizan para el POS interno del hotel (folio ↔ consumo); la del hotel es
+`0026_hotel_core`.
 
-> Cuando esté estable armo un bundle `supabase/HOTEL-SETUP.sql` (todas las
-> migraciones en un solo pegado), igual que se hizo `BROTHERHOOD-SETUP.sql`.
+> Si prefieres, también puedes aplicar una por una las de `supabase/migrations/`.
+> El bundle se regenera concatenando esa carpeta en orden.
 
 ### 3. Variables de entorno del worktree
 Copiar `.env.example` a `.env.local` en esta rama y poner las claves del
