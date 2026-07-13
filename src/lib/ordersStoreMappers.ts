@@ -108,8 +108,11 @@ export function buildItemsText(items: OrderItem[]): string {
 
 export function orderRowToLocalOrder(row: Row, items: OrderItem[]): LocalOrder {
   const seq = num(row.seq)
+  const branchSeq = num(row.branch_seq)
   return {
     rowNumber: seq > 0 ? seq + 1 : undefined,
+    branchNumber: branchSeq > 0 ? branchSeq : undefined,
+    branchCode: cleanText(row.branch_code) || undefined,
     id: cleanText(row.id),
     createdAt: iso(row.created_at),
     customerName: cleanText(row.customer_name),

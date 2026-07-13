@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     // el pedido pertenece a una sola sede y no expone datos de otras.
     const { data, error } = await supabase
       .from("orders")
-      .select("id,status,seq")
+      .select("id,status,seq,branch_seq,branch_code")
       .eq("id", orderId)
       .maybeSingle()
 
@@ -65,6 +65,14 @@ export async function GET(request: NextRequest) {
     }
 
     const seq = Number(data.seq || 0)
+    const branchSeq = Number(data.branch_seq || 0)
+    const branchCode = String(data.branch_code || "").trim()
+    const displayNumber =
+      branchSeq > 0
+        ? `#${String(branchSeq).padStart(2, "0")}${branchCode ? `-${branchCode}` : ""}`
+        : seq > 0
+          ? `#${String(seq).padStart(2, "0")}`
+          : ""
     const rawStatus = String(data.status || "").trim()
     const status = PUBLIC_STATUSES.has(rawStatus) ? rawStatus : "Pendiente"
 
@@ -93,7 +101,7 @@ export async function GET(request: NextRequest) {
     return noStoreResponse({
       ok: true,
       orderId: String(data.id || orderId),
-      displayNumber: seq > 0 ? `#${String(seq).padStart(2, "0")}` : "",
+      displayNumber,
       status,
       items,
     })

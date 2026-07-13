@@ -221,6 +221,14 @@ function calculateDeliveryMessageOrderTotals(order: LocalOrder): OrderTotals {
 }
 
 export function getDisplayOrderNumber(order: LocalOrder) {
+  // Número por sede (#40-s): correlativo propio de la sede + inicial. Si aún no
+  // se aplicó la migración 0025, cae al número global (rowNumber/seq).
+  if (order.branchNumber && order.branchNumber > 0) {
+    return `#${String(order.branchNumber).padStart(2, "0")}${
+      order.branchCode ? `-${order.branchCode}` : ""
+    }`
+  }
+
   if (order.rowNumber && order.rowNumber > 1) {
     return `#${String(order.rowNumber - 1).padStart(2, "0")}`
   }

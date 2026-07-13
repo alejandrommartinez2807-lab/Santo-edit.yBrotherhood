@@ -128,6 +128,8 @@ export type PaymentForm = {
 
 export type LocalOrder = {
   rowNumber?: number
+  branchNumber?: number
+  branchCode?: string
   id: string
   createdAt: string
   customerName: string
@@ -557,6 +559,9 @@ export function calculatePaymentDraft(order: LocalOrder, form: PaymentForm) {
 }
 
 export function getDisplayOrderNumber(order: LocalOrder) {
+  if (order.branchNumber && order.branchNumber > 0) {
+    return `#${String(order.branchNumber).padStart(2, "0")}${order.branchCode ? `-${order.branchCode}` : ""}`
+  }
   if (order.rowNumber && order.rowNumber > 1) return `#${String(order.rowNumber - 1).padStart(2, "0")}`
   const parts = order.id.split("-")
   const lastPart = parts[parts.length - 1] || order.id

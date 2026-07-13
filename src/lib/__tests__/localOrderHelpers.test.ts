@@ -41,7 +41,17 @@ describe("normalizePhoneForWhatsApp", () => {
 })
 
 describe("getDisplayOrderNumber", () => {
-  it("usa rowNumber para el número visible", () => {
+  it("usa el número por sede con inicial cuando existe", () => {
+    const order = { id: "ord-x", branchNumber: 40, branchCode: "s", rowNumber: 5 } as LocalOrder
+    expect(getDisplayOrderNumber(order)).toBe("#40-s")
+  })
+
+  it("muestra el número por sede sin guion si no hay inicial", () => {
+    const order = { id: "ord-x", branchNumber: 7 } as LocalOrder
+    expect(getDisplayOrderNumber(order)).toBe("#07")
+  })
+
+  it("cae a rowNumber si no hay número por sede (pre-migración)", () => {
     const order = { id: "ord-x", rowNumber: 5 } as LocalOrder
     expect(getDisplayOrderNumber(order)).toBe("#04")
   })
