@@ -33,6 +33,7 @@ const NAV_ENTRIES: NavEntry[] = [
   { key: "hotelReservations", label: "Reservas hotel", href: "/local-santo/reservas-hotel" },
   { key: "folio", label: "Folio", href: "/local-santo/folio" },
   { key: "housekeeping", label: "Limpieza", href: "/local-santo/housekeeping" },
+  { key: "rateSeasons", label: "Tarifas", href: "/local-santo/tarifas" },
   { key: "delivery", label: "Delivery", href: "/local-santo/delivery" },
   { key: "paymentProofs", label: "Comprobantes", href: "/local-santo/comprobantes" },
   { key: "tickets", label: "Tickets", href: "/local-santo/tickets" },

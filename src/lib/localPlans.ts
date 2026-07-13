@@ -46,6 +46,7 @@ export type LocalModuleKey =
   | "hotelReservations"
   | "folio"
   | "housekeeping"
+  | "rateSeasons"
   | "waiterConfirmation"
   | "kitchenItems"
   | "tickets"
@@ -128,6 +129,7 @@ export type LocalPlanConfigLike = {
   hotelReservationsModuleEnabled?: unknown
   folioModuleEnabled?: unknown
   housekeepingModuleEnabled?: unknown
+  rateSeasonsModuleEnabled?: unknown
   waiterConfirmationModuleEnabled?: unknown
   kitchenItemsModuleEnabled?: unknown
   ticketsModuleEnabled?: unknown
@@ -213,6 +215,7 @@ export const LOCAL_MODULE_KEYS: LocalModuleKey[] = [
   "hotelReservations",
   "folio",
   "housekeeping",
+  "rateSeasons",
   "waiterConfirmation",
   "kitchenItems",
   "tickets",
@@ -381,6 +384,7 @@ export const LOCAL_PLAN_DEFINITIONS: LocalPlanDefinition[] = [
       "hotelReservations",
       "folio",
       "housekeeping",
+      "rateSeasons",
       "waiterConfirmation",
       "kitchenItems",
       "tickets",
@@ -817,6 +821,18 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     comingSoon: false,
   },
   {
+    key: "rateSeasons",
+    label: "Tarifas por temporada",
+    description: "Temporadas que ajustan la tarifa por noche de un tipo de habitación en un rango de fechas (precio fijo o factor). Al crear una reserva se sugiere automáticamente la tarifa según las fechas.",
+    category: "money",
+    minimumPlan: "complete",
+    ownerConfigKey: "rateSeasonsModuleEnabled",
+    visibleForOwnerSettings: true,
+    visibleForSupport: true,
+    routePath: "/local-santo/tarifas",
+    comingSoon: false,
+  },
+  {
     key: "waiterConfirmation",
     label: "Confirmación por mesonero",
     description: "Revisión del personal para productos que requieren confirmación antes de avanzar en cocina o entrega.",
@@ -1238,6 +1254,10 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "housekeeping") {
     return normalizeBoolean(config.housekeepingModuleEnabled, false)
+  }
+
+  if (moduleKey === "rateSeasons") {
+    return normalizeBoolean(config.rateSeasonsModuleEnabled, false)
   }
 
   if (moduleKey === "waiterConfirmation") {

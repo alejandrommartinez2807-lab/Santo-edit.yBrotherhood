@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import {
   getHotelReservations,
+  getRateSeasons,
   getRoomTypes,
   getRooms,
   saveHotelReservation,
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
     if (!access.ok) return access.response
 
     const branchId = await resolveBranchId(request)
-    const [reservations, rooms, roomTypes] = await Promise.all([
+    const [reservations, rooms, roomTypes, rateSeasons] = await Promise.all([
       getHotelReservations(
         {
           from: cleanText(request.nextUrl.searchParams.get("from")) || undefined,
@@ -64,9 +65,10 @@ export async function GET(request: NextRequest) {
       ),
       getRooms(branchId),
       getRoomTypes(branchId),
+      getRateSeasons(branchId),
     ])
 
-    return NextResponse.json({ ok: true, reservations, rooms, roomTypes })
+    return NextResponse.json({ ok: true, reservations, rooms, roomTypes, rateSeasons })
   } catch (error) {
     return NextResponse.json(
       {

@@ -175,6 +175,7 @@ export type BusinessConfig = {
   hotelReservationsModuleEnabled: boolean
   folioModuleEnabled: boolean
   housekeepingModuleEnabled: boolean
+  rateSeasonsModuleEnabled: boolean
   waiterConfirmationModuleEnabled: boolean
   kitchenItemsModuleEnabled: boolean
   ticketsModuleEnabled: boolean
@@ -319,6 +320,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   hotelReservationsModuleEnabled: true,
   folioModuleEnabled: true,
   housekeepingModuleEnabled: true,
+  rateSeasonsModuleEnabled: true,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
   ticketsModuleEnabled: true,
@@ -845,6 +847,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.housekeepingModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.housekeepingModuleEnabled
     ),
+    rateSeasonsModuleEnabled: normalizeBooleanConfig(
+      source.rateSeasonsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.rateSeasonsModuleEnabled
+    ),
     waiterConfirmationModuleEnabled: normalizeBooleanConfig(
       source.waiterConfirmationModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.waiterConfirmationModuleEnabled
@@ -951,6 +957,7 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
   const hotelReservationsAccess = getModulePlanAccess(config, "hotelReservations")
   const folioAccess = getModulePlanAccess(config, "folio")
   const housekeepingAccess = getModulePlanAccess(config, "housekeeping")
+  const rateSeasonsAccess = getModulePlanAccess(config, "rateSeasons")
   const waiterConfirmationAccess = getModulePlanAccess(config, "waiterConfirmation")
   const kitchenItemsAccess = getModulePlanAccess(config, "kitchenItems")
   const ticketsAccess = getModulePlanAccess(config, "tickets")
@@ -1058,6 +1065,9 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
       : false,
     housekeepingModuleEnabled: housekeepingAccess.includedInPlan
       ? config.housekeepingModuleEnabled
+      : false,
+    rateSeasonsModuleEnabled: rateSeasonsAccess.includedInPlan
+      ? config.rateSeasonsModuleEnabled
       : false,
     waiterConfirmationModuleEnabled: waiterConfirmationAccess.includedInPlan
       ? config.waiterConfirmationModuleEnabled

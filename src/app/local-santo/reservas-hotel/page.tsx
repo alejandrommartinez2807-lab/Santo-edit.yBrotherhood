@@ -24,6 +24,7 @@ import {
   nightsBetween,
   type HotelReservationStatus,
 } from "@/lib/hotelReservationConflicts"
+import { quoteStay, type RateSeasonLike } from "@/lib/rateSeasons"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -92,6 +93,7 @@ function ReservasHotelContent() {
   const [reservations, setReservations] = useState<HotelReservation[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([])
+  const [rateSeasons, setRateSeasons] = useState<RateSeasonLike[]>([])
   const [loading, setLoading] = useState(true)
   const [denied, setDenied] = useState(false)
   const [error, setError] = useState("")
@@ -127,6 +129,7 @@ function ReservasHotelContent() {
       setReservations(data.reservations || [])
       setRooms(data.rooms || [])
       setRoomTypes(data.roomTypes || [])
+      setRateSeasons(data.rateSeasons || [])
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
     } finally {
@@ -176,15 +179,35 @@ function ReservasHotelContent() {
     return map
   }, [rooms])
 
-  // Al elegir habitación, precarga su tarifa.
+  // Cotiza una habitación para el rango actual aplicando las temporadas.
+  const quoteRoom = useCallback(
+    (room: Room) =>
+      quoteStay({
+        baseRate: rateByRoom(room),
+        roomTypeId: room.roomTypeId,
+        checkIn,
+        checkOut,
+        seasons: rateSeasons,
+      }),
+    [rateByRoom, checkIn, checkOut, rateSeasons],
+  )
+
+  // Al elegir habitación, precarga su tarifa (ajustada por temporada si aplica).
   function selectRoom(id: string) {
     setRoomId(id)
     const room = rooms.find((r) => r.id === id)
-    if (room) setRate(String(rateByRoom(room)))
+    if (room) setRate(String(quoteRoom(room).averageRate || rateByRoom(room)))
   }
 
   const effectiveRate = Number(rate) || 0
   const total = effectiveRate * nights
+
+  // Sugerencia de temporada para la habitación elegida y las fechas actuales.
+  const selectedRoom = useMemo(() => rooms.find((r) => r.id === roomId), [rooms, roomId])
+  const seasonQuote = useMemo(
+    () => (selectedRoom ? quoteRoom(selectedRoom) : null),
+    [selectedRoom, quoteRoom],
+  )
 
   async function create() {
     if (!guestName.trim() || !validRange) return
@@ -371,6 +394,23 @@ function ReservasHotelContent() {
                   className="w-full bg-transparent font-bold outline-none"
                 />
               </label>
+              {seasonQuote?.seasonApplied && (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-2.5 text-sm font-bold text-[var(--brand-primary)] sm:col-span-2">
+                  <span>
+                    Temporada {seasonQuote.seasonNames.join(", ")}: ~${seasonQuote.averageRate}/noche
+                    (total ${seasonQuote.total})
+                  </span>
+                  {Math.abs(seasonQuote.averageRate - effectiveRate) > 0.01 && (
+                    <button
+                      type="button"
+                      onClick={() => setRate(String(seasonQuote.averageRate))}
+                      className="rounded-full border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-1 text-xs font-black uppercase text-[var(--brand-primary)]"
+                    >
+                      Aplicar
+                    </button>
+                  )}
+                </div>
+              )}
               <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3">
                 <Users size={16} className="shrink-0 text-[var(--brand-primary)]" />
                 <input
