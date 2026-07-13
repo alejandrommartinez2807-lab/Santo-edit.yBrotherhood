@@ -3,6 +3,7 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import { BRAND } from "@/lib/brand"
+import { signOutLocalStaff } from "@/lib/staffSession"
 import {
   AlertTriangle,
   ArrowLeft,
@@ -868,19 +869,12 @@ function DeliveryPageContent() {
   }
 
   function handleLogout() {
+    // Cierra la sesión de verdad (incluye Supabase) y va al login para poder
+    // entrar como otro usuario. Ver signOutLocalStaff.
     window.localStorage.removeItem(ADMIN_STORAGE_KEY)
     setAdminPassword("")
     setPasswordInput("")
-    setOrders([])
-    setErrorMessage(null)
-    setToastMessage(null)
-    setSearchTerm("")
-    setActiveFilter("Activos")
-    setShowControls(true)
-    knownReadyIdsRef.current = new Set()
-    hasLoadedOnceRef.current = false
-    pendingStatusRef.current = new Map()
-    setReportingOrderIds([])
+    void signOutLocalStaff()
   }
 
   async function reportDeliveryToCashier(order: LocalOrder) {
@@ -1162,7 +1156,7 @@ function DeliveryPageContent() {
                     onClick={handleLogout}
                     className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
                   >
-                    Salir
+                    Cambiar de usuario
                   </button>
                 </div>
 
