@@ -280,6 +280,21 @@ export async function deleteFolioItem(id: string, branchId?: string | null): Pro
   return { ok: true }
 }
 
+/** IDs de pedidos del POS ya cargados a algún folio (para no duplicar). */
+export async function getChargedOrderIds(branchId?: string | null): Promise<string[]> {
+  const supabase = getSupabaseAdmin()
+  let query = supabase
+    .from("folio_items")
+    .select("source_order_id")
+    .not("source_order_id", "is", null)
+  if (branchId) query = query.eq("branch_id", branchId)
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+  return (data ?? [])
+    .map((row) => cleanText((row as Row).source_order_id))
+    .filter(Boolean)
+}
+
 /** ¿El folio ya tiene el cargo de habitación? (para no duplicarlo al abrir). */
 export async function hasRoomCharge(folioId: string, branchId?: string | null): Promise<boolean> {
   const supabase = getSupabaseAdmin()

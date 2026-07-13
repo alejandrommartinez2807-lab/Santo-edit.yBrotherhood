@@ -48,3 +48,7 @@ export async function deleteFolioItem(id: string, branchId?: string | null) {
 export async function hasRoomCharge(folioId: string, branchId?: string | null): Promise<boolean> {
   return store.hasRoomCharge(folioId, branchId)
 }
+
+export async function getChargedOrderIds(branchId?: string | null): Promise<string[]> {
+  return store.getChargedOrderIds(branchId)
+}

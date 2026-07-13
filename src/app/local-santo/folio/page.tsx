@@ -13,6 +13,7 @@ import {
   Receipt,
   Trash2,
   UserRound,
+  UtensilsCrossed,
 } from "lucide-react"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
 
@@ -52,12 +53,22 @@ type FolioItem = {
   method: string
   createdAt: string
 }
+type ChargeableOrder = {
+  id: string
+  number: number | null
+  customerName: string
+  tableNumber: string
+  orderType: string
+  status: string
+  total: number
+}
 type FolioView = {
   folio: Folio | null
   items: FolioItem[]
   guest: Guest | null
   reservation: Reservation | null
   balance: number
+  chargeableOrders?: ChargeableOrder[]
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -234,6 +245,7 @@ function FolioContent() {
   const items = view?.items || []
   const balance = view?.balance || 0
   const reservation = view?.reservation || null
+  const chargeableOrders = view?.chargeableOrders || []
   const closed = folio?.status === "cerrado"
 
   const inputClass =
@@ -513,6 +525,48 @@ function FolioContent() {
                               <CreditCard size={18} />
                             </button>
                           </div>
+                        </div>
+
+                        {/* Cargar consumo del restaurante a la habitación */}
+                        <div className="mt-5 rounded-xl border-2 border-dashed border-[var(--brand-primary)]/25 p-3">
+                          <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                            <UtensilsCrossed size={15} /> Cargar consumo del restaurante
+                          </p>
+                          {chargeableOrders.length === 0 ? (
+                            <p className="mt-2 text-sm font-bold text-[var(--brand-ink-2)]/55">
+                              No hay pedidos pendientes por cargar.
+                            </p>
+                          ) : (
+                            <ul className="mt-2 space-y-2">
+                              {chargeableOrders.map((order) => (
+                                <li
+                                  key={order.id}
+                                  className="flex items-center justify-between gap-3 rounded-lg bg-[var(--brand-cream)] px-3 py-2"
+                                >
+                                  <div className="min-w-0">
+                                    <p className="font-bold text-[var(--brand-ink-3)]">
+                                      Pedido {order.number ? `#${order.number}` : ""}
+                                      {order.customerName ? ` · ${order.customerName}` : ""}
+                                    </p>
+                                    <p className="text-xs font-bold uppercase tracking-wide text-[var(--brand-ink-2)]/50">
+                                      {order.orderType}
+                                      {order.tableNumber ? ` · ${order.tableNumber}` : ""} · {order.status}
+                                    </p>
+                                  </div>
+                                  <span className="font-black text-[var(--brand-ink-3)]">${order.total}</span>
+                                  <button
+                                    onClick={() =>
+                                      post({ action: "chargeOrder", folioId: folio.id, orderId: order.id })
+                                    }
+                                    disabled={busy}
+                                    className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-black uppercase text-white disabled:opacity-50"
+                                  >
+                                    <Plus size={13} /> Cargar
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                         </div>
 
                         <button

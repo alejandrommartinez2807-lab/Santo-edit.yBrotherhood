@@ -5,7 +5,7 @@
 -- Es idempotente: si lo corres dos veces no rompe ni duplica.
 --
 -- Incluye el motor del restaurante (reutilizado para el POS interno /
--- folio del huésped) + el núcleo hotelero (0026_hotel_core).
+-- folio del huésped) + el núcleo hotelero (0026_hotel_core, 0027).
 -- Aplícalo en un proyecto Supabase NUEVO y VACÍO del hotel.
 -- ============================================================
 
@@ -1525,7 +1525,7 @@ create table if not exists folio_items (
   unit_amount      numeric(12,2) not null default 0,
   amount           numeric(12,2) not null default 0, -- total de la línea
   method           text not null default '',         -- método de pago (si kind=pago)
-  source_order_id  uuid,                              -- pedido del POS (restaurante)
+  source_order_id  text,                              -- id del pedido del POS (texto: "ord-...")
   created_by       text not null default '',
   created_at       timestamptz not null default now()
 );
@@ -1593,4 +1593,22 @@ alter table folios              enable row level security;
 alter table folio_items         enable row level security;
 alter table rate_seasons        enable row level security;
 alter table housekeeping_tasks  enable row level security;
+
+
+-- ============================================================
+-- >>> 0027_folio_source_order_text.sql
+-- ============================================================
+
+-- ============================================================
+-- Santo Edit · Hotel — folio_items.source_order_id a TEXT
+-- Migración: 0027_folio_source_order_text
+--
+-- Los IDs de pedidos del POS son texto ("ord-mrjkwq6a-2xqqf"), no uuid. La
+-- columna se creó como uuid en 0026 y rompía al cargar un pedido al folio.
+-- Este ALTER la pasa a text (idempotente: si ya es text, no hace nada dañino).
+-- Aplicar solo si ya se corrió 0026 con la versión antigua (uuid).
+-- ============================================================
+
+alter table folio_items
+  alter column source_order_id type text using source_order_id::text;
 

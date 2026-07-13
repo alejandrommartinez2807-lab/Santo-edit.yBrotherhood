@@ -184,6 +184,7 @@ export {
   closeFolio,
   deleteFolioItem,
   folioBalance,
+  getChargedOrderIds,
   getFolioByReservation,
   getFolioItems,
   getGuest,

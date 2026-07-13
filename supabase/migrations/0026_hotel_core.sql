@@ -165,7 +165,7 @@ create table if not exists folio_items (
   unit_amount      numeric(12,2) not null default 0,
   amount           numeric(12,2) not null default 0, -- total de la línea
   method           text not null default '',         -- método de pago (si kind=pago)
-  source_order_id  uuid,                              -- pedido del POS (restaurante)
+  source_order_id  text,                              -- id del pedido del POS (texto: "ord-...")
   created_by       text not null default '',
   created_at       timestamptz not null default now()
 );

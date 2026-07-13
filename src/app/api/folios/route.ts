@@ -4,16 +4,19 @@ import {
   closeFolio,
   deleteFolioItem,
   folioBalance,
+  getChargedOrderIds,
   getFolioByReservation,
   getFolioItems,
   getGuest,
   getHotelReservationById,
+  getOrders,
   hasRoomCharge,
   openFolio,
   saveGuest,
   updateHotelReservationGuest,
   updateHotelReservationStatus,
 } from "@/lib/orders"
+import type { LocalOrder } from "@/lib/orders"
 import { resolveBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 import { getLocalAccessAuditActor } from "@/lib/localAccess"
@@ -28,17 +31,45 @@ function cleanText(value: unknown) {
   return String(value || "").trim()
 }
 
+function orderTotal(order: LocalOrder) {
+  return Number(order.totalUSD ?? order.totalPrice ?? 0) || 0
+}
+
+// Pedidos del POS que se pueden cargar a una habitación: activos (no cancelados,
+// no de práctica) y aún no cargados a ningún folio.
+async function getChargeableOrders(branchId: string | null) {
+  const [orders, chargedIds] = await Promise.all([
+    getOrders(branchId),
+    getChargedOrderIds(branchId),
+  ])
+  const charged = new Set(chargedIds)
+  return orders
+    .filter((order) => order.status !== "Cancelado" && !order.isTraining && !charged.has(order.id))
+    .slice(0, 40)
+    .map((order) => ({
+      id: order.id,
+      number: order.branchNumber ?? order.rowNumber ?? null,
+      customerName: order.customerName,
+      tableNumber: order.tableNumber,
+      orderType: order.orderType,
+      status: order.status,
+      total: orderTotal(order),
+    }))
+}
+
 async function buildFolioView(reservationId: string, branchId: string | null) {
   const folio = await getFolioByReservation(reservationId, branchId)
   const items = folio ? await getFolioItems(folio.id, branchId) : []
   const reservation = await getHotelReservationById(reservationId, branchId)
   const guest = reservation?.guestId ? await getGuest(reservation.guestId, branchId) : null
+  const chargeableOrders = folio && folio.status !== "cerrado" ? await getChargeableOrders(branchId) : []
   return {
     folio,
     items,
     guest,
     reservation,
     balance: folioBalance(items),
+    chargeableOrders,
   }
 }
 
@@ -172,6 +203,50 @@ export async function POST(request: NextRequest) {
           unitAmount: amount,
           quantity: 1,
           method: cleanText(body.method),
+          createdBy,
+        },
+        branchId,
+      )
+
+      const view = await buildFolioView(reservationId, branchId)
+      return NextResponse.json({ ok: true, ...view })
+    }
+
+    // --- Cargar un pedido del restaurante a la habitación ---
+    if (action === "chargeOrder") {
+      const folioId = cleanText(body.folioId)
+      const orderId = cleanText(body.orderId)
+      const reservationId = cleanText(body.reservationId)
+      if (!folioId || !orderId) {
+        return NextResponse.json({ error: "Folio o pedido no indicado" }, { status: 400 })
+      }
+
+      // Idempotencia: no cargar dos veces el mismo pedido.
+      const chargedIds = new Set(await getChargedOrderIds(branchId))
+      if (chargedIds.has(orderId)) {
+        return NextResponse.json({ error: "Ese pedido ya fue cargado a una habitación." }, { status: 409 })
+      }
+
+      const order = (await getOrders(branchId)).find((o) => o.id === orderId)
+      if (!order) {
+        return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 })
+      }
+      const amount = Number(order.totalUSD ?? order.totalPrice ?? 0) || 0
+      if (amount <= 0) {
+        return NextResponse.json({ error: "El pedido no tiene monto para cargar" }, { status: 400 })
+      }
+
+      const orderLabel = order.branchNumber ?? order.rowNumber
+      await addFolioItem(
+        {
+          folioId,
+          kind: "cargo",
+          category: "restaurante",
+          description: `Pedido${orderLabel ? ` #${orderLabel}` : ""}${order.customerName ? ` · ${order.customerName}` : ""}`,
+          amount,
+          unitAmount: amount,
+          quantity: 1,
+          sourceOrderId: orderId,
           createdBy,
         },
         branchId,
