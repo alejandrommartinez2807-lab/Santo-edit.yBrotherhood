@@ -21,7 +21,7 @@ export const BRAND = {
   description:
     "Confort, gastronomía y atención de primera en el corazón de Valencia. Habitaciones, suites y salones para negocios y placer.",
   /** Logo en /public (déjalo vacío para usar solo texto). */
-  logoUrl: "/demo/lidotel/lidotel-logo.jpg",
+  logoUrl: "/demo/lidotel/lidotel-logo.png",
 
   /** Contacto / redes (defaults; la config en BD puede sobreescribir). */
   whatsapp: "582417000399",

@@ -40,7 +40,7 @@ function readBusinessDescription(config: Record<string, unknown>) {
 
   return description && description !== "Menú y pedidos"
     ? description
-    : `Menú digital y pedidos en línea de ${BRAND.name}.`;
+    : BRAND.description;
 }
 
 // Metadata dinámica por cliente: el nombre sale de BRAND (fijo por código en
@@ -65,9 +65,9 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     manifest: "/manifest.webmanifest",
     icons: {
-      icon: "/demo/lidotel/lidotel-logo.jpg",
-      shortcut: "/demo/lidotel/lidotel-logo.jpg",
-      apple: "/demo/lidotel/lidotel-logo.jpg",
+      icon: "/favicon.ico",
+      shortcut: "/favicon.ico",
+      apple: "/demo/lidotel/lidotel-logo.png",
     },
     openGraph: {
       type: "website",
@@ -112,11 +112,11 @@ async function getRestaurantJsonLd(): Promise<string> {
 
     const jsonLd: Record<string, unknown> = {
       "@context": "https://schema.org",
-      "@type": "Restaurant",
+      "@type": "Hotel",
       name: BRAND.name,
       url: siteUrl,
       image: `${siteUrl}/logo.png`,
-      menu: siteUrl,
+      starRating: { "@type": "Rating", ratingValue: "5" },
       description: readBusinessDescription(config),
     };
 
