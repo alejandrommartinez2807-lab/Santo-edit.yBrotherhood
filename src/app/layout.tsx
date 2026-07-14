@@ -76,13 +76,13 @@ export async function generateMetadata(): Promise<Metadata> {
       description,
       url: "/",
       locale: "es_VE",
-      images: [{ url: "/demo/lidotel/lidotel-fachada.jpg", alt: businessName }],
+      images: [{ url: "/demo/lidotel/lidotel-hero.png", alt: businessName }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: ["/demo/lidotel/lidotel-fachada.jpg"],
+      images: ["/demo/lidotel/lidotel-hero.png"],
     },
   };
 }
