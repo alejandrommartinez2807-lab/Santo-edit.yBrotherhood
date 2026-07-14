@@ -12,21 +12,21 @@
 
 export const BRAND = {
   /** Nombre del negocio (default si la config en BD viene vacía). */
-  name: "Brotherhood",
+  name: "Lidotel Valencia",
   /** Nombre corto para títulos/QR. */
-  shortName: "Brotherhood",
+  shortName: "Lidotel",
   /** Frase corta de marca. */
-  tagline: "Smash Burgers, Combos y Sides",
+  tagline: "Hotel 5 estrellas · Valencia",
   /** Descripción para el menú/landing. */
   description:
-    "Smash burgers jugosas, combos, papas, chicken y bebidas frías. Delivery y pick up en Valencia y San Diego.",
+    "Confort, gastronomía y atención de primera en el corazón de Valencia. Habitaciones, suites y salones para negocios y placer.",
   /** Logo en /public (déjalo vacío para usar solo texto). */
-  logoUrl: "/brotherhood-logo.png",
+  logoUrl: "/demo/lidotel/lidotel-logo.jpg",
 
   /** Contacto / redes (defaults; la config en BD puede sobreescribir). */
-  whatsapp: "584124467558",
-  instagram: "brotherhood_vzla",
-  location: "Valencia, Venezuela",
+  whatsapp: "582417000399",
+  instagram: "lidotel",
+  location: "Valencia, Carabobo, Venezuela",
 
   /** Moneda e idioma. */
   currency: {

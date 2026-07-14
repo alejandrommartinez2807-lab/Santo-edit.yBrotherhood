@@ -19,23 +19,23 @@
      los `--brand-ink*` son el texto y ahora son claros (ink-3 = el más brillante,
      para títulos/texto principal). Así, cualquier combo `bg-cream + text-ink`
      mantiene contraste pero invertido a oscuro sin tocar cada componente. */
-  --brand-primary: #f5a623;
-  --brand-primary-dark: #d4820a;
-  --brand-primary-rgb: 245, 166, 35;
-  --brand-cream: #0d0d0d;
-  --brand-ink: #e7e5e4;
-  --brand-ink-2: #a8a29e;
-  --brand-ink-3: #fafaf9;
-  --brand-amber: #ffb340;
-  --brand-accent: #ffb340;
-  --brand-accent-200: #ffc766;
-  --brand-accent-100: #ffe1b0;
-  --brand-accent-rgb: 255, 179, 64;
+  --brand-primary: #d4af37;
+  --brand-primary-dark: #a8842a;
+  --brand-primary-rgb: 212, 175, 55;
+  --brand-cream: #0b0b0c;
+  --brand-ink: #ece9e1;
+  --brand-ink-2: #b3ad9e;
+  --brand-ink-3: #faf7ef;
+  --brand-amber: #e6c964;
+  --brand-accent: #d4af37;
+  --brand-accent-200: #e6c964;
+  --brand-accent-100: #f2e2a8;
+  --brand-accent-rgb: 212, 175, 55;
 
   /* Superficies oscuras auxiliares para tarjetas/paneles del sitio público. */
-  --brand-surface: #141414;
-  --brand-surface-2: #1c1c1c;
-  --brand-border: #2a2a2a;
+  --brand-surface: #15140f;
+  --brand-surface-2: #1d1b14;
+  --brand-border: #2c2822;
 }
 
 * {
@@ -57,7 +57,7 @@ html {
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top, rgba(245, 166, 35, 0.16), transparent 35%),
+    radial-gradient(circle at top, rgba(212, 175, 55, 0.16), transparent 35%),
     linear-gradient(180deg, #141414 0%, #0a0a0a 45%, #000000 100%);
   color: white;
 }

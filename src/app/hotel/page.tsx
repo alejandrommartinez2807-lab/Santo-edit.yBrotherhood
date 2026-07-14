@@ -38,6 +38,12 @@ export default function HotelLandingPage() {
     <main className="min-h-screen bg-[var(--brand-cream)] text-[var(--brand-ink-2)]">
       {/* Hero */}
       <section className="px-6 py-16 text-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/demo/lidotel/lidotel-fachada.jpg"
+          alt={BRAND.name}
+          className="mx-auto mb-10 h-56 w-full max-w-3xl rounded-2xl object-cover shadow-2xl ring-1 ring-[var(--brand-primary)]/30 sm:h-80"
+        />
         <p className="text-xs font-black uppercase tracking-[0.24em] text-[var(--brand-primary)]">{BRAND.name}</p>
         <h1 className="mx-auto mt-3 max-w-2xl text-4xl font-black uppercase text-[var(--brand-ink-3)]">
           {profile?.headline || "Bienvenido"}
