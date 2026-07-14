@@ -7,14 +7,25 @@ import {
   CalendarCheck,
   Check,
   Clock,
+  ConciergeBell,
   KeyRound,
   Mail,
   MapPin,
   Phone,
+  Quote,
+  Sparkles,
   Star,
+  UtensilsCrossed,
   Users,
 } from "lucide-react"
 import { BRAND } from "@/lib/brand"
+
+const EXPERIENCE = [
+  { icon: MapPin, title: "Ubicación privilegiada", text: "En el corazón de Valencia, a minutos de todo." },
+  { icon: UtensilsCrossed, title: "Gastronomía de autor", text: "Restaurante y desayuno buffet incluido." },
+  { icon: Sparkles, title: "Confort 5 estrellas", text: "Habitaciones y suites impecables, atención al detalle." },
+  { icon: ConciergeBell, title: "Atención personalizada", text: "Un equipo dedicado a que tu estadía sea perfecta." },
+]
 
 type Profile = {
   headline: string
@@ -26,15 +37,16 @@ type Profile = {
   checkinTime: string
   checkoutTime: string
 }
-type Quote = { total: number; averageRate: number }
+type RoomQuote = { total: number; averageRate: number }
 type RoomType = {
   roomTypeId: string
   name: string
   description: string
   capacity: number
   freeCount: number
-  quote: Quote
+  quote: RoomQuote
 }
+type Review = { guestName: string; rating: number; comment: string }
 
 function isoInDays(days: number) {
   const d = new Date()
@@ -47,6 +59,9 @@ const FACHADA = "/demo/lidotel/lidotel-fachada.jpg"
 export default function HotelLandingPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [types, setTypes] = useState<RoomType[]>([])
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [ratingAvg, setRatingAvg] = useState(0)
+  const [ratingCount, setRatingCount] = useState(0)
   const [loaded, setLoaded] = useState(false)
 
   // Rango de muestra (dentro de una semana, 2 noches) para cotizar "desde".
@@ -66,6 +81,17 @@ export default function HotelLandingPage() {
       .then((d) => setTypes(Array.isArray(d.types) ? d.types : []))
       .catch(() => setTypes([]))
   }, [sample])
+
+  useEffect(() => {
+    fetch("/api/public/hotel/review", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        setReviews(Array.isArray(d.reviews) ? d.reviews : [])
+        setRatingAvg(d.summary?.average || 0)
+        setRatingCount(d.summary?.count || 0)
+      })
+      .catch(() => setReviews([]))
+  }, [])
 
   const amenities = (profile?.amenities || "")
     .split(/[,\n]/)
@@ -113,6 +139,21 @@ export default function HotelLandingPage() {
               <KeyRound size={18} /> Mi reserva
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* ============ Experiencia ============ */}
+      <section className="mx-auto max-w-6xl px-6 pt-16">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {EXPERIENCE.map(({ icon: Icon, title, text }) => (
+            <div key={title} className="text-center sm:text-left">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary)]/12 text-[var(--brand-primary)]">
+                <Icon size={22} strokeWidth={1.5} />
+              </span>
+              <h3 className="mt-4 font-serif text-lg font-semibold text-[var(--brand-ink-3)]">{title}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-[var(--brand-ink-2)]">{text}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -181,6 +222,47 @@ export default function HotelLandingPage() {
                 </li>
               ))}
             </ul>
+          </div>
+        </section>
+      )}
+
+      {/* ============ Testimonios ============ */}
+      {reviews.length > 0 && (
+        <section className="mx-auto max-w-6xl px-6 py-20">
+          <div className="text-center">
+            <p className="kicker">Opiniones</p>
+            <h2 className="mt-3 font-serif text-4xl font-semibold text-[var(--brand-ink-3)]">Lo que dicen nuestros huéspedes</h2>
+            {ratingCount > 0 && (
+              <div className="mt-4 flex items-center justify-center gap-2 text-[var(--brand-primary)]">
+                <span className="flex items-center gap-0.5">
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <Star key={i} size={16} fill={i < Math.round(ratingAvg) ? "currentColor" : "none"} strokeWidth={1.5} />
+                  ))}
+                </span>
+                <span className="font-serif text-lg text-[var(--brand-ink-3)]">{ratingAvg.toFixed(1)}</span>
+                <span className="text-sm text-[var(--brand-ink-2)]">· {ratingCount} opiniones</span>
+              </div>
+            )}
+            <hr className="hairline-gold mx-auto mt-6 w-24" />
+          </div>
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {reviews.slice(0, 6).map((r, i) => (
+              <figure
+                key={i}
+                className="flex flex-col rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-surface)] p-7"
+              >
+                <Quote className="text-[var(--brand-primary)]/50" size={26} />
+                <blockquote className="mt-3 flex-1 text-[var(--brand-ink)]">“{r.comment}”</blockquote>
+                <figcaption className="mt-5 flex items-center justify-between border-t border-white/5 pt-4">
+                  <span className="font-serif text-lg text-[var(--brand-ink-3)]">{r.guestName}</span>
+                  <span className="flex items-center gap-0.5 text-[var(--brand-primary)]">
+                    {Array.from({ length: r.rating }).map((_, s) => (
+                      <Star key={s} size={13} fill="currentColor" strokeWidth={0} />
+                    ))}
+                  </span>
+                </figcaption>
+              </figure>
+            ))}
           </div>
         </section>
       )}

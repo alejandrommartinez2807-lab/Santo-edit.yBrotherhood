@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createReview, getBusinessConfig, getHotelReservationByCode } from "@/lib/orders"
+import { createReview, getBusinessConfig, getHotelReservationByCode, getReviews } from "@/lib/orders"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
-import { clampRating } from "@/lib/reviewsSummary"
+import { clampRating, summarizeReviews } from "@/lib/reviewsSummary"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
 
@@ -23,6 +23,26 @@ async function reviewsEnabled() {
   const config = (await getBusinessConfig()) as unknown as Record<string, unknown>
   const access = getModulePlanAccess(config, "guestReviews")
   return access.includedInPlan && access.effectiveEnabled
+}
+
+// GET público: reseñas publicadas + resumen (para testimonios en la landing).
+export async function GET(request: NextRequest) {
+  try {
+    if (!(await reviewsEnabled())) {
+      return noStore({ ok: true, enabled: false, summary: { count: 0, average: 0 }, reviews: [] })
+    }
+    const branchId = await resolveBranchId(request)
+    const all = await getReviews(branchId)
+    const published = all.filter((r) => r.published)
+    const summary = summarizeReviews(published)
+    const reviews = published
+      .slice(0, 12)
+      .map((r) => ({ guestName: r.guestName, rating: r.rating, comment: r.comment, createdAt: r.createdAt }))
+    return noStore({ ok: true, enabled: true, summary: { count: summary.count, average: summary.average }, reviews })
+  } catch (error) {
+    captureError(error, { route: "/api/public/hotel/review", action: "GET" })
+    return noStore({ ok: true, enabled: false, summary: { count: 0, average: 0 }, reviews: [] })
+  }
 }
 
 // POST público: el huésped deja una reseña (opcionalmente con su código).
