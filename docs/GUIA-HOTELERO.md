@@ -49,7 +49,10 @@
 ## 5. Operación diaria (recepción)
 
 1. **Reservas hotel**: crea/confirma reservas; el buscador acepta el **código
-   escaneado del QR** que el huésped recibe al reservar en línea.
+   escaneado del QR** que el huésped recibe al reservar en línea. Con
+   **Editar** puedes extender la estadía, cambiar de habitación, fechas o
+   tarifa — el sistema recalcula el total y rechaza el cambio si la otra
+   habitación está ocupada (te dice por quién).
 2. **Folio**: al hacer check-in se abre el folio con el cargo de habitación;
    agrega consumos y pagos. El **check-out exige saldo $0** (o confirmación
    explícita) y encola la limpieza de salida solo.
@@ -84,7 +87,27 @@ Ambas deben terminar en `🟢`. Requieren el servidor corriendo (`npm run dev`)
 y el `.env.local` del hotel en la raíz. Se pueden encadenar (los scripts
 respetan solos el límite de reservas públicas por minuto).
 
-## 8. Claves y accesos
+## 8. Los errores clásicos de los PMS — y cómo estamos cubiertos
+
+Comparado con los sistemas profesionales (Cloudbeds, Mews, Opera) y las quejas
+más comunes de la industria:
+
+| Error típico de la industria | Cómo estamos cubiertos |
+| --- | --- |
+| **Overbooking** (vender la misma habitación dos veces) | El servidor reconfirma disponibilidad justo antes de crear cada reserva; probado con dos clientes en paralelo por la última habitación: solo uno gana. |
+| **Overbooking entre canales** (Booking/Airbnb + directo) | Exportamos el calendario iCal de ocupación; si vendes en OTAs, usa **bloqueos** para apartar el cupo que les des. La sincronización automática bidireccional es ampliable a futuro. |
+| **Front desk lento / flujos rígidos** | Todo a 1–2 clics; con 200 habitaciones cada pantalla responde en menos de medio segundo (probado). |
+| **Meses de entrenamiento** (el 52% de los gerentes reporta 4 meses a 3 años en sistemas legacy) | Panel en español simple + esta guía; el flujo completo (reserva→check-in→cargos→check-out) son 4 botones. |
+| **No poder modificar reservas** | Editar extiende estadías, cambia habitación/fechas/tarifa con validación de choques. |
+| **Cierres/cuadres manuales** | Cierre de día (night audit), reportes de ocupación/ADR/RevPAR y facturación con correlativo. |
+| **Datos que se pierden** | Todo queda en la base con auditoría de quién hizo cada cobro/cambio. |
+
+Limitaciones honestas (ampliables cuando haga falta): pagos online = depósito
+reportado y confirmado a mano (sin pasarela), notificaciones = enlaces de
+WhatsApp con un clic (no envío automático), OTAs = exportación iCal (no
+sincronización bidireccional), facturas con formato fijo.
+
+## 9. Claves y accesos
 
 Cada rol tiene su clave (recepción/caja, limpieza, gerente, dueño) y solo ve
 sus módulos — se administran en **Panel → Usuarios**. El QR de cada reserva y

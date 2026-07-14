@@ -10,6 +10,7 @@ import {
   LogIn,
   LogOut,
   Loader2,
+  Pencil,
   Phone,
   Plus,
   Search,
@@ -257,6 +258,56 @@ function ReservasHotelContent() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "No se pudo actualizar")
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error")
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // ---- Editar reserva (extender estadía, cambiar habitación/fechas/tarifa) ----
+  const [editingId, setEditingId] = useState("")
+  const [editCheckIn, setEditCheckIn] = useState("")
+  const [editCheckOut, setEditCheckOut] = useState("")
+  const [editRoomId, setEditRoomId] = useState("")
+  const [editRate, setEditRate] = useState("")
+
+  function startEdit(reservation: HotelReservation) {
+    setEditingId(reservation.id)
+    setEditCheckIn(reservation.checkInDate)
+    setEditCheckOut(reservation.checkOutDate)
+    setEditRoomId(reservation.roomId)
+    setEditRate(String(reservation.ratePerNight))
+    setError("")
+  }
+
+  async function saveEdit(reservation: HotelReservation) {
+    setBusy(true)
+    setError("")
+    try {
+      const room = rooms.find((x) => x.id === editRoomId)
+      const res = await fetch("/api/hotel-reservations", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          id: reservation.id,
+          roomId: editRoomId,
+          roomTypeId: room?.roomTypeId || "",
+          guestName: reservation.guestName,
+          guestPhone: reservation.guestPhone,
+          checkInDate: editCheckIn,
+          checkOutDate: editCheckOut,
+          adults: reservation.adults,
+          children: reservation.children,
+          ratePerNight: Number(editRate) || reservation.ratePerNight,
+          status: reservation.status,
+          note: reservation.note,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "No se pudo guardar el cambio")
+      setEditingId("")
       await load()
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
@@ -593,6 +644,19 @@ function ReservasHotelContent() {
                           </button>
                         </>
                       )}
+                      {(reservation.status === "pendiente" ||
+                        reservation.status === "confirmada" ||
+                        reservation.status === "checkin") && (
+                        <button
+                          onClick={() =>
+                            editingId === reservation.id ? setEditingId("") : startEdit(reservation)
+                          }
+                          disabled={busy}
+                          className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-1.5 text-xs font-black uppercase text-[var(--brand-primary-dark)] disabled:opacity-50"
+                        >
+                          <Pencil size={13} /> {editingId === reservation.id ? "Cerrar" : "Editar"}
+                        </button>
+                      )}
                       <button
                         onClick={() => remove(reservation)}
                         disabled={busy}
@@ -602,6 +666,62 @@ function ReservasHotelContent() {
                         <Trash2 size={16} />
                       </button>
                     </div>
+
+                    {/* Edición en sitio: extender estadía, cambiar habitación,
+                        fechas o tarifa. El servidor valida solapes (409). */}
+                    {editingId === reservation.id && (
+                      <div className="mt-3 grid gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3 sm:grid-cols-2">
+                        <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 font-bold">
+                          <span className="text-[10px] font-black uppercase text-[var(--brand-primary-dark)]">Entrada</span>
+                          <input
+                            type="date"
+                            value={editCheckIn}
+                            onChange={(e) => setEditCheckIn(e.target.value)}
+                            className="w-full bg-transparent font-bold outline-none"
+                          />
+                        </label>
+                        <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 font-bold">
+                          <span className="text-[10px] font-black uppercase text-[var(--brand-primary-dark)]">Salida</span>
+                          <input
+                            type="date"
+                            value={editCheckOut}
+                            onChange={(e) => setEditCheckOut(e.target.value)}
+                            className="w-full bg-transparent font-bold outline-none"
+                          />
+                        </label>
+                        <select
+                          value={editRoomId}
+                          onChange={(e) => setEditRoomId(e.target.value)}
+                          className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 font-bold outline-none"
+                        >
+                          {rooms
+                            .filter((room) => room.active)
+                            .map((room) => (
+                              <option key={room.id} value={room.id}>
+                                {room.name}
+                                {room.outOfService ? " (fuera de servicio)" : ""}
+                              </option>
+                            ))}
+                        </select>
+                        <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2">
+                          <span className="text-[10px] font-black uppercase text-[var(--brand-primary-dark)]">$/noche</span>
+                          <input
+                            type="number"
+                            min={0}
+                            value={editRate}
+                            onChange={(e) => setEditRate(e.target.value)}
+                            className="w-full bg-transparent font-bold outline-none"
+                          />
+                        </label>
+                        <button
+                          onClick={() => saveEdit(reservation)}
+                          disabled={busy || !editCheckIn || !editCheckOut || !editRoomId}
+                          className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-2.5 text-sm font-black uppercase text-[#171410] disabled:opacity-50 sm:col-span-2"
+                        >
+                          <Check size={15} /> Guardar cambios
+                        </button>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
