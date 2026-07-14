@@ -133,6 +133,7 @@ try {
   r = await staff("/api/hotel-reservations", { method: "POST", body: JSON.stringify({ roomId: indRooms[4].id, roomTypeId: IND.id, guestName: "QA Paquete BORRAR", guestPhone: "0000000", checkInDate: N, checkOutDate: N2, ratePerNight: 75 }) })
   const pkgResv = r.data?.reservation
   if (pkgResv) cleanup.reservationIds.push(pkgResv.id)
+  if (!pkgResv) throw new Error(`No se pudo crear la reserva del paquete (${r.status}: ${r.data?.error || "sin detalle"}); se aborta y se limpia.`)
   const noFolio = await staff("/api/packages", { method: "POST", body: JSON.stringify({ action: "applyToReservation", packageId: cleanup.packageId, reservationId: pkgResv.id }) })
   check("14 aplicar paquete SIN check-in → 409 claro", noFolio.status === 409, noFolio.data?.error)
   let f = await staff("/api/folios", { method: "POST", body: JSON.stringify({ action: "open", reservationId: pkgResv.id }) })
