@@ -156,6 +156,7 @@ export {
   saveRoom,
   saveRoomType,
   updateRoomHousekeeping,
+  uploadRoomTypePhoto,
 } from "./ordersRooms"
 
 export type {

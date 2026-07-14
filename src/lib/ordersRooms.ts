@@ -50,3 +50,7 @@ export async function updateRoomHousekeeping(
 export async function deleteRoom(id: string, branchId?: string | null) {
   return roomsStore.deleteRoom(id, branchId)
 }
+
+export async function uploadRoomTypePhoto(input: roomsStore.UploadRoomTypePhotoInput) {
+  return roomsStore.uploadRoomTypePhoto(input)
+}

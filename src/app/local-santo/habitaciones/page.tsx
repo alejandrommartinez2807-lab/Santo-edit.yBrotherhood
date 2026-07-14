@@ -313,6 +313,39 @@ function HabitacionesPageContent() {
     void saveTypePhotos(type, [...type.photos, { url, caption: photoCaption.trim() }])
   }
 
+  // Sube un archivo local (foto del teléfono/PC) y lo agrega a la galería.
+  async function uploadPhotoFile(type: RoomType, file: File) {
+    setBusy(true)
+    setError("")
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(String(reader.result || ""))
+        reader.onerror = () => reject(new Error("No se pudo leer el archivo"))
+        reader.readAsDataURL(file)
+      })
+      const res = await fetch("/api/rooms/upload-photo", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          dataUrl,
+          fileName: file.name,
+          mimeType: file.type,
+          typeName: type.name,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.url) throw new Error(data.error || "No se pudo subir la foto")
+      const caption = photoCaption.trim()
+      setPhotoCaption("")
+      await saveTypePhotos(type, [...type.photos, { url: data.url, caption }])
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error")
+    } finally {
+      setBusy(false)
+    }
+  }
+
   function movePhoto(type: RoomType, index: number, delta: number) {
     const next = [...type.photos]
     const target = index + delta
@@ -597,7 +630,7 @@ function HabitacionesPageContent() {
                           </ul>
                         )}
 
-                        <div className="mt-3 grid gap-2 sm:grid-cols-5">
+                        <div className="mt-3 grid gap-2 sm:grid-cols-6">
                           <input
                             value={photoUrl}
                             onChange={(e) => setPhotoUrl(e.target.value)}
@@ -617,6 +650,24 @@ function HabitacionesPageContent() {
                           >
                             <Plus size={16} /> Agregar
                           </button>
+                          <label
+                            className={`inline-flex cursor-pointer items-center justify-center gap-1 rounded-xl border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-sm font-black uppercase text-[var(--brand-primary-dark)] ${
+                              busy ? "pointer-events-none opacity-50" : ""
+                            }`}
+                          >
+                            <ImageIcon size={16} /> Subir foto
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              className="hidden"
+                              disabled={busy}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                e.target.value = ""
+                                if (file) void uploadPhotoFile(type, file)
+                              }}
+                            />
+                          </label>
                         </div>
                       </div>
                     ))}

@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { cleanText } from "@/lib/localOrderHelpers"
+import { decodeDataUrlImage, sanitizeUploadedImageFileName } from "@/lib/dataUrlImages"
 import { type Row } from "./ordersStoreMappers"
 
 // ============================================================
@@ -216,6 +217,60 @@ export async function deleteRoomType(
   const { error } = await deleteQuery
   if (error) throw new Error(error.message)
   return { ok: true }
+}
+
+// Sube una foto de habitación al bucket público ya existente del template
+// (menu-images) bajo el prefijo room-types/ — así no hace falta crear un
+// bucket nuevo en Supabase para estrenar la galería.
+const ROOM_PHOTOS_BUCKET = "menu-images"
+
+export type UploadRoomTypePhotoInput = {
+  dataUrl: string
+  fileName?: string
+  mimeType?: string
+  typeName?: string
+}
+
+export async function uploadRoomTypePhoto(
+  input: UploadRoomTypePhotoInput,
+): Promise<{ url: string }> {
+  const supabase = getSupabaseAdmin()
+
+  const image = decodeDataUrlImage(input.dataUrl, {
+    label: "La foto de la habitación",
+    maxBytes: 6_000_000,
+    fallbackMimeType: input.mimeType || "image/jpeg",
+  })
+  const safeName = sanitizeUploadedImageFileName(
+    input.fileName,
+    input.typeName || "habitacion",
+    image.mimeType,
+  )
+  const path = `room-types/${Date.now()}-${safeName}`
+
+  let { error: uploadError } = await supabase.storage
+    .from(ROOM_PHOTOS_BUCKET)
+    .upload(path, image.buffer, { contentType: image.mimeType, upsert: true })
+
+  // En una base recién provisionada el bucket todavía no existe: se crea
+  // público al vuelo (service role) y se reintenta, sin pasos manuales.
+  if (uploadError && /bucket not found/i.test(uploadError.message || "")) {
+    await supabase.storage
+      .createBucket(ROOM_PHOTOS_BUCKET, { public: true })
+      .catch(() => undefined)
+    ;({ error: uploadError } = await supabase.storage
+      .from(ROOM_PHOTOS_BUCKET)
+      .upload(path, image.buffer, { contentType: image.mimeType, upsert: true }))
+  }
+
+  if (uploadError) {
+    throw new Error(uploadError.message || "No se pudo subir la foto")
+  }
+
+  const { data: publicData } = supabase.storage.from(ROOM_PHOTOS_BUCKET).getPublicUrl(path)
+  const url = publicData?.publicUrl || ""
+  if (!url) throw new Error("La foto se subió, pero no se recibió un enlace válido")
+  return { url }
 }
 
 // ---------------- Habitaciones ----------------
