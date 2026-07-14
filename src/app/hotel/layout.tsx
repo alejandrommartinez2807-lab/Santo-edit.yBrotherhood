@@ -22,19 +22,19 @@ export default function HotelLayout({ children }: { children: ReactNode }) {
               {BRAND.name}
             </span>
           </Link>
-          <nav className="flex items-center gap-5 text-sm font-medium text-[var(--brand-ink-2)]">
-            <Link href="/hotel" className="hidden transition-colors hover:text-[var(--brand-primary)] sm:inline">
+          <nav className="flex items-center gap-6 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--brand-ink-2)]">
+            <Link href="/hotel" className="hidden transition-colors hover:text-[var(--brand-primary-dark)] sm:inline">
               Inicio
             </Link>
             <Link
               href="/hotel/mi-reserva"
-              className="hidden transition-colors hover:text-[var(--brand-primary)] sm:inline"
+              className="hidden transition-colors hover:text-[var(--brand-primary-dark)] sm:inline"
             >
               Mi reserva
             </Link>
             <Link
               href="/hotel/reservar"
-              className="rounded-full border border-[var(--brand-primary)]/60 px-4 py-1.5 text-[var(--brand-primary)] transition-colors hover:bg-[var(--brand-primary)] hover:text-[#0b0b0c]"
+              className="rounded-full bg-[var(--brand-primary)] px-5 py-2.5 font-serif text-[11px] font-semibold uppercase tracking-[0.18em] text-[#171410] shadow-sm transition-transform hover:scale-[1.04]"
             >
               Reservar
             </Link>

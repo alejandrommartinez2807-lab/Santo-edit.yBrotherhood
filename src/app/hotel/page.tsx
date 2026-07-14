@@ -141,8 +141,7 @@ export default function HotelLandingPage() {
     .map((a) => a.trim())
     .filter(Boolean)
 
-  const money = (n: number) =>
-    new Intl.NumberFormat("es-VE", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n)
+  const money = (n: number) => `$${Math.round(n)}`
 
   return (
     <main>
@@ -150,8 +149,8 @@ export default function HotelLandingPage() {
       <section className="relative isolate min-h-[92vh] overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={HERO} alt={BRAND.name} className="absolute inset-0 -z-10 h-full w-full object-cover" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/55 via-black/40 to-[var(--brand-cream)]" />
-        <div className="absolute inset-x-0 bottom-0 -z-10 h-2/3 bg-gradient-to-t from-[var(--brand-cream)] via-[var(--brand-cream)]/70 to-transparent" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/60 via-black/45 to-black/30" />
+        <div className="absolute inset-x-0 bottom-0 -z-10 h-36 bg-gradient-to-t from-[var(--brand-cream)] to-transparent" />
 
         <div className="mx-auto flex min-h-[92vh] max-w-4xl flex-col items-center justify-center px-6 py-28 text-center">
           <div className="flex items-center gap-1.5 text-[var(--brand-primary)]">
@@ -159,7 +158,9 @@ export default function HotelLandingPage() {
               <Star key={i} size={16} fill="currentColor" strokeWidth={0} />
             ))}
           </div>
-          <p className="mt-5 kicker text-white/80">Hotel 5 estrellas · Valencia</p>
+          <p className="mt-5 text-[0.72rem] font-bold uppercase tracking-[0.32em] text-[#e6cf9a]">
+            Hotel 5 estrellas · Valencia
+          </p>
           <h1 className="mt-5 font-serif text-6xl font-semibold leading-[1] text-white drop-shadow-lg sm:text-7xl md:text-8xl">
             {profile?.headline || BRAND.name}
           </h1>
@@ -170,14 +171,14 @@ export default function HotelLandingPage() {
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <Link
               href="/hotel/reservar"
-              className="group inline-flex items-center gap-2 rounded-full bg-[var(--brand-primary)] px-9 py-4 text-sm font-semibold uppercase tracking-wider text-[#0b0b0c] shadow-xl shadow-black/40 transition-transform hover:scale-[1.03]"
+              className="group inline-flex items-center gap-2.5 rounded-full bg-[var(--brand-primary)] px-10 py-4 font-serif text-[13px] font-semibold uppercase tracking-[0.22em] text-[#171410] shadow-xl shadow-black/40 transition-transform hover:scale-[1.03]"
             >
-              <CalendarCheck size={18} /> Reservar ahora
-              <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+              <CalendarCheck size={17} /> Reservar ahora
+              <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
             </Link>
             <Link
               href="/hotel/mi-reserva"
-              className="inline-flex items-center gap-2 rounded-full border border-white/40 px-9 py-4 text-sm font-semibold uppercase tracking-wider text-white backdrop-blur-sm transition-colors hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+              className="inline-flex items-center gap-2.5 rounded-full border border-white/70 bg-black/30 px-10 py-4 font-serif text-[13px] font-semibold uppercase tracking-[0.22em] text-white backdrop-blur-md transition-colors hover:border-[#e6cf9a] hover:text-[#e6cf9a]"
             >
               <KeyRound size={18} /> Mi reserva
             </Link>
@@ -257,15 +258,18 @@ export default function HotelLandingPage() {
                 </div>
                 <div className="mt-6 flex items-end justify-between border-t border-black/5 pt-5">
                   <div>
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--brand-ink-2)]/70">Desde</p>
-                    <p className="font-serif text-3xl font-semibold text-gold">
-                      {money(t.quote.averageRate)}
+                    <p className="text-[10px] uppercase tracking-[0.22em] text-[var(--brand-ink-2)]">Desde</p>
+                    <p className="mt-1 font-serif text-4xl font-semibold leading-none text-gold">
+                      <span className="mr-0.5 align-top text-lg">$</span>
+                      {Math.round(t.quote.averageRate)}
                     </p>
-                    <p className="text-xs text-[var(--brand-ink-2)]">por noche</p>
+                    <p className="mt-1.5 text-[10px] uppercase tracking-[0.18em] text-[var(--brand-ink-2)]">
+                      USD · por noche
+                    </p>
                   </div>
                   <Link
                     href="/hotel/reservar"
-                    className="group/btn inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-primary)]/50 px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--brand-primary)] transition-colors hover:bg-[var(--brand-primary)] hover:text-[#0b0b0c]"
+                    className="group/btn inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-primary)]/50 px-5 py-2.5 font-serif text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--brand-primary)] transition-colors hover:bg-[var(--brand-primary)] hover:text-[#0b0b0c]"
                   >
                     Reservar
                     <ArrowRight size={14} className="transition-transform group-hover/btn:translate-x-0.5" />
@@ -294,7 +298,7 @@ export default function HotelLandingPage() {
           </p>
           <Link
             href="/hotel/reservar"
-            className="mt-10 inline-flex items-center gap-2 rounded-full bg-[var(--brand-primary)] px-9 py-4 text-sm font-semibold uppercase tracking-wider text-[#0b0b0c] transition-transform hover:scale-[1.03]"
+            className="mt-10 inline-flex items-center gap-2 rounded-full bg-[var(--brand-primary)] px-9 py-4 font-serif text-[13px] font-semibold uppercase tracking-[0.22em] text-[#171410] transition-transform hover:scale-[1.03]"
           >
             <CalendarCheck size={18} /> Reservar mi estadía
           </Link>
@@ -478,7 +482,7 @@ export default function HotelLandingPage() {
         </p>
         <Link
           href="/hotel/reservar"
-          className="group mt-9 inline-flex items-center gap-2 rounded-full bg-[var(--brand-primary)] px-10 py-4 text-sm font-semibold uppercase tracking-wider text-[#0b0b0c] shadow-lg shadow-black/10 transition-transform hover:scale-[1.03]"
+          className="group mt-9 inline-flex items-center gap-2 rounded-full bg-[var(--brand-primary)] px-10 py-4 font-serif text-[13px] font-semibold uppercase tracking-[0.22em] text-[#171410] shadow-lg shadow-black/10 transition-transform hover:scale-[1.03]"
         >
           <CalendarCheck size={18} /> Reservar ahora
           <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />

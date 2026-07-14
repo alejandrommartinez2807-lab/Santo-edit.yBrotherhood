@@ -26,7 +26,7 @@
   --brand-primary-rgb: 176, 141, 76;
   --brand-cream: #faf8f3;
   --brand-ink: #2a2620;
-  --brand-ink-2: #6f6759;
+  --brand-ink-2: #605845;
   --brand-ink-3: #171410;
   --brand-amber: #c8a35f;
   --brand-accent: #b08d4c;
@@ -36,8 +36,8 @@
 
   /* Superficies claras auxiliares para tarjetas/paneles del sitio público. */
   --brand-surface: #ffffff;
-  --brand-surface-2: #f4efe4;
-  --brand-border: #e6dfcf;
+  --brand-surface-2: #f1e9d7;
+  --brand-border: #ddd0b6;
 }
 
 * {
@@ -58,13 +58,13 @@
   letter-spacing: 0.005em;
 }
 
-/* Kicker: etiqueta fina en versalitas espaciadas, en oro. */
+/* Kicker: etiqueta fina en versalitas espaciadas, en oro profundo (legible sobre claro). */
 .kicker {
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.32em;
   text-transform: uppercase;
-  color: var(--brand-primary);
+  color: var(--brand-primary-dark);
 }
 
 /* Filete/hairline en degradado dorado (separadores premium). */
