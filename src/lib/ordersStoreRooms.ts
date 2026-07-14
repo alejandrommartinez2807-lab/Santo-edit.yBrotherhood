@@ -332,6 +332,66 @@ export async function saveRoom(
   return mapRoom(data as Row)
 }
 
+export type BulkCreateRoomsInput = {
+  roomTypeId: string
+  fromNumber: number
+  toNumber: number
+  floor?: string
+  capacity?: number
+  prefix?: string
+}
+
+// Alta en serie: crea las habitaciones numeradas [from..to] de un tipo en un
+// solo insert. Las que ya existen (mismo nombre en la sede) se saltan y se
+// reportan, así el hotelero puede cargar pisos completos sin depender de nadie.
+export async function createRoomsBulk(
+  input: BulkCreateRoomsInput,
+  branchId?: string | null,
+): Promise<{ created: Room[]; skipped: string[] }> {
+  const supabase = getSupabaseAdmin()
+  const from = Math.trunc(num(input.fromNumber, NaN))
+  const to = Math.trunc(num(input.toNumber, NaN))
+  if (!Number.isFinite(from) || !Number.isFinite(to) || from <= 0 || to < from) {
+    throw new Error("Indica un rango de números válido (desde ≤ hasta)")
+  }
+  if (to - from + 1 > 200) {
+    throw new Error("Máximo 200 habitaciones por tanda")
+  }
+  const roomTypeId = cleanText(input.roomTypeId)
+  if (!roomTypeId) throw new Error("Elige el tipo de habitación")
+
+  const prefix = cleanText(input.prefix)
+  const names: string[] = []
+  for (let n = from; n <= to; n++) names.push(`${prefix}${n}`)
+
+  const existing = await getRooms(branchId)
+  const taken = new Set(existing.map((room) => room.name))
+  const skipped = names.filter((name) => taken.has(name))
+  const fresh = names.filter((name) => !taken.has(name))
+  if (fresh.length === 0) return { created: [], skipped }
+
+  const now = new Date().toISOString()
+  const rows = fresh.map((name, index) => ({
+    room_type_id: roomTypeId,
+    name,
+    floor: cleanText(input.floor),
+    capacity: Math.max(1, num(input.capacity, 2)),
+    base_rate: null,
+    housekeeping_status: "limpia",
+    out_of_service: false,
+    amenities: "",
+    notes: "",
+    sort_order: from + index,
+    active: true,
+    updated_at: now,
+    branch_id: branchId ?? null,
+  }))
+
+  const { data, error } = await supabase.from("rooms").insert(rows).select("*")
+  if (error) throw new Error(error.message)
+  return { created: (data ?? []).map((raw) => mapRoom(raw as Row)), skipped }
+}
+
 export async function updateRoomHousekeeping(
   id: string,
   status: string,

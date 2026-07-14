@@ -148,6 +148,7 @@ export type {
 } from "./ordersRooms"
 export {
   ROOM_HOUSEKEEPING_STATUSES,
+  createRoomsBulk,
   deleteRoom,
   deleteRoomType,
   getRooms,

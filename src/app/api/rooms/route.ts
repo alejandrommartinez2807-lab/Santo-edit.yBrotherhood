@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import {
+  createRoomsBulk,
   getRoomTypes,
   getRooms,
   saveRoom,
@@ -115,6 +116,25 @@ export async function POST(request: NextRequest) {
       }
       const roomType = await saveRoomType(input, branchId)
       return NextResponse.json({ ok: true, roomType }, { status: input.id ? 200 : 201 })
+    }
+
+    // Alta en serie de habitaciones numeradas (pisos completos de una vez).
+    if (cleanText(body.kind) === "roomsBulk") {
+      const result = await createRoomsBulk(
+        {
+          roomTypeId: cleanText(body.roomTypeId),
+          fromNumber: Number(body.fromNumber),
+          toNumber: Number(body.toNumber),
+          floor: cleanText(body.floor),
+          capacity: body.capacity === undefined ? undefined : Number(body.capacity),
+          prefix: cleanText(body.prefix),
+        },
+        branchId,
+      )
+      return NextResponse.json(
+        { ok: true, created: result.created, skipped: result.skipped },
+        { status: 201 },
+      )
     }
 
     const input = normalizeRoomPayload(

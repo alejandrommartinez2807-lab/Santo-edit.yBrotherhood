@@ -54,3 +54,10 @@ export async function deleteRoom(id: string, branchId?: string | null) {
 export async function uploadRoomTypePhoto(input: roomsStore.UploadRoomTypePhotoInput) {
   return roomsStore.uploadRoomTypePhoto(input)
 }
+
+export async function createRoomsBulk(
+  input: roomsStore.BulkCreateRoomsInput,
+  branchId?: string | null,
+) {
+  return roomsStore.createRoomsBulk(input, branchId)
+}

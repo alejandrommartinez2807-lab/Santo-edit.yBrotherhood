@@ -116,6 +116,14 @@ function HabitacionesPageContent() {
   const [roomRate, setRoomRate] = useState("")
   const [roomAmenities, setRoomAmenities] = useState("")
 
+  // Alta en serie (pisos completos)
+  const [bulkTypeId, setBulkTypeId] = useState("")
+  const [bulkFrom, setBulkFrom] = useState("")
+  const [bulkTo, setBulkTo] = useState("")
+  const [bulkFloor, setBulkFloor] = useState("")
+  const [bulkCapacity, setBulkCapacity] = useState("2")
+  const [bulkMessage, setBulkMessage] = useState("")
+
   // Ficha de la habitación: estadías (actual/próxima/historial) y saldos de folio.
   const [stays, setStays] = useState<RoomStay[]>([])
   const [folioBalances, setFolioBalances] = useState<Record<string, number>>({})
@@ -267,6 +275,43 @@ function HabitacionesPageContent() {
       setTypeName("")
       setTypeRate("")
       await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error")
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // Crea un rango de habitaciones numeradas de una vez (p. ej. 301 a 320).
+  async function createRoomsBulk() {
+    if (!bulkTypeId || !bulkFrom.trim() || !bulkTo.trim()) return
+    setBusy(true)
+    setError("")
+    setBulkMessage("")
+    try {
+      const res = await fetch("/api/rooms", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          kind: "roomsBulk",
+          roomTypeId: bulkTypeId,
+          fromNumber: Number(bulkFrom),
+          toNumber: Number(bulkTo),
+          floor: bulkFloor.trim(),
+          capacity: Number(bulkCapacity) || 2,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "No se pudo crear la serie")
+      const created = Array.isArray(data.created) ? data.created.length : 0
+      const skipped = Array.isArray(data.skipped) ? data.skipped.length : 0
+      setBulkMessage(
+        `${created} habitación(es) creada(s)${skipped ? ` · ${skipped} ya existían (${data.skipped.join(", ")})` : ""}.`,
+      )
+      setBulkFrom("")
+      setBulkTo("")
+      await load()
+      await loadStays()
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
     } finally {
@@ -734,6 +779,71 @@ function HabitacionesPageContent() {
                 >
                   <Plus size={16} /> Agregar habitación
                 </button>
+              </div>
+
+              {/* Alta en serie: pisos completos sin cargar una por una */}
+              <h3 className="mt-6 flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                <BedDouble size={16} /> Crear en serie (piso completo)
+              </h3>
+              <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]">
+                Crea habitaciones numeradas de una sola vez: elige el tipo y el rango
+                (por ejemplo 501 a 520). Las que ya existan se saltan.
+              </p>
+              <div className="mt-3 grid gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-6">
+                <select
+                  value={bulkTypeId}
+                  onChange={(e) => setBulkTypeId(e.target.value)}
+                  className={`${inputClass} sm:col-span-2`}
+                >
+                  <option value="">Tipo de habitación…</option>
+                  {roomTypes.map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  min={1}
+                  value={bulkFrom}
+                  onChange={(e) => setBulkFrom(e.target.value)}
+                  placeholder="Desde (501)"
+                  className={inputClass}
+                />
+                <input
+                  type="number"
+                  min={1}
+                  value={bulkTo}
+                  onChange={(e) => setBulkTo(e.target.value)}
+                  placeholder="Hasta (520)"
+                  className={inputClass}
+                />
+                <input
+                  value={bulkFloor}
+                  onChange={(e) => setBulkFloor(e.target.value)}
+                  placeholder="Piso (opcional)"
+                  className={inputClass}
+                />
+                <input
+                  type="number"
+                  min={1}
+                  value={bulkCapacity}
+                  onChange={(e) => setBulkCapacity(e.target.value)}
+                  placeholder="Capacidad"
+                  className={inputClass}
+                />
+                <button
+                  onClick={createRoomsBulk}
+                  disabled={busy || !bulkTypeId || !bulkFrom.trim() || !bulkTo.trim()}
+                  className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-[#171410] disabled:opacity-50 sm:col-span-6"
+                >
+                  <Plus size={16} /> Crear serie
+                </button>
+                {bulkMessage && (
+                  <p className="rounded-xl bg-green-50 px-3 py-2 text-sm font-bold text-green-700 sm:col-span-6">
+                    {bulkMessage}
+                  </p>
+                )}
               </div>
             </section>
 
