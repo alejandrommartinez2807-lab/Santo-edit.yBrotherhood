@@ -11,11 +11,16 @@ export default function HotelLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen flex-col bg-[var(--brand-cream)] text-[var(--brand-ink)]">
       <header className="sticky top-0 z-30 border-b border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/75 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link
-            href="/hotel"
-            className="font-serif text-xl font-semibold tracking-wide text-[var(--brand-ink-3)]"
-          >
-            {BRAND.name}
+          <Link href="/hotel" className="flex items-center gap-3" aria-label={BRAND.name}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={BRAND.logoUrl}
+              alt={BRAND.name}
+              className="h-11 w-11 rounded-lg bg-white object-contain p-1 shadow-sm"
+            />
+            <span className="hidden font-serif text-lg font-semibold tracking-wide text-[var(--brand-ink-3)] sm:inline">
+              {BRAND.name}
+            </span>
           </Link>
           <nav className="flex items-center gap-5 text-sm font-medium text-[var(--brand-ink-2)]">
             <Link href="/hotel" className="hidden transition-colors hover:text-[var(--brand-primary)] sm:inline">

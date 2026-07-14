@@ -64,6 +64,11 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description,
     manifest: "/manifest.webmanifest",
+    icons: {
+      icon: "/demo/lidotel/lidotel-logo.jpg",
+      shortcut: "/demo/lidotel/lidotel-logo.jpg",
+      apple: "/demo/lidotel/lidotel-logo.jpg",
+    },
     openGraph: {
       type: "website",
       siteName: businessName,

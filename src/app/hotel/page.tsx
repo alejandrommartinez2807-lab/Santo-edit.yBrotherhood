@@ -7,17 +7,21 @@ import {
   CalendarCheck,
   Check,
   Clock,
+  Compass,
   ConciergeBell,
   KeyRound,
   Mail,
   MapPin,
+  PartyPopper,
   Phone,
   Quote,
   Sparkles,
   Star,
   UtensilsCrossed,
   Users,
+  Waves,
 } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import { BRAND } from "@/lib/brand"
 
 const EXPERIENCE = [
@@ -26,6 +30,13 @@ const EXPERIENCE = [
   { icon: Sparkles, title: "Confort 5 estrellas", text: "Habitaciones y suites impecables, atención al detalle." },
   { icon: ConciergeBell, title: "Atención personalizada", text: "Un equipo dedicado a que tu estadía sea perfecta." },
 ]
+
+const SERVICE_ICONS: Record<string, LucideIcon> = {
+  spa: Waves,
+  tour: Compass,
+  restaurante: UtensilsCrossed,
+  otro: PartyPopper,
+}
 
 type Profile = {
   headline: string
@@ -47,6 +58,7 @@ type RoomType = {
   quote: RoomQuote
 }
 type Review = { guestName: string; rating: number; comment: string }
+type ResortService = { id: string; name: string; kind: string; description: string; price: number }
 
 function isoInDays(days: number) {
   const d = new Date()
@@ -62,6 +74,7 @@ export default function HotelLandingPage() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [ratingAvg, setRatingAvg] = useState(0)
   const [ratingCount, setRatingCount] = useState(0)
+  const [services, setServices] = useState<ResortService[]>([])
   const [loaded, setLoaded] = useState(false)
 
   // Rango de muestra (dentro de una semana, 2 noches) para cotizar "desde".
@@ -91,6 +104,13 @@ export default function HotelLandingPage() {
         setRatingCount(d.summary?.count || 0)
       })
       .catch(() => setReviews([]))
+  }, [])
+
+  useEffect(() => {
+    fetch("/api/public/hotel/services", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => setServices(Array.isArray(d.services) ? d.services : []))
+      .catch(() => setServices([]))
   }, [])
 
   const amenities = (profile?.amenities || "")
@@ -206,6 +226,44 @@ export default function HotelLandingPage() {
         </div>
       </section>
 
+      {/* ============ Servicios y experiencias ============ */}
+      {services.length > 0 && (
+        <section className="border-y border-[var(--brand-primary)]/10 bg-[#0a0a0b]">
+          <div className="mx-auto max-w-6xl px-6 py-20">
+            <div className="text-center">
+              <p className="kicker">Experiencias</p>
+              <h2 className="mt-3 font-serif text-4xl font-semibold text-[var(--brand-ink-3)]">Servicios del resort</h2>
+              <p className="mx-auto mt-3 max-w-xl text-[var(--brand-ink-2)]">
+                Spa, gastronomía, tours y eventos para completar tu estadía.
+              </p>
+              <hr className="hairline-gold mx-auto mt-6 w-24" />
+            </div>
+            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {services.map((s) => {
+                const Icon = SERVICE_ICONS[s.kind] || Sparkles
+                return (
+                  <article
+                    key={s.id}
+                    className="flex flex-col rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-surface)] p-7 transition-colors hover:border-[var(--brand-primary)]/45"
+                  >
+                    <Icon className="text-[var(--brand-primary)]" size={26} strokeWidth={1.5} />
+                    <h3 className="mt-4 font-serif text-xl font-semibold text-[var(--brand-ink-3)]">{s.name}</h3>
+                    {s.description && (
+                      <p className="mt-2 flex-1 text-sm leading-relaxed text-[var(--brand-ink-2)]">{s.description}</p>
+                    )}
+                    {s.price > 0 && (
+                      <p className="mt-5 border-t border-white/5 pt-4 text-sm text-[var(--brand-ink-2)]">
+                        Desde <span className="font-serif text-lg text-gold">{money(s.price)}</span>
+                      </p>
+                    )}
+                  </article>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ============ Amenidades ============ */}
       {amenities.length > 0 && (
         <section className="border-y border-[var(--brand-primary)]/10 bg-[#0a0a0b]">
@@ -308,6 +366,15 @@ export default function HotelLandingPage() {
               )}
             </div>
           </div>
+        </div>
+        <div className="mt-6 overflow-hidden rounded-2xl border border-[var(--brand-primary)]/15">
+          <iframe
+            title="Ubicación de Lidotel Valencia"
+            src="https://maps.google.com/maps?q=Lidotel%20Valencia%20Avenida%204%20Valencia%20Carabobo%20Venezuela&z=15&output=embed"
+            className="h-72 w-full grayscale-[0.3] contrast-110"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
         </div>
       </section>
     </main>
