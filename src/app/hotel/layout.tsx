@@ -1,46 +1,16 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
 import { BRAND } from "@/lib/brand"
+import HotelHeader from "./HotelHeader"
 
 // Layout premium compartido por las páginas públicas del hotel (landing,
-// reservar, mi-reserva): header translúcido con hairline dorado + footer.
-// Da un marco de 5★ consistente y distinto al resto del template.
+// reservar, mi-reserva): header fijo (transparente sobre el hero, marfil al
+// hacer scroll) + footer. Da un marco de 5★ consistente.
 export default function HotelLayout({ children }: { children: ReactNode }) {
   const year = new Date().getFullYear()
   return (
     <div className="flex min-h-screen flex-col bg-[var(--brand-cream)] text-[var(--brand-ink)]">
-      <header className="sticky top-0 z-30 border-b border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/75 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/hotel" className="flex items-center gap-3" aria-label={BRAND.name}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={BRAND.logoUrl}
-              alt={BRAND.name}
-              className="h-11 w-11 rounded-lg bg-white object-contain p-1 shadow-sm"
-            />
-            <span className="hidden font-serif text-lg font-semibold tracking-wide text-[var(--brand-ink-3)] sm:inline">
-              {BRAND.name}
-            </span>
-          </Link>
-          <nav className="flex items-center gap-6 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--brand-ink-2)]">
-            <Link href="/hotel" className="hidden transition-colors hover:text-[var(--brand-primary-dark)] sm:inline">
-              Inicio
-            </Link>
-            <Link
-              href="/hotel/mi-reserva"
-              className="hidden transition-colors hover:text-[var(--brand-primary-dark)] sm:inline"
-            >
-              Mi reserva
-            </Link>
-            <Link
-              href="/hotel/reservar"
-              className="rounded-full bg-[var(--brand-primary)] px-5 py-2.5 font-serif text-[11px] font-semibold uppercase tracking-[0.18em] text-[#171410] shadow-sm transition-transform hover:scale-[1.04]"
-            >
-              Reservar
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <HotelHeader />
 
       <div className="flex-1">{children}</div>
 
