@@ -52,7 +52,7 @@
 
 /* Serif editorial para superficies premium (hotel). Titulares con aire de 5★. */
 .font-serif {
-  font-family: var(--font-serif), "Playfair Display", Georgia, "Times New Roman", serif;
+  font-family: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
   letter-spacing: 0.005em;
 }
 

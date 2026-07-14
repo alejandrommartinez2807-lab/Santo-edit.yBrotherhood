@@ -16,7 +16,7 @@ const serifFont = Playfair_Display({
   weight: ["500", "600", "700"],
   subsets: ["latin"],
   style: ["normal", "italic"],
-  variable: "--font-serif",
+  variable: "--font-playfair",
   display: "swap",
 });
 import { Analytics } from "@vercel/analytics/react";
