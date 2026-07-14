@@ -141,8 +141,6 @@ export default function HotelLandingPage() {
     .map((a) => a.trim())
     .filter(Boolean)
 
-  const money = (n: number) => `$${Math.round(n)}`
-
   return (
     <main>
       {/* ==================== HERO cinematográfico ==================== */}
@@ -332,9 +330,13 @@ export default function HotelLandingPage() {
                     <p className="mt-2 flex-1 text-sm leading-relaxed text-[var(--brand-ink-2)]">{s.description}</p>
                   )}
                   {s.price > 0 && (
-                    <p className="mt-5 border-t border-black/5 pt-4 text-sm text-[var(--brand-ink-2)]">
-                      Desde <span className="font-serif text-lg text-gold">{money(s.price)}</span>
-                    </p>
+                    <div className="mt-5 flex items-baseline justify-between border-t border-black/5 pt-4">
+                      <span className="text-[10px] uppercase tracking-[0.22em] text-[var(--brand-ink-2)]">Desde</span>
+                      <span className="font-serif text-2xl font-semibold leading-none text-gold">
+                        <span className="mr-0.5 align-top text-sm">$</span>
+                        {Math.round(s.price)}
+                      </span>
+                    </div>
                   )}
                 </article>
               )
