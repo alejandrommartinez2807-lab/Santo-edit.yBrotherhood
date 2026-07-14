@@ -74,12 +74,14 @@ type Profile = {
   checkoutTime: string
 }
 type RoomQuote = { total: number; averageRate: number }
+type RoomTypePhoto = { url: string; caption: string }
 type RoomType = {
   roomTypeId: string
   name: string
   description: string
   capacity: number
   freeCount: number
+  photos?: RoomTypePhoto[]
   quote: RoomQuote
 }
 type Review = { guestName: string; rating: number; comment: string }
@@ -140,6 +142,21 @@ export default function HotelLandingPage() {
     .split(/[,\n]/)
     .map((a) => a.trim())
     .filter(Boolean)
+
+  // Galería: mezcla las fotos de todos los tipos (sin repetir la portada dos
+  // veces seguidas del mismo tipo) y muestra hasta 8.
+  const galleryPhotos = useMemo(() => {
+    const photos: { url: string; caption: string }[] = []
+    const seen = new Set<string>()
+    for (const t of types) {
+      for (const photo of t.photos || []) {
+        if (seen.has(photo.url)) continue
+        seen.add(photo.url)
+        photos.push({ url: photo.url, caption: photo.caption || t.name })
+      }
+    }
+    return photos.slice(0, 8)
+  }, [types])
 
   return (
     <main>
@@ -231,7 +248,19 @@ export default function HotelLandingPage() {
               className="group relative flex flex-col overflow-hidden rounded-xl border border-[var(--brand-border)] bg-[var(--brand-surface)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--brand-primary)]/40 hover:shadow-2xl hover:shadow-black/10"
             >
               {/* Filete dorado superior, discreto */}
-              <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--brand-primary)]/60 to-transparent" />
+              <span className="pointer-events-none absolute inset-x-0 top-0 z-10 h-px bg-gradient-to-r from-transparent via-[var(--brand-primary)]/60 to-transparent" />
+
+              {t.photos && t.photos.length > 0 && (
+                <div className="relative h-52 overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={t.photos[0].url}
+                    alt={t.photos[0].caption || t.name}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
+              )}
 
               <div className="flex flex-1 flex-col p-9">
                 <div className="flex items-center justify-between">
@@ -283,6 +312,42 @@ export default function HotelLandingPage() {
           )}
         </div>
       </section>
+
+      {/* ==================== Galería ==================== */}
+      {galleryPhotos.length >= 3 && (
+        <section className="mx-auto max-w-6xl px-6 pb-24">
+          <div className="text-center">
+            <p className="kicker">Galería</p>
+            <h2 className="mt-3 font-serif text-4xl font-semibold text-[var(--brand-ink-3)] sm:text-5xl">
+              Un vistazo al hotel
+            </h2>
+            <hr className="hairline-gold mx-auto mt-6 w-24" />
+          </div>
+          <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {galleryPhotos.map((photo, i) => (
+              <figure
+                key={photo.url}
+                className={`group relative overflow-hidden rounded-xl border border-[var(--brand-border)] ${
+                  i % 4 === 0 ? "row-span-2 h-full min-h-64" : "h-40 sm:h-48"
+                }`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={photo.url}
+                  alt={photo.caption}
+                  loading="lazy"
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                {photo.caption && (
+                  <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2 pt-8 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    {photo.caption}
+                  </figcaption>
+                )}
+              </figure>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* ==================== Banda de invitación (parallax) ==================== */}
       <section className="relative isolate overflow-hidden">

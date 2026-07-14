@@ -7,6 +7,7 @@ import {
   type SaveRoomInput,
   type SaveRoomTypeInput,
 } from "@/lib/orders"
+import { normalizeRoomTypePhotos } from "@/lib/ordersStoreRooms"
 import { resolveBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 
@@ -33,6 +34,7 @@ function normalizeRoomTypePayload(source: Record<string, unknown>): SaveRoomType
     baseCapacity: optionalNumber(source.baseCapacity),
     maxCapacity: optionalNumber(source.maxCapacity),
     baseRate: optionalNumber(source.baseRate),
+    photos: source.photos === undefined ? undefined : normalizeRoomTypePhotos(source.photos),
     sortOrder: optionalNumber(source.sortOrder),
     active: source.active === undefined ? undefined : source.active !== false,
   }

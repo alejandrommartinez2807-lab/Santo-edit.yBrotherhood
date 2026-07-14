@@ -27,6 +27,24 @@ export function normalizeHousekeepingStatus(value: unknown): RoomHousekeepingSta
     : "limpia"
 }
 
+// Galería pública del tipo (migración 0039): el orden del arreglo es el orden
+// de la galería. Se limita a 12 fotos y solo URLs http(s) para evitar basura.
+export type RoomTypePhoto = { url: string; caption: string }
+
+export const MAX_ROOM_TYPE_PHOTOS = 12
+
+export function normalizeRoomTypePhotos(value: unknown): RoomTypePhoto[] {
+  if (!Array.isArray(value)) return []
+  return value
+    .map((raw) => {
+      const item = (raw ?? {}) as Record<string, unknown>
+      const url = cleanText(item.url)
+      return { url, caption: cleanText(item.caption).slice(0, 160) }
+    })
+    .filter((photo) => /^https?:\/\//i.test(photo.url))
+    .slice(0, MAX_ROOM_TYPE_PHOTOS)
+}
+
 export type RoomType = {
   id: string
   name: string
@@ -34,6 +52,7 @@ export type RoomType = {
   baseCapacity: number
   maxCapacity: number
   baseRate: number
+  photos: RoomTypePhoto[]
   sortOrder: number
   active: boolean
   createdAt: string
@@ -64,6 +83,7 @@ export type SaveRoomTypeInput = {
   baseCapacity?: number
   maxCapacity?: number
   baseRate?: number
+  photos?: RoomTypePhoto[]
   sortOrder?: number
   active?: boolean
 }
@@ -96,6 +116,7 @@ function mapRoomType(raw: Row): RoomType {
     baseCapacity: Math.max(1, num(raw.base_capacity, 2)),
     maxCapacity: Math.max(1, num(raw.max_capacity, 2)),
     baseRate: Math.max(0, num(raw.base_rate, 0)),
+    photos: normalizeRoomTypePhotos(raw.photos),
     sortOrder: num(raw.sort_order, 0),
     active: raw.active !== false,
     createdAt: String(raw.created_at || ""),
@@ -144,7 +165,7 @@ export async function saveRoomType(
   branchId?: string | null,
 ): Promise<RoomType> {
   const supabase = getSupabaseAdmin()
-  const fields = {
+  const fields: Record<string, unknown> = {
     name: cleanText(input.name),
     description: cleanText(input.description),
     base_capacity: Math.max(1, num(input.baseCapacity, 2)),
@@ -153,6 +174,11 @@ export async function saveRoomType(
     sort_order: num(input.sortOrder, 0),
     active: input.active !== false,
     updated_at: new Date().toISOString(),
+  }
+  // Solo toca la galería si el cliente la manda: así los formularios viejos no
+  // borran fotos y el guardado sigue funcionando si 0039 no está aplicada aún.
+  if (input.photos !== undefined) {
+    fields.photos = normalizeRoomTypePhotos(input.photos)
   }
 
   if (input.id) {

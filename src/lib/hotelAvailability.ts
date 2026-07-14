@@ -50,12 +50,15 @@ export type AvailabilityRoom = {
   outOfService?: boolean
 }
 
+export type AvailabilityRoomTypePhoto = { url: string; caption: string }
+
 export type AvailabilityRoomType = {
   id: string
   name: string
   description?: string
   baseCapacity?: number
   baseRate?: number
+  photos?: AvailabilityRoomTypePhoto[]
   active?: boolean
 }
 
@@ -65,6 +68,7 @@ export type AvailableType = {
   description: string
   capacity: number
   freeCount: number
+  photos: AvailabilityRoomTypePhoto[]
   quote: StayQuote
 }
 
@@ -165,6 +169,7 @@ export function availableTypesForStay(params: {
       description: type.description ?? "",
       capacity: Math.max(1, Number(type.baseCapacity) || 1),
       freeCount: free.length,
+      photos: type.photos ?? [],
       quote,
     })
   }

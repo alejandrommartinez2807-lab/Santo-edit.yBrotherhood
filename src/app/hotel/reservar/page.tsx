@@ -25,6 +25,7 @@ type AvailableType = {
   description: string
   capacity: number
   freeCount: number
+  photos?: { url: string; caption: string }[]
   quote: Quote
 }
 type Created = {
@@ -242,7 +243,16 @@ export default function HotelReservarPage() {
                       }`}
                     >
                       <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="min-w-0">
+                        {type.photos && type.photos.length > 0 && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={type.photos[0].url}
+                            alt={type.photos[0].caption || type.name}
+                            loading="lazy"
+                            className="h-16 w-24 shrink-0 rounded-lg border border-[var(--brand-primary)]/20 object-cover"
+                          />
+                        )}
+                        <div className="min-w-0 flex-1">
                           <p className="text-lg font-black text-[var(--brand-ink-3)]">{type.name}</p>
                           <p className="flex flex-wrap items-center gap-x-3 text-sm font-bold text-[var(--brand-ink-2)]">
                             <span className="inline-flex items-center gap-1"><Users size={14} /> {type.capacity}p</span>

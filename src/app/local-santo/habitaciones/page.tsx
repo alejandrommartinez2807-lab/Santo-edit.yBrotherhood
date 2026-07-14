@@ -5,6 +5,9 @@ import Link from "next/link"
 import {
   ArrowLeft,
   BedDouble,
+  ChevronLeft,
+  ChevronRight,
+  ImageIcon,
   Loader2,
   Plus,
   Sparkles,
@@ -29,6 +32,8 @@ const HOUSEKEEPING_STYLES: Record<string, string> = {
   mantenimiento: "border-red-200 bg-red-50 text-red-600",
 }
 
+type RoomTypePhoto = { url: string; caption: string }
+
 type RoomType = {
   id: string
   name: string
@@ -36,6 +41,7 @@ type RoomType = {
   baseCapacity: number
   maxCapacity: number
   baseRate: number
+  photos: RoomTypePhoto[]
   sortOrder: number
   active: boolean
 }
@@ -80,6 +86,11 @@ function HabitacionesPageContent() {
   const [typeName, setTypeName] = useState("")
   const [typeRate, setTypeRate] = useState("")
   const [typeCapacity, setTypeCapacity] = useState("2")
+
+  // Galería de fotos por tipo
+  const [photoTypeId, setPhotoTypeId] = useState("")
+  const [photoUrl, setPhotoUrl] = useState("")
+  const [photoCaption, setPhotoCaption] = useState("")
 
   // Alta de habitación
   const [roomName, setRoomName] = useState("")
@@ -147,6 +158,53 @@ function HabitacionesPageContent() {
     } finally {
       setBusy(false)
     }
+  }
+
+  // Guarda la galería completa del tipo (el orden del arreglo es el orden público).
+  async function saveTypePhotos(type: RoomType, photos: RoomTypePhoto[]) {
+    setBusy(true)
+    setError("")
+    try {
+      const res = await fetch("/api/rooms", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          kind: "roomType",
+          id: type.id,
+          name: type.name,
+          baseRate: type.baseRate,
+          baseCapacity: type.baseCapacity,
+          maxCapacity: type.maxCapacity,
+          photos,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "No se pudo guardar la galería")
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error")
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function addPhoto(type: RoomType) {
+    const url = photoUrl.trim()
+    if (!/^https?:\/\//i.test(url)) {
+      setError("La foto debe ser un enlace directo que empiece por http(s)://")
+      return
+    }
+    setPhotoUrl("")
+    setPhotoCaption("")
+    void saveTypePhotos(type, [...type.photos, { url, caption: photoCaption.trim() }])
+  }
+
+  function movePhoto(type: RoomType, index: number, delta: number) {
+    const next = [...type.photos]
+    const target = index + delta
+    if (target < 0 || target >= next.length) return
+    ;[next[index], next[target]] = [next[target], next[index]]
+    void saveTypePhotos(type, next)
   }
 
   async function createRoom() {
@@ -330,6 +388,127 @@ function HabitacionesPageContent() {
                 </ul>
               )}
             </section>
+
+            {/* Galería de fotos por tipo (se muestra en la página pública) */}
+            {roomTypes.length > 0 && (
+              <section className="mt-8">
+                <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                  <ImageIcon size={16} /> Fotos por tipo
+                </h2>
+                <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]">
+                  Estas fotos salen en la página pública: en la tarjeta del tipo y en la galería del
+                  hotel. Pega el enlace directo de la imagen (http…jpg/png/webp).
+                </p>
+                <div className="mt-3 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
+                  <div className="flex flex-wrap gap-2">
+                    {roomTypes.map((type) => (
+                      <button
+                        key={type.id}
+                        onClick={() => setPhotoTypeId(type.id === photoTypeId ? "" : type.id)}
+                        className={`inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${
+                          type.id === photoTypeId
+                            ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-[#171410]"
+                            : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]"
+                        }`}
+                      >
+                        {type.name}
+                        <span className={type.id === photoTypeId ? "" : "text-[var(--brand-primary-dark)]"}>
+                          {type.photos.length}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {roomTypes
+                    .filter((type) => type.id === photoTypeId)
+                    .map((type) => (
+                      <div key={type.id} className="mt-4">
+                        {type.photos.length === 0 ? (
+                          <p className="rounded-xl border-2 border-dashed border-[var(--brand-primary)]/25 p-4 text-sm font-bold text-[var(--brand-ink-2)]">
+                            {type.name} aún no tiene fotos. Agrega la primera abajo: será la portada
+                            de la tarjeta en la página pública.
+                          </p>
+                        ) : (
+                          <ul className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                            {type.photos.map((photo, index) => (
+                              <li
+                                key={`${photo.url}-${index}`}
+                                className="overflow-hidden rounded-xl border-2 border-[var(--brand-primary)]/20"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={photo.url}
+                                  alt={photo.caption || type.name}
+                                  className="h-28 w-full object-cover"
+                                  loading="lazy"
+                                />
+                                <div className="flex items-center justify-between gap-1 p-2">
+                                  <p className="min-w-0 truncate text-xs font-bold text-[var(--brand-ink-2)]">
+                                    {index === 0 ? "★ Portada" : photo.caption || `Foto ${index + 1}`}
+                                  </p>
+                                  <span className="flex shrink-0 items-center gap-1">
+                                    <button
+                                      onClick={() => movePhoto(type, index, -1)}
+                                      disabled={busy || index === 0}
+                                      title="Mover antes"
+                                      className="text-[var(--brand-primary-dark)] disabled:opacity-30"
+                                    >
+                                      <ChevronLeft size={16} />
+                                    </button>
+                                    <button
+                                      onClick={() => movePhoto(type, index, 1)}
+                                      disabled={busy || index === type.photos.length - 1}
+                                      title="Mover después"
+                                      className="text-[var(--brand-primary-dark)] disabled:opacity-30"
+                                    >
+                                      <ChevronRight size={16} />
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        saveTypePhotos(
+                                          type,
+                                          type.photos.filter((_, i) => i !== index),
+                                        )
+                                      }
+                                      disabled={busy}
+                                      title="Quitar foto"
+                                      className="text-red-500 disabled:opacity-50"
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </span>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+
+                        <div className="mt-3 grid gap-2 sm:grid-cols-5">
+                          <input
+                            value={photoUrl}
+                            onChange={(e) => setPhotoUrl(e.target.value)}
+                            placeholder="https://… enlace directo de la imagen"
+                            className={`${inputClass} sm:col-span-2`}
+                          />
+                          <input
+                            value={photoCaption}
+                            onChange={(e) => setPhotoCaption(e.target.value)}
+                            placeholder="Descripción (opcional)"
+                            className={`${inputClass} sm:col-span-2`}
+                          />
+                          <button
+                            onClick={() => addPhoto(type)}
+                            disabled={busy || !photoUrl.trim()}
+                            className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-[#171410] disabled:opacity-50"
+                          >
+                            <Plus size={16} /> Agregar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </section>
+            )}
 
             {/* Alta de habitación */}
             <section className="mt-8">
