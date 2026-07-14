@@ -72,14 +72,17 @@
 
 ## 7. Antes de entregar / después de cambios grandes
 
-Corre el QA integral (53 verificaciones de vida real, limpia sus datos solos):
+Corre las dos rondas de QA (73 verificaciones de vida real; limpian sus
+datos solas y dejan el hotel exactamente como estaba):
 
 ```bash
-node scripts/qa-hotel-completo.mjs
+node scripts/qa-hotel-completo.mjs   # ronda 1: 53 checks (cliente + operación)
+node scripts/qa-hotel-ronda2.mjs     # ronda 2: 20 checks de blindaje fino
 ```
 
-Debe terminar en `🟢 TODO PERFECTO`. Requiere el servidor corriendo
-(`npm run dev`) y el `.env.local` del hotel en la raíz.
+Ambas deben terminar en `🟢`. Requieren el servidor corriendo (`npm run dev`)
+y el `.env.local` del hotel en la raíz. Se pueden encadenar (los scripts
+respetan solos el límite de reservas públicas por minuto).
 
 ## 8. Claves y accesos
 
