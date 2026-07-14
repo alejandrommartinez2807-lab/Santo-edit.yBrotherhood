@@ -67,4 +67,17 @@ describe("Configuración de módulos · fitness function", () => {
       `Módulos sin cablear en configuracion/page.tsx (su interruptor no guardaría nada): ${missing.join(", ")}`,
     ).toEqual([])
   })
+
+  it("cada ownerConfigKey existe en los defaults del panel (pedidos/domain.tsx)", () => {
+    // TERCERA copia del tipo: el normalizador del panel reconstruye la config
+    // y descartaba las claves que no conocía. Así el panel del hotel quedó
+    // invisible (getModulePlanAccess veía roomsModuleEnabled ausente => false)
+    // aunque el servidor y la configuración sí lo tenían activo.
+    const panelKeys = readDefaultConfigKeys("app/pedidos/domain.tsx")
+    const missing = OWNER_CONFIG_KEYS.filter((key) => !panelKeys.has(key))
+    expect(
+      missing,
+      `Módulos sin cablear en pedidos/domain.tsx (el panel los vería apagados): ${missing.join(", ")}`,
+    ).toEqual([])
+  })
 })

@@ -400,6 +400,55 @@ export type BusinessConfig = {
   membershipPlanMode: LocalPlanMode
   customIncludedModules: LocalModuleKey[]
   customBlockedModules: LocalModuleKey[]
+  // Interruptores de módulos: el panel debe conservar TODOS los ownerConfigKey
+  // al normalizar (fitness businessConfigModuleKeys); si el normalizador
+  // descarta uno, getModulePlanAccess lo ve ausente y usa su fallback (los
+  // hoteleros caen a false y el panel del hotel desaparece — ya pasó).
+  promotionModuleEnabled: boolean
+  inventoryAlertsModuleEnabled: boolean
+  advancedMenuModuleEnabled: boolean
+  productVariationsModuleEnabled: boolean
+  productAddonsModuleEnabled: boolean
+  productBuilderModuleEnabled: boolean
+  productCombosModuleEnabled: boolean
+  productAvailabilityModuleEnabled: boolean
+  salesChannelsModuleEnabled: boolean
+  reservationsModuleEnabled: boolean
+  waiterConfirmationModuleEnabled: boolean
+  kitchenItemsModuleEnabled: boolean
+  ticketsModuleEnabled: boolean
+  splitBillModuleEnabled: boolean
+  serviceChargeTipsModuleEnabled: boolean
+  suppliersModuleEnabled: boolean
+  supplierPurchasesModuleEnabled: boolean
+  accountsPayableModuleEnabled: boolean
+  subrecipesModuleEnabled: boolean
+  auditLogModuleEnabled: boolean
+  visualEditorModuleEnabled: boolean
+  trainingModeModuleEnabled: boolean
+  branchesModuleEnabled: boolean
+  roomsModuleEnabled: boolean
+  hotelReservationsModuleEnabled: boolean
+  folioModuleEnabled: boolean
+  housekeepingModuleEnabled: boolean
+  rateSeasonsModuleEnabled: boolean
+  hotelReportsModuleEnabled: boolean
+  bookingEngineModuleEnabled: boolean
+  tapeChartModuleEnabled: boolean
+  groupBookingsModuleEnabled: boolean
+  advancedRatesModuleEnabled: boolean
+  resortServicesModuleEnabled: boolean
+  resortChargesModuleEnabled: boolean
+  guestReviewsModuleEnabled: boolean
+  guestCrmModuleEnabled: boolean
+  hotelLandingModuleEnabled: boolean
+  hotelPackagesModuleEnabled: boolean
+  guestPortalModuleEnabled: boolean
+  onlinePaymentsModuleEnabled: boolean
+  guestNotificationsModuleEnabled: boolean
+  nightAuditModuleEnabled: boolean
+  fiscalInvoicingModuleEnabled: boolean
+  channelManagerModuleEnabled: boolean
   deliveryEnabled: boolean
   // Botones de aviso al cliente por WhatsApp (Confirmar/Preparación/Salida…)
   // en las tarjetas de delivery del panel; el dueño puede apagarlos.
@@ -455,6 +504,51 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   membershipPlanMode: "plan",
   customIncludedModules: [],
   customBlockedModules: [],
+  promotionModuleEnabled: true,
+  inventoryAlertsModuleEnabled: true,
+  advancedMenuModuleEnabled: true,
+  productVariationsModuleEnabled: true,
+  productAddonsModuleEnabled: true,
+  productBuilderModuleEnabled: true,
+  productCombosModuleEnabled: true,
+  productAvailabilityModuleEnabled: true,
+  salesChannelsModuleEnabled: true,
+  reservationsModuleEnabled: false,
+  waiterConfirmationModuleEnabled: true,
+  kitchenItemsModuleEnabled: true,
+  ticketsModuleEnabled: true,
+  splitBillModuleEnabled: false,
+  serviceChargeTipsModuleEnabled: false,
+  suppliersModuleEnabled: false,
+  supplierPurchasesModuleEnabled: false,
+  accountsPayableModuleEnabled: false,
+  subrecipesModuleEnabled: false,
+  auditLogModuleEnabled: true,
+  visualEditorModuleEnabled: true,
+  trainingModeModuleEnabled: false,
+  branchesModuleEnabled: true,
+  roomsModuleEnabled: true,
+  hotelReservationsModuleEnabled: true,
+  folioModuleEnabled: true,
+  housekeepingModuleEnabled: true,
+  rateSeasonsModuleEnabled: true,
+  hotelReportsModuleEnabled: true,
+  bookingEngineModuleEnabled: true,
+  tapeChartModuleEnabled: true,
+  groupBookingsModuleEnabled: true,
+  advancedRatesModuleEnabled: true,
+  resortServicesModuleEnabled: true,
+  resortChargesModuleEnabled: true,
+  guestReviewsModuleEnabled: true,
+  guestCrmModuleEnabled: true,
+  hotelLandingModuleEnabled: true,
+  hotelPackagesModuleEnabled: true,
+  guestPortalModuleEnabled: true,
+  onlinePaymentsModuleEnabled: true,
+  guestNotificationsModuleEnabled: true,
+  nightAuditModuleEnabled: true,
+  fiscalInvoicingModuleEnabled: true,
+  channelManagerModuleEnabled: true,
   deliveryEnabled: true,
   orderWhatsappStageButtonsEnabled: true,
   ownerDashboardModuleEnabled: true,
@@ -2255,6 +2349,186 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     membershipPlanMode: normalizeLocalPlanMode(source.membershipPlanMode),
     customIncludedModules: normalizeLocalModuleList(source.customIncludedModules),
     customBlockedModules: normalizeLocalModuleList(source.customBlockedModules),
+    promotionModuleEnabled: normalizeBooleanConfig(
+      source.promotionModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.promotionModuleEnabled
+    ),
+    inventoryAlertsModuleEnabled: normalizeBooleanConfig(
+      source.inventoryAlertsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.inventoryAlertsModuleEnabled
+    ),
+    advancedMenuModuleEnabled: normalizeBooleanConfig(
+      source.advancedMenuModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.advancedMenuModuleEnabled
+    ),
+    productVariationsModuleEnabled: normalizeBooleanConfig(
+      source.productVariationsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.productVariationsModuleEnabled
+    ),
+    productAddonsModuleEnabled: normalizeBooleanConfig(
+      source.productAddonsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.productAddonsModuleEnabled
+    ),
+    productBuilderModuleEnabled: normalizeBooleanConfig(
+      source.productBuilderModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.productBuilderModuleEnabled
+    ),
+    productCombosModuleEnabled: normalizeBooleanConfig(
+      source.productCombosModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.productCombosModuleEnabled
+    ),
+    productAvailabilityModuleEnabled: normalizeBooleanConfig(
+      source.productAvailabilityModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.productAvailabilityModuleEnabled
+    ),
+    salesChannelsModuleEnabled: normalizeBooleanConfig(
+      source.salesChannelsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.salesChannelsModuleEnabled
+    ),
+    reservationsModuleEnabled: normalizeBooleanConfig(
+      source.reservationsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.reservationsModuleEnabled
+    ),
+    waiterConfirmationModuleEnabled: normalizeBooleanConfig(
+      source.waiterConfirmationModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.waiterConfirmationModuleEnabled
+    ),
+    kitchenItemsModuleEnabled: normalizeBooleanConfig(
+      source.kitchenItemsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.kitchenItemsModuleEnabled
+    ),
+    ticketsModuleEnabled: normalizeBooleanConfig(
+      source.ticketsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.ticketsModuleEnabled
+    ),
+    splitBillModuleEnabled: normalizeBooleanConfig(
+      source.splitBillModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.splitBillModuleEnabled
+    ),
+    serviceChargeTipsModuleEnabled: normalizeBooleanConfig(
+      source.serviceChargeTipsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.serviceChargeTipsModuleEnabled
+    ),
+    suppliersModuleEnabled: normalizeBooleanConfig(
+      source.suppliersModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.suppliersModuleEnabled
+    ),
+    supplierPurchasesModuleEnabled: normalizeBooleanConfig(
+      source.supplierPurchasesModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.supplierPurchasesModuleEnabled
+    ),
+    accountsPayableModuleEnabled: normalizeBooleanConfig(
+      source.accountsPayableModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.accountsPayableModuleEnabled
+    ),
+    subrecipesModuleEnabled: normalizeBooleanConfig(
+      source.subrecipesModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.subrecipesModuleEnabled
+    ),
+    auditLogModuleEnabled: normalizeBooleanConfig(
+      source.auditLogModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.auditLogModuleEnabled
+    ),
+    visualEditorModuleEnabled: normalizeBooleanConfig(
+      source.visualEditorModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.visualEditorModuleEnabled
+    ),
+    trainingModeModuleEnabled: normalizeBooleanConfig(
+      source.trainingModeModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.trainingModeModuleEnabled
+    ),
+    branchesModuleEnabled: normalizeBooleanConfig(
+      source.branchesModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.branchesModuleEnabled
+    ),
+    roomsModuleEnabled: normalizeBooleanConfig(
+      source.roomsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.roomsModuleEnabled
+    ),
+    hotelReservationsModuleEnabled: normalizeBooleanConfig(
+      source.hotelReservationsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.hotelReservationsModuleEnabled
+    ),
+    folioModuleEnabled: normalizeBooleanConfig(
+      source.folioModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.folioModuleEnabled
+    ),
+    housekeepingModuleEnabled: normalizeBooleanConfig(
+      source.housekeepingModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.housekeepingModuleEnabled
+    ),
+    rateSeasonsModuleEnabled: normalizeBooleanConfig(
+      source.rateSeasonsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.rateSeasonsModuleEnabled
+    ),
+    hotelReportsModuleEnabled: normalizeBooleanConfig(
+      source.hotelReportsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.hotelReportsModuleEnabled
+    ),
+    bookingEngineModuleEnabled: normalizeBooleanConfig(
+      source.bookingEngineModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.bookingEngineModuleEnabled
+    ),
+    tapeChartModuleEnabled: normalizeBooleanConfig(
+      source.tapeChartModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.tapeChartModuleEnabled
+    ),
+    groupBookingsModuleEnabled: normalizeBooleanConfig(
+      source.groupBookingsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.groupBookingsModuleEnabled
+    ),
+    advancedRatesModuleEnabled: normalizeBooleanConfig(
+      source.advancedRatesModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.advancedRatesModuleEnabled
+    ),
+    resortServicesModuleEnabled: normalizeBooleanConfig(
+      source.resortServicesModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.resortServicesModuleEnabled
+    ),
+    resortChargesModuleEnabled: normalizeBooleanConfig(
+      source.resortChargesModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.resortChargesModuleEnabled
+    ),
+    guestReviewsModuleEnabled: normalizeBooleanConfig(
+      source.guestReviewsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.guestReviewsModuleEnabled
+    ),
+    guestCrmModuleEnabled: normalizeBooleanConfig(
+      source.guestCrmModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.guestCrmModuleEnabled
+    ),
+    hotelLandingModuleEnabled: normalizeBooleanConfig(
+      source.hotelLandingModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.hotelLandingModuleEnabled
+    ),
+    hotelPackagesModuleEnabled: normalizeBooleanConfig(
+      source.hotelPackagesModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.hotelPackagesModuleEnabled
+    ),
+    guestPortalModuleEnabled: normalizeBooleanConfig(
+      source.guestPortalModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.guestPortalModuleEnabled
+    ),
+    onlinePaymentsModuleEnabled: normalizeBooleanConfig(
+      source.onlinePaymentsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.onlinePaymentsModuleEnabled
+    ),
+    guestNotificationsModuleEnabled: normalizeBooleanConfig(
+      source.guestNotificationsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.guestNotificationsModuleEnabled
+    ),
+    nightAuditModuleEnabled: normalizeBooleanConfig(
+      source.nightAuditModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.nightAuditModuleEnabled
+    ),
+    fiscalInvoicingModuleEnabled: normalizeBooleanConfig(
+      source.fiscalInvoicingModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.fiscalInvoicingModuleEnabled
+    ),
+    channelManagerModuleEnabled: normalizeBooleanConfig(
+      source.channelManagerModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.channelManagerModuleEnabled
+    ),
     orderWhatsappStageButtonsEnabled: normalizeBooleanConfig(
       source.orderWhatsappStageButtonsEnabled,
       DEFAULT_BUSINESS_CONFIG.orderWhatsappStageButtonsEnabled
