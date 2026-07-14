@@ -26,25 +26,38 @@
    en vivo + próxima llegada + historial 90 días, toggle fuera de servicio, notas
    editables en sitio.
 
+## Segunda tanda (2026-07-14 tarde, migración 0039 YA aplicada)
+
+7. **Galerías sembradas**: 10 fotos premium (Unsplash hotlink) en los 3 tipos
+   (Individual 3, Doble Superior 3, Suite Ejecutiva 4) vía API staff.
+8. **Fix payload parcial** (`054c25f`): `saveRoomType` ya no pisa con defaults
+   los campos que el payload no trae (la siembra borró descripciones/orden y
+   se restauraron; el editor de fotos tenía el mismo bug latente).
+9. **Subir fotos como archivo** (`ba43ab4`): POST `/api/rooms/upload-photo`
+   (guard rooms, ~5MB, jpeg/png/webp) sube a Storage — bucket `menu-images`
+   prefijo `room-types/`, **se crea público al vuelo si no existe** — y botón
+   "Subir foto" en Habitaciones. Verificado en vivo contra el Supabase real.
+10. **Lightbox en la landing** (`8aba456`): clic en portada de tipo (badge
+    "N fotos") o en la galería abre visor grande con caption, contador,
+    flechas + teclado. Verificado en vivo.
+
 ## Pendientes del USUARIO antes del próximo deploy
 
-1. **Aplicar la migración `supabase/migrations/0039_room_type_photos.sql`** en el
-   Supabase del hotel (`edxbuggbqcrsaynxysuj`). Sin ella todo funciona pero el
-   editor de fotos no guarda.
-2. **Re-subir env vars**: `bash deploy-hotel-env.sh` (el bug de comillas ya está
+1. **Re-subir env vars**: `bash deploy-hotel-env.sh` (el bug de comillas ya está
    corregido; el admin `1234` no entra en prod hasta esto).
-3. **Deploy**: `npx vercel --prod --scope carlos-projects8` DESDE el worktree
+2. **Deploy**: `npx vercel --prod --scope carlos-projects8` DESDE el worktree
    `D:/Santo edit/.claude/worktrees/nice-visvesvaraya-5726a1` (NUNCA desde
    `D:\Santo edit`). URL canónica: https://hotel-valencia.vercel.app
-4. **QA con clave** (Claude no teclea claves): login al panel → ver "Panel del
-   hotel" + franja "Hotel · hoy" → cargar fotos a los 3 tipos → probar buscador
-   de reservas por código.
+3. **QA con clave** (Claude no teclea claves): login al panel → ver "Panel del
+   hotel" + franja "Hotel · hoy" → probar "Subir foto" en Habitaciones →
+   buscador de reservas por código.
 
 ## Ideas siguientes (no comprometidas)
 
-- Subir fotos a Supabase Storage (hoy es por URL).
-- Folio visible dentro de la ficha de habitación (hoy enlaza al módulo Folio).
-- Datos demo de galería para Lidotel (fotos reales de habitaciones de lidotel.com).
+- Folio visible dentro de la ficha de habitación (hoy muestra saldo + enlace).
+- Reemplazar las fotos Unsplash por fotos reales de Lidotel cuando el usuario
+  las tenga (con "Subir foto" ya se puede sin tocar código).
+- Lightbox también en /hotel/reservar (hoy solo miniatura).
 
 ## Reglas permanentes
 
