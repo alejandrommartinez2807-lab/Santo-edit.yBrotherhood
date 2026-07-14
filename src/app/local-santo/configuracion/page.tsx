@@ -219,6 +219,11 @@ type BusinessConfig = {
   hotelLandingModuleEnabled: boolean;
   hotelPackagesModuleEnabled: boolean;
   guestPortalModuleEnabled: boolean;
+  onlinePaymentsModuleEnabled: boolean;
+  guestNotificationsModuleEnabled: boolean;
+  nightAuditModuleEnabled: boolean;
+  fiscalInvoicingModuleEnabled: boolean;
+  channelManagerModuleEnabled: boolean;
   waiterConfirmationModuleEnabled: boolean;
   kitchenItemsModuleEnabled: boolean;
   ticketsModuleEnabled: boolean;
@@ -397,6 +402,11 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   hotelLandingModuleEnabled: true,
   hotelPackagesModuleEnabled: true,
   guestPortalModuleEnabled: true,
+  onlinePaymentsModuleEnabled: true,
+  guestNotificationsModuleEnabled: true,
+  nightAuditModuleEnabled: true,
+  fiscalInvoicingModuleEnabled: true,
+  channelManagerModuleEnabled: true,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
   ticketsModuleEnabled: true,
@@ -1242,6 +1252,26 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     guestPortalModuleEnabled: normalizeBoolean(
       source.guestPortalModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.guestPortalModuleEnabled,
+    ),
+    onlinePaymentsModuleEnabled: normalizeBoolean(
+      source.onlinePaymentsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.onlinePaymentsModuleEnabled,
+    ),
+    guestNotificationsModuleEnabled: normalizeBoolean(
+      source.guestNotificationsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.guestNotificationsModuleEnabled,
+    ),
+    nightAuditModuleEnabled: normalizeBoolean(
+      source.nightAuditModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.nightAuditModuleEnabled,
+    ),
+    fiscalInvoicingModuleEnabled: normalizeBoolean(
+      source.fiscalInvoicingModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.fiscalInvoicingModuleEnabled,
+    ),
+    channelManagerModuleEnabled: normalizeBoolean(
+      source.channelManagerModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.channelManagerModuleEnabled,
     ),
     waiterConfirmationModuleEnabled: normalizeBoolean(
       source.waiterConfirmationModuleEnabled,

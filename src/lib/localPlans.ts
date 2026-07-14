@@ -160,6 +160,11 @@ export type LocalPlanConfigLike = {
   hotelLandingModuleEnabled?: unknown
   hotelPackagesModuleEnabled?: unknown
   guestPortalModuleEnabled?: unknown
+  onlinePaymentsModuleEnabled?: unknown
+  guestNotificationsModuleEnabled?: unknown
+  nightAuditModuleEnabled?: unknown
+  fiscalInvoicingModuleEnabled?: unknown
+  channelManagerModuleEnabled?: unknown
   waiterConfirmationModuleEnabled?: unknown
   kitchenItemsModuleEnabled?: unknown
   ticketsModuleEnabled?: unknown
@@ -954,24 +959,26 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
   {
     key: "onlinePayments",
     label: "Pagos online",
-    description: "Cobro de depósito o total al reservar (pago móvil, Zelle, transferencia o Stripe), conciliado con el folio.",
+    description: "Depósitos de reserva (pago móvil, Zelle, transferencia) con referencia, para reportar y confirmar antes del check-in.",
     category: "money",
     minimumPlan: "complete",
+    ownerConfigKey: "onlinePaymentsModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/pagos-online",
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     key: "guestNotifications",
     label: "Notificaciones",
-    description: "Confirmación, recordatorio y post-estadía automáticos por email y WhatsApp.",
+    description: "Avisos de confirmación, recordatorio y post-estadía por WhatsApp (enlace wa.me con el mensaje listo), con registro para no repetir.",
     category: "growth",
     minimumPlan: "complete",
+    ownerConfigKey: "guestNotificationsModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/notificaciones",
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     key: "guestReviews",
@@ -1000,35 +1007,38 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
   {
     key: "nightAudit",
     label: "Cierre de día",
-    description: "Auditoría nocturna: cierra la jornada, consolida y rueda la fecha de negocio.",
+    description: "Resumen del día (llegadas, salidas, en casa, ingreso de la noche) y cierre que guarda el snapshot.",
     category: "money",
     minimumPlan: "complete",
+    ownerConfigKey: "nightAuditModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/cierre-dia",
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     key: "fiscalInvoicing",
     label: "Facturación fiscal",
-    description: "Factura legal (SENIAT/impuestos), notas de crédito y series de facturación sobre el folio.",
+    description: "Factura desde el folio con número correlativo, datos fiscales e impuesto (imprimible).",
     category: "money",
     minimumPlan: "complete",
+    ownerConfigKey: "fiscalInvoicingModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/facturacion",
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     key: "channelManager",
     label: "Canales / OTAs",
-    description: "Sincroniza disponibilidad y tarifas con Booking, Expedia y Airbnb.",
+    description: "Feed iCal de las fechas ocupadas para que Booking, Airbnb y otras OTAs se suscriban y no haya overbooking.",
     category: "growth",
     minimumPlan: "complete",
+    ownerConfigKey: "channelManagerModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/canales",
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     key: "advancedRates",
@@ -1576,6 +1586,26 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "guestPortal") {
     return normalizeBoolean(config.guestPortalModuleEnabled, false)
+  }
+
+  if (moduleKey === "onlinePayments") {
+    return normalizeBoolean(config.onlinePaymentsModuleEnabled, false)
+  }
+
+  if (moduleKey === "guestNotifications") {
+    return normalizeBoolean(config.guestNotificationsModuleEnabled, false)
+  }
+
+  if (moduleKey === "nightAudit") {
+    return normalizeBoolean(config.nightAuditModuleEnabled, false)
+  }
+
+  if (moduleKey === "fiscalInvoicing") {
+    return normalizeBoolean(config.fiscalInvoicingModuleEnabled, false)
+  }
+
+  if (moduleKey === "channelManager") {
+    return normalizeBoolean(config.channelManagerModuleEnabled, false)
   }
 
   if (moduleKey === "waiterConfirmation") {

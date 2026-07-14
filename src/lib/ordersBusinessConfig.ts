@@ -188,6 +188,11 @@ export type BusinessConfig = {
   hotelLandingModuleEnabled: boolean
   hotelPackagesModuleEnabled: boolean
   guestPortalModuleEnabled: boolean
+  onlinePaymentsModuleEnabled: boolean
+  guestNotificationsModuleEnabled: boolean
+  nightAuditModuleEnabled: boolean
+  fiscalInvoicingModuleEnabled: boolean
+  channelManagerModuleEnabled: boolean
   waiterConfirmationModuleEnabled: boolean
   kitchenItemsModuleEnabled: boolean
   ticketsModuleEnabled: boolean
@@ -345,6 +350,11 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   hotelLandingModuleEnabled: true,
   hotelPackagesModuleEnabled: true,
   guestPortalModuleEnabled: true,
+  onlinePaymentsModuleEnabled: true,
+  guestNotificationsModuleEnabled: true,
+  nightAuditModuleEnabled: true,
+  fiscalInvoicingModuleEnabled: true,
+  channelManagerModuleEnabled: true,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
   ticketsModuleEnabled: true,
@@ -923,6 +933,26 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.guestPortalModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.guestPortalModuleEnabled
     ),
+    onlinePaymentsModuleEnabled: normalizeBooleanConfig(
+      source.onlinePaymentsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.onlinePaymentsModuleEnabled
+    ),
+    guestNotificationsModuleEnabled: normalizeBooleanConfig(
+      source.guestNotificationsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.guestNotificationsModuleEnabled
+    ),
+    nightAuditModuleEnabled: normalizeBooleanConfig(
+      source.nightAuditModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.nightAuditModuleEnabled
+    ),
+    fiscalInvoicingModuleEnabled: normalizeBooleanConfig(
+      source.fiscalInvoicingModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.fiscalInvoicingModuleEnabled
+    ),
+    channelManagerModuleEnabled: normalizeBooleanConfig(
+      source.channelManagerModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.channelManagerModuleEnabled
+    ),
     waiterConfirmationModuleEnabled: normalizeBooleanConfig(
       source.waiterConfirmationModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.waiterConfirmationModuleEnabled
@@ -1042,6 +1072,11 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
   const hotelLandingAccess = getModulePlanAccess(config, "hotelLanding")
   const hotelPackagesAccess = getModulePlanAccess(config, "hotelPackages")
   const guestPortalAccess = getModulePlanAccess(config, "guestPortal")
+  const onlinePaymentsAccess = getModulePlanAccess(config, "onlinePayments")
+  const guestNotificationsAccess = getModulePlanAccess(config, "guestNotifications")
+  const nightAuditAccess = getModulePlanAccess(config, "nightAudit")
+  const fiscalInvoicingAccess = getModulePlanAccess(config, "fiscalInvoicing")
+  const channelManagerAccess = getModulePlanAccess(config, "channelManager")
   const waiterConfirmationAccess = getModulePlanAccess(config, "waiterConfirmation")
   const kitchenItemsAccess = getModulePlanAccess(config, "kitchenItems")
   const ticketsAccess = getModulePlanAccess(config, "tickets")
@@ -1186,6 +1221,19 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
       : false,
     guestPortalModuleEnabled: guestPortalAccess.includedInPlan
       ? config.guestPortalModuleEnabled
+      : false,
+    onlinePaymentsModuleEnabled: onlinePaymentsAccess.includedInPlan
+      ? config.onlinePaymentsModuleEnabled
+      : false,
+    guestNotificationsModuleEnabled: guestNotificationsAccess.includedInPlan
+      ? config.guestNotificationsModuleEnabled
+      : false,
+    nightAuditModuleEnabled: nightAuditAccess.includedInPlan ? config.nightAuditModuleEnabled : false,
+    fiscalInvoicingModuleEnabled: fiscalInvoicingAccess.includedInPlan
+      ? config.fiscalInvoicingModuleEnabled
+      : false,
+    channelManagerModuleEnabled: channelManagerAccess.includedInPlan
+      ? config.channelManagerModuleEnabled
       : false,
     waiterConfirmationModuleEnabled: waiterConfirmationAccess.includedInPlan
       ? config.waiterConfirmationModuleEnabled
