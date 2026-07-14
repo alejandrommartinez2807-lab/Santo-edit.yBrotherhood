@@ -60,10 +60,26 @@ type Room = {
   active: boolean
 }
 
+// Estadías para la ficha de la habitación (actual, próxima e historial).
+type RoomStay = {
+  id: string
+  roomId: string
+  guestName: string
+  checkInDate: string
+  checkOutDate: string
+  status: string
+}
+
 function authHeaders(): HeadersInit {
   const password =
     typeof window !== "undefined" ? window.sessionStorage.getItem(OWNER_STORAGE_KEY) || "" : ""
   return { "Content-Type": "application/json", "x-admin-password": password }
+}
+
+function isoDaysFromNow(days: number) {
+  const d = new Date()
+  d.setDate(d.getDate() + days)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
 }
 
 export default function HabitacionesPage() {
@@ -100,6 +116,45 @@ function HabitacionesPageContent() {
   const [roomRate, setRoomRate] = useState("")
   const [roomAmenities, setRoomAmenities] = useState("")
 
+  // Ficha de la habitación: estadías (actual/próxima/historial) y saldos de folio.
+  const [stays, setStays] = useState<RoomStay[]>([])
+  const [folioBalances, setFolioBalances] = useState<Record<string, number>>({})
+  const [notesDraft, setNotesDraft] = useState<Record<string, string>>({})
+
+  const loadStays = useCallback(async () => {
+    try {
+      const res = await fetch(
+        `/api/hotel-reservations?from=${isoDaysFromNow(-90)}&to=${isoDaysFromNow(60)}`,
+        { headers: authHeaders(), cache: "no-store" },
+      )
+      if (!res.ok) return
+      const data = await res.json()
+      const list: RoomStay[] = Array.isArray(data.reservations) ? data.reservations : []
+      setStays(list)
+
+      // Saldo del folio solo para los huéspedes en casa (pocas consultas).
+      const inHouse = list.filter((stay) => stay.status === "checkin")
+      const balances = await Promise.all(
+        inHouse.map(async (stay) => {
+          try {
+            const folioRes = await fetch(`/api/folios?reservationId=${stay.id}`, {
+              headers: authHeaders(),
+              cache: "no-store",
+            })
+            if (!folioRes.ok) return null
+            const folioData = await folioRes.json()
+            return [stay.id, Number(folioData.balance) || 0] as const
+          } catch {
+            return null
+          }
+        }),
+      )
+      setFolioBalances(Object.fromEntries(balances.filter(Boolean) as [string, number][]))
+    } catch {
+      // La ficha muestra "Libre" si esto falla; el CRUD de habitaciones no depende.
+    }
+  }, [])
+
   const load = useCallback(async () => {
     setLoading(true)
     setError("")
@@ -122,9 +177,68 @@ function HabitacionesPageContent() {
   }, [])
 
   useEffect(() => {
-    const timer = setTimeout(load, 0)
+    const timer = setTimeout(() => {
+      void load()
+      void loadStays()
+    }, 0)
     return () => clearTimeout(timer)
-  }, [load])
+  }, [load, loadStays])
+
+  const today = isoDaysFromNow(0)
+
+  // Estadía actual, próxima llegada e historial por habitación.
+  const staysByRoom = useMemo(() => {
+    const map = new Map<string, { current?: RoomStay; next?: RoomStay; pastCount: number }>()
+    for (const stay of stays) {
+      const entry = map.get(stay.roomId) || { pastCount: 0 }
+      if (stay.status === "checkin") {
+        entry.current = stay
+      } else if (
+        (stay.status === "pendiente" || stay.status === "confirmada") &&
+        stay.checkOutDate > today
+      ) {
+        if (!entry.next || stay.checkInDate < entry.next.checkInDate) entry.next = stay
+      } else if (stay.status === "checkout") {
+        entry.pastCount += 1
+      }
+      map.set(stay.roomId, entry)
+    }
+    return map
+  }, [stays, today])
+
+  // Guarda cambios puntuales de una habitación (notas, fuera de servicio…)
+  // reenviando la ficha completa, que es lo que espera el endpoint.
+  async function saveRoomPatch(room: Room, patch: Partial<Room>) {
+    setBusy(true)
+    setError("")
+    try {
+      const res = await fetch("/api/rooms", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          id: room.id,
+          roomTypeId: room.roomTypeId,
+          name: room.name,
+          floor: room.floor,
+          capacity: room.capacity,
+          baseRate: room.baseRate,
+          housekeepingStatus: room.housekeepingStatus,
+          outOfService: room.outOfService,
+          amenities: room.amenities,
+          notes: room.notes,
+          active: room.active,
+          ...patch,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "No se pudo guardar la habitación")
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error")
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const typeNameById = useMemo(() => {
     const map = new Map<string, string>()
@@ -623,6 +737,46 @@ function HabitacionesPageContent() {
                       </span>
                     </div>
 
+                    {/* Estadía actual / próxima llegada / historial + saldo del folio */}
+                    {(() => {
+                      const info = staysByRoom.get(room.id)
+                      const balance = info?.current ? folioBalances[info.current.id] : undefined
+                      return (
+                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl bg-[var(--brand-cream)] px-3 py-2 text-sm font-bold text-[var(--brand-ink-2)]">
+                          {info?.current ? (
+                            <>
+                              <span className="inline-flex items-center gap-1.5 text-green-700">
+                                <BedDouble size={14} /> {info.current.guestName} · sale{" "}
+                                {info.current.checkOutDate}
+                              </span>
+                              {balance !== undefined && (
+                                <span className={balance > 0 ? "text-amber-700" : "text-green-700"}>
+                                  Saldo del folio: ${balance}
+                                </span>
+                              )}
+                              <Link
+                                href="/local-santo/folio"
+                                className="text-[var(--brand-primary-dark)] underline-offset-2 hover:underline"
+                              >
+                                Abrir folio
+                              </Link>
+                            </>
+                          ) : info?.next ? (
+                            <span>
+                              Próxima llegada: {info.next.guestName} · {info.next.checkInDate}
+                            </span>
+                          ) : (
+                            <span>Libre — sin llegadas próximas</span>
+                          )}
+                          {info && info.pastCount > 0 && (
+                            <span className="text-[var(--brand-ink-2)]">
+                              {info.pastCount} estadía(s) previa(s) en 90 días
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })()}
+
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       {Object.keys(HOUSEKEEPING_LABELS).map((status) => (
                         <button
@@ -639,6 +793,17 @@ function HabitacionesPageContent() {
                         </button>
                       ))}
                       <button
+                        onClick={() => saveRoomPatch(room, { outOfService: !room.outOfService })}
+                        disabled={busy}
+                        className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase disabled:opacity-40 ${
+                          room.outOfService
+                            ? "border-red-300 bg-red-50 text-red-600"
+                            : "border-[var(--brand-primary)]/20 bg-white text-[var(--brand-ink-2)]/70"
+                        }`}
+                      >
+                        {room.outOfService ? "Volver a servicio" : "Fuera de servicio"}
+                      </button>
+                      <button
                         onClick={() => removeRoom(room)}
                         disabled={busy}
                         title="Eliminar habitación"
@@ -646,6 +811,35 @@ function HabitacionesPageContent() {
                       >
                         <Trash2 size={16} />
                       </button>
+                    </div>
+
+                    {/* Notas internas de la habitación */}
+                    <div className="mt-2 flex items-center gap-2">
+                      <input
+                        value={notesDraft[room.id] ?? room.notes}
+                        onChange={(e) =>
+                          setNotesDraft((draft) => ({ ...draft, [room.id]: e.target.value }))
+                        }
+                        placeholder="Notas internas (vista al jardín, ruido del ascensor…)"
+                        className="w-full rounded-xl border-2 border-[var(--brand-primary)]/15 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+                      />
+                      {(notesDraft[room.id] ?? room.notes) !== room.notes && (
+                        <button
+                          onClick={() =>
+                            saveRoomPatch(room, { notes: notesDraft[room.id] ?? "" }).then(() =>
+                              setNotesDraft((draft) => {
+                                const next = { ...draft }
+                                delete next[room.id]
+                                return next
+                              }),
+                            )
+                          }
+                          disabled={busy}
+                          className="shrink-0 rounded-xl bg-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase text-[#171410] disabled:opacity-50"
+                        >
+                          Guardar
+                        </button>
+                      )}
                     </div>
                   </li>
                 ))}
