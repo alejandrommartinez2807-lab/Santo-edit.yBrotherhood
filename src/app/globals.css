@@ -19,23 +19,24 @@
      los `--brand-ink*` son el texto y ahora son claros (ink-3 = el más brillante,
      para títulos/texto principal). Así, cualquier combo `bg-cream + text-ink`
      mantiene contraste pero invertido a oscuro sin tocar cada componente. */
-  --brand-primary: #d4af37;
-  --brand-primary-dark: #a8842a;
-  --brand-primary-rgb: 212, 175, 55;
-  --brand-cream: #0b0b0c;
-  --brand-ink: #ece9e1;
-  --brand-ink-2: #b3ad9e;
-  --brand-ink-3: #faf7ef;
-  --brand-amber: #e6c964;
-  --brand-accent: #d4af37;
-  --brand-accent-200: #e6c964;
-  --brand-accent-100: #f2e2a8;
-  --brand-accent-rgb: 212, 175, 55;
+  /* Oro champán apagado (menos latón, más 5 estrellas) sobre negro profundo. */
+  --brand-primary: #c8a35f;
+  --brand-primary-dark: #97783f;
+  --brand-primary-rgb: 200, 163, 95;
+  --brand-cream: #0a0a09;
+  --brand-ink: #e9e4d8;
+  --brand-ink-2: #a49d8d;
+  --brand-ink-3: #f6f1e6;
+  --brand-amber: #d9bc7d;
+  --brand-accent: #c8a35f;
+  --brand-accent-200: #d9bc7d;
+  --brand-accent-100: #ecdcb2;
+  --brand-accent-rgb: 200, 163, 95;
 
   /* Superficies oscuras auxiliares para tarjetas/paneles del sitio público. */
-  --brand-surface: #15140f;
-  --brand-surface-2: #1d1b14;
-  --brand-border: #2c2822;
+  --brand-surface: #121110;
+  --brand-surface-2: #191815;
+  --brand-border: #262319;
 }
 
 * {
@@ -79,7 +80,7 @@
 
 /* Texto con relleno dorado metálico para titulares destacados. */
 .text-gold {
-  background: linear-gradient(180deg, #f4e3a6 0%, var(--brand-primary) 55%, var(--brand-primary-dark) 100%);
+  background: linear-gradient(180deg, #eeddb0 0%, var(--brand-primary) 55%, var(--brand-primary-dark) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -92,8 +93,8 @@ html {
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top, rgba(212, 175, 55, 0.16), transparent 35%),
-    linear-gradient(180deg, #141414 0%, #0a0a0a 45%, #000000 100%);
+    radial-gradient(circle at top, rgba(200, 163, 95, 0.1), transparent 35%),
+    linear-gradient(180deg, #121211 0%, #0a0a09 45%, #000000 100%);
   color: white;
 }
 

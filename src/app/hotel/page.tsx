@@ -229,18 +229,19 @@ export default function HotelLandingPage() {
           {types.map((t, i) => (
             <article
               key={t.roomTypeId}
-              className="group relative flex flex-col overflow-hidden rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-surface)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--brand-primary)]/50 hover:shadow-2xl hover:shadow-black/50"
+              className="group relative flex flex-col overflow-hidden rounded-xl border border-white/8 bg-[var(--brand-surface)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--brand-primary)]/40 hover:shadow-2xl hover:shadow-black/50"
             >
-              {/* Encabezado dorado con número e ícono */}
-              <div className="relative flex h-28 items-center justify-between overflow-hidden bg-gradient-to-br from-[var(--brand-primary)]/25 via-[var(--brand-primary)]/8 to-transparent px-7">
-                <span className="font-serif text-6xl font-semibold leading-none text-[var(--brand-primary)]/35">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <BedDouble className="text-[var(--brand-primary)]" size={30} strokeWidth={1.5} />
-              </div>
+              {/* Filete dorado superior, discreto */}
+              <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--brand-primary)]/60 to-transparent" />
 
-              <div className="flex flex-1 flex-col p-7 pt-5">
-                <h3 className="font-serif text-2xl font-semibold text-[var(--brand-ink-3)]">{t.name}</h3>
+              <div className="flex flex-1 flex-col p-9">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold tracking-[0.35em] text-[var(--brand-primary)]/80">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <BedDouble className="text-[var(--brand-primary)]/70" size={22} strokeWidth={1.25} />
+                </div>
+                <h3 className="mt-6 font-serif text-[1.75rem] font-medium leading-tight text-[var(--brand-ink-3)]">{t.name}</h3>
                 {t.description && (
                   <p className="mt-2 flex-1 text-sm leading-relaxed text-[var(--brand-ink-2)]">{t.description}</p>
                 )}
@@ -317,7 +318,7 @@ export default function HotelLandingPage() {
               return (
                 <article
                   key={s.id}
-                  className="group flex flex-col rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-surface)] p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[var(--brand-primary)]/50"
+                  className="group flex flex-col rounded-2xl border border-white/8 bg-[var(--brand-surface)] p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[var(--brand-primary)]/40"
                 >
                   <span className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-[var(--brand-primary)]/25 bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]">
                     <Icon size={24} strokeWidth={1.5} />
@@ -351,7 +352,7 @@ export default function HotelLandingPage() {
                 return (
                   <div
                     key={a}
-                    className="flex flex-col items-center gap-3 rounded-2xl border border-[var(--brand-primary)]/12 bg-[var(--brand-surface)] p-6 transition-colors hover:border-[var(--brand-primary)]/40"
+                    className="flex flex-col items-center gap-3 rounded-2xl border border-white/8 bg-[var(--brand-surface)] p-6 transition-colors hover:border-[var(--brand-primary)]/40"
                   >
                     <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary)]/12 text-[var(--brand-primary)]">
                       <Icon size={22} strokeWidth={1.5} />
@@ -388,7 +389,7 @@ export default function HotelLandingPage() {
             {reviews.slice(0, 6).map((r, i) => (
               <figure
                 key={i}
-                className="flex flex-col rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-surface)] p-8"
+                className="flex flex-col rounded-2xl border border-white/8 bg-[var(--brand-surface)] p-8"
               >
                 <Quote className="text-[var(--brand-primary)]/50" size={30} />
                 <blockquote className="mt-4 flex-1 leading-relaxed text-[var(--brand-ink)]">“{r.comment}”</blockquote>
@@ -415,7 +416,7 @@ export default function HotelLandingPage() {
             <hr className="hairline-gold mx-auto mt-6 w-24" />
           </div>
           <div className="mt-12 grid gap-6 sm:grid-cols-2">
-            <div className="rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-surface)] p-8">
+            <div className="rounded-2xl border border-white/8 bg-[var(--brand-surface)] p-8">
               <p className="kicker inline-flex items-center gap-2">
                 <Clock size={14} /> Horarios
               </p>
@@ -430,7 +431,7 @@ export default function HotelLandingPage() {
                 </p>
               </div>
             </div>
-            <div className="rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-surface)] p-8">
+            <div className="rounded-2xl border border-white/8 bg-[var(--brand-surface)] p-8">
               <p className="kicker">Contacto</p>
               <div className="mt-4 space-y-3 text-[var(--brand-ink)]">
                 {profile?.address && (
