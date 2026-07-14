@@ -80,7 +80,7 @@ export default function MiReservaPage() {
         <Link href="/hotel" className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
           <ArrowLeft size={16} /> {BRAND.name}
         </Link>
-        <h1 className="mt-3 text-3xl font-black uppercase text-[var(--brand-ink-3)]">Mi reserva</h1>
+        <h1 className="mt-3 font-serif text-4xl font-semibold text-[var(--brand-ink-3)]">Mi reserva</h1>
         <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">Consulta tu reserva con tu código y teléfono.</p>
 
         {!reservation ? (

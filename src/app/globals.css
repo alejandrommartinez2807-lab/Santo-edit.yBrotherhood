@@ -50,6 +50,41 @@
   text-transform: uppercase;
 }
 
+/* Serif editorial para superficies premium (hotel). Titulares con aire de 5★. */
+.font-serif {
+  font-family: var(--font-serif), "Playfair Display", Georgia, "Times New Roman", serif;
+  letter-spacing: 0.005em;
+}
+
+/* Kicker: etiqueta fina en versalitas espaciadas, en oro. */
+.kicker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--brand-primary);
+}
+
+/* Filete/hairline en degradado dorado (separadores premium). */
+.hairline-gold {
+  height: 1px;
+  border: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(var(--brand-primary-rgb), 0.65),
+    transparent
+  );
+}
+
+/* Texto con relleno dorado metálico para titulares destacados. */
+.text-gold {
+  background: linear-gradient(180deg, #f4e3a6 0%, var(--brand-primary) 55%, var(--brand-primary-dark) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -63,8 +98,8 @@ body {
 }
 
 ::selection {
-  background: var(--bambucha-orange);
-  color: black;
+  background: rgba(var(--brand-primary-rgb), 0.85);
+  color: #0b0b0c;
 }
 
 /* Fina, discreta y en colores de la marca: el thumb usa el primario

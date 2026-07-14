@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Anton } from "next/font/google";
+import { Anton, Playfair_Display } from "next/font/google";
 import { BRAND } from "@/lib/brand";
 
 // Fuente display condensada (títulos/hero) — el cuerpo sigue en la sans del sistema.
@@ -7,6 +7,16 @@ const displayFont = Anton({
   weight: "400",
   subsets: ["latin"],
   variable: "--font-display",
+  display: "swap",
+});
+
+// Serif editorial elegante para las superficies premium (hotel): titulares con
+// aire de 5 estrellas, muy distinto al display condensado del resto.
+const serifFont = Playfair_Display({
+  weight: ["500", "600", "700"],
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  variable: "--font-serif",
   display: "swap",
 });
 import { Analytics } from "@vercel/analytics/react";
@@ -44,7 +54,7 @@ export async function generateMetadata(): Promise<Metadata> {
   );
   const businessName = BRAND.name;
   const description = readBusinessDescription(config);
-  const title = `${businessName} | Menú y pedidos`;
+  const title = businessName;
 
   return {
     metadataBase: new URL(getSiteUrl()),
@@ -129,7 +139,7 @@ export default async function RootLayout({
   ]);
 
   return (
-    <html lang="es" className={`h-full antialiased ${displayFont.variable}`}>
+    <html lang="es" className={`h-full antialiased ${displayFont.variable} ${serifFont.variable}`}>
       <head>
         {themeCss ? <style id="brand-theme" dangerouslySetInnerHTML={{ __html: themeCss }} /> : null}
         {restaurantJsonLd ? (

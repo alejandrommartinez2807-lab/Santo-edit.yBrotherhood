@@ -139,7 +139,7 @@ export default function HotelReservarPage() {
         <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-green-700">
           <CheckCircle2 size={28} />
         </span>
-        <h1 className="mt-4 text-2xl font-black uppercase text-[var(--brand-ink-3)]">¡Reserva recibida!</h1>
+        <h1 className="mt-4 font-serif text-3xl font-semibold text-[var(--brand-ink-3)]">¡Reserva recibida!</h1>
         <p className="mt-2 font-bold text-[var(--brand-ink-2)]/70">
           Tu código de reserva es
         </p>
@@ -180,7 +180,7 @@ export default function HotelReservarPage() {
         >
           <ArrowLeft size={16} /> {BRAND.name}
         </Link>
-        <h1 className="mt-3 text-3xl font-black uppercase text-[var(--brand-ink-3)]">Reservar en línea</h1>
+        <h1 className="mt-3 font-serif text-4xl font-semibold text-[var(--brand-ink-3)]">Reservar en línea</h1>
         <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
           Elige tus fechas y mira las habitaciones disponibles con su precio.
         </p>
