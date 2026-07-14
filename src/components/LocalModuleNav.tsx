@@ -22,36 +22,41 @@ type NavEntry = {
 }
 
 // Solo módulos con página propia. El orden es el orden de la barra:
-// operación diaria primero, administración después.
+// hotel primero (Recepción → Dinero → Resort/huésped), luego el POS de
+// restaurante y al final la administración. En negocios sin módulos
+// hoteleros esas entradas no aparecen y la barra queda como siempre.
 const NAV_ENTRIES: NavEntry[] = [
+  // — Recepción —
+  { key: "hotelReservations", label: "Reservas hotel", href: "/local-santo/reservas-hotel" },
+  { key: "tapeChart", label: "Calendario", href: "/local-santo/calendario" },
+  { key: "rooms", label: "Habitaciones", href: "/local-santo/habitaciones" },
+  { key: "folio", label: "Folio", href: "/local-santo/folio" },
+  { key: "housekeeping", label: "Limpieza", href: "/local-santo/housekeeping" },
+  { key: "bookingEngine", label: "Reservas online", href: "/local-santo/reservas-online" },
+  { key: "guestPortal", label: "Portal huésped", href: "/local-santo/portal-huesped" },
+  { key: "groupBookings", label: "Grupos", href: "/local-santo/grupos" },
+  // — Dinero del hotel —
+  { key: "rateSeasons", label: "Tarifas", href: "/local-santo/tarifas" },
+  { key: "advancedRates", label: "Planes de tarifa", href: "/local-santo/planes-tarifa" },
+  { key: "onlinePayments", label: "Pagos online", href: "/local-santo/pagos-online" },
+  { key: "fiscalInvoicing", label: "Facturación", href: "/local-santo/facturacion" },
+  { key: "nightAudit", label: "Cierre de día", href: "/local-santo/cierre-dia" },
+  { key: "hotelReports", label: "Reportes hotel", href: "/local-santo/reportes-hotel" },
+  // — Resort y huésped —
+  { key: "resortServices", label: "Servicios", href: "/local-santo/servicios" },
+  { key: "resortCharges", label: "Cargo resort", href: "/local-santo/cargos-resort" },
+  { key: "hotelPackages", label: "Paquetes", href: "/local-santo/paquetes" },
+  { key: "guestReviews", label: "Reseñas", href: "/local-santo/resenas" },
+  { key: "guestCrm", label: "CRM", href: "/local-santo/crm" },
+  { key: "channelManager", label: "Canales/OTAs", href: "/local-santo/canales" },
+  { key: "guestNotifications", label: "Notificaciones", href: "/local-santo/notificaciones" },
+  { key: "hotelLanding", label: "Página hotel", href: "/local-santo/pagina-hotel" },
+  // — Restaurante / room service —
   { key: "cashier", label: "Caja", href: "/local-santo/caja" },
   { key: "kitchen", label: "Cocina", href: "/local-santo/cocina" },
   { key: "openAccounts", label: "Mesonero", href: "/local-santo/mesonero" },
   { key: "tables", label: "Mesas y QR", href: "/local-santo/mesas" },
   { key: "reservations", label: "Reservas", href: "/local-santo/reservas" },
-  { key: "rooms", label: "Habitaciones", href: "/local-santo/habitaciones" },
-  { key: "hotelReservations", label: "Reservas hotel", href: "/local-santo/reservas-hotel" },
-  { key: "folio", label: "Folio", href: "/local-santo/folio" },
-  { key: "housekeeping", label: "Limpieza", href: "/local-santo/housekeeping" },
-  { key: "rateSeasons", label: "Tarifas", href: "/local-santo/tarifas" },
-  { key: "hotelReports", label: "Reportes hotel", href: "/local-santo/reportes-hotel" },
-  // Roadmap hotel/resort (Próximamente) — ocultos hasta activarse por rol/plan
-  { key: "bookingEngine", label: "Reservas online", href: "/local-santo/reservas-online" },
-  { key: "guestPortal", label: "Portal huésped", href: "/local-santo/portal-huesped" },
-  { key: "hotelLanding", label: "Página hotel", href: "/local-santo/pagina-hotel" },
-  { key: "onlinePayments", label: "Pagos online", href: "/local-santo/pagos-online" },
-  { key: "guestNotifications", label: "Notificaciones", href: "/local-santo/notificaciones" },
-  { key: "guestReviews", label: "Reseñas", href: "/local-santo/resenas" },
-  { key: "tapeChart", label: "Calendario", href: "/local-santo/calendario" },
-  { key: "nightAudit", label: "Cierre de día", href: "/local-santo/cierre-dia" },
-  { key: "fiscalInvoicing", label: "Facturación", href: "/local-santo/facturacion" },
-  { key: "channelManager", label: "Canales/OTAs", href: "/local-santo/canales" },
-  { key: "advancedRates", label: "Planes de tarifa", href: "/local-santo/planes-tarifa" },
-  { key: "guestCrm", label: "CRM", href: "/local-santo/crm" },
-  { key: "groupBookings", label: "Grupos", href: "/local-santo/grupos" },
-  { key: "resortServices", label: "Servicios", href: "/local-santo/servicios" },
-  { key: "resortCharges", label: "Cargo resort", href: "/local-santo/cargos-resort" },
-  { key: "hotelPackages", label: "Paquetes", href: "/local-santo/paquetes" },
   { key: "delivery", label: "Delivery", href: "/local-santo/delivery" },
   { key: "paymentProofs", label: "Comprobantes", href: "/local-santo/comprobantes" },
   { key: "tickets", label: "Tickets", href: "/local-santo/tickets" },

@@ -154,6 +154,7 @@ import {
   normalizeBusinessConfig,
   isBusinessModuleEffective
 } from "./domain"
+import HotelPanelSection from "@/components/local/HotelPanelSection"
 import {
   ModuleAccessCard,
   PanelMiniMetric,
@@ -1282,6 +1283,12 @@ export default function PedidosPage() {
   const isBranchesModuleVisible = isOwnerAccess
   const isAuditLogModuleVisible =
     isOwnerAccess && auditLogAccess.effectiveEnabled
+  // Con módulos hoteleros activos el panel habla de hotel: la recepción va
+  // primero y el POS de comida queda como sección "Restaurante y room service".
+  const isHotelFrontDeskVisible =
+    canUseOperationalPanel &&
+    (getModulePlanAccess(businessConfig, "rooms").effectiveEnabled ||
+      getModulePlanAccess(businessConfig, "hotelReservations").effectiveEnabled)
   const activeOpenAccounts = openAccounts.filter(isOpenAccountActive)
   const pendingOpenAccountsCount = activeOpenAccounts.filter(
     (account) => getOpenAccountPendingUSD(account) > 0
@@ -3448,7 +3455,7 @@ export default function PedidosPage() {
                 </p>
 
                 <h1 className="mt-1 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl">
-                  Control de pedidos
+                  {isHotelFrontDeskVisible ? "Panel del hotel" : "Control de pedidos"}
                 </h1>
 
                 <p className="mt-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -3534,6 +3541,18 @@ export default function PedidosPage() {
               </button>
             )}
           </section>
+        )}
+
+        <HotelPanelSection
+          businessConfig={businessConfig}
+          isOwnerAccess={isOwnerAccess}
+          canUseOperationalPanel={canUseOperationalPanel}
+        />
+
+        {isHotelFrontDeskVisible && (
+          <p className="mt-6 text-xs font-black uppercase tracking-[0.24em] text-[var(--brand-primary)]">
+            Restaurante y room service
+          </p>
         )}
 
         <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
