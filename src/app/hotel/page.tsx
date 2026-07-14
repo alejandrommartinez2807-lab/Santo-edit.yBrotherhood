@@ -147,7 +147,7 @@ export default function HotelLandingPage() {
       <section className="relative isolate min-h-[92vh] overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={HERO} alt={BRAND.name} className="absolute inset-0 -z-10 h-full w-full object-cover" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/60 via-black/45 to-black/30" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/60 via-black/50 to-black/45" />
         <div className="absolute inset-x-0 bottom-0 -z-10 h-36 bg-gradient-to-t from-[var(--brand-cream)] to-transparent" />
 
         <div className="mx-auto flex min-h-[92vh] max-w-4xl flex-col items-center justify-center px-6 py-28 text-center">
@@ -164,7 +164,7 @@ export default function HotelLandingPage() {
           </h1>
           <div className="mx-auto mt-7 h-px w-28 bg-gradient-to-r from-transparent via-[var(--brand-primary)] to-transparent" />
           {profile?.about && (
-            <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-white/85">{profile.about}</p>
+            <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-white drop-shadow-[0_1px_12px_rgba(0,0,0,0.55)]">{profile.about}</p>
           )}
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <Link
@@ -182,7 +182,7 @@ export default function HotelLandingPage() {
             </Link>
           </div>
         </div>
-        <div className="pointer-events-none absolute inset-x-0 bottom-8 flex justify-center text-white/60">
+        <div className="pointer-events-none absolute inset-x-0 bottom-8 flex justify-center text-[var(--brand-primary-dark)]">
           <ChevronDown size={26} className="animate-bounce" />
         </div>
       </section>
@@ -193,7 +193,7 @@ export default function HotelLandingPage() {
           {HALLMARKS.map((h, i) => (
             <span key={h} className="flex items-center gap-10">
               {i > 0 && <span className="hidden h-1 w-1 rounded-full bg-[var(--brand-primary)]/60 sm:block" />}
-              <span className="font-serif text-base italic text-[var(--brand-ink-2)]">{h}</span>
+              <span className="font-serif text-[1.05rem] italic text-[var(--brand-ink)]">{h}</span>
             </span>
           ))}
         </div>
@@ -208,7 +208,7 @@ export default function HotelLandingPage() {
                 <Icon size={24} strokeWidth={1.5} />
               </span>
               <h3 className="mt-5 font-serif text-xl font-semibold text-[var(--brand-ink-3)]">{title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--brand-ink-2)]">{text}</p>
+              <p className="mt-2 text-[15px] leading-relaxed text-[var(--brand-ink-2)]">{text}</p>
             </div>
           ))}
         </div>
@@ -235,39 +235,39 @@ export default function HotelLandingPage() {
 
               <div className="flex flex-1 flex-col p-9">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold tracking-[0.35em] text-[var(--brand-primary)]/80">
+                  <span className="text-xs font-semibold tracking-[0.35em] text-[var(--brand-primary-dark)]">
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <BedDouble className="text-[var(--brand-primary)]/70" size={22} strokeWidth={1.25} />
                 </div>
                 <h3 className="mt-6 font-serif text-[1.75rem] font-medium leading-tight text-[var(--brand-ink-3)]">{t.name}</h3>
                 {t.description && (
-                  <p className="mt-2 flex-1 text-sm leading-relaxed text-[var(--brand-ink-2)]">{t.description}</p>
+                  <p className="mt-2 flex-1 text-[15px] leading-relaxed text-[var(--brand-ink-2)]">{t.description}</p>
                 )}
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-3 py-1 text-xs text-[var(--brand-ink-2)]">
                     <Users size={13} /> Hasta {t.capacity}
                   </span>
                   {t.freeCount > 0 && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-primary)]/25 px-3 py-1 text-xs text-[var(--brand-primary)]">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-primary)]/40 px-3 py-1 text-xs font-medium text-[var(--brand-primary-dark)]">
                       Disponible
                     </span>
                   )}
                 </div>
                 <div className="mt-6 flex items-end justify-between border-t border-black/5 pt-5">
                   <div>
-                    <p className="text-[10px] uppercase tracking-[0.22em] text-[var(--brand-ink-2)]">Desde</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--brand-ink-2)]">Desde</p>
                     <p className="mt-1 font-serif text-4xl font-semibold leading-none text-gold">
                       <span className="mr-0.5 align-top text-lg">$</span>
                       {Math.round(t.quote.averageRate)}
                     </p>
-                    <p className="mt-1.5 text-[10px] uppercase tracking-[0.18em] text-[var(--brand-ink-2)]">
+                    <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--brand-ink-2)]">
                       USD · por noche
                     </p>
                   </div>
                   <Link
                     href="/hotel/reservar"
-                    className="group/btn inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-primary)]/50 px-5 py-2.5 font-serif text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--brand-primary)] transition-colors hover:bg-[var(--brand-primary)] hover:text-[#0b0b0c]"
+                    className="group/btn inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-primary)]/50 px-5 py-2.5 font-serif text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--brand-primary-dark)] transition-colors hover:bg-[var(--brand-primary)] hover:text-[#0b0b0c]"
                   >
                     Reservar
                     <ArrowRight size={14} className="transition-transform group-hover/btn:translate-x-0.5" />
@@ -277,7 +277,7 @@ export default function HotelLandingPage() {
             </article>
           ))}
           {types.length === 0 && loaded && (
-            <p className="col-span-full text-center text-[var(--brand-ink-2)]/70">
+            <p className="col-span-full text-center text-[var(--brand-ink-2)]">
               Escríbenos para conocer nuestra disponibilidad.
             </p>
           )}
@@ -327,11 +327,11 @@ export default function HotelLandingPage() {
                   </span>
                   <h3 className="mt-5 font-serif text-xl font-semibold text-[var(--brand-ink-3)]">{s.name}</h3>
                   {s.description && (
-                    <p className="mt-2 flex-1 text-sm leading-relaxed text-[var(--brand-ink-2)]">{s.description}</p>
+                    <p className="mt-2 flex-1 text-[15px] leading-relaxed text-[var(--brand-ink-2)]">{s.description}</p>
                   )}
                   {s.price > 0 && (
                     <div className="mt-5 flex items-baseline justify-between border-t border-black/5 pt-4">
-                      <span className="text-[10px] uppercase tracking-[0.22em] text-[var(--brand-ink-2)]">Desde</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--brand-ink-2)]">Desde</span>
                       <span className="font-serif text-2xl font-semibold leading-none text-gold">
                         <span className="mr-0.5 align-top text-sm">$</span>
                         {Math.round(s.price)}
@@ -427,7 +427,7 @@ export default function HotelLandingPage() {
                 <Clock size={14} /> Horarios
               </p>
               <div className="mt-4 space-y-2 text-[var(--brand-ink)]">
-                <p className="flex items-center justify-between border-b border-white/5 pb-2">
+                <p className="flex items-center justify-between border-b border-black/10 pb-2">
                   <span className="text-[var(--brand-ink-2)]">Check-in</span>
                   <span className="font-serif text-xl">{profile?.checkinTime || "15:00"}</span>
                 </p>
@@ -456,7 +456,7 @@ export default function HotelLandingPage() {
                   </p>
                 )}
                 {!profile?.address && !profile?.phone && !profile?.email && loaded && (
-                  <p className="text-[var(--brand-ink-2)]/70">Escríbenos para reservar.</p>
+                  <p className="text-[var(--brand-ink-2)]">Escríbenos para reservar.</p>
                 )}
               </div>
             </div>

@@ -57,7 +57,7 @@ export default function HotelLayout({ children }: { children: ReactNode }) {
           </div>
           <div className="text-sm text-[var(--brand-ink-2)]">
             <p className="kicker mb-3">Reservas</p>
-            <Link href="/hotel/reservar" className="text-[var(--brand-primary)] transition-colors hover:underline">
+            <Link href="/hotel/reservar" className="font-semibold text-[var(--brand-primary-dark)] transition-colors hover:underline">
               Reservar en línea
             </Link>
             <p className="mt-1">
@@ -67,7 +67,7 @@ export default function HotelLayout({ children }: { children: ReactNode }) {
             </p>
           </div>
         </div>
-        <div className="border-t border-black/5 py-5 text-center text-xs text-[var(--brand-ink-2)]/70">
+        <div className="border-t border-black/5 py-5 text-center text-xs text-[var(--brand-ink-2)]">
           © {year} {BRAND.name}. Todos los derechos reservados.
         </div>
       </footer>

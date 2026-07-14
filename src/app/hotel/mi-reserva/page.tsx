@@ -77,11 +77,11 @@ export default function MiReservaPage() {
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-10 text-[var(--brand-ink-2)]">
       <div className="mx-auto w-full max-w-md">
-        <Link href="/hotel" className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+        <Link href="/hotel" className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary-dark)]">
           <ArrowLeft size={16} /> {BRAND.name}
         </Link>
         <h1 className="mt-3 font-serif text-4xl font-semibold text-[var(--brand-ink-3)]">Mi reserva</h1>
-        <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">Consulta tu reserva con tu código y teléfono.</p>
+        <p className="text-sm font-bold text-[var(--brand-ink-2)]">Consulta tu reserva con tu código y teléfono.</p>
 
         {!reservation ? (
           <div className="mt-6 grid gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
@@ -96,11 +96,11 @@ export default function MiReservaPage() {
           <>
             <div className="mt-6 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5">
               <p className="text-lg font-black text-[var(--brand-ink-3)]">Hola, {reservation.guestName}</p>
-              <p className="text-sm font-black uppercase tracking-wide text-[var(--brand-primary)]">{reservation.statusLabel} · #{reservation.code}</p>
+              <p className="text-sm font-black uppercase tracking-wide text-[var(--brand-primary-dark)]">{reservation.statusLabel} · #{reservation.code}</p>
               <p className="mt-3 flex items-center gap-2 font-bold">
                 <CalendarRange size={16} /> {reservation.checkInDate} → {reservation.checkOutDate} ({reservation.nights}n)
               </p>
-              <p className="mt-1 font-bold text-[var(--brand-ink-2)]/70">{reservation.adults} adulto(s){reservation.children ? ` · ${reservation.children} niño(s)` : ""}</p>
+              <p className="mt-1 font-bold text-[var(--brand-ink-2)]">{reservation.adults} adulto(s){reservation.children ? ` · ${reservation.children} niño(s)` : ""}</p>
               <p className="mt-2 text-2xl font-black text-[var(--brand-ink-3)]">${reservation.totalAmount}</p>
             </div>
 
@@ -110,7 +110,7 @@ export default function MiReservaPage() {
                 <p className="inline-flex items-center gap-2 font-bold text-green-700"><CheckCircle2 size={18} /> ¡Gracias por tu reseña!</p>
               ) : (
                 <>
-                  <p className="text-sm font-black uppercase text-[var(--brand-primary)]">Deja tu reseña</p>
+                  <p className="text-sm font-black uppercase text-[var(--brand-primary-dark)]">Deja tu reseña</p>
                   <div className="mt-2 flex gap-1">
                     {[1, 2, 3, 4, 5].map((i) => (
                       <button key={i} onClick={() => setRating(i)} type="button" aria-label={`${i} estrellas`}>

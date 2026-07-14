@@ -140,10 +140,10 @@ export default function HotelReservarPage() {
           <CheckCircle2 size={28} />
         </span>
         <h1 className="mt-4 font-serif text-3xl font-semibold text-[var(--brand-ink-3)]">¡Reserva recibida!</h1>
-        <p className="mt-2 font-bold text-[var(--brand-ink-2)]/70">
+        <p className="mt-2 font-bold text-[var(--brand-ink-2)]">
           Tu código de reserva es
         </p>
-        <p className="my-2 text-4xl font-black tracking-[0.2em] text-[var(--brand-primary)]">
+        <p className="my-2 text-4xl font-black tracking-[0.2em] text-[var(--brand-primary-dark)]">
           {created.code}
         </p>
         <div className="mt-2 w-full max-w-sm rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 text-left font-bold">
@@ -153,17 +153,17 @@ export default function HotelReservarPage() {
           </p>
           <p className="mt-2 text-lg font-black text-[var(--brand-ink-3)]">
             Total ${created.totalAmount}
-            <span className="ml-1 text-sm font-bold text-[var(--brand-ink-2)]/60">
+            <span className="ml-1 text-sm font-bold text-[var(--brand-ink-2)]">
               ({created.nights}n × ${created.ratePerNight})
             </span>
           </p>
         </div>
-        <p className="mt-4 max-w-sm text-sm font-bold text-[var(--brand-ink-2)]/60">
+        <p className="mt-4 max-w-sm text-sm font-bold text-[var(--brand-ink-2)]">
           Guardamos tu reserva como <b>pendiente</b>. Te contactaremos por teléfono para confirmarla.
         </p>
         <Link
           href="/hotel"
-          className="mt-8 inline-flex items-center rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+          className="mt-8 inline-flex items-center rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary-dark)]"
         >
           Volver al hotel
         </Link>
@@ -176,19 +176,19 @@ export default function HotelReservarPage() {
       <div className="mx-auto w-full max-w-2xl">
         <Link
           href="/hotel"
-          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary-dark)]"
         >
           <ArrowLeft size={16} /> {BRAND.name}
         </Link>
         <h1 className="mt-3 font-serif text-4xl font-semibold text-[var(--brand-ink-3)]">Reservar en línea</h1>
-        <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
+        <p className="text-sm font-bold text-[var(--brand-ink-2)]">
           Elige tus fechas y mira las habitaciones disponibles con su precio.
         </p>
 
         {/* Fechas */}
         <div className="mt-6 grid gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-2">
           <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
-            <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Entrada</span>
+            <span className="text-xs font-black uppercase text-[var(--brand-primary-dark)]">Entrada</span>
             <input
               type="date"
               value={checkIn}
@@ -202,7 +202,7 @@ export default function HotelReservarPage() {
             />
           </label>
           <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
-            <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Salida</span>
+            <span className="text-xs font-black uppercase text-[var(--brand-primary-dark)]">Salida</span>
             <input
               type="date"
               value={checkOut}
@@ -216,7 +216,7 @@ export default function HotelReservarPage() {
         {error && <p className="mt-3 font-bold text-red-600">{error}</p>}
 
         {enabled === false ? (
-          <p className="mt-6 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-6 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary-dark)]">
             Las reservas en línea no están disponibles por ahora. Escríbenos para reservar.
           </p>
         ) : loading ? (
@@ -227,7 +227,7 @@ export default function HotelReservarPage() {
           <>
             {/* Tipos disponibles */}
             {types.length === 0 ? (
-              <p className="mt-6 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-6 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]">
                 No hay habitaciones libres para esas fechas. Prueba con otras.
               </p>
             ) : (
@@ -244,17 +244,17 @@ export default function HotelReservarPage() {
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="min-w-0">
                           <p className="text-lg font-black text-[var(--brand-ink-3)]">{type.name}</p>
-                          <p className="flex flex-wrap items-center gap-x-3 text-sm font-bold text-[var(--brand-ink-2)]/65">
+                          <p className="flex flex-wrap items-center gap-x-3 text-sm font-bold text-[var(--brand-ink-2)]">
                             <span className="inline-flex items-center gap-1"><Users size={14} /> {type.capacity}p</span>
                             <span>{type.freeCount} disponible{type.freeCount === 1 ? "" : "s"}</span>
                             {type.quote.seasonApplied && (
-                              <span className="text-[var(--brand-primary)]">Temporada {type.quote.seasonNames.join(", ")}</span>
+                              <span className="text-[var(--brand-primary-dark)]">Temporada {type.quote.seasonNames.join(", ")}</span>
                             )}
                           </p>
                         </div>
                         <div className="text-right">
                           <p className="text-xl font-black text-[var(--brand-ink-3)]">${type.quote.total}</p>
-                          <p className="text-xs font-bold text-[var(--brand-ink-2)]/55">
+                          <p className="text-xs font-bold text-[var(--brand-ink-2)]">
                             {nights}n × ${type.quote.averageRate}
                           </p>
                         </div>
@@ -263,8 +263,8 @@ export default function HotelReservarPage() {
                         onClick={() => setSelectedTypeId(isSel ? "" : type.roomTypeId)}
                         className={`mt-3 w-full rounded-xl px-4 py-2.5 text-sm font-black uppercase ${
                           isSel
-                            ? "border-2 border-[var(--brand-primary)] bg-white text-[var(--brand-primary)]"
-                            : "bg-[var(--brand-primary)] text-white"
+                            ? "border-2 border-[var(--brand-primary)] bg-white text-[var(--brand-primary-dark)]"
+                            : "bg-[var(--brand-primary)] text-[#171410]"
                         }`}
                       >
                         {isSel ? "Elegida" : "Elegir esta habitación"}
@@ -278,7 +278,7 @@ export default function HotelReservarPage() {
             {/* Datos del huésped */}
             {selectedType && (
               <div className="mt-4 grid gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-2">
-                <p className="text-sm font-black uppercase text-[var(--brand-primary)] sm:col-span-2">
+                <p className="text-sm font-black uppercase text-[var(--brand-primary-dark)] sm:col-span-2">
                   Tus datos
                 </p>
                 <input value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Nombre completo" className={`${inputClass} sm:col-span-2`} />
@@ -289,13 +289,13 @@ export default function HotelReservarPage() {
                   <input type="number" min={1} value={adults} onChange={(e) => setAdults(e.target.value)} placeholder="Adultos" className="w-full bg-transparent font-bold outline-none" />
                 </label>
                 <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3">
-                  <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Niños</span>
+                  <span className="text-xs font-black uppercase text-[var(--brand-primary-dark)]">Niños</span>
                   <input type="number" min={0} value={children} onChange={(e) => setChildren(e.target.value)} placeholder="Niños" className="w-full bg-transparent font-bold outline-none" />
                 </label>
                 <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Nota (opcional): llegada tarde, cuna…" className={`${inputClass} sm:col-span-2`} />
                 <div className="flex items-center justify-between rounded-xl bg-[var(--brand-cream)] px-4 py-3 font-black text-[var(--brand-ink-3)] sm:col-span-2">
                   <span>Total {selectedType.name}</span>
-                  <span>${selectedType.quote.total} <span className="text-sm font-bold text-[var(--brand-ink-2)]/60">({nights}n)</span></span>
+                  <span>${selectedType.quote.total} <span className="text-sm font-bold text-[var(--brand-ink-2)]">({nights}n)</span></span>
                 </div>
                 <button
                   onClick={submit}
