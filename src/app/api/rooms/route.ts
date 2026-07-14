@@ -120,11 +120,22 @@ export async function POST(request: NextRequest) {
 
     // Alta en serie de habitaciones numeradas (pisos completos de una vez).
     if (cleanText(body.kind) === "roomsBulk") {
+      const fromNumber = Number(body.fromNumber)
+      const toNumber = Number(body.toNumber)
+      if (!cleanText(body.roomTypeId)) {
+        return NextResponse.json({ error: "Elige el tipo de habitación" }, { status: 400 })
+      }
+      if (!Number.isFinite(fromNumber) || !Number.isFinite(toNumber) || fromNumber <= 0 || toNumber < fromNumber) {
+        return NextResponse.json({ error: "Indica un rango de números válido (desde ≤ hasta)" }, { status: 400 })
+      }
+      if (toNumber - fromNumber + 1 > 200) {
+        return NextResponse.json({ error: "Máximo 200 habitaciones por tanda" }, { status: 400 })
+      }
       const result = await createRoomsBulk(
         {
           roomTypeId: cleanText(body.roomTypeId),
-          fromNumber: Number(body.fromNumber),
-          toNumber: Number(body.toNumber),
+          fromNumber,
+          toNumber,
           floor: cleanText(body.floor),
           capacity: body.capacity === undefined ? undefined : Number(body.capacity),
           prefix: cleanText(body.prefix),
