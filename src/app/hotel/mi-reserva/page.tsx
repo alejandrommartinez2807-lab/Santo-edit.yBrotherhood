@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, CalendarRange, CheckCircle2, Loader2, Star } from "lucide-react"
 import { BRAND } from "@/lib/brand"
@@ -14,7 +14,34 @@ type Reservation = {
   adults: number
   children: number
   totalAmount: number
+  status?: string
   statusLabel: string
+}
+
+// Misma clave que escribe /hotel/reservar al confirmar: autocompleta y consulta
+// sin teclear. Cuando la estadía ya terminó, se borra y vuelve el formulario.
+const GUEST_RESERVATION_MEMORY_KEY = "hotel_guest_reservation_v1"
+const FINISHED_STATUSES = new Set(["checkout", "cancelada", "no_show"])
+
+function readMemory(): { code: string; phone: string } | null {
+  try {
+    const raw = window.localStorage.getItem(GUEST_RESERVATION_MEMORY_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as { code?: unknown; phone?: unknown }
+    const code = String(parsed.code || "").trim()
+    const phone = String(parsed.phone || "").trim()
+    return code && phone ? { code, phone } : null
+  } catch {
+    return null
+  }
+}
+
+function clearMemory() {
+  try {
+    window.localStorage.removeItem(GUEST_RESERVATION_MEMORY_KEY)
+  } catch {
+    // Nada que limpiar.
+  }
 }
 
 export default function MiReservaPage() {
@@ -31,25 +58,62 @@ export default function MiReservaPage() {
   const [reviewError, setReviewError] = useState("")
   const [sending, setSending] = useState(false)
 
-  async function lookup() {
-    if (!code.trim() || phone.trim().length < 4) return
+  const doLookup = useCallback(async (codeValue: string, phoneValue: string, auto = false) => {
+    if (!codeValue.trim() || phoneValue.trim().length < 4) return
     setLoading(true)
     setError("")
     try {
       const res = await fetch("/api/public/hotel/lookup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: code.trim(), phone: phone.trim() }),
+        body: JSON.stringify({ code: codeValue.trim(), phone: phoneValue.trim() }),
       })
       const data = await res.json()
       if (!res.ok || data.ok === false) throw new Error(data.error || "No encontramos tu reserva")
-      setReservation(data.reservation)
+      const found = data.reservation as Reservation
+      const finished = FINISHED_STATUSES.has(String(found.status || ""))
+      if (finished) {
+        // Estadía terminada: se olvida en este navegador. En consulta manual
+        // igual se muestra el resultado; en la automática vuelve el formulario.
+        clearMemory()
+        if (auto) {
+          setCode("")
+          setPhone("")
+          setReservation(null)
+          return
+        }
+      }
+      setReservation(found)
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Error")
+      if (auto) {
+        // La memoria ya no sirve (reserva borrada o datos cambiados): límpiala
+        // en silencio y deja el formulario listo para teclear.
+        clearMemory()
+        setCode("")
+        setPhone("")
+      } else {
+        setError(e instanceof Error ? e.message : "Error")
+      }
       setReservation(null)
     } finally {
       setLoading(false)
     }
+  }, [])
+
+  // Al abrir: si este navegador recuerda una reserva, autocompleta y consulta solo.
+  useEffect(() => {
+    const memory = readMemory()
+    if (!memory) return
+    const timer = setTimeout(() => {
+      setCode(memory.code)
+      setPhone(memory.phone)
+      void doLookup(memory.code, memory.phone, true)
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [doLookup])
+
+  function lookup() {
+    void doLookup(code, phone)
   }
 
   async function sendReview() {

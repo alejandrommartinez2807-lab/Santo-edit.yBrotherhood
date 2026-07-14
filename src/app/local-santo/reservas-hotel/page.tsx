@@ -12,6 +12,7 @@ import {
   Loader2,
   Phone,
   Plus,
+  Search,
   Trash2,
   Users,
   X,
@@ -286,15 +287,25 @@ function ReservasHotelContent() {
   const inputClass =
     "rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
 
-  const upcoming = useMemo(
-    () =>
-      [...reservations].sort((a, b) =>
-        a.checkInDate === b.checkInDate
-          ? a.guestName.localeCompare(b.guestName)
-          : a.checkInDate.localeCompare(b.checkInDate),
-      ),
-    [reservations],
-  )
+  // Búsqueda por código (escaneado del QR del huésped), nombre o teléfono.
+  const [search, setSearch] = useState("")
+
+  const upcoming = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    const filtered = term
+      ? reservations.filter(
+          (r) =>
+            r.code.toLowerCase().includes(term) ||
+            r.guestName.toLowerCase().includes(term) ||
+            r.guestPhone.toLowerCase().includes(term),
+        )
+      : reservations
+    return [...filtered].sort((a, b) =>
+      a.checkInDate === b.checkInDate
+        ? a.guestName.localeCompare(b.guestName)
+        : a.checkInDate.localeCompare(b.checkInDate),
+    )
+  }, [reservations, search])
 
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
@@ -456,14 +467,36 @@ function ReservasHotelContent() {
 
             {error && <p className="mt-3 font-bold text-red-600">{error}</p>}
 
+            {/* Buscar por código escaneado, nombre o teléfono */}
+            <div className="mt-8 flex items-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-3">
+              <Search size={18} className="shrink-0 text-[var(--brand-primary-dark)]" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar reserva: escanea el QR o escribe código, nombre o teléfono"
+                className="w-full bg-transparent font-bold outline-none"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  title="Limpiar búsqueda"
+                  className="shrink-0 text-[var(--brand-ink-2)]"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+
             {/* Lista de reservas */}
             {loading ? (
               <p className="mt-8 inline-flex items-center gap-2 font-bold">
                 <Loader2 className="animate-spin" size={18} /> Cargando…
               </p>
             ) : upcoming.length === 0 ? (
-              <p className="mt-8 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
-                No hay reservas próximas. Crea la primera arriba.
+              <p className="mt-8 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]">
+                {search.trim()
+                  ? `Ninguna reserva coincide con “${search.trim()}”.`
+                  : "No hay reservas próximas. Crea la primera arriba."}
               </p>
             ) : (
               <ul className="mt-8 space-y-3">
