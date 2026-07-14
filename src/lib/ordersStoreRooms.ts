@@ -165,21 +165,20 @@ export async function saveRoomType(
   branchId?: string | null,
 ): Promise<RoomType> {
   const supabase = getSupabaseAdmin()
+  // Solo se tocan los campos que el payload trae: un formulario parcial (p. ej.
+  // el editor de fotos) no debe pisar descripción, orden, tarifas ni la galería
+  // que no envió. Además photos solo se escribe si viene (compatible sin 0039).
   const fields: Record<string, unknown> = {
     name: cleanText(input.name),
-    description: cleanText(input.description),
-    base_capacity: Math.max(1, num(input.baseCapacity, 2)),
-    max_capacity: Math.max(1, num(input.maxCapacity, 2)),
-    base_rate: Math.max(0, num(input.baseRate, 0)),
-    sort_order: num(input.sortOrder, 0),
     active: input.active !== false,
     updated_at: new Date().toISOString(),
   }
-  // Solo toca la galería si el cliente la manda: así los formularios viejos no
-  // borran fotos y el guardado sigue funcionando si 0039 no está aplicada aún.
-  if (input.photos !== undefined) {
-    fields.photos = normalizeRoomTypePhotos(input.photos)
-  }
+  if (input.description !== undefined) fields.description = cleanText(input.description)
+  if (input.baseCapacity !== undefined) fields.base_capacity = Math.max(1, num(input.baseCapacity, 2))
+  if (input.maxCapacity !== undefined) fields.max_capacity = Math.max(1, num(input.maxCapacity, 2))
+  if (input.baseRate !== undefined) fields.base_rate = Math.max(0, num(input.baseRate, 0))
+  if (input.sortOrder !== undefined) fields.sort_order = num(input.sortOrder, 0)
+  if (input.photos !== undefined) fields.photos = normalizeRoomTypePhotos(input.photos)
 
   if (input.id) {
     let updateQuery = supabase.from("room_types").update(fields).eq("id", input.id)
@@ -189,9 +188,18 @@ export async function saveRoomType(
     return mapRoomType(data as Row)
   }
 
+  // En el alta sí se materializan los defaults de los campos ausentes.
   const { data, error } = await supabase
     .from("room_types")
-    .insert({ ...fields, branch_id: branchId ?? null })
+    .insert({
+      description: "",
+      base_capacity: 2,
+      max_capacity: 2,
+      base_rate: 0,
+      sort_order: 0,
+      ...fields,
+      branch_id: branchId ?? null,
+    })
     .select("*")
     .single()
   if (error) throw new Error(error.message)

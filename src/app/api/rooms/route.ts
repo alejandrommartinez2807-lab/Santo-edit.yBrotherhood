@@ -30,7 +30,8 @@ function normalizeRoomTypePayload(source: Record<string, unknown>): SaveRoomType
   return {
     id: cleanText(source.id) || undefined,
     name: cleanText(source.name),
-    description: cleanText(source.description),
+    // Ausente ≠ vacío: un payload parcial no debe borrar la descripción.
+    description: source.description === undefined ? undefined : cleanText(source.description),
     baseCapacity: optionalNumber(source.baseCapacity),
     maxCapacity: optionalNumber(source.maxCapacity),
     baseRate: optionalNumber(source.baseRate),
