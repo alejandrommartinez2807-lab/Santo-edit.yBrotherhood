@@ -44,7 +44,7 @@ export default function HotelLayout({ children }: { children: ReactNode }) {
 
       <div className="flex-1">{children}</div>
 
-      <footer className="border-t border-[var(--brand-primary)]/15 bg-[#0a0a0b]">
+      <footer className="border-t border-[var(--brand-primary)]/20 bg-[var(--brand-surface-2)]">
         <div className="mx-auto grid max-w-6xl gap-8 px-6 py-12 sm:grid-cols-3">
           <div>
             <p className="font-serif text-lg font-semibold text-[var(--brand-ink-3)]">{BRAND.name}</p>
@@ -67,7 +67,7 @@ export default function HotelLayout({ children }: { children: ReactNode }) {
             </p>
           </div>
         </div>
-        <div className="border-t border-white/5 py-5 text-center text-xs text-[var(--brand-ink-2)]/60">
+        <div className="border-t border-black/5 py-5 text-center text-xs text-[var(--brand-ink-2)]/70">
           © {year} {BRAND.name}. Todos los derechos reservados.
         </div>
       </footer>

@@ -189,7 +189,7 @@ export default function HotelLandingPage() {
       </section>
 
       {/* ==================== Franja de sellos ==================== */}
-      <div className="border-y border-[var(--brand-primary)]/15 bg-[#0a0a0b]">
+      <div className="border-y border-[var(--brand-primary)]/15 bg-[var(--brand-surface-2)]">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-10 gap-y-3 px-6 py-6">
           {HALLMARKS.map((h, i) => (
             <span key={h} className="flex items-center gap-10">
@@ -229,7 +229,7 @@ export default function HotelLandingPage() {
           {types.map((t, i) => (
             <article
               key={t.roomTypeId}
-              className="group relative flex flex-col overflow-hidden rounded-xl border border-white/8 bg-[var(--brand-surface)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--brand-primary)]/40 hover:shadow-2xl hover:shadow-black/50"
+              className="group relative flex flex-col overflow-hidden rounded-xl border border-[var(--brand-border)] bg-[var(--brand-surface)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--brand-primary)]/40 hover:shadow-2xl hover:shadow-black/10"
             >
               {/* Filete dorado superior, discreto */}
               <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--brand-primary)]/60 to-transparent" />
@@ -246,7 +246,7 @@ export default function HotelLandingPage() {
                   <p className="mt-2 flex-1 text-sm leading-relaxed text-[var(--brand-ink-2)]">{t.description}</p>
                 )}
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1 text-xs text-[var(--brand-ink-2)]">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-3 py-1 text-xs text-[var(--brand-ink-2)]">
                     <Users size={13} /> Hasta {t.capacity}
                   </span>
                   {t.freeCount > 0 && (
@@ -255,7 +255,7 @@ export default function HotelLandingPage() {
                     </span>
                   )}
                 </div>
-                <div className="mt-6 flex items-end justify-between border-t border-white/5 pt-5">
+                <div className="mt-6 flex items-end justify-between border-t border-black/5 pt-5">
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--brand-ink-2)]/70">Desde</p>
                     <p className="font-serif text-3xl font-semibold text-gold">
@@ -318,7 +318,7 @@ export default function HotelLandingPage() {
               return (
                 <article
                   key={s.id}
-                  className="group flex flex-col rounded-2xl border border-white/8 bg-[var(--brand-surface)] p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[var(--brand-primary)]/40"
+                  className="group flex flex-col rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface)] p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[var(--brand-primary)]/40"
                 >
                   <span className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-[var(--brand-primary)]/25 bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]">
                     <Icon size={24} strokeWidth={1.5} />
@@ -328,7 +328,7 @@ export default function HotelLandingPage() {
                     <p className="mt-2 flex-1 text-sm leading-relaxed text-[var(--brand-ink-2)]">{s.description}</p>
                   )}
                   {s.price > 0 && (
-                    <p className="mt-5 border-t border-white/5 pt-4 text-sm text-[var(--brand-ink-2)]">
+                    <p className="mt-5 border-t border-black/5 pt-4 text-sm text-[var(--brand-ink-2)]">
                       Desde <span className="font-serif text-lg text-gold">{money(s.price)}</span>
                     </p>
                   )}
@@ -341,7 +341,7 @@ export default function HotelLandingPage() {
 
       {/* ==================== Amenidades (grid de iconos) ==================== */}
       {amenities.length > 0 && (
-        <section className="border-y border-[var(--brand-primary)]/10 bg-[#0a0a0b]">
+        <section className="border-y border-[var(--brand-primary)]/10 bg-[var(--brand-surface-2)]">
           <div className="mx-auto max-w-5xl px-6 py-20 text-center">
             <p className="kicker">Servicios incluidos</p>
             <h2 className="mt-3 font-serif text-4xl font-semibold text-[var(--brand-ink-3)] sm:text-5xl">Todo para tu confort</h2>
@@ -352,7 +352,7 @@ export default function HotelLandingPage() {
                 return (
                   <div
                     key={a}
-                    className="flex flex-col items-center gap-3 rounded-2xl border border-white/8 bg-[var(--brand-surface)] p-6 transition-colors hover:border-[var(--brand-primary)]/40"
+                    className="flex flex-col items-center gap-3 rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface)] p-6 transition-colors hover:border-[var(--brand-primary)]/40"
                   >
                     <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-primary)]/12 text-[var(--brand-primary)]">
                       <Icon size={22} strokeWidth={1.5} />
@@ -389,11 +389,11 @@ export default function HotelLandingPage() {
             {reviews.slice(0, 6).map((r, i) => (
               <figure
                 key={i}
-                className="flex flex-col rounded-2xl border border-white/8 bg-[var(--brand-surface)] p-8"
+                className="flex flex-col rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface)] p-8"
               >
                 <Quote className="text-[var(--brand-primary)]/50" size={30} />
                 <blockquote className="mt-4 flex-1 leading-relaxed text-[var(--brand-ink)]">“{r.comment}”</blockquote>
-                <figcaption className="mt-6 flex items-center justify-between border-t border-white/5 pt-5">
+                <figcaption className="mt-6 flex items-center justify-between border-t border-black/5 pt-5">
                   <span className="font-serif text-lg text-[var(--brand-ink-3)]">{r.guestName}</span>
                   <span className="flex items-center gap-0.5 text-[var(--brand-primary)]">
                     {Array.from({ length: r.rating }).map((_, s) => (
@@ -408,7 +408,7 @@ export default function HotelLandingPage() {
       )}
 
       {/* ==================== Contacto / horarios / mapa ==================== */}
-      <section className="border-t border-[var(--brand-primary)]/10 bg-[#0a0a0b]">
+      <section className="border-t border-[var(--brand-primary)]/10 bg-[var(--brand-surface-2)]">
         <div className="mx-auto max-w-5xl px-6 py-24">
           <div className="text-center">
             <p className="kicker">Visítanos</p>
@@ -416,7 +416,7 @@ export default function HotelLandingPage() {
             <hr className="hairline-gold mx-auto mt-6 w-24" />
           </div>
           <div className="mt-12 grid gap-6 sm:grid-cols-2">
-            <div className="rounded-2xl border border-white/8 bg-[var(--brand-surface)] p-8">
+            <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface)] p-8">
               <p className="kicker inline-flex items-center gap-2">
                 <Clock size={14} /> Horarios
               </p>
@@ -431,7 +431,7 @@ export default function HotelLandingPage() {
                 </p>
               </div>
             </div>
-            <div className="rounded-2xl border border-white/8 bg-[var(--brand-surface)] p-8">
+            <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface)] p-8">
               <p className="kicker">Contacto</p>
               <div className="mt-4 space-y-3 text-[var(--brand-ink)]">
                 {profile?.address && (
@@ -478,7 +478,7 @@ export default function HotelLandingPage() {
         </p>
         <Link
           href="/hotel/reservar"
-          className="group mt-9 inline-flex items-center gap-2 rounded-full bg-[var(--brand-primary)] px-10 py-4 text-sm font-semibold uppercase tracking-wider text-[#0b0b0c] shadow-xl shadow-black/30 transition-transform hover:scale-[1.03]"
+          className="group mt-9 inline-flex items-center gap-2 rounded-full bg-[var(--brand-primary)] px-10 py-4 text-sm font-semibold uppercase tracking-wider text-[#0b0b0c] shadow-lg shadow-black/10 transition-transform hover:scale-[1.03]"
         >
           <CalendarCheck size={18} /> Reservar ahora
           <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />

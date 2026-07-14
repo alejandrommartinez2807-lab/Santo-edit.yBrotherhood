@@ -4,8 +4,8 @@
   "description": "Hotel 5 estrellas en Valencia · reservas y servicios",
   "start_url": "/hotel",
   "display": "standalone",
-  "background_color": "#0b0b0c",
-  "theme_color": "#0b0b0c",
+  "background_color": "#faf8f3",
+  "theme_color": "#faf8f3",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },

@@ -19,24 +19,25 @@
      los `--brand-ink*` son el texto y ahora son claros (ink-3 = el más brillante,
      para títulos/texto principal). Así, cualquier combo `bg-cream + text-ink`
      mantiene contraste pero invertido a oscuro sin tocar cada componente. */
-  /* Oro champán apagado (menos latón, más 5 estrellas) sobre negro profundo. */
-  --brand-primary: #c8a35f;
-  --brand-primary-dark: #97783f;
-  --brand-primary-rgb: 200, 163, 95;
-  --brand-cream: #0a0a09;
-  --brand-ink: #e9e4d8;
-  --brand-ink-2: #a49d8d;
-  --brand-ink-3: #f6f1e6;
-  --brand-amber: #d9bc7d;
-  --brand-accent: #c8a35f;
-  --brand-accent-200: #d9bc7d;
-  --brand-accent-100: #ecdcb2;
-  --brand-accent-rgb: 200, 163, 95;
+  /* Tema CLARO de lujo (Lidotel): marfil cálido + oro champán profundo.
+     El hero y las bandas con foto siguen oscuros por contraste editorial. */
+  --brand-primary: #b08d4c;
+  --brand-primary-dark: #8a6c35;
+  --brand-primary-rgb: 176, 141, 76;
+  --brand-cream: #faf8f3;
+  --brand-ink: #2a2620;
+  --brand-ink-2: #6f6759;
+  --brand-ink-3: #171410;
+  --brand-amber: #c8a35f;
+  --brand-accent: #b08d4c;
+  --brand-accent-200: #c8a35f;
+  --brand-accent-100: #eadfc3;
+  --brand-accent-rgb: 176, 141, 76;
 
-  /* Superficies oscuras auxiliares para tarjetas/paneles del sitio público. */
-  --brand-surface: #121110;
-  --brand-surface-2: #191815;
-  --brand-border: #262319;
+  /* Superficies claras auxiliares para tarjetas/paneles del sitio público. */
+  --brand-surface: #ffffff;
+  --brand-surface-2: #f4efe4;
+  --brand-border: #e6dfcf;
 }
 
 * {
@@ -80,7 +81,7 @@
 
 /* Texto con relleno dorado metálico para titulares destacados. */
 .text-gold {
-  background: linear-gradient(180deg, #eeddb0 0%, var(--brand-primary) 55%, var(--brand-primary-dark) 100%);
+  background: linear-gradient(180deg, #d3b26e 0%, var(--brand-primary) 50%, var(--brand-primary-dark) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -93,9 +94,9 @@ html {
 body {
   margin: 0;
   background:
-    radial-gradient(circle at top, rgba(200, 163, 95, 0.1), transparent 35%),
-    linear-gradient(180deg, #121211 0%, #0a0a09 45%, #000000 100%);
-  color: white;
+    radial-gradient(circle at top, rgba(176, 141, 76, 0.08), transparent 35%),
+    linear-gradient(180deg, #fffdf9 0%, #faf8f3 45%, #f4efe4 100%);
+  color: var(--brand-ink);
 }
 
 ::selection {
