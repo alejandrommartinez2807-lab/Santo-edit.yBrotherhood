@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import {
   deleteRoom,
   deleteRoomType,
+  getRooms,
   updateRoomHousekeeping,
 } from "@/lib/orders"
 import { resolveBranchId } from "@/lib/branch"
@@ -77,6 +78,20 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     const kind = String(request.nextUrl.searchParams.get("kind") || "").trim()
 
     if (kind === "roomType") {
+      // No dejar tipos huérfanos: si tiene habitaciones, se avisa claro en vez
+      // de reventar con el error crudo de la base de datos.
+      const attached = (await getRooms(branchId)).filter((room) => room.roomTypeId === targetId)
+      if (attached.length > 0) {
+        return NextResponse.json(
+          {
+            error: `Ese tipo tiene ${attached.length} habitación(es) (${attached
+              .slice(0, 5)
+              .map((room) => room.name)
+              .join(", ")}${attached.length > 5 ? "…" : ""}). Reasígnalas o elimínalas primero.`,
+          },
+          { status: 409 },
+        )
+      }
       await deleteRoomType(targetId, branchId)
     } else {
       await deleteRoom(targetId, branchId)

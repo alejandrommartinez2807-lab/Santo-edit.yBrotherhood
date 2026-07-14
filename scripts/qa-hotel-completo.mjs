@@ -80,10 +80,16 @@ try {
   check("B5 teléfono inválido → 400", r.status === 400, r.data?.error)
 
   // ============ C. Reserva feliz + caracteres especiales (2 POST) ============
+  // Pausa por el rate limit público (8 POST/min): así el script puede correrse
+  // varias veces seguidas (o después de la ronda 2) sin falsos negativos.
+  results.push("… pausa 62s por rate limit público …")
+  await sleep(62_000)
+
   r = await pub("/api/public/hotel", { method: "POST", body: bookBody({ roomTypeId: IND.id, guestName: "María José Pérez QA", guestPhone: "04141112233", checkIn: A, checkOut: A2, note: "Llegada tarde ~23:00" }) })
   const happy = r.data?.reservation
-  check("C1 reserva feliz → código + total", Boolean(happy?.code) && happy.totalAmount === happy.ratePerNight * 2, `code=${happy?.code} total=$${happy?.totalAmount}`)
+  check("C1 reserva feliz → código + total", Boolean(happy?.code) && happy.totalAmount === happy.ratePerNight * 2, `code=${happy?.code} total=$${happy?.totalAmount} ${happy ? "" : `status=${r.status} ${r.data?.error || ""}`}`)
   if (happy) createdReservations.push({ code: happy.code })
+  if (!happy) throw new Error(`La reserva feliz falló (${r.status}: ${r.data?.error || "sin detalle"}); se aborta la ronda y se limpia.`)
 
   r = await pub("/api/public/hotel", { method: "POST", body: bookBody({ roomTypeId: types["Doble Superior"].id, guestName: "Ñandú Ödipo <b>QA</b> 🏨", guestPhone: "04149998877", checkIn: A, checkOut: A2, note: "Cuna extra & vista <script>alert(1)</script>" }) })
   const weird = r.data?.reservation

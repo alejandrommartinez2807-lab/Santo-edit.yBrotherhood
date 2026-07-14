@@ -188,6 +188,18 @@ export async function POST(request: NextRequest) {
       return noStoreResponse({ ok: false, error: "Ese tipo de habitación no existe" }, { status: 404 })
     }
 
+    // Capacidad: el grupo debe caber en el tipo elegido (los niños cuentan).
+    const capacity = Math.max(roomType.maxCapacity || roomType.baseCapacity || 1, 1)
+    if (adults + children > capacity) {
+      return noStoreResponse(
+        {
+          ok: false,
+          error: `${roomType.name} aloja hasta ${capacity} persona(s). Elige otro tipo de habitación o reserva más de una.`,
+        },
+        { status: 400 },
+      )
+    }
+
     // Restricciones de venta (estancia mínima, cerrado a llegada/salida).
     const restriction = evaluateStayRestrictions({ restrictions, roomTypeId, checkIn, checkOut })
     if (!restriction.allowed) {

@@ -3228,11 +3228,11 @@ export default function PedidosPage() {
             </p>
 
             <h1 className="mt-2 text-center text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
-              Panel del local
+              Panel privado
             </h1>
 
             <p className="mt-3 text-center text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
-              Ingresa la clave autorizada para gestionar los pedidos del negocio.
+              Ingresa la clave autorizada para gestionar la operación del negocio.
             </p>
           </div>
 
@@ -3472,12 +3472,21 @@ export default function PedidosPage() {
                 <CurrentBranchBanner />
               </div>
 
-              <div className="grid w-full min-w-0 grid-cols-2 gap-2 sm:grid-cols-5 2xl:max-w-[880px]">
-                <MetricCard label="Activos" value={activeOrders.length} />
-                <MetricCard label="Nuevos" value={newOrdersCount} />
-                <MetricCard label="Listos" value={readyOrdersCount} tone="yellow" />
-                <MetricCard label="Por revisar" value={staffConfirmationPendingOrders.length} tone={staffConfirmationPendingOrders.length > 0 ? "yellow" : "red"} />
-                <MetricCard label="Ventas" value={formatUSD(totalRegistered)} />
+              <div className="w-full min-w-0 2xl:max-w-[880px]">
+                {/* En modo hotel estas métricas son del POS: se rotulan como
+                    room service para que el panel hable de hotel primero. */}
+                {isHotelFrontDeskVisible && (
+                  <p className="mb-1.5 text-[0.62rem] font-black uppercase tracking-[0.2em] text-[var(--brand-primary)]/80">
+                    Room service · restaurante
+                  </p>
+                )}
+                <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-5">
+                  <MetricCard label={isHotelFrontDeskVisible ? "Pedidos" : "Activos"} value={activeOrders.length} />
+                  <MetricCard label="Nuevos" value={newOrdersCount} />
+                  <MetricCard label="Listos" value={readyOrdersCount} tone="yellow" />
+                  <MetricCard label="Por revisar" value={staffConfirmationPendingOrders.length} tone={staffConfirmationPendingOrders.length > 0 ? "yellow" : "red"} />
+                  <MetricCard label={isHotelFrontDeskVisible ? "Ventas rest." : "Ventas"} value={formatUSD(totalRegistered)} />
+                </div>
               </div>
             </div>
           </div>
