@@ -18,7 +18,10 @@ function CanalesContent() {
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    if (typeof window !== "undefined") setUrl(`${window.location.origin}/api/public/hotel/ical`)
+    const timer = setTimeout(() => {
+      setUrl(`${window.location.origin}/api/public/hotel/ical`)
+    }, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   function copy() {

@@ -16,7 +16,10 @@ export default function PortalHuespedPage() {
 function PortalHuespedContent() {
   const [url, setUrl] = useState("/hotel/mi-reserva")
   useEffect(() => {
-    if (typeof window !== "undefined") setUrl(`${window.location.origin}/hotel/mi-reserva`)
+    const timer = setTimeout(() => {
+      setUrl(`${window.location.origin}/hotel/mi-reserva`)
+    }, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   return (

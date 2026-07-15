@@ -74,7 +74,7 @@ function OrderNumberCard({
     <div
       className={`flex flex-col items-center justify-center rounded-3xl border-4 px-6 py-5 ${
         ready
-          ? "border-[#f5a623] bg-[#f5a623] text-black shadow-[0_0_40px_rgba(245,166,35,0.35)]"
+          ? "border-[#d3b26e] bg-[#d3b26e] text-black shadow-[0_0_40px_rgba(211,178,110,0.35)]"
           : "border-[#2a2a2a] bg-[#141414] text-[#fafaf9]"
       }`}
     >
@@ -182,7 +182,7 @@ function PantallaContent() {
     <main className="min-h-screen bg-[#0a0a0a] px-4 py-5 text-[#fafaf9] sm:px-8">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <CookingPot size={30} className="text-[#f5a623]" />
+          <CookingPot size={30} className="text-[#d3b26e]" />
           <div>
             <h1 className="text-2xl font-black uppercase tracking-[0.08em] sm:text-3xl">
               {BRAND.name}
@@ -201,7 +201,7 @@ function PantallaContent() {
             type="button"
             onClick={goFullscreen}
             title="Pantalla completa"
-            className="rounded-full border-2 border-[#2a2a2a] bg-[#141414] p-2.5 text-[#fafaf9]/60 transition hover:border-[#f5a623] hover:text-[#f5a623]"
+            className="rounded-full border-2 border-[#2a2a2a] bg-[#141414] p-2.5 text-[#fafaf9]/60 transition hover:border-[#d3b26e] hover:text-[#d3b26e]"
           >
             <Expand size={18} />
           </button>
@@ -237,8 +237,8 @@ function PantallaContent() {
             )}
           </section>
 
-          <section className="rounded-[2rem] border-4 border-[#f5a623]/60 bg-[#111111] p-5 sm:p-6">
-            <h2 className="text-center text-xl font-black uppercase tracking-[0.18em] text-[#f5a623] sm:text-2xl">
+          <section className="rounded-[2rem] border-4 border-[#d3b26e]/60 bg-[#111111] p-5 sm:p-6">
+            <h2 className="text-center text-xl font-black uppercase tracking-[0.18em] text-[#d3b26e] sm:text-2xl">
               ¡Listo! Pasa a retirar
             </h2>
             {ready.length === 0 ? (

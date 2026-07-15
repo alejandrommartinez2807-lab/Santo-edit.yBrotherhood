@@ -3204,13 +3204,13 @@ export default function PedidosPage() {
   if (!isLoggedIn) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-3)]">
-        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border-4 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.14)]">
+        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border border-[var(--brand-primary)]/45 bg-[var(--brand-surface-2)] shadow-sm">
           <div className="h-6 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="px-6 py-6">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
             >
               <ArrowLeft size={16} />
               Volver
@@ -3225,7 +3225,7 @@ export default function PedidosPage() {
               className="mx-auto mt-6 h-28 w-28 object-contain"
             />
 
-            <p className="mt-5 text-center text-xs font-black uppercase tracking-[0.28em] text-[var(--brand-primary)]">
+            <p className="mt-5 text-center text-xs font-bold uppercase tracking-[0.28em] text-[var(--brand-primary)]">
               Acceso privado
             </p>
 
@@ -3240,7 +3240,7 @@ export default function PedidosPage() {
 
           <div className="space-y-4 px-6 pb-6">
             <div>
-              <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Clave de acceso
               </label>
 
@@ -3253,7 +3253,7 @@ export default function PedidosPage() {
                     if (event.key === "Enter") handleLogin()
                   }}
                   placeholder="Ingresa la clave del local"
-                  className="w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                  className="w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                 />
 
                 <button
@@ -3267,7 +3267,7 @@ export default function PedidosPage() {
             </div>
 
             {errorMessage && (
-              <div className="rounded-2xl border-2 border-red-500/35 bg-red-500/100/15 px-4 py-3">
+              <div className="rounded-2xl border border-red-500/35 bg-red-500/100/15 px-4 py-3">
                 <p className="text-sm font-bold leading-6 text-red-300">
                   {errorMessage}
                 </p>
@@ -3278,7 +3278,7 @@ export default function PedidosPage() {
               type="button"
               onClick={handleLogin}
               disabled={isLoading}
-              className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-[1.02] disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-sm transition hover:scale-[1.02] disabled:opacity-60"
             >
               {isLoading ? <Loader2 size={21} className="animate-spin" /> : <LogIn size={21} />}
               {isLoading ? "Validando acceso" : "Entrar al panel"}
@@ -3293,17 +3293,17 @@ export default function PedidosPage() {
   // template de restaurante conserva su estilo grueso original.
   const headerChipClass = isHotelFrontDeskVisible
     ? "inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/30 bg-white px-3.5 py-2 text-xs font-semibold text-[var(--brand-primary-dark)] transition hover:border-[var(--brand-primary)]/60 hover:bg-[rgba(var(--brand-primary-rgb),0.06)]"
-    : "inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
+    : "inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
   const headerLogoutClass = isHotelFrontDeskVisible
     ? "inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-semibold text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
-    : "inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
+    : "inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
   const headerSoundClass = isHotelFrontDeskVisible
     ? `inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
         isPanelSoundActive
           ? "border-[var(--brand-primary)]/45 bg-[rgba(var(--brand-primary-rgb),0.12)] text-[var(--brand-primary-dark)]"
           : "border-[var(--brand-primary)]/30 bg-white text-[var(--brand-primary-dark)] hover:border-[var(--brand-primary)]/60 hover:bg-[rgba(var(--brand-primary-rgb),0.06)]"
       }`
-    : `inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-60 ${
+    : `inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-60 ${
         isPanelSoundActive
           ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
           : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)] hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
@@ -3316,14 +3316,14 @@ export default function PedidosPage() {
         onDismiss={paymentProofAlerts.dismissNewProofAlert}
       />
       {newOrderToast && (
-        <div className="fixed right-4 top-4 z-50 max-w-sm rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] p-4 shadow-2xl shadow-black/20">
+        <div className="fixed right-4 top-4 z-50 max-w-sm rounded-[1.4rem] border border-[var(--brand-primary)]/40 bg-[var(--brand-surface-2)] p-4 shadow-2xl shadow-black/20">
           <div className="flex gap-3">
             <BellRing className="mt-1 text-[var(--brand-primary)]" size={24} />
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Nuevo pedido
               </p>
-              <p className="mt-1 text-lg font-black text-[var(--brand-ink-3)]">
+              <p className="mt-1 text-lg font-bold text-[var(--brand-ink-3)]">
                 {newOrderToast.number} · {formatUSD(newOrderToast.totalUSD)}
               </p>
               <p className="text-sm font-bold text-[var(--brand-ink-2)]/70">
@@ -3339,7 +3339,7 @@ export default function PedidosPage() {
           className={
             isHotelFrontDeskVisible
               ? "overflow-hidden rounded-2xl border border-[var(--brand-border)] bg-white shadow-sm"
-              : "overflow-hidden rounded-[1.6rem] border-4 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]"
+              : "overflow-hidden rounded-[1.6rem] border border-[var(--brand-primary)]/45 bg-[var(--brand-surface-2)] shadow-sm"
           }
         >
           {!isHotelFrontDeskVisible && (
@@ -3370,7 +3370,9 @@ export default function PedidosPage() {
                     Cierre del día
                   </button>
 
-                  {isHistoryModuleVisible && (
+                  {/* En modo hotel la cabecera queda mínima: estos accesos ya
+                      viven como módulos en sus secciones (POS/Administración). */}
+                  {isHistoryModuleVisible && !isHotelFrontDeskVisible && (
                     <a
                       href="/local-santo/cierres"
                       className={headerChipClass}
@@ -3380,7 +3382,7 @@ export default function PedidosPage() {
                     </a>
                   )}
 
-                  {isExpensesModuleVisible && (
+                  {isExpensesModuleVisible && !isHotelFrontDeskVisible && (
                     <button
                       type="button"
                       onClick={() => {
@@ -3398,7 +3400,7 @@ export default function PedidosPage() {
                     </button>
                   )}
 
-                  {isCustomersModuleVisible && (
+                  {isCustomersModuleVisible && !isHotelFrontDeskVisible && (
                     <a
                       href="/local-santo/clientes"
                       className={headerChipClass}
@@ -3408,7 +3410,7 @@ export default function PedidosPage() {
                     </a>
                   )}
 
-                  {isInventoryModuleVisible && (
+                  {isInventoryModuleVisible && !isHotelFrontDeskVisible && (
                     <a
                       href="/local-santo/inventario"
                       className={headerChipClass}
@@ -3418,28 +3420,30 @@ export default function PedidosPage() {
                     </a>
                   )}
 
-                  {isMenuProductsModuleVisible && (
+                  {isMenuProductsModuleVisible && !isHotelFrontDeskVisible && (
                     <a
                       href="/local-santo/menu"
                       className={headerChipClass}
                     >
                       <Store size={16} />
-                      {isHotelFrontDeskVisible ? "Carta" : "Productos"}
+                      Productos
                     </a>
                   )}
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOpenAccountsMessage(null)
-                      setIsLocationsModalOpen(true)
-                      loadOpenAccounts(adminPassword, true)
-                    }}
-                    className={headerChipClass}
-                  >
-                    <MapPin size={16} />
-                    {isHotelFrontDeskVisible ? "Ubicaciones" : "Mesas"}
-                  </button>
+                  {!isHotelFrontDeskVisible && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpenAccountsMessage(null)
+                        setIsLocationsModalOpen(true)
+                        loadOpenAccounts(adminPassword, true)
+                      }}
+                      className={headerChipClass}
+                    >
+                      <MapPin size={16} />
+                      Mesas
+                    </button>
+                  )}
 
                   {canEditSensitiveSettings && (
                     <button
@@ -3480,7 +3484,7 @@ export default function PedidosPage() {
                   className={
                     isHotelFrontDeskVisible
                       ? "mt-4 text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[var(--brand-primary-dark)]"
-                      : "mt-4 text-xs font-black uppercase tracking-[0.32em] text-[var(--brand-primary)]"
+                      : "mt-4 text-xs font-bold uppercase tracking-[0.32em] text-[var(--brand-primary)]"
                   }
                 >
                   {businessConfig.businessName}
@@ -3490,7 +3494,7 @@ export default function PedidosPage() {
                   className={
                     isHotelFrontDeskVisible
                       ? "mt-1 font-serif text-4xl font-semibold leading-tight text-[var(--brand-ink-3)] sm:text-5xl"
-                      : "mt-1 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl"
+                      : "mt-1 text-4xl font-bold uppercase leading-none text-[var(--brand-primary)] sm:text-5xl"
                   }
                 >
                   {isHotelFrontDeskVisible ? "Panel del hotel" : "Control de pedidos"}
@@ -3509,7 +3513,7 @@ export default function PedidosPage() {
                 </p>
 
                 {soundMessage && (
-                  <p className="mt-2 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-3 py-2 text-xs font-black text-[var(--brand-ink-2)]">
+                  <p className="mt-2 rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-3 py-2 text-xs font-bold text-[var(--brand-ink-2)]">
                     {soundMessage}
                   </p>
                 )}
@@ -3517,29 +3521,27 @@ export default function PedidosPage() {
                 <CurrentBranchBanner />
               </div>
 
-              <div className="w-full min-w-0 2xl:max-w-[880px]">
-                {/* En modo hotel estas métricas son del POS: se rotulan como
-                    room service para que el panel hable de hotel primero. */}
-                {isHotelFrontDeskVisible && (
-                  <p className="mb-1.5 text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[var(--brand-primary-dark)]">
-                    Room service · restaurante
-                  </p>
-                )}
-                <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-5">
-                  <MetricCard label={isHotelFrontDeskVisible ? "Pedidos" : "Activos"} value={activeOrders.length} />
-                  <MetricCard label="Nuevos" value={newOrdersCount} />
-                  <MetricCard label="Listos" value={readyOrdersCount} tone="yellow" />
-                  <MetricCard label="Por revisar" value={staffConfirmationPendingOrders.length} tone={staffConfirmationPendingOrders.length > 0 ? "yellow" : "red"} />
-                  <MetricCard label={isHotelFrontDeskVisible ? "Ventas rest." : "Ventas"} value={formatUSD(totalRegistered)} />
+              {/* Las métricas del POS solo aparecen en modo restaurante: en el
+                  hotel viven dentro de la sección "Restaurante y room service"
+                  y el botón plegado ya avisa cuántos pedidos hay en curso. */}
+              {!isHotelFrontDeskVisible && (
+                <div className="w-full min-w-0 2xl:max-w-[880px]">
+                  <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-5">
+                    <MetricCard label="Activos" value={activeOrders.length} />
+                    <MetricCard label="Nuevos" value={newOrdersCount} />
+                    <MetricCard label="Listos" value={readyOrdersCount} tone="yellow" />
+                    <MetricCard label="Por revisar" value={staffConfirmationPendingOrders.length} tone={staffConfirmationPendingOrders.length > 0 ? "yellow" : "red"} />
+                    <MetricCard label="Ventas" value={formatUSD(totalRegistered)} />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </header>
 
         {(trainingActive || (canEditSensitiveSettings && trainingAvailable)) && (
           <section
-            className={`mt-4 flex flex-col gap-3 rounded-[1.4rem] border-2 p-4 sm:flex-row sm:items-center sm:justify-between ${
+            className={`mt-4 flex flex-col gap-3 rounded-[1.4rem] border p-4 sm:flex-row sm:items-center sm:justify-between ${
               trainingActive
                 ? "border-orange-500 bg-orange-100"
                 : "border-[var(--brand-border)] bg-[var(--brand-surface-2)]"
@@ -3556,7 +3558,7 @@ export default function PedidosPage() {
               />
               <div>
                 <p
-                  className={`text-sm font-black uppercase tracking-[0.12em] ${
+                  className={`text-sm font-bold uppercase tracking-[0.12em] ${
                     trainingActive
                       ? "text-orange-800"
                       : "text-[var(--brand-primary)]"
@@ -3578,7 +3580,7 @@ export default function PedidosPage() {
                 type="button"
                 onClick={() => setTrainingMode(!trainingActive)}
                 disabled={isSavingTraining}
-                className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-full border-2 px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] transition disabled:opacity-50 ${
+                className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-full border px-5 py-2.5 text-xs font-bold uppercase tracking-[0.12em] transition disabled:opacity-50 ${
                   trainingActive
                     ? "border-orange-600 bg-orange-600 text-white hover:bg-orange-700"
                     : "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
@@ -3894,10 +3896,10 @@ export default function PedidosPage() {
         </section>
 
         {isPaymentProofsModuleVisible && (pendingPaymentProofsCount > 0 || paymentProofsMessage) && (
-          <section className={`mt-4 rounded-[1.4rem] border-2 p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)] ${pendingPaymentProofsCount > 0 ? "border-[var(--brand-primary)] bg-[rgba(var(--brand-primary-rgb),0.12)]" : "border-orange-400 bg-orange-100"}`}>
+          <section className={`mt-4 rounded-[1.4rem] border p-4 shadow-sm ${pendingPaymentProofsCount > 0 ? "border-[var(--brand-primary)] bg-[rgba(var(--brand-primary-rgb),0.12)]" : "border-orange-400 bg-orange-100"}`}>
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   <BellRing size={18} />
                   Comprobantes de pago
                 </p>
@@ -3917,11 +3919,11 @@ export default function PedidosPage() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => loadPaymentProofs(adminPassword)} className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.08)]">
+                <button type="button" onClick={() => loadPaymentProofs(adminPassword)} className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.08)]">
                   <RefreshCw size={16} />
                   Actualizar
                 </button>
-                <a href="/local-santo/comprobantes" className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)]">
+                <a href="/local-santo/comprobantes" className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-primary)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)]">
                   Abrir revisión
                 </a>
               </div>
@@ -3930,10 +3932,10 @@ export default function PedidosPage() {
         )}
 
         {staffConfirmationPendingOrders.length > 0 && (
-          <section className="mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-[rgba(var(--brand-primary-rgb),0.12)] p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+          <section className="mt-4 rounded-[1.4rem] border border-[var(--brand-primary)]/40 bg-[rgba(var(--brand-primary-rgb),0.12)] p-4 shadow-sm">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   <AlertTriangle size={18} />
                   Productos por revisar
                 </p>
@@ -3948,7 +3950,7 @@ export default function PedidosPage() {
 
               <a
                 href="/local-santo/mesonero"
-                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)]"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-primary)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)]"
               >
                 Abrir mesonero
               </a>
@@ -3957,8 +3959,8 @@ export default function PedidosPage() {
         )}
 
         {visibleOperationalModules === 0 && (
-          <section className="mt-4 rounded-[1.4rem] border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] p-4">
-            <p className="text-sm font-black uppercase text-[var(--brand-amber)]">
+          <section className="mt-4 rounded-[1.4rem] border border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] p-4">
+            <p className="text-sm font-bold uppercase text-[var(--brand-amber)]">
               No hay módulos operativos visibles
             </p>
             <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
@@ -3973,21 +3975,30 @@ export default function PedidosPage() {
         {(!isHotelFrontDeskVisible || showRestaurantModules) && (
         <>
         {isHotelFrontDeskVisible && (
-          <p className="mt-7 text-[0.65rem] font-bold uppercase tracking-[0.24em] text-[var(--brand-primary-dark)]">
-            Restaurante y room service · pedidos en curso
-          </p>
+          <>
+            <p className="mt-7 text-[0.65rem] font-bold uppercase tracking-[0.24em] text-[var(--brand-primary-dark)]">
+              Restaurante y room service · pedidos en curso
+            </p>
+            <div className="mt-2 grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-5">
+              <MetricCard label="Pedidos" value={activeOrders.length} />
+              <MetricCard label="Nuevos" value={newOrdersCount} />
+              <MetricCard label="Listos" value={readyOrdersCount} tone="yellow" />
+              <MetricCard label="Por revisar" value={staffConfirmationPendingOrders.length} tone={staffConfirmationPendingOrders.length > 0 ? "yellow" : "red"} />
+              <MetricCard label="Ventas rest." value={formatUSD(totalRegistered)} />
+            </div>
+          </>
         )}
-        <section className="sticky top-0 z-30 mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+        <section className="sticky top-0 z-30 mt-4 rounded-[1.4rem] border border-[var(--brand-primary)]/40 bg-[var(--brand-surface-2)] p-3 shadow-sm">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Filtros operativos
               </p>
               <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
                 {filteredOrders.length} {isHotelFrontDeskVisible ? "consumo(s)" : "pedido(s)"} en pantalla · Total {formatUSD(filteredPanelTotal)}{isCashierModuleVisible ? ` · Pendiente ${formatUSD(filteredPanelPending)}` : ""}
               </p>
               {!arePanelFiltersVisible && (
-                <p className="mt-1 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]/70">
+                <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--brand-primary)]/70">
                   {activeFilter} · {panelPaymentFilter} · {panelOrderScopeFilter}
                   {filteredStaffConfirmationPendingCount > 0 ? ` · ${filteredStaffConfirmationPendingCount} por revisar` : ""}
                   {panelSearchText.trim() ? ` · ${panelSearchText.trim()}` : ""}
@@ -3996,10 +4007,24 @@ export default function PedidosPage() {
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              {isHotelFrontDeskVisible && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpenAccountsMessage(null)
+                    setIsLocationsModalOpen(true)
+                    loadOpenAccounts(adminPassword, true)
+                  }}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/30 bg-white px-5 py-3 text-xs font-semibold text-[var(--brand-primary-dark)] transition hover:border-[var(--brand-primary)]/60"
+                >
+                  <MapPin size={16} />
+                  Ubicaciones
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setArePanelFiltersVisible((value) => !value)}
-                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
               >
                 {arePanelFiltersVisible ? <EyeOff size={17} /> : <Eye size={17} />}
                 {arePanelFiltersVisible ? "Ocultar filtros" : "Mostrar filtros"}
@@ -4013,7 +4038,7 @@ export default function PedidosPage() {
                   setPanelOrderScopeFilter("Todos los tipos")
                   setPanelSearchText("")
                 }}
-                className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
+                className="rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-surface-2)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
               >
                 Limpiar filtros
               </button>
@@ -4021,7 +4046,7 @@ export default function PedidosPage() {
               <button
                 type="button"
                 onClick={() => loadOrders()}
-                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase text-[var(--brand-ink)] transition hover:scale-105"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase text-[var(--brand-ink)] transition hover:scale-105"
               >
                 {isLoading ? (
                   <Loader2 size={17} className="animate-spin" />
@@ -4045,7 +4070,7 @@ export default function PedidosPage() {
                     value={panelSearchText}
                     onChange={(event) => setPanelSearchText(event.target.value)}
                     placeholder="Buscar por cliente, teléfono, mesa, zona, producto, número, variación, adicional o revisión"
-                    className="w-full rounded-full border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                    className="w-full rounded-full border border-[var(--brand-border)] bg-[var(--brand-cream)] px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                   />
                 </div>
               </div>
@@ -4060,7 +4085,7 @@ export default function PedidosPage() {
                         key={status}
                         type="button"
                         onClick={() => setActiveFilter(status)}
-                        className={`shrink-0 rounded-full border-2 px-4 py-2.5 text-xs font-black uppercase transition ${
+                        className={`shrink-0 rounded-full border px-4 py-2.5 text-xs font-bold uppercase transition ${
                           isActive
                             ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                             : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)] hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
@@ -4082,7 +4107,7 @@ export default function PedidosPage() {
                           key={filter}
                           type="button"
                           onClick={() => setPanelPaymentFilter(filter)}
-                          className={`shrink-0 rounded-full border-2 px-4 py-2.5 text-xs font-black uppercase transition ${
+                          className={`shrink-0 rounded-full border px-4 py-2.5 text-xs font-bold uppercase transition ${
                             isActive
                               ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                               : "border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)] hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
@@ -4104,7 +4129,7 @@ export default function PedidosPage() {
                         key={filter}
                         type="button"
                         onClick={() => setPanelOrderScopeFilter(filter)}
-                        className={`shrink-0 rounded-full border-2 px-4 py-2.5 text-xs font-black uppercase transition ${
+                        className={`shrink-0 rounded-full border px-4 py-2.5 text-xs font-bold uppercase transition ${
                           isActive
                             ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                             : "border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)] hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
@@ -4135,7 +4160,7 @@ export default function PedidosPage() {
           )}
 
           {errorMessage && (
-            <div className="mt-3 rounded-2xl border-2 border-red-500/35 bg-red-500/100/15 px-4 py-3">
+            <div className="mt-3 rounded-2xl border border-red-500/35 bg-red-500/100/15 px-4 py-3">
               <p className="text-sm font-bold leading-6 text-red-300">
                 {errorMessage}
               </p>
@@ -4144,7 +4169,7 @@ export default function PedidosPage() {
         </section>
 
         {filteredOrders.length === 0 ? (
-          <section className="mt-5 rounded-[2rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-6 py-14 text-center shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]">
+          <section className="mt-5 rounded-[2rem] border border-[var(--brand-primary)]/40 bg-[var(--brand-surface-2)] px-6 py-14 text-center shadow-sm">
             <Image
               src={BRAND.logoUrl || "/logoremovebg.png"}
               alt={BRAND.name}
@@ -4158,7 +4183,7 @@ export default function PedidosPage() {
               className={
                 isHotelFrontDeskVisible
                   ? "mt-5 font-serif text-3xl font-semibold text-[var(--brand-ink-3)]"
-                  : "mt-5 text-3xl font-black uppercase text-[var(--brand-primary)]"
+                  : "mt-5 text-3xl font-bold uppercase text-[var(--brand-primary)]"
               }
             >
               {isHotelFrontDeskVisible ? "Sin consumos pendientes" : "Sin pedidos pendientes"}
@@ -4195,22 +4220,22 @@ export default function PedidosPage() {
               return (
                 <article
                   key={order.id}
-                  className={`overflow-hidden rounded-[1.6rem] border-2 bg-[var(--brand-surface-2)] shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)] transition ${
+                  className={`overflow-hidden rounded-[1.6rem] border bg-[var(--brand-surface-2)] shadow-sm transition ${
                     isHighlighted
                       ? "border-red-500 ring-4 ring-red-300"
                       : "border-[var(--brand-primary)]"
                   }`}
                 >
-                  <div className="border-b-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-4 py-4">
+                  <div className="border-b border-[var(--brand-primary)] bg-[var(--brand-cream)] px-4 py-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-4xl font-black leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+                          <p className="text-4xl font-bold leading-none text-[var(--brand-primary)]">
                             {getDisplayOrderNumber(order)}
                           </p>
 
                           <span
-                            className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-black uppercase ${getStatusStyle(
+                            className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold uppercase ${getStatusStyle(
                               order.status
                             )}`}
                           >
@@ -4219,7 +4244,7 @@ export default function PedidosPage() {
                           </span>
 
                           <span
-                            className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-black uppercase ${getPaymentStatusStyle(
+                            className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-bold uppercase ${getPaymentStatusStyle(
                               orderPayment.status
                             )}`}
                           >
@@ -4227,21 +4252,21 @@ export default function PedidosPage() {
                           </span>
 
                           {isDelivery && (
-                            <span className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-black uppercase text-white">
+                            <span className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-bold uppercase text-white">
                               <Truck size={15} />
                               Delivery
                             </span>
                           )}
 
                           {hasPendingStaffConfirmation && (
-                            <span className="inline-flex items-center gap-2 rounded-full border border-yellow-500 bg-[var(--brand-accent)] px-3 py-1.5 text-xs font-black uppercase text-[var(--brand-ink)]">
+                            <span className="inline-flex items-center gap-2 rounded-full border border-yellow-500 bg-[var(--brand-accent)] px-3 py-1.5 text-xs font-bold uppercase text-[var(--brand-ink)]">
                               <AlertTriangle size={15} />
                               Por revisar
                             </span>
                           )}
 
                           {hasConfirmedStaffConfirmation && (
-                            <span className="inline-flex items-center gap-2 rounded-full border border-green-600 bg-green-500/100 px-3 py-1.5 text-xs font-black uppercase text-white">
+                            <span className="inline-flex items-center gap-2 rounded-full border border-green-600 bg-green-500/100 px-3 py-1.5 text-xs font-bold uppercase text-white">
                               <CheckCircle2 size={15} />
                               Revisión confirmada
                             </span>
@@ -4254,16 +4279,16 @@ export default function PedidosPage() {
                       </div>
 
                       <div className="text-right">
-                        <p className="text-3xl font-black leading-none text-[var(--brand-ink-3)]">
+                        <p className="text-3xl font-bold leading-none text-[var(--brand-ink-3)]">
                           {formatUSD(orderTotals.totalUSD)}
                         </p>
                         {orderTotals.totalRegularVES > 0 && (
-                          <p className="mt-1 text-xs font-black text-[var(--brand-ink-2)]/60">
+                          <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/60">
                             Ref. normales Bs {formatVES(orderTotals.totalRegularVES)}
                           </p>
                         )}
                         {orderTotals.deliveryCostUSD > 0 && (
-                          <p className="mt-1 text-xs font-black text-[var(--brand-primary)]">
+                          <p className="mt-1 text-xs font-bold text-[var(--brand-primary)]">
                             Incluye delivery {formatUSD(orderTotals.deliveryCostUSD)}
                           </p>
                         )}
@@ -4286,12 +4311,12 @@ export default function PedidosPage() {
                     </div>
 
                     {staffConfirmationSummary.requiredCount > 0 && (
-                      <div className={`rounded-[1.4rem] border-2 p-4 ${
+                      <div className={`rounded-[1.4rem] border p-4 ${
                         hasPendingStaffConfirmation
                           ? "border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)]"
                           : "border-green-500/45 bg-green-500/10"
                       }`}>
-                        <p className={`flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] ${
+                        <p className={`flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] ${
                           hasPendingStaffConfirmation ? "text-[var(--brand-amber)]" : "text-green-300"
                         }`}>
                           {hasPendingStaffConfirmation ? <AlertTriangle size={16} /> : <CheckCircle2 size={16} />}
@@ -4310,7 +4335,7 @@ export default function PedidosPage() {
                                 updateStaffConfirmation(order, "confirmStaffItems")
                               }
                               disabled={isUpdatingStaffConfirmation}
-                              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)] disabled:cursor-not-allowed disabled:opacity-60"
+                              className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-primary)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)] disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {isUpdatingStaffConfirmation ? (
                                 <Loader2 size={15} className="animate-spin" />
@@ -4328,7 +4353,7 @@ export default function PedidosPage() {
                                 updateStaffConfirmation(order, "resetStaffItems")
                               }
                               disabled={isUpdatingStaffConfirmation}
-                              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)] disabled:cursor-not-allowed disabled:opacity-60"
+                              className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)] disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {isUpdatingStaffConfirmation ? (
                                 <Loader2 size={15} className="animate-spin" />
@@ -4342,7 +4367,7 @@ export default function PedidosPage() {
                           {hasPendingStaffConfirmation && (
                             <a
                               href="/local-santo/mesonero"
-                              className="inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
+                              className="inline-flex items-center justify-center rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                             >
                               Abrir mesonero
                             </a>
@@ -4352,8 +4377,8 @@ export default function PedidosPage() {
                     )}
 
                     {isDelivery && (
-                      <div className="space-y-3 rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-4">
-                        <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                      <div className="space-y-3 rounded-[1.4rem] border border-[var(--brand-border)] bg-[var(--brand-cream)] p-4">
+                        <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                           <Truck size={16} />
                           Datos de delivery
                         </p>
@@ -4363,7 +4388,7 @@ export default function PedidosPage() {
                         <button
                           type="button"
                           onClick={() => copyCourierHandoff(order)}
-                          className={`flex w-full items-center justify-center gap-2 rounded-full border-2 px-4 py-3 text-xs font-black uppercase tracking-[0.1em] transition ${
+                          className={`flex w-full items-center justify-center gap-2 rounded-full border px-4 py-3 text-xs font-bold uppercase tracking-[0.1em] transition ${
                             copiedCourierOrderId === order.id
                               ? "border-green-600 bg-green-600 text-white"
                               : "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white hover:opacity-90"
@@ -4403,7 +4428,7 @@ export default function PedidosPage() {
                               href={buildDeliveryWhatsAppUrl(order, "confirm")}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
+                              className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-3 text-center text-[0.68rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
                             >
                               <MessageCircle size={16} />
                               Confirmar
@@ -4413,7 +4438,7 @@ export default function PedidosPage() {
                               href={buildDeliveryWhatsAppUrl(order, "preparing")}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
+                              className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-surface-2)] px-4 py-3 text-center text-[0.68rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                             >
                               <CookingPot size={16} />
                               Preparación
@@ -4423,7 +4448,7 @@ export default function PedidosPage() {
                               href={buildDeliveryWhatsAppUrl(order, "onTheWay")}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.1em] text-white transition hover:bg-[var(--brand-primary-dark)]"
+                              className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-primary)] px-4 py-3 text-center text-[0.68rem] font-bold uppercase tracking-[0.1em] text-white transition hover:bg-[var(--brand-primary-dark)]"
                             >
                               <Truck size={16} />
                               Avisar salida
@@ -4433,7 +4458,7 @@ export default function PedidosPage() {
                               href={buildDeliveryWhatsAppUrl(order, "arrived")}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-green-600 bg-green-500/100 px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.1em] text-white transition hover:bg-green-400"
+                              className="inline-flex items-center justify-center gap-2 rounded-full border border-green-600 bg-green-500/100 px-4 py-3 text-center text-[0.68rem] font-bold uppercase tracking-[0.1em] text-white transition hover:bg-green-400"
                             >
                               <CheckCircle2 size={16} />
                               Llegué
@@ -4441,7 +4466,7 @@ export default function PedidosPage() {
                           </div>
                         ) : isDeliveryModuleVisible &&
                           businessConfig.orderWhatsappStageButtonsEnabled ? (
-                          <div className="rounded-2xl border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-3 py-2 text-xs font-black text-[var(--brand-amber)]">
+                          <div className="rounded-2xl border border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-3 py-2 text-xs font-bold text-[var(--brand-amber)]">
                             Este delivery no tiene teléfono válido para abrir WhatsApp.
                           </div>
                         ) : null}
@@ -4456,15 +4481,15 @@ export default function PedidosPage() {
                         href={buildDeliveryWhatsAppUrl(order, "ready")}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-green-600 bg-green-500 px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.1em] text-white transition hover:bg-green-400"
+                        className="inline-flex items-center justify-center gap-2 rounded-full border border-green-600 bg-green-500 px-4 py-3 text-center text-[0.68rem] font-bold uppercase tracking-[0.1em] text-white transition hover:bg-green-400"
                       >
                         <MessageCircle size={16} />
                         Avisar por WhatsApp que está listo
                       </a>
                     ) : null}
 
-                    <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
-                      <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <div className="rounded-[1.4rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                         Productos
                       </p>
 
@@ -4491,14 +4516,14 @@ export default function PedidosPage() {
                     </div>
 
                     {isCashierModuleVisible && (
-                      <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-4">
+                      <div className="rounded-[1.4rem] border border-[var(--brand-border)] bg-[var(--brand-cream)] p-4">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div>
-                            <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                               Cobro
                             </p>
                             <span
-                              className={`mt-2 inline-flex rounded-full px-3 py-1.5 text-xs font-black uppercase ${getPaymentStatusStyle(
+                              className={`mt-2 inline-flex rounded-full px-3 py-1.5 text-xs font-bold uppercase ${getPaymentStatusStyle(
                                 orderPayment.status
                               )}`}
                             >
@@ -4509,13 +4534,13 @@ export default function PedidosPage() {
                           <button
                             type="button"
                             onClick={() => openPaymentModal(order)}
-                            className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
+                            className="rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
                           >
                             Registrar cobro
                           </button>
                         </div>
 
-                        <div className="mt-3 space-y-1 text-sm font-black text-[var(--brand-ink-3)]">
+                        <div className="mt-3 space-y-1 text-sm font-bold text-[var(--brand-ink-3)]">
                           {orderTotals.totalCombosUSD > 0 && (
                             <p>Combos solo divisas: {formatUSD(orderTotals.totalCombosUSD)}</p>
                           )}
@@ -4577,8 +4602,8 @@ export default function PedidosPage() {
                     )}
 
                     {order.customerNote && (
-                      <div className="rounded-[1.4rem] border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] p-4">
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-amber)]">
+                      <div className="rounded-[1.4rem] border border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] p-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-amber)]">
                           Nota general
                         </p>
                         <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]">
@@ -4592,7 +4617,7 @@ export default function PedidosPage() {
                         href={order.attachmentImageUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-center gap-3 rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-3 transition hover:bg-[rgba(var(--brand-primary-rgb),0.08)]"
+                        className="flex items-center gap-3 rounded-[1.4rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-3 transition hover:bg-[rgba(var(--brand-primary-rgb),0.08)]"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -4600,7 +4625,7 @@ export default function PedidosPage() {
                           alt="Imagen del pedido"
                           className="h-16 w-16 rounded-lg object-cover"
                         />
-                        <span className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                        <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
                           Imagen adjunta · toca para ampliar
                         </span>
                       </a>
@@ -4617,7 +4642,7 @@ export default function PedidosPage() {
                         <button
                           type="button"
                           onClick={() => updateStatus(order.id, primaryAction.nextStatus)}
-                          className={`rounded-full px-5 py-3 text-xs font-black uppercase tracking-[0.12em] transition ${primaryAction.className}`}
+                          className={`rounded-full px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] transition ${primaryAction.className}`}
                         >
                           {primaryAction.label}
                         </button>
@@ -4627,7 +4652,7 @@ export default function PedidosPage() {
                         <button
                           type="button"
                           onClick={() => updateStatus(order.id, "Cancelado")}
-                          className="rounded-full bg-red-700 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-red-800"
+                          className="rounded-full bg-red-700 px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white transition hover:bg-red-800"
                         >
                           Cancelar
                         </button>
@@ -4646,13 +4671,13 @@ export default function PedidosPage() {
       {isCloseModalOpen && (
         <ModalShell onClose={() => setIsCloseModalOpen(false)} title="Cierre del día">
           <div className="space-y-4">
-            <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] p-4">
+            <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/40 bg-[var(--brand-surface-2)] p-4">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Resumen principal
                   </p>
-                  <h2 className="mt-1 text-3xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_2px_0_rgba(var(--brand-accent-rgb),0.75)]">
+                  <h2 className="font-serif mt-1 text-3xl leading-tight text-[var(--brand-ink-3)] font-semibold">
                     Cierre operativo
                   </h2>
                   <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -4661,7 +4686,7 @@ export default function PedidosPage() {
                 </div>
 
                 <span
-                  className={`inline-flex w-fit items-center gap-2 rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] ${
+                  className={`inline-flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] ${
                     hasCloseReviewWarnings
                       ? "border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] text-[var(--brand-amber)]"
                       : "border-green-600 bg-green-500/10 text-green-300"
@@ -4711,7 +4736,7 @@ export default function PedidosPage() {
             </div>
 
             <div
-              className={`rounded-[1.4rem] border-2 p-4 ${
+              className={`rounded-[1.4rem] border p-4 ${
                 hasCloseReviewWarnings
                   ? "border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)]"
                   : "border-green-500/35 bg-green-500/10"
@@ -4720,7 +4745,7 @@ export default function PedidosPage() {
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <p
-                    className={`text-xs font-black uppercase tracking-[0.18em] ${
+                    className={`text-xs font-bold uppercase tracking-[0.18em] ${
                       hasCloseReviewWarnings ? "text-[var(--brand-amber)]" : "text-green-300"
                     }`}
                   >
@@ -4731,7 +4756,7 @@ export default function PedidosPage() {
                   </p>
                 </div>
 
-                <span className="rounded-full bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]">
+                <span className="rounded-full bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)]">
                   {closeReviewItems.length} punto(s)
                 </span>
               </div>
@@ -4743,18 +4768,18 @@ export default function PedidosPage() {
                   return (
                     <div
                       key={`${item.title}-${item.value}`}
-                      className={`rounded-2xl border-2 px-4 py-3 ${classes.wrapper}`}
+                      className={`rounded-2xl border px-4 py-3 ${classes.wrapper}`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className={`text-sm font-black uppercase ${classes.title}`}>
+                          <p className={`text-sm font-bold uppercase ${classes.title}`}>
                             {item.title}
                           </p>
                           <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
                             {item.description}
                           </p>
                         </div>
-                        <p className={`shrink-0 text-sm font-black ${classes.value}`}>
+                        <p className={`shrink-0 text-sm font-bold ${classes.value}`}>
                           {item.value}
                         </p>
                       </div>
@@ -4764,7 +4789,7 @@ export default function PedidosPage() {
               </div>
 
               {closeReviewItems.length > 4 && (
-                <p className="mt-3 rounded-2xl bg-[var(--brand-surface-2)] px-4 py-3 text-xs font-black text-[var(--brand-ink-2)]/70">
+                <p className="mt-3 rounded-2xl bg-[var(--brand-surface-2)] px-4 py-3 text-xs font-bold text-[var(--brand-ink-2)]/70">
                   Hay {closeReviewItems.length - 4} punto(s) adicional(es). Abre “Alertas completas” para revisarlos todos.
                 </p>
               )}
@@ -4867,8 +4892,8 @@ export default function PedidosPage() {
                   items={dayStats.deliveredByType}
                 />
 
-                <div className="rounded-[1.4rem] border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-amber)]">
+                <div className="rounded-[1.4rem] border border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-amber)]">
                     Pendiente por entregar
                   </p>
                   <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -4908,7 +4933,7 @@ export default function PedidosPage() {
               </div>
 
               {dayStats.realPaymentTotals.deliveryWithoutPaymentMethodUSD > 0 && (
-                <p className="mt-3 rounded-2xl border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3 text-xs font-black leading-5 text-[var(--brand-amber)]">
+                <p className="mt-3 rounded-2xl border border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3 text-xs font-bold leading-5 text-[var(--brand-amber)]">
                   Hay delivery con costo registrado, pero todavía sin forma de cobro marcada. Revisa los pedidos pendientes o parciales antes de cerrar caja.
                 </p>
               )}
@@ -4959,7 +4984,7 @@ export default function PedidosPage() {
               </div>
 
               {expenseCloseBreakdown.expensesWithoutProvider.length > 0 && (
-                <p className="mt-3 rounded-2xl border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3 text-xs font-black leading-5 text-[var(--brand-amber)]">
+                <p className="mt-3 rounded-2xl border border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3 text-xs font-bold leading-5 text-[var(--brand-amber)]">
                   Hay {expenseCloseBreakdown.expensesWithoutProvider.length} gasto(s) sin proveedor. No bloquea el cierre, pero conviene completarlo para que el historial sea más útil.
                 </p>
               )}
@@ -4987,8 +5012,8 @@ export default function PedidosPage() {
                 />
               </div>
 
-              <div className="mt-3 rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <div className="mt-3 rounded-[1.4rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   Gastos registrados hoy
                 </p>
                 {dayExpenses.length === 0 ? (
@@ -5004,7 +5029,7 @@ export default function PedidosPage() {
                       >
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                           <div>
-                            <p className="text-sm font-black uppercase text-[var(--brand-ink-3)]">
+                            <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">
                               {expense.concept || "Gasto"}
                             </p>
                             <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -5012,17 +5037,17 @@ export default function PedidosPage() {
                               {expense.provider ? ` · ${expense.provider}` : " · Sin proveedor"}
                             </p>
                             {expense.inventoryLinked && expense.inventoryItemName && (
-                              <p className="mt-1 text-xs font-black text-green-300">
+                              <p className="mt-1 text-xs font-bold text-green-300">
                                 Inventario: {expense.inventoryItemName} +{expense.inventoryQuantity || 0} {expense.inventoryUnit || "unidades"}
                               </p>
                             )}
                           </div>
                           <div className="text-left sm:text-right">
-                            <p className="text-base font-black text-[var(--brand-primary)]">
+                            <p className="text-base font-bold text-[var(--brand-primary)]">
                               {formatUSD(expense.equivalentUSD)}
                             </p>
                             {expense.amountVES > 0 && (
-                              <p className="mt-1 text-xs font-black text-[var(--brand-ink-2)]/65">
+                              <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
                                 Bs {formatVES(expense.amountVES)}
                               </p>
                             )}
@@ -5060,7 +5085,7 @@ export default function PedidosPage() {
                 />
               </div>
 
-              <p className="mt-3 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
+              <p className="mt-3 rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
                 Los descuentos por receta se ejecutan cuando los pedidos se marcan como entregados. Esta sección resume las compras que sumaron inventario desde gastos y los productos vendidos que conviene revisar contra recetas.
               </p>
 
@@ -5077,14 +5102,14 @@ export default function PedidosPage() {
                     >
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                         <div>
-                          <p className="text-sm font-black uppercase text-green-300">
+                          <p className="text-sm font-bold uppercase text-green-300">
                             {expense.inventoryItemName}
                           </p>
                           <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
                             {expense.concept || "Compra"} · {expense.provider || "Sin proveedor"}
                           </p>
                         </div>
-                        <p className="text-sm font-black text-green-300">
+                        <p className="text-sm font-bold text-green-300">
                           +{expense.inventoryQuantity || 0} {expense.inventoryUnit || "unidades"}
                         </p>
                       </div>
@@ -5111,7 +5136,7 @@ export default function PedidosPage() {
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-sm font-black uppercase text-[var(--brand-ink-3)]">
+                          <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">
                             {index + 1}. {product.name}
                           </p>
                           <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/60">
@@ -5119,11 +5144,11 @@ export default function PedidosPage() {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-base font-black text-[var(--brand-primary)]">
+                          <p className="text-base font-bold text-[var(--brand-primary)]">
                             {formatUSD(product.totalUSD)}
                           </p>
                           {!product.onlyCurrency && product.totalVES > 0 && (
-                            <p className="mt-1 text-xs font-black text-[var(--brand-ink-2)]/65">
+                            <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
                               Bs {formatVES(product.totalVES)}
                             </p>
                           )}
@@ -5146,18 +5171,18 @@ export default function PedidosPage() {
                   return (
                     <div
                       key={`${item.title}-${item.value}`}
-                      className={`rounded-2xl border-2 px-4 py-3 ${classes.wrapper}`}
+                      className={`rounded-2xl border px-4 py-3 ${classes.wrapper}`}
                     >
                       <div className="flex items-start gap-3">
-                        <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 ${classes.icon}`}>
+                        <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${classes.icon}`}>
                           {item.tone === "success" ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
                         </span>
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-                            <p className={`text-sm font-black uppercase ${classes.title}`}>
+                            <p className={`text-sm font-bold uppercase ${classes.title}`}>
                               {item.title}
                             </p>
-                            <p className={`text-sm font-black ${classes.value}`}>
+                            <p className={`text-sm font-bold ${classes.value}`}>
                               {item.value}
                             </p>
                           </div>
@@ -5182,8 +5207,8 @@ export default function PedidosPage() {
             </CloseDetailSection>
 
             {closeSummaryMessage && (
-              <div className="rounded-2xl border-2 border-green-500/30 bg-green-500/10 px-4 py-3">
-                <p className="text-sm font-black text-green-300">
+              <div className="rounded-2xl border border-green-500/30 bg-green-500/10 px-4 py-3">
+                <p className="text-sm font-bold text-green-300">
                   {closeSummaryMessage}
                 </p>
               </div>
@@ -5193,7 +5218,7 @@ export default function PedidosPage() {
               <button
                 type="button"
                 onClick={copyCloseSummary}
-                className="w-full rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]"
+                className="w-full rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)]"
               >
                 Copiar resumen
               </button>
@@ -5204,7 +5229,7 @@ export default function PedidosPage() {
                   setIsResetReviewVisible(true)
                   setIsResetModalOpen(true)
                 }}
-                className="w-full rounded-full bg-red-700 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white"
+                className="w-full rounded-full bg-red-700 px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-white"
               >
                 Guardar cierre y reiniciar pedidos
               </button>
@@ -5217,7 +5242,7 @@ export default function PedidosPage() {
         <ModalShell onClose={() => setIsResetModalOpen(false)} title="Revisión antes de cerrar">
           <div className="space-y-4">
             <div
-              className={`rounded-[1.4rem] border-2 p-4 ${
+              className={`rounded-[1.4rem] border p-4 ${
                 hasCloseReviewWarnings
                   ? "border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)]"
                   : "border-green-500/35 bg-green-500/10"
@@ -5231,7 +5256,7 @@ export default function PedidosPage() {
                 )}
                 <div>
                   <p
-                    className={`text-sm font-black uppercase ${
+                    className={`text-sm font-bold uppercase ${
                       hasCloseReviewWarnings ? "text-[var(--brand-amber)]" : "text-green-300"
                     }`}
                   >
@@ -5269,11 +5294,11 @@ export default function PedidosPage() {
               }
             />
 
-            <div className="rounded-[1.4rem] border-2 border-red-500/35 bg-red-500/10 p-4">
+            <div className="rounded-[1.4rem] border border-red-500/35 bg-red-500/10 p-4">
               <div className="flex gap-3">
                 <AlertTriangle className="mt-1 shrink-0 text-red-600" size={26} />
                 <div>
-                  <p className="text-sm font-black uppercase text-red-300">
+                  <p className="text-sm font-bold uppercase text-red-300">
                     Esta acción reinicia el día operativo.
                   </p>
                   <p className="mt-2 text-sm font-bold leading-6 text-red-300/80">
@@ -5284,14 +5309,14 @@ export default function PedidosPage() {
             </div>
 
             <div>
-              <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Escribe REINICIAR para confirmar
               </label>
               <input
                 value={resetConfirmationText}
                 onChange={(event) => setResetConfirmationText(event.target.value)}
                 placeholder="REINICIAR"
-                className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
               />
               <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
                 Esta palabra evita reinicios accidentales. Puedes volver al panel para corregir pedidos antes de cerrar.
@@ -5307,7 +5332,7 @@ export default function PedidosPage() {
                   setResetConfirmationText("")
                 }}
                 disabled={isResettingDay}
-                className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                className="rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-surface-2)] px-5 py-4 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
               >
                 Volver a revisar pedidos
               </button>
@@ -5316,7 +5341,7 @@ export default function PedidosPage() {
                 type="button"
                 onClick={() => setIsResetModalOpen(false)}
                 disabled={isResettingDay}
-                className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                className="rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-surface-2)] px-5 py-4 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
               >
                 Seguir viendo cierre
               </button>
@@ -5325,7 +5350,7 @@ export default function PedidosPage() {
                 type="button"
                 onClick={resetDayOrders}
                 disabled={isResettingDay}
-                className="flex items-center justify-center gap-3 rounded-full bg-red-700 px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-white disabled:opacity-50"
+                className="flex items-center justify-center gap-3 rounded-full bg-red-700 px-5 py-4 text-xs font-bold uppercase tracking-[0.12em] text-white disabled:opacity-50"
               >
                 {isResettingDay && <Loader2 size={18} className="animate-spin" />}
                 Cerrar de todos modos
@@ -5347,8 +5372,8 @@ export default function PedidosPage() {
           title="Gastos del día"
         >
           <div className="space-y-4">
-            <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+            <div className="rounded-[1.4rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Control de salidas de caja
               </p>
               <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -5371,14 +5396,14 @@ export default function PedidosPage() {
               />
             </div>
 
-            <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] p-4">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+            <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Nuevo gasto
               </p>
 
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Concepto frecuente o insumo del inventario
                   </label>
                   <select
@@ -5386,7 +5411,7 @@ export default function PedidosPage() {
                     onChange={(event) =>
                       selectExpenseQuickConcept(event.target.value)
                     }
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   >
                     <option value="">Selecciona un gasto rápido o insumo guardado</option>
                     {expenseQuickConcepts.map((concept) => (
@@ -5405,7 +5430,7 @@ export default function PedidosPage() {
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Concepto
                   </label>
                   <input
@@ -5417,12 +5442,12 @@ export default function PedidosPage() {
                       }
                     }}
                     placeholder="Ej: compra de pan, pago motorizado, salsas"
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Proveedor
                   </label>
                   <input
@@ -5431,12 +5456,12 @@ export default function PedidosPage() {
                       updateExpenseForm("provider", event.target.value)
                     }
                     placeholder="Ej: Distribuidora, mercado, motorizado"
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Tipo
                   </label>
                   <select
@@ -5444,7 +5469,7 @@ export default function PedidosPage() {
                     onChange={(event) =>
                       updateExpenseForm("expenseType", event.target.value)
                     }
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   >
                     {EXPENSE_TYPES.map((expenseType) => (
                       <option key={expenseType} value={expenseType}>
@@ -5455,7 +5480,7 @@ export default function PedidosPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Categoría
                   </label>
                   <select
@@ -5463,7 +5488,7 @@ export default function PedidosPage() {
                     onChange={(event) =>
                       updateExpenseForm("category", event.target.value)
                     }
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   >
                     {EXPENSE_CATEGORIES.map((category) => (
                       <option key={category} value={category}>
@@ -5474,7 +5499,7 @@ export default function PedidosPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Método
                   </label>
                   <select
@@ -5482,7 +5507,7 @@ export default function PedidosPage() {
                     onChange={(event) =>
                       updateExpenseForm("method", event.target.value)
                     }
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   >
                     {EXPENSE_METHODS.map((method) => (
                       <option key={method} value={method}>
@@ -5493,7 +5518,7 @@ export default function PedidosPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Monto en divisas
                   </label>
                   <input
@@ -5504,12 +5529,12 @@ export default function PedidosPage() {
                       updateExpenseForm("amountUSD", event.target.value)
                     }
                     placeholder="Ej: 10.00"
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Monto en bolívares
                   </label>
                   <input
@@ -5520,12 +5545,12 @@ export default function PedidosPage() {
                       updateExpenseForm("amountVES", event.target.value)
                     }
                     placeholder="Ej: 650.00 o 650,00"
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Equivalente USD manual
                   </label>
                   <input
@@ -5536,7 +5561,7 @@ export default function PedidosPage() {
                       updateExpenseForm("equivalentUSD", event.target.value)
                     }
                     placeholder="Opcional. Útil si no hay tasa del día."
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   />
                   <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
                     Estimado actual: {formatUSD(expenseDraftEquivalentUSD)}
@@ -5547,7 +5572,7 @@ export default function PedidosPage() {
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Nota
                   </label>
                   <textarea
@@ -5557,14 +5582,14 @@ export default function PedidosPage() {
                     }
                     placeholder="Detalle opcional del gasto."
                     rows={3}
-                    className="mt-2 w-full resize-none rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full resize-none rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
-                <div className="sm:col-span-2 rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
+                <div className="sm:col-span-2 rounded-[1.4rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                      <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                         <PackageCheck size={16} />
                         Relación con inventario
                       </p>
@@ -5573,7 +5598,7 @@ export default function PedidosPage() {
                       </p>
                     </div>
 
-                    <label className={`inline-flex items-center gap-2 rounded-full border-2 px-4 py-3 text-xs font-black uppercase tracking-[0.1em] ${
+                    <label className={`inline-flex items-center gap-2 rounded-full border px-4 py-3 text-xs font-bold uppercase tracking-[0.1em] ${
                       isInventoryModuleVisible
                         ? "cursor-pointer border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                         : "cursor-not-allowed border-[var(--brand-border)] bg-[var(--brand-cream)] text-[var(--brand-primary)]/55"
@@ -5595,7 +5620,7 @@ export default function PedidosPage() {
                   </div>
 
                   {!isInventoryModuleVisible && (
-                    <p className="mt-3 rounded-2xl border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3 text-xs font-black leading-5 text-[var(--brand-amber)]">
+                    <p className="mt-3 rounded-2xl border border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3 text-xs font-bold leading-5 text-[var(--brand-amber)]">
                       Inventario no está activo en este plan. El gasto puede guardarse normalmente, pero no se sumará mercancía.
                     </p>
                   )}
@@ -5606,7 +5631,7 @@ export default function PedidosPage() {
                         <button
                           type="button"
                           onClick={() => updateExpenseInventoryForm("mode", "existing")}
-                          className={`rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] ${
+                          className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] ${
                             expenseInventoryForm.mode === "existing"
                               ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                               : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)]"
@@ -5617,7 +5642,7 @@ export default function PedidosPage() {
                         <button
                           type="button"
                           onClick={() => updateExpenseInventoryForm("mode", "new")}
-                          className={`rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] ${
+                          className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] ${
                             expenseInventoryForm.mode === "new"
                               ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                               : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)]"
@@ -5629,7 +5654,7 @@ export default function PedidosPage() {
                           type="button"
                           onClick={() => loadExpenseInventory()}
                           disabled={isLoadingExpenseInventory}
-                          className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                          className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
                         >
                           {isLoadingExpenseInventory ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
                           Inventario
@@ -5638,13 +5663,13 @@ export default function PedidosPage() {
 
                       {expenseInventoryForm.mode === "existing" ? (
                         <div className="sm:col-span-2">
-                          <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                          <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                             Producto existente
                           </label>
                           <select
                             value={expenseInventoryForm.itemId}
                             onChange={(event) => updateExpenseInventoryForm("itemId", event.target.value)}
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           >
                             <option value="">Selecciona un producto</option>
                             {expenseInventory.map((item) => (
@@ -5657,24 +5682,24 @@ export default function PedidosPage() {
                       ) : (
                         <>
                           <div>
-                            <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                            <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                               Nombre en inventario
                             </label>
                             <input
                               value={expenseInventoryForm.name}
                               onChange={(event) => updateExpenseInventoryForm("name", event.target.value)}
                               placeholder="Ej: Pan, salchichas, papas"
-                              className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                              className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                             />
                           </div>
                           <div>
-                            <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                            <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                               Categoría inventario
                             </label>
                             <select
                               value={expenseInventoryForm.category}
                               onChange={(event) => updateExpenseInventoryForm("category", event.target.value)}
-                              className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                              className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                             >
                               {EXPENSE_CATEGORIES.map((category) => (
                                 <option key={category} value={category}>
@@ -5687,7 +5712,7 @@ export default function PedidosPage() {
                       )}
 
                       <div>
-                        <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                        <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                           Cantidad que entra
                         </label>
                         <input
@@ -5696,19 +5721,19 @@ export default function PedidosPage() {
                           value={expenseInventoryForm.quantity}
                           onChange={(event) => updateExpenseInventoryForm("quantity", event.target.value)}
                           placeholder="Ej: 24"
-                          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                          className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                         />
                       </div>
 
                       <div>
-                        <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                        <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                           Unidad
                         </label>
                         <select
                           value={expenseInventoryForm.unit}
                           onChange={(event) => updateExpenseInventoryForm("unit", event.target.value)}
                           disabled={expenseInventoryForm.mode === "existing"}
-                          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)] disabled:opacity-60"
+                          className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)] disabled:opacity-60"
                         >
                           {EXPENSE_INVENTORY_UNIT_OPTIONS.map((unit) => (
                             <option key={unit} value={unit}>
@@ -5720,7 +5745,7 @@ export default function PedidosPage() {
 
                       {expenseInventoryForm.mode === "new" && (
                         <div className="sm:col-span-2">
-                          <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                          <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                             Stock mínimo
                           </label>
                           <input
@@ -5729,20 +5754,20 @@ export default function PedidosPage() {
                             value={expenseInventoryForm.minimumStock}
                             onChange={(event) => updateExpenseInventoryForm("minimumStock", event.target.value)}
                             placeholder="Opcional"
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           />
                         </div>
                       )}
 
                       <div className="sm:col-span-2">
-                        <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                        <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                           Nota para inventario
                         </label>
                         <input
                           value={expenseInventoryForm.note}
                           onChange={(event) => updateExpenseInventoryForm("note", event.target.value)}
                           placeholder="Opcional. Ej: compra de la mañana"
-                          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                          className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                         />
                       </div>
                     </div>
@@ -5750,8 +5775,8 @@ export default function PedidosPage() {
                 </div>
               </div>
 
-                <details className="sm:col-span-2 rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
-                  <summary className="cursor-pointer text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <details className="sm:col-span-2 rounded-[1.4rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
+                  <summary className="cursor-pointer text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Editar conceptos frecuentes
                   </summary>
 
@@ -5764,14 +5789,14 @@ export default function PedidosPage() {
                       {expenseQuickConcepts.map((concept) => (
                         <div
                           key={concept.id}
-                          className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-3"
+                          className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] p-3"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div>
-                              <p className="text-sm font-black uppercase text-[var(--brand-ink-3)]">
+                              <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">
                                 {concept.name}
                               </p>
-                              <p className="mt-1 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                              <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                                 {concept.category} · {concept.unit}
                               </p>
                               <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/60">
@@ -5794,14 +5819,14 @@ export default function PedidosPage() {
                       ))}
                     </div>
 
-                    <div className="rounded-[1.2rem] border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-4">
-                      <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <div className="rounded-[1.2rem] border border-[var(--brand-border)] bg-[var(--brand-cream)] p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                         Agregar concepto
                       </p>
 
                       <div className="mt-3 grid gap-3 sm:grid-cols-2">
                         <div className="sm:col-span-2">
-                          <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                          <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                             Nombre
                           </label>
                           <input
@@ -5810,12 +5835,12 @@ export default function PedidosPage() {
                               setNewExpenseQuickConceptName(event.target.value)
                             }
                             placeholder="Ej: Carbón, aceite, gas, hielo"
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           />
                         </div>
 
                         <div>
-                          <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                          <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                             Categoría sugerida
                           </label>
                           <select
@@ -5823,7 +5848,7 @@ export default function PedidosPage() {
                             onChange={(event) =>
                               setNewExpenseQuickConceptCategory(event.target.value)
                             }
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           >
                             {EXPENSE_CATEGORIES.map((category) => (
                               <option key={category} value={category}>
@@ -5834,7 +5859,7 @@ export default function PedidosPage() {
                         </div>
 
                         <div>
-                          <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                          <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                             Unidad sugerida
                           </label>
                           <select
@@ -5842,7 +5867,7 @@ export default function PedidosPage() {
                             onChange={(event) =>
                               setNewExpenseQuickConceptUnit(event.target.value)
                             }
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           >
                             {EXPENSE_INVENTORY_UNIT_OPTIONS.map((unit) => (
                               <option key={unit} value={unit}>
@@ -5852,7 +5877,7 @@ export default function PedidosPage() {
                           </select>
                         </div>
 
-                        <label className="sm:col-span-2 inline-flex items-center gap-2 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-black text-[var(--brand-ink)]">
+                        <label className="sm:col-span-2 inline-flex items-center gap-2 rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink)]">
                           <input
                             type="checkbox"
                             checked={newExpenseQuickConceptRelatedInventory}
@@ -5869,7 +5894,7 @@ export default function PedidosPage() {
                         <button
                           type="button"
                           onClick={addExpenseQuickConcept}
-                          className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]"
+                          className="rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)]"
                         >
                           Agregar concepto
                         </button>
@@ -5877,7 +5902,7 @@ export default function PedidosPage() {
                         <button
                           type="button"
                           onClick={resetExpenseQuickConcepts}
-                          className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+                          className="rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-surface-2)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]"
                         >
                           Restaurar lista base
                         </button>
@@ -5892,7 +5917,7 @@ export default function PedidosPage() {
                   type="button"
                   onClick={saveDayExpense}
                   disabled={isSavingExpense}
-                  className="flex items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50"
+                  className="flex items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50"
                 >
                   {isSavingExpense && <Loader2 size={18} className="animate-spin" />}
                   Guardar gasto
@@ -5902,7 +5927,7 @@ export default function PedidosPage() {
                   type="button"
                   onClick={resetExpenseForm}
                   disabled={isSavingExpense}
-                  className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                  className="rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-surface-2)] px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
                 >
                   Limpiar formulario
                 </button>
@@ -5910,15 +5935,15 @@ export default function PedidosPage() {
             </div>
 
             {expenseMessage && (
-              <p className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-black text-[var(--brand-ink-2)]">
+              <p className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]">
                 {expenseMessage}
               </p>
             )}
 
-            <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
+            <div className="rounded-[1.4rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Gastos registrados hoy
                   </p>
                   <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -5930,7 +5955,7 @@ export default function PedidosPage() {
                   <button
                     type="button"
                     onClick={() => setAreExpensesVisible((value) => !value)}
-                    className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)]"
                   >
                     {areExpensesVisible ? <EyeOff size={16} /> : <Eye size={16} />}
                     {areExpensesVisible ? "Ocultar lista" : "Mostrar lista"}
@@ -5940,7 +5965,7 @@ export default function PedidosPage() {
                     type="button"
                     onClick={() => loadDayExpenses(adminPassword)}
                     disabled={isLoadingExpenses}
-                    className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
                   >
                     {isLoadingExpenses ? (
                       <Loader2 size={16} className="animate-spin" />
@@ -5962,18 +5987,18 @@ export default function PedidosPage() {
                     {dayExpenses.map((expense) => (
                       <div
                         key={expense.id}
-                        className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-4"
+                        className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] p-4"
                       >
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div>
-                            <p className="text-base font-black uppercase text-[var(--brand-ink-3)]">
+                            <p className="text-base font-bold uppercase text-[var(--brand-ink-3)]">
                               {expense.concept || "Gasto"}
                             </p>
-                            <p className="mt-1 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                            <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                               {expense.expenseType || "Gasto operativo"} · {expense.category || "Otros"} · {expense.method || "Sin registrar"}
                             </p>
                             {expense.provider && (
-                              <p className="mt-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/60">
+                              <p className="mt-1 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/60">
                                 Proveedor: {expense.provider}
                               </p>
                             )}
@@ -5990,16 +6015,16 @@ export default function PedidosPage() {
                           </div>
 
                           <div className="text-left sm:text-right">
-                            <p className="text-lg font-black text-[var(--brand-primary)]">
+                            <p className="text-lg font-bold text-[var(--brand-primary)]">
                               {formatUSD(expense.equivalentUSD)}
                             </p>
                             {expense.amountUSD > 0 && (
-                              <p className="text-xs font-black text-[var(--brand-ink-2)]/65">
+                              <p className="text-xs font-bold text-[var(--brand-ink-2)]/65">
                                 Divisas {formatUSD(expense.amountUSD)}
                               </p>
                             )}
                             {expense.amountVES > 0 && (
-                              <p className="text-xs font-black text-[var(--brand-ink-2)]/65">
+                              <p className="text-xs font-bold text-[var(--brand-ink-2)]/65">
                                 Bs {formatVES(expense.amountVES)}
                               </p>
                             )}
@@ -6016,7 +6041,7 @@ export default function PedidosPage() {
                               type="button"
                               onClick={() => deleteDayExpense(expense.id)}
                               disabled={deletingExpenseId === expense.id}
-                              className="inline-flex items-center gap-2 rounded-full bg-red-500/100/15 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-red-300 disabled:opacity-50"
+                              className="inline-flex items-center gap-2 rounded-full bg-red-500/100/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-red-300 disabled:opacity-50"
                             >
                               {deletingExpenseId === expense.id ? (
                                 <Loader2 size={16} className="animate-spin" />
@@ -6032,7 +6057,7 @@ export default function PedidosPage() {
                   </div>
                 )
               ) : (
-                <p className="mt-4 rounded-2xl border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-amber)]">
+                <p className="mt-4 rounded-2xl border border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-amber)]">
                   Lista oculta. Hay {dayExpenseTotals.count} gasto(s) por {formatUSD(dayExpenseTotals.equivalentUSD)}.
                 </p>
               )}
@@ -6044,10 +6069,10 @@ export default function PedidosPage() {
       {isLocationsModalOpen && (
         <ModalShell onClose={() => setIsLocationsModalOpen(false)} title="Mesas y ubicaciones">
           <div className="space-y-4">
-            <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
+            <div className="rounded-[1.4rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Mapa operativo del local
                   </p>
                   <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -6060,25 +6085,25 @@ export default function PedidosPage() {
                     loadOrders(adminPassword, true)
                     loadOpenAccounts(adminPassword, false)
                   }}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
                 >
                   <RefreshCw size={16} />
                   Actualizar
                 </button>
               </div>
               <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                <span className="rounded-2xl bg-[var(--brand-cream)] px-4 py-3 text-xs font-black uppercase tracking-[0.10em] text-[var(--brand-ink)]">
+                <span className="rounded-2xl bg-[var(--brand-cream)] px-4 py-3 text-xs font-bold uppercase tracking-[0.10em] text-[var(--brand-ink)]">
                   Mesas activas: {orderLocations.length}
                 </span>
-                <span className="rounded-2xl bg-[var(--brand-cream)] px-4 py-3 text-xs font-black uppercase tracking-[0.10em] text-[var(--brand-ink)]">
+                <span className="rounded-2xl bg-[var(--brand-cream)] px-4 py-3 text-xs font-bold uppercase tracking-[0.10em] text-[var(--brand-ink)]">
                   Cuentas abiertas: {activeOpenAccounts.length}
                 </span>
-                <span className="rounded-2xl bg-[var(--brand-cream)] px-4 py-3 text-xs font-black uppercase tracking-[0.10em] text-[var(--brand-ink)]">
+                <span className="rounded-2xl bg-[var(--brand-cream)] px-4 py-3 text-xs font-bold uppercase tracking-[0.10em] text-[var(--brand-ink)]">
                   Por cobrar: {pendingOpenAccountsCount}
                 </span>
               </div>
               {openAccountsMessage && (
-                <p className="mt-3 rounded-2xl border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3 text-sm font-bold text-[var(--brand-amber)]">
+                <p className="mt-3 rounded-2xl border border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3 text-sm font-bold text-[var(--brand-amber)]">
                   {openAccountsMessage}
                 </p>
               )}
@@ -6099,12 +6124,12 @@ export default function PedidosPage() {
                 return (
                   <div
                     key={location}
-                    className={`rounded-2xl border-2 p-4 ${statusClass}`}
+                    className={`rounded-2xl border p-4 ${statusClass}`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="font-black uppercase text-[var(--brand-ink-3)]">{location}</p>
-                        <p className="mt-1 text-[0.68rem] font-black uppercase tracking-[0.12em] opacity-75">
+                        <p className="font-bold uppercase text-[var(--brand-ink-3)]">{location}</p>
+                        <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] opacity-75">
                           {getLocalTableStatusLabel(tableSummary.status)}
                         </p>
                       </div>
@@ -6119,7 +6144,7 @@ export default function PedidosPage() {
                       </button>
                     </div>
 
-                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-black">
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-bold">
                       <span className="rounded-xl bg-[var(--brand-surface)]/85 px-3 py-2">
                         Activos: {tableSummary.activeOrders.length}
                       </span>
@@ -6143,7 +6168,7 @@ export default function PedidosPage() {
                         ))}
                       </div>
                     ) : tableSummary.hasOpenAccount ? (
-                      <p className="mt-3 rounded-xl bg-[var(--brand-surface)]/90 px-3 py-2 text-[0.68rem] font-black uppercase tracking-[0.10em]">
+                      <p className="mt-3 rounded-xl bg-[var(--brand-surface)]/90 px-3 py-2 text-[0.68rem] font-bold uppercase tracking-[0.10em]">
                         Cuenta abierta asociada
                       </p>
                     ) : null}
@@ -6157,13 +6182,13 @@ export default function PedidosPage() {
                 value={newLocationName}
                 onChange={(event) => setNewLocationName(event.target.value)}
                 placeholder="Nueva mesa o ubicación"
-                className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
               />
               <button
                 type="button"
                 onClick={addOrderLocation}
                 disabled={isSavingLocations}
-                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase text-[var(--brand-ink)] disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-6 py-4 text-sm font-bold uppercase text-[var(--brand-ink)] disabled:opacity-50"
               >
                 {isSavingLocations ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
                 Agregar
@@ -6171,7 +6196,7 @@ export default function PedidosPage() {
             </div>
 
             {locationsMessage && (
-              <p className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]">
+              <p className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]">
                 {locationsMessage}
               </p>
             )}
@@ -6180,7 +6205,7 @@ export default function PedidosPage() {
               type="button"
               onClick={restoreDefaultOrderLocations}
               disabled={isSavingLocations}
-              className="w-full rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+              className="w-full rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-surface-2)] px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
             >
               Restaurar mesas base
             </button>
@@ -6201,8 +6226,8 @@ export default function PedidosPage() {
           title="Registrar cobro"
         >
           <div className="space-y-4">
-            <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+            <div className="rounded-[1.4rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 {getDisplayOrderNumber(paymentModalOrder)} · {paymentModalOrder.customerName || "Cliente"}
               </p>
               <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -6225,13 +6250,13 @@ export default function PedidosPage() {
               />
             </div>
 
-            <div className="rounded-[1.4rem] border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-4">
+            <div className="rounded-[1.4rem] border border-[var(--brand-border)] bg-[var(--brand-cream)] p-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   Estado estimado
                 </p>
                 <span
-                  className={`inline-flex w-fit rounded-full px-3 py-1.5 text-xs font-black uppercase ${getPaymentStatusStyle(
+                  className={`inline-flex w-fit rounded-full px-3 py-1.5 text-xs font-bold uppercase ${getPaymentStatusStyle(
                     paymentDraft.status
                   )}`}
                 >
@@ -6245,8 +6270,8 @@ export default function PedidosPage() {
             </div>
 
             {paymentDraft.status !== "Pagado" && (
-              <div className="rounded-[1.4rem] border-2 border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] p-4">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-amber)]">
+              <div className="rounded-[1.4rem] border border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-amber)]">
                   Ayuda rápida para completar el pendiente
                 </p>
                 <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
@@ -6257,7 +6282,7 @@ export default function PedidosPage() {
                     type="button"
                     onClick={completePaymentPendingInVES}
                     disabled={paymentDraft.pendingUSD <= 0 || paymentExchangeRate <= 0}
-                    className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                    className="rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-surface-2)] px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
                   >
                     Completar pendiente en Bs
                   </button>
@@ -6265,7 +6290,7 @@ export default function PedidosPage() {
                     type="button"
                     onClick={completePaymentPendingInUSD}
                     disabled={paymentDraft.pendingUSD <= 0}
-                    className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                    className="rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-surface-2)] px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
                   >
                     Completar pendiente en divisas
                   </button>
@@ -6274,8 +6299,8 @@ export default function PedidosPage() {
             )}
 
             {showLowVESWarning && (
-              <div className="rounded-[1.4rem] border-2 border-red-500/35 bg-red-500/10 p-4">
-                <p className="text-sm font-black leading-6 text-red-300">
+              <div className="rounded-[1.4rem] border border-red-500/35 bg-red-500/10 p-4">
+                <p className="text-sm font-bold leading-6 text-red-300">
                   Revisa el monto en bolívares: lo escrito equivale a menos de $0.20. Si querías cubrir el pendiente en Bs, usa el botón “Completar pendiente en Bs” o escribe el monto completo sin separador de miles.
                 </p>
               </div>
@@ -6283,7 +6308,7 @@ export default function PedidosPage() {
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   Monto recibido en divisas
                 </label>
                 <input
@@ -6294,12 +6319,12 @@ export default function PedidosPage() {
                     updatePaymentForm("amountReceivedUSD", event.target.value)
                   }
                   placeholder="Ej: 35.00"
-                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   Método en divisas
                 </label>
                 <select
@@ -6307,7 +6332,7 @@ export default function PedidosPage() {
                   onChange={(event) =>
                     updatePaymentForm("paymentMethodUSD", event.target.value)
                   }
-                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                 >
                   {paymentForm.paymentMethodUSD &&
                     !PAYMENT_METHOD_USD_OPTIONS.includes(paymentForm.paymentMethodUSD) && (
@@ -6324,7 +6349,7 @@ export default function PedidosPage() {
               </div>
 
               <div>
-                <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   Monto recibido en bolívares reales
                 </label>
                 <input
@@ -6335,7 +6360,7 @@ export default function PedidosPage() {
                     updatePaymentForm("amountReceivedVES", event.target.value)
                   }
                   placeholder="Ej: 1569.25 o 1569,25"
-                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                 />
                 <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
                   Escribe el monto real en bolívares, no el equivalente en dólares. Evita separador de miles: usa 1569.25 o 1569,25.
@@ -6343,7 +6368,7 @@ export default function PedidosPage() {
               </div>
 
               <div>
-                <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   Método en bolívares
                 </label>
                 <select
@@ -6351,7 +6376,7 @@ export default function PedidosPage() {
                   onChange={(event) =>
                     updatePaymentForm("paymentMethodVES", event.target.value)
                   }
-                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                 >
                   {paymentForm.paymentMethodVES &&
                     !PAYMENT_METHOD_VES_OPTIONS.includes(paymentForm.paymentMethodVES) && (
@@ -6370,7 +6395,7 @@ export default function PedidosPage() {
 
             {paymentModalIsDelivery && (
               <div>
-                <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   Delivery pagado en
                 </label>
                 <select
@@ -6381,7 +6406,7 @@ export default function PedidosPage() {
                       event.target.value as DeliveryPaymentIn
                     )
                   }
-                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                 >
                   {DELIVERY_PAYMENT_OPTIONS.map((option) => (
                     <option key={option} value={option}>
@@ -6396,7 +6421,7 @@ export default function PedidosPage() {
             )}
 
             <div>
-              <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Nota de pago
               </label>
               <textarea
@@ -6406,13 +6431,13 @@ export default function PedidosPage() {
                 }
                 placeholder="Ejemplo: Cliente pagó productos mixto y delivery por pago móvil."
                 rows={4}
-                className="mt-2 w-full resize-none rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                className="mt-2 w-full resize-none rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
               />
             </div>
 
             {paymentMessage && (
-              <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
-                <p className="text-sm font-black text-[var(--brand-ink-2)]">
+              <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
+                <p className="text-sm font-bold text-[var(--brand-ink-2)]">
                   {paymentMessage}
                 </p>
               </div>
@@ -6422,7 +6447,7 @@ export default function PedidosPage() {
               type="button"
               onClick={savePayment}
               disabled={isSavingPayment}
-              className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50"
             >
               {isSavingPayment && <Loader2 size={18} className="animate-spin" />}
               Guardar cobro

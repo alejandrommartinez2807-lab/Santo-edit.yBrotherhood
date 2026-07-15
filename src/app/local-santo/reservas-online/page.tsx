@@ -57,7 +57,10 @@ function ReservasOnlineContent() {
   const [publicUrl, setPublicUrl] = useState("/hotel/reservar")
 
   useEffect(() => {
-    if (typeof window !== "undefined") setPublicUrl(`${window.location.origin}/hotel/reservar`)
+    const timer = setTimeout(() => {
+      setPublicUrl(`${window.location.origin}/hotel/reservar`)
+    }, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   const load = useCallback(async () => {
