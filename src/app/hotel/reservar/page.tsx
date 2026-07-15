@@ -11,6 +11,7 @@ import {
   Users,
 } from "lucide-react"
 import { BRAND } from "@/lib/brand"
+import PhotoLightbox, { type LightboxPhoto } from "../PhotoLightbox"
 
 type Quote = {
   nights: number
@@ -86,6 +87,9 @@ export default function HotelReservarPage() {
   const [note, setNote] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [created, setCreated] = useState<Created | null>(null)
+
+  // Galería de fotos del tipo (lightbox); null = cerrado.
+  const [lightbox, setLightbox] = useState<{ photos: LightboxPhoto[]; index: number } | null>(null)
 
   const loadAvailability = useCallback(async () => {
     setLoading(true)
@@ -263,53 +267,86 @@ export default function HotelReservarPage() {
                 No hay habitaciones libres para esas fechas. Prueba con otras.
               </p>
             ) : (
-              <ul className="mt-6 space-y-3">
+              <ul className="mt-6 space-y-4">
                 {types.map((type) => {
                   const isSel = type.roomTypeId === selectedTypeId
+                  const fewLeft = type.freeCount <= 3
                   return (
                     <li
                       key={type.roomTypeId}
-                      className={`rounded-2xl border-2 bg-white p-4 ${
+                      className={`overflow-hidden rounded-2xl border-2 bg-white ${
                         isSel ? "border-[var(--brand-primary)]" : "border-[var(--brand-primary)]/20"
                       }`}
                     >
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        {type.photos && type.photos.length > 0 && (
-                          // eslint-disable-next-line @next/next/no-img-element
+                      {/* Foto grande clicable: abre la galería del tipo */}
+                      {type.photos && type.photos.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setLightbox({ photos: type.photos!, index: 0 })}
+                          aria-label={`Ver fotos de ${type.name}`}
+                          className="relative block h-44 w-full cursor-zoom-in overflow-hidden sm:h-52"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={type.photos[0].url}
                             alt={type.photos[0].caption || type.name}
                             loading="lazy"
-                            className="h-16 w-24 shrink-0 rounded-lg border border-[var(--brand-primary)]/20 object-cover"
+                            className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
                           />
+                          {type.photos.length > 1 && (
+                            <span className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white">
+                              {type.photos.length} fotos · ver galería
+                            </span>
+                          )}
+                        </button>
+                      )}
+
+                      <div className="p-4">
+                        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+                          <h3 className="min-w-0 font-serif text-2xl font-semibold leading-tight text-[var(--brand-ink-3)]">
+                            {type.name}
+                          </h3>
+                          <div className="text-right">
+                            <p className="text-xl font-black text-[var(--brand-ink-3)]">${type.quote.total}</p>
+                            <p className="text-xs font-bold text-[var(--brand-ink-2)]">
+                              {nights}n × ${type.quote.averageRate}
+                            </p>
+                          </div>
+                        </div>
+                        {type.description && (
+                          <p className="mt-1 text-sm leading-relaxed text-[var(--brand-ink-2)]">{type.description}</p>
                         )}
-                        <div className="min-w-0 flex-1">
-                          <p className="text-lg font-black text-[var(--brand-ink-3)]">{type.name}</p>
-                          <p className="flex flex-wrap items-center gap-x-3 text-sm font-bold text-[var(--brand-ink-2)]">
-                            <span className="inline-flex items-center gap-1"><Users size={14} /> {type.capacity}p</span>
-                            <span>{type.freeCount} disponible{type.freeCount === 1 ? "" : "s"}</span>
-                            {type.quote.seasonApplied && (
-                              <span className="text-[var(--brand-primary-dark)]">Temporada {type.quote.seasonNames.join(", ")}</span>
-                            )}
-                          </p>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          {/* Cupo real, visible: ámbar cuando quedan pocas */}
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-black ${
+                              fewLeft
+                                ? "border-amber-400 bg-amber-100 text-amber-900"
+                                : "border-green-400 bg-green-100 text-green-900"
+                            }`}
+                          >
+                            {type.freeCount === 1 ? "¡Queda 1!" : `Quedan ${type.freeCount}`}
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-primary)]/25 px-3 py-1 text-xs font-bold text-[var(--brand-ink-2)]">
+                            <Users size={13} /> Hasta {type.capacity}
+                          </span>
+                          {type.quote.seasonApplied && (
+                            <span className="inline-flex items-center rounded-full border border-[var(--brand-primary)]/25 px-3 py-1 text-xs font-bold text-[var(--brand-primary-dark)]">
+                              Temporada {type.quote.seasonNames.join(", ")}
+                            </span>
+                          )}
                         </div>
-                        <div className="text-right">
-                          <p className="text-xl font-black text-[var(--brand-ink-3)]">${type.quote.total}</p>
-                          <p className="text-xs font-bold text-[var(--brand-ink-2)]">
-                            {nights}n × ${type.quote.averageRate}
-                          </p>
-                        </div>
+                        <button
+                          onClick={() => setSelectedTypeId(isSel ? "" : type.roomTypeId)}
+                          className={`mt-4 w-full rounded-xl px-4 py-2.5 text-sm font-black uppercase ${
+                            isSel
+                              ? "border-2 border-[var(--brand-primary)] bg-white text-[var(--brand-primary-dark)]"
+                              : "bg-[var(--brand-primary)] text-[#171410]"
+                          }`}
+                        >
+                          {isSel ? "Elegida" : "Elegir esta habitación"}
+                        </button>
                       </div>
-                      <button
-                        onClick={() => setSelectedTypeId(isSel ? "" : type.roomTypeId)}
-                        className={`mt-3 w-full rounded-xl px-4 py-2.5 text-sm font-black uppercase ${
-                          isSel
-                            ? "border-2 border-[var(--brand-primary)] bg-white text-[var(--brand-primary-dark)]"
-                            : "bg-[var(--brand-primary)] text-[#171410]"
-                        }`}
-                      >
-                        {isSel ? "Elegida" : "Elegir esta habitación"}
-                      </button>
                     </li>
                   )
                 })}
@@ -351,6 +388,14 @@ export default function HotelReservarPage() {
           </>
         )}
       </div>
+
+      {lightbox && (
+        <PhotoLightbox
+          photos={lightbox.photos}
+          initialIndex={lightbox.index}
+          onClose={() => setLightbox(null)}
+        />
+      )}
     </main>
   )
 }

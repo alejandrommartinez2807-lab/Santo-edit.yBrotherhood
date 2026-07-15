@@ -8,8 +8,6 @@ import {
   CalendarCheck,
   Car,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   Clock,
   Coffee,
   Compass,
@@ -28,10 +26,10 @@ import {
   Waves,
   Wifi,
   Wind,
-  X,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { BRAND } from "@/lib/brand"
+import PhotoLightbox from "./PhotoLightbox"
 
 const HERO = "/demo/lidotel/lidotel-hero.png"
 
@@ -104,23 +102,8 @@ export default function HotelLandingPage() {
   const [services, setServices] = useState<ResortService[]>([])
   const [loaded, setLoaded] = useState(false)
 
-  // Lightbox: lista de fotos activa + índice (null = cerrado).
+  // Lightbox: lista de fotos activa + índice inicial (null = cerrado).
   const [lightbox, setLightbox] = useState<{ photos: RoomTypePhoto[]; index: number } | null>(null)
-
-  useEffect(() => {
-    if (!lightbox) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setLightbox(null)
-      if (e.key === "ArrowRight")
-        setLightbox((lb) => (lb ? { ...lb, index: (lb.index + 1) % lb.photos.length } : lb))
-      if (e.key === "ArrowLeft")
-        setLightbox((lb) =>
-          lb ? { ...lb, index: (lb.index - 1 + lb.photos.length) % lb.photos.length } : lb,
-        )
-    }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [lightbox])
 
   // Rango de muestra (dentro de una semana, 2 noches) para cotizar "desde".
   const sample = useMemo(() => ({ checkIn: isoInDays(7), checkOut: isoInDays(9) }), [])
@@ -589,68 +572,11 @@ export default function HotelLandingPage() {
 
       {/* ==================== Lightbox de fotos ==================== */}
       {lightbox && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Galería de fotos"
-          onClick={() => setLightbox(null)}
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
-        >
-          <button
-            type="button"
-            onClick={() => setLightbox(null)}
-            aria-label="Cerrar"
-            className="absolute right-4 top-4 rounded-full border border-white/30 p-2 text-white transition-colors hover:border-white"
-          >
-            <X size={20} />
-          </button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={lightbox.photos[lightbox.index].url}
-            alt={lightbox.photos[lightbox.index].caption || "Foto del hotel"}
-            onClick={(e) => e.stopPropagation()}
-            className="max-h-[78vh] max-w-full rounded-xl object-contain shadow-2xl"
-          />
-          <div
-            className="mt-4 flex items-center gap-5 text-white"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {lightbox.photos.length > 1 && (
-              <button
-                type="button"
-                aria-label="Foto anterior"
-                onClick={() =>
-                  setLightbox((lb) =>
-                    lb ? { ...lb, index: (lb.index - 1 + lb.photos.length) % lb.photos.length } : lb,
-                  )
-                }
-                className="rounded-full border border-white/30 p-2.5 transition-colors hover:border-[#e6cf9a] hover:text-[#e6cf9a]"
-              >
-                <ChevronLeft size={18} />
-              </button>
-            )}
-            <span className="min-w-40 text-center text-sm text-white/85">
-              {lightbox.photos[lightbox.index].caption || `Foto ${lightbox.index + 1}`}
-              <span className="ml-2 text-white/50">
-                {lightbox.index + 1} / {lightbox.photos.length}
-              </span>
-            </span>
-            {lightbox.photos.length > 1 && (
-              <button
-                type="button"
-                aria-label="Foto siguiente"
-                onClick={() =>
-                  setLightbox((lb) =>
-                    lb ? { ...lb, index: (lb.index + 1) % lb.photos.length } : lb,
-                  )
-                }
-                className="rounded-full border border-white/30 p-2.5 transition-colors hover:border-[#e6cf9a] hover:text-[#e6cf9a]"
-              >
-                <ChevronRight size={18} />
-              </button>
-            )}
-          </div>
-        </div>
+        <PhotoLightbox
+          photos={lightbox.photos}
+          initialIndex={lightbox.index}
+          onClose={() => setLightbox(null)}
+        />
       )}
     </main>
   )
