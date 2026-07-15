@@ -3327,7 +3327,7 @@ export default function PedidosPage() {
                     className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                   >
                     <ArrowLeft size={16} />
-                    Menú
+                    {isHotelFrontDeskVisible ? "Sitio público" : "Menú"}
                   </Link>
 
                   <button
@@ -3396,7 +3396,7 @@ export default function PedidosPage() {
                       className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                     >
                       <Store size={16} />
-                      Productos
+                      {isHotelFrontDeskVisible ? "Carta" : "Productos"}
                     </a>
                   )}
 
@@ -3410,7 +3410,7 @@ export default function PedidosPage() {
                     className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                   >
                     <MapPin size={16} />
-                    Mesas
+                    {isHotelFrontDeskVisible ? "Ubicaciones" : "Mesas"}
                   </button>
 
                   {canEditSensitiveSettings && (
@@ -3467,8 +3467,9 @@ export default function PedidosPage() {
                 </h1>
 
                 <p className="mt-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-                  {businessConfig.businessShortDescription} · Plan {planLabel} · Acceso {localAccessRoleLabel || "privado"} · {visibleOperationalModules}/{visibleOperationalModulesLimit} módulos visibles · Vista {businessConfig.defaultViewMode}
-                  {isPanelSoundAvailable ? " · Sonidos permitidos" : " · Sonidos no activos"}
+                  {isHotelFrontDeskVisible
+                    ? `${businessConfig.businessShortDescription} · Acceso ${localAccessRoleLabel || "privado"} · Plan ${planLabel}`
+                    : `${businessConfig.businessShortDescription} · Plan ${planLabel} · Acceso ${localAccessRoleLabel || "privado"} · ${visibleOperationalModules}/${visibleOperationalModulesLimit} módulos visibles · Vista ${businessConfig.defaultViewMode}${isPanelSoundAvailable ? " · Sonidos permitidos" : " · Sonidos no activos"}`}
                 </p>
 
                 {soundMessage && (
@@ -3912,7 +3913,7 @@ export default function PedidosPage() {
                 Filtros operativos
               </p>
               <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
-                {filteredOrders.length} pedido(s) en pantalla · Total {formatUSD(filteredPanelTotal)}{isCashierModuleVisible ? ` · Pendiente ${formatUSD(filteredPanelPending)}` : ""}
+                {filteredOrders.length} {isHotelFrontDeskVisible ? "consumo(s)" : "pedido(s)"} en pantalla · Total {formatUSD(filteredPanelTotal)}{isCashierModuleVisible ? ` · Pendiente ${formatUSD(filteredPanelPending)}` : ""}
               </p>
               {!arePanelFiltersVisible && (
                 <p className="mt-1 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]/70">
@@ -4082,12 +4083,20 @@ export default function PedidosPage() {
               className="mx-auto h-28 w-28 object-contain"
             />
 
-            <h2 className="mt-5 text-3xl font-black uppercase text-[var(--brand-primary)]">
-              Sin pedidos pendientes
+            <h2
+              className={
+                isHotelFrontDeskVisible
+                  ? "mt-5 font-serif text-3xl font-semibold text-[var(--brand-ink-3)]"
+                  : "mt-5 text-3xl font-black uppercase text-[var(--brand-primary)]"
+              }
+            >
+              {isHotelFrontDeskVisible ? "Sin consumos pendientes" : "Sin pedidos pendientes"}
             </h2>
 
             <p className="mx-auto mt-3 max-w-md text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-              Los pedidos nuevos aparecerán automáticamente en esta pantalla.
+              {isHotelFrontDeskVisible
+                ? "Los pedidos de room service y del restaurante aparecerán automáticamente aquí."
+                : "Los pedidos nuevos aparecerán automáticamente en esta pantalla."}
             </p>
           </section>
         ) : (
