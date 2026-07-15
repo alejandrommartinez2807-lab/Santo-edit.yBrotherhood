@@ -51,12 +51,12 @@ export default function CurrentBranchBanner() {
   const multiBranch = branches.length > 1
 
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-black">
-      <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-white text-[var(--brand-primary)]">
-        <MapPin size={18} />
+    <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-[var(--brand-primary)]/25 bg-[rgba(var(--brand-primary-rgb),0.10)] px-4 py-2.5">
+      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--brand-primary)]/25 bg-white text-[var(--brand-primary-dark)]">
+        <MapPin size={16} strokeWidth={1.75} />
       </span>
       <div className="flex flex-col">
-        <span className="text-[0.6rem] font-black uppercase tracking-[0.18em] text-black/70">
+        <span className="text-[0.6rem] font-bold uppercase tracking-[0.18em] text-[var(--brand-primary-dark)]">
           Estás viendo la sede
         </span>
         {multiBranch ? (
@@ -67,7 +67,7 @@ export default function CurrentBranchBanner() {
               setSelectedBranchId(e.target.value)
               window.location.reload()
             }}
-            className="mt-0.5 cursor-pointer rounded-lg border-2 border-[var(--brand-primary)] bg-white px-2 py-1 text-base font-black uppercase text-[var(--brand-primary)] outline-none"
+            className="mt-0.5 cursor-pointer rounded-lg border border-[var(--brand-primary)]/35 bg-white px-2 py-1 font-serif text-base font-semibold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
           >
             {branches.map((b) => (
               <option key={b.id} value={b.id}>
@@ -76,12 +76,12 @@ export default function CurrentBranchBanner() {
             ))}
           </select>
         ) : (
-          <span className="text-xl font-black uppercase leading-tight text-black">
+          <span className="font-serif text-lg font-semibold leading-tight text-[var(--brand-ink-3)]">
             {selectedBranch.name}
           </span>
         )}
       </div>
-      <span className="ml-auto max-w-[15rem] text-right text-[0.68rem] font-bold leading-tight text-black/80">
+      <span className="ml-auto max-w-[15rem] text-right text-[0.68rem] font-medium leading-tight text-[var(--brand-ink-2)]">
         {multiBranch
           ? "Todos los pedidos y datos de abajo son solo de esta sede. Cambia arriba para ver otra."
           : "Todos los pedidos y datos de abajo son de esta sede."}
