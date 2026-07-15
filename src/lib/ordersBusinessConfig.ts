@@ -142,6 +142,14 @@ export type BusinessConfig = {
   // plantilla estándar con mini encuesta.
   postSaleSurveyEnabled: boolean
   postSaleSurveyMessage: string
+  // Envío AUTOMÁTICO del link de encuesta X minutos después de la entrega
+  // (requiere WhatsApp Business Cloud API configurada en el servidor).
+  postSaleSurveyAutoEnabled: boolean
+  postSaleSurveyDelayMinutes: number
+  // Aspectos que el cliente califica con estrellas 1–5 (separados por coma).
+  postSaleSurveyAspects: string
+  // Alarma de anulación (toast + push a dueño/encargado), apagable.
+  cancellationAlertsEnabled: boolean
   // Guía paso a paso y advertencias del checkout público (configurables).
   publicOrderStepsEnabled: boolean
   publicPrepayNoticeEnabled: boolean
@@ -293,6 +301,10 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   orderWhatsappStageButtonsEnabled: true,
   postSaleSurveyEnabled: true,
   postSaleSurveyMessage: "",
+  postSaleSurveyAutoEnabled: false,
+  postSaleSurveyDelayMinutes: 40,
+  postSaleSurveyAspects: "Sabor de la comida, Tiempo de entrega, Atención",
+  cancellationAlertsEnabled: true,
   publicOrderStepsEnabled: true,
   publicPrepayNoticeEnabled: true,
   publicPrepayNoticeText: "",
@@ -713,6 +725,24 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       DEFAULT_BUSINESS_CONFIG.postSaleSurveyEnabled
     ),
     postSaleSurveyMessage: String(source.postSaleSurveyMessage || "").trim(),
+    postSaleSurveyAutoEnabled: normalizeBooleanConfig(
+      source.postSaleSurveyAutoEnabled,
+      DEFAULT_BUSINESS_CONFIG.postSaleSurveyAutoEnabled
+    ),
+    postSaleSurveyDelayMinutes: (() => {
+      const minutes = Number(source.postSaleSurveyDelayMinutes)
+      if (!Number.isFinite(minutes) || minutes <= 0) {
+        return DEFAULT_BUSINESS_CONFIG.postSaleSurveyDelayMinutes
+      }
+      return Math.min(1440, Math.max(5, Math.round(minutes)))
+    })(),
+    postSaleSurveyAspects:
+      String(source.postSaleSurveyAspects || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.postSaleSurveyAspects,
+    cancellationAlertsEnabled: normalizeBooleanConfig(
+      source.cancellationAlertsEnabled,
+      DEFAULT_BUSINESS_CONFIG.cancellationAlertsEnabled
+    ),
     publicOrderStepsEnabled: normalizeBooleanConfig(
       source.publicOrderStepsEnabled,
       DEFAULT_BUSINESS_CONFIG.publicOrderStepsEnabled

@@ -830,10 +830,11 @@ export default function PedidosPage() {
         )
 
         // Alarma de anulación: toast rojo persistente + sonido de advertencia
-        // para que gerencia/dueño lo vea sí o sí.
-        const cancelledChange = changedOrders.find(
-          (order) => order.status === "Cancelado"
-        )
+        // para que gerencia/dueño lo vea sí o sí. Apagable por el dueño
+        // desde Configuración (cancellationAlertsEnabled).
+        const cancelledChange = businessConfigRef.current.cancellationAlertsEnabled
+          ? changedOrders.find((order) => order.status === "Cancelado")
+          : undefined
 
         if (cancelledChange) {
           const cancelledTotals = getOrderTotals(cancelledChange)
@@ -3474,7 +3475,8 @@ export default function PedidosPage() {
                     {isPanelSoundActive ? "Sonido activo" : isPanelSoundAvailable ? "Activar sonido" : "Sonido no activo"}
                   </button>
 
-                  {staffAlertsPush.state !== "unavailable" && (
+                  {businessConfig.cancellationAlertsEnabled &&
+                    staffAlertsPush.state !== "unavailable" && (
                     <button
                       type="button"
                       onClick={() => void staffAlertsPush.toggle()}

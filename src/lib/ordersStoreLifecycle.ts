@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { isMissingColumnError } from "@/lib/ordersStoreMappers"
+import { OrderActionConflictError } from "@/lib/orderConflicts"
 import type { LocalOrder, OrderStatus } from "@/types/localOrders"
 
 type LoadOrderWithItems = (
@@ -14,10 +15,38 @@ export async function updateOrderStatusInStore(
   loadOrderWithItems: LoadOrderWithItems,
 ): Promise<LocalOrder> {
   const supabase = getSupabaseAdmin()
-  let query = supabase.from("orders").update({ status }).eq("id", orderId)
+
+  // Anti doble-acción con varios usuarios a la vez: se lee el estado actual
+  // y el UPDATE exige que siga siendo ese (lock optimista). Si otro usuario
+  // ya hizo el mismo cambio (o uno distinto en el medio), se responde con un
+  // conflicto claro en vez de aplicar la acción dos veces.
+  let currentQuery = supabase.from("orders").select("status").eq("id", orderId)
+  if (branchId) currentQuery = currentQuery.eq("branch_id", branchId)
+  const { data: currentRows, error: currentError } = await currentQuery.limit(1)
+  if (currentError) throw new Error(currentError.message)
+  if (!currentRows?.length) throw new Error("Pedido no encontrado en esta sucursal")
+
+  const currentStatus = String(currentRows[0]?.status || "")
+
+  if (currentStatus === status) {
+    throw new OrderActionConflictError(
+      `Este pedido ya está como "${status}": otro usuario lo marcó primero. La lista se actualizará sola.`,
+    )
+  }
+
+  let query = supabase
+    .from("orders")
+    .update({ status })
+    .eq("id", orderId)
+    .eq("status", currentStatus)
   if (branchId) query = query.eq("branch_id", branchId)
-  const { error } = await query
+  const { data: updatedRows, error } = await query.select("id")
   if (error) throw new Error(error.message)
+  if (!updatedRows?.length) {
+    throw new OrderActionConflictError(
+      "El pedido cambió de estado mientras lo actualizabas (otro usuario lo tocó primero). Revisa la lista y vuelve a intentar.",
+    )
+  }
 
   if (status === "Preparando") {
     // Marca el arranque real de cocina la PRIMERA vez que el pedido pasa a

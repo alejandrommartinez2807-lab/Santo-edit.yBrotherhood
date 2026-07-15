@@ -42,6 +42,18 @@ export const SIMPLE_BUSINESS_CONFIG_FIELDS: readonly SimpleConfigField[] = [
   // apagarla o escribir su propio mensaje (vacío = plantilla estándar).
   { key: "postSaleSurveyEnabled", type: "boolean", default: true },
   { key: "postSaleSurveyMessage", type: "string", default: "" },
+  // Encuesta automática: enviar por WhatsApp Business (Cloud API) el link de
+  // la encuesta X minutos después de marcar el pedido como Entregado.
+  { key: "postSaleSurveyAutoEnabled", type: "boolean", default: false },
+  { key: "postSaleSurveyDelayMinutes", type: "number", default: 40, min: 5, max: 1440 },
+  // Aspectos que el cliente califica con estrellas 1–5 (separados por coma).
+  {
+    key: "postSaleSurveyAspects",
+    type: "string",
+    default: "Sabor de la comida, Tiempo de entrega, Atención",
+  },
+  // Alarma de anulación (toast rojo + push a dueño/encargado), apagable.
+  { key: "cancellationAlertsEnabled", type: "boolean", default: true },
   // Guía paso a paso y advertencias del checkout público (Fase avisos):
   // el dueño decide si se muestran y puede escribir su propio texto de
   // "paga antes de que tu pedido se procese".

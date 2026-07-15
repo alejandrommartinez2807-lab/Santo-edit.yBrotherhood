@@ -1,6 +1,7 @@
 import { cleanText, getOrderStaffConfirmationSummary } from "@/lib/localOrderHelpers"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { isMissingColumnError } from "@/lib/ordersStoreMappers"
+import { OrderActionConflictError } from "@/lib/orderConflicts"
 import type { LocalOrder, OrderItem } from "@/types/localOrders"
 
 type LoadOrderWithItems = (
@@ -73,7 +74,25 @@ export async function setOrderItemDeliveredInStore(
 ): Promise<LocalOrder> {
   const supabase = getSupabaseAdmin()
   // Valida que el pedido exista en esta sucursal antes de tocar sus líneas.
-  await loadOrderWithItems(orderId, branchId)
+  const existingOrder = await loadOrderWithItems(orderId, branchId)
+
+  // Anti doble-acción: si la línea YA está en el estado pedido (otro usuario
+  // la marcó primero), se avisa en vez de repetir el marcado.
+  const targetLineId = cleanText(input.lineId)
+  const targetName = cleanText(input.itemName)
+  const existingItem = existingOrder.items.find((item) => {
+    if (targetLineId && cleanText(item.cartLineId) === targetLineId) return true
+    if (!targetLineId && targetName && cleanText(item.name) === targetName) return true
+    return false
+  })
+
+  if (existingItem && Boolean(existingItem.deliveredAt) === input.delivered) {
+    throw new OrderActionConflictError(
+      input.delivered
+        ? `"${existingItem.name}" ya estaba marcado como entregado (otro usuario lo marcó primero).`
+        : `"${existingItem.name}" ya estaba pendiente por entregar (otro usuario lo desmarcó primero).`,
+    )
+  }
 
   const patch = input.delivered
     ? {

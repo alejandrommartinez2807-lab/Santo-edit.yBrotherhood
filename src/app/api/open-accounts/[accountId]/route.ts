@@ -13,6 +13,7 @@ import { getLocalAccessAuditActor, getRequestAccess, type LocalRole } from "@/li
 import { getModulePlanAccess } from "@/lib/localPlans";
 import { resolveBranchId } from "@/lib/branch";
 import { writeAuditLog } from "@/lib/audit";
+import { OrderActionConflictError } from "@/lib/orderConflicts";
 
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards";
 
@@ -573,6 +574,14 @@ export async function PATCH(
       { status: 400 },
     );
   } catch (error) {
+    // 409: otro usuario ya hizo esta misma acción (anti doble-acción).
+    if (error instanceof OrderActionConflictError) {
+      return NextResponse.json(
+        { error: error.message, conflict: true },
+        { status: 409 },
+      );
+    }
+
     return NextResponse.json(
       {
         error:

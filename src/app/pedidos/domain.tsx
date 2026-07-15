@@ -407,6 +407,8 @@ export type BusinessConfig = {
   // Encuesta post-venta por WhatsApp en pedidos entregados (configurable).
   postSaleSurveyEnabled: boolean
   postSaleSurveyMessage: string
+  // Alarma de anulación (toast rojo + push), apagable por el dueño.
+  cancellationAlertsEnabled: boolean
   ownerDashboardModuleEnabled: boolean
   cashierModuleEnabled: boolean
   kitchenModuleEnabled: boolean
@@ -462,6 +464,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   orderWhatsappStageButtonsEnabled: true,
   postSaleSurveyEnabled: true,
   postSaleSurveyMessage: "",
+  cancellationAlertsEnabled: true,
   ownerDashboardModuleEnabled: true,
   cashierModuleEnabled: true,
   kitchenModuleEnabled: true,
@@ -2301,6 +2304,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       DEFAULT_BUSINESS_CONFIG.postSaleSurveyEnabled
     ),
     postSaleSurveyMessage: String(source.postSaleSurveyMessage || "").trim(),
+    cancellationAlertsEnabled: normalizeBooleanConfig(
+      source.cancellationAlertsEnabled,
+      DEFAULT_BUSINESS_CONFIG.cancellationAlertsEnabled
+    ),
     deliveryEnabled: normalizeBooleanConfig(
       source.deliveryEnabled,
       DEFAULT_BUSINESS_CONFIG.deliveryEnabled

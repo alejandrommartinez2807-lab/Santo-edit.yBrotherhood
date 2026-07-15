@@ -168,6 +168,13 @@ type BusinessConfig = {
   // plantilla estándar.
   postSaleSurveyEnabled: boolean;
   postSaleSurveyMessage: string;
+  // Envío automático del link de encuesta X min después de la entrega.
+  postSaleSurveyAutoEnabled: boolean;
+  postSaleSurveyDelayMinutes: number;
+  // Aspectos calificables con estrellas 1–5 (separados por coma).
+  postSaleSurveyAspects: string;
+  // Alarma de anulación (toast + push), apagable.
+  cancellationAlertsEnabled: boolean;
   // Guía paso a paso y advertencias del checkout público.
   publicOrderStepsEnabled: boolean;
   publicPrepayNoticeEnabled: boolean;
@@ -337,6 +344,10 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   orderWhatsappStageButtonsEnabled: true,
   postSaleSurveyEnabled: true,
   postSaleSurveyMessage: "",
+  postSaleSurveyAutoEnabled: false,
+  postSaleSurveyDelayMinutes: 40,
+  postSaleSurveyAspects: "Sabor de la comida, Tiempo de entrega, Atención",
+  cancellationAlertsEnabled: true,
   publicOrderStepsEnabled: true,
   publicPrepayNoticeEnabled: true,
   publicPrepayNoticeText: "",
@@ -1040,6 +1051,24 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
       DEFAULT_BUSINESS_CONFIG.postSaleSurveyEnabled,
     ),
     postSaleSurveyMessage: String(source.postSaleSurveyMessage || "").trim(),
+    postSaleSurveyAutoEnabled: normalizeBoolean(
+      source.postSaleSurveyAutoEnabled,
+      DEFAULT_BUSINESS_CONFIG.postSaleSurveyAutoEnabled,
+    ),
+    postSaleSurveyDelayMinutes: (() => {
+      const minutes = Number(source.postSaleSurveyDelayMinutes);
+      if (!Number.isFinite(minutes) || minutes <= 0) {
+        return DEFAULT_BUSINESS_CONFIG.postSaleSurveyDelayMinutes;
+      }
+      return Math.min(1440, Math.max(5, Math.round(minutes)));
+    })(),
+    postSaleSurveyAspects:
+      String(source.postSaleSurveyAspects || "").trim() ||
+      DEFAULT_BUSINESS_CONFIG.postSaleSurveyAspects,
+    cancellationAlertsEnabled: normalizeBoolean(
+      source.cancellationAlertsEnabled,
+      DEFAULT_BUSINESS_CONFIG.cancellationAlertsEnabled,
+    ),
     publicOrderStepsEnabled: normalizeBoolean(
       source.publicOrderStepsEnabled,
       DEFAULT_BUSINESS_CONFIG.publicOrderStepsEnabled,
@@ -2732,24 +2761,117 @@ export default function BusinessConfigPage() {
             </label>
 
             {businessConfig.postSaleSurveyEnabled && (
-              <div className="mt-3">
-                <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
-                  Mensaje propio de la encuesta (opcional)
+              <div className="mt-3 space-y-3">
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                    Mensaje propio de la encuesta (opcional)
+                  </label>
+                  <textarea
+                    value={businessConfig.postSaleSurveyMessage}
+                    onChange={(e) =>
+                      setBusinessConfig((c) => ({
+                        ...c,
+                        postSaleSurveyMessage: e.target.value,
+                      }))
+                    }
+                    rows={4}
+                    placeholder="Déjalo vacío para usar la encuesta estándar. Si escribes aquí, se envía exactamente este texto (el link de la encuesta se agrega solo)."
+                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                    Aspectos que el cliente califica (estrellas 1–5)
+                  </label>
+                  <input
+                    value={businessConfig.postSaleSurveyAspects}
+                    onChange={(e) =>
+                      setBusinessConfig((c) => ({
+                        ...c,
+                        postSaleSurveyAspects: e.target.value,
+                      }))
+                    }
+                    placeholder="Sabor de la comida, Tiempo de entrega, Atención"
+                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  />
+                  <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/55">
+                    Separados por coma. Cada aspecto aparece con sus estrellas en la
+                    página de la encuesta, junto a un campo libre de sugerencias.
+                  </p>
+                </div>
+
+                <label className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={businessConfig.postSaleSurveyAutoEnabled}
+                    onChange={(e) =>
+                      setBusinessConfig((c) => ({
+                        ...c,
+                        postSaleSurveyAutoEnabled: e.target.checked,
+                      }))
+                    }
+                    className="mt-0.5 h-5 w-5 accent-[var(--brand-primary)]"
+                  />
+                  <span>
+                    <span className="block text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
+                      Enviar la encuesta automáticamente
+                    </span>
+                    <span className="mt-0.5 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                      El sistema manda el link por WhatsApp solo, un rato después
+                      de marcar el pedido como Entregado. Requiere conectar la
+                      cuenta de WhatsApp Business (Cloud API) en el servidor; sin
+                      esa conexión queda el botón manual.
+                    </span>
+                  </span>
                 </label>
-                <textarea
-                  value={businessConfig.postSaleSurveyMessage}
-                  onChange={(e) =>
-                    setBusinessConfig((c) => ({
-                      ...c,
-                      postSaleSurveyMessage: e.target.value,
-                    }))
-                  }
-                  rows={4}
-                  placeholder="Déjalo vacío para usar la encuesta estándar. Si escribes aquí, se envía exactamente este texto."
-                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
-                />
+
+                {businessConfig.postSaleSurveyAutoEnabled && (
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                      Minutos de espera después de la entrega
+                    </label>
+                    <input
+                      type="number"
+                      min={5}
+                      max={1440}
+                      value={businessConfig.postSaleSurveyDelayMinutes}
+                      onChange={(e) =>
+                        setBusinessConfig((c) => ({
+                          ...c,
+                          postSaleSurveyDelayMinutes: Number(e.target.value) || 40,
+                        }))
+                      }
+                      className="mt-2 w-40 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    />
+                  </div>
+                )}
               </div>
             )}
+
+            <label className="mt-3 flex items-start gap-3">
+              <input
+                type="checkbox"
+                checked={businessConfig.cancellationAlertsEnabled}
+                onChange={(e) =>
+                  setBusinessConfig((c) => ({
+                    ...c,
+                    cancellationAlertsEnabled: e.target.checked,
+                  }))
+                }
+                className="mt-0.5 h-5 w-5 accent-[var(--brand-primary)]"
+              />
+              <span>
+                <span className="block text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
+                  Alarma de anulación de pedidos
+                </span>
+                <span className="mt-0.5 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                  Aviso rojo en el panel + notificación al teléfono del dueño y
+                  encargados suscritos cuando se anula un pedido. Desmárcalo si
+                  no quieres estas alertas.
+                </span>
+              </span>
+            </label>
 
             <div className="mt-5 border-t-2 border-dashed border-[var(--brand-primary)]/15 pt-4">
               <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">

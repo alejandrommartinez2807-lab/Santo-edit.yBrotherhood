@@ -19,6 +19,7 @@ import {
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import { writeAuditLog } from "@/lib/audit"
+import { OrderActionConflictError } from "@/lib/orderConflicts"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 import {
   sendOrderCancelledStaffPush,
@@ -466,9 +467,10 @@ export async function PATCH(
       await sendOrderReadyPush(orderId, getDisplayOrderNumber(order))
     }
 
-    if (status === "Cancelado") {
+    if (status === "Cancelado" && (await getBusinessConfig()).cancellationAlertsEnabled !== false) {
       // Alarma de anulación al dueño/encargado (equipos suscritos): quién
-      // anuló y qué productos llevaba el pedido. Nunca lanza.
+      // anuló y qué productos llevaba el pedido. Nunca lanza. El dueño puede
+      // apagarla completa desde Configuración (cancellationAlertsEnabled).
       const actor = getLocalAccessAuditActor(access)
       const itemsSummary = (order.items || [])
         .map((item) => `${Math.max(1, Number(item.quantity || 1))}x ${item.name}`)
@@ -504,6 +506,15 @@ export async function PATCH(
       },
     })
   } catch (error) {
+    // 409: otro usuario ya hizo esta misma acción (anti doble-acción). El
+    // cliente muestra el mensaje y su polling refresca la lista.
+    if (error instanceof OrderActionConflictError) {
+      return NextResponse.json(
+        { error: error.message, conflict: true },
+        { status: 409 }
+      )
+    }
+
     return NextResponse.json(
       {
         error:
