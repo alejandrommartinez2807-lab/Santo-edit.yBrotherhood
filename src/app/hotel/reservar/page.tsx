@@ -11,6 +11,13 @@ import {
   Users,
 } from "lucide-react"
 import { BRAND } from "@/lib/brand"
+import {
+  DEFAULT_HOTEL_BOOKING_FIELDS,
+  HOTEL_BOOKING_FIELD_DEFINITIONS,
+  normalizeHotelBookingFields,
+  type HotelBookingFieldId,
+  type HotelBookingFieldsConfig,
+} from "@/lib/hotelBooking"
 import PhotoLightbox, { type LightboxPhoto } from "../PhotoLightbox"
 
 type Quote = {
@@ -85,6 +92,13 @@ export default function HotelReservarPage() {
   const [adults, setAdults] = useState("2")
   const [children, setChildren] = useState("0")
   const [note, setNote] = useState("")
+  // Campos extra que el dueño activó (cédula, dirección, hora de llegada…).
+  const [bookingFields, setBookingFields] = useState<HotelBookingFieldsConfig>(
+    DEFAULT_HOTEL_BOOKING_FIELDS,
+  )
+  const [document, setDocument] = useState("")
+  const [address, setAddress] = useState("")
+  const [arrivalTime, setArrivalTime] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [created, setCreated] = useState<Created | null>(null)
 
@@ -104,6 +118,7 @@ export default function HotelReservarPage() {
       setEnabled(data.enabled)
       setTypes(data.types || [])
       setNights(data.nights || 0)
+      if (data.bookingFields) setBookingFields(normalizeHotelBookingFields(data.bookingFields))
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
     } finally {
@@ -121,8 +136,23 @@ export default function HotelReservarPage() {
     [types, selectedTypeId],
   )
 
+  // Valor actual de cada campo extra configurable.
+  const extraFieldValue = useCallback(
+    (id: HotelBookingFieldId) =>
+      ({ document, email: guestEmail, address, arrivalTime, requests: note })[id] || "",
+    [document, guestEmail, address, arrivalTime, note],
+  )
+
+  const missingRequired = useMemo(
+    () =>
+      HOTEL_BOOKING_FIELD_DEFINITIONS.filter(
+        (f) => bookingFields[f.id] === "required" && !extraFieldValue(f.id).trim(),
+      ),
+    [bookingFields, extraFieldValue],
+  )
+
   async function submit() {
-    if (!selectedType || guestName.trim().length < 3) return
+    if (!selectedType || guestName.trim().length < 3 || missingRequired.length > 0) return
     setSubmitting(true)
     setError("")
     try {
@@ -137,6 +167,9 @@ export default function HotelReservarPage() {
           adults: Number(adults) || 2,
           children: Number(children) || 0,
           note: note.trim(),
+          document: document.trim(),
+          address: address.trim(),
+          arrivalTime: arrivalTime.trim(),
           checkIn,
           checkOut,
         }),
@@ -359,9 +392,50 @@ export default function HotelReservarPage() {
                 <p className="text-sm font-black uppercase text-[var(--brand-primary-dark)] sm:col-span-2">
                   Tus datos
                 </p>
-                <input value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Nombre completo" className={`${inputClass} sm:col-span-2`} />
-                <input value={guestPhone} onChange={(e) => setGuestPhone(e.target.value)} placeholder="Teléfono" className={inputClass} />
-                <input value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} placeholder="Email (opcional)" className={inputClass} />
+                <input value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Nombre completo *" className={`${inputClass} sm:col-span-2`} />
+                <input value={guestPhone} onChange={(e) => setGuestPhone(e.target.value)} placeholder="Teléfono *" className={inputClass} />
+                {bookingFields.email !== "off" && (
+                  <input
+                    type="email"
+                    value={guestEmail}
+                    onChange={(e) => setGuestEmail(e.target.value)}
+                    placeholder={bookingFields.email === "required" ? "Email *" : "Email (opcional)"}
+                    className={inputClass}
+                  />
+                )}
+                {bookingFields.document !== "off" && (
+                  <input
+                    value={document}
+                    onChange={(e) => setDocument(e.target.value)}
+                    placeholder={
+                      bookingFields.document === "required"
+                        ? "Cédula o pasaporte *"
+                        : "Cédula o pasaporte (opcional)"
+                    }
+                    className={inputClass}
+                  />
+                )}
+                {bookingFields.address !== "off" && (
+                  <input
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder={bookingFields.address === "required" ? "Dirección *" : "Dirección (opcional)"}
+                    className={`${inputClass} sm:col-span-2`}
+                  />
+                )}
+                {bookingFields.arrivalTime !== "off" && (
+                  <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 sm:col-span-2">
+                    <span className="text-xs font-black uppercase text-[var(--brand-primary-dark)]">
+                      Hora de llegada{bookingFields.arrivalTime === "required" ? " *" : ""}
+                    </span>
+                    <input
+                      type="time"
+                      value={arrivalTime}
+                      onChange={(e) => setArrivalTime(e.target.value)}
+                      className="w-full bg-transparent font-bold outline-none"
+                    />
+                  </label>
+                )}
                 <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3">
                   <Users size={16} className="shrink-0 text-[var(--brand-primary)]" />
                   <input type="number" min={1} value={adults} onChange={(e) => setAdults(e.target.value)} placeholder="Adultos" className="w-full bg-transparent font-bold outline-none" />
@@ -370,14 +444,30 @@ export default function HotelReservarPage() {
                   <span className="text-xs font-black uppercase text-[var(--brand-primary-dark)]">Niños</span>
                   <input type="number" min={0} value={children} onChange={(e) => setChildren(e.target.value)} placeholder="Niños" className="w-full bg-transparent font-bold outline-none" />
                 </label>
-                <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Nota (opcional): llegada tarde, cuna…" className={`${inputClass} sm:col-span-2`} />
+                {bookingFields.requests !== "off" && (
+                  <input
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder={
+                      bookingFields.requests === "required"
+                        ? "Solicitudes especiales *"
+                        : "Solicitudes especiales (opcional): llegada tarde, cuna…"
+                    }
+                    className={`${inputClass} sm:col-span-2`}
+                  />
+                )}
                 <div className="flex items-center justify-between rounded-xl bg-[var(--brand-cream)] px-4 py-3 font-black text-[var(--brand-ink-3)] sm:col-span-2">
                   <span>Total {selectedType.name}</span>
                   <span>${selectedType.quote.total} <span className="text-sm font-bold text-[var(--brand-ink-2)]">({nights}n)</span></span>
                 </div>
+                {missingRequired.length > 0 && (
+                  <p className="text-xs font-bold text-amber-800 sm:col-span-2">
+                    Falta completar: {missingRequired.map((f) => f.label.toLowerCase()).join(", ")}
+                  </p>
+                )}
                 <button
                   onClick={submit}
-                  disabled={submitting || guestName.trim().length < 3}
+                  disabled={submitting || guestName.trim().length < 3 || missingRequired.length > 0}
                   className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50 sm:col-span-2"
                 >
                   {submitting ? <Loader2 className="animate-spin" size={16} /> : null}

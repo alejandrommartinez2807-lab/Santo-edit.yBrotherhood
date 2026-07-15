@@ -20,6 +20,11 @@ import {
 } from "@/lib/hotelReservationConflicts"
 import { getReservationNow } from "@/lib/reservationConflicts"
 import { availableTypesForStay, pickFreeRoomOfType } from "@/lib/hotelAvailability"
+import {
+  DEFAULT_HOTEL_TERMS,
+  HOTEL_BOOKING_FIELD_DEFINITIONS,
+  type HotelBookingFieldsConfig,
+} from "@/lib/hotelBooking"
 import { quoteStay } from "@/lib/rateSeasons"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
@@ -45,10 +50,14 @@ function cleanText(value: unknown) {
   return String(value || "").trim()
 }
 
-async function isBookingEnabled() {
-  const config = (await getBusinessConfig()) as unknown as Record<string, unknown>
-  const access = getModulePlanAccess(config, "bookingEngine")
-  return access.includedInPlan && access.effectiveEnabled
+async function getBookingContext() {
+  const config = await getBusinessConfig()
+  const access = getModulePlanAccess(config as unknown as Record<string, unknown>, "bookingEngine")
+  return {
+    enabled: access.includedInPlan && access.effectiveEnabled,
+    bookingFields: config.hotelBookingFields as HotelBookingFieldsConfig,
+    termsText: config.hotelTermsText || DEFAULT_HOTEL_TERMS,
+  }
 }
 
 function toCandidates(
@@ -74,13 +83,13 @@ export async function GET(request: NextRequest) {
   if (rateLimitResponse) return rateLimitResponse
 
   try {
-    const enabled = await isBookingEnabled()
+    const { enabled, bookingFields, termsText } = await getBookingContext()
     if (!enabled) return noStoreResponse({ ok: true, enabled: false, types: [] })
 
     const checkIn = normalizeStayDate(request.nextUrl.searchParams.get("checkIn"))
     const checkOut = normalizeStayDate(request.nextUrl.searchParams.get("checkOut"))
     if (!isValidStayRange({ checkIn, checkOut })) {
-      return noStoreResponse({ ok: true, enabled: true, nights: 0, types: [] })
+      return noStoreResponse({ ok: true, enabled: true, nights: 0, types: [], bookingFields, termsText })
     }
 
     const branchId = await resolveBranchId(request)
@@ -104,7 +113,14 @@ export async function GET(request: NextRequest) {
       restrictions,
     })
 
-    return noStoreResponse({ ok: true, enabled: true, nights: nightsBetween(checkIn, checkOut), types })
+    return noStoreResponse({
+      ok: true,
+      enabled: true,
+      nights: nightsBetween(checkIn, checkOut),
+      types,
+      bookingFields,
+      termsText,
+    })
   } catch (error) {
     captureError(error, { route: "/api/public/hotel", action: "GET" })
     return noStoreResponse({ ok: false, error: "No se pudo consultar la disponibilidad" }, { status: 500 })
@@ -122,7 +138,8 @@ export async function POST(request: NextRequest) {
   if (rateLimitResponse) return rateLimitResponse
 
   try {
-    if (!(await isBookingEnabled())) {
+    const { enabled, bookingFields } = await getBookingContext()
+    if (!enabled) {
       return noStoreResponse(
         { ok: false, error: "Las reservas online no están disponibles por ahora" },
         { status: 403 },
@@ -135,6 +152,29 @@ export async function POST(request: NextRequest) {
     const guestEmail = cleanText(body.guestEmail).slice(0, 120)
     const note = cleanText(body.note).slice(0, 200)
     const roomTypeId = cleanText(body.roomTypeId)
+
+    // Campos extra según lo que el dueño configuró (cédula, dirección…).
+    // Los apagados se ignoran aunque el cliente los envíe.
+    const extraValues: Record<string, string> = {
+      document: cleanText(body.document).slice(0, 30),
+      email: guestEmail,
+      address: cleanText(body.address).slice(0, 160),
+      arrivalTime: cleanText(body.arrivalTime).slice(0, 20),
+      requests: note,
+    }
+    for (const field of HOTEL_BOOKING_FIELD_DEFINITIONS) {
+      const mode = bookingFields[field.id]
+      if (mode === "off") extraValues[field.id] = ""
+      if (mode === "required" && !extraValues[field.id]) {
+        return noStoreResponse(
+          { ok: false, error: `Falta un dato obligatorio: ${field.label.toLowerCase()}` },
+          { status: 400 },
+        )
+      }
+    }
+    if (bookingFields.email === "required" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(extraValues.email)) {
+      return noStoreResponse({ ok: false, error: "Escribe un email válido" }, { status: 400 })
+    }
     const adults = Math.min(Math.max(1, Number(body.adults) || 2), 20)
     const children = Math.min(Math.max(0, Number(body.children) || 0), 20)
     const checkIn = normalizeStayDate(body.checkIn)
@@ -230,7 +270,13 @@ export async function POST(request: NextRequest) {
       seasons,
     })
 
-    const noteParts = [guestEmail ? `Email: ${guestEmail}` : "", note].filter(Boolean)
+    const noteParts = [
+      extraValues.email ? `Email: ${extraValues.email}` : "",
+      extraValues.document ? `Documento: ${extraValues.document}` : "",
+      extraValues.address ? `Dirección: ${extraValues.address}` : "",
+      extraValues.arrivalTime ? `Llegada: ${extraValues.arrivalTime}` : "",
+      extraValues.requests,
+    ].filter(Boolean)
     const reservation = await saveHotelReservation(
       {
         roomId: freeRoom.id,

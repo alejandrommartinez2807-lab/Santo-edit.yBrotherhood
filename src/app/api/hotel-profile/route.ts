@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getHotelProfile, saveHotelProfile } from "@/lib/orders"
+import {
+  getBusinessConfig,
+  getHotelProfile,
+  saveBusinessConfig,
+  saveHotelProfile,
+} from "@/lib/orders"
 import { resolveBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
+import { DEFAULT_HOTEL_TERMS, normalizeHotelBookingFields } from "@/lib/hotelBooking"
 
 import { checkHotelLandingAccess } from "./guard"
 
@@ -17,8 +23,14 @@ export async function GET(request: NextRequest) {
     const access = await checkHotelLandingAccess(request, ["owner", "manager", "support"])
     if (!access.ok) return access.response
     const branchId = await resolveBranchId(request)
-    const profile = await getHotelProfile(branchId)
-    return NextResponse.json({ ok: true, profile })
+    const [profile, config] = await Promise.all([getHotelProfile(branchId), getBusinessConfig()])
+    return NextResponse.json({
+      ok: true,
+      profile,
+      bookingFields: config.hotelBookingFields,
+      termsText: config.hotelTermsText,
+      termsDefault: DEFAULT_HOTEL_TERMS,
+    })
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "No se pudo cargar la página" },
@@ -57,7 +69,28 @@ export async function POST(request: NextRequest) {
       },
       branchId,
     )
-    return NextResponse.json({ ok: true, profile })
+
+    // Formulario de reserva + términos: viven en business_config (a nivel de
+    // negocio; la demo es una propiedad). Solo se tocan si el editor los envía.
+    if (body.bookingFields !== undefined || body.termsText !== undefined) {
+      await saveBusinessConfig({
+        ...(body.bookingFields !== undefined
+          ? { hotelBookingFields: normalizeHotelBookingFields(body.bookingFields) }
+          : {}),
+        ...(body.termsText !== undefined
+          ? { hotelTermsText: cleanText(body.termsText).slice(0, 8000) }
+          : {}),
+      })
+    }
+
+    const config = await getBusinessConfig()
+    return NextResponse.json({
+      ok: true,
+      profile,
+      bookingFields: config.hotelBookingFields,
+      termsText: config.hotelTermsText,
+      termsDefault: DEFAULT_HOTEL_TERMS,
+    })
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "No se pudo guardar la página" },

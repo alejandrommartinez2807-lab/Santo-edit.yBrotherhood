@@ -16,6 +16,11 @@ import {
 import { getSupabaseAdmin } from "./supabaseServer"
 import { normalizeBusinessComplexitySettings } from "./businessComplexity"
 import {
+  DEFAULT_HOTEL_BOOKING_FIELDS,
+  normalizeHotelBookingFields,
+  type HotelBookingFieldsConfig,
+} from "./hotelBooking"
+import {
   normalizeLocalModuleList,
   normalizeLocalPlanKey,
   getModulePlanAccess,
@@ -215,6 +220,10 @@ export type BusinessConfig = {
   filtersOpenByDefault: boolean
   allowCloseWithPendingOrders: boolean
   allowCloseWithPendingPayments: boolean
+  // Hotel: qué campos pide el formulario de reserva pública y si son
+  // obligatorios; texto de términos y condiciones (vacío = default estándar).
+  hotelBookingFields: HotelBookingFieldsConfig
+  hotelTermsText: string
   updatedAt?: string
 }
 
@@ -374,6 +383,8 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   filtersOpenByDefault: false,
   allowCloseWithPendingOrders: true,
   allowCloseWithPendingPayments: true,
+  hotelBookingFields: { ...DEFAULT_HOTEL_BOOKING_FIELDS },
+  hotelTermsText: "",
 }
 
 function normalizeBooleanConfig(value: unknown, fallback: boolean) {
@@ -1026,6 +1037,8 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.allowCloseWithPendingPayments,
       DEFAULT_BUSINESS_CONFIG.allowCloseWithPendingPayments
     ),
+    hotelBookingFields: normalizeHotelBookingFields(source.hotelBookingFields),
+    hotelTermsText: String(source.hotelTermsText || "").trim(),
     updatedAt: source.updatedAt ? String(source.updatedAt) : undefined,
   }
 }

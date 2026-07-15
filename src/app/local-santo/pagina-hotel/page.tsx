@@ -4,6 +4,14 @@ import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, ExternalLink, Loader2, Save } from "lucide-react"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
+import {
+  DEFAULT_HOTEL_BOOKING_FIELDS,
+  HOTEL_BOOKING_FIELD_DEFINITIONS,
+  normalizeHotelBookingFields,
+  type HotelBookingFieldId,
+  type HotelBookingFieldMode,
+  type HotelBookingFieldsConfig,
+} from "@/lib/hotelBooking"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -45,6 +53,9 @@ export default function PaginaHotelPage() {
 
 function PaginaHotelContent() {
   const [profile, setProfile] = useState<Profile>(EMPTY)
+  const [bookingFields, setBookingFields] = useState<HotelBookingFieldsConfig>(
+    DEFAULT_HOTEL_BOOKING_FIELDS,
+  )
   const [loading, setLoading] = useState(true)
   const [denied, setDenied] = useState(false)
   const [error, setError] = useState("")
@@ -64,6 +75,7 @@ function PaginaHotelContent() {
       if (!res.ok) throw new Error(data.error || "No se pudo cargar")
       setDenied(false)
       setProfile({ ...EMPTY, ...(data.profile || {}) })
+      setBookingFields(normalizeHotelBookingFields(data.bookingFields))
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
     } finally {
@@ -81,14 +93,24 @@ function PaginaHotelContent() {
     setSaved(false)
   }
 
+  function setFieldMode(id: HotelBookingFieldId, mode: HotelBookingFieldMode) {
+    setBookingFields((f) => ({ ...f, [id]: mode }))
+    setSaved(false)
+  }
+
   async function save() {
     setBusy(true)
     setError("")
     try {
-      const res = await fetch("/api/hotel-profile", { method: "POST", headers: authHeaders(), body: JSON.stringify(profile) })
+      const res = await fetch("/api/hotel-profile", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ ...profile, bookingFields }),
+      })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "No se pudo guardar")
       setProfile({ ...EMPTY, ...(data.profile || {}) })
+      setBookingFields(normalizeHotelBookingFields(data.bookingFields))
       setSaved(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
@@ -137,6 +159,35 @@ function PaginaHotelContent() {
                 <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Check-out</span>
                 <input type="time" value={profile.checkoutTime} onChange={(e) => set("checkoutTime", e.target.value)} className="w-full bg-transparent font-bold outline-none" />
               </label>
+            </div>
+            {/* Qué datos pide el formulario de reserva pública */}
+            <div className="rounded-xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/50 p-4">
+              <p className="text-sm font-black uppercase text-[var(--brand-ink-3)]">
+                Formulario de reserva
+              </p>
+              <p className="text-xs font-bold text-[var(--brand-ink-2)]/70">
+                Elige qué datos se piden al huésped al reservar en línea. Nombre y teléfono
+                siempre son obligatorios.
+              </p>
+              <div className="mt-3 grid gap-2">
+                {HOTEL_BOOKING_FIELD_DEFINITIONS.map((def) => (
+                  <label
+                    key={def.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--brand-primary)]/15 bg-white px-3 py-2"
+                  >
+                    <span className="text-sm font-bold text-[var(--brand-ink-3)]">{def.label}</span>
+                    <select
+                      value={bookingFields[def.id]}
+                      onChange={(e) => setFieldMode(def.id, e.target.value as HotelBookingFieldMode)}
+                      className="rounded-lg border-2 border-[var(--brand-primary)]/25 bg-white px-2 py-1.5 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+                    >
+                      <option value="off">No pedir</option>
+                      <option value="optional">Opcional</option>
+                      <option value="required">Obligatorio</option>
+                    </select>
+                  </label>
+                ))}
+              </div>
             </div>
             {error && <p className="font-bold text-red-600">{error}</p>}
             <button onClick={save} disabled={busy} className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50">
