@@ -11,150 +11,15 @@ import type {
   PaymentSummaryItem,
 } from "./domain"
 
-export function ModuleAccessCard({
-  href,
-  onClick,
-  icon,
-  eyebrow,
-  title,
-  description,
-  metric,
-  disabled,
-}: {
-  href?: string
-  onClick?: () => void
-  icon: ReactNode
-  eyebrow: string
-  title: string
-  description: string
-  metric: string
-  disabled?: boolean
-}) {
-  const className =
-    "group flex min-h-[180px] flex-col justify-between rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] p-4 text-left shadow-[0_7px_0_rgba(var(--brand-primary-rgb),0.10)] transition hover:-translate-y-0.5 hover:bg-[rgba(var(--brand-primary-rgb),0.08)]"
-
-  const content = (
-    <>
-      <div>
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]">
-            {icon}
-          </div>
-
-          <span className="rounded-full border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-3 py-1 text-[0.58rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-            {metric}
-          </span>
-        </div>
-
-        <p className="mt-4 text-[0.62rem] font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-          {eyebrow}
-        </p>
-
-        <h2 className="mt-1 text-2xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_2px_0_rgba(var(--brand-accent-rgb),0.75)]">
-          {title}
-        </h2>
-
-        <p className="mt-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-          {description}
-        </p>
-      </div>
-
-      <div className="mt-4 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-4 py-2 text-center text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] group-hover:bg-[var(--brand-accent)] group-hover:text-[var(--brand-ink)]">
-        {disabled ? "Disponible luego" : "Entrar"}
-      </div>
-    </>
-  )
-
-  if (disabled) {
-    return (
-      <button
-        type="button"
-        disabled
-        className={`${className} cursor-not-allowed opacity-70`}
-      >
-        {content}
-      </button>
-    )
-  }
-
-  if (onClick) {
-    return (
-      <button type="button" onClick={onClick} className={className}>
-        {content}
-      </button>
-    )
-  }
-
-  if (!href) {
-    return (
-      <button
-        type="button"
-        disabled
-        className={`${className} cursor-not-allowed opacity-70`}
-      >
-        {content}
-      </button>
-    )
-  }
-
-  return (
-    <a href={href} className={className}>
-      {content}
-    </a>
-  )
-}
-
-export function PanelMiniMetric({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-3 py-2">
-      <p className="text-[0.58rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-        {label}
-      </p>
-      <p className="mt-1 break-words text-sm font-black text-[var(--brand-ink-3)]">
-        {value}
-      </p>
-    </div>
-  )
-}
-
-export function MetricCard({
-  label,
-  value,
-  tone = "red",
-}: {
-  label: string
-  value: string | number
-  tone?: "red" | "yellow"
-}) {
-  const style =
-    tone === "yellow"
-      ? "border-yellow-400 bg-[rgba(var(--brand-primary-rgb),0.12)] text-[var(--brand-amber)]"
-      : "border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-primary)]"
-
-  return (
-    <div className={`min-w-0 overflow-hidden rounded-[1.2rem] border-2 p-3 ${style}`}>
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em]">
-        {label}
-      </p>
-      <p className="mt-1 whitespace-nowrap text-lg font-black leading-tight tracking-[-0.03em] sm:text-xl xl:text-2xl">
-        {value}
-      </p>
-    </div>
-  )
-}
-
-export function InfoBox({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-[1.2rem] border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-3">
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
-        {label}
-      </p>
-      <p className="mt-1 break-words text-sm font-black text-[var(--brand-ink-3)]">
-        {value || "—"}
-      </p>
-    </div>
-  )
-}
+// Las tarjetas base del panel (módulos, métricas e info) viven en
+// PanelPrimitiveCards con el estilo sobrio 5★ del hotel: una sola fuente
+// de verdad para que /admin y "El hotel hoy" sean la misma familia visual.
+export {
+  ModuleAccessCard,
+  PanelMiniMetric,
+  MetricCard,
+  InfoBox,
+} from "@/components/local/PanelPrimitiveCards"
 
 export function CloseDetailSection({
   title,

@@ -105,11 +105,11 @@ export function ModuleAccessCard({
 
 export function PanelMiniMetric({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-3 py-2">
-      <p className="text-[0.58rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+    <div className="rounded-xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-3 py-2">
+      <p className="text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[var(--brand-primary-dark)]">
         {label}
       </p>
-      <p className="mt-1 break-words text-sm font-black text-[var(--brand-ink-3)]">
+      <p className="mt-1 break-words text-sm font-semibold text-[var(--brand-ink-3)]">
         {value}
       </p>
     </div>
@@ -144,11 +144,11 @@ export function MetricCard({
 
 export function InfoBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3">
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+    <div className="rounded-xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3">
+      <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-primary-dark)]">
         {label}
       </p>
-      <p className="mt-1 break-words text-sm font-black text-[var(--brand-ink-3)]">
+      <p className="mt-1 break-words text-sm font-semibold text-[var(--brand-ink-3)]">
         {value || "—"}
       </p>
     </div>
