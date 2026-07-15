@@ -151,6 +151,29 @@ sirve, pero el rótulo dice "mesas").
 
 ---
 
+## Estado 2026-07-15 (madrugada 2) — hotel de verdad en TODO el sistema
+
+- **Causa raíz del "veo Brotherhood" arreglada**: `staffLightTheme.ts` forzaba
+  la paleta naranja del template en TODOS los módulos /local-santo; ahora es
+  champán AA. /admin y /pedidos ganaron layout con esa paleta fija y /hotel/**
+  fija la suya editorial: la Personalización del dueño re-pinta SOLO el menú
+  público (/carta). Defaults de fábrica (2 copias + 4 fallbacks) ya no son
+  burger: tema claro champán + textos de hotel. La BD del demo se corrigió por
+  API (tema, textos "buenas burgers"/"frater", locationLabel→Habitación).
+- **Chrome 5★ en los 53 módulos + /admin**: serif sin uppercase, hairlines,
+  sin sombras duras, font-bold (script masivo; pantalla de cocina sigue oscura
+  con acentos champán). "Volver al panel" → /admin en los 52 módulos.
+- **Panel /admin ordenado**: cabecera hotel mínima (Sitio público, Cierre del
+  día, Config, Sonido, Salir); métricas POS y botón Ubicaciones viven en la
+  sección "Restaurante y room service".
+- **Landing 100% editable** (Panel → Página del hotel): portada, frase,
+  estrellas, sellos, cita, mapa, WhatsApp (botón flotante), Instagram/Facebook/
+  TikTok — `hotelSiteExtras` en business_config, sin migración. **Detalle
+  comercial por tipo** (camas, m², vista, amenidades con iconos) en landing y
+  motor de reservas — `hotelRoomTypeDetails`. Demo poblada (3 tipos).
+- Fix react-hooks (canales, portal-huesped, reservas-online). APIs: barrido
+  completo sin 5xx.
+
 ## Estado 2026-07-15 (noche) — rediseño 5★ del panel /admin HECHO
 
 - **Cabecera** de /admin en modo hotel: tarjeta blanca hairline + shadow-sm
