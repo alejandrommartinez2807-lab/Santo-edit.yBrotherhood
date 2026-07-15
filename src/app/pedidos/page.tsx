@@ -3289,6 +3289,26 @@ export default function PedidosPage() {
     )
   }
 
+  // Cabecera 5★ en modo hotel: marco hairline y chips fantasma finos; el
+  // template de restaurante conserva su estilo grueso original.
+  const headerChipClass = isHotelFrontDeskVisible
+    ? "inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/30 bg-white px-3.5 py-2 text-xs font-semibold text-[var(--brand-primary-dark)] transition hover:border-[var(--brand-primary)]/60 hover:bg-[rgba(var(--brand-primary-rgb),0.06)]"
+    : "inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
+  const headerLogoutClass = isHotelFrontDeskVisible
+    ? "inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-semibold text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
+    : "inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
+  const headerSoundClass = isHotelFrontDeskVisible
+    ? `inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+        isPanelSoundActive
+          ? "border-[var(--brand-primary)]/45 bg-[rgba(var(--brand-primary-rgb),0.12)] text-[var(--brand-primary-dark)]"
+          : "border-[var(--brand-primary)]/30 bg-white text-[var(--brand-primary-dark)] hover:border-[var(--brand-primary)]/60 hover:bg-[rgba(var(--brand-primary-rgb),0.06)]"
+      }`
+    : `inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-60 ${
+        isPanelSoundActive
+          ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
+          : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)] hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
+      }`
+
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-3 py-4 text-[var(--brand-ink-3)] sm:px-6 lg:px-8">
       <PaymentProofAlertToast
@@ -3315,8 +3335,16 @@ export default function PedidosPage() {
       )}
 
       <div className="mx-auto max-w-7xl">
-        <header className="overflow-hidden rounded-[1.6rem] border-4 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
-          <div className="h-1.5 shrink-0 bg-[linear-gradient(90deg,var(--brand-primary),var(--brand-accent))]" />
+        <header
+          className={
+            isHotelFrontDeskVisible
+              ? "overflow-hidden rounded-2xl border border-[var(--brand-border)] bg-white shadow-sm"
+              : "overflow-hidden rounded-[1.6rem] border-4 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]"
+          }
+        >
+          {!isHotelFrontDeskVisible && (
+            <div className="h-1.5 shrink-0 bg-[linear-gradient(90deg,var(--brand-primary),var(--brand-accent))]" />
+          )}
 
           <div className="p-4 sm:p-5">
             <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-center 2xl:justify-between">
@@ -3324,7 +3352,7 @@ export default function PedidosPage() {
                 <div className="flex flex-wrap gap-2">
                   <Link
                     href="/"
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
+                    className={headerChipClass}
                   >
                     <ArrowLeft size={16} />
                     {isHotelFrontDeskVisible ? "Sitio público" : "Menú"}
@@ -3336,7 +3364,7 @@ export default function PedidosPage() {
                       setCloseSummaryMessage(null)
                       setIsCloseModalOpen(true)
                     }}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
+                    className={headerChipClass}
                   >
                     <Clock size={16} />
                     Cierre del día
@@ -3345,7 +3373,7 @@ export default function PedidosPage() {
                   {isHistoryModuleVisible && (
                     <a
                       href="/local-santo/cierres"
-                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
+                      className={headerChipClass}
                     >
                       <Clock size={16} />
                       Historial de cierres
@@ -3363,7 +3391,7 @@ export default function PedidosPage() {
                           loadExpenseInventory(true)
                         }
                       }}
-                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
+                      className={headerChipClass}
                     >
                       <Plus size={16} />
                       Gastos
@@ -3373,7 +3401,7 @@ export default function PedidosPage() {
                   {isCustomersModuleVisible && (
                     <a
                       href="/local-santo/clientes"
-                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
+                      className={headerChipClass}
                     >
                       <MessageCircle size={16} />
                       Clientes
@@ -3383,7 +3411,7 @@ export default function PedidosPage() {
                   {isInventoryModuleVisible && (
                     <a
                       href="/local-santo/inventario"
-                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
+                      className={headerChipClass}
                     >
                       <PackageCheck size={16} />
                       Inventario
@@ -3393,7 +3421,7 @@ export default function PedidosPage() {
                   {isMenuProductsModuleVisible && (
                     <a
                       href="/local-santo/menu"
-                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
+                      className={headerChipClass}
                     >
                       <Store size={16} />
                       {isHotelFrontDeskVisible ? "Carta" : "Productos"}
@@ -3407,7 +3435,7 @@ export default function PedidosPage() {
                       setIsLocationsModalOpen(true)
                       loadOpenAccounts(adminPassword, true)
                     }}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
+                    className={headerChipClass}
                   >
                     <MapPin size={16} />
                     {isHotelFrontDeskVisible ? "Ubicaciones" : "Mesas"}
@@ -3418,7 +3446,7 @@ export default function PedidosPage() {
                       type="button"
                       onClick={() => loadBusinessConfig(adminPassword)}
                       disabled={isLoadingBusinessConfig}
-                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)] disabled:opacity-50"
+                      className={`${headerChipClass} disabled:opacity-50`}
                     >
                       {isLoadingBusinessConfig ? (
                         <Loader2 size={16} className="animate-spin" />
@@ -3433,11 +3461,7 @@ export default function PedidosPage() {
                     type="button"
                     onClick={isPanelSoundActive ? disablePanelSound : activatePanelSound}
                     disabled={!isPanelSoundAvailable}
-                    className={`inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                      isPanelSoundActive
-                        ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
-                        : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)] hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
-                    }`}
+                    className={headerSoundClass}
                   >
                     {isPanelSoundActive ? <Volume2 size={16} /> : <VolumeX size={16} />}
                     {isPanelSoundActive ? "Sonido activo" : isPanelSoundAvailable ? "Activar sonido" : "Sonido no activo"}
@@ -3446,7 +3470,7 @@ export default function PedidosPage() {
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)]"
+                    className={headerLogoutClass}
                   >
                     Cerrar sesión
                   </button>
