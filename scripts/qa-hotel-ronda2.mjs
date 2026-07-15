@@ -62,11 +62,11 @@ try {
   check("3 staff con fechas basura → 400 con mensaje", r.status === 400, r.data?.error)
 
   // ---------- 2. Capacidad del grupo ----------
-  r = await pub("/api/public/hotel", { method: "POST", body: JSON.stringify({ roomTypeId: IND.id, guestName: "Familia Grande QA", guestPhone: "04141230001", checkIn: plus(30), checkOut: plus(31), adults: 2, children: 2 }) })
+  r = await pub("/api/public/hotel", { method: "POST", body: JSON.stringify({ roomTypeId: IND.id, guestName: "Familia Grande QA", guestPhone: "04141230001", checkIn: plus(30), checkOut: plus(31), adults: 2, children: 2, termsAccepted: true }) })
   check("4 grupo de 4 en Individual (cap 1) → 400 claro", r.status === 400, r.data?.error)
 
   // ---------- 3. Nota kilométrica se trunca sin romper ----------
-  r = await pub("/api/public/hotel", { method: "POST", body: JSON.stringify({ roomTypeId: IND.id, guestName: "Notas Largas QA", guestPhone: "04141230002", checkIn: plus(30), checkOut: plus(31), adults: 1, note: "x".repeat(2000) }) })
+  r = await pub("/api/public/hotel", { method: "POST", body: JSON.stringify({ roomTypeId: IND.id, guestName: "Notas Largas QA", guestPhone: "04141230002", checkIn: plus(30), checkOut: plus(31), adults: 1, termsAccepted: true, note: "x".repeat(2000) }) })
   const noteResv = r.data?.reservation
   check("5 nota de 2000 caracteres → reserva creada igual", Boolean(noteResv?.code), `code=${noteResv?.code}`)
   if (noteResv) cleanup.reservationIds.push(null) // se resuelve por código al final

@@ -56,6 +56,8 @@ function PaginaHotelContent() {
   const [bookingFields, setBookingFields] = useState<HotelBookingFieldsConfig>(
     DEFAULT_HOTEL_BOOKING_FIELDS,
   )
+  const [termsText, setTermsText] = useState("")
+  const [termsDefault, setTermsDefault] = useState("")
   const [loading, setLoading] = useState(true)
   const [denied, setDenied] = useState(false)
   const [error, setError] = useState("")
@@ -76,6 +78,8 @@ function PaginaHotelContent() {
       setDenied(false)
       setProfile({ ...EMPTY, ...(data.profile || {}) })
       setBookingFields(normalizeHotelBookingFields(data.bookingFields))
+      setTermsText(String(data.termsText || ""))
+      setTermsDefault(String(data.termsDefault || ""))
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
     } finally {
@@ -105,12 +109,13 @@ function PaginaHotelContent() {
       const res = await fetch("/api/hotel-profile", {
         method: "POST",
         headers: authHeaders(),
-        body: JSON.stringify({ ...profile, bookingFields }),
+        body: JSON.stringify({ ...profile, bookingFields, termsText }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "No se pudo guardar")
       setProfile({ ...EMPTY, ...(data.profile || {}) })
       setBookingFields(normalizeHotelBookingFields(data.bookingFields))
+      setTermsText(String(data.termsText || ""))
       setSaved(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
@@ -188,6 +193,38 @@ function PaginaHotelContent() {
                   </label>
                 ))}
               </div>
+            </div>
+            {/* Términos y condiciones de la reserva pública */}
+            <div className="rounded-xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/50 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-black uppercase text-[var(--brand-ink-3)]">
+                  Términos y condiciones
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTermsText(termsDefault)
+                    setSaved(false)
+                  }}
+                  className="rounded-lg border-2 border-[var(--brand-primary)]/25 bg-white px-2.5 py-1 text-xs font-black uppercase text-[var(--brand-primary)]"
+                >
+                  Usar texto estándar
+                </button>
+              </div>
+              <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/70">
+                El huésped debe aceptarlos para reservar (se leen en /hotel/terminos). Si lo dejas
+                vacío, se usa el texto estándar de la industria.
+              </p>
+              <textarea
+                value={termsText}
+                onChange={(e) => {
+                  setTermsText(e.target.value)
+                  setSaved(false)
+                }}
+                placeholder={termsDefault}
+                rows={8}
+                className={`${inputClass} mt-2 text-sm`}
+              />
             </div>
             {error && <p className="font-bold text-red-600">{error}</p>}
             <button onClick={save} disabled={busy} className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50">

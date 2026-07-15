@@ -35,7 +35,7 @@ async function staff(path, opts = {}) {
   try { data = await res.json() } catch {}
   return { status: res.status, data }
 }
-const bookBody = (o) => JSON.stringify({ adults: 2, children: 0, ...o })
+const bookBody = (o) => JSON.stringify({ adults: 2, children: 0, termsAccepted: true, ...o })
 
 // ids de reservas QA para limpiar al final
 const createdReservations = []
@@ -84,8 +84,11 @@ try {
   r = await pub("/api/public/hotel", { method: "POST", body: bookBody({ roomTypeId: IND.id, guestName: "Cliente QA", guestPhone: "123", checkIn: A, checkOut: A2 }) })
   check("B5 teléfono inválido → 400", r.status === 400, r.data?.error)
 
+  r = await pub("/api/public/hotel", { method: "POST", body: JSON.stringify({ roomTypeId: IND.id, guestName: "Cliente QA", guestPhone: "04140000001", adults: 2, checkIn: A, checkOut: A2 }) })
+  check("B6 sin aceptar términos → 400", r.status === 400, r.data?.error)
+
   // ============ C. Reserva feliz + caracteres especiales (2 POST) ============
-  // B(5) + C(2) = 7 POST caben en la misma ventana de 8/min tras la pausa.
+  // B(6) + C(2) = 8 POST caben justo en la misma ventana de 8/min tras la pausa.
   r = await pub("/api/public/hotel", { method: "POST", body: bookBody({ roomTypeId: IND.id, guestName: "María José Pérez QA", guestPhone: "04141112233", checkIn: A, checkOut: A2, note: "Llegada tarde ~23:00" }) })
   const happy = r.data?.reservation
   check("C1 reserva feliz → código + total", Boolean(happy?.code) && happy.totalAmount === happy.ratePerNight * 2, `code=${happy?.code} total=$${happy?.totalAmount} ${happy ? "" : `status=${r.status} ${r.data?.error || ""}`}`)

@@ -95,6 +95,7 @@ export default function HotelReservarPage() {
   const [document, setDocument] = useState("")
   const [address, setAddress] = useState("")
   const [arrivalTime, setArrivalTime] = useState("")
+  const [termsAccepted, setTermsAccepted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [created, setCreated] = useState<Created | null>(null)
 
@@ -148,7 +149,8 @@ export default function HotelReservarPage() {
   )
 
   async function submit() {
-    if (!selectedType || guestName.trim().length < 3 || missingRequired.length > 0) return
+    if (!selectedType || guestName.trim().length < 3 || missingRequired.length > 0 || !termsAccepted)
+      return
     setSubmitting(true)
     setError("")
     try {
@@ -166,6 +168,7 @@ export default function HotelReservarPage() {
           document: document.trim(),
           address: address.trim(),
           arrivalTime: arrivalTime.trim(),
+          termsAccepted,
           checkIn,
           checkOut,
         }),
@@ -446,6 +449,25 @@ export default function HotelReservarPage() {
                   <span>Total {selectedType.name}</span>
                   <span>${selectedType.quote.total} <span className="text-sm font-bold text-[var(--brand-ink-2)]">({nights}n)</span></span>
                 </div>
+                {/* Aceptación de términos: sin marcarla no se envía (y el servidor lo exige) */}
+                <label className="flex items-start gap-2.5 rounded-xl bg-[var(--brand-cream)]/70 px-4 py-3 sm:col-span-2">
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--brand-primary)]"
+                  />
+                  <span className="text-sm font-bold text-[var(--brand-ink-2)]">
+                    He leído y acepto los{" "}
+                    <Link
+                      href="/hotel/terminos"
+                      target="_blank"
+                      className="text-[var(--brand-primary-dark)] underline underline-offset-2"
+                    >
+                      términos y condiciones
+                    </Link>
+                  </span>
+                </label>
                 {missingRequired.length > 0 && (
                   <p className="text-xs font-bold text-amber-800 sm:col-span-2">
                     Falta completar: {missingRequired.map((f) => f.label.toLowerCase()).join(", ")}
@@ -453,7 +475,12 @@ export default function HotelReservarPage() {
                 )}
                 <button
                   onClick={submit}
-                  disabled={submitting || guestName.trim().length < 3 || missingRequired.length > 0}
+                  disabled={
+                    submitting ||
+                    guestName.trim().length < 3 ||
+                    missingRequired.length > 0 ||
+                    !termsAccepted
+                  }
                   className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50 sm:col-span-2"
                 >
                   {submitting ? <Loader2 className="animate-spin" size={16} /> : null}

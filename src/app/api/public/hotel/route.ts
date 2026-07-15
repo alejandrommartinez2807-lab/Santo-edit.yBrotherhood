@@ -180,6 +180,15 @@ export async function POST(request: NextRequest) {
     const checkIn = normalizeStayDate(body.checkIn)
     const checkOut = normalizeStayDate(body.checkOut)
 
+    // El huésped debe aceptar los términos y condiciones (checkbox del
+    // formulario); el servidor lo exige aunque manipulen el cliente.
+    if (body.termsAccepted !== true) {
+      return noStoreResponse(
+        { ok: false, error: "Debes aceptar los términos y condiciones para reservar" },
+        { status: 400 },
+      )
+    }
+
     if (guestName.length < 3) {
       return noStoreResponse({ ok: false, error: "Escribe tu nombre completo" }, { status: 400 })
     }
