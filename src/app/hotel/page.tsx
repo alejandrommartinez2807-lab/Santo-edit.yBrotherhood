@@ -335,8 +335,9 @@ export default function HotelLandingPage() {
   return (
     <main>
       {/* ==================== HERO cinematográfico ==================== */}
-      {/* svh: en el teléfono la barra del navegador no hace saltar la portada */}
-      <section className="relative isolate min-h-[88svh] overflow-hidden sm:min-h-[92vh]">
+      {/* En el teléfono la portada cubre la PANTALLA COMPLETA al entrar
+          (100svh): la franja de sellos queda debajo del pliegue, sin asomarse. */}
+      <section className="relative isolate min-h-[100svh] overflow-hidden sm:min-h-[92vh]">
         {extras?.heroUrl ? (
           // Portada personalizada por el dueño: una sola imagen.
           // eslint-disable-next-line @next/next/no-img-element
@@ -347,9 +348,9 @@ export default function HotelLandingPage() {
             className="absolute inset-0 -z-10 h-full w-full object-cover"
           />
         ) : (
-          // Portada de fábrica con recorte pensado para cada pantalla: en el
-          // teléfono se sirve la versión vertical (el edificio bien encuadrado
-          // y sin estirar la foto apaisada).
+          // Portada de fábrica por pantalla: el teléfono recibe el render
+          // VERTICAL con el letrero LIDOTEL; object-[center_30%] lo mantiene
+          // encuadrado cuando el recorte es vertical.
           <picture>
             <source media="(max-width: 640px)" srcSet={HERO_MOBILE} />
             { }
@@ -357,14 +358,14 @@ export default function HotelLandingPage() {
               src={HERO}
               alt={BRAND.name}
               fetchPriority="high"
-              className="absolute inset-0 -z-10 h-full w-full object-cover"
+              className="absolute inset-0 -z-10 h-full w-full object-cover object-[center_30%] sm:object-center"
             />
           </picture>
         )}
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/60 via-black/40 to-black/55 sm:via-black/50 sm:to-black/45" />
         <div className="absolute inset-x-0 bottom-0 -z-10 h-36 bg-gradient-to-t from-[var(--brand-cream)] to-transparent" />
 
-        <div className="mx-auto flex min-h-[88svh] max-w-4xl flex-col items-center justify-center px-6 py-24 text-center sm:min-h-[92vh] sm:py-28">
+        <div className="mx-auto flex min-h-[100svh] max-w-4xl flex-col items-center justify-center px-6 py-24 text-center sm:min-h-[92vh] sm:py-28">
           {starCount > 0 && (
             <div className="flex items-center gap-1.5 text-[var(--brand-primary)] drop-shadow-[0_1px_6px_rgba(0,0,0,0.55)]">
               {Array.from({ length: starCount }).map((_, i) => (
