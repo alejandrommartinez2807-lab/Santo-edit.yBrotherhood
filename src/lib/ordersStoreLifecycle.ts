@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
+import { isMissingColumnError } from "@/lib/ordersStoreMappers"
 import type { LocalOrder, OrderStatus } from "@/types/localOrders"
 
 type LoadOrderWithItems = (
@@ -17,6 +18,24 @@ export async function updateOrderStatusInStore(
   if (branchId) query = query.eq("branch_id", branchId)
   const { error } = await query
   if (error) throw new Error(error.message)
+
+  if (status === "Preparando") {
+    // Marca el arranque real de cocina la PRIMERA vez que el pedido pasa a
+    // Preparando: el cronómetro de cocina cuenta desde aquí. Si la migración
+    // 0026 no está aplicada, se omite en silencio (queda el fallback por
+    // createdAt en la pantalla de cocina).
+    let stampQuery = supabase
+      .from("orders")
+      .update({ kitchen_started_at: new Date().toISOString() })
+      .eq("id", orderId)
+      .is("kitchen_started_at", null)
+    if (branchId) stampQuery = stampQuery.eq("branch_id", branchId)
+    const { error: stampError } = await stampQuery
+    if (stampError && !isMissingColumnError(stampError)) {
+      throw new Error(stampError.message)
+    }
+  }
+
   return loadOrderWithItems(orderId, branchId)
 }
 

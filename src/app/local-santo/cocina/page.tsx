@@ -111,6 +111,7 @@ type LocalOrder = {
   exchangeSource?: string
   exchangeValueDate?: string
   status: OrderStatus
+  kitchenStartedAt?: string
   payment?: OrderPayment
   paymentStatus?: PaymentStatus
   amountReceivedUSD?: number
@@ -195,6 +196,13 @@ function getElapsedMinutes(value: string) {
   const minutes = Math.floor((Date.now() - createdAt) / 60000)
 
   return minutes > 0 ? minutes : 0
+}
+
+// El cronómetro cuenta desde que caja envió el pedido a cocina
+// (kitchenStartedAt, migración 0026). Pedidos anteriores a la migración
+// caen al tiempo desde la creación.
+function getKitchenElapsedMinutes(order: LocalOrder) {
+  return getElapsedMinutes(order.kitchenStartedAt || order.createdAt)
 }
 
 function formatElapsedMinutes(minutes: number) {
@@ -892,7 +900,7 @@ export default function CocinaPage() {
                 const regularItems = order.items.filter((item) => !isComboItem(item))
                 const isDelivery = isDeliveryOrder(order)
                 const displayTableNumber = getDisplayTableNumber(order)
-                const elapsedMinutes = getElapsedMinutes(order.createdAt)
+                const elapsedMinutes = getKitchenElapsedMinutes(order)
                 const hasProductsToConfirm = hasStaffConfirmationItems(order)
                 const hasConfirmedProducts = hasConfirmedStaffConfirmationItems(order)
                 const productsToConfirmText = buildStaffConfirmationText(order)
@@ -948,7 +956,7 @@ export default function CocinaPage() {
 
                         <div className={`rounded-[1.15rem] border-2 px-4 py-3 text-right ${getElapsedToneClasses(elapsedMinutes)}`}>
                           <p className="text-[0.62rem] font-black uppercase tracking-[0.14em]">
-                            Tiempo
+                            En cocina
                           </p>
                           <p className="mt-1 text-2xl font-black leading-none">
                             {formatElapsedMinutes(elapsedMinutes)}
@@ -968,7 +976,7 @@ export default function CocinaPage() {
                           value={displayTableNumber}
                         />
                         <InfoBox label="Tipo" value={isDelivery ? "Delivery" : order.orderType} />
-                        <InfoBox label="Tiempo" value={formatElapsedMinutes(elapsedMinutes)} />
+                        <InfoBox label="En cocina" value={formatElapsedMinutes(elapsedMinutes)} />
                       </div>
 
                       {isDelivery && (

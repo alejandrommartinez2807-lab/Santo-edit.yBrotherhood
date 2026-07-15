@@ -61,6 +61,9 @@ export function itemRowToOrderItem(row: Row): OrderItem {
     staffConfirmedBy: cleanText(row.staff_confirmed_by) || undefined,
     staffConfirmedRole: cleanText(row.staff_confirmed_role) || undefined,
     ivaRate: row.iva_rate == null ? null : num(row.iva_rate),
+    // Columnas 0026: si la migración no está aplicada, llegan undefined.
+    deliveredAt: cleanText(row.delivered_at) || undefined,
+    deliveredBy: cleanText(row.delivered_by) || undefined,
   }
 }
 
@@ -149,6 +152,7 @@ export function orderRowToLocalOrder(row: Row, items: OrderItem[]): LocalOrder {
     exchangeSource: cleanText(row.exchange_source) || undefined,
     exchangeValueDate: cleanText(row.exchange_value_date) || undefined,
     status: (cleanText(row.status) || "Nuevo") as OrderStatus,
+    kitchenStartedAt: cleanText(row.kitchen_started_at) || undefined,
     isTraining: row.is_training === true,
 
     registeredById: cleanText(row.registered_by_id) || undefined,
