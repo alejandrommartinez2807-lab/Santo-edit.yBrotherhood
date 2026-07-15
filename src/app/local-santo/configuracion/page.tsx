@@ -1384,14 +1384,6 @@ function getModuleCheckedValue(
   return moduleItem.effectiveEnabled;
 }
 
-function countIncludedOwnerModules(config: BusinessConfig) {
-  return getVisibleOwnerSettingModules()
-    .map((moduleDefinition) =>
-      getModulePlanAccess(config, moduleDefinition.key),
-    )
-    .filter((moduleItem) => moduleItem.includedInPlan).length;
-}
-
 function getOwnerModuleLabel(moduleItem: LocalModulePlanAccess) {
   if (moduleItem.moduleKey === "menuProducts") {
     return "Productos del menú";
@@ -1437,10 +1429,6 @@ export default function BusinessConfigPage() {
   const hasMergedMenuFeaturedStateRef = useRef(false);
 
   const activePlan = getLocalPlanDefinition(businessConfig.membershipPlan);
-  const includedModulesCount = useMemo(
-    () => countIncludedOwnerModules(businessConfig),
-    [businessConfig],
-  );
   const visibleOwnerModules = useMemo(
     () =>
       getVisibleOwnerSettingModules()
@@ -1449,6 +1437,13 @@ export default function BusinessConfigPage() {
           getModulePlanAccess(businessConfig, moduleDefinition.key),
         ),
     [businessConfig],
+  );
+  // Cuenta sobre el MISMO conjunto que el denominador (los módulos visibles):
+  // antes usaba countIncludedOwnerModules, que también contaba módulos no
+  // listados, y el contador podía dar cosas como "65/63".
+  const includedModulesCount = useMemo(
+    () => visibleOwnerModules.filter((access) => access.includedInPlan).length,
+    [visibleOwnerModules],
   );
   const visibleSupportModules = useMemo(
     () =>
