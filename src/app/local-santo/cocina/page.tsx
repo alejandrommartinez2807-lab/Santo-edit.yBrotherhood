@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import { BRAND } from "@/lib/brand"
 import { signOutLocalStaff } from "@/lib/staffSession"
@@ -30,12 +30,16 @@ import {
   isStaffConfirmationItemRequired,
 } from "@/lib/localOrderHelpers"
 import ModuleAccessGuard, { useHotelMode } from "@/components/ModuleAccessGuard"
+import { hotelPosAreaForLocation, type HotelPosArea } from "@/lib/hotelPos"
 import {
   useOperationalSounds,
   useOrderSoundAlerts,
 } from "@/hooks/useOperationalSounds"
 
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
+// Submódulos de cocina en modo hotel: pedidos del restaurante vs pedidos a
+// habitaciones (room service), para que no se mezclen en la pantalla.
+const HOTEL_KITCHEN_TAB_KEY = "cocina_hotel_submodulo"
 
 type ProductPaymentMode = "divisa" | "mixto"
 type OrderStatus = "Nuevo" | "Preparando" | "Listo" | "Entregado" | "Cancelado"
@@ -384,20 +388,18 @@ function InfoBox({ label, value }: { label: string; value: string }) {
   )
 }
 
-// Debajo del guard el subtítulo sabe si el negocio opera como hotel y habla
-// de room service en vez de pedidos del local.
-function CocinaSubtitle() {
-  const hotelMode = useHotelMode()
+export default function CocinaPage() {
   return (
-    <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-      {hotelMode
-        ? "Aquí aparecen los consumos y pedidos de room service cuando caja los confirma. Cocina puede revisar preparación, listos y completos sin cerrar ventas."
-        : "Aquí aparecen los pedidos cuando caja los confirma y los envía a cocina. Cocina puede revisar preparación, listos y completos sin cerrar ventas."}
-    </p>
+    <ModuleAccessGuard moduleKey="kitchen" moduleName="Cocina">
+      <CocinaPageContent />
+    </ModuleAccessGuard>
   )
 }
 
-export default function CocinaPage() {
+function CocinaPageContent() {
+  // Con el hotel activo, cocina se divide en Restaurante y Habitaciones.
+  const hotelMode = useHotelMode()
+  const [hotelArea, setHotelArea] = useState<HotelPosArea>("restaurante")
   const [adminPassword, setAdminPassword] = useState("")
   const [passwordInput, setPasswordInput] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -550,12 +552,25 @@ export default function CocinaPage() {
   const restoreSession = useEffectEvent(() => {
     const savedPassword = window.sessionStorage.getItem(ADMIN_STORAGE_KEY)
 
+    // Última área usada en este equipo (restaurante por defecto).
+    const savedArea = window.localStorage.getItem(HOTEL_KITCHEN_TAB_KEY)
+    if (savedArea === "restaurante" || savedArea === "habitaciones") setHotelArea(savedArea)
+
     if (savedPassword) {
       setAdminPassword(savedPassword)
       setPasswordInput(savedPassword)
       loadOrders(savedPassword)
     }
   })
+
+  function selectHotelArea(area: HotelPosArea) {
+    setHotelArea(area)
+    try {
+      window.localStorage.setItem(HOTEL_KITCHEN_TAB_KEY, area)
+    } catch {
+      // Sin almacenamiento, el área simplemente no se recuerda.
+    }
+  }
 
   useEffect(() => {
     // Difiere la restauración de sesión un tick para no hacer setState
@@ -578,13 +593,46 @@ export default function CocinaPage() {
     }
   }, [adminPassword])
 
-  const preparingOrders = orders.filter(shouldShowAsPreparing)
-  const readyOrders = orders.filter(shouldShowAsReady)
-  const completedOrders = orders.filter(shouldShowAsCompleted)
-  const deliveryOrders = orders.filter(isDeliveryOrder)
+  // Área del pedido: los delivery son del restaurante; el resto se decide por
+  // la ubicación ("Habitación 101" ⇒ habitaciones, "Mesa 4"/"Barra" ⇒ resto).
+  const areaOf = useCallback(
+    (order: LocalOrder): HotelPosArea =>
+      isDeliveryOrder(order) ? "restaurante" : hotelPosAreaForLocation(order.tableNumber),
+    [],
+  )
+
+  // En modo hotel cada submódulo ve SOLO sus pedidos.
+  const areaOrders = useMemo(
+    () => (hotelMode ? orders.filter((order) => areaOf(order) === hotelArea) : orders),
+    [orders, hotelMode, hotelArea, areaOf],
+  )
+
+  // Contadores para las pestañas (pedidos vivos por área).
+  const areaPendingCounts = useMemo(() => {
+    const counts = { restaurante: 0, habitaciones: 0 }
+    for (const order of orders) {
+      if (order.status !== "Preparando" && order.status !== "Listo") continue
+      counts[areaOf(order)] += 1
+    }
+    return counts
+  }, [orders, areaOf])
+
+  const preparingOrders = areaOrders.filter(shouldShowAsPreparing)
+  const readyOrders = areaOrders.filter(shouldShowAsReady)
+  const completedOrders = areaOrders.filter(shouldShowAsCompleted)
+  const deliveryOrders = areaOrders.filter(isDeliveryOrder)
+  // Habitaciones distintas con pedidos vivos (métrica del submódulo hotel).
+  const activeRoomsCount = useMemo(() => {
+    const rooms = new Set<string>()
+    for (const order of areaOrders) {
+      if (order.status !== "Preparando" && order.status !== "Listo") continue
+      rooms.add(String(order.tableNumber || "").trim().toLowerCase())
+    }
+    return rooms.size
+  }, [areaOrders])
 
   const filteredOrders = useMemo(() => {
-    let nextOrders = orders
+    let nextOrders = areaOrders
 
     if (activeFilter === "En cocina") {
       nextOrders = nextOrders.filter(shouldShowAsPreparing)
@@ -595,7 +643,7 @@ export default function CocinaPage() {
     }
 
     return nextOrders.filter((order) => matchesSearch(order, searchText))
-  }, [activeFilter, orders, searchText])
+  }, [activeFilter, areaOrders, searchText])
 
   const visibleDeliveryCount = filteredOrders.filter(isDeliveryOrder).length
 
@@ -687,7 +735,6 @@ export default function CocinaPage() {
   }
 
   return (
-    <ModuleAccessGuard moduleKey="kitchen" moduleName="Cocina">
       <main className="min-h-screen bg-[var(--brand-cream)] px-3 py-4 text-[var(--brand-ink-3)] sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <header className="overflow-hidden rounded-[1.6rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
@@ -758,17 +805,64 @@ export default function CocinaPage() {
                   </p>
 
                   <h1 className="font-serif mt-1 text-4xl leading-tight text-[var(--brand-ink-3)] sm:text-5xl font-semibold">
-                    Módulo cocina
+                    {hotelMode ? "Cocina del hotel" : "Módulo cocina"}
                   </h1>
 
-                  <CocinaSubtitle />
+                  <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
+                    {hotelMode
+                      ? hotelArea === "habitaciones"
+                        ? "Pedidos a HABITACIONES (room service): lo que los huéspedes piden desde el QR de su habitación. Los del restaurante están en su submódulo."
+                        : "Pedidos del RESTAURANTE del hotel (mesas, barra, para llevar y delivery). El room service a habitaciones está en su submódulo."
+                      : "Aquí aparecen los pedidos cuando caja los confirma y los envía a cocina. Cocina puede revisar preparación, listos y completos sin cerrar ventas."}
+                  </p>
+
+                  {/* Submódulos del hotel: cocina restaurante / cocina habitaciones */}
+                  {hotelMode && (
+                    <div className="mt-4 inline-flex rounded-full border border-[var(--brand-primary)]/30 bg-[var(--brand-cream)] p-1">
+                      {([
+                        { key: "restaurante", label: "Restaurante" },
+                        { key: "habitaciones", label: "Habitaciones" },
+                      ] as { key: HotelPosArea; label: string }[]).map((tab) => {
+                        const pending = areaPendingCounts[tab.key]
+                        return (
+                          <button
+                            key={tab.key}
+                            type="button"
+                            onClick={() => selectHotelArea(tab.key)}
+                            className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] transition ${
+                              hotelArea === tab.key
+                                ? "bg-[var(--brand-primary)] text-white shadow-sm"
+                                : "text-[var(--brand-primary)] hover:bg-white"
+                            }`}
+                          >
+                            {tab.label}
+                            {pending > 0 && (
+                              <span
+                                className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold ${
+                                  hotelArea === tab.key
+                                    ? "bg-white/25 text-white"
+                                    : "bg-[var(--brand-primary)] text-white"
+                                }`}
+                              >
+                                {pending}
+                              </span>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-4 lg:w-[680px]">
                   <InfoBox label="En cocina" value={String(preparingOrders.length)} />
                   <InfoBox label="Listos" value={String(readyOrders.length)} />
                   <InfoBox label="Completos" value={String(completedOrders.length)} />
-                  <InfoBox label="Delivery" value={String(deliveryOrders.length)} />
+                  {hotelMode && hotelArea === "habitaciones" ? (
+                    <InfoBox label="Habitaciones activas" value={String(activeRoomsCount)} />
+                  ) : (
+                    <InfoBox label={hotelMode ? "Delivery / afuera" : "Delivery"} value={String(deliveryOrders.length)} />
+                  )}
                 </div>
               </div>
             </div>
@@ -889,11 +983,17 @@ export default function CocinaPage() {
               />
 
               <h2 className="font-serif mt-5 text-3xl text-[var(--brand-ink-3)] font-semibold">
-                Sin pedidos en cocina
+                {hotelMode
+                  ? hotelArea === "habitaciones"
+                    ? "Sin pedidos a habitaciones"
+                    : "Sin pedidos del restaurante"
+                  : "Sin pedidos en cocina"}
               </h2>
 
               <p className="mx-auto mt-3 max-w-md text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-                Cuando caja confirme un pedido y lo envíe a preparación, aparecerá en esta pantalla. Los pedidos completos quedan como consulta para cocina.
+                {hotelMode && hotelArea === "habitaciones"
+                  ? "Cuando un huésped pida desde el QR de su habitación y caja lo confirme, aparecerá aquí. Revisa también el submódulo Restaurante."
+                  : "Cuando caja confirme un pedido y lo envíe a preparación, aparecerá en esta pantalla. Los pedidos completos quedan como consulta para cocina."}
               </p>
             </section>
           ) : (
@@ -975,7 +1075,13 @@ export default function CocinaPage() {
                       <div className="grid gap-3 sm:grid-cols-2">
                         <InfoBox label="Cliente" value={order.customerName || "Cliente"} />
                         <InfoBox
-                          label={isDelivery ? "Zona delivery" : "Mesa / ubicación"}
+                          label={
+                            isDelivery
+                              ? "Zona delivery"
+                              : hotelMode && hotelArea === "habitaciones"
+                                ? "Habitación"
+                                : "Mesa / ubicación"
+                          }
                           value={displayTableNumber}
                         />
                         <InfoBox label="Tipo" value={isDelivery ? "Delivery" : order.orderType} />
@@ -1111,6 +1217,5 @@ export default function CocinaPage() {
           )}
         </div>
       </main>
-    </ModuleAccessGuard>
   )
 }
