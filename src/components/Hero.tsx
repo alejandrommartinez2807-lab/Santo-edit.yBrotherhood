@@ -5,6 +5,8 @@ import Image from "next/image"
 import {
   ArrowRight,
   Beef,
+  BellRing,
+  Clock,
   Flame,
   MapPin,
   Sandwich,
@@ -28,6 +30,7 @@ type PublicBusinessConfig = {
   scheduleTitle: string
   scheduleLine1: string
   reviewsTitle: string
+  locationLabel: string
 }
 
 const DEFAULT_PUBLIC_CONFIG: PublicBusinessConfig = {
@@ -45,6 +48,7 @@ const DEFAULT_PUBLIC_CONFIG: PublicBusinessConfig = {
   scheduleTitle: "Horario",
   scheduleLine1: "Horario disponible",
   reviewsTitle: "Reseñas",
+  locationLabel: "Mesa",
 }
 
 function readText(source: Record<string, unknown>, keys: string[], fallback: string) {
@@ -156,6 +160,7 @@ function normalizePublicBusinessConfig(value: unknown): PublicBusinessConfig {
       ["reviewsTitle", "publicReviewsTitle", "reviewTitle"],
       DEFAULT_PUBLIC_CONFIG.reviewsTitle
     ),
+    locationLabel: readText(source, ["locationLabel"], DEFAULT_PUBLIC_CONFIG.locationLabel),
   }
 }
 
@@ -219,11 +224,20 @@ export default function Hero() {
     )
   }, [businessConfig.googleMapsUrl])
 
-  const guarantees = [
-    { icon: Beef, top: "Carne", bottom: "100% res" },
-    { icon: Flame, top: "Queso", bottom: "fundido" },
-    { icon: Sandwich, top: "Pan", bottom: "brioche" },
-  ]
+  // Con ubicación "Habitación" el negocio opera como hotel: los sellos del
+  // hero hablan de room service, no de la hamburguesería del template.
+  const isHotelMenu = /habitaci|suite|room/i.test(businessConfig.locationLabel)
+  const guarantees = isHotelMenu
+    ? [
+        { icon: BellRing, top: "Room service", bottom: "a tu habitación" },
+        { icon: UtensilsCrossed, top: "Cocina", bottom: "del hotel" },
+        { icon: Clock, top: "Atención", bottom: "todos los días" },
+      ]
+    : [
+        { icon: Beef, top: "Carne", bottom: "100% res" },
+        { icon: Flame, top: "Queso", bottom: "fundido" },
+        { icon: Sandwich, top: "Pan", bottom: "brioche" },
+      ]
 
   const marqueeItems = [
     ...businessConfig.heroBadgeText

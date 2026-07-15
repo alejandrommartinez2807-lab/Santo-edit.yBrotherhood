@@ -1,4 +1,79 @@
-# Continuar el demo Lidotel — prompt + backlog (v5 · 2026-07-15)
+# Continuar el demo Lidotel — prompt + backlog (v6 · 2026-07-15)
+
+## PROMPT v6 (copiar/pegar) — AUDITORÍA MÓDULO POR MÓDULO
+
+> Pedido por el dueño: "se están mezclando muchas cosas". Este prompt obliga a
+> ir UN módulo a la vez, verificarlo de verdad (no solo que responda 200),
+> arreglarlo, commitear y recién ahí pasar al siguiente.
+
+```
+Continúo el demo Lidotel (PMS hotelero). Lee las memorias santo-edit-hotel-deploy
+y santo-edit-hotel-pms-build y docs/CONTINUAR-LIDOTEL.md del worktree.
+
+Reglas fijas:
+- Worktree: D:/Santo edit/.claude/worktrees/nice-visvesvaraya-5726a1 (rama
+  demo-lidotel). NUNCA desde D:\Santo edit. Deploy autorizado al terminar:
+  npx vercel --prod --scope carlos-projects8 DESDE el worktree.
+- Dev: el usuario corre npm run dev en 3000 (verificar con curl). NUNCA npm run
+  build con el dev vivo. Verificar con tsc + eslint + vitest --dir ./src + curl;
+  vistas con Edge headless + CDP (script shots.mjs del scratchpad; Claude in
+  Chrome no alcanza localhost). Claves staff en .env.local (header
+  x-admin-password + Origin http://localhost:3000; la clave lleva comillas en
+  el .env: quitarlas).
+- QA: node scripts/qa-hotel-completo.mjs (54) + qa-hotel-ronda2.mjs (20). NO
+  editar archivos mientras corren. OJO E2/E3: jamás meter un await entre
+  pickFreeRoomOfType y saveHotelReservation en /api/public/hotel.
+- Fases pequeñas: UN módulo por fase → commit → siguiente. Nada de tocar cinco
+  módulos a la vez.
+
+MÉTODO por módulo (checklist obligatoria, en este orden):
+1. ABRIR: captura con Edge/CDP logueado (sessionStorage
+   santo_perrito_owner_session) y mirarla de verdad.
+2. TEXTOS: ¿habla de hotel (huésped, habitación, room service) o quedó texto
+   de burger/restaurante? ¿Título, subtítulo, vacíos y errores en español neutro?
+3. FUNCIONALIDAD: ejercitar el flujo COMPLETO por API (crear → ver → editar →
+   borrar, con limpieza de datos de prueba). Si algo depende de otro módulo
+   (caja↔cierre, folio↔reservas, QR↔habitaciones), probar la CONEXIÓN.
+4. COHERENCIA: los números que muestra deben cuadrar con los de los módulos
+   hermanos (caja de hoy = cierre de hoy = reportes del día).
+5. ARREGLAR lo que falle/chirríe (estética champán fina incluida), tsc +
+   eslint + tests, commit con nombre del módulo.
+6. Marcar el módulo en la tabla de abajo (docs/CONTINUAR-LIDOTEL.md) con ✔ y
+   una línea de qué se arregló.
+
+ORDEN sugerido (los de dinero primero, luego operación, luego catálogo/público):
+1. Caja (recepción + restaurante)   2. Cierre de día   3. Reportes hotel
+4. Pagos y depósitos                5. Folio           6. Reservas hotel
+7. Reservas online                  8. Calendario      9. Habitaciones
+10. QR de habitaciones (mesas)     11. Housekeeping   12. Cocina (3 pestañas)
+13. Room service (delivery)        14. Tickets        15. Menú + Menú avanzado
+16. Servicios                      17. Paquetes       18. Cargo resort
+19. Reseñas                        20. CRM huéspedes  21. Portal huésped
+22. Notificaciones                 23. Página hotel   24. Tarifas/Temporadas/
+    Planes/Grupos/Canales          25. Facturación    26. Cierres/Historial
+27. Inventario/Alertas/Subrecetas/Proveedores/Compras/Cuentas por pagar
+28. Control de gastos              29. Clientes       30. Usuarios/Auditoría/
+    Sucursales/Configuración/Soporte/Dueño            31. Público: /hotel,
+    /hotel/reservar, /hotel/mi-reserva, /carta (QR), landing y checkout.
+
+Al terminar TODOS: vitest + QA 54/54 y 20/20 + capturas finales + deploy
+(npx vercel --prod) + verificación en vivo con curl. Actualizar esta tabla
+y las memorias.
+```
+
+### Tabla de auditoría (marcar al pasar cada módulo)
+
+| # | Módulo | Estado | Nota |
+|---|--------|--------|------|
+| 1 | Caja recepción/restaurante | ✔ 15 jul | cobros con detalle + cierre conectado |
+| 2 | Cierre de día | ✔ 15 jul | bloque caja recepción + nota en snapshot |
+| 3 | Reportes hotel | ✔ 15 jul | KPIs, gráficas, CSV |
+| 4 | Pagos y depósitos | ✔ 15 jul | métricas/filtros/contexto reserva |
+| 12 | Cocina (Restaurante/Habitaciones/Por producto) | ✔ 15 jul | fusionada, sin módulo duplicado |
+| 10 | QR de habitaciones | ✔ 15 jul | auto-generados desde Habitaciones |
+| 15 | Menú | ✔ 15 jul | 17 productos demo + promo + destacados |
+| — | resto | pendiente | usar el MÉTODO de arriba |
+
 
 ## Estado 2026-07-15 (tarde) — upsell, POS por áreas, reportes con gráficas
 
