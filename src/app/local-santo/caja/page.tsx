@@ -117,6 +117,12 @@ function CajaPageContent() {
   const [confirmingStaffOrderId, setConfirmingStaffOrderId] = useState<string | null>(null)
   const [attachingOpenAccountOrderId, setAttachingOpenAccountOrderId] = useState<string | null>(null)
   const [canSplitBill, setCanSplitBill] = useState(false)
+  // Encuesta post-venta por WhatsApp (configurable por el dueño).
+  const [postSaleSurvey, setPostSaleSurvey] = useState({
+    enabled: false,
+    message: "",
+    reviewUrl: "",
+  })
 
   const pendingStatusRef = useRef<Map<string, OrderStatus>>(new Map())
   const isLoggedIn = adminPassword.length > 0
@@ -147,6 +153,11 @@ function CajaPageContent() {
 
       setLocalTables(normalizeLocalTablesForMap(businessConfig.localTables))
       setCanSplitBill(Boolean(businessConfig.splitBillEnabled))
+      setPostSaleSurvey({
+        enabled: businessConfig.postSaleSurveyEnabled !== false,
+        message: String(businessConfig.postSaleSurveyMessage || ""),
+        reviewUrl: String(businessConfig.googleReviewUrl || ""),
+      })
     } catch {
       setLocalTables(DEFAULT_LOCAL_TABLES)
     }
@@ -1021,6 +1032,9 @@ function CajaPageContent() {
                 onResetStaffItems={() => resetStaffItems(order)}
                 isConfirmingStaff={confirmingStaffOrderId === order.id}
                 isAttachingToOpenAccount={attachingOpenAccountOrderId === order.id}
+                postSaleSurveyEnabled={postSaleSurvey.enabled}
+                postSaleSurveyMessage={postSaleSurvey.message}
+                googleReviewUrl={postSaleSurvey.reviewUrl}
               />
             ))}
           </section>

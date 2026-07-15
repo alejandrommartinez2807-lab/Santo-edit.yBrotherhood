@@ -122,6 +122,10 @@ export type BusinessConfig = {
   orderHelpWhatsappEnabled: boolean
   // Botones de aviso al cliente por WhatsApp en el panel privado, apagables.
   orderWhatsappStageButtonsEnabled: boolean
+  // Encuesta post-venta por WhatsApp (pedidos entregados). Mensaje vacío =
+  // plantilla estándar con mini encuesta.
+  postSaleSurveyEnabled: boolean
+  postSaleSurveyMessage: string
   exchangeRateMode: ExchangeRateMode
   manualExchangeRate: number
   deliveryEnabled: boolean
@@ -262,6 +266,8 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   deliveryWhatsapp: "",
   orderHelpWhatsappEnabled: true,
   orderWhatsappStageButtonsEnabled: true,
+  postSaleSurveyEnabled: true,
+  postSaleSurveyMessage: "",
   exchangeRateMode: "automatic",
   manualExchangeRate: 0,
   deliveryEnabled: true,
@@ -671,6 +677,11 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.orderWhatsappStageButtonsEnabled,
       DEFAULT_BUSINESS_CONFIG.orderWhatsappStageButtonsEnabled
     ),
+    postSaleSurveyEnabled: normalizeBooleanConfig(
+      source.postSaleSurveyEnabled,
+      DEFAULT_BUSINESS_CONFIG.postSaleSurveyEnabled
+    ),
+    postSaleSurveyMessage: String(source.postSaleSurveyMessage || "").trim(),
     deliveryEnabled: normalizeBooleanConfig(
       source.deliveryEnabled,
       DEFAULT_BUSINESS_CONFIG.deliveryEnabled

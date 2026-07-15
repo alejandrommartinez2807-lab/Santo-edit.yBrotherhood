@@ -37,6 +37,11 @@ export const SIMPLE_BUSINESS_CONFIG_FIELDS: readonly SimpleConfigField[] = [
   // Botones de aviso al cliente por WhatsApp (Confirmar/Preparación/Salida…)
   // en las tarjetas de delivery del panel privado.
   { key: "orderWhatsappStageButtonsEnabled", type: "boolean", default: true },
+  // Encuesta post-venta: botón en caja/pedidos que abre WhatsApp con una
+  // mini encuesta para pedidos entregados (delivery/pick up). El dueño puede
+  // apagarla o escribir su propio mensaje (vacío = plantilla estándar).
+  { key: "postSaleSurveyEnabled", type: "boolean", default: true },
+  { key: "postSaleSurveyMessage", type: "string", default: "" },
   // Apariencia (tema)
   { key: "themePrimaryColor", type: "string", default: "#a00000" },
   { key: "themeAccentColor", type: "string", default: "#ffd23c" },

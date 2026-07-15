@@ -153,6 +153,10 @@ type BusinessConfig = {
   orderHelpWhatsappEnabled: boolean;
   // Botones de aviso al cliente por WhatsApp en el panel privado, apagables.
   orderWhatsappStageButtonsEnabled: boolean;
+  // Encuesta post-venta por WhatsApp para pedidos entregados. Mensaje vacío =
+  // plantilla estándar.
+  postSaleSurveyEnabled: boolean;
+  postSaleSurveyMessage: string;
   exchangeRateMode: ExchangeRateMode;
   manualExchangeRate: number;
   deliveryEnabled: boolean;
@@ -313,6 +317,8 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   deliveryWhatsapp: "",
   orderHelpWhatsappEnabled: true,
   orderWhatsappStageButtonsEnabled: true,
+  postSaleSurveyEnabled: true,
+  postSaleSurveyMessage: "",
   exchangeRateMode: "automatic",
   manualExchangeRate: 0,
   deliveryEnabled: true,
@@ -980,6 +986,11 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.orderWhatsappStageButtonsEnabled,
       DEFAULT_BUSINESS_CONFIG.orderWhatsappStageButtonsEnabled,
     ),
+    postSaleSurveyEnabled: normalizeBoolean(
+      source.postSaleSurveyEnabled,
+      DEFAULT_BUSINESS_CONFIG.postSaleSurveyEnabled,
+    ),
+    postSaleSurveyMessage: String(source.postSaleSurveyMessage || "").trim(),
     exchangeRateMode: normalizeExchangeRateMode(source.exchangeRateMode),
     manualExchangeRate:
       Number.isFinite(manualExchangeRate) && manualExchangeRate > 0
@@ -2626,6 +2637,52 @@ export default function BusinessConfigPage() {
                 </span>
               </span>
             </label>
+
+            <label className="mt-3 flex items-start gap-3">
+              <input
+                type="checkbox"
+                checked={businessConfig.postSaleSurveyEnabled}
+                onChange={(e) =>
+                  setBusinessConfig((c) => ({
+                    ...c,
+                    postSaleSurveyEnabled: e.target.checked,
+                  }))
+                }
+                className="mt-0.5 h-5 w-5 accent-[var(--brand-primary)]"
+              />
+              <span>
+                <span className="block text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
+                  Encuesta post-venta por WhatsApp
+                </span>
+                <span className="mt-0.5 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                  En los pedidos ENTREGADOS de delivery y pick up, Caja y el
+                  panel de Pedidos muestran un botón que abre WhatsApp con una
+                  mini encuesta (¿qué tal estuvo?, ¿fue a tiempo?, ¿qué
+                  mejoramos?). Si configuraste el link de reseñas de Google,
+                  también lo incluye.
+                </span>
+              </span>
+            </label>
+
+            {businessConfig.postSaleSurveyEnabled && (
+              <div className="mt-3">
+                <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                  Mensaje propio de la encuesta (opcional)
+                </label>
+                <textarea
+                  value={businessConfig.postSaleSurveyMessage}
+                  onChange={(e) =>
+                    setBusinessConfig((c) => ({
+                      ...c,
+                      postSaleSurveyMessage: e.target.value,
+                    }))
+                  }
+                  rows={4}
+                  placeholder="Déjalo vacío para usar la encuesta estándar. Si escribes aquí, se envía exactamente este texto."
+                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                />
+              </div>
+            )}
           </SectionCard>
 
           <SectionCard

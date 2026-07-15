@@ -404,6 +404,9 @@ export type BusinessConfig = {
   // Botones de aviso al cliente por WhatsApp (Confirmar/Preparación/Salida…)
   // en las tarjetas de delivery del panel; el dueño puede apagarlos.
   orderWhatsappStageButtonsEnabled: boolean
+  // Encuesta post-venta por WhatsApp en pedidos entregados (configurable).
+  postSaleSurveyEnabled: boolean
+  postSaleSurveyMessage: string
   ownerDashboardModuleEnabled: boolean
   cashierModuleEnabled: boolean
   kitchenModuleEnabled: boolean
@@ -457,6 +460,8 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   customBlockedModules: [],
   deliveryEnabled: true,
   orderWhatsappStageButtonsEnabled: true,
+  postSaleSurveyEnabled: true,
+  postSaleSurveyMessage: "",
   ownerDashboardModuleEnabled: true,
   cashierModuleEnabled: true,
   kitchenModuleEnabled: true,
@@ -1818,6 +1823,38 @@ export function buildDeliveryWhatsAppUrl(
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
 }
 
+// Encuesta post-venta: mensaje corto para pedidos ENTREGADOS. Si el dueño
+// escribió su propio mensaje en Configuración se envía tal cual; vacío =
+// esta plantilla con mini encuesta. Espejo del builder de caja/domain.
+export function buildPostSaleSurveyWhatsAppUrl(
+  order: LocalOrder,
+  options: { customMessage?: string; reviewUrl?: string } = {}
+) {
+  const phone = normalizePhoneForWhatsApp(order.customerPhone || "")
+
+  if (!phone) return ""
+
+  const customMessage = String(options.customMessage || "").trim()
+  const message = customMessage
+    ? customMessage
+    : [
+        `Hola ${order.customerName || "cliente"}, somos ${BRAND.name}. ¡Gracias por tu pedido ${getDisplayOrderNumber(order)}!`,
+        "",
+        "Queremos mejorar y tu opinión nos ayuda muchísimo. ¿Nos regalas 30 segundos?",
+        "",
+        "1. Del 1 al 5, ¿qué tal estuvo tu pedido?",
+        "2. ¿La entrega fue a tiempo?",
+        "3. ¿Qué podemos mejorar?",
+        "",
+        "Responde por aquí mismo, leemos todo. 🙌",
+        ...(options.reviewUrl
+          ? ["", `Y si quieres apoyarnos, déjanos tu reseña: ${options.reviewUrl}`]
+          : []),
+      ].join("\n")
+
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+}
+
 // Texto para pasarle el pedido al repartidor por WhatsApp con UN solo copiado:
 // teléfono del cliente, link de la dirección y un resumen corto de qué lleva.
 // Sin montos ni estado de pago: al repartidor no le interesan (pedido del
@@ -2259,6 +2296,11 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.orderWhatsappStageButtonsEnabled,
       DEFAULT_BUSINESS_CONFIG.orderWhatsappStageButtonsEnabled
     ),
+    postSaleSurveyEnabled: normalizeBooleanConfig(
+      source.postSaleSurveyEnabled,
+      DEFAULT_BUSINESS_CONFIG.postSaleSurveyEnabled
+    ),
+    postSaleSurveyMessage: String(source.postSaleSurveyMessage || "").trim(),
     deliveryEnabled: normalizeBooleanConfig(
       source.deliveryEnabled,
       DEFAULT_BUSINESS_CONFIG.deliveryEnabled
