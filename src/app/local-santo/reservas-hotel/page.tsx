@@ -19,6 +19,9 @@ import {
   X,
 } from "lucide-react"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
+import ReservationNotifyButtons, {
+  reservationNotifyKey,
+} from "@/components/local/ReservationNotifyButtons"
 import {
   HOTEL_RESERVATION_STATUS_LABELS,
   findRoomStayConflict,
@@ -101,6 +104,29 @@ function ReservasHotelContent() {
   const [error, setError] = useState("")
   const [busy, setBusy] = useState(false)
 
+  // Avisos WhatsApp integrados: log de enviados (si el módulo de
+  // notificaciones está apagado, la botonera simplemente no aparece).
+  const [notifyLog, setNotifyLog] = useState<{ reservationId: string; kind: string }[] | null>(null)
+
+  const loadNotifyLog = useCallback(async () => {
+    try {
+      const res = await fetch("/api/notifications", { headers: authHeaders(), cache: "no-store" })
+      if (!res.ok) {
+        setNotifyLog(null)
+        return
+      }
+      const data = await res.json()
+      setNotifyLog(Array.isArray(data.log) ? data.log : [])
+    } catch {
+      setNotifyLog(null)
+    }
+  }, [])
+
+  const sentNotifyKeys = useMemo(
+    () => new Set((notifyLog || []).map((l) => reservationNotifyKey(l.reservationId, l.kind))),
+    [notifyLog],
+  )
+
   const [checkIn, setCheckIn] = useState(todayISO())
   const [checkOut, setCheckOut] = useState(addDaysISO(todayISO(), 1))
   const [guestName, setGuestName] = useState("")
@@ -140,9 +166,12 @@ function ReservasHotelContent() {
   }, [])
 
   useEffect(() => {
-    const timer = setTimeout(load, 0)
+    const timer = setTimeout(() => {
+      load()
+      loadNotifyLog()
+    }, 0)
     return () => clearTimeout(timer)
-  }, [load])
+  }, [load, loadNotifyLog])
 
   const nights = useMemo(() => nightsBetween(checkIn, checkOut), [checkIn, checkOut])
   const validRange = useMemo(() => isValidStayRange({ checkIn, checkOut }), [checkIn, checkOut])
@@ -666,6 +695,22 @@ function ReservasHotelContent() {
                         <Trash2 size={16} />
                       </button>
                     </div>
+
+                    {/* Avisos WhatsApp sin salir de reservas (confirmación,
+                        recordatorio, post-estadía) con su registro de enviados. */}
+                    {notifyLog !== null &&
+                      reservation.status !== "cancelada" &&
+                      reservation.status !== "no_show" && (
+                        <div className="mt-2.5 border-t border-[var(--brand-primary)]/10 pt-2.5">
+                          <ReservationNotifyButtons
+                            reservation={reservation}
+                            sentKeys={sentNotifyKeys}
+                            authHeaders={authHeaders}
+                            onLogged={loadNotifyLog}
+                            onError={setError}
+                          />
+                        </div>
+                      )}
 
                     {/* Edición en sitio: extender estadía, cambiar habitación,
                         fechas o tarifa. El servidor valida solapes (409). */}

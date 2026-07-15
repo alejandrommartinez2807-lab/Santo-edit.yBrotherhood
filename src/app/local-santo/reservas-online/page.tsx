@@ -4,6 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, CalendarRange, ExternalLink, Globe, Loader2 } from "lucide-react"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
+import ReservationNotifyButtons, {
+  reservationNotifyKey,
+} from "@/components/local/ReservationNotifyButtons"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -56,6 +59,28 @@ function ReservasOnlineContent() {
   const [error, setError] = useState("")
   const [publicUrl, setPublicUrl] = useState("/hotel/reservar")
 
+  // Avisos WhatsApp integrados (mismo log que el módulo Notificaciones).
+  const [notifyLog, setNotifyLog] = useState<{ reservationId: string; kind: string }[] | null>(null)
+
+  const loadNotifyLog = useCallback(async () => {
+    try {
+      const res = await fetch("/api/notifications", { headers: authHeaders(), cache: "no-store" })
+      if (!res.ok) {
+        setNotifyLog(null)
+        return
+      }
+      const data = await res.json()
+      setNotifyLog(Array.isArray(data.log) ? data.log : [])
+    } catch {
+      setNotifyLog(null)
+    }
+  }, [])
+
+  const sentNotifyKeys = useMemo(
+    () => new Set((notifyLog || []).map((l) => reservationNotifyKey(l.reservationId, l.kind))),
+    [notifyLog],
+  )
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setPublicUrl(`${window.location.origin}/hotel/reservar`)
@@ -89,9 +114,12 @@ function ReservasOnlineContent() {
   }, [])
 
   useEffect(() => {
-    const timer = setTimeout(load, 0)
+    const timer = setTimeout(() => {
+      load()
+      loadNotifyLog()
+    }, 0)
     return () => clearTimeout(timer)
-  }, [load])
+  }, [load, loadNotifyLog])
 
   const webReservations = useMemo(
     () => reservations.filter((r) => r.source === "web"),
@@ -196,6 +224,21 @@ function ReservasOnlineContent() {
                         {STATUS_LABELS[r.status] || r.status}
                       </span>
                     </div>
+
+                    {/* Avisos WhatsApp aquí mismo: la reserva web entra
+                        pendiente y el aviso de confirmación sale sin cambiar
+                        de módulo. */}
+                    {notifyLog !== null && r.status !== "cancelada" && r.status !== "no_show" && (
+                      <div className="mt-2.5 border-t border-[var(--brand-primary)]/10 pt-2.5">
+                        <ReservationNotifyButtons
+                          reservation={r}
+                          sentKeys={sentNotifyKeys}
+                          authHeaders={authHeaders}
+                          onLogged={loadNotifyLog}
+                          onError={setError}
+                        />
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>

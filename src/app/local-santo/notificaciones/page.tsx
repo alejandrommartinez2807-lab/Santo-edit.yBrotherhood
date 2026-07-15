@@ -98,7 +98,10 @@ function NotificacionesContent() {
           <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-accent)] text-[var(--brand-primary)]"><Bell size={24} /></span>
           <div>
             <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Notificaciones</h1>
-            <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">Envía el aviso por WhatsApp con el mensaje ya listo.</p>
+            <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
+              Envía el aviso por WhatsApp con el mensaje ya listo. También puedes enviarlos
+              directo desde <b>Reservas del hotel</b> y <b>Reservas online</b>, sin venir aquí.
+            </p>
           </div>
         </div>
 
