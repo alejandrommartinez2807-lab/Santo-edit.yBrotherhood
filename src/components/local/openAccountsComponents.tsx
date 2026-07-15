@@ -2,7 +2,8 @@
 
 // Piezas visuales reutilizables del panel de cuentas abiertas.
 
-import type { OpenAccountOrderSummary } from "@/types/localOrders";
+import { CheckCircle2, Circle } from "lucide-react";
+import type { OpenAccountOrderSummary, OrderItem } from "@/types/localOrders";
 
 function MiniStat({
   label,
@@ -62,10 +63,23 @@ function OrderPill({
   );
 }
 
-function OrderItemsPreview({ order }: { order: OpenAccountOrderSummary }) {
+function OrderItemsPreview({
+  order,
+  onToggleItemDelivered,
+  isTogglingDelivered = false,
+}: {
+  order: OpenAccountOrderSummary;
+  // Si llega el callback, cada producto muestra su check "entregado" para ir
+  // marcando lo que ya se llevó a la mesa (columnas 0026).
+  onToggleItemDelivered?: (item: OrderItem, delivered: boolean) => void;
+  isTogglingDelivered?: boolean;
+}) {
+  const items = Array.isArray(order.items) ? order.items : [];
+  const canToggleItems = Boolean(onToggleItemDelivered) && items.length > 0;
+
   const itemLines =
-    Array.isArray(order.items) && order.items.length > 0
-      ? order.items.map((item) => {
+    items.length > 0
+      ? items.map((item) => {
           const details = [
             item.selectionSummary,
             item.note ? `Nota: ${item.note}` : "",
@@ -87,6 +101,74 @@ function OrderItemsPreview({ order }: { order: OpenAccountOrderSummary }) {
       <p className="mt-2 rounded-xl border border-dashed border-[var(--brand-primary)]/20 bg-white px-3 py-2 text-[0.7rem] font-bold text-[var(--brand-ink-2)]/55">
         Sin detalle de productos guardado en esta cuenta.
       </p>
+    );
+  }
+
+  if (canToggleItems) {
+    const deliveredCount = items.filter((item) => Boolean(item.deliveredAt)).length;
+
+    return (
+      <div className="mt-2 rounded-xl border border-[var(--brand-primary)]/15 bg-white px-3 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[0.58rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]/75">
+            Productos
+          </p>
+          <span
+            className={`rounded-full px-2 py-0.5 text-[0.58rem] font-black uppercase tracking-[0.08em] ${
+              deliveredCount === items.length
+                ? "bg-green-100 text-green-700"
+                : "bg-[var(--brand-cream)] text-[var(--brand-ink-2)]/70"
+            }`}
+          >
+            {deliveredCount}/{items.length} entregados
+          </span>
+        </div>
+        <ul className="mt-1.5 space-y-1.5">
+          {items.map((item, index) => {
+            const delivered = Boolean(item.deliveredAt);
+            const details = [
+              item.selectionSummary,
+              item.note ? `Nota: ${item.note}` : "",
+            ]
+              .filter(Boolean)
+              .join(" · ");
+
+            return (
+              <li key={`${order.id}-item-${item.cartLineId || index}`}>
+                <button
+                  type="button"
+                  onClick={() => onToggleItemDelivered?.(item, !delivered)}
+                  disabled={isTogglingDelivered}
+                  title={
+                    delivered
+                      ? `Entregado${item.deliveredBy ? ` por ${item.deliveredBy}` : ""} · toca para desmarcar`
+                      : "Toca cuando lo entregues al cliente"
+                  }
+                  className={`flex w-full items-start gap-2 rounded-xl border px-2.5 py-1.5 text-left text-[0.72rem] font-bold leading-5 transition disabled:opacity-50 ${
+                    delivered
+                      ? "border-green-600/40 bg-green-50 text-green-800"
+                      : "border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] text-[var(--brand-ink-2)]/80 hover:border-[var(--brand-primary)]/40"
+                  }`}
+                >
+                  {delivered ? (
+                    <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-green-600" />
+                  ) : (
+                    <Circle size={15} className="mt-0.5 shrink-0 opacity-40" />
+                  )}
+                  <span className="min-w-0">
+                    <span className={delivered ? "line-through decoration-green-600/50" : ""}>
+                      {item.quantity}x {item.name}
+                    </span>
+                    {details ? (
+                      <span className="block text-[0.66rem] opacity-70">{details}</span>
+                    ) : null}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     );
   }
 
