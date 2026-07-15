@@ -7,6 +7,8 @@ import {
 } from "@/lib/orders"
 import { resolveBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
+import { syncRoomQrTables } from "@/lib/hotelRoomQrSync"
+import { captureError } from "@/lib/monitoring"
 
 import { checkRoomsAccess } from "../guard"
 
@@ -95,6 +97,10 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       await deleteRoomType(targetId, branchId)
     } else {
       await deleteRoom(targetId, branchId)
+      // Su mesa-QR desaparece con ella.
+      await syncRoomQrTables(branchId).catch((error) =>
+        captureError(error, { route: "/api/rooms/[id]", action: "sync-room-qr" }),
+      )
     }
 
     return NextResponse.json({ ok: true })

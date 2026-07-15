@@ -132,6 +132,19 @@ function CajaPageContent() {
   const isLoggedIn = adminPassword.length > 0
   const soundControls = useOperationalSounds({ adminPassword })
 
+  // En hotel, la caja del RESTAURANTE no muestra las mesas-QR de las
+  // habitaciones (esas viven en el módulo QR de habitaciones); los pedidos de
+  // room service igual llegan y se cobran aquí.
+  const restaurantTables = useMemo(
+    () =>
+      hotelMode
+        ? localTables.filter(
+            (table) => String(table.area || "").trim().toLowerCase() !== "habitaciones",
+          )
+        : localTables,
+    [localTables, hotelMode],
+  )
+
   useOrderSoundAlerts(orders, {
     module: "cashier",
     enabled: isLoggedIn && soundControls.isSoundEnabled,
@@ -891,7 +904,7 @@ function CajaPageContent() {
           {showTablesMap ? (
             <div className="mt-3">
               <LocalTablesMap
-                tables={localTables}
+                tables={restaurantTables}
                 orders={orders}
                 openAccounts={openAccounts}
                 compact
@@ -936,7 +949,7 @@ function CajaPageContent() {
           {showQrLinks ? (
             <div className="mt-3">
               <LocalTableQrLinksPanel
-                tables={localTables}
+                tables={restaurantTables}
                 compact
                 title="QR y enlaces por mesa"
                 description="Copia enlaces de mesa para imprimirlos como QR o enviarlos al cliente. Caja sigue registrando los cobros reales desde cada pedido."
@@ -963,7 +976,7 @@ function CajaPageContent() {
           title="Cuentas abiertas de caja"
           description="Revisa todo lo asociado a cada mesa, cobra la cuenta completa en un solo paso y ciérrala solo cuando la mesa termine."
           closeRoleLabel="Caja"
-          tableOptions={localTables.map((table) => table.name)}
+          tableOptions={restaurantTables.map((table) => table.name)}
           preferredTableName={selectedCashTableName}
           onOrdersShouldRefresh={() => {
             loadOrders(adminPassword, true)

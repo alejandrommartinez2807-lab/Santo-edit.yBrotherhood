@@ -114,10 +114,20 @@ function MesasContent() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState("");
 
-  const activeTables = useMemo(
-    () => normalizeLocalTablesForMap(localTables, DEFAULT_LOCAL_TABLES).filter((table) => table.isActive !== false),
-    [localTables],
-  );
+  const activeTables = useMemo(() => {
+    const tables = normalizeLocalTablesForMap(localTables, DEFAULT_LOCAL_TABLES).filter(
+      (table) => table.isActive !== false,
+    );
+    // En hotel este módulo es SOLO de habitaciones: sus QR se generan
+    // automáticamente al crear cada habitación (área "Habitaciones"). Los QR
+    // de las mesas del restaurante viven en Caja → Restaurante.
+    if (hotelMode) {
+      return tables.filter(
+        (table) => String(table.area || "").trim().toLowerCase() === "habitaciones",
+      );
+    }
+    return tables;
+  }, [localTables, hotelMode]);
   const localOrders = useMemo(() => orders.filter(isLocalOrder), [orders]);
   const activeLocalOrders = useMemo(() => orders.filter(isActiveLocalOrder), [orders]);
   const activeOpenAccounts = useMemo(
@@ -248,14 +258,14 @@ function MesasContent() {
 
               <p className="mt-5 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 <Table2 size={18} />
-                {hotelMode ? "QR por habitación y mesa" : "Mesas y QR"}
+                {hotelMode ? "QR de habitaciones" : "Mesas y QR"}
               </p>
               <h1 className="font-serif mt-2 text-3xl text-[var(--brand-ink-3)] sm:text-4xl font-semibold">
                 {businessName}
               </h1>
               <p className="mt-3 max-w-3xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
                 {hotelMode
-                  ? "Panel para preparar los QR de room service: imprime uno por habitación (o mesa del restaurante) y el huésped pide desde su teléfono con la ubicación preseleccionada."
+                  ? "Un QR por habitación, generado AUTOMÁTICAMENTE al crear cada habitación (y se retira solo al eliminarla). Imprime la tarjeta y el huésped pide room service con su habitación ya cargada. Los QR de las mesas del restaurante están en Caja → Restaurante."
                   : "Panel para revisar el estado de mesas y preparar enlaces imprimibles. Los QR abren el menú público con la mesa preseleccionada."}
               </p>
             </div>
@@ -284,7 +294,9 @@ function MesasContent() {
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5 print:grid-cols-5">
             <div className="rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">Mesas activas</p>
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">
+                {hotelMode ? "Habitaciones con QR" : "Mesas activas"}
+              </p>
               <p className="mt-2 text-3xl font-bold text-[var(--brand-ink-3)]">{activeTables.length}</p>
             </div>
             <div className="rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">

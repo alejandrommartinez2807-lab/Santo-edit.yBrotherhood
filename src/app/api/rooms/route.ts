@@ -11,6 +11,8 @@ import {
 import { normalizeRoomTypePhotos } from "@/lib/ordersStoreRooms"
 import { resolveBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
+import { syncRoomQrTables } from "@/lib/hotelRoomQrSync"
+import { captureError } from "@/lib/monitoring"
 
 import { checkRoomsAccess } from "./guard"
 
@@ -142,6 +144,11 @@ export async function POST(request: NextRequest) {
         },
         branchId,
       )
+      // El QR de cada habitación nueva se genera solo (mesas del área
+      // Habitaciones); si falla, la creación de habitaciones no se cae.
+      await syncRoomQrTables(branchId).catch((error) =>
+        captureError(error, { route: "/api/rooms", action: "sync-room-qr" }),
+      )
       return NextResponse.json(
         { ok: true, created: result.created, skipped: result.skipped },
         { status: 201 },
@@ -155,6 +162,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Escribe el número o nombre de la habitación" }, { status: 400 })
     }
     const room = await saveRoom(input, branchId)
+    await syncRoomQrTables(branchId).catch((error) =>
+      captureError(error, { route: "/api/rooms", action: "sync-room-qr" }),
+    )
     return NextResponse.json({ ok: true, room }, { status: input.id ? 200 : 201 })
   } catch (error) {
     return NextResponse.json(
