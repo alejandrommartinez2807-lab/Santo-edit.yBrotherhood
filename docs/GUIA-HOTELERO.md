@@ -40,9 +40,18 @@
 ## 4. Servicios del resort, paquetes y cargos
 
 - **Panel → Servicios**: catálogo (spa, tours, salón…) con precio y cupo por
-  franja. Se muestran en la página pública automáticamente.
+  franja. Se muestran en la página pública automáticamente y el cliente puede
+  **reservarlos desde la landing**: con el código de su reserva quedan
+  asociados a su cuenta (aparecen en el folio al check-in); sin código quedan
+  a su nombre y teléfono.
 - **Panel → Paquetes**: combos estadía+servicios que se aplican a una reserva
-  en un clic (cargan al folio).
+  en un clic (cargan al folio). También se **ofrecen al reservar en línea**.
+- **Extras al reservar** (Panel → Página hotel → "Extras al reservar"): decide
+  si el motor ofrece servicios y/o paquetes, con **foto editable por ítem**
+  (pega el enlace) o en modo **"solo texto"** si prefieres menciones sobrias.
+- **Incluido con la habitación** (Página hotel → detalle por tipo): lo que ya
+  viene con la tarifa (desayuno, wifi…) sale como lista verde "Incluido con tu
+  habitación" en cada tarjeta del motor de reservas.
 - **Panel → Cargo resort**: cargar consumos de bar/spa/tienda al folio del
   huésped en casa. El restaurante (POS) también puede cargar pedidos al folio.
 
@@ -52,23 +61,42 @@
    escaneado del QR** que el huésped recibe al reservar en línea. Con
    **Editar** puedes extender la estadía, cambiar de habitación, fechas o
    tarifa — el sistema recalcula el total y rechaza el cambio si la otra
-   habitación está ocupada (te dice por quién).
+   habitación está ocupada (te dice por quién). Cada reserva trae la botonera
+   de **avisos WhatsApp** (confirmación / recordatorio / post-estadía) con su
+   check de "ya enviado" — sin ir al módulo Notificaciones.
 2. **Folio**: al hacer check-in se abre el folio con el cargo de habitación;
    agrega consumos y pagos. El **check-out exige saldo $0** (o confirmación
    explícita) y encola la limpieza de salida solo.
-3. **Limpieza**: tablero por habitación con tareas y estados.
-4. **Bloqueos** (Panel → Grupos): aparta habitaciones por mantenimiento o
+3. **Caja del hotel** (Panel → Caja): dos submódulos. **Caja recepción** cobra
+   estadías — salidas del día con su saldo, huéspedes en casa, cobro en un
+   modal (con check-out opcional al saldar), depósitos por confirmar y lo
+   cobrado hoy por método. **Caja restaurante** es el POS de siempre.
+4. **Cocina del hotel** (Panel → Cocina): submódulos **Restaurante** y
+   **Habitaciones** para que el room service no se mezcle con las mesas. Un
+   pedido cuenta como habitación cuando su ubicación se llama "Habitación
+   101", "Hab 5", "Suite 2"… (así nombras sus QR en Sucursales → Mesas y QR).
+5. **Pagos y depósitos**: anticipos de reservas con métricas, filtros,
+   "abonado X de Y" por reserva y atajos 50%/restante al registrar.
+6. **Limpieza**: tablero por habitación con tareas y estados.
+7. **Bloqueos** (Panel → Grupos): aparta habitaciones por mantenimiento o
    eventos; dejan de venderse en la página pública ese rango.
-5. **Cierre de día** y **Reportes hotel** (ocupación, ADR, RevPAR) para el dueño.
-6. **Facturación**: factura desde el folio con número correlativo e IVA.
+8. **Cierre de día** y **Reportes hotel**: ocupación/ADR/RevPAR con deltas vs
+   el periodo anterior, gráficas por noche, canales web/recepción, facturado
+   en folios por categoría, cobros por método, tabla diaria y descarga CSV.
+9. **Facturación**: factura desde el folio con número correlativo e IVA.
 
 ## 6. La página pública (lo que ve el cliente)
 
 - **Panel → Página hotel**: edita titular, descripción, amenidades, contacto y
   horarios. Cambios visibles al instante.
-- El cliente: consulta disponibilidad → reserva → recibe **código + QR** → puede
-  volver a **Mi reserva** (se recuerda solo en su teléfono) → deja reseña al
-  salir. Las reseñas se moderan en **Panel → Reseñas** antes de publicarse.
+- **Reseñas estilo Google**: en Página hotel publica el total real de tu ficha
+  (cantidad, calificación y enlace); la landing muestra "4.6 · 2.350 opiniones
+  · Ver en Google" y deja **solo 5 reseñas visibles**. En 0 usa las internas.
+- El cliente: consulta disponibilidad → ve qué **incluye** cada habitación →
+  agrega **servicios y paquetes** (quedan asociados a su reserva y se cargan a
+  su cuenta en el hotel) → recibe **código + QR** → puede volver a **Mi
+  reserva** (ve sus servicios y puede agregar más) → deja reseña al salir.
+  Las reseñas se moderan en **Panel → Reseñas** antes de publicarse.
 - Protecciones ya probadas: fechas inválidas/pasadas rechazadas, doble reserva
   imposible (si dos clientes pelean la última habitación, solo uno gana), tipos
   agotados dejan de ofrecerse, límite de reservas por minuto contra abuso.

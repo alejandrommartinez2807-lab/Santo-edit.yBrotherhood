@@ -1,4 +1,56 @@
-# Continuar el demo Lidotel — prompt + backlog (v4 · 2026-07-15)
+# Continuar el demo Lidotel — prompt + backlog (v5 · 2026-07-15)
+
+## Estado 2026-07-15 (tarde) — upsell, POS por áreas, reportes con gráficas
+
+Hecho en esta sesión (commits 143200e…5c045a8, TODO verificado con tsc +
+eslint + 403 tests + QA 54/54 y 20/20 + capturas Edge/CDP):
+
+- **Extras al reservar**: el motor público ofrece SERVICIOS y PAQUETES del
+  hotel (config `hotelUpsell` en business_config, sin migración): foto
+  editable por ítem o modo "solo texto"; editor en Página del hotel. Los
+  servicios elegidos se crean como `service_bookings` VINCULADOS a la reserva
+  (aparecen en el folio al check-in); el paquete va en la nota. Totales de
+  extras separados ("se pagan en el hotel").
+- **Incluido con la habitación**: campo `includes` por tipo
+  (hotelRoomTypeDetails) → lista verde en cada tarjeta del motor.
+- **Reservar servicios desde la landing**: formulario inline por servicio
+  (fecha/hora/personas); con código de reserva + teléfono queda asociado a la
+  cuenta del huésped (valida últimos 4 dígitos y cupo por franja); sin código,
+  a nombre y teléfono. POST público nuevo en /api/public/hotel/services.
+  Mi reserva muestra los servicios de la estadía y permite agregar más.
+- **Reseñas estilo Google**: googleReviewsCount/Rating/Url en hotelSiteExtras
+  (editor en Página del hotel); la landing muestra el total de la ficha con
+  "Ver en Google" y deja solo 5 visibles. Demo: 4.6 · 2.350 (corregible).
+- **Pagos y depósitos**: métricas, filtros (estado/método/búsqueda), contexto
+  por reserva (abonado X de Y, atajos 50%/restante), fechas y referencias.
+- **Reportes del hotel**: KPIs con delta vs periodo anterior, línea de
+  ocupación por noche + columnas de ingreso (SVG propio con crosshair y
+  tooltip; paleta validada #a5762f/#2f6bb0), canales web/recepción, facturado
+  en folios por categoría, tipos más vendidos, cobros por método, estancia
+  media/huéspedes/cancelaciones, tabla diaria y CSV. Lib pura en
+  hotelReports.ts con tests. API ampliada (periodo previo, folio en rango).
+- **Caja del hotel**: submódulos con pestañas — CAJA RECEPCIÓN (nuevo
+  /api/folios/summary: en casa con saldo de folio, salidas de hoy, llegadas,
+  depósitos por confirmar, cobrado hoy por método; cobro en modal con
+  check-out opcional; "Abrir folio" si falta) y CAJA RESTAURANTE (POS igual).
+  Roles: "cashier" añadido a folios y reservation-payments (recepcion tenía
+  el módulo folio pero el rol lo bloqueaba — bug latente corregido).
+- **Cocina del hotel**: submódulos RESTAURANTE y HABITACIONES por ubicación
+  del pedido (helper puro hotelPos.isRoomServiceLocation, testeado); contador
+  de pedidos vivos por pestaña; mesas demo "Habitación 101/102" agregadas.
+- **Notificaciones integradas**: botonera WhatsApp (confirmación/recordatorio/
+  post) en cada tarjeta de Reservas del hotel y Reservas online, con aviso
+  sugerido por estado y check de enviado (mismo log del módulo).
+- **Fix carrera reservas**: el catálogo de extras había ensanchado la ventana
+  del doble-booking (QA E2/E3) → catálogo al Promise.all inicial + doble
+  chequeo optimista post-insert (gana created_at más antiguo; el rival se
+  revierte con 409). NO meter awaits entre pickFreeRoomOfType y el insert.
+
+Pendiente sugerido: subir fotos propias para servicios/paquetes (hoy sin
+foto usan icono), corregir el conteo real de Google Maps, y DEPLOY a
+hotel-valencia.vercel.app cuando el dueño lo pida (npx vercel --prod --scope
+carlos-projects8 desde el worktree).
+
 
 ## PROMPT v4 (copiar/pegar en la otra cuenta) — rediseño 5★ del panel /admin
 
