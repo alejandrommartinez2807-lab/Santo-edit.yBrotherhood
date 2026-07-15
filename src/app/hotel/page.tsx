@@ -35,7 +35,10 @@ import type { LucideIcon } from "lucide-react"
 import { BRAND } from "@/lib/brand"
 import PhotoLightbox from "./PhotoLightbox"
 
-const HERO = "/demo/lidotel/lidotel-hero.png"
+// Portada optimizada: webp liviano para escritorio y un recorte VERTICAL para
+// teléfonos (el png original pesaba 3 MB y en móvil se estiraba borroso).
+const HERO = "/demo/lidotel/lidotel-hero.webp"
+const HERO_MOBILE = "/demo/lidotel/lidotel-hero-movil.webp"
 
 const EXPERIENCE = [
   { icon: MapPin, title: "Ubicación privilegiada", text: "En el corazón de Valencia, a minutos de todo." },
@@ -153,6 +156,16 @@ export default function HotelLandingPage() {
   const [svcBusy, setSvcBusy] = useState(false)
   const [svcError, setSvcError] = useState("")
   const [svcDone, setSvcDone] = useState<ServiceBookingDone | null>(null)
+
+  // El botón flotante de WhatsApp aparece solo cuando el visitante ya bajó un
+  // poco (no encima de la portada) y se esconde al volver arriba.
+  const [showWhatsappFloat, setShowWhatsappFloat] = useState(false)
+  useEffect(() => {
+    const onScroll = () => setShowWhatsappFloat(window.scrollY > 320)
+    onScroll()
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
 
   // Lightbox: lista de fotos activa + índice inicial (null = cerrado).
   const [lightbox, setLightbox] = useState<{ photos: RoomTypePhoto[]; index: number } | null>(null)
@@ -322,21 +335,44 @@ export default function HotelLandingPage() {
   return (
     <main>
       {/* ==================== HERO cinematográfico ==================== */}
-      <section className="relative isolate min-h-[92vh] overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={heroUrl} alt={BRAND.name} className="absolute inset-0 -z-10 h-full w-full object-cover" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/60 via-black/50 to-black/45" />
+      {/* svh: en el teléfono la barra del navegador no hace saltar la portada */}
+      <section className="relative isolate min-h-[88svh] overflow-hidden sm:min-h-[92vh]">
+        {extras?.heroUrl ? (
+          // Portada personalizada por el dueño: una sola imagen.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={extras.heroUrl}
+            alt={BRAND.name}
+            fetchPriority="high"
+            className="absolute inset-0 -z-10 h-full w-full object-cover"
+          />
+        ) : (
+          // Portada de fábrica con recorte pensado para cada pantalla: en el
+          // teléfono se sirve la versión vertical (el edificio bien encuadrado
+          // y sin estirar la foto apaisada).
+          <picture>
+            <source media="(max-width: 640px)" srcSet={HERO_MOBILE} />
+            { }
+            <img
+              src={HERO}
+              alt={BRAND.name}
+              fetchPriority="high"
+              className="absolute inset-0 -z-10 h-full w-full object-cover"
+            />
+          </picture>
+        )}
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/60 via-black/40 to-black/55 sm:via-black/50 sm:to-black/45" />
         <div className="absolute inset-x-0 bottom-0 -z-10 h-36 bg-gradient-to-t from-[var(--brand-cream)] to-transparent" />
 
-        <div className="mx-auto flex min-h-[92vh] max-w-4xl flex-col items-center justify-center px-6 py-28 text-center">
+        <div className="mx-auto flex min-h-[88svh] max-w-4xl flex-col items-center justify-center px-6 py-24 text-center sm:min-h-[92vh] sm:py-28">
           {starCount > 0 && (
-            <div className="flex items-center gap-1.5 text-[var(--brand-primary)]">
+            <div className="flex items-center gap-1.5 text-[var(--brand-primary)] drop-shadow-[0_1px_6px_rgba(0,0,0,0.55)]">
               {Array.from({ length: starCount }).map((_, i) => (
                 <Star key={i} size={16} fill="currentColor" strokeWidth={0} />
               ))}
             </div>
           )}
-          <p className="mt-5 text-[0.72rem] font-bold uppercase tracking-[0.32em] text-[#e6cf9a]">
+          <p className="mt-5 text-[0.72rem] font-bold uppercase tracking-[0.32em] text-[#e6cf9a] drop-shadow-[0_1px_8px_rgba(0,0,0,0.65)]">
             {tagline}
           </p>
           <h1 className="mt-5 font-serif text-6xl font-semibold leading-[1] text-white drop-shadow-lg sm:text-7xl md:text-8xl">
@@ -561,7 +597,7 @@ export default function HotelLandingPage() {
       {/* ==================== Banda de invitación (parallax) ==================== */}
       <section className="relative isolate overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={heroUrl} alt="" className="absolute inset-0 -z-10 h-full w-full object-cover" />
+        <img src={heroUrl} alt="" loading="lazy" className="absolute inset-0 -z-10 h-full w-full object-cover" />
         <div className="absolute inset-0 -z-10 bg-black/70" />
         <div className="mx-auto max-w-3xl px-6 py-28 text-center">
           <Sparkles className="mx-auto text-[var(--brand-primary)]" size={28} />
@@ -921,14 +957,21 @@ export default function HotelLandingPage() {
         </Link>
       </section>
 
-      {/* ==================== WhatsApp flotante ==================== */}
+      {/* ==================== WhatsApp flotante ====================
+          Aparece solo después de bajar un poco (no tapa la portada). */}
       {whatsappUrl && (
         <a
           href={whatsappUrl}
           target="_blank"
           rel="noreferrer"
           aria-label="Escríbenos por WhatsApp"
-          className="fixed bottom-5 right-5 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#25d366] text-white shadow-lg shadow-black/25 transition-transform hover:scale-105"
+          aria-hidden={!showWhatsappFloat}
+          tabIndex={showWhatsappFloat ? 0 : -1}
+          className={`fixed bottom-5 right-5 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#25d366] text-white shadow-lg shadow-black/25 transition-all duration-300 hover:scale-105 ${
+            showWhatsappFloat
+              ? "translate-y-0 opacity-100"
+              : "pointer-events-none translate-y-6 opacity-0"
+          }`}
         >
           <MessageCircle size={26} />
         </a>
