@@ -49,6 +49,8 @@ const NAV_ENTRIES: NavEntry[] = [
   { key: "roles", label: "Usuarios", href: "/local-santo/usuarios" },
   { key: "branches", label: "Sucursales", href: "/local-santo/sucursales" },
   { key: "auditLog", label: "Auditoría", href: "/local-santo/auditoria" },
+  // Resultados de la encuesta post-venta (misma visibilidad que "Dueño").
+  { key: "ownerDashboard", label: "Encuestas", href: "/local-santo/encuestas" },
   { key: "settings", label: "Configuración", href: "/local-santo/configuracion" },
   { key: "support", label: "Soporte", href: "/local-santo/soporte" },
 ]

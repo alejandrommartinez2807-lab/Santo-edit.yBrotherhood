@@ -1827,8 +1827,9 @@ export function buildDeliveryWhatsAppUrl(
 }
 
 // Encuesta post-venta: mensaje corto para pedidos ENTREGADOS. Si el dueño
-// escribió su propio mensaje en Configuración se envía tal cual; vacío =
-// esta plantilla con mini encuesta. Espejo del builder de caja/domain.
+// escribió su propio mensaje en Configuración se envía tal cual (el link de
+// la encuesta se agrega igual); vacío = esta plantilla. Espejo del builder
+// de caja/domain.
 export function buildPostSaleSurveyWhatsAppUrl(
   order: LocalOrder,
   options: { customMessage?: string; reviewUrl?: string } = {}
@@ -1837,19 +1838,30 @@ export function buildPostSaleSurveyWhatsAppUrl(
 
   if (!phone) return ""
 
+  const surveyUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/encuesta/${order.id}`
+      : ""
+
   const customMessage = String(options.customMessage || "").trim()
   const message = customMessage
-    ? customMessage
+    ? surveyUrl
+      ? [customMessage, "", `Califícanos aquí (1 minuto): ${surveyUrl}`].join("\n")
+      : customMessage
     : [
         `Hola ${order.customerName || "cliente"}, somos ${BRAND.name}. ¡Gracias por tu pedido ${getDisplayOrderNumber(order)}!`,
         "",
-        "Queremos mejorar y tu opinión nos ayuda muchísimo. ¿Nos regalas 30 segundos?",
+        "Queremos mejorar y tu opinión nos ayuda muchísimo. ¿Nos regalas 1 minuto?",
+        ...(surveyUrl
+          ? ["", `Califica tu pedido con estrellas aquí: ${surveyUrl}`]
+          : [
+              "",
+              "1. Del 1 al 5, ¿qué tal estuvo tu pedido?",
+              "2. ¿La entrega fue a tiempo?",
+              "3. ¿Qué podemos mejorar?",
+            ]),
         "",
-        "1. Del 1 al 5, ¿qué tal estuvo tu pedido?",
-        "2. ¿La entrega fue a tiempo?",
-        "3. ¿Qué podemos mejorar?",
-        "",
-        "Responde por aquí mismo, leemos todo. 🙌",
+        "También puedes respondernos por aquí, leemos todo. 🙌",
         ...(options.reviewUrl
           ? ["", `Y si quieres apoyarnos, déjanos tu reseña: ${options.reviewUrl}`]
           : []),

@@ -74,6 +74,7 @@ export function CashOrderCard({
   postSaleSurveyEnabled = false,
   postSaleSurveyMessage = "",
   googleReviewUrl = "",
+  onSurveyLinkOpened,
 }: {
   order: LocalOrder
   kitchenFlowMode?: KitchenFlowMode
@@ -93,6 +94,8 @@ export function CashOrderCard({
   postSaleSurveyEnabled?: boolean
   postSaleSurveyMessage?: string
   googleReviewUrl?: string
+  // Avisa que el staff abrió el WhatsApp de la encuesta (marca "ya enviada").
+  onSurveyLinkOpened?: () => void
 }) {
   const orderTotals = getOrderTotals(order)
   const payment = getOrderPayment(order)
@@ -471,6 +474,7 @@ export function CashOrderCard({
               })}
               label="Encuesta post-venta"
               green
+              onOpen={onSurveyLinkOpened}
             />
           )}
 
@@ -514,7 +518,7 @@ export function CashOrderCard({
   )
 }
 
-export function WhatsAppButton({ href, label, dark, green }: { href: string; label: string; dark?: boolean; green?: boolean }) {
+export function WhatsAppButton({ href, label, dark, green, onOpen }: { href: string; label: string; dark?: boolean; green?: boolean; onOpen?: () => void }) {
   const className = green
     ? "border-green-600 bg-green-500 text-white hover:bg-green-400"
     : dark
@@ -522,7 +526,7 @@ export function WhatsAppButton({ href, label, dark, green }: { href: string; lab
       : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
 
   return (
-    <a href={href} target="_blank" rel="noreferrer" className={`inline-flex items-center justify-center gap-2 rounded-full border-2 px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.1em] transition ${className}`}>
+    <a href={href} target="_blank" rel="noreferrer" onClick={onOpen} className={`inline-flex items-center justify-center gap-2 rounded-full border-2 px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.1em] transition ${className}`}>
       <MessageCircle size={16} /> {label}
     </a>
   )

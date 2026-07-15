@@ -295,6 +295,19 @@ export default function PedidosPage() {
   // la app esté cerrada. El toast rojo del panel funciona sin esto.
   const staffAlertsPush = useStaffAlertsPush(adminPassword, isLoggedIn)
 
+  // Al abrir el WhatsApp de la encuesta, se marca el pedido como "encuesta
+  // enviada" para que el envío automático no la repita. Mejor esfuerzo.
+  function markSurveySent(orderId: string) {
+    void fetch("/api/surveys", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-password": adminPassword,
+      },
+      body: JSON.stringify({ action: "markSent", orderId }),
+    }).catch(() => undefined)
+  }
+
   function getPanelAudioContext() {
     try {
       const AudioContextClass =
@@ -3838,6 +3851,17 @@ export default function PedidosPage() {
               metric="Bitácora"
             />
           )}
+
+          {businessConfig.postSaleSurveyEnabled && canEditSensitiveSettings && (
+            <ModuleAccessCard
+              href="/local-santo/encuestas"
+              icon={<MessageCircle size={24} />}
+              eyebrow="Post-venta"
+              title="Encuestas"
+              description="Estrellas por aspecto y sugerencias que dejan los clientes después de sus pedidos entregados."
+              metric="Opiniones"
+            />
+          )}
         </section>
 
         {isPaymentProofsModuleVisible && (pendingPaymentProofsCount > 0 || paymentProofsMessage) && (
@@ -4401,6 +4425,7 @@ export default function PedidosPage() {
                         })}
                         target="_blank"
                         rel="noreferrer"
+                        onClick={() => markSurveySent(order.id)}
                         className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-green-600 bg-white px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.1em] text-green-700 transition hover:bg-green-50"
                       >
                         <MessageCircle size={16} />

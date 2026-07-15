@@ -168,6 +168,19 @@ function CajaPageContent() {
     }
   }
 
+  // Al abrir el WhatsApp de la encuesta, se marca el pedido como "encuesta
+  // enviada" para que el envío automático no la repita. Mejor esfuerzo.
+  function markSurveySent(orderId: string) {
+    void fetch("/api/surveys", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-password": adminPassword,
+      },
+      body: JSON.stringify({ action: "markSent", orderId }),
+    }).catch(() => undefined)
+  }
+
   async function loadOpenAccounts(password = adminPassword, silent = true) {
     if (!password) {
       setOpenAccounts([])
@@ -1047,6 +1060,7 @@ function CajaPageContent() {
                 postSaleSurveyEnabled={postSaleSurvey.enabled}
                 postSaleSurveyMessage={postSaleSurvey.message}
                 googleReviewUrl={postSaleSurvey.reviewUrl}
+                onSurveyLinkOpened={() => markSurveySent(order.id)}
               />
             ))}
           </section>

@@ -748,13 +748,24 @@ export function buildDeliveryWhatsAppUrl(order: LocalOrder, messageType: Deliver
 
 // Encuesta post-venta: mensaje corto para pedidos ENTREGADOS (delivery /
 // pick up). Si el dueño escribió su propio mensaje en Configuración se envía
-// tal cual; vacío = esta plantilla con mini encuesta.
+// tal cual (el link de la encuesta se agrega igual); vacío = esta plantilla.
 export function buildPostSaleSurveyMessage(
   order: LocalOrder,
   options: { customMessage?: string; reviewUrl?: string } = {},
 ) {
+  // El builder corre en el navegador del staff: el link de la encuesta usa
+  // el mismo host desde el que atiende (sirve en prod y en previews).
+  const surveyUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/encuesta/${order.id}`
+      : ""
+
   const customMessage = String(options.customMessage || "").trim()
-  if (customMessage) return customMessage
+  if (customMessage) {
+    return surveyUrl
+      ? [customMessage, "", `Califícanos aquí (1 minuto): ${surveyUrl}`].join("\n")
+      : customMessage
+  }
 
   const displayNumber = getDisplayOrderNumber(order)
   const customerName = order.customerName || "cliente"
@@ -762,13 +773,17 @@ export function buildPostSaleSurveyMessage(
   return [
     `Hola ${customerName}, somos ${BRAND.name}. ¡Gracias por tu pedido ${displayNumber}!`,
     "",
-    "Queremos mejorar y tu opinión nos ayuda muchísimo. ¿Nos regalas 30 segundos?",
+    "Queremos mejorar y tu opinión nos ayuda muchísimo. ¿Nos regalas 1 minuto?",
+    ...(surveyUrl
+      ? ["", `Califica tu pedido con estrellas aquí: ${surveyUrl}`]
+      : [
+          "",
+          "1. Del 1 al 5, ¿qué tal estuvo tu pedido?",
+          "2. ¿La entrega fue a tiempo?",
+          "3. ¿Qué podemos mejorar?",
+        ]),
     "",
-    "1. Del 1 al 5, ¿qué tal estuvo tu pedido?",
-    "2. ¿La entrega fue a tiempo?",
-    "3. ¿Qué podemos mejorar?",
-    "",
-    "Responde por aquí mismo, leemos todo. 🙌",
+    "También puedes respondernos por aquí, leemos todo. 🙌",
     ...(options.reviewUrl
       ? ["", `Y si quieres apoyarnos, déjanos tu reseña: ${options.reviewUrl}`]
       : []),
