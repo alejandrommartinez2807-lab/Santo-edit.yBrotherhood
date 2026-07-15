@@ -2,7 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, CalendarRange, CheckCircle2, Loader2, Star } from "lucide-react"
+import {
+  ArrowLeft,
+  CalendarRange,
+  CheckCircle2,
+  Loader2,
+  Plus,
+  Sparkles,
+  Star,
+} from "lucide-react"
 import { BRAND } from "@/lib/brand"
 import ReservationQr from "../ReservationQr"
 
@@ -18,6 +26,17 @@ type Reservation = {
   status?: string
   statusLabel: string
 }
+
+type StayService = {
+  serviceName: string
+  date: string
+  time: string
+  people: number
+  status: string
+  total: number
+}
+
+type CatalogService = { id: string; name: string; price: number }
 
 // Misma clave que escribe /hotel/reservar al confirmar: autocompleta y consulta
 // sin teclear. Cuando la estadía ya terminó, se borra y vuelve el formulario.
@@ -52,6 +71,16 @@ export default function MiReservaPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
+  // Servicios de la estadía (asociados a la cuenta) + agregar uno nuevo.
+  const [stayServices, setStayServices] = useState<StayService[]>([])
+  const [catalog, setCatalog] = useState<CatalogService[]>([])
+  const [addServiceId, setAddServiceId] = useState("")
+  const [addDate, setAddDate] = useState("")
+  const [addPeople, setAddPeople] = useState("2")
+  const [addBusy, setAddBusy] = useState(false)
+  const [addError, setAddError] = useState("")
+  const [addDone, setAddDone] = useState("")
+
   // Reseña
   const [rating, setRating] = useState(5)
   const [comment, setComment] = useState("")
@@ -85,6 +114,7 @@ export default function MiReservaPage() {
         }
       }
       setReservation(found)
+      setStayServices(Array.isArray(data.services) ? data.services : [])
     } catch (e) {
       if (auto) {
         // La memoria ya no sirve (reserva borrada o datos cambiados): límpiala
@@ -115,6 +145,55 @@ export default function MiReservaPage() {
 
   function lookup() {
     void doLookup(code, phone)
+  }
+
+  // Catálogo de servicios reservables (para agregarlos a la estadía).
+  useEffect(() => {
+    if (!reservation) return
+    fetch("/api/public/hotel/services", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) =>
+        setCatalog(
+          Array.isArray(d.services)
+            ? d.services.map((s: { id: unknown; name: unknown; price: unknown }) => ({
+                id: String(s.id || ""),
+                name: String(s.name || ""),
+                price: Number(s.price) || 0,
+              }))
+            : [],
+        ),
+      )
+      .catch(() => setCatalog([]))
+  }, [reservation])
+
+  async function addService() {
+    if (!reservation || !addServiceId || !addDate) return
+    setAddBusy(true)
+    setAddError("")
+    setAddDone("")
+    try {
+      const res = await fetch("/api/public/hotel/services", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          serviceId: addServiceId,
+          date: addDate,
+          people: Number(addPeople) || 1,
+          code: reservation.code,
+          guestPhone: phone,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.ok === false) throw new Error(data.error || "No se pudo reservar")
+      setAddDone(`${data.booking?.serviceName || "Servicio"} agregado a tu estadía.`)
+      setAddServiceId("")
+      // Refresca la lista sin perder la sesión del formulario.
+      void doLookup(reservation.code, phone)
+    } catch (e) {
+      setAddError(e instanceof Error ? e.message : "Error")
+    } finally {
+      setAddBusy(false)
+    }
   }
 
   async function sendReview() {
@@ -173,6 +252,103 @@ export default function MiReservaPage() {
             {!FINISHED_STATUSES.has(String(reservation.status || "")) && (
               <div className="mt-4">
                 <ReservationQr code={reservation.code} />
+              </div>
+            )}
+
+            {/* Servicios asociados a la estadía: todo en una sola cuenta */}
+            {(stayServices.length > 0 || catalog.length > 0) && (
+              <div className="mt-4 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
+                <p className="inline-flex items-center gap-1.5 text-sm font-black uppercase text-[var(--brand-primary-dark)]">
+                  <Sparkles size={15} /> Servicios de tu estadía
+                </p>
+                {stayServices.length > 0 ? (
+                  <ul className="mt-2 space-y-1.5">
+                    {stayServices.map((s, i) => (
+                      <li
+                        key={`${s.serviceName}-${s.date}-${i}`}
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[var(--brand-cream)]/70 px-3 py-2 text-sm font-bold text-[var(--brand-ink-2)]"
+                      >
+                        <span>
+                          {s.serviceName}
+                          {s.people > 1 ? ` × ${s.people}` : ""}
+                          <span className="ml-2 text-xs text-[var(--brand-ink-2)]/60">
+                            {s.date}
+                            {s.time ? ` · ${s.time}` : ""}
+                          </span>
+                        </span>
+                        <span className="text-[var(--brand-ink-3)]">{s.total > 0 ? `$${s.total}` : ""}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/60">
+                    Aún no tienes servicios reservados. Se cargan a tu cuenta y los pagas en el hotel.
+                  </p>
+                )}
+
+                {/* Agregar un servicio: queda asociado a ESTA reserva */}
+                {catalog.length > 0 && !FINISHED_STATUSES.has(String(reservation.status || "")) && (
+                  <div className="mt-3 grid gap-2 border-t border-[var(--brand-primary)]/15 pt-3">
+                    <select
+                      value={addServiceId}
+                      onChange={(e) => {
+                        setAddServiceId(e.target.value)
+                        setAddError("")
+                        setAddDone("")
+                        if (!addDate) setAddDate(reservation.checkInDate)
+                      }}
+                      className={inputClass}
+                    >
+                      <option value="">Agregar un servicio…</option>
+                      {catalog.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                          {s.price > 0 ? ` — $${s.price}/persona` : ""}
+                        </option>
+                      ))}
+                    </select>
+                    {addServiceId && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <label className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2">
+                          <span className="block text-[10px] font-black uppercase text-[var(--brand-primary-dark)]">Fecha</span>
+                          <input
+                            type="date"
+                            value={addDate}
+                            onChange={(e) => setAddDate(e.target.value)}
+                            className="w-full bg-transparent font-bold outline-none"
+                          />
+                        </label>
+                        <label className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2">
+                          <span className="block text-[10px] font-black uppercase text-[var(--brand-primary-dark)]">Personas</span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={20}
+                            value={addPeople}
+                            onChange={(e) => setAddPeople(e.target.value)}
+                            className="w-full bg-transparent font-bold outline-none"
+                          />
+                        </label>
+                      </div>
+                    )}
+                    {addError && <p className="text-sm font-bold text-red-600">{addError}</p>}
+                    {addDone && (
+                      <p className="inline-flex items-center gap-1.5 text-sm font-bold text-green-700">
+                        <CheckCircle2 size={15} /> {addDone}
+                      </p>
+                    )}
+                    {addServiceId && (
+                      <button
+                        onClick={addService}
+                        disabled={addBusy || !addDate}
+                        className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-2.5 text-sm font-black uppercase text-white disabled:opacity-50"
+                      >
+                        {addBusy ? <Loader2 className="animate-spin" size={15} /> : <Plus size={15} />}
+                        Reservar y asociar a mi cuenta
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

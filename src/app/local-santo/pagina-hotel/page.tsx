@@ -14,11 +14,14 @@ import {
 } from "@/lib/hotelBooking"
 import {
   DEFAULT_HOTEL_SITE_EXTRAS,
+  DEFAULT_HOTEL_UPSELL,
   normalizeHotelRoomTypeDetails,
   normalizeHotelSiteExtras,
+  normalizeHotelUpsell,
   type HotelRoomTypeDetails,
   type HotelRoomTypeDetailsMap,
   type HotelSiteExtras,
+  type HotelUpsellConfig,
 } from "@/lib/hotelSite"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
@@ -69,6 +72,9 @@ function PaginaHotelContent() {
   const [siteExtras, setSiteExtras] = useState<HotelSiteExtras>({ ...DEFAULT_HOTEL_SITE_EXTRAS })
   const [roomTypeDetails, setRoomTypeDetails] = useState<HotelRoomTypeDetailsMap>({})
   const [roomTypes, setRoomTypes] = useState<{ id: string; name: string }[]>([])
+  const [upsell, setUpsell] = useState<HotelUpsellConfig>({ ...DEFAULT_HOTEL_UPSELL })
+  const [servicesList, setServicesList] = useState<{ id: string; name: string }[]>([])
+  const [packagesList, setPackagesList] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [denied, setDenied] = useState(false)
   const [error, setError] = useState("")
@@ -93,6 +99,7 @@ function PaginaHotelContent() {
       setTermsDefault(String(data.termsDefault || ""))
       setSiteExtras(normalizeHotelSiteExtras(data.siteExtras))
       setRoomTypeDetails(normalizeHotelRoomTypeDetails(data.roomTypeDetails))
+      setUpsell(normalizeHotelUpsell(data.upsell))
 
       // Tipos de habitación para el detalle comercial (camas, m², vista…).
       const roomsRes = await fetch("/api/rooms", { headers: authHeaders(), cache: "no-store" })
@@ -105,6 +112,30 @@ function PaginaHotelContent() {
             name: String(t.name || ""),
           })),
         )
+      }
+
+      // Servicios y paquetes activos, para asignarles su foto en el motor de
+      // reservas. Si el módulo está apagado, la sección simplemente no sale.
+      const mapNames = (list: unknown) =>
+        Array.isArray(list)
+          ? list
+              .filter((item: { active?: unknown }) => item && item.active !== false)
+              .map((item: { id?: unknown; name?: unknown }) => ({
+                id: String(item.id || ""),
+                name: String(item.name || ""),
+              }))
+          : []
+      const [servicesRes, packagesRes] = await Promise.all([
+        fetch("/api/resort-services", { headers: authHeaders(), cache: "no-store" }),
+        fetch("/api/packages", { headers: authHeaders(), cache: "no-store" }),
+      ])
+      if (servicesRes.ok) {
+        const servicesData = await servicesRes.json()
+        setServicesList(mapNames(servicesData.services))
+      }
+      if (packagesRes.ok) {
+        const packagesData = await packagesRes.json()
+        setPackagesList(mapNames(packagesData.packages))
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
@@ -135,8 +166,23 @@ function PaginaHotelContent() {
 
   function setTypeDetail(typeId: string, key: keyof HotelRoomTypeDetails, value: string) {
     setRoomTypeDetails((map) => {
-      const current = map[typeId] || { beds: "", sizeM2: "", view: "", amenities: "" }
+      const current = map[typeId] || { beds: "", sizeM2: "", view: "", amenities: "", includes: "" }
       return { ...map, [typeId]: { ...current, [key]: value } }
+    })
+    setSaved(false)
+  }
+
+  function setUpsellField<K extends keyof HotelUpsellConfig>(key: K, value: HotelUpsellConfig[K]) {
+    setUpsell((u) => ({ ...u, [key]: value }))
+    setSaved(false)
+  }
+
+  function setUpsellImage(kind: "serviceImages" | "packageImages", id: string, url: string) {
+    setUpsell((u) => {
+      const map = { ...u[kind] }
+      if (url.trim()) map[id] = url.trim()
+      else delete map[id]
+      return { ...u, [kind]: map }
     })
     setSaved(false)
   }
@@ -148,7 +194,14 @@ function PaginaHotelContent() {
       const res = await fetch("/api/hotel-profile", {
         method: "POST",
         headers: authHeaders(),
-        body: JSON.stringify({ ...profile, bookingFields, termsText, siteExtras, roomTypeDetails }),
+        body: JSON.stringify({
+          ...profile,
+          bookingFields,
+          termsText,
+          siteExtras,
+          roomTypeDetails,
+          upsell,
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "No se pudo guardar")
@@ -157,6 +210,7 @@ function PaginaHotelContent() {
       setTermsText(String(data.termsText || ""))
       setSiteExtras(normalizeHotelSiteExtras(data.siteExtras))
       setRoomTypeDetails(normalizeHotelRoomTypeDetails(data.roomTypeDetails))
+      setUpsell(normalizeHotelUpsell(data.upsell))
       setSaved(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
@@ -236,6 +290,48 @@ function PaginaHotelContent() {
               </div>
             </div>
 
+            {/* Reseñas de Google (la landing muestra este total y deja 5 visibles) */}
+            <div className="rounded-xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/50 p-4">
+              <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">Reseñas de Google</p>
+              <p className="text-xs font-bold text-[var(--brand-ink-2)]/70">
+                Publica el total real de tu ficha de Google Maps: la landing muestra
+                &quot;4.8 · 1.240 opiniones&quot; con solo 5 reseñas visibles. En 0 usa las
+                reseñas internas del sistema.
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-2.5 font-bold">
+                  <span className="shrink-0 text-xs font-bold uppercase text-[var(--brand-primary)]">Opiniones</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={siteExtras.googleReviewsCount || ""}
+                    onChange={(e) => setExtra("googleReviewsCount", Number(e.target.value) || 0)}
+                    placeholder="1240"
+                    className="w-full bg-transparent font-bold outline-none"
+                  />
+                </label>
+                <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-2.5 font-bold">
+                  <span className="shrink-0 text-xs font-bold uppercase text-[var(--brand-primary)]">Calificación</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={5}
+                    step={0.1}
+                    value={siteExtras.googleReviewsRating || ""}
+                    onChange={(e) => setExtra("googleReviewsRating", Number(e.target.value) || 0)}
+                    placeholder="4.8"
+                    className="w-full bg-transparent font-bold outline-none"
+                  />
+                </label>
+                <input
+                  value={siteExtras.googleReviewsUrl}
+                  onChange={(e) => setExtra("googleReviewsUrl", e.target.value)}
+                  placeholder="Enlace a tu ficha de Google (botón 'Ver en Google')"
+                  className={`${inputClass} sm:col-span-2`}
+                />
+              </div>
+            </div>
+
             {/* WhatsApp y redes sociales */}
             <div className="rounded-xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/50 p-4">
               <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">WhatsApp y redes</p>
@@ -262,7 +358,13 @@ function PaginaHotelContent() {
                 </p>
                 <div className="mt-3 grid gap-3">
                   {roomTypes.map((t) => {
-                    const d = roomTypeDetails[t.id] || { beds: "", sizeM2: "", view: "", amenities: "" }
+                    const d = roomTypeDetails[t.id] || {
+                      beds: "",
+                      sizeM2: "",
+                      view: "",
+                      amenities: "",
+                      includes: "",
+                    }
                     return (
                       <div key={t.id} className="rounded-lg border border-[var(--brand-primary)]/15 bg-white p-3">
                         <p className="text-sm font-bold text-[var(--brand-ink-3)]">{t.name}</p>
@@ -272,12 +374,87 @@ function PaginaHotelContent() {
                           <input value={d.view} onChange={(e) => setTypeDetail(t.id, "view", e.target.value)} placeholder="Vista (ciudad…)" className={inputClass} />
                         </div>
                         <input value={d.amenities} onChange={(e) => setTypeDetail(t.id, "amenities", e.target.value)} placeholder="Amenidades del tipo separadas por coma (wifi, A/C, TV, minibar…)" className={`${inputClass} mt-2`} />
+                        <input
+                          value={d.includes || ""}
+                          onChange={(e) => setTypeDetail(t.id, "includes", e.target.value)}
+                          placeholder="Incluido con la tarifa, separado por coma (desayuno buffet, spa, estacionamiento…)"
+                          className={`${inputClass} mt-2`}
+                        />
                       </div>
                     )
                   })}
                 </div>
               </div>
             )}
+
+            {/* Servicios y paquetes ofrecidos al reservar */}
+            <div className="rounded-xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/50 p-4">
+              <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">
+                Extras al reservar (servicios y paquetes)
+              </p>
+              <p className="text-xs font-bold text-[var(--brand-ink-2)]/70">
+                Lo que el huésped puede agregar a su reserva. Con &quot;Solo texto&quot; se
+                muestran como menciones sin foto. Las fotos aceptan un enlace (súbelas
+                en Habitaciones → Fotos y copia el enlace).
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                <label className="flex items-center justify-between gap-2 rounded-lg border border-[var(--brand-primary)]/15 bg-white px-3 py-2">
+                  <span className="text-sm font-bold text-[var(--brand-ink-3)]">Ofrecer servicios</span>
+                  <input
+                    type="checkbox"
+                    checked={upsell.showServices}
+                    onChange={(e) => setUpsellField("showServices", e.target.checked)}
+                    className="h-5 w-5 accent-[var(--brand-primary)]"
+                  />
+                </label>
+                <label className="flex items-center justify-between gap-2 rounded-lg border border-[var(--brand-primary)]/15 bg-white px-3 py-2">
+                  <span className="text-sm font-bold text-[var(--brand-ink-3)]">Ofrecer paquetes</span>
+                  <input
+                    type="checkbox"
+                    checked={upsell.showPackages}
+                    onChange={(e) => setUpsellField("showPackages", e.target.checked)}
+                    className="h-5 w-5 accent-[var(--brand-primary)]"
+                  />
+                </label>
+                <label className="flex items-center justify-between gap-2 rounded-lg border border-[var(--brand-primary)]/15 bg-white px-3 py-2">
+                  <span className="text-sm font-bold text-[var(--brand-ink-3)]">Estilo</span>
+                  <select
+                    value={upsell.style}
+                    onChange={(e) => setUpsellField("style", e.target.value === "texto" ? "texto" : "fotos")}
+                    className="rounded-lg border border-[var(--brand-primary)]/25 bg-white px-2 py-1.5 text-sm font-bold outline-none"
+                  >
+                    <option value="fotos">Con fotos</option>
+                    <option value="texto">Solo texto</option>
+                  </select>
+                </label>
+              </div>
+              {upsell.style === "fotos" && (servicesList.length > 0 || packagesList.length > 0) && (
+                <div className="mt-3 grid gap-2">
+                  {servicesList.map((s) => (
+                    <label key={s.id} className="grid gap-1 rounded-lg border border-[var(--brand-primary)]/15 bg-white px-3 py-2 sm:grid-cols-[180px_1fr] sm:items-center">
+                      <span className="truncate text-sm font-bold text-[var(--brand-ink-3)]">{s.name}</span>
+                      <input
+                        value={upsell.serviceImages[s.id] || ""}
+                        onChange={(e) => setUpsellImage("serviceImages", s.id, e.target.value)}
+                        placeholder="Foto del servicio (enlace https://…)"
+                        className="w-full rounded-lg border border-[var(--brand-primary)]/20 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+                      />
+                    </label>
+                  ))}
+                  {packagesList.map((p) => (
+                    <label key={p.id} className="grid gap-1 rounded-lg border border-[var(--brand-primary)]/15 bg-white px-3 py-2 sm:grid-cols-[180px_1fr] sm:items-center">
+                      <span className="truncate text-sm font-bold text-[var(--brand-ink-3)]">📦 {p.name}</span>
+                      <input
+                        value={upsell.packageImages[p.id] || ""}
+                        onChange={(e) => setUpsellImage("packageImages", p.id, e.target.value)}
+                        placeholder="Foto del paquete (enlace https://…)"
+                        className="w-full rounded-lg border border-[var(--brand-primary)]/20 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+                      />
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Qué datos pide el formulario de reserva pública */}
             <div className="rounded-xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/50 p-4">

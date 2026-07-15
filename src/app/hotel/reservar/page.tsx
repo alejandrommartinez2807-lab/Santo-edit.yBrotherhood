@@ -6,8 +6,13 @@ import {
   ArrowLeft,
   BedDouble,
   CalendarRange,
+  Check,
   CheckCircle2,
+  Gift,
   Loader2,
+  Minus,
+  Plus,
+  Sparkles,
   Users,
 } from "lucide-react"
 import { BRAND } from "@/lib/brand"
@@ -35,9 +40,33 @@ type AvailableType = {
   capacity: number
   freeCount: number
   photos?: { url: string; caption: string }[]
-  details?: { beds: string; sizeM2: string; view: string; amenities: string } | null
+  details?: {
+    beds: string
+    sizeM2: string
+    view: string
+    amenities: string
+    includes?: string
+  } | null
   quote: Quote
 }
+type UpsellService = {
+  id: string
+  name: string
+  kind: string
+  description: string
+  price: number
+  durationMin: number
+  imageUrl: string
+}
+type UpsellPackage = {
+  id: string
+  name: string
+  description: string
+  includes: string
+  price: number
+  imageUrl: string
+}
+type Upsell = { style: "fotos" | "texto"; services: UpsellService[]; packages: UpsellPackage[] }
 type Created = {
   code: string
   guestName: string
@@ -47,6 +76,19 @@ type Created = {
   ratePerNight: number
   totalAmount: number
   roomTypeName: string
+  services?: { name: string; price: number; people: number; date: string }[]
+  packageName?: string
+  packagePrice?: number
+  extrasTotal?: number
+}
+
+/** "desayuno, wifi, spa" → lista limpia para chips. */
+function csvList(value: string | undefined, max = 8): string[] {
+  return (value || "")
+    .split(/[,\n]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, max)
 }
 
 // Memoria del navegador para "Mi reserva": autocompleta código+teléfono al
@@ -100,6 +142,11 @@ export default function HotelReservarPage() {
   const [submitting, setSubmitting] = useState(false)
   const [created, setCreated] = useState<Created | null>(null)
 
+  // Extras del hotel al reservar: servicios elegidos (id → personas) y paquete.
+  const [upsell, setUpsell] = useState<Upsell>({ style: "fotos", services: [], packages: [] })
+  const [selectedServices, setSelectedServices] = useState<Record<string, number>>({})
+  const [selectedPackageId, setSelectedPackageId] = useState("")
+
   // Galería de fotos del tipo (lightbox); null = cerrado.
   const [lightbox, setLightbox] = useState<{ photos: LightboxPhoto[]; index: number } | null>(null)
 
@@ -117,6 +164,13 @@ export default function HotelReservarPage() {
       setTypes(data.types || [])
       setNights(data.nights || 0)
       if (data.bookingFields) setBookingFields(normalizeHotelBookingFields(data.bookingFields))
+      if (data.upsell) {
+        setUpsell({
+          style: data.upsell.style === "texto" ? "texto" : "fotos",
+          services: Array.isArray(data.upsell.services) ? data.upsell.services : [],
+          packages: Array.isArray(data.upsell.packages) ? data.upsell.packages : [],
+        })
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
     } finally {
@@ -133,6 +187,38 @@ export default function HotelReservarPage() {
     () => types.find((t) => t.roomTypeId === selectedTypeId) || null,
     [types, selectedTypeId],
   )
+
+  // Totales de extras: los servicios se cobran por persona; el paquete es fijo.
+  // Se pagan en el hotel (van al folio), por eso se muestran aparte del total
+  // de la habitación.
+  const selectedPackage = useMemo(
+    () => upsell.packages.find((p) => p.id === selectedPackageId) || null,
+    [upsell.packages, selectedPackageId],
+  )
+  const extrasTotal = useMemo(() => {
+    const servicesTotal = Object.entries(selectedServices).reduce((sum, [id, people]) => {
+      const service = upsell.services.find((s) => s.id === id)
+      return service ? sum + service.price * Math.max(1, people) : sum
+    }, 0)
+    return servicesTotal + (selectedPackage ? selectedPackage.price : 0)
+  }, [selectedServices, upsell.services, selectedPackage])
+
+  function toggleService(id: string) {
+    setSelectedServices((current) => {
+      const next = { ...current }
+      if (next[id]) delete next[id]
+      else next[id] = 1
+      return next
+    })
+  }
+
+  function setServicePeople(id: string, delta: number) {
+    setSelectedServices((current) => {
+      if (!current[id]) return current
+      const next = Math.min(20, Math.max(1, current[id] + delta))
+      return { ...current, [id]: next }
+    })
+  }
 
   // Valor actual de cada campo extra configurable.
   const extraFieldValue = useCallback(
@@ -172,6 +258,8 @@ export default function HotelReservarPage() {
           termsAccepted,
           checkIn,
           checkOut,
+          services: Object.entries(selectedServices).map(([id, people]) => ({ id, people })),
+          packageId: selectedPackageId,
         }),
       })
       const data = await res.json()
@@ -211,11 +299,39 @@ export default function HotelReservarPage() {
             <CalendarRange size={16} /> {created.checkInDate} → {created.checkOutDate} ({created.nights}n)
           </p>
           <p className="mt-2 text-lg font-black text-[var(--brand-ink-3)]">
-            Total ${created.totalAmount}
+            Habitación ${created.totalAmount}
             <span className="ml-1 text-sm font-bold text-[var(--brand-ink-2)]">
               ({created.nights}n × ${created.ratePerNight})
             </span>
           </p>
+          {((created.services && created.services.length > 0) || created.packageName) && (
+            <div className="mt-3 border-t border-[var(--brand-primary)]/15 pt-3">
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary-dark)]">
+                Extras de tu estadía
+              </p>
+              {created.packageName && (
+                <p className="mt-1 flex items-center justify-between gap-2 text-sm">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Gift size={14} /> Paquete {created.packageName}
+                  </span>
+                  <span>${created.packagePrice}</span>
+                </p>
+              )}
+              {(created.services || []).map((s) => (
+                <p key={s.name} className="mt-1 flex items-center justify-between gap-2 text-sm">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Sparkles size={14} /> {s.name}
+                    {s.people > 1 ? ` × ${s.people}` : ""}
+                  </span>
+                  <span>${s.price * s.people}</span>
+                </p>
+              ))}
+              <p className="mt-2 text-sm text-[var(--brand-ink-2)]">
+                Los extras quedaron asociados a tu reserva: se cargan a tu cuenta
+                (folio) y los pagas en el hotel.
+              </p>
+            </div>
+          )}
         </div>
         <p className="mt-4 max-w-sm text-sm font-bold text-[var(--brand-ink-2)]">
           Guardamos tu reserva como <b>pendiente</b>. Te contactaremos por teléfono para confirmarla.
@@ -374,6 +490,25 @@ export default function HotelReservarPage() {
                             </span>
                           )}
                         </div>
+                        {/* Servicios que YA vienen con la tarifa (los define el
+                            dueño por tipo): el huésped sabe qué está pagando. */}
+                        {csvList(type.details?.includes).length > 0 && (
+                          <div className="mt-3 rounded-xl bg-green-50 px-3 py-2">
+                            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-green-800">
+                              Incluido con tu habitación
+                            </p>
+                            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                              {csvList(type.details?.includes).map((item) => (
+                                <span
+                                  key={item}
+                                  className="inline-flex items-center gap-1 text-xs font-bold text-green-900"
+                                >
+                                  <Check size={12} /> {item}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                         <button
                           onClick={() => setSelectedTypeId(isSel ? "" : type.roomTypeId)}
                           className={`mt-4 w-full rounded-xl px-4 py-2.5 text-sm font-black uppercase ${
@@ -389,6 +524,170 @@ export default function HotelReservarPage() {
                   )
                 })}
               </ul>
+            )}
+
+            {/* Extras: servicios y paquetes del hotel para completar la
+                estadía. Quedan asociados a la reserva (y luego al folio). */}
+            {selectedType && (upsell.services.length > 0 || upsell.packages.length > 0) && (
+              <div className="mt-4 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
+                <p className="text-sm font-black uppercase text-[var(--brand-primary-dark)]">
+                  Completa tu estadía <span className="font-bold text-[var(--brand-ink-2)]/55">(opcional)</span>
+                </p>
+                <p className="mt-0.5 text-xs font-bold text-[var(--brand-ink-2)]/65">
+                  Se asocian a tu reserva y se pagan en el hotel.
+                </p>
+
+                {upsell.services.length > 0 && (
+                  <ul className="mt-3 space-y-2">
+                    {upsell.services.map((service) => {
+                      const picked = selectedServices[service.id] || 0
+                      const showPhoto = upsell.style === "fotos" && service.imageUrl
+                      return (
+                        <li
+                          key={service.id}
+                          className={`overflow-hidden rounded-xl border-2 ${
+                            picked
+                              ? "border-[var(--brand-primary)] bg-[var(--brand-cream)]/60"
+                              : "border-[var(--brand-primary)]/20 bg-white"
+                          }`}
+                        >
+                          <div className="flex items-stretch gap-3">
+                            {showPhoto && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={service.imageUrl}
+                                alt={service.name}
+                                loading="lazy"
+                                className="h-auto w-24 shrink-0 object-cover sm:w-32"
+                              />
+                            )}
+                            <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2 py-2.5 pr-3 pl-1 sm:pl-2">
+                              <div className="min-w-0">
+                                <p className="font-bold text-[var(--brand-ink-3)]">
+                                  {service.name}
+                                  {service.price > 0 && (
+                                    <span className="ml-2 text-sm text-[var(--brand-ink-2)]/60">
+                                      ${service.price}/persona
+                                    </span>
+                                  )}
+                                </p>
+                                {service.description && (
+                                  <p className="text-xs font-bold leading-relaxed text-[var(--brand-ink-2)]/65">
+                                    {service.description}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex shrink-0 items-center gap-2">
+                                {picked > 0 && (
+                                  <span className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-primary)]/30 bg-white px-1.5 py-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => setServicePeople(service.id, -1)}
+                                      aria-label="Menos personas"
+                                      className="rounded-full p-1 text-[var(--brand-primary-dark)]"
+                                    >
+                                      <Minus size={13} />
+                                    </button>
+                                    <span className="min-w-5 text-center text-sm font-black text-[var(--brand-ink-3)]">
+                                      {picked}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => setServicePeople(service.id, 1)}
+                                      aria-label="Más personas"
+                                      className="rounded-full p-1 text-[var(--brand-primary-dark)]"
+                                    >
+                                      <Plus size={13} />
+                                    </button>
+                                  </span>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => toggleService(service.id)}
+                                  className={`rounded-full px-3.5 py-1.5 text-xs font-black uppercase ${
+                                    picked
+                                      ? "border-2 border-[var(--brand-primary)] bg-white text-[var(--brand-primary-dark)]"
+                                      : "bg-[var(--brand-primary)] text-[#171410]"
+                                  }`}
+                                >
+                                  {picked ? "Quitar" : "Agregar"}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+
+                {upsell.packages.length > 0 && (
+                  <>
+                    <p className="mt-4 inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary-dark)]">
+                      <Gift size={14} /> Paquetes del hotel
+                    </p>
+                    <ul className="mt-2 space-y-2">
+                      {upsell.packages.map((pkg) => {
+                        const picked = selectedPackageId === pkg.id
+                        const showPhoto = upsell.style === "fotos" && pkg.imageUrl
+                        return (
+                          <li
+                            key={pkg.id}
+                            className={`overflow-hidden rounded-xl border-2 ${
+                              picked
+                                ? "border-[var(--brand-primary)] bg-[var(--brand-cream)]/60"
+                                : "border-[var(--brand-primary)]/20 bg-white"
+                            }`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => setSelectedPackageId(picked ? "" : pkg.id)}
+                              className="flex w-full items-stretch gap-3 text-left"
+                            >
+                              {showPhoto && (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={pkg.imageUrl}
+                                  alt={pkg.name}
+                                  loading="lazy"
+                                  className="h-auto w-24 shrink-0 object-cover sm:w-32"
+                                />
+                              )}
+                              <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2 py-2.5 pr-3 pl-1 sm:pl-2">
+                                <div className="min-w-0">
+                                  <p className="font-bold text-[var(--brand-ink-3)]">
+                                    {pkg.name}
+                                    {pkg.price > 0 && (
+                                      <span className="ml-2 text-sm text-[var(--brand-ink-2)]/60">
+                                        ${pkg.price}
+                                      </span>
+                                    )}
+                                  </p>
+                                  {(pkg.includes || pkg.description) && (
+                                    <p className="text-xs font-bold leading-relaxed text-[var(--brand-ink-2)]/65">
+                                      {pkg.includes ? `Incluye: ${pkg.includes}` : pkg.description}
+                                    </p>
+                                  )}
+                                </div>
+                                <span
+                                  className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3.5 py-1.5 text-xs font-black uppercase ${
+                                    picked
+                                      ? "border-2 border-[var(--brand-primary)] bg-white text-[var(--brand-primary-dark)]"
+                                      : "bg-[var(--brand-primary)] text-[#171410]"
+                                  }`}
+                                >
+                                  {picked ? <Check size={13} /> : null}
+                                  {picked ? "Elegido" : "Elegir"}
+                                </span>
+                              </div>
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </>
+                )}
+              </div>
             )}
 
             {/* Datos del huésped */}
@@ -461,9 +760,26 @@ export default function HotelReservarPage() {
                     className={`${inputClass} sm:col-span-2`}
                   />
                 )}
-                <div className="flex items-center justify-between rounded-xl bg-[var(--brand-cream)] px-4 py-3 font-black text-[var(--brand-ink-3)] sm:col-span-2">
-                  <span>Total {selectedType.name}</span>
-                  <span>${selectedType.quote.total} <span className="text-sm font-bold text-[var(--brand-ink-2)]">({nights}n)</span></span>
+                <div className="rounded-xl bg-[var(--brand-cream)] px-4 py-3 font-black text-[var(--brand-ink-3)] sm:col-span-2">
+                  <p className="flex items-center justify-between">
+                    <span>Habitación · {selectedType.name}</span>
+                    <span>
+                      ${selectedType.quote.total}{" "}
+                      <span className="text-sm font-bold text-[var(--brand-ink-2)]">({nights}n)</span>
+                    </span>
+                  </p>
+                  {extrasTotal > 0 && (
+                    <>
+                      <p className="mt-1 flex items-center justify-between text-sm font-bold text-[var(--brand-ink-2)]">
+                        <span>Extras (se pagan en el hotel)</span>
+                        <span>${extrasTotal}</span>
+                      </p>
+                      <p className="mt-1 flex items-center justify-between border-t border-[var(--brand-primary)]/15 pt-1.5">
+                        <span>Total estimado</span>
+                        <span>${selectedType.quote.total + extrasTotal}</span>
+                      </p>
+                    </>
+                  )}
                 </div>
                 {/* Aceptación de términos: sin marcarla no se envía (y el servidor lo exige) */}
                 <label className="flex items-start gap-2.5 rounded-xl bg-[var(--brand-cream)]/70 px-4 py-3 sm:col-span-2">

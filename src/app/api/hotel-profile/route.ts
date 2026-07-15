@@ -8,7 +8,11 @@ import {
 import { resolveBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 import { DEFAULT_HOTEL_TERMS, normalizeHotelBookingFields } from "@/lib/hotelBooking"
-import { normalizeHotelRoomTypeDetails, normalizeHotelSiteExtras } from "@/lib/hotelSite"
+import {
+  normalizeHotelRoomTypeDetails,
+  normalizeHotelSiteExtras,
+  normalizeHotelUpsell,
+} from "@/lib/hotelSite"
 
 import { checkHotelLandingAccess } from "./guard"
 
@@ -33,6 +37,7 @@ export async function GET(request: NextRequest) {
       termsDefault: DEFAULT_HOTEL_TERMS,
       siteExtras: config.hotelSiteExtras,
       roomTypeDetails: config.hotelRoomTypeDetails,
+      upsell: config.hotelUpsell,
     })
   } catch (error) {
     return NextResponse.json(
@@ -87,7 +92,8 @@ export async function POST(request: NextRequest) {
       body.bookingFields !== undefined ||
       body.termsText !== undefined ||
       body.siteExtras !== undefined ||
-      body.roomTypeDetails !== undefined
+      body.roomTypeDetails !== undefined ||
+      body.upsell !== undefined
     ) {
       await saveBusinessConfig({
         ...(body.bookingFields !== undefined
@@ -102,6 +108,7 @@ export async function POST(request: NextRequest) {
         ...(body.roomTypeDetails !== undefined
           ? { hotelRoomTypeDetails: normalizeHotelRoomTypeDetails(body.roomTypeDetails) }
           : {}),
+        ...(body.upsell !== undefined ? { hotelUpsell: normalizeHotelUpsell(body.upsell) } : {}),
       })
     }
 
@@ -114,6 +121,7 @@ export async function POST(request: NextRequest) {
       termsDefault: DEFAULT_HOTEL_TERMS,
       siteExtras: config.hotelSiteExtras,
       roomTypeDetails: config.hotelRoomTypeDetails,
+      upsell: config.hotelUpsell,
     })
   } catch (error) {
     return NextResponse.json(

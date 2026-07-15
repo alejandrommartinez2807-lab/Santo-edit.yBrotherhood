@@ -7,13 +7,16 @@ import {
   BedDouble,
   CalendarCheck,
   Car,
+  CheckCircle2,
   ChevronDown,
   Clock,
   Coffee,
   Compass,
   ConciergeBell,
   Dumbbell,
+  ExternalLink,
   KeyRound,
+  Loader2,
   Mail,
   MapPin,
   MessageCircle,
@@ -85,6 +88,9 @@ type SiteExtras = {
   instagram: string
   facebook: string
   tiktok: string
+  googleReviewsCount?: number
+  googleReviewsRating?: number
+  googleReviewsUrl?: string
 }
 type RoomQuote = { total: number; averageRate: number }
 type RoomTypePhoto = { url: string; caption: string }
@@ -100,7 +106,31 @@ type RoomType = {
   quote: RoomQuote
 }
 type Review = { guestName: string; rating: number; comment: string }
-type ResortService = { id: string; name: string; kind: string; description: string; price: number }
+type ResortService = {
+  id: string
+  name: string
+  kind: string
+  description: string
+  price: number
+  imageUrl?: string
+}
+
+// Formulario de reserva de servicio (se abre bajo la tarjeta elegida).
+type ServiceBookingForm = {
+  serviceId: string
+  date: string
+  time: string
+  people: string
+  hasCode: boolean
+  code: string
+  guestName: string
+  guestPhone: string
+}
+
+type ServiceBookingDone = {
+  serviceId: string
+  message: string
+}
 
 function isoInDays(days: number) {
   const d = new Date()
@@ -117,6 +147,12 @@ export default function HotelLandingPage() {
   const [ratingCount, setRatingCount] = useState(0)
   const [services, setServices] = useState<ResortService[]>([])
   const [loaded, setLoaded] = useState(false)
+
+  // Reserva de servicio desde la landing (spa, tour…): un formulario a la vez.
+  const [svcForm, setSvcForm] = useState<ServiceBookingForm | null>(null)
+  const [svcBusy, setSvcBusy] = useState(false)
+  const [svcError, setSvcError] = useState("")
+  const [svcDone, setSvcDone] = useState<ServiceBookingDone | null>(null)
 
   // Lightbox: lista de fotos activa + índice inicial (null = cerrado).
   const [lightbox, setLightbox] = useState<{ photos: RoomTypePhoto[]; index: number } | null>(null)
@@ -160,6 +196,73 @@ export default function HotelLandingPage() {
       .catch(() => setServices([]))
   }, [])
 
+  function openServiceForm(serviceId: string) {
+    setSvcError("")
+    setSvcDone(null)
+    setSvcForm((current) =>
+      current?.serviceId === serviceId
+        ? null
+        : {
+            serviceId,
+            date: isoInDays(1),
+            time: "",
+            people: "2",
+            hasCode: false,
+            code: "",
+            guestName: "",
+            guestPhone: "",
+          },
+    )
+  }
+
+  function setSvc<K extends keyof ServiceBookingForm>(key: K, value: ServiceBookingForm[K]) {
+    setSvcForm((current) => (current ? { ...current, [key]: value } : current))
+    setSvcError("")
+  }
+
+  const svcFormValid = Boolean(
+    svcForm &&
+      svcForm.date &&
+      (svcForm.hasCode
+        ? svcForm.code.trim().length >= 3 && svcForm.guestPhone.trim().length >= 4
+        : svcForm.guestName.trim().length >= 3 && svcForm.guestPhone.trim().length >= 7),
+  )
+
+  async function submitServiceBooking() {
+    if (!svcForm || !svcFormValid) return
+    setSvcBusy(true)
+    setSvcError("")
+    try {
+      const res = await fetch("/api/public/hotel/services", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          serviceId: svcForm.serviceId,
+          date: svcForm.date,
+          time: svcForm.time,
+          people: Number(svcForm.people) || 1,
+          code: svcForm.hasCode ? svcForm.code.trim() : "",
+          guestName: svcForm.guestName.trim(),
+          guestPhone: svcForm.guestPhone.trim(),
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.ok === false) throw new Error(data.error || "No se pudo reservar")
+      const booking = data.booking || {}
+      setSvcDone({
+        serviceId: svcForm.serviceId,
+        message: booking.linkedToReservation
+          ? `¡Listo! ${booking.serviceName} quedó reservado para el ${booking.date} y asociado a tu reserva #${booking.reservationCode}. Se carga a tu cuenta al llegar.`
+          : `¡Listo! ${booking.serviceName} quedó reservado para el ${booking.date}. Te contactaremos para confirmarte.`,
+      })
+      setSvcForm(null)
+    } catch (e) {
+      setSvcError(e instanceof Error ? e.message : "Error")
+    } finally {
+      setSvcBusy(false)
+    }
+  }
+
   const amenities = (profile?.amenities || "")
     .split(/[,\n]/)
     .map((a) => a.trim())
@@ -195,6 +298,11 @@ export default function HotelLandingPage() {
       ? { label: "TikTok", url: `https://tiktok.com/@${extras.tiktok.replace(/^@/, "").replace(/^https?:\/\/(www\.)?tiktok\.com\/@?/, "")}` }
       : null,
   ].filter((s): s is { label: string; url: string } => Boolean(s))
+
+  // Reseñas mostradas: el rating/total de la ficha de Google manda si el dueño
+  // lo configuró; si no, se usan los datos internos del sistema.
+  const displayRating = extras?.googleReviewsRating || ratingAvg
+  const displayReviewCount = extras?.googleReviewsCount || ratingCount
 
   // Galería: mezcla las fotos de todos los tipos (sin repetir la portada dos
   // veces seguidas del mismo tipo) y muestra hasta 8.
@@ -483,27 +591,142 @@ export default function HotelLandingPage() {
           <div className="mt-14 grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
             {services.map((s) => {
               const Icon = SERVICE_ICONS[s.kind] || Sparkles
+              const isFormOpen = svcForm?.serviceId === s.id
+              const isDone = svcDone?.serviceId === s.id
               return (
                 <article
                   key={s.id}
-                  className="group flex flex-col rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface)] p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[var(--brand-primary)]/40"
+                  className="group flex flex-col overflow-hidden rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--brand-primary)]/40"
                 >
-                  <span className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-[var(--brand-primary)]/25 bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]">
-                    <Icon size={24} strokeWidth={1.5} />
-                  </span>
-                  <h3 className="mt-5 font-serif text-xl font-semibold text-[var(--brand-ink-3)]">{s.name}</h3>
-                  {s.description && (
-                    <p className="mt-2 flex-1 text-[15px] leading-relaxed text-[var(--brand-ink-2)]">{s.description}</p>
+                  {s.imageUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={s.imageUrl}
+                      alt={s.name}
+                      loading="lazy"
+                      className="h-44 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
                   )}
-                  {s.price > 0 && (
-                    <div className="mt-5 flex items-baseline justify-between border-t border-black/5 pt-4">
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--brand-ink-2)]">Desde</span>
-                      <span className="font-serif text-2xl font-semibold leading-none text-gold">
-                        <span className="mr-0.5 align-top text-sm">$</span>
-                        {Math.round(s.price)}
+                  <div className="flex flex-1 flex-col p-8">
+                    {!s.imageUrl && (
+                      <span className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-[var(--brand-primary)]/25 bg-[var(--brand-primary)]/10 text-[var(--brand-primary)]">
+                        <Icon size={24} strokeWidth={1.5} />
                       </span>
+                    )}
+                    <h3 className={`font-serif text-xl font-semibold text-[var(--brand-ink-3)] ${s.imageUrl ? "" : "mt-5"}`}>
+                      {s.name}
+                    </h3>
+                    {s.description && (
+                      <p className="mt-2 flex-1 text-[15px] leading-relaxed text-[var(--brand-ink-2)]">{s.description}</p>
+                    )}
+                    <div className="mt-5 flex items-center justify-between gap-3 border-t border-black/5 pt-4">
+                      {s.price > 0 ? (
+                        <span>
+                          <span className="mr-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--brand-ink-2)]">Desde</span>
+                          <span className="font-serif text-2xl font-semibold leading-none text-gold">
+                            <span className="mr-0.5 align-top text-sm">$</span>
+                            {Math.round(s.price)}
+                          </span>
+                        </span>
+                      ) : (
+                        <span />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => openServiceForm(s.id)}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-primary)]/50 px-5 py-2.5 font-serif text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--brand-primary-dark)] transition-colors hover:bg-[var(--brand-primary)] hover:text-[#0b0b0c]"
+                      >
+                        {isFormOpen ? "Cerrar" : "Reservar"}
+                        <ArrowRight size={13} />
+                      </button>
                     </div>
-                  )}
+
+                    {isDone && (
+                      <p className="mt-4 flex items-start gap-2 rounded-xl bg-green-50 px-3 py-2.5 text-sm font-medium leading-relaxed text-green-900">
+                        <CheckCircle2 size={17} className="mt-0.5 shrink-0" /> {svcDone.message}
+                      </p>
+                    )}
+
+                    {/* Reserva del servicio sin salir de la página: con el
+                        código de la estadía queda asociada a la cuenta del
+                        huésped; sin código, a su nombre y teléfono. */}
+                    {isFormOpen && svcForm && (
+                      <div className="mt-4 grid gap-2 rounded-xl border border-[var(--brand-primary)]/20 bg-[var(--brand-surface-2)] p-3">
+                        <div className="grid grid-cols-2 gap-2">
+                          <label className="rounded-lg border border-[var(--brand-primary)]/20 bg-white px-3 py-2">
+                            <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-ink-2)]">Fecha</span>
+                            <input
+                              type="date"
+                              value={svcForm.date}
+                              min={isoInDays(0)}
+                              onChange={(e) => setSvc("date", e.target.value)}
+                              className="w-full bg-transparent text-sm font-medium text-[var(--brand-ink-3)] outline-none"
+                            />
+                          </label>
+                          <label className="rounded-lg border border-[var(--brand-primary)]/20 bg-white px-3 py-2">
+                            <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-ink-2)]">Hora (opcional)</span>
+                            <input
+                              type="time"
+                              value={svcForm.time}
+                              onChange={(e) => setSvc("time", e.target.value)}
+                              className="w-full bg-transparent text-sm font-medium text-[var(--brand-ink-3)] outline-none"
+                            />
+                          </label>
+                        </div>
+                        <label className="rounded-lg border border-[var(--brand-primary)]/20 bg-white px-3 py-2">
+                          <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--brand-ink-2)]">Personas</span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={20}
+                            value={svcForm.people}
+                            onChange={(e) => setSvc("people", e.target.value)}
+                            className="w-full bg-transparent text-sm font-medium text-[var(--brand-ink-3)] outline-none"
+                          />
+                        </label>
+                        <label className="flex items-center gap-2 px-1 text-sm text-[var(--brand-ink-2)]">
+                          <input
+                            type="checkbox"
+                            checked={svcForm.hasCode}
+                            onChange={(e) => setSvc("hasCode", e.target.checked)}
+                            className="h-4 w-4 accent-[var(--brand-primary)]"
+                          />
+                          Ya tengo reserva de habitación (asociar a mi cuenta)
+                        </label>
+                        {svcForm.hasCode ? (
+                          <input
+                            value={svcForm.code}
+                            onChange={(e) => setSvc("code", e.target.value.toUpperCase())}
+                            placeholder="Código de tu reserva (ej. WBZNT)"
+                            className="rounded-lg border border-[var(--brand-primary)]/20 bg-white px-3 py-2.5 text-sm font-medium text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                          />
+                        ) : (
+                          <input
+                            value={svcForm.guestName}
+                            onChange={(e) => setSvc("guestName", e.target.value)}
+                            placeholder="Tu nombre completo"
+                            className="rounded-lg border border-[var(--brand-primary)]/20 bg-white px-3 py-2.5 text-sm font-medium text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                          />
+                        )}
+                        <input
+                          value={svcForm.guestPhone}
+                          onChange={(e) => setSvc("guestPhone", e.target.value)}
+                          placeholder={svcForm.hasCode ? "Teléfono de tu reserva" : "Tu teléfono"}
+                          className="rounded-lg border border-[var(--brand-primary)]/20 bg-white px-3 py-2.5 text-sm font-medium text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                        />
+                        {svcError && <p className="text-sm font-medium text-red-700">{svcError}</p>}
+                        <button
+                          type="button"
+                          onClick={submitServiceBooking}
+                          disabled={svcBusy || !svcFormValid}
+                          className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--brand-primary)] px-5 py-3 font-serif text-[12px] font-semibold uppercase tracking-[0.18em] text-[#171410] disabled:opacity-50"
+                        >
+                          {svcBusy ? <Loader2 size={15} className="animate-spin" /> : <CalendarCheck size={15} />}
+                          Confirmar reserva del servicio
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </article>
               )
             })}
@@ -544,21 +767,35 @@ export default function HotelLandingPage() {
           <div className="text-center">
             <p className="kicker">Opiniones</p>
             <h2 className="mt-3 font-serif text-4xl font-semibold text-[var(--brand-ink-3)] sm:text-5xl">Lo que dicen nuestros huéspedes</h2>
-            {ratingCount > 0 && (
-              <div className="mt-5 flex items-center justify-center gap-2 text-[var(--brand-primary)]">
+            {/* Resumen tipo ficha de Google: el dueño publica el total real de
+                su ficha (googleReviews*) aunque aquí solo se lean 5 reseñas. */}
+            {(displayReviewCount > 0 || displayRating > 0) && (
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-[var(--brand-primary)]">
                 <span className="flex items-center gap-0.5">
                   {[0, 1, 2, 3, 4].map((i) => (
-                    <Star key={i} size={16} fill={i < Math.round(ratingAvg) ? "currentColor" : "none"} strokeWidth={1.5} />
+                    <Star key={i} size={16} fill={i < Math.round(displayRating) ? "currentColor" : "none"} strokeWidth={1.5} />
                   ))}
                 </span>
-                <span className="font-serif text-lg text-[var(--brand-ink-3)]">{ratingAvg.toFixed(1)}</span>
-                <span className="text-sm text-[var(--brand-ink-2)]">· {ratingCount} opiniones</span>
+                <span className="font-serif text-lg text-[var(--brand-ink-3)]">{displayRating.toFixed(1)}</span>
+                <span className="text-sm text-[var(--brand-ink-2)]">
+                  · {displayReviewCount.toLocaleString("es-VE")} opiniones
+                </span>
+                {extras?.googleReviewsUrl && (
+                  <a
+                    href={extras.googleReviewsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-primary)]/40 px-3 py-1 text-xs font-semibold text-[var(--brand-primary-dark)] transition-colors hover:bg-[var(--brand-primary)]/10"
+                  >
+                    Ver en Google <ExternalLink size={12} />
+                  </a>
+                )}
               </div>
             )}
             <hr className="hairline-gold mx-auto mt-6 w-24" />
           </div>
           <div className="mt-14 grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
-            {reviews.slice(0, 6).map((r, i) => (
+            {reviews.slice(0, 5).map((r, i) => (
               <figure
                 key={i}
                 className="flex flex-col rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface)] p-8"

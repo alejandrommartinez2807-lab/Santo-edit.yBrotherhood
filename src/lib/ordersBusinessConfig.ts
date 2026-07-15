@@ -22,10 +22,13 @@ import {
 } from "./hotelBooking"
 import {
   DEFAULT_HOTEL_SITE_EXTRAS,
+  DEFAULT_HOTEL_UPSELL,
   normalizeHotelRoomTypeDetails,
   normalizeHotelSiteExtras,
+  normalizeHotelUpsell,
   type HotelRoomTypeDetailsMap,
   type HotelSiteExtras,
+  type HotelUpsellConfig,
 } from "./hotelSite"
 import {
   normalizeLocalModuleList,
@@ -235,6 +238,8 @@ export type BusinessConfig = {
   // detalle comercial por tipo de habitación (camas, m², vista, amenidades).
   hotelSiteExtras: HotelSiteExtras
   hotelRoomTypeDetails: HotelRoomTypeDetailsMap
+  // Hotel: servicios/paquetes ofrecidos al reservar y sus fotos (o solo texto).
+  hotelUpsell: HotelUpsellConfig
   updatedAt?: string
 }
 
@@ -400,6 +405,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   hotelTermsText: "",
   hotelSiteExtras: { ...DEFAULT_HOTEL_SITE_EXTRAS },
   hotelRoomTypeDetails: {},
+  hotelUpsell: { ...DEFAULT_HOTEL_UPSELL },
 }
 
 function normalizeBooleanConfig(value: unknown, fallback: boolean) {
@@ -1056,6 +1062,7 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     hotelTermsText: String(source.hotelTermsText || "").trim(),
     hotelSiteExtras: normalizeHotelSiteExtras(source.hotelSiteExtras),
     hotelRoomTypeDetails: normalizeHotelRoomTypeDetails(source.hotelRoomTypeDetails),
+    hotelUpsell: normalizeHotelUpsell(source.hotelUpsell),
     updatedAt: source.updatedAt ? String(source.updatedAt) : undefined,
   }
 }

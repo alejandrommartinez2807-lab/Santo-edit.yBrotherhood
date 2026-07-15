@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import {
+  createServiceBooking,
   getBusinessConfig,
   getHotelReservations,
+  getPackages,
   getRateRestrictions,
   getRateSeasons,
+  getResortServices,
   getRoomBlocks,
   getRoomTypes,
   getRooms,
@@ -52,12 +55,63 @@ function cleanText(value: unknown) {
 
 async function getBookingContext() {
   const config = await getBusinessConfig()
-  const access = getModulePlanAccess(config as unknown as Record<string, unknown>, "bookingEngine")
+  const raw = config as unknown as Record<string, unknown>
+  const access = getModulePlanAccess(raw, "bookingEngine")
+  const servicesAccess = getModulePlanAccess(raw, "resortServices")
+  const packagesAccess = getModulePlanAccess(raw, "hotelPackages")
   return {
     enabled: access.includedInPlan && access.effectiveEnabled,
     bookingFields: config.hotelBookingFields as HotelBookingFieldsConfig,
     termsText: config.hotelTermsText || DEFAULT_HOTEL_TERMS,
     roomTypeDetails: config.hotelRoomTypeDetails,
+    upsell: config.hotelUpsell,
+    servicesEnabled: servicesAccess.includedInPlan && servicesAccess.effectiveEnabled,
+    packagesEnabled: packagesAccess.includedInPlan && packagesAccess.effectiveEnabled,
+  }
+}
+
+// Catálogo de extras que se ofrecen al reservar (servicios y paquetes activos,
+// con su foto si el dueño la configuró). Falla suave: sin extras, la reserva
+// de habitación sigue funcionando igual.
+async function getUpsellCatalog(
+  context: Awaited<ReturnType<typeof getBookingContext>>,
+  branchId: string | null,
+) {
+  const { upsell } = context
+  const wantServices = context.servicesEnabled && upsell.showServices
+  const wantPackages = context.packagesEnabled && upsell.showPackages
+  try {
+    const [services, packages] = await Promise.all([
+      wantServices ? getResortServices(branchId) : Promise.resolve([]),
+      wantPackages ? getPackages(branchId) : Promise.resolve([]),
+    ])
+    return {
+      style: upsell.style,
+      services: services
+        .filter((s) => s.active)
+        .map((s) => ({
+          id: s.id,
+          name: s.name,
+          kind: s.kind,
+          description: s.description,
+          price: s.price,
+          durationMin: s.durationMin,
+          imageUrl: upsell.style === "fotos" ? upsell.serviceImages[s.id] || "" : "",
+        })),
+      packages: packages
+        .filter((p) => p.active)
+        .map((p) => ({
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          includes: p.includes,
+          price: p.price,
+          imageUrl: upsell.style === "fotos" ? upsell.packageImages[p.id] || "" : "",
+        })),
+    }
+  } catch (error) {
+    captureError(error, { route: "/api/public/hotel", action: "upsell-catalog" })
+    return { style: upsell.style, services: [], packages: [] }
   }
 }
 
@@ -84,7 +138,8 @@ export async function GET(request: NextRequest) {
   if (rateLimitResponse) return rateLimitResponse
 
   try {
-    const { enabled, bookingFields, termsText, roomTypeDetails } = await getBookingContext()
+    const context = await getBookingContext()
+    const { enabled, bookingFields, termsText, roomTypeDetails } = context
     if (!enabled) return noStoreResponse({ ok: true, enabled: false, types: [] })
 
     const checkIn = normalizeStayDate(request.nextUrl.searchParams.get("checkIn"))
@@ -121,6 +176,9 @@ export async function GET(request: NextRequest) {
       details: roomTypeDetails[t.roomTypeId] || null,
     }))
 
+    // Extras para completar la estadía (servicios y paquetes del hotel).
+    const upsellCatalog = await getUpsellCatalog(context, branchId)
+
     return noStoreResponse({
       ok: true,
       enabled: true,
@@ -128,6 +186,7 @@ export async function GET(request: NextRequest) {
       types: typesWithDetails,
       bookingFields,
       termsText,
+      upsell: upsellCatalog,
     })
   } catch (error) {
     captureError(error, { route: "/api/public/hotel", action: "GET" })
@@ -146,7 +205,8 @@ export async function POST(request: NextRequest) {
   if (rateLimitResponse) return rateLimitResponse
 
   try {
-    const { enabled, bookingFields } = await getBookingContext()
+    const context = await getBookingContext()
+    const { enabled, bookingFields } = context
     if (!enabled) {
       return noStoreResponse(
         { ok: false, error: "Las reservas online no están disponibles por ahora" },
@@ -287,11 +347,34 @@ export async function POST(request: NextRequest) {
       seasons,
     })
 
+    // ---- Extras elegidos al reservar (servicios y paquete del hotel). Se
+    // validan contra el catálogo activo; lo apagado se ignora en silencio. ----
+    const upsellCatalog = await getUpsellCatalog(context, branchId)
+    const requestedServices = Array.isArray(body.services) ? body.services.slice(0, 10) : []
+    const selectedServices: { id: string; name: string; price: number; people: number }[] = []
+    for (const rawService of requestedServices) {
+      const item = (rawService && typeof rawService === "object" ? rawService : {}) as Record<
+        string,
+        unknown
+      >
+      const service = upsellCatalog.services.find((s) => s.id === cleanText(item.id))
+      if (!service) continue
+      const people = Math.min(Math.max(1, Number(item.people) || 1), 20)
+      if (selectedServices.some((s) => s.id === service.id)) continue
+      selectedServices.push({ id: service.id, name: service.name, price: service.price, people })
+    }
+    const selectedPackage = upsellCatalog.packages.find((p) => p.id === cleanText(body.packageId)) || null
+
+    const servicesNote = selectedServices
+      .map((s) => `${s.name}${s.people > 1 ? ` (${s.people}p)` : ""}`)
+      .join(", ")
     const noteParts = [
       extraValues.email ? `Email: ${extraValues.email}` : "",
       extraValues.document ? `Documento: ${extraValues.document}` : "",
       extraValues.address ? `Dirección: ${extraValues.address}` : "",
       extraValues.arrivalTime ? `Llegada: ${extraValues.arrivalTime}` : "",
+      selectedPackage ? `Paquete: ${selectedPackage.name} ($${selectedPackage.price})` : "",
+      servicesNote ? `Servicios: ${servicesNote}` : "",
       extraValues.requests,
     ].filter(Boolean)
     const reservation = await saveHotelReservation(
@@ -312,6 +395,38 @@ export async function POST(request: NextRequest) {
       branchId,
     )
 
+    // Cada servicio queda como reserva de servicio VINCULADA a la estadía: al
+    // hacer check-in aparece en el folio para cargarse a la cuenta del huésped.
+    const bookedServices: { name: string; price: number; people: number; date: string }[] = []
+    for (const service of selectedServices) {
+      try {
+        await createServiceBooking(
+          {
+            serviceId: service.id,
+            reservationId: reservation.id,
+            guestName,
+            guestPhone,
+            date: checkIn,
+            people: service.people,
+            note: `[Web] Reservado junto a la estadía #${reservation.code}`,
+          },
+          branchId,
+        )
+        bookedServices.push({
+          name: service.name,
+          price: service.price,
+          people: service.people,
+          date: checkIn,
+        })
+      } catch (error) {
+        // La reserva de habitación ya existe; un extra fallido no la tumba.
+        captureError(error, { route: "/api/public/hotel", action: "book-extra-service" })
+      }
+    }
+    const extrasTotal =
+      bookedServices.reduce((sum, s) => sum + s.price * s.people, 0) +
+      (selectedPackage ? selectedPackage.price : 0)
+
     return noStoreResponse(
       {
         ok: true,
@@ -324,6 +439,10 @@ export async function POST(request: NextRequest) {
           ratePerNight: reservation.ratePerNight,
           totalAmount: reservation.totalAmount,
           roomTypeName: roomType.name,
+          services: bookedServices,
+          packageName: selectedPackage?.name || "",
+          packagePrice: selectedPackage?.price || 0,
+          extrasTotal,
         },
       },
       { status: 201 },

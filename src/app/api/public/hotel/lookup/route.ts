@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getBusinessConfig, getHotelReservationByCode } from "@/lib/orders"
+import {
+  getBusinessConfig,
+  getHotelReservationByCode,
+  getResortServices,
+  getServiceBookings,
+} from "@/lib/orders"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import { HOTEL_RESERVATION_STATUS_LABELS } from "@/lib/hotelReservationConflicts"
@@ -61,6 +66,40 @@ export async function POST(request: NextRequest) {
       return noStore({ ok: false, error: "No encontramos una reserva con esos datos" }, { status: 404 })
     }
 
+    // Servicios reservados de esta estadía (spa, tours…): el huésped ve todo
+    // lo asociado a su cuenta en un solo lugar. Falla suave si el módulo está
+    // apagado o la consulta falla.
+    let services: {
+      serviceName: string
+      date: string
+      time: string
+      people: number
+      status: string
+      total: number
+    }[] = []
+    try {
+      const [bookings, catalog] = await Promise.all([
+        getServiceBookings({ reservationId: reservation.id }, branchId),
+        getResortServices(branchId),
+      ])
+      const byId = new Map(catalog.map((s) => [s.id, s]))
+      services = bookings
+        .filter((b) => b.status !== "cancelada")
+        .map((b) => {
+          const service = byId.get(b.serviceId)
+          return {
+            serviceName: service?.name || "Servicio",
+            date: b.date,
+            time: b.time,
+            people: b.people,
+            status: b.status,
+            total: Math.max(0, (service?.price || 0) * b.people),
+          }
+        })
+    } catch (error) {
+      captureError(error, { route: "/api/public/hotel/lookup", action: "services" })
+    }
+
     return noStore({
       ok: true,
       reservation: {
@@ -75,6 +114,7 @@ export async function POST(request: NextRequest) {
         status: reservation.status,
         statusLabel: HOTEL_RESERVATION_STATUS_LABELS[reservation.status] || reservation.status,
       },
+      services,
     })
   } catch (error) {
     captureError(error, { route: "/api/public/hotel/lookup", action: "POST" })
