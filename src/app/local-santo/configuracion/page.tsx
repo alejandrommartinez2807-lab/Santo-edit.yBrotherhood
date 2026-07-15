@@ -153,6 +153,15 @@ type BusinessConfig = {
   orderHelpWhatsappEnabled: boolean;
   // Botones de aviso al cliente por WhatsApp en el panel privado, apagables.
   orderWhatsappStageButtonsEnabled: boolean;
+  // Encuesta post-venta por WhatsApp para pedidos entregados. Mensaje vacío =
+  // plantilla estándar.
+  postSaleSurveyEnabled: boolean;
+  postSaleSurveyMessage: string;
+  // Guía paso a paso y advertencias del checkout público.
+  publicOrderStepsEnabled: boolean;
+  publicPrepayNoticeEnabled: boolean;
+  publicPrepayNoticeText: string;
+  publicOpenAccountHintHighlighted: boolean;
   exchangeRateMode: ExchangeRateMode;
   manualExchangeRate: number;
   deliveryEnabled: boolean;
@@ -313,6 +322,12 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   deliveryWhatsapp: "",
   orderHelpWhatsappEnabled: true,
   orderWhatsappStageButtonsEnabled: true,
+  postSaleSurveyEnabled: true,
+  postSaleSurveyMessage: "",
+  publicOrderStepsEnabled: true,
+  publicPrepayNoticeEnabled: true,
+  publicPrepayNoticeText: "",
+  publicOpenAccountHintHighlighted: true,
   exchangeRateMode: "automatic",
   manualExchangeRate: 0,
   deliveryEnabled: true,
@@ -979,6 +994,24 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     orderWhatsappStageButtonsEnabled: normalizeBoolean(
       source.orderWhatsappStageButtonsEnabled,
       DEFAULT_BUSINESS_CONFIG.orderWhatsappStageButtonsEnabled,
+    ),
+    postSaleSurveyEnabled: normalizeBoolean(
+      source.postSaleSurveyEnabled,
+      DEFAULT_BUSINESS_CONFIG.postSaleSurveyEnabled,
+    ),
+    postSaleSurveyMessage: String(source.postSaleSurveyMessage || "").trim(),
+    publicOrderStepsEnabled: normalizeBoolean(
+      source.publicOrderStepsEnabled,
+      DEFAULT_BUSINESS_CONFIG.publicOrderStepsEnabled,
+    ),
+    publicPrepayNoticeEnabled: normalizeBoolean(
+      source.publicPrepayNoticeEnabled,
+      DEFAULT_BUSINESS_CONFIG.publicPrepayNoticeEnabled,
+    ),
+    publicPrepayNoticeText: String(source.publicPrepayNoticeText || "").trim(),
+    publicOpenAccountHintHighlighted: normalizeBoolean(
+      source.publicOpenAccountHintHighlighted,
+      DEFAULT_BUSINESS_CONFIG.publicOpenAccountHintHighlighted,
     ),
     exchangeRateMode: normalizeExchangeRateMode(source.exchangeRateMode),
     manualExchangeRate:
@@ -2626,6 +2659,154 @@ export default function BusinessConfigPage() {
                 </span>
               </span>
             </label>
+
+            <label className="mt-3 flex items-start gap-3">
+              <input
+                type="checkbox"
+                checked={businessConfig.postSaleSurveyEnabled}
+                onChange={(e) =>
+                  setBusinessConfig((c) => ({
+                    ...c,
+                    postSaleSurveyEnabled: e.target.checked,
+                  }))
+                }
+                className="mt-0.5 h-5 w-5 accent-[var(--brand-primary)]"
+              />
+              <span>
+                <span className="block text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
+                  Encuesta post-venta por WhatsApp
+                </span>
+                <span className="mt-0.5 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                  En los pedidos ENTREGADOS de delivery y pick up, Caja y el
+                  panel de Pedidos muestran un botón que abre WhatsApp con una
+                  mini encuesta (¿qué tal estuvo?, ¿fue a tiempo?, ¿qué
+                  mejoramos?). Si configuraste el link de reseñas de Google,
+                  también lo incluye.
+                </span>
+              </span>
+            </label>
+
+            {businessConfig.postSaleSurveyEnabled && (
+              <div className="mt-3">
+                <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                  Mensaje propio de la encuesta (opcional)
+                </label>
+                <textarea
+                  value={businessConfig.postSaleSurveyMessage}
+                  onChange={(e) =>
+                    setBusinessConfig((c) => ({
+                      ...c,
+                      postSaleSurveyMessage: e.target.value,
+                    }))
+                  }
+                  rows={4}
+                  placeholder="Déjalo vacío para usar la encuesta estándar. Si escribes aquí, se envía exactamente este texto."
+                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                />
+              </div>
+            )}
+
+            <div className="mt-5 border-t-2 border-dashed border-[var(--brand-primary)]/15 pt-4">
+              <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                Guía y advertencias del pedido público
+              </p>
+              <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                Textos que ayudan al cliente a no equivocarse al pedir. Cada
+                uno se puede apagar si no lo quieres mostrar.
+              </p>
+
+              <label className="mt-3 flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={businessConfig.publicOrderStepsEnabled}
+                  onChange={(e) =>
+                    setBusinessConfig((c) => ({
+                      ...c,
+                      publicOrderStepsEnabled: e.target.checked,
+                    }))
+                  }
+                  className="mt-0.5 h-5 w-5 accent-[var(--brand-primary)]"
+                />
+                <span>
+                  <span className="block text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
+                    Paso a paso del pedido
+                  </span>
+                  <span className="mt-0.5 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                    Lista numerada al inicio del checkout que le dice al
+                    cliente qué botón tocar y qué sigue, según sea mesa, pick
+                    up o delivery.
+                  </span>
+                </span>
+              </label>
+
+              <label className="mt-3 flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={businessConfig.publicPrepayNoticeEnabled}
+                  onChange={(e) =>
+                    setBusinessConfig((c) => ({
+                      ...c,
+                      publicPrepayNoticeEnabled: e.target.checked,
+                    }))
+                  }
+                  className="mt-0.5 h-5 w-5 accent-[var(--brand-primary)]"
+                />
+                <span>
+                  <span className="block text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
+                    Advertencia “paga antes de que se procese”
+                  </span>
+                  <span className="mt-0.5 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                    Tarjeta amarilla bien visible en pick up y delivery (en el
+                    formulario y en la confirmación): el pedido no se prepara
+                    hasta que el pago esté confirmado.
+                  </span>
+                </span>
+              </label>
+
+              {businessConfig.publicPrepayNoticeEnabled && (
+                <div className="mt-3">
+                  <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                    Texto propio de la advertencia (opcional)
+                  </label>
+                  <textarea
+                    value={businessConfig.publicPrepayNoticeText}
+                    onChange={(e) =>
+                      setBusinessConfig((c) => ({
+                        ...c,
+                        publicPrepayNoticeText: e.target.value,
+                      }))
+                    }
+                    rows={3}
+                    placeholder="Déjalo vacío para usar el texto estándar: «Tu pedido NO empieza a prepararse hasta que pagues y tu pago sea confirmado…»"
+                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  />
+                </div>
+              )}
+
+              <label className="mt-3 flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={businessConfig.publicOpenAccountHintHighlighted}
+                  onChange={(e) =>
+                    setBusinessConfig((c) => ({
+                      ...c,
+                      publicOpenAccountHintHighlighted: e.target.checked,
+                    }))
+                  }
+                  className="mt-0.5 h-5 w-5 accent-[var(--brand-primary)]"
+                />
+                <span>
+                  <span className="block text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
+                    Resaltar aviso de cuenta abierta
+                  </span>
+                  <span className="mt-0.5 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                    El texto “¿Ya abriste una cuenta en tu mesa? No hace falta
+                    poner tus datos otra vez” se muestra como tarjeta grande y
+                    llamativa en vez de una nota pequeña.
+                  </span>
+                </span>
+              </label>
+            </div>
           </SectionCard>
 
           <SectionCard

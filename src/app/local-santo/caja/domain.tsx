@@ -709,3 +709,42 @@ export function buildDeliveryWhatsAppUrl(order: LocalOrder, messageType: Deliver
   if (!phone) return ""
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
 }
+
+// Encuesta post-venta: mensaje corto para pedidos ENTREGADOS (delivery /
+// pick up). Si el dueño escribió su propio mensaje en Configuración se envía
+// tal cual; vacío = esta plantilla con mini encuesta.
+export function buildPostSaleSurveyMessage(
+  order: LocalOrder,
+  options: { customMessage?: string; reviewUrl?: string } = {},
+) {
+  const customMessage = String(options.customMessage || "").trim()
+  if (customMessage) return customMessage
+
+  const displayNumber = getDisplayOrderNumber(order)
+  const customerName = order.customerName || "cliente"
+
+  return [
+    `Hola ${customerName}, somos ${BRAND.name}. ¡Gracias por tu pedido ${displayNumber}!`,
+    "",
+    "Queremos mejorar y tu opinión nos ayuda muchísimo. ¿Nos regalas 30 segundos?",
+    "",
+    "1. Del 1 al 5, ¿qué tal estuvo tu pedido?",
+    "2. ¿La entrega fue a tiempo?",
+    "3. ¿Qué podemos mejorar?",
+    "",
+    "Responde por aquí mismo, leemos todo. 🙌",
+    ...(options.reviewUrl
+      ? ["", `Y si quieres apoyarnos, déjanos tu reseña: ${options.reviewUrl}`]
+      : []),
+  ].join("\n")
+}
+
+export function buildPostSaleSurveyWhatsAppUrl(
+  order: LocalOrder,
+  options: { customMessage?: string; reviewUrl?: string } = {},
+) {
+  const phone = normalizePhoneForWhatsApp(order.customerPhone || "")
+  if (!phone) return ""
+  const message = buildPostSaleSurveyMessage(order, options)
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+}

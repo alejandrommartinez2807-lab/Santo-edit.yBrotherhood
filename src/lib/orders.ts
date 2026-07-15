@@ -117,6 +117,7 @@ export {
   findOrderByClientOrderId,
   getOrders,
   resetOrderStaffItems,
+  setOrderItemDelivered,
   updateOrderDeliveryReport,
   updateOrderPayment,
   updateOrderStatus,

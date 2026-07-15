@@ -32,6 +32,7 @@ import {
 } from "@/lib/localOrderHelpers"
 import {
   buildDeliveryWhatsAppUrl,
+  buildPostSaleSurveyWhatsAppUrl,
   formatDate,
   getDisplayLocation,
   getDisplayOrderNumber,
@@ -63,6 +64,9 @@ export function CashOrderCard({
   isConfirmingStaff,
   isAttachingToOpenAccount,
   paymentProofs = [],
+  postSaleSurveyEnabled = false,
+  postSaleSurveyMessage = "",
+  googleReviewUrl = "",
 }: {
   order: LocalOrder
   suggestedOpenAccount: OpenAccount | null
@@ -76,6 +80,10 @@ export function CashOrderCard({
   isConfirmingStaff: boolean
   isAttachingToOpenAccount: boolean
   paymentProofs?: PaymentProof[]
+  // Encuesta post-venta por WhatsApp para pedidos entregados (configurable).
+  postSaleSurveyEnabled?: boolean
+  postSaleSurveyMessage?: string
+  googleReviewUrl?: string
 }) {
   const orderTotals = getOrderTotals(order)
   const payment = getOrderPayment(order)
@@ -335,6 +343,17 @@ export function CashOrderCard({
             <div className="rounded-full border-2 border-green-600 bg-green-50 px-5 py-3 text-center text-xs font-black uppercase tracking-[0.12em] text-green-700">
               Pedido entregado
             </div>
+          )}
+
+          {order.status === "Entregado" && postSaleSurveyEnabled && phone && (
+            <WhatsAppButton
+              href={buildPostSaleSurveyWhatsAppUrl(order, {
+                customMessage: postSaleSurveyMessage,
+                reviewUrl: googleReviewUrl,
+              })}
+              label="Encuesta post-venta"
+              green
+            />
           )}
 
           {order.status === "Cancelado" && (

@@ -55,6 +55,8 @@ export type CreatedOrderSummary = {
   customerName: string;
   customerPhone: string;
   totalUSD: number;
+  // Tipo con el que se registró (la confirmación decide qué avisos mostrar).
+  orderType?: string;
   hasStaffConfirmationItems?: boolean;
   staffConfirmationProductNames?: string[];
   offline?: boolean;
@@ -113,6 +115,14 @@ export type PublicBusinessConfig = {
   deliveryWhatsapp: string;
   // Botón "¿Dudas con tu pedido? Escríbenos" (WhatsApp), apagable por el dueño.
   orderHelpWhatsappEnabled: boolean;
+  // Guía paso a paso del checkout (qué botones tocar y qué sigue), apagable.
+  publicOrderStepsEnabled: boolean;
+  // Advertencia visible "paga antes de que tu pedido se procese" en
+  // delivery/pick up. Texto editable por el dueño (vacío = texto estándar).
+  publicPrepayNoticeEnabled: boolean;
+  publicPrepayNoticeText: string;
+  // Resalta el aviso "si ya abriste cuenta no repitas tus datos" en mesa.
+  publicOpenAccountHintHighlighted: boolean;
   deliveryEnabled: boolean;
   deliveryModuleEnabled: boolean;
   paymentProofsEnabled: boolean;

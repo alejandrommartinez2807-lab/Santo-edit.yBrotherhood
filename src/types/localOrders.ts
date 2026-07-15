@@ -69,6 +69,10 @@ export type OrderItem = {
   staffConfirmedRole?: string
   /** Tasa de IVA fijada en la venta (16 / 8 / 0). null = se usó la default. */
   ivaRate?: number | null
+  // Entrega por producto (0026): cuándo y quién entregó esta línea al
+  // cliente. Ausente = aún no entregado (o migración sin aplicar).
+  deliveredAt?: string
+  deliveredBy?: string
 }
 
 // Desglose fiscal FIJADO en la orden al momento de cobrar (no se recalcula).
@@ -156,6 +160,9 @@ export type LocalOrder = {
   exchangeSource?: string
   exchangeValueDate?: string
   status: OrderStatus
+  // Momento en que caja envió el pedido a cocina (0026). El cronómetro de
+  // cocina cuenta desde aquí; ausente = pedido viejo o migración sin aplicar.
+  kitchenStartedAt?: string
   // Pedido de práctica (Modo entrenamiento): excluido de reportes/inventario/cierre.
   isTraining?: boolean
 

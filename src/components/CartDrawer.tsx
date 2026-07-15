@@ -97,6 +97,11 @@ import PublicBranchPicker, {
   usePublicBranchSelection,
 } from "@/components/PublicBranchPicker";
 import {
+  PublicCheckoutSteps,
+  PublicPrepayNotice,
+} from "@/components/PublicCheckoutGuide";
+import { readImageFileForUpload } from "@/lib/clientImage";
+import {
   doesPlanAllowLocalOrders,
   doesPlanAllowDelivery,
   getActivePublicLocalTableNames,
@@ -429,6 +434,11 @@ export default function CartDrawer({
     costUSD: number;
   } | null>(null);
   const [isQuotingDistance, setIsQuotingDistance] = useState(false);
+  // Aviso (no error) cuando el GPS entregó una lectura poco precisa: el
+  // pedido puede seguir, pero el cliente debe verificar el punto en el mapa.
+  const [gpsAccuracyNotice, setGpsAccuracyNotice] = useState<string | null>(
+    null,
+  );
   const [distanceQuoteError, setDistanceQuoteError] = useState<string | null>(
     null,
   );
@@ -698,7 +708,7 @@ export default function CartDrawer({
     setOrderAttachmentMimeType("");
   }
 
-  function handleOrderAttachmentChange(event: ChangeEvent<HTMLInputElement>) {
+  async function handleOrderAttachmentChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     setOrderAttachmentError("");
 
@@ -707,35 +717,21 @@ export default function CartDrawer({
       return;
     }
 
-    if (!file.type.startsWith("image/")) {
-      setOrderAttachmentError("El adjunto debe ser una imagen.");
+    // Compresión en el navegador antes de subir (fotos de cámara pesadas y
+    // HEIC de iPhone pasan a JPEG liviano). Ver lib/clientImage.
+    try {
+      const image = await readImageFileForUpload(file, {
+        fallbackName: "adjunto",
+      });
+      setOrderAttachmentDataUrl(image.dataUrl);
+      setOrderAttachmentFileName(image.fileName);
+      setOrderAttachmentMimeType(image.mimeType);
+    } catch (error) {
       clearOrderAttachment();
-      return;
+      setOrderAttachmentError(
+        error instanceof Error ? error.message : "No se pudo leer la imagen.",
+      );
     }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setOrderAttachmentError("La imagen es muy pesada. Usa una más liviana.");
-      clearOrderAttachment();
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      if (!result.startsWith("data:image/")) {
-        setOrderAttachmentError("No se pudo leer la imagen.");
-        clearOrderAttachment();
-        return;
-      }
-      setOrderAttachmentDataUrl(result);
-      setOrderAttachmentFileName(file.name || "adjunto.jpg");
-      setOrderAttachmentMimeType(file.type || "image/jpeg");
-    };
-    reader.onerror = () => {
-      setOrderAttachmentError("No se pudo leer la imagen.");
-      clearOrderAttachment();
-    };
-    reader.readAsDataURL(file);
   }
 
   const requestCloseOrderModal = useEffectEvent(() => closeOrderModal());
@@ -1179,6 +1175,7 @@ export default function CartDrawer({
     try {
       setIsQuotingDistance(true);
       setDistanceQuoteError(null);
+      setGpsAccuracyNotice(null);
       setDistanceQuote(null);
 
       const response = await fetch("/api/public/delivery-quote", {
@@ -1264,17 +1261,74 @@ export default function CartDrawer({
     const startGpsRequest = () => {
       setIsQuotingDistance(true);
       setDistanceQuoteError(null);
+      setGpsAccuracyNotice(null);
 
-      navigator.geolocation.getCurrentPosition(
+      // getCurrentPosition entrega el PRIMER fix disponible, que en teléfonos
+      // suele ser la posición aproximada por wifi/antena (±500–2000 m) antes
+      // de que el GPS real enganche: por eso a veces cotizaba con una
+      // ubicación errada. Ahora observamos el GPS unos segundos y nos
+      // quedamos con la lectura MÁS precisa (o cortamos apenas baja de 35 m).
+      const GOOD_ACCURACY_M = 35;
+      const MAX_WAIT_MS = 14_000;
+      let bestPosition: GeolocationPosition | null = null;
+      let finished = false;
+      let watchId = 0;
+      let waitTimer = 0;
+
+      const finishWithBest = () => {
+        if (finished) return;
+        finished = true;
+        window.clearTimeout(waitTimer);
+        navigator.geolocation.clearWatch(watchId);
+
+        if (!bestPosition) {
+          setIsQuotingDistance(false);
+          setDistanceQuoteError(
+            "No se pudo leer tu ubicación. Pega el link de Google Maps de tu punto de entrega.",
+          );
+          return;
+        }
+
+        const lat = bestPosition.coords.latitude;
+        const lng = bestPosition.coords.longitude;
+        const accuracy = Math.round(Number(bestPosition.coords.accuracy || 0));
+
+        // Se guarda como link para que el repartidor pueda abrirlo en Maps.
+        setCustomerMapsUrl(`https://www.google.com/maps?q=${lat},${lng}`);
+        void requestDistanceQuote({ lat, lng });
+
+        // Con precisión pobre (interiores, GPS apagado, laptop) el punto
+        // puede caer lejos: se avisa para que lo verifique en el mapa.
+        if (accuracy > 150) {
+          setGpsAccuracyNotice(
+            `Tu ubicación llegó con precisión baja (±${accuracy} m). Revisa en el mapa que el punto marcado sea tu dirección; si no coincide, pega tu link de Google Maps.`,
+          );
+        }
+      };
+
+      watchId = navigator.geolocation.watchPosition(
         (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
+          if (
+            !bestPosition ||
+            position.coords.accuracy < bestPosition.coords.accuracy
+          ) {
+            bestPosition = position;
+          }
 
-          // Se guarda como link para que el repartidor pueda abrirlo en Maps.
-          setCustomerMapsUrl(`https://www.google.com/maps?q=${lat},${lng}`);
-          void requestDistanceQuote({ lat, lng });
+          if (position.coords.accuracy <= GOOD_ACCURACY_M) {
+            finishWithBest();
+          }
         },
         (gpsError) => {
+          // Si ya hay alguna lectura, se usa esa en vez de fallar.
+          if (bestPosition) {
+            finishWithBest();
+            return;
+          }
+
+          finished = true;
+          window.clearTimeout(waitTimer);
+          navigator.geolocation.clearWatch(watchId);
           setIsQuotingDistance(false);
           // 1 = permiso denegado: el navegador ya no vuelve a preguntar, así
           // que se explica cómo desbloquearlo (más el plan B del link).
@@ -1284,8 +1338,10 @@ export default function CartDrawer({
               : "No se pudo leer tu ubicación. Pega el link de Google Maps de tu punto de entrega.",
           );
         },
-        { enableHighAccuracy: true, timeout: 12_000 },
+        { enableHighAccuracy: true, timeout: MAX_WAIT_MS, maximumAge: 0 },
       );
+
+      waitTimer = window.setTimeout(finishWithBest, MAX_WAIT_MS);
     };
 
     // Si el permiso ya quedó bloqueado, el navegador ni muestra la pregunta
@@ -1927,6 +1983,7 @@ export default function CartDrawer({
           "Cliente",
         customerPhone:
           cleanText(data.order?.customerPhone) || customerPhone.trim(),
+        orderType,
         totalUSD: Number(
           data.order?.totalUSD || data.order?.totalPrice || totalUSD || 0,
         ),
@@ -2022,6 +2079,7 @@ export default function CartDrawer({
           id: "Guardado sin conexión",
           customerName: customerName.trim() || "Cliente",
           customerPhone: customerPhone.trim(),
+          orderType,
           totalUSD,
           hasStaffConfirmationItems,
           staffConfirmationProductNames,
@@ -2651,6 +2709,21 @@ export default function CartDrawer({
                     </div>
                   )}
 
+                {/* Recordatorio de pago anticipado en la confirmación: para
+                    Pick up / Delivery el pedido no entra a preparación hasta
+                    confirmar el pago (configurable por el dueño). */}
+                {publicConfig.publicPrepayNoticeEnabled &&
+                  lastOrderCanReportPayment &&
+                  !lastCreatedOrder.offline &&
+                  (lastCreatedOrder.orderType === "Para llevar" ||
+                    lastCreatedOrder.orderType === "Delivery") && (
+                    <div className="text-left">
+                      <PublicPrepayNotice
+                        text={publicConfig.publicPrepayNoticeText}
+                      />
+                    </div>
+                  )}
+
                 {/* Paso 1: los datos del negocio para pagar (pago móvil,
                     Zelle…), ya filtrados a los métodos que el cliente eligió:
                     los copia aquí mismo y luego reporta su pago. */}
@@ -2919,18 +2992,45 @@ export default function CartDrawer({
                   label="¿En qué sede estás pidiendo?"
                 />
 
+                {/* Guía paso a paso del pedido (configurable por el dueño):
+                    qué botón tocar y qué sigue, según el tipo de pedido. */}
+                {publicConfig.publicOrderStepsEnabled && (
+                  <PublicCheckoutSteps
+                    orderType={orderType}
+                    submitLabel={
+                      publicConfig.publicCartLocalOrderButtonText ||
+                      "Registrar pedido local"
+                    }
+                    prepayEnabled={publicConfig.publicPrepayNoticeEnabled}
+                  />
+                )}
+
                 {/* Aviso para mesas con cuenta: la segunda vez no hace falta
                     volver a identificarse, solo indicar la misma mesa. Solo
-                    aplica si el negocio tiene cuentas abiertas activas. */}
-                {orderType === "Comer aquí" && publicConfig.openAccountsEnabled && (
-                  <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.06)] px-4 py-2.5">
-                    <p className="text-[0.7rem] font-bold leading-4 text-[var(--brand-ink-2)]/65">
-                      ¿Ya abriste una cuenta en tu mesa? No hace falta poner
-                      tus datos otra vez: indica la misma mesa y tu pedido se
-                      suma solo.
-                    </p>
-                  </div>
-                )}
+                    aplica si el negocio tiene cuentas abiertas activas. El
+                    dueño puede pedir que se vea RESALTADO (por defecto). */}
+                {orderType === "Comer aquí" &&
+                  publicConfig.openAccountsEnabled &&
+                  (publicConfig.publicOpenAccountHintHighlighted ? (
+                    <div className="rounded-2xl border-[3px] border-[var(--brand-primary)] bg-[var(--brand-accent)]/25 px-4 py-3.5 shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.2)]">
+                      <p className="inline-flex items-center gap-2 text-[0.7rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                        <Table2 size={15} className="shrink-0" />
+                        ¿Ya abriste una cuenta en tu mesa?
+                      </p>
+                      <p className="mt-1.5 text-[0.85rem] font-black leading-5 text-[var(--brand-ink)]">
+                        No hace falta poner tus datos otra vez: indica la misma
+                        mesa y tu pedido se suma solo a tu cuenta.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.06)] px-4 py-2.5">
+                      <p className="text-[0.7rem] font-bold leading-4 text-[var(--brand-ink-2)]/65">
+                        ¿Ya abriste una cuenta en tu mesa? No hace falta poner
+                        tus datos otra vez: indica la misma mesa y tu pedido se
+                        suma solo.
+                      </p>
+                    </div>
+                  ))}
 
                 <div>
                   <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
@@ -3209,6 +3309,11 @@ export default function CartDrawer({
                     pago luego pre-carga ese método. */}
                 {isTakeawayOrder && (
                   <div className="space-y-5 sm:space-y-4">
+                    {publicConfig.publicPrepayNoticeEnabled && (
+                      <PublicPrepayNotice
+                        text={publicConfig.publicPrepayNoticeText}
+                      />
+                    )}
                     {renderCheckoutPaymentSection()}
                   </div>
                 )}
@@ -3218,6 +3323,11 @@ export default function CartDrawer({
                   // pago mixto, costo) son el único nivel de borde para que
                   // el formulario respire y no se vea comprimido.
                   <div className="space-y-5 sm:space-y-4">
+                    {publicConfig.publicPrepayNoticeEnabled && (
+                      <PublicPrepayNotice
+                        text={publicConfig.publicPrepayNoticeText}
+                      />
+                    )}
                     {/* 1. Ubicación primero (como las apps grandes): define el
                         costo del envío y la cobertura antes de pedir datos. */}
                     {isDistancePricingEnabled && (
@@ -3316,6 +3426,12 @@ export default function CartDrawer({
                           {distanceQuoteError && (
                             <p className="mt-3 rounded-2xl border-2 border-orange-400/40 bg-orange-100 px-4 py-3 text-sm font-bold leading-5 text-orange-800">
                               {distanceQuoteError}
+                            </p>
+                          )}
+
+                          {gpsAccuracyNotice && !distanceQuoteError && (
+                            <p className="mt-3 rounded-2xl border-2 border-amber-400/60 bg-amber-50 px-4 py-3 text-sm font-bold leading-5 text-amber-800">
+                              {gpsAccuracyNotice}
                             </p>
                           )}
 
@@ -3656,7 +3772,7 @@ export default function CartDrawer({
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={handleOrderAttachmentChange}
+                        onChange={(event) => void handleOrderAttachmentChange(event)}
                         className="hidden"
                       />
                     </label>

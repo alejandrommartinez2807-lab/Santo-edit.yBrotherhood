@@ -4,6 +4,7 @@ import {
   deleteOrder,
   resetOrderStaffItems,
   getBusinessConfig,
+  setOrderItemDelivered,
   updateOrderDeliveryReport,
   updateOrderStatus,
   type OrderStatus,
@@ -19,7 +20,10 @@ import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import { writeAuditLog } from "@/lib/audit"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
-import { sendOrderReadyPush } from "@/lib/orderPushNotifications"
+import {
+  sendOrderCancelledStaffPush,
+  sendOrderReadyPush,
+} from "@/lib/orderPushNotifications"
 import { getDisplayOrderNumber } from "@/lib/localOrderHelpers"
 
 export const runtime = "nodejs"
@@ -268,6 +272,65 @@ export async function PATCH(
       })
     }
 
+    if (body.action === "setItemDelivered") {
+      // Mismos roles que confirman productos: quien atiende la mesa/caja va
+      // marcando lo que ya se entregó al cliente (cuentas abiertas).
+      if (!canRoleConfirmStaffItems(access.role)) {
+        return forbiddenResponse("Esta clave no puede marcar productos entregados")
+      }
+
+      const moduleKey = getStaffConfirmationModuleForRole(access.role)
+      const moduleCheck = await checkModuleAvailability(
+        moduleKey,
+        moduleKey === "cashier"
+          ? "Caja"
+          : moduleKey === "openAccounts"
+            ? "Mesonero"
+            : "El panel de pedidos"
+      )
+
+      if (!moduleCheck.ok) {
+        return moduleCheck.response
+      }
+
+      if (!canLocalAccessUseModule(access, moduleKey)) {
+        return forbiddenResponse("Este usuario no tiene permiso para este módulo")
+      }
+
+      const delivered = body.delivered !== false
+      const order = await setOrderItemDelivered(orderId, {
+        lineId: String(body.lineId || "").trim() || undefined,
+        productId: Number(body.productId || 0) || undefined,
+        itemName: String(body.itemName || "").trim() || undefined,
+        delivered,
+        deliveredBy:
+          String(body.deliveredBy || "").trim() ||
+          getLocalAccessAuditActor(access).label ||
+          getRoleLabel(access.role),
+      }, branchId)
+
+      await writeAuditLog({
+        action: "order.item.delivered",
+        branchId,
+        entityType: "order",
+        entityId: orderId,
+        actor: getLocalAccessAuditActor(access),
+        request,
+        metadata: {
+          item: String(body.itemName || body.lineId || ""),
+          delivered,
+        },
+      })
+
+      return NextResponse.json({
+        order,
+        access: {
+          role: access.role,
+          moduleKey,
+        },
+      })
+    }
+
     if (body.action === "resetStaffItems") {
       if (!canRoleConfirmStaffItems(access.role)) {
         return forbiddenResponse("Esta clave no puede reabrir la revisión del pedido")
@@ -392,6 +455,26 @@ export async function PATCH(
       // Aviso web push al cliente suscrito. Nunca lanza: un fallo de push no
       // puede tumbar el cambio de estado de caja/cocina.
       await sendOrderReadyPush(orderId, getDisplayOrderNumber(order))
+    }
+
+    if (status === "Cancelado") {
+      // Alarma de anulación al dueño/encargado (equipos suscritos): quién
+      // anuló y qué productos llevaba el pedido. Nunca lanza.
+      const actor = getLocalAccessAuditActor(access)
+      const itemsSummary = (order.items || [])
+        .map((item) => `${Math.max(1, Number(item.quantity || 1))}x ${item.name}`)
+        .join(", ")
+
+      await sendOrderCancelledStaffPush({
+        displayNumber: getDisplayOrderNumber(order),
+        customerName: order.customerName || "",
+        itemsSummary,
+        totalUSD: Number(order.totalUSD || order.totalPrice || 0),
+        cancelledBy:
+          [actor.label, getRoleLabel(access.role)].filter(Boolean).join(" · ") ||
+          getRoleLabel(access.role),
+        branchId,
+      })
     }
 
     await writeAuditLog({

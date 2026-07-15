@@ -370,6 +370,15 @@ export function buildPublicBusinessConfigResponse(
     mainWhatsapp: cleanWhatsappNumber(config.mainWhatsapp),
     deliveryWhatsapp: cleanWhatsappNumber(config.deliveryWhatsapp),
     orderHelpWhatsappEnabled: config.orderHelpWhatsappEnabled !== false,
+    // Encuesta post-venta: la leen los paneles internos (caja/pedidos) que se
+    // alimentan de esta misma respuesta. No expone nada sensible.
+    postSaleSurveyEnabled: config.postSaleSurveyEnabled !== false,
+    postSaleSurveyMessage: cleanText(config.postSaleSurveyMessage),
+    // Guía y advertencias del checkout público (configurables por el dueño).
+    publicOrderStepsEnabled: config.publicOrderStepsEnabled !== false,
+    publicPrepayNoticeEnabled: config.publicPrepayNoticeEnabled !== false,
+    publicPrepayNoticeText: cleanText(config.publicPrepayNoticeText),
+    publicOpenAccountHintHighlighted: config.publicOpenAccountHintHighlighted !== false,
     exchangeRateMode:
       normalizeText(config.exchangeRateMode) === "manual"
         ? "manual"

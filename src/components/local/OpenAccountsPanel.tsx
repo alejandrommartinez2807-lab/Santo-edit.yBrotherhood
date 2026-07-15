@@ -456,6 +456,64 @@ export function OpenAccountsPanel({
     }
   }
 
+  // Marca/desmarca UN producto del pedido como entregado al cliente.
+  // Va directo al pedido (PATCH /api/orders/:id) y refresca la cuenta.
+  async function toggleAccountItemDelivered(
+    accountId: string,
+    orderId: string,
+    item: { cartLineId?: string; id: number; name: string },
+    delivered: boolean,
+  ) {
+    if (!canManage || isSaving) return;
+
+    setIsSaving(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch(
+        `/api/orders/${encodeURIComponent(orderId)}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-password": adminPassword,
+          },
+          body: JSON.stringify({
+            action: "setItemDelivered",
+            lineId: item.cartLineId || "",
+            productId: item.id,
+            itemName: item.name,
+            delivered,
+          }),
+        },
+      );
+      const data = await readApiResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || data.message || "No se pudo marcar el producto",
+        );
+      }
+
+      setExpandedAccounts((current) => ({ ...current, [accountId]: true }));
+      setMessage(
+        delivered
+          ? `"${item.name}" marcado como entregado.`
+          : `"${item.name}" vuelve a pendiente por entregar.`,
+      );
+      await refreshAccountsAfterAction();
+      onOrdersShouldRefresh?.();
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "No se pudo marcar el producto",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   async function closeAccount(
     account: OpenAccount,
     accountOrders: OpenAccountOrderSummary[],
@@ -1070,7 +1128,21 @@ export function OpenAccountsPanel({
                               }
                             />
                           </div>
-                          <OrderItemsPreview order={order} />
+                          <OrderItemsPreview
+                            order={order}
+                            isTogglingDelivered={isSaving}
+                            onToggleItemDelivered={
+                              canManage && !isClosed && order.status !== "Cancelado"
+                                ? (item, delivered) =>
+                                    toggleAccountItemDelivered(
+                                      account.id,
+                                      order.id,
+                                      item,
+                                      delivered,
+                                    )
+                                : undefined
+                            }
+                          />
                           {canManage &&
                           !isClosed &&
                           order.status !== "Cancelado" ? (

@@ -91,6 +91,7 @@ function normalizeMoneyInput(value: string) {
 import PaymentMethodDetailsList from "@/components/PaymentMethodDetailsList";
 import { readRecentPublicOrders } from "@/components/recentPublicOrders";
 import { isVesPaymentMethod } from "@/lib/paymentOptions";
+import { readImageFileForUpload } from "@/lib/clientImage";
 
 // Muestra el total en la moneda de los métodos que el cliente eligió al pedir:
 // solo Bs si todos son en bolívares, solo $ si todos son en divisas, y ambos si
@@ -222,7 +223,7 @@ export default function PublicOrderPaymentSection({
     (proof) => proof.status === "Necesita corrección",
   );
 
-  function handleFileChange(file: File | undefined) {
+  async function handleFileChange(file: File | undefined) {
     setFormError(null);
 
     if (!file) {
@@ -232,31 +233,26 @@ export default function PublicOrderPaymentSection({
       return;
     }
 
-    if (!file.type.startsWith("image/")) {
-      setFormError("El comprobante debe ser una imagen (captura o foto).");
-      return;
+    // Se comprime EN el teléfono antes de subir: las fotos de cámara (4–12 MB,
+    // o HEIC en iPhone) pasan a un JPEG liviano que sube rápido aunque la
+    // señal esté mala. Ver lib/clientImage.
+    try {
+      const image = await readImageFileForUpload(file, {
+        fallbackName: "comprobante",
+      });
+      setDataUrl(image.dataUrl);
+      setFileName(image.fileName);
+      setMimeType(image.mimeType);
+    } catch (error) {
+      setDataUrl("");
+      setFileName("");
+      setMimeType("");
+      setFormError(
+        error instanceof Error
+          ? error.message
+          : "No se pudo leer la imagen del comprobante.",
+      );
     }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setFormError("La imagen pesa más de 5 MB. Usa una captura más liviana.");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = String(reader.result || "");
-      if (!result.startsWith("data:image/")) {
-        setFormError("No se pudo leer la imagen del comprobante.");
-        return;
-      }
-      setDataUrl(result);
-      setFileName(file.name || "comprobante.jpg");
-      setMimeType(file.type || "image/jpeg");
-    };
-    reader.onerror = () => {
-      setFormError("No se pudo leer la imagen del comprobante.");
-    };
-    reader.readAsDataURL(file);
   }
 
   async function submitProof(confirmDuplicate = false) {
@@ -587,7 +583,7 @@ export default function PublicOrderPaymentSection({
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(event) => handleFileChange(event.target.files?.[0])}
+                onChange={(event) => void handleFileChange(event.target.files?.[0])}
               />
             </label>
           </div>

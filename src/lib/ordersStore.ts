@@ -7,6 +7,7 @@ import { createOrderInStore } from "./ordersStoreCreate"
 import {
   confirmOrderStaffItemsInStore,
   resetOrderStaffItemsInStore,
+  setOrderItemDeliveredInStore,
 } from "./ordersStoreStaff"
 import { updateOrderPaymentInStore } from "./ordersStorePayments"
 import {
@@ -85,6 +86,20 @@ export async function resetOrderStaffItems(
   branchId?: string | null,
 ): Promise<LocalOrder> {
   return resetOrderStaffItemsInStore(orderId, input, branchId, loadOrderWithItems)
+}
+
+export async function setOrderItemDelivered(
+  orderId: string,
+  input: {
+    lineId?: string
+    productId?: number
+    itemName?: string
+    delivered: boolean
+    deliveredBy?: string
+  },
+  branchId?: string | null,
+): Promise<LocalOrder> {
+  return setOrderItemDeliveredInStore(orderId, input, branchId, loadOrderWithItems)
 }
 
 export async function deleteOrder(
