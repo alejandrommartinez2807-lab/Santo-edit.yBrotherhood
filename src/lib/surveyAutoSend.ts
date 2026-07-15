@@ -65,11 +65,11 @@ export async function dispatchPostSaleSurveys(): Promise<SurveyDispatchResult> {
 
   const supabase = getSupabaseAdmin()
 
-  // branch-exempt: barrido de TODAS las sedes (cada pedido guarda su sede y
-  // el link de la encuesta es por pedido). updated_at ≈ momento de la
-  // entrega (el último cambio de estado del pedido).
+  // updated_at ≈ momento de la entrega (último cambio de estado del pedido).
   const { data, error } = await supabase
     .from("orders")
+    // branch-exempt: barrido intencional de TODAS las sedes (cada pedido ya
+    // guarda su sede y el link de la encuesta es por pedido).
     .select("id, customer_name, customer_phone, order_type, branch_seq, branch_code, seq, survey_sent_at")
     .eq("status", "Entregado")
     .is("survey_sent_at", null)

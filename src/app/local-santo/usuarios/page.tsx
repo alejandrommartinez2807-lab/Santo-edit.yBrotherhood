@@ -49,7 +49,7 @@ const ROLES: { value: string; label: string; defaultModules: LocalModuleKey[] }[
   },
   {
     value: "manager",
-    label: "Encargado",
+    label: "Encargado / Administrador",
     defaultModules: [
       "mainPanel",
       "cashier",
@@ -347,6 +347,15 @@ function StaffFormFields({
         >
           {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
         </select>
+
+        {(form.role === "owner" || form.role === "manager") && (
+          <p className="mt-2 rounded-xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-3 py-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/75">
+            Este rol recibe las <strong>alertas de anulación</strong>: cuando
+            esta persona entre al panel de Pedidos desde su teléfono y toque
+            «Alertas de anulación», las notificaciones le llegarán aunque
+            tenga la app o la sesión cerrada.
+          </p>
+        )}
       </div>
 
       <div className="rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4">
