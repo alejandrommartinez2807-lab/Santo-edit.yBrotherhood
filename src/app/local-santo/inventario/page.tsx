@@ -7,6 +7,7 @@ import { useEffect, useEffectEvent, useMemo, useState } from "react"
 import {
   AlertTriangle,
   ArrowLeft,
+  ArrowRightLeft,
   CheckCircle2,
   Eye,
   EyeOff,
@@ -19,6 +20,7 @@ import {
   Trash2,
   XCircle,
 } from "lucide-react"
+import { getSelectedBranchId } from "@/lib/branchClient"
 import { formatUSD, formatVES } from "@/utils/formatCurrency"
 import { products as baseMenuProducts } from "@/data/products"
 import {
@@ -147,10 +149,12 @@ type BusinessConfig = {
 type InventoryModuleKey =
   | "movimientos"
   | "productos"
+  | "cantidades"
   | "nuevo"
   | "recetas"
   | "conteo"
   | "alertas"
+  | "transferencia"
 
 const INVENTORY_MODULES: {
   key: InventoryModuleKey
@@ -186,6 +190,16 @@ const INVENTORY_MODULES: {
     key: "alertas",
     label: "Alertas",
     description: "Agotados, stock bajo, costos faltantes y compras sugeridas.",
+  },
+  {
+    key: "cantidades",
+    label: "Solo cantidades",
+    description: "Vista rápida: cuánto queda de cada producto, sin costos ni acciones.",
+  },
+  {
+    key: "transferencia",
+    label: "Transferir a sede",
+    description: "Enviar inventario de esta sede a otra (por ejemplo, un evento o feria).",
   },
 ]
 
@@ -739,6 +753,18 @@ function InventoryPageContent() {
   const [newQuickItemUnit, setNewQuickItemUnit] = useState("unidades")
   const [areQuickItemsVisible, setAreQuickItemsVisible] = useState(false)
   const [activeInventoryModule, setActiveInventoryModule] = useState<InventoryModuleKey>("movimientos")
+  // Vista "Solo cantidades": búsqueda propia, sin tocar los filtros de insumos.
+  const [quantitiesSearchText, setQuantitiesSearchText] = useState("")
+  // Transferencia entre sedes (surtir eventos/ferias desde esta sede).
+  const [transferBranches, setTransferBranches] = useState<
+    { id: string; name: string; isEvent?: boolean }[]
+  >([])
+  const [transferTargetBranchId, setTransferTargetBranchId] = useState("")
+  const [transferQuantities, setTransferQuantities] = useState<Record<string, string>>({})
+  const [transferNote, setTransferNote] = useState("")
+  const [transferSearchText, setTransferSearchText] = useState("")
+  const [isTransferring, setIsTransferring] = useState(false)
+  const [transferMessage, setTransferMessage] = useState<string | null>(null)
 
   const isLoggedIn = adminPassword.length > 0
   const inventoryAccess = getModulePlanAccess(businessConfig, "inventory")
@@ -1243,6 +1269,11 @@ function InventoryPageContent() {
       setIsPhysicalCountVisible(true)
     }
 
+    if (moduleKey === "transferencia") {
+      setTransferMessage(null)
+      void loadTransferBranches()
+    }
+
     requestAnimationFrame(() => {
       document
         .getElementById("inventario-modulo-activo")
@@ -1380,6 +1411,109 @@ function InventoryPageContent() {
       )
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  // Sedes destino para transferencias: todas las activas menos la actual.
+  async function loadTransferBranches(password = adminPassword) {
+    if (!password) return
+
+    try {
+      const response = await fetch("/api/branches", {
+        headers: { "x-admin-password": password },
+        cache: "no-store",
+      })
+      const data = await readApiResponse(response)
+
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudieron cargar las sedes")
+      }
+
+      const currentBranchId = getSelectedBranchId()
+      const branches = (Array.isArray(data.branches) ? data.branches : [])
+        .filter(
+          (branch: Record<string, unknown>) =>
+            branch.is_active !== false &&
+            String(branch.id || "") !== String(currentBranchId || ""),
+        )
+        .map((branch: Record<string, unknown>) => ({
+          id: String(branch.id || ""),
+          name: String(branch.name || ""),
+          isEvent: Boolean(branch.isEvent),
+        }))
+        .filter((branch: { id: string; name: string }) => branch.id && branch.name)
+
+      setTransferBranches(branches)
+    } catch (error) {
+      setTransferMessage(
+        error instanceof Error ? error.message : "No se pudieron cargar las sedes",
+      )
+    }
+  }
+
+  async function submitInventoryTransfer() {
+    if (!adminPassword || isTransferring) return
+
+    const items = Object.entries(transferQuantities)
+      .map(([itemId, rawValue]) => ({
+        itemId,
+        quantity: parseNumberInput(rawValue),
+      }))
+      .filter((item) => item.quantity > 0)
+
+    if (!transferTargetBranchId) {
+      setTransferMessage("Elige la sede destino de la transferencia.")
+      return
+    }
+
+    if (!items.length) {
+      setTransferMessage("Escribe la cantidad a transferir en al menos un producto.")
+      return
+    }
+
+    const targetName =
+      transferBranches.find((branch) => branch.id === transferTargetBranchId)?.name ||
+      "la sede destino"
+    const confirmed = window.confirm(
+      `Vas a transferir ${items.length} producto(s) a ${targetName}. El stock saldrá de esta sede y entrará en la otra. ¿Confirmas?`,
+    )
+
+    if (!confirmed) return
+
+    setIsTransferring(true)
+    setTransferMessage(null)
+
+    try {
+      const response = await fetch("/api/inventory/transfer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": adminPassword,
+        },
+        body: JSON.stringify({
+          targetBranchId: transferTargetBranchId,
+          items,
+          note: transferNote.trim(),
+        }),
+      })
+      const data = await readApiResponse(response)
+
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudo completar la transferencia")
+      }
+
+      setTransferMessage(
+        String(data.message || `Transferencia a ${targetName} registrada.`),
+      )
+      setTransferQuantities({})
+      setTransferNote("")
+      await loadInventory()
+    } catch (error) {
+      setTransferMessage(
+        error instanceof Error ? error.message : "No se pudo completar la transferencia",
+      )
+    } finally {
+      setIsTransferring(false)
     }
   }
 
@@ -2546,7 +2680,7 @@ function InventoryPageContent() {
                   </p>
                 </div>
 
-                <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-3 xl:w-auto xl:min-w-[720px] xl:grid-cols-6">
+                <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-4 xl:w-auto xl:min-w-[720px] xl:grid-cols-4">
                   {INVENTORY_MODULES.map((module) => (
                     <InventoryModuleButton
                       key={module.key}
@@ -2796,6 +2930,236 @@ function InventoryPageContent() {
             </section>
 
                         )}
+
+            {activeInventoryModule === "cantidades" && (
+            <section id="inventario-cantidades" className="scroll-mt-28 mt-4 rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    Solo cantidades
+                  </p>
+                  <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
+                    Cuánto queda de cada producto, de un vistazo. Sin costos, sin formularios: ideal para revisar rápido desde el teléfono.
+                  </p>
+                </div>
+
+                <div className="relative w-full lg:w-80">
+                  <Search size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--brand-primary)]" />
+                  <input
+                    value={quantitiesSearchText}
+                    onChange={(event) => setQuantitiesSearchText(event.target.value)}
+                    placeholder="Buscar producto"
+                    className="w-full rounded-full border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                  />
+                </div>
+              </div>
+
+              {(() => {
+                const query = normalizeComparableText(quantitiesSearchText)
+                const visibleItems = inventory
+                  .filter((item) => item.isActive !== false)
+                  .filter(
+                    (item) =>
+                      !query ||
+                      normalizeComparableText(`${item.name} ${item.category}`).includes(query),
+                  )
+                  .sort((first, second) => first.name.localeCompare(second.name))
+
+                if (visibleItems.length === 0) {
+                  return (
+                    <p className="mt-4 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-sm font-bold text-[var(--brand-ink-2)]/60">
+                      {inventory.length === 0
+                        ? "Todavía no hay productos de inventario en esta sede."
+                        : "Ningún producto coincide con esa búsqueda."}
+                    </p>
+                  )
+                }
+
+                return (
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                    {visibleItems.map((item) => {
+                      const status = getStockStatus(item)
+                      const statusClass =
+                        status.tone === "danger"
+                          ? "border-red-500/50 bg-red-50"
+                          : status.tone === "warning"
+                            ? "border-yellow-500/60 bg-[var(--brand-accent-100)]"
+                            : "border-green-600/35 bg-green-50"
+
+                      return (
+                        <div
+                          key={item.id}
+                          className={`flex items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 ${statusClass}`}
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-black text-[var(--brand-ink-3)]">
+                              {item.name}
+                            </p>
+                            <p className="text-[0.66rem] font-bold uppercase tracking-[0.08em] text-[var(--brand-ink-2)]/55">
+                              {item.category}
+                            </p>
+                          </div>
+                          <p className="shrink-0 text-right text-xl font-black leading-none text-[var(--brand-ink-3)]">
+                            {item.quantity}
+                            <span className="block text-[0.62rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)]/55">
+                              {item.unit}
+                            </span>
+                          </p>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
+            </section>
+            )}
+
+            {activeInventoryModule === "transferencia" && (
+            <section id="inventario-transferencia" className="scroll-mt-28 mt-4 rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    Transferir inventario a otra sede
+                  </p>
+                  <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
+                    Saca inventario de ESTA sede y súmalo en otra (por ejemplo, para surtir un evento o una feria). Cada lado queda con su movimiento en el historial.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => void loadTransferBranches()}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+                >
+                  <RefreshCw size={16} />
+                  Recargar sedes
+                </button>
+              </div>
+
+              {transferBranches.length === 0 ? (
+                <p className="mt-4 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-sm font-bold text-[var(--brand-ink-2)]/60">
+                  No hay otra sede activa para recibir la transferencia. Crea la sede (o el evento) primero en Sucursales.
+                </p>
+              ) : (
+                <>
+                  <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                    <label className="block">
+                      <span className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                        Sede destino
+                      </span>
+                      <select
+                        value={transferTargetBranchId}
+                        onChange={(event) => setTransferTargetBranchId(event.target.value)}
+                        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                      >
+                        <option value="">Elige a dónde va el inventario…</option>
+                        {transferBranches.map((branch) => (
+                          <option key={branch.id} value={branch.id}>
+                            {branch.name}
+                            {branch.isEvent ? " · Evento" : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="block">
+                      <span className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                        Nota (opcional)
+                      </span>
+                      <input
+                        value={transferNote}
+                        onChange={(event) => setTransferNote(event.target.value)}
+                        placeholder="Ejemplo: surtido para la feria del sábado"
+                        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="relative mt-3 w-full lg:w-80">
+                    <Search size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--brand-primary)]" />
+                    <input
+                      value={transferSearchText}
+                      onChange={(event) => setTransferSearchText(event.target.value)}
+                      placeholder="Buscar producto a transferir"
+                      className="w-full rounded-full border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                    />
+                  </div>
+
+                  {(() => {
+                    const query = normalizeComparableText(transferSearchText)
+                    const visibleItems = inventory
+                      .filter((item) => item.isActive !== false && item.quantity > 0)
+                      .filter(
+                        (item) =>
+                          !query ||
+                          normalizeComparableText(`${item.name} ${item.category}`).includes(query),
+                      )
+                      .sort((first, second) => first.name.localeCompare(second.name))
+
+                    if (visibleItems.length === 0) {
+                      return (
+                        <p className="mt-3 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-sm font-bold text-[var(--brand-ink-2)]/60">
+                          No hay productos con stock disponible para transferir.
+                        </p>
+                      )
+                    }
+
+                    return (
+                      <div className="mt-3 grid gap-2 lg:grid-cols-2">
+                        {visibleItems.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex items-center justify-between gap-3 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3"
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-black text-[var(--brand-ink-3)]">
+                                {item.name}
+                              </p>
+                              <p className="text-[0.66rem] font-bold text-[var(--brand-ink-2)]/60">
+                                Disponible: {item.quantity} {item.unit}
+                              </p>
+                            </div>
+                            <input
+                              value={transferQuantities[item.id] || ""}
+                              onChange={(event) =>
+                                setTransferQuantities((current) => ({
+                                  ...current,
+                                  [item.id]: event.target.value,
+                                }))
+                              }
+                              inputMode="decimal"
+                              placeholder="0"
+                              className="w-24 shrink-0 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-right text-sm font-black text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  })()}
+
+                  {transferMessage && (
+                    <p className="mt-3 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]">
+                      {transferMessage}
+                    </p>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => void submitInventoryTransfer()}
+                    disabled={isTransferring}
+                    className="mt-4 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50"
+                  >
+                    {isTransferring ? (
+                      <Loader2 size={18} className="animate-spin" />
+                    ) : (
+                      <ArrowRightLeft size={18} />
+                    )}
+                    Transferir inventario
+                  </button>
+                </>
+              )}
+            </section>
+            )}
 
             {activeInventoryModule === "recetas" && (
             <section id="inventario-recetas" className="scroll-mt-28 mt-4 rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
