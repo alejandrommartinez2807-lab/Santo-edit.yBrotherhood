@@ -100,6 +100,7 @@ import {
   PublicCheckoutSteps,
   PublicPrepayNotice,
 } from "@/components/PublicCheckoutGuide";
+import { readImageFileForUpload } from "@/lib/clientImage";
 import {
   doesPlanAllowLocalOrders,
   doesPlanAllowDelivery,
@@ -433,6 +434,11 @@ export default function CartDrawer({
     costUSD: number;
   } | null>(null);
   const [isQuotingDistance, setIsQuotingDistance] = useState(false);
+  // Aviso (no error) cuando el GPS entregó una lectura poco precisa: el
+  // pedido puede seguir, pero el cliente debe verificar el punto en el mapa.
+  const [gpsAccuracyNotice, setGpsAccuracyNotice] = useState<string | null>(
+    null,
+  );
   const [distanceQuoteError, setDistanceQuoteError] = useState<string | null>(
     null,
   );
@@ -702,7 +708,7 @@ export default function CartDrawer({
     setOrderAttachmentMimeType("");
   }
 
-  function handleOrderAttachmentChange(event: ChangeEvent<HTMLInputElement>) {
+  async function handleOrderAttachmentChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     setOrderAttachmentError("");
 
@@ -711,35 +717,21 @@ export default function CartDrawer({
       return;
     }
 
-    if (!file.type.startsWith("image/")) {
-      setOrderAttachmentError("El adjunto debe ser una imagen.");
+    // Compresión en el navegador antes de subir (fotos de cámara pesadas y
+    // HEIC de iPhone pasan a JPEG liviano). Ver lib/clientImage.
+    try {
+      const image = await readImageFileForUpload(file, {
+        fallbackName: "adjunto",
+      });
+      setOrderAttachmentDataUrl(image.dataUrl);
+      setOrderAttachmentFileName(image.fileName);
+      setOrderAttachmentMimeType(image.mimeType);
+    } catch (error) {
       clearOrderAttachment();
-      return;
+      setOrderAttachmentError(
+        error instanceof Error ? error.message : "No se pudo leer la imagen.",
+      );
     }
-
-    if (file.size > 5 * 1024 * 1024) {
-      setOrderAttachmentError("La imagen es muy pesada. Usa una más liviana.");
-      clearOrderAttachment();
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      if (!result.startsWith("data:image/")) {
-        setOrderAttachmentError("No se pudo leer la imagen.");
-        clearOrderAttachment();
-        return;
-      }
-      setOrderAttachmentDataUrl(result);
-      setOrderAttachmentFileName(file.name || "adjunto.jpg");
-      setOrderAttachmentMimeType(file.type || "image/jpeg");
-    };
-    reader.onerror = () => {
-      setOrderAttachmentError("No se pudo leer la imagen.");
-      clearOrderAttachment();
-    };
-    reader.readAsDataURL(file);
   }
 
   const requestCloseOrderModal = useEffectEvent(() => closeOrderModal());
@@ -1183,6 +1175,7 @@ export default function CartDrawer({
     try {
       setIsQuotingDistance(true);
       setDistanceQuoteError(null);
+      setGpsAccuracyNotice(null);
       setDistanceQuote(null);
 
       const response = await fetch("/api/public/delivery-quote", {
@@ -1268,17 +1261,74 @@ export default function CartDrawer({
     const startGpsRequest = () => {
       setIsQuotingDistance(true);
       setDistanceQuoteError(null);
+      setGpsAccuracyNotice(null);
 
-      navigator.geolocation.getCurrentPosition(
+      // getCurrentPosition entrega el PRIMER fix disponible, que en teléfonos
+      // suele ser la posición aproximada por wifi/antena (±500–2000 m) antes
+      // de que el GPS real enganche: por eso a veces cotizaba con una
+      // ubicación errada. Ahora observamos el GPS unos segundos y nos
+      // quedamos con la lectura MÁS precisa (o cortamos apenas baja de 35 m).
+      const GOOD_ACCURACY_M = 35;
+      const MAX_WAIT_MS = 14_000;
+      let bestPosition: GeolocationPosition | null = null;
+      let finished = false;
+      let watchId = 0;
+      let waitTimer = 0;
+
+      const finishWithBest = () => {
+        if (finished) return;
+        finished = true;
+        window.clearTimeout(waitTimer);
+        navigator.geolocation.clearWatch(watchId);
+
+        if (!bestPosition) {
+          setIsQuotingDistance(false);
+          setDistanceQuoteError(
+            "No se pudo leer tu ubicación. Pega el link de Google Maps de tu punto de entrega.",
+          );
+          return;
+        }
+
+        const lat = bestPosition.coords.latitude;
+        const lng = bestPosition.coords.longitude;
+        const accuracy = Math.round(Number(bestPosition.coords.accuracy || 0));
+
+        // Se guarda como link para que el repartidor pueda abrirlo en Maps.
+        setCustomerMapsUrl(`https://www.google.com/maps?q=${lat},${lng}`);
+        void requestDistanceQuote({ lat, lng });
+
+        // Con precisión pobre (interiores, GPS apagado, laptop) el punto
+        // puede caer lejos: se avisa para que lo verifique en el mapa.
+        if (accuracy > 150) {
+          setGpsAccuracyNotice(
+            `Tu ubicación llegó con precisión baja (±${accuracy} m). Revisa en el mapa que el punto marcado sea tu dirección; si no coincide, pega tu link de Google Maps.`,
+          );
+        }
+      };
+
+      watchId = navigator.geolocation.watchPosition(
         (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
+          if (
+            !bestPosition ||
+            position.coords.accuracy < bestPosition.coords.accuracy
+          ) {
+            bestPosition = position;
+          }
 
-          // Se guarda como link para que el repartidor pueda abrirlo en Maps.
-          setCustomerMapsUrl(`https://www.google.com/maps?q=${lat},${lng}`);
-          void requestDistanceQuote({ lat, lng });
+          if (position.coords.accuracy <= GOOD_ACCURACY_M) {
+            finishWithBest();
+          }
         },
         (gpsError) => {
+          // Si ya hay alguna lectura, se usa esa en vez de fallar.
+          if (bestPosition) {
+            finishWithBest();
+            return;
+          }
+
+          finished = true;
+          window.clearTimeout(waitTimer);
+          navigator.geolocation.clearWatch(watchId);
           setIsQuotingDistance(false);
           // 1 = permiso denegado: el navegador ya no vuelve a preguntar, así
           // que se explica cómo desbloquearlo (más el plan B del link).
@@ -1288,8 +1338,10 @@ export default function CartDrawer({
               : "No se pudo leer tu ubicación. Pega el link de Google Maps de tu punto de entrega.",
           );
         },
-        { enableHighAccuracy: true, timeout: 12_000 },
+        { enableHighAccuracy: true, timeout: MAX_WAIT_MS, maximumAge: 0 },
       );
+
+      waitTimer = window.setTimeout(finishWithBest, MAX_WAIT_MS);
     };
 
     // Si el permiso ya quedó bloqueado, el navegador ni muestra la pregunta
@@ -3377,6 +3429,12 @@ export default function CartDrawer({
                             </p>
                           )}
 
+                          {gpsAccuracyNotice && !distanceQuoteError && (
+                            <p className="mt-3 rounded-2xl border-2 border-amber-400/60 bg-amber-50 px-4 py-3 text-sm font-bold leading-5 text-amber-800">
+                              {gpsAccuracyNotice}
+                            </p>
+                          )}
+
                           {!distanceQuote &&
                             !distanceQuoteError &&
                             distanceMaxKm > 0 && (
@@ -3714,7 +3772,7 @@ export default function CartDrawer({
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={handleOrderAttachmentChange}
+                        onChange={(event) => void handleOrderAttachmentChange(event)}
                         className="hidden"
                       />
                     </label>
