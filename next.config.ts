@@ -8,9 +8,13 @@ const nextConfig: NextConfig = {
     "192.168.0.120:3000",
   ],
   // Producto Hotel (Lidotel): la portada pública es el hotel, no el menú de
-  // restaurante del template. La raíz redirige a /hotel.
+  // restaurante del template. La raíz redirige a /hotel y el panel privado
+  // vive en /admin (los enlaces viejos a /pedidos siguen funcionando).
   async redirects() {
-    return [{ source: "/", destination: "/hotel", permanent: false }]
+    return [
+      { source: "/", destination: "/hotel", permanent: false },
+      { source: "/pedidos", destination: "/admin", permanent: false },
+    ]
   },
 }
 

@@ -239,11 +239,11 @@ function MesasContent() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <Link
-                href="/pedidos"
+                href="/admin"
                 className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-yellow-50 print:hidden"
               >
                 <ArrowLeft size={15} />
-                Volver a pedidos
+                Volver al panel
               </Link>
 
               <p className="mt-5 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">

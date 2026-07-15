@@ -28,7 +28,7 @@ function purgeSupabaseTokens() {
 // el sello y re-logueaba al mismo usuario. Ahora cerramos la sesión de Supabase
 // Y borramos sus tokens del navegador. Es "mejor esfuerzo": si algo falla, igual
 // redirige al login.
-export async function signOutLocalStaff(redirectTo = "/pedidos") {
+export async function signOutLocalStaff(redirectTo = "/admin") {
   try {
     await getSupabaseBrowser().auth.signOut()
   } catch {
