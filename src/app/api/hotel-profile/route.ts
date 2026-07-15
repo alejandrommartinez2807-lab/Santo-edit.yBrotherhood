@@ -59,19 +59,26 @@ export async function POST(request: NextRequest) {
     const branchId = await resolveBranchId(request)
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
 
-    const profile = await saveHotelProfile(
-      {
-        headline: cleanText(body.headline),
-        about: cleanText(body.about),
-        amenities: cleanText(body.amenities),
-        address: cleanText(body.address),
-        phone: cleanText(body.phone),
-        email: cleanText(body.email),
-        checkinTime: cleanText(body.checkinTime),
-        checkoutTime: cleanText(body.checkoutTime),
-      },
-      branchId,
-    )
+    // Guardado PARCIAL seguro: solo se tocan los campos que el cliente envía.
+    // Un POST con solo siteExtras/roomTypeDetails no debe vaciar el perfil.
+    const PROFILE_KEYS = [
+      "headline",
+      "about",
+      "amenities",
+      "address",
+      "phone",
+      "email",
+      "checkinTime",
+      "checkoutTime",
+    ] as const
+    const profileInput: Record<string, string> = {}
+    for (const key of PROFILE_KEYS) {
+      if (body[key] !== undefined) profileInput[key] = cleanText(body[key])
+    }
+    const profile =
+      Object.keys(profileInput).length > 0
+        ? await saveHotelProfile(profileInput, branchId)
+        : await getHotelProfile(branchId)
 
     // Formulario de reserva + términos + extras de la landing + detalle por
     // tipo: viven en business_config (a nivel de negocio; la demo es una
