@@ -7,6 +7,7 @@ export type AuditAction =
   | "order.delivery.reported"
   | "order.staff.confirmed"
   | "order.staff.reset"
+  | "order.item.delivered"
   | "order.deleted"
   | "open_account.order.attached"
   | "open_account.order.status.updated"
@@ -30,6 +31,7 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   "order.delivery.reported": "Delivery reportado",
   "order.staff.confirmed": "Ítem confirmado por personal",
   "order.staff.reset": "Confirmación de personal revertida",
+  "order.item.delivered": "Producto marcado como entregado",
   "order.deleted": "Pedido eliminado",
   "open_account.order.attached": "Pedido sumado a cuenta abierta",
   "open_account.order.status.updated": "Estado en cuenta abierta actualizado",

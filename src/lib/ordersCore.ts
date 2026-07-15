@@ -99,6 +99,22 @@ export async function confirmOrderStaffItems(
   return ordersStore.confirmOrderStaffItems(orderId, input, branchId)
 }
 
+export type SetOrderItemDeliveredInput = {
+  lineId?: string
+  productId?: number
+  itemName?: string
+  delivered: boolean
+  deliveredBy?: string
+}
+
+export async function setOrderItemDelivered(
+  orderId: string,
+  input: SetOrderItemDeliveredInput,
+  branchId?: string | null,
+) {
+  return ordersStore.setOrderItemDelivered(orderId, input, branchId)
+}
+
 export async function resetOrderStaffItems(
   orderId: string,
   input: ResetStaffItemsInput = {},

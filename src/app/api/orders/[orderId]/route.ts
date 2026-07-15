@@ -4,6 +4,7 @@ import {
   deleteOrder,
   resetOrderStaffItems,
   getBusinessConfig,
+  setOrderItemDelivered,
   updateOrderDeliveryReport,
   updateOrderStatus,
   type OrderStatus,
@@ -257,6 +258,65 @@ export async function PATCH(
         entityId: orderId,
         actor: getLocalAccessAuditActor(access),
         request,
+      })
+
+      return NextResponse.json({
+        order,
+        access: {
+          role: access.role,
+          moduleKey,
+        },
+      })
+    }
+
+    if (body.action === "setItemDelivered") {
+      // Mismos roles que confirman productos: quien atiende la mesa/caja va
+      // marcando lo que ya se entregó al cliente (cuentas abiertas).
+      if (!canRoleConfirmStaffItems(access.role)) {
+        return forbiddenResponse("Esta clave no puede marcar productos entregados")
+      }
+
+      const moduleKey = getStaffConfirmationModuleForRole(access.role)
+      const moduleCheck = await checkModuleAvailability(
+        moduleKey,
+        moduleKey === "cashier"
+          ? "Caja"
+          : moduleKey === "openAccounts"
+            ? "Mesonero"
+            : "El panel de pedidos"
+      )
+
+      if (!moduleCheck.ok) {
+        return moduleCheck.response
+      }
+
+      if (!canLocalAccessUseModule(access, moduleKey)) {
+        return forbiddenResponse("Este usuario no tiene permiso para este módulo")
+      }
+
+      const delivered = body.delivered !== false
+      const order = await setOrderItemDelivered(orderId, {
+        lineId: String(body.lineId || "").trim() || undefined,
+        productId: Number(body.productId || 0) || undefined,
+        itemName: String(body.itemName || "").trim() || undefined,
+        delivered,
+        deliveredBy:
+          String(body.deliveredBy || "").trim() ||
+          getLocalAccessAuditActor(access).label ||
+          getRoleLabel(access.role),
+      }, branchId)
+
+      await writeAuditLog({
+        action: "order.item.delivered",
+        branchId,
+        entityType: "order",
+        entityId: orderId,
+        actor: getLocalAccessAuditActor(access),
+        request,
+        metadata: {
+          item: String(body.itemName || body.lineId || ""),
+          delivered,
+        },
       })
 
       return NextResponse.json({

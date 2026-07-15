@@ -1,5 +1,6 @@
 import { cleanText, getOrderStaffConfirmationSummary } from "@/lib/localOrderHelpers"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
+import { isMissingColumnError } from "@/lib/ordersStoreMappers"
 import type { LocalOrder, OrderItem } from "@/types/localOrders"
 
 type LoadOrderWithItems = (
@@ -51,6 +52,84 @@ export async function confirmOrderStaffItemsInStore(
   if (branchId) query = query.eq("branch_id", branchId)
   const { error } = await query
   if (error) throw new Error(error.message)
+
+  return loadOrderWithItems(orderId, branchId)
+}
+
+// Marca (o desmarca) UNA línea del pedido como entregada al cliente
+// (columnas 0026). Identifica la línea por line_id (cartLineId); si el pedido
+// es viejo y no guardó line_id, cae al par producto+nombre.
+export async function setOrderItemDeliveredInStore(
+  orderId: string,
+  input: {
+    lineId?: string
+    productId?: number
+    itemName?: string
+    delivered: boolean
+    deliveredBy?: string
+  },
+  branchId: string | null | undefined,
+  loadOrderWithItems: LoadOrderWithItems,
+): Promise<LocalOrder> {
+  const supabase = getSupabaseAdmin()
+  // Valida que el pedido exista en esta sucursal antes de tocar sus líneas.
+  await loadOrderWithItems(orderId, branchId)
+
+  const patch = input.delivered
+    ? {
+        delivered_at: new Date().toISOString(),
+        delivered_by: cleanText(input.deliveredBy) || null,
+      }
+    : { delivered_at: null, delivered_by: null }
+
+  const lineId = cleanText(input.lineId)
+  let updated = 0
+
+  if (lineId) {
+    const { data, error } = await supabase
+      .from("order_items")
+      .update(patch)
+      .eq("order_id", orderId)
+      .eq("line_id", lineId)
+      .select("id")
+    if (error) {
+      if (isMissingColumnError(error)) {
+        throw new Error(
+          "Falta aplicar la migración 0026 en Supabase para marcar productos entregados.",
+        )
+      }
+      throw new Error(error.message)
+    }
+    updated = data?.length ?? 0
+  }
+
+  if (!updated) {
+    const itemName = cleanText(input.itemName)
+    const productId = Number(input.productId || 0)
+    if (!itemName && !productId) {
+      throw new Error("No se pudo identificar el producto del pedido")
+    }
+    let fallbackQuery = supabase
+      .from("order_items")
+      .update(patch)
+      .eq("order_id", orderId)
+    if (productId) fallbackQuery = fallbackQuery.eq("product_id", productId)
+    if (itemName) fallbackQuery = fallbackQuery.eq("name", itemName)
+    const { data, error } = await fallbackQuery.select("id")
+    if (error) {
+      if (isMissingColumnError(error)) {
+        throw new Error(
+          "Falta aplicar la migración 0026 en Supabase para marcar productos entregados.",
+        )
+      }
+      throw new Error(error.message)
+    }
+    updated = data?.length ?? 0
+  }
+
+  if (!updated) {
+    throw new Error("No se encontró ese producto dentro del pedido")
+  }
 
   return loadOrderWithItems(orderId, branchId)
 }
