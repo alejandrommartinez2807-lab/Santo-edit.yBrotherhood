@@ -151,6 +151,21 @@ sirve, pero el rótulo dice "mesas").
 
 ---
 
+## Estado 2026-07-15 (noche) — rediseño 5★ del panel /admin HECHO
+
+- **Cabecera** de /admin en modo hotel: tarjeta blanca hairline + shadow-sm
+  (sin border-4 ni franja degradada), chips fantasma finos, "Cerrar sesión"
+  sólido champán; rótulo/subtítulo en versalitas finas AA. Restaurante intacto.
+- **Banner de sede** fino champán (primary/10 + hairline + serif).
+- **Tarjetas unificadas**: `pedidos/components.tsx` re-exporta
+  ModuleAccessCard/MetricCard/InfoBox/PanelMiniMetric desde
+  `PanelPrimitiveCards` (única fuente de verdad, estilo ModuleTile);
+  Administración y POS quedan de la familia de "El hotel hoy". Caja/cocina/
+  delivery usan sus propias copias locales — sin impacto.
+- **Verificado**: tsc + eslint + 397 tests + QA 54/54 y 20/20 en verde.
+  Deploy `dpl_CkMa5kuxtAxBJDqYwP1QYVxRypG7` en vivo; /?mesa=5 → 200 (QR ok),
+  /admin → 200.
+
 ## Estado al cierre de la sesión 2026-07-15 (backlog v3 completado)
 
 - **1-2 Reservar**: tarjetas con foto grande (h-44/52) + badge "N fotos · ver
