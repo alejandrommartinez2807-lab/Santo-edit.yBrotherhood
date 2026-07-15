@@ -1,71 +1,114 @@
-# Continuar el demo Lidotel — estado y pendientes
+# Continuar el demo Lidotel — prompt + backlog (v3 · 2026-07-15)
 
-> **Backlog 2026-07-14: LAS 6 TAREAS COMPLETADAS** (commits `3b82799` → `f382e2f`
-> en `demo-lidotel`). Este doc queda como registro + pendientes del usuario.
-> Contexto fino en las memorias `santo-edit-hotel-deploy` y `santo-edit-hotel-pms-build`.
+> **Cómo usar:** copia el bloque "PROMPT" en una sesión nueva de Claude Code
+> (abierta en `D:\Santo edit`). El contexto fino vive en las memorias
+> `santo-edit-hotel-deploy` y `santo-edit-hotel-pms-build`.
 
-## Hecho (2026-07-14)
+---
 
-1. **Contraste/legibilidad** (`3b82799`): ink-2 `#4d4433`, primary-dark `#7d6230`
-   (AA sobre marfil y surface-2), hero con velo más fuerte + subtítulo con sombra,
-   etiquetas 11px semibold, fuera opacidades /55-/70, botones sólidos texto `#171410`.
-2. **Panel con cara de hotel** (`aa1e699`): `HotelPanelSection` (franja "Hotel · hoy"
-   con llegadas/salidas/en casa/ocupación/por limpiar + 22 tarjetas agrupadas
-   Recepción→Dinero→Resort), título "Panel del hotel", POS rotulado "Restaurante y
-   room service", nav flotante reordenada hotel-primero.
-3. **Integración 23 fases**: flujo dorado verificado END-TO-END por API contra el
-   Supabase real (reserva→check-in+cargo hab→cargo bar→facturable→pago→check-out→
-   housekeeping encolado→night audit→reporte). Datos QA borrados.
-4. **Galería de fotos por tipo** (`2274079`): migración `0039_room_type_photos.sql`
-   (columna `photos jsonb` en `room_types`), editor en Habitaciones (URL+caption,
-   portada, reordenar), portada en tarjetas de landing/reservar + sección Galería.
-5. **Mi reserva sin fricción** (`25cf335`): QR del código al confirmar, localStorage
-   `hotel_guest_reservation_v1` autocompleta y consulta solo, se limpia al terminar
-   la estadía (verificado en vivo); buscador por código/nombre/teléfono en staff.
-6. **Ficha de habitación enriquecida** (`f382e2f`): estadía actual + saldo del folio
-   en vivo + próxima llegada + historial 90 días, toggle fuera de servicio, notas
-   editables en sitio.
+## PROMPT (copiar/pegar)
 
-## Segunda tanda (2026-07-14 tarde, migración 0039 YA aplicada)
+```
+Continúo el demo Lidotel del PMS hotelero. Lee primero la memoria
+santo-edit-hotel-deploy y santo-edit-hotel-pms-build, y el archivo
+docs/CONTINUAR-LIDOTEL.md del worktree del hotel.
 
-7. **Galerías sembradas**: 10 fotos premium (Unsplash hotlink) en los 3 tipos
-   (Individual 3, Doble Superior 3, Suite Ejecutiva 4) vía API staff.
-8. **Fix payload parcial** (`054c25f`): `saveRoomType` ya no pisa con defaults
-   los campos que el payload no trae (la siembra borró descripciones/orden y
-   se restauraron; el editor de fotos tenía el mismo bug latente).
-9. **Subir fotos como archivo** (`ba43ab4`): POST `/api/rooms/upload-photo`
-   (guard rooms, ~5MB, jpeg/png/webp) sube a Storage — bucket `menu-images`
-   prefijo `room-types/`, **se crea público al vuelo si no existe** — y botón
-   "Subir foto" en Habitaciones. Verificado en vivo contra el Supabase real.
-10. **Lightbox en la landing** (`8aba456`): clic en portada de tipo (badge
-    "N fotos") o en la galería abre visor grande con caption, contador,
-    flechas + teclado. Verificado en vivo.
+Datos clave:
+- Worktree: D:/Santo edit/.claude/worktrees/nice-visvesvaraya-5726a1 (rama demo-lidotel).
+  NUNCA deployar desde D:\Santo edit (apunta a Brotherhood).
+- En vivo: https://hotel-valencia.vercel.app (dominio del proyecto, se actualiza
+  solo con cada deploy). Deploy: npx vercel --prod --scope carlos-projects8 desde
+  el worktree (autorizado a correrlo Claude; a veces el CLI da ECONNRESET pero el
+  build sigue en la nube — verificar con vercel ls + curl, no re-deployar a ciegas).
+- Supabase del hotel: edxbuggbqcrsaynxysuj (migraciones 0026-0039 aplicadas).
+- Dev: el usuario suele correr npm run dev en 3000; verificar con curl. NUNCA
+  correr npm run build con el dev server vivo (comparten .next y se envenena).
+- Ver la página: extensión Claude in Chrome (funciona). Claves staff en
+  .env.local (ORDERS_*); Claude las usa en headers x-admin-password para QA de
+  API, pero NO las teclea en formularios (el login lo prueba el usuario).
+- QA: node scripts/qa-hotel-completo.mjs (53 checks) + node scripts/qa-hotel-ronda2.mjs
+  (20 checks). Ambos limpian sus datos y deben terminar en verde.
 
-## Pendientes del USUARIO antes del próximo deploy
+Trabaja el backlog de docs/CONTINUAR-LIDOTEL.md en orden, por fases pequeñas con
+commit + verificación por fase, y deploy al final.
+```
 
-1. **Re-subir env vars**: `bash deploy-hotel-env.sh` (el bug de comillas ya está
-   corregido; el admin `1234` no entra en prod hasta esto).
-2. **Deploy**: `npx vercel --prod --scope carlos-projects8` DESDE el worktree
-   `D:/Santo edit/.claude/worktrees/nice-visvesvaraya-5726a1` (NUNCA desde
-   `D:\Santo edit`). URL canónica: https://hotel-valencia.vercel.app
-3. **QA con clave** (Claude no teclea claves): login al panel → ver "Panel del
-   hotel" + franja "Hotel · hoy" → probar "Subir foto" en Habitaciones →
-   buscador de reservas por código.
+---
 
-## Ideas siguientes (no comprometidas)
+## BACKLOG (en orden)
 
-- Folio visible dentro de la ficha de habitación (hoy muestra saldo + enlace).
-- Reemplazar las fotos Unsplash por fotos reales de Lidotel cuando el usuario
-  las tenga (con "Subir foto" ya se puede sin tocar código).
-- Lightbox también en /hotel/reservar (hoy solo miniatura).
+### 1. Reservar: las habitaciones deben LUCIR (imágenes grandes)
+Hoy `/hotel/reservar` muestra una miniatura de 96×64. Rediseñar la tarjeta de
+cada tipo: foto grande (h-40+, object-cover, esquina con badge "N fotos"),
+galería clicable (reusar el patrón lightbox de la landing), nombre serif,
+descripción y precio como en la landing. Móvil primero (la gente reserva del
+teléfono).
+
+### 2. Disponibilidad visible: "Quedan X"
+El "6 disponibles" está en gris pequeño. Mostrar el cupo claro en la tarjeta:
+chip "Quedan 2" (ámbar si ≤3, verde si hay holgura). El dato ya viene
+(`freeCount` en `/api/public/hotel`).
+
+### 3. Campos del formulario EDITABLES por el dueño (p. ej. cédula)
+El dueño decide qué se pide al reservar:
+- Config editable (en `hotel_profile` o `business_config`, editor en
+  `/local-santo/pagina-hotel`): activar/desactivar campos extra y si son
+  obligatorios: **cédula/documento de identidad**, email obligatorio (hoy es
+  opcional), dirección, hora estimada de llegada, solicitudes especiales.
+- El booking público (`/hotel/reservar`) renderiza los campos activos y el
+  SERVIDOR valida los obligatorios (no solo el cliente).
+- Guardar: documento en `guests`/nota de la reserva (campo `note` ya viaja);
+  ideal: crear el guest con documentNumber al reservar.
+
+### 4. QR descargable tras reservar
+En la confirmación (y en /hotel/mi-reserva) botón **"Descargar QR"**: bajar la
+imagen del QR como archivo (fetch → blob → <a download="reserva-CODIGO.png">).
+Así el huésped no pierde su código.
+
+### 5. Términos y condiciones con checkbox obligatorio
+- Checkbox "He leído y acepto los términos y condiciones" ANTES de confirmar
+  la reserva; sin marcar no se envía. El SERVIDOR también exige
+  `termsAccepted: true` (400 si falta).
+- El texto es EDITABLE por el dueño (campo largo en hotel_profile +
+  editor en /local-santo/pagina-hotel; modal o página /hotel/terminos para
+  leerlo completo).
+- DEFAULT (basado en las políticas estándar de las grandes cadenas — Marriott/
+  Hilton/IHG): check-in 15:00 / check-out 12:00; cancelación gratis hasta 48h
+  antes de la llegada, después se cobra 1 noche; no-show = cargo de 1 noche;
+  edad mínima 18 años para registrarse; documento de identidad obligatorio en
+  el check-in; el huésped responde por daños a la habitación; no fumar en
+  habitaciones (cargo de limpieza); mascotas solo con autorización previa;
+  datos personales usados solo para gestionar la reserva.
+
+### 6. Hotel-ificar los módulos heredados (arrancado, falta terminar)
+HECHO: preset "Hotel / Resort" en Configuración (enciende PMS, apaga mesas/
+delivery, ubicación="Habitación") + contador de módulos corregido (daba 65/63).
+FALTA: pasada por los TEXTOS visibles de Caja, Cocina, Delivery, Menú,
+Análisis/Reportes y Clientes para que hablen de hotel/room service cuando
+`isHotelFrontDeskVisible` (p. ej. "Delivery" → "Room service / a domicilio",
+subtítulos "pedidos del local" → "consumos"); revisar la página de Configuración
+logueado (la prueba el usuario) y los QR por habitación (Sucursales → Mesas y QR
+sirve, pero el rótulo dice "mesas").
+
+---
+
+## Estado al cierre de la sesión 2026-07-14/15
+
+- **En vivo** (deploy `7ve14au7f`): panel privado rediseñado 5★ ("El hotel hoy"
+  con llegadas/salidas por nombre, fichas compactas, POS plegado, Administración
+  aparte, tarjetas serif), header público transparente→marfil, galерías con
+  lightbox, editar reservas desde recepción, alta en serie (25 habitaciones
+  demo), subida de fotos a Storage, preset Hotel/Resort.
+- **QA**: 73 checks automatizados en verde (rondas 1 y 2). Escala probada con
+  200 habitaciones (<550ms por pantalla).
+- **Bug raíz documentado**: hay TRES copias de BusinessConfig/normalize
+  (ordersBusinessConfig, configuracion/page, pedidos/domain) — el fitness
+  businessConfigModuleKeys ya vigila las tres.
 
 ## Reglas permanentes
 
 - Producto SEPARADO: nada va al main de Santo ni al proyecto Vercel brotherhood.
 - Migraciones: Claude las escribe; el usuario las aplica en Supabase.
-- Fases pequeñas: commit + `npm run build` (y tests si tocan lógica) por fase.
-- Deploy a producción: SIEMPRE lo corre el usuario.
-- Ver la página desde Claude: extensión Claude in Chrome (funciona, 2026-07-14) —
-  el Browser pane no captura en esta máquina. OJO: si el dev server sirve colores
-  viejos o 404s raros, borrar `.next` y reiniciar (caché envenenado; pasó hoy).
-  No correr `npm run build` con el dev server corriendo (comparten `.next`).
+- Fases pequeñas: commit + tsc/tests (+ build solo si el dev server está
+  apagado) por fase; QA rondas antes de entregar.
+- El texto público SIEMPRE en español neutro y con contraste AA.
