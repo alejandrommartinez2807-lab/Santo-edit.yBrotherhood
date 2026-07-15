@@ -29,7 +29,7 @@ import {
   isStaffConfirmationItemConfirmed,
   isStaffConfirmationItemRequired,
 } from "@/lib/localOrderHelpers"
-import ModuleAccessGuard from "@/components/ModuleAccessGuard"
+import ModuleAccessGuard, { useHotelMode } from "@/components/ModuleAccessGuard"
 import {
   useOperationalSounds,
   useOrderSoundAlerts,
@@ -381,6 +381,19 @@ function InfoBox({ label, value }: { label: string; value: string }) {
         {value || "—"}
       </p>
     </div>
+  )
+}
+
+// Debajo del guard el subtítulo sabe si el negocio opera como hotel y habla
+// de room service en vez de pedidos del local.
+function CocinaSubtitle() {
+  const hotelMode = useHotelMode()
+  return (
+    <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
+      {hotelMode
+        ? "Aquí aparecen los consumos y pedidos de room service cuando caja los confirma. Cocina puede revisar preparación, listos y completos sin cerrar ventas."
+        : "Aquí aparecen los pedidos cuando caja los confirma y los envía a cocina. Cocina puede revisar preparación, listos y completos sin cerrar ventas."}
+    </p>
   )
 }
 
@@ -748,9 +761,7 @@ export default function CocinaPage() {
                     Módulo cocina
                   </h1>
 
-                  <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-                    Aquí aparecen los pedidos cuando caja los confirma y los envía a cocina. Cocina puede revisar preparación, listos y completos sin cerrar ventas.
-                  </p>
+                  <CocinaSubtitle />
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-4 lg:w-[680px]">

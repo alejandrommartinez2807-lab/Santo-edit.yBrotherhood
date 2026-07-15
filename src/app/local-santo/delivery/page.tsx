@@ -32,7 +32,7 @@ import {
   isStaffConfirmationItemConfirmed,
   isStaffConfirmationItemRequired,
 } from "@/lib/localOrderHelpers"
-import ModuleAccessGuard from "@/components/ModuleAccessGuard"
+import ModuleAccessGuard, { useHotelMode } from "@/components/ModuleAccessGuard"
 
 type ProductPaymentMode = "divisa" | "mixto"
 type StaffConfirmationStatus = "pending" | "confirmed"
@@ -754,6 +754,8 @@ export default function DeliveryPage() {
 }
 
 function DeliveryPageContent() {
+  // Con la recepción activa el módulo habla de room service y domicilio.
+  const hotelMode = useHotelMode()
   const [adminPassword, setAdminPassword] = useState("")
   const [passwordInput, setPasswordInput] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -1165,12 +1167,13 @@ function DeliveryPageContent() {
                 </p>
 
                 <h1 className="mt-1 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl">
-                  Módulo delivery
+                  {hotelMode ? "Room service / domicilio" : "Módulo delivery"}
                 </h1>
 
                 <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
-                  Aquí solo aparecen pedidos delivery. Coordina datos del cliente,
-                  WhatsApp y ruta sin acceso a caja, cocina ni panel general.
+                  {hotelMode
+                    ? "Aquí aparecen los pedidos de room service y a domicilio. Coordina habitación o dirección, WhatsApp y entrega sin acceso a caja, cocina ni panel general."
+                    : "Aquí solo aparecen pedidos delivery. Coordina datos del cliente, WhatsApp y ruta sin acceso a caja, cocina ni panel general."}
                 </p>
               </div>
 

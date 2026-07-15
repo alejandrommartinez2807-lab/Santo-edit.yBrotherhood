@@ -130,7 +130,17 @@ export default function LocalModuleNav({
   }
 
   const allowed = new Set(allowedModules)
-  const entries = NAV_ENTRIES.filter((entry) => allowed.has(entry.key))
+  // Con la recepción activa, los módulos heredados del restaurante hablan de
+  // hotel: el delivery es room service y los QR de mesas son por habitación.
+  const hotelMode = allowed.has("rooms") || allowed.has("hotelReservations")
+  const hotelLabels: Record<string, string> = {
+    delivery: "Room service",
+    tables: "QR habitaciones",
+    reservations: "Reservas rest.",
+  }
+  const entries = NAV_ENTRIES.filter((entry) => allowed.has(entry.key)).map((entry) =>
+    hotelMode && hotelLabels[entry.key] ? { ...entry, label: hotelLabels[entry.key] } : entry,
+  )
   const showPanelLink = allowed.has("mainPanel")
 
   const selectedBranch =

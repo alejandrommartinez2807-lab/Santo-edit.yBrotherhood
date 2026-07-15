@@ -566,6 +566,8 @@ export default function LocalMenuPage() {
     enabled: false,
     ivaDefaultRate: 16,
   })
+  // Modo hotel: el menú es la carta de room service / restaurante del hotel.
+  const [hotelMode, setHotelMode] = useState(false)
   const [form, setForm] = useState<MenuForm>(EMPTY_FORM)
   const [searchText, setSearchText] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("Todas")
@@ -733,18 +735,21 @@ export default function LocalMenuPage() {
     setSuccessMessage(null)
   }
 
-  // Config fiscal del negocio (para mostrar el IVA por producto solo si aplica).
+  // Config fiscal del negocio (para mostrar el IVA por producto solo si aplica)
+  // + modo hotel (los textos hablan de room service).
   useEffect(() => {
     if (!adminPassword) return
     fetch("/api/business-config", { headers: { "x-admin-password": adminPassword }, cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         const c = j?.businessConfig
-        if (c)
+        if (c) {
           setFiscal({
             enabled: c.fiscalEnabled === true,
             ivaDefaultRate: Number(c.ivaDefaultRate) || 16,
           })
+          setHotelMode(c.roomsModuleEnabled === true || c.hotelReservationsModuleEnabled === true)
+        }
       })
       .catch(() => {})
   }, [adminPassword])
@@ -1235,7 +1240,9 @@ export default function LocalMenuPage() {
                 </h1>
 
                 <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-                  Crea y actualiza productos del menú público sin tocar código. Puedes subir fotos, cambiar precio, destacar productos y dejar preparada la configuración premium por tipo de producto.
+                  {hotelMode
+                    ? "Crea y actualiza la carta de room service y del restaurante del hotel sin tocar código. Puedes subir fotos, cambiar precio y destacar productos."
+                    : "Crea y actualiza productos del menú público sin tocar código. Puedes subir fotos, cambiar precio, destacar productos y dejar preparada la configuración premium por tipo de producto."}
                 </p>
               </div>
 

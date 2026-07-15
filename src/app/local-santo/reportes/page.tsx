@@ -6,7 +6,7 @@ import { ArrowLeft, Loader2, BarChart3, TrendingUp, TrendingDown, Clock, PieChar
 import { DonutChart, HBarChart, VBarChart } from "@/components/charts"
 import { buildCsvSections, downloadCsv } from "@/lib/csv"
 import { fillDailySeries } from "@/lib/reportSeries"
-import ModuleAccessGuard from "@/components/ModuleAccessGuard"
+import ModuleAccessGuard, { useHotelMode } from "@/components/ModuleAccessGuard"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -110,6 +110,8 @@ export default function ReportesPage() {
 }
 
 function ReportesPageContent() {
+  // Con la recepción activa los reportes hablan de room service, no de delivery.
+  const hotelMode = useHotelMode()
   const [period, setPeriod] = useState("today")
   const [fromDate, setFromDate] = useState("")
   const [toDate, setToDate] = useState("")
@@ -278,9 +280,9 @@ function ReportesPageContent() {
       ...(report.delivery && report.delivery.orders
         ? [
             {
-              title: "Delivery",
+              title: hotelMode ? "Room service / domicilio" : "Delivery",
               rows: [
-                ["Pedidos delivery", report.delivery.orders],
+                [hotelMode ? "Pedidos room service" : "Pedidos delivery", report.delivery.orders],
                 ["Ventas delivery USD", report.delivery.revenueUSD],
                 ["Cobrado por envíos USD", report.delivery.deliveryCostUSD],
                 ["Envío promedio USD", report.delivery.avgDeliveryUSD],
@@ -329,7 +331,11 @@ function ReportesPageContent() {
             </span>
             <div>
               <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Reportes</h1>
-              <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">Resumen de ventas del negocio.</p>
+              <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
+                {hotelMode
+                  ? "Resumen de ventas del restaurante y room service (los reportes de habitaciones viven en Reportes hotel)."
+                  : "Resumen de ventas del negocio."}
+              </p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2 print:hidden">
@@ -566,10 +572,10 @@ function ReportesPageContent() {
               ) : null}
 
               {report.delivery && report.delivery.orders > 0 ? (
-                <Card title="Delivery" icon={<Truck size={16} />}>
+                <Card title={hotelMode ? "Room service / domicilio" : "Delivery"} icon={<Truck size={16} />}>
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      ["Pedidos delivery", String(report.delivery.orders)],
+                      [hotelMode ? "Pedidos room service" : "Pedidos delivery", String(report.delivery.orders)],
                       ["Ventas delivery", usd(report.delivery.revenueUSD)],
                       ["Cobrado por envíos", usd(report.delivery.deliveryCostUSD)],
                       ["Envío promedio", usd(report.delivery.avgDeliveryUSD)],

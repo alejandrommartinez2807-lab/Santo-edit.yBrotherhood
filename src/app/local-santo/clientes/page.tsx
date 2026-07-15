@@ -1,6 +1,6 @@
 "use client"
 
-import ModuleAccessGuard from "@/components/ModuleAccessGuard"
+import ModuleAccessGuard, { useHotelMode } from "@/components/ModuleAccessGuard"
 import { BRAND } from "@/lib/brand"
 import { useEffect, useEffectEvent, useMemo, useState } from "react"
 import {
@@ -370,6 +370,8 @@ export default function FrequentCustomersPage() {
 }
 
 function FrequentCustomersPageContent() {
+  // Con la recepción activa el módulo habla de huéspedes y consumos.
+  const hotelMode = useHotelMode()
   const [adminPassword, setAdminPassword] = useState("")
   const [passwordInput, setPasswordInput] = useState("")
   const [businessConfig, setBusinessConfig] = useState<BusinessConfig>(
@@ -614,7 +616,9 @@ function FrequentCustomersPageContent() {
                 </h1>
 
                 <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-                  Revisa quiénes compran más, cuándo fue su último pedido y escríbeles por WhatsApp para facilitar una recompra.
+                  {hotelMode
+                    ? "Revisa qué huéspedes y clientes consumen más, cuándo fue su último consumo y escríbeles por WhatsApp para invitarlos a volver."
+                    : "Revisa quiénes compran más, cuándo fue su último pedido y escríbeles por WhatsApp para facilitar una recompra."}
                 </p>
               </div>
 

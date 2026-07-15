@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { BRAND } from "@/lib/brand"
 import Link from "next/link";
 import { ArrowLeft, Loader2, Printer, RefreshCw, Store, Table2 } from "lucide-react";
-import ModuleAccessGuard from "@/components/ModuleAccessGuard";
+import ModuleAccessGuard, { useHotelMode } from "@/components/ModuleAccessGuard";
 import { LocalTableQrLinksPanel } from "@/components/local/LocalTableQrLinksPanel";
 import {
   DEFAULT_LOCAL_TABLES,
@@ -103,6 +103,8 @@ function isTableOccupied(table: LocalTableMapItem, orders: LocalOrder[], openAcc
 }
 
 function MesasContent() {
+  // Con la recepción activa, los QR son por habitación (room service).
+  const hotelMode = useHotelMode();
   const [businessName, setBusinessName] = useState<string>(BRAND.name);
   const [localTables, setLocalTables] = useState<LocalTableMapItem[]>(DEFAULT_LOCAL_TABLES);
   const [orders, setOrders] = useState<LocalOrder[]>([]);
@@ -246,13 +248,15 @@ function MesasContent() {
 
               <p className="mt-5 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 <Table2 size={18} />
-                Mesas y QR
+                {hotelMode ? "QR por habitación y mesa" : "Mesas y QR"}
               </p>
               <h1 className="mt-2 text-3xl font-black uppercase text-[var(--brand-ink-3)] sm:text-4xl">
                 {businessName}
               </h1>
               <p className="mt-3 max-w-3xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-                Panel para revisar el estado de mesas y preparar enlaces imprimibles. Los QR abren el menú público con la mesa preseleccionada.
+                {hotelMode
+                  ? "Panel para preparar los QR de room service: imprime uno por habitación (o mesa del restaurante) y el huésped pide desde su teléfono con la ubicación preseleccionada."
+                  : "Panel para revisar el estado de mesas y preparar enlaces imprimibles. Los QR abren el menú público con la mesa preseleccionada."}
               </p>
             </div>
 

@@ -18,7 +18,7 @@ import {
 } from "lucide-react"
 import { formatUSD, formatVES } from "@/utils/formatCurrency"
 import type { LocalOrder as StoredLocalOrder, OpenAccount } from "@/types/localOrders"
-import ModuleAccessGuard from "@/components/ModuleAccessGuard"
+import ModuleAccessGuard, { useHotelMode } from "@/components/ModuleAccessGuard"
 import { LocalTableQrLinksPanel } from "@/components/local/LocalTableQrLinksPanel"
 import { OpenAccountsPanel } from "@/components/local/OpenAccountsPanel"
 import {
@@ -91,6 +91,8 @@ export default function CajaPage() {
 }
 
 function CajaPageContent() {
+  // Con la recepción activa el módulo habla de hotel (consumos, room service).
+  const hotelMode = useHotelMode()
   const [adminPassword, setAdminPassword] = useState("")
   const [passwordInput, setPasswordInput] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -756,7 +758,9 @@ function CajaPageContent() {
                 <p className="mt-4 text-xs font-black uppercase tracking-[0.32em] text-[var(--brand-primary)]">{BRAND.name}</p>
                 <h1 className="mt-1 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl">Módulo caja</h1>
                 <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-                  Caja confirma pedidos, registra pagos y decide cuándo enviar a cocina. Cuando cocina marca listo, caja puede avisar la salida y cerrar la entrega.
+                  {hotelMode
+                    ? "Caja confirma los consumos del hotel (room service y restaurante), registra pagos y decide cuándo enviar a cocina. Cuando cocina marca listo, caja avisa la entrega a la habitación o mesa."
+                    : "Caja confirma pedidos, registra pagos y decide cuándo enviar a cocina. Cuando cocina marca listo, caja puede avisar la salida y cerrar la entrega."}
                 </p>
               </div>
 
@@ -765,7 +769,7 @@ function CajaPageContent() {
                 <MetricCard label="Por revisar" value={pendingStaffReviewCount} tone={pendingStaffReviewCount > 0 ? "yellow" : "soft"} />
                 <MetricCard label="Parciales" value={partialPaymentCount} tone="yellow" />
                 <MetricCard label="Listos" value={readyCount} tone="soft" />
-                <MetricCard label="Delivery" value={deliveryCount} tone="soft" />
+                <MetricCard label={hotelMode ? "Room service" : "Delivery"} value={deliveryCount} tone="soft" />
                 <MetricCard label="Comprobantes" value={pendingPaymentProofsCount} tone={pendingPaymentProofsCount > 0 ? "yellow" : "soft"} />
               </div>
             </div>

@@ -1,6 +1,13 @@
 "use client"
 
-import { useEffect, useState, type FormEvent, type ReactNode } from "react"
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react"
 import {
   ArrowLeft,
   Loader2,
@@ -15,6 +22,19 @@ import { resolveStaffLoginEmail } from "@/lib/staffIdentity"
 import LocalStaffShell from "@/components/LocalStaffShell"
 
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
+
+// Modo hotel: con la recepción activa (habitaciones o reservas de hotel en los
+// módulos permitidos), las páginas heredadas del restaurante hablan de hotel y
+// room service. Se lee con useHotelMode() debajo de un ModuleAccessGuard.
+const HotelModeContext = createContext(false)
+
+export function useHotelMode() {
+  return useContext(HotelModeContext)
+}
+
+function isHotelNav(navModules: string[] | undefined) {
+  return Boolean(navModules?.some((key) => key === "rooms" || key === "hotelReservations"))
+}
 
 type ModuleKey =
   | "publicMenu"
@@ -571,17 +591,22 @@ export default function ModuleAccessGuard({
   }, [moduleKey, retryKey])
 
   if (state === "available") {
-    if (chromeless) return <>{children}</>
+    const hotelMode = isHotelNav(access?.navModules)
+    if (chromeless) {
+      return <HotelModeContext.Provider value={hotelMode}>{children}</HotelModeContext.Provider>
+    }
 
     return (
-      <LocalStaffShell
-        moduleKey={moduleKey}
-        allowedModules={access?.navModules || []}
-        roleLabel={roleLabel}
-        displayName={access?.displayName || ""}
-      >
-        {children}
-      </LocalStaffShell>
+      <HotelModeContext.Provider value={hotelMode}>
+        <LocalStaffShell
+          moduleKey={moduleKey}
+          allowedModules={access?.navModules || []}
+          roleLabel={roleLabel}
+          displayName={access?.displayName || ""}
+        >
+          {children}
+        </LocalStaffShell>
+      </HotelModeContext.Provider>
     )
   }
 
