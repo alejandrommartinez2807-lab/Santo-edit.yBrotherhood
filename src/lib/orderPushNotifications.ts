@@ -90,6 +90,48 @@ export async function saveOrderPushSubscription(
   }
 }
 
+// Envía un payload a una lista de filas de push_subscriptions y limpia las
+// suscripciones vencidas (410/404). Compartido por el aviso al cliente y las
+// alertas internas del staff.
+async function sendPushToSubscriptionRows(
+  rows: Array<{ endpoint: unknown; subscription: unknown }>,
+  payload: string,
+): Promise<void> {
+  const supabase = getSupabaseAdmin()
+  const goneEndpoints: string[] = []
+
+  await Promise.all(
+    rows.map(async (row) => {
+      const subscription = parsePushSubscription(row.subscription)
+
+      if (!subscription) {
+        goneEndpoints.push(String(row.endpoint || ""))
+        return
+      }
+
+      try {
+        await webPush.sendNotification(subscription, payload, { TTL: 60 * 60 })
+      } catch (sendError) {
+        const statusCode = (sendError as { statusCode?: number })?.statusCode
+
+        if (statusCode === 404 || statusCode === 410) {
+          goneEndpoints.push(subscription.endpoint)
+        } else {
+          captureError(sendError, {
+            route: "lib/orderPushNotifications",
+            action: "sendNotification",
+          })
+        }
+      }
+    }),
+  )
+
+  if (goneEndpoints.length) {
+    // branch-exempt: limpieza por endpoint único.
+    await supabase.from("push_subscriptions").delete().in("endpoint", goneEndpoints)
+  }
+}
+
 // Notifica "pedido listo" a todas las suscripciones del pedido y limpia las
 // vencidas (410/404). Nunca lanza: se llama desde el cambio de estado y un
 // fallo de push no puede tumbar la operación de caja/cocina.
@@ -113,39 +155,119 @@ export async function sendOrderReadyPush(orderId: string, displayNumber: string)
       url: `/pedido/${orderId}`,
     })
 
-    const goneEndpoints: string[] = []
-
-    await Promise.all(
-      data.map(async (row) => {
-        const subscription = parsePushSubscription(row.subscription)
-
-        if (!subscription) {
-          goneEndpoints.push(String(row.endpoint || ""))
-          return
-        }
-
-        try {
-          await webPush.sendNotification(subscription, payload, { TTL: 60 * 60 })
-        } catch (sendError) {
-          const statusCode = (sendError as { statusCode?: number })?.statusCode
-
-          if (statusCode === 404 || statusCode === 410) {
-            goneEndpoints.push(subscription.endpoint)
-          } else {
-            captureError(sendError, {
-              route: "lib/orderPushNotifications",
-              action: "sendNotification",
-            })
-          }
-        }
-      }),
-    )
-
-    if (goneEndpoints.length) {
-      // branch-exempt: limpieza por endpoint único.
-      await supabase.from("push_subscriptions").delete().in("endpoint", goneEndpoints)
-    }
+    await sendPushToSubscriptionRows(data, payload)
   } catch (error) {
     captureError(error, { route: "lib/orderPushNotifications", action: "sendOrderReadyPush" })
+  }
+}
+
+// --- Alertas internas (dueño / encargado) --------------------------------
+// Reutiliza push_subscriptions con un order_id reservado: cada equipo del
+// dueño/encargado que active "alertas de anulación" guarda aquí su
+// suscripción, con la sede a la que pertenece (null = todas).
+
+export const STAFF_ALERTS_ORDER_ID = "staff-alerts"
+
+export async function saveStaffAlertPushSubscription(
+  subscription: PushSubscriptionPayload,
+  branchId?: string | null,
+): Promise<boolean> {
+  try {
+    const supabase = getSupabaseAdmin()
+    // branch-exempt: la fila guarda branch_id; el id reservado no es un pedido.
+    const { error } = await supabase.from("push_subscriptions").upsert(
+      {
+        order_id: STAFF_ALERTS_ORDER_ID,
+        endpoint: subscription.endpoint,
+        subscription,
+        branch_id: branchId ?? null,
+      },
+      { onConflict: "endpoint" },
+    )
+
+    if (error) throw new Error(error.message)
+
+    return true
+  } catch (error) {
+    captureError(error, { route: "lib/orderPushNotifications", action: "saveStaffAlertSubscription" })
+    return false
+  }
+}
+
+export async function deleteStaffAlertPushSubscription(endpoint: string): Promise<boolean> {
+  try {
+    const supabase = getSupabaseAdmin()
+    // branch-exempt: borrado por endpoint único del propio equipo.
+    const { error } = await supabase
+      .from("push_subscriptions")
+      .delete()
+      .eq("order_id", STAFF_ALERTS_ORDER_ID)
+      .eq("endpoint", endpoint)
+
+    if (error) throw new Error(error.message)
+
+    return true
+  } catch (error) {
+    captureError(error, { route: "lib/orderPushNotifications", action: "deleteStaffAlertSubscription" })
+    return false
+  }
+}
+
+// Alarma de anulación: avisa a los equipos suscritos del dueño/encargado que
+// un pedido fue anulado, con quién lo hizo y qué productos llevaba. Nunca
+// lanza: un fallo de push no puede tumbar la anulación en caja.
+export async function sendOrderCancelledStaffPush(input: {
+  displayNumber: string
+  customerName?: string
+  itemsSummary?: string
+  totalUSD?: number
+  cancelledBy?: string
+  branchId?: string | null
+}): Promise<void> {
+  if (!isPushConfigured()) return
+
+  try {
+    const supabase = getSupabaseAdmin()
+    let query = supabase
+      .from("push_subscriptions")
+      .select("endpoint, subscription")
+      .eq("order_id", STAFF_ALERTS_ORDER_ID)
+
+    if (input.branchId) {
+      // Alertas de la sede del pedido + equipos suscritos sin sede fija.
+      query = query.or(`branch_id.eq.${input.branchId},branch_id.is.null`)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw new Error(error.message)
+    if (!data?.length) return
+
+    const bodyParts = [
+      `Pedido ${input.displayNumber}${input.customerName ? ` de ${input.customerName}` : ""} fue ANULADO`,
+      input.cancelledBy ? `por ${input.cancelledBy}` : "",
+    ]
+      .filter(Boolean)
+      .join(" ")
+
+    const detailParts = [
+      input.itemsSummary ? `Productos: ${input.itemsSummary}` : "",
+      input.totalUSD && input.totalUSD > 0 ? `Total: $${input.totalUSD.toFixed(2)}` : "",
+    ]
+      .filter(Boolean)
+      .join(" · ")
+
+    const payload = JSON.stringify({
+      title: "🚨 Pedido anulado",
+      body: detailParts ? `${bodyParts}. ${detailParts}` : `${bodyParts}.`,
+      url: "/pedidos",
+    })
+
+    await sendPushToSubscriptionRows(data, payload)
+  } catch (error) {
+    captureError(error, {
+      route: "lib/orderPushNotifications",
+      action: "sendOrderCancelledStaffPush",
+    })
   }
 }

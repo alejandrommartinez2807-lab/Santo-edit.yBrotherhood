@@ -20,7 +20,10 @@ import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import { writeAuditLog } from "@/lib/audit"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
-import { sendOrderReadyPush } from "@/lib/orderPushNotifications"
+import {
+  sendOrderCancelledStaffPush,
+  sendOrderReadyPush,
+} from "@/lib/orderPushNotifications"
 import { getDisplayOrderNumber } from "@/lib/localOrderHelpers"
 
 export const runtime = "nodejs"
@@ -461,6 +464,26 @@ export async function PATCH(
       // Aviso web push al cliente suscrito. Nunca lanza: un fallo de push no
       // puede tumbar el cambio de estado de caja/cocina.
       await sendOrderReadyPush(orderId, getDisplayOrderNumber(order))
+    }
+
+    if (status === "Cancelado") {
+      // Alarma de anulación al dueño/encargado (equipos suscritos): quién
+      // anuló y qué productos llevaba el pedido. Nunca lanza.
+      const actor = getLocalAccessAuditActor(access)
+      const itemsSummary = (order.items || [])
+        .map((item) => `${Math.max(1, Number(item.quantity || 1))}x ${item.name}`)
+        .join(", ")
+
+      await sendOrderCancelledStaffPush({
+        displayNumber: getDisplayOrderNumber(order),
+        customerName: order.customerName || "",
+        itemsSummary,
+        totalUSD: Number(order.totalUSD || order.totalPrice || 0),
+        cancelledBy:
+          [actor.label, getRoleLabel(access.role)].filter(Boolean).join(" · ") ||
+          getRoleLabel(access.role),
+        branchId,
+      })
     }
 
     await writeAuditLog({
