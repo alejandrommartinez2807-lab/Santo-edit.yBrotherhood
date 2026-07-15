@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import {
   createServiceBooking,
+  deleteHotelReservation,
   getBusinessConfig,
   getHotelReservations,
   getPackages,
@@ -291,14 +292,19 @@ export async function POST(request: NextRequest) {
     }
 
     const branchId = await resolveBranchId(request)
-    const [rooms, roomTypes, reservations, seasons, blocks, restrictions] = await Promise.all([
-      getRooms(branchId),
-      getRoomTypes(branchId),
-      getHotelReservations({ from: checkIn, to: checkOut }, branchId),
-      getRateSeasons(branchId),
-      getRoomBlocks({ from: checkIn, to: checkOut }, branchId),
-      getRateRestrictions(branchId),
-    ])
+    // El catálogo de extras se trae AQUÍ (en paralelo) y no después del chequeo
+    // de disponibilidad: cualquier await entre pickFreeRoomOfType y el insert
+    // ensancha la ventana de doble reserva (lo vigila el QA E2/E3).
+    const [rooms, roomTypes, reservations, seasons, blocks, restrictions, upsellCatalog] =
+      await Promise.all([
+        getRooms(branchId),
+        getRoomTypes(branchId),
+        getHotelReservations({ from: checkIn, to: checkOut }, branchId),
+        getRateSeasons(branchId),
+        getRoomBlocks({ from: checkIn, to: checkOut }, branchId),
+        getRateRestrictions(branchId),
+        getUpsellCatalog(context, branchId),
+      ])
 
     const roomType = roomTypes.find((t) => t.id === roomTypeId)
     if (!roomType) {
@@ -349,7 +355,6 @@ export async function POST(request: NextRequest) {
 
     // ---- Extras elegidos al reservar (servicios y paquete del hotel). Se
     // validan contra el catálogo activo; lo apagado se ignora en silencio. ----
-    const upsellCatalog = await getUpsellCatalog(context, branchId)
     const requestedServices = Array.isArray(body.services) ? body.services.slice(0, 10) : []
     const selectedServices: { id: string; name: string; price: number; people: number }[] = []
     for (const rawService of requestedServices) {
@@ -394,6 +399,34 @@ export async function POST(request: NextRequest) {
       },
       branchId,
     )
+
+    // Doble chequeo OPTIMISTA contra carreras: si dos clientes pasaron el
+    // chequeo de disponibilidad a la vez y ambos insertaron la misma
+    // habitación, gana determinísticamente uno (created_at más antiguo; a
+    // igualdad, id menor) y el resto revierte su reserva con 409. Ambas
+    // peticiones aplican la MISMA regla, así que sobrevive exactamente una.
+    const afterInsert = await getHotelReservations({ from: checkIn, to: checkOut }, branchId)
+    const rivals = afterInsert.filter(
+      (r) =>
+        r.roomId === freeRoom.id &&
+        r.id !== reservation.id &&
+        r.status !== "cancelada" &&
+        r.status !== "no_show" &&
+        r.checkInDate < checkOut &&
+        checkIn < r.checkOutDate,
+    )
+    const losesTo = (rival: (typeof rivals)[number]) =>
+      rival.createdAt < reservation.createdAt ||
+      (rival.createdAt === reservation.createdAt && rival.id < reservation.id)
+    if (rivals.some(losesTo)) {
+      await deleteHotelReservation(reservation.id, branchId).catch((error) =>
+        captureError(error, { route: "/api/public/hotel", action: "race-rollback" }),
+      )
+      return noStoreResponse(
+        { ok: false, error: "Esa habitación se acaba de ocupar. Prueba con otras fechas." },
+        { status: 409 },
+      )
+    }
 
     // Cada servicio queda como reserva de servicio VINCULADA a la estadía: al
     // hacer check-in aparece en el folio para cargarse a la cuenta del huésped.
