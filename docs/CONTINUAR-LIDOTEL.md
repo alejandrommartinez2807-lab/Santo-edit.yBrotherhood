@@ -1,4 +1,63 @@
-# Continuar el demo Lidotel — prompt + backlog (v3 · 2026-07-15)
+# Continuar el demo Lidotel — prompt + backlog (v4 · 2026-07-15)
+
+## PROMPT v4 (copiar/pegar en la otra cuenta) — rediseño 5★ del panel /admin
+
+```
+Continúo el demo Lidotel del PMS hotelero. Lee la memoria santo-edit-hotel-deploy
+y santo-edit-hotel-pms-build si existen, y docs/CONTINUAR-LIDOTEL.md del worktree.
+
+Datos clave:
+- Worktree: D:/Santo edit/.claude/worktrees/nice-visvesvaraya-5726a1 (rama demo-lidotel).
+  NUNCA deployar desde D:\Santo edit (su .vercel apunta a Brotherhood).
+- En vivo: https://hotel-valencia.vercel.app · deploy: npx vercel --prod --scope
+  carlos-projects8 DESDE el worktree (autorizado; si el CLI da ECONNRESET el build
+  sigue en la nube: verificar con vercel ls + curl).
+- Dev: el usuario corre npm run dev en 3000 (verificar con curl). NUNCA correr
+  npm run build con el dev server vivo (comparten .next y se envenena).
+- Verificar con tsc + eslint + vitest + curl (nada de preview/browser pane).
+- QA: node scripts/qa-hotel-completo.mjs (54 checks) + qa-hotel-ronda2.mjs (20).
+  NO editar archivos mientras corren (el dev server se reinicia y el script
+  muere en su propia limpieza dejando reservas QA huérfanas que hacen fallar
+  la siguiente corrida). Si quedan huérfanas: borrarlas por ID exacto con los
+  nombres hardcodeados del script (QA Relleno N, Corredor Uno/Dos QA, etc.).
+- El panel privado es /admin (=/pedidos con redirect). Fases pequeñas: commit
+  + verificación por fase, QA + deploy al final.
+
+TAREA — rediseño visual 5★ del panel /admin (hoy la cabecera y las tarjetas
+inferiores siguen con el estilo grueso del template de restaurante y chocan
+con las fichas finas de "El hotel hoy"):
+
+1. CABECERA del panel (src/app/pedidos/page.tsx, bloque <header> ~línea 3318):
+   en modo hotel (isHotelFrontDeskVisible) quitar el marco border-4 + franja
+   degradada + sombras duras → tarjeta blanca con filete fino
+   (border border-[var(--brand-border)], shadow-sm). Los ~9 chips de acceso
+   rápido (Sitio público, Cierre del día, Historial, Gastos, Clientes,
+   Inventario, Carta, Ubicaciones, Config, Sonido, Cerrar sesión) pasan de
+   pastillas border-2 uppercase a botones fantasma finos (border
+   border-[var(--brand-primary)]/30, texto brand-primary-dark, sin negrita
+   black). "Cerrar sesión" puede quedar sólido champán como acción principal.
+2. BANNER DE SEDE (src/components/local/CurrentBranchBanner.tsx): la barra
+   marrón "ESTÁS VIENDO LA SEDE PRINCIPAL" es pesada → versión fina champán
+   (fondo primary/10, filete primary/25, texto primary-dark) al menos en hotel.
+3. TARJETAS (src/app/pedidos/components.tsx): ModuleAccessCard, MetricCard,
+   InfoBox y PanelMiniMetric siguen con border-2 + títulos uppercase black +
+   pill "ENTRAR" + drop-shadow. Rediseñarlas al estilo de ModuleTile de
+   src/components/local/HotelPanelSection.tsx (~línea 85): filete 1px, fondo
+   blanco, icono en círculo champán suave, título font-serif semibold sin
+   uppercase, métrica pequeña en versalitas, footer "Entrar →" discreto,
+   hover -translate-y-0.5 + borde champán. Esto arregla de una vez la sección
+   Administración y las tarjetas del POS ("Restaurante y room service").
+   OJO: caja importa MetricCard de pedidos/components (src/app/local-santo/
+   caja/page.tsx línea ~79) y pasa tone="soft" — revisar TODOS los usos y
+   tonos (red/yellow/soft) para no romper caja/cocina/delivery.
+4. Revisar visual final coherente: "El hotel hoy" (ya fino) + cabecera +
+   Administración + POS deben verse de la misma familia. Contraste AA.
+
+Al terminar: vitest + las 2 rondas de QA en verde + npx vercel --prod y
+verificación en vivo con curl.
+```
+
+---
 
 > **Cómo usar:** copia el bloque "PROMPT" en una sesión nueva de Claude Code
 > (abierta en `D:\Santo edit`). El contexto fino vive en las memorias
