@@ -70,11 +70,22 @@ type DepositRow = {
   guestName: string
   code: string
 }
+type CollectedRow = {
+  time: string
+  guestName: string
+  code: string
+  method: string
+  amount: number
+  kind: "folio" | "deposito"
+  registeredBy: string
+  description: string
+}
 type Summary = {
   today: string
   inHouse: InHouseRow[]
   arrivals: ArrivalRow[]
   depositsPending: DepositRow[]
+  collectedRows: CollectedRow[]
   totals: {
     inHouseCount: number
     balanceDue: number
@@ -357,6 +368,55 @@ export default function CajaRecepcion({ adminPassword }: { adminPassword: string
           <ul className="mt-3 space-y-2">
             {staying.map((r) => (
               <GuestRow key={r.id} row={r} onPay={() => openPayment(r)} onOpenFolio={() => openFolioFor(r)} />
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* Cobros de hoy, con TODO el detalle: hora, huésped, cómo pagó, cuánto
+          y quién lo registró. Es el mismo dato que consume el cierre del día. */}
+      <section className="mt-4 rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+            <Wallet size={16} /> Cobros de hoy
+          </p>
+          <p className="text-sm font-bold text-[var(--brand-ink-3)]">
+            Total {formatUSD(totals?.collectedToday || 0)}
+            <span className="ml-2 text-xs font-bold text-[var(--brand-ink-2)]/55">
+              va directo al cierre del día
+            </span>
+          </p>
+        </div>
+        {(summary?.collectedRows || []).length === 0 ? (
+          <p className="mt-3 text-sm font-bold text-[var(--brand-ink-2)]/60">
+            Aún no hay cobros registrados hoy. Cada cobro de folio o depósito confirmado
+            aparecerá aquí con su hora, método y quién lo registró.
+          </p>
+        ) : (
+          <ul className="mt-3 space-y-1.5">
+            {(summary?.collectedRows || []).map((row, i) => (
+              <li
+                key={`${row.time}-${row.code}-${i}`}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-[var(--brand-cream)]/70 px-3 py-2 text-sm font-bold text-[var(--brand-ink-2)]"
+              >
+                <span className="min-w-0">
+                  <span className="text-[var(--brand-ink-2)]/50">{row.time}</span>{" "}
+                  {row.guestName}
+                  {row.code ? <span className="text-[var(--brand-ink-2)]/45"> #{row.code}</span> : null}
+                  <span className="ml-2 rounded-full border border-[var(--brand-primary)]/20 bg-white px-2 py-0.5 text-xs">
+                    {row.method}
+                  </span>
+                  {row.kind === "deposito" && (
+                    <span className="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
+                      depósito
+                    </span>
+                  )}
+                  {row.registeredBy && (
+                    <span className="ml-1 text-xs text-[var(--brand-ink-2)]/50">por {row.registeredBy}</span>
+                  )}
+                </span>
+                <span className="shrink-0 text-[var(--brand-ink-3)]">{formatUSD(row.amount)}</span>
+              </li>
             ))}
           </ul>
         )}

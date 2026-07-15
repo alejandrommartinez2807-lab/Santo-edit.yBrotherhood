@@ -280,6 +280,21 @@ export async function deleteFolioItem(id: string, branchId?: string | null): Pro
   return { ok: true }
 }
 
+/** Folios por id (para mapear pagos → reserva → huésped sin N+1). */
+export async function getFoliosByIds(
+  folioIds: string[],
+  branchId?: string | null,
+): Promise<Folio[]> {
+  const ids = [...new Set(folioIds.filter(Boolean))]
+  if (ids.length === 0) return []
+  const supabase = getSupabaseAdmin()
+  let query = supabase.from("folios").select("*").in("id", ids.slice(0, 200))
+  if (branchId) query = query.eq("branch_id", branchId)
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+  return (data ?? []).map((raw) => mapFolio(raw as Row))
+}
+
 /**
  * Líneas de folio del periodo [from, to) por fecha de creación (hora Caracas).
  * Para reportes: ingresos por categoría (habitación, restaurante, servicio,

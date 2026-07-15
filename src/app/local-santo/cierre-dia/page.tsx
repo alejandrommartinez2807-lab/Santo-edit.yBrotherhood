@@ -2,13 +2,29 @@
 
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, ArrowRightCircle, LogIn, LogOut, Moon, Users } from "lucide-react"
+import { ArrowLeft, ArrowRightCircle, LogIn, LogOut, Moon, Users, Wallet } from "lucide-react"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
 
 type Summary = { date: string; arrivals: number; departures: number; inHouse: number; pendingArrivals: number; roomRevenue: number }
-type Day = { id: string; date: string; arrivals: number; departures: number; inHouse: number; roomRevenue: number; closedAt: string }
+type Day = { id: string; date: string; arrivals: number; departures: number; inHouse: number; roomRevenue: number; note?: string; closedAt: string }
+type ReceptionRow = {
+  time: string
+  guestName: string
+  code: string
+  method: string
+  amount: number
+  kind: "folio" | "deposito"
+  registeredBy: string
+}
+type Reception = {
+  total: number
+  folioTotal: number
+  depositsTotal: number
+  byMethod: { method: string; amount: number }[]
+  rows: ReceptionRow[]
+}
 
 function authHeaders(): HeadersInit {
   const password = typeof window !== "undefined" ? window.sessionStorage.getItem(OWNER_STORAGE_KEY) || "" : ""
@@ -29,6 +45,7 @@ export default function CierreDiaPage() {
 function CierreDiaContent() {
   const [date, setDate] = useState(todayISO())
   const [summary, setSummary] = useState<Summary | null>(null)
+  const [reception, setReception] = useState<Reception | null>(null)
   const [history, setHistory] = useState<Day[]>([])
   const [loading, setLoading] = useState(true)
   const [denied, setDenied] = useState(false)
@@ -45,6 +62,7 @@ function CierreDiaContent() {
       if (!res.ok) throw new Error(data.error || "No se pudo cargar")
       setDenied(false)
       setSummary(data.summary || null)
+      setReception(data.reception || null)
       setHistory(data.history || [])
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
@@ -125,6 +143,59 @@ function CierreDiaContent() {
                   <span className="text-sm font-bold uppercase text-[var(--brand-primary)]">Ingreso de la noche</span>
                   <span className="text-2xl font-bold text-[var(--brand-ink-3)]">${summary.roomRevenue}</span>
                 </div>
+
+                {/* Lo COBRADO por recepción ese día (folios + depósitos):
+                    el cierre cuadra contra la caja y queda en el snapshot. */}
+                <div className="mt-3 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5 text-sm font-bold uppercase text-[var(--brand-primary)]">
+                      <Wallet size={15} /> Cobrado por recepción
+                    </span>
+                    <span className="text-2xl font-bold text-[var(--brand-ink-3)]">
+                      ${reception?.total ?? 0}
+                    </span>
+                  </div>
+                  {reception && reception.total > 0 ? (
+                    <>
+                      <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
+                        <span>Folios ${reception.folioTotal}</span>
+                        <span>Depósitos ${reception.depositsTotal}</span>
+                        {reception.byMethod.map((m) => (
+                          <span key={m.method}>{m.method}: ${m.amount}</span>
+                        ))}
+                      </p>
+                      <ul className="mt-3 space-y-1.5 border-t border-[var(--brand-primary)]/10 pt-3">
+                        {reception.rows.map((row, i) => (
+                          <li
+                            key={`${row.time}-${row.code}-${i}`}
+                            className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[var(--brand-cream)]/70 px-3 py-2 text-sm font-bold text-[var(--brand-ink-2)]"
+                          >
+                            <span className="min-w-0">
+                              <span className="text-[var(--brand-ink-2)]/50">{row.time}</span>{" "}
+                              {row.guestName}
+                              {row.code ? <span className="text-[var(--brand-ink-2)]/45"> #{row.code}</span> : null}
+                              <span className="ml-2 rounded-full border border-[var(--brand-primary)]/20 bg-white px-2 py-0.5 text-xs">
+                                {row.method}
+                              </span>
+                              {row.kind === "deposito" && (
+                                <span className="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">depósito</span>
+                              )}
+                              {row.registeredBy && (
+                                <span className="ml-1 text-xs text-[var(--brand-ink-2)]/50">por {row.registeredBy}</span>
+                              )}
+                            </span>
+                            <span className="text-[var(--brand-ink-3)]">${row.amount}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/60">
+                      Sin cobros de recepción registrados este día.
+                    </p>
+                  )}
+                </div>
+
                 <button onClick={closeDay} disabled={busy} className="mt-4 inline-flex w-full items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-bold uppercase text-white disabled:opacity-50">
                   <Moon size={16} /> Cerrar el día {date}
                 </button>
@@ -136,9 +207,14 @@ function CierreDiaContent() {
                 <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">Cierres anteriores</h2>
                 <ul className="mt-3 space-y-2">
                   {history.map((d) => (
-                    <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--brand-primary)]/15 bg-white px-4 py-2 font-bold">
-                      <span className="text-[var(--brand-ink-3)]">{d.date}</span>
-                      <span className="text-sm text-[var(--brand-ink-2)]/65">{d.arrivals} llegadas · {d.departures} salidas · {d.inHouse} en casa · ${d.roomRevenue}</span>
+                    <li key={d.id} className="rounded-xl border border-[var(--brand-primary)]/15 bg-white px-4 py-2 font-bold">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-[var(--brand-ink-3)]">{d.date}</span>
+                        <span className="text-sm text-[var(--brand-ink-2)]/65">{d.arrivals} llegadas · {d.departures} salidas · {d.inHouse} en casa · ${d.roomRevenue}</span>
+                      </div>
+                      {d.note && (
+                        <p className="mt-0.5 text-xs font-bold text-[var(--brand-ink-2)]/55">{d.note}</p>
+                      )}
                     </li>
                   ))}
                 </ul>

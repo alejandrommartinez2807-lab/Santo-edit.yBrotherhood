@@ -3,13 +3,13 @@ import {
   folioBalance,
   getFolioByReservation,
   getFolioItems,
-  getFolioItemsInRange,
   getHotelReservations,
   getReservationPayments,
   getRooms,
 } from "@/lib/orders"
 
 import { resolveBranchId } from "@/lib/branch"
+import { getReceptionCashForDate } from "@/lib/hotelReceptionCash"
 import { checkFolioAccess } from "../guard"
 
 export const runtime = "nodejs"
@@ -48,15 +48,14 @@ export async function GET(request: NextRequest) {
     const to = new Date(new Date(`${today}T00:00:00Z`).getTime() + 60 * DAY_MS)
       .toISOString()
       .slice(0, 10)
-    const tomorrow = new Date(new Date(`${today}T00:00:00Z`).getTime() + DAY_MS)
-      .toISOString()
-      .slice(0, 10)
 
-    const [reservations, rooms, todaysFolioItems, payments] = await Promise.all([
+    const [reservations, rooms, payments, receptionCash] = await Promise.all([
       getHotelReservations({ from, to }, branchId),
       getRooms(branchId),
-      getFolioItemsInRange({ from: today, to: tomorrow }, branchId).catch(() => []),
       getReservationPayments({}, branchId).catch(() => []),
+      // Cobrado hoy (folios + depósitos confirmados) con detalle fila a fila —
+      // el mismo cálculo que usa el cierre de día, para que siempre cuadren.
+      getReceptionCashForDate(today, branchId).catch(() => null),
     ])
 
     const roomNameById = new Map(rooms.map((room) => [room.id, room.name]))
@@ -131,23 +130,6 @@ export async function GET(request: NextRequest) {
         }
       })
 
-    // Cobrado hoy = pagos de folio de hoy + depósitos confirmados hoy.
-    let collectedToday = 0
-    const collectedByMethod = new Map<string, number>()
-    for (const item of todaysFolioItems) {
-      if (item.kind !== "pago") continue
-      collectedToday += item.amount
-      const key = item.method || "otro"
-      collectedByMethod.set(key, (collectedByMethod.get(key) || 0) + item.amount)
-    }
-    for (const p of payments) {
-      if (p.status !== "confirmado") continue
-      if (String(p.createdAt || "").slice(0, 10) !== today) continue
-      collectedToday += p.amount
-      const key = p.method || "otro"
-      collectedByMethod.set(key, (collectedByMethod.get(key) || 0) + p.amount)
-    }
-
     const round2 = (n: number) => Math.round(n * 100) / 100
 
     return NextResponse.json({
@@ -156,16 +138,16 @@ export async function GET(request: NextRequest) {
       inHouse,
       arrivals,
       depositsPending,
+      // Detalle de lo cobrado hoy (hora, huésped, método, monto, quién).
+      collectedRows: receptionCash?.rows || [],
       totals: {
         inHouseCount: inHouse.length,
         balanceDue: round2(inHouse.reduce((sum, r) => sum + Math.max(0, r.balance), 0)),
         arrivalsCount: arrivals.length,
         departuresCount: inHouse.filter((r) => r.departsToday).length,
         depositsPendingCount: depositsPending.length,
-        collectedToday: round2(collectedToday),
-        collectedByMethod: [...collectedByMethod.entries()]
-          .map(([method, amount]) => ({ method, amount: round2(amount) }))
-          .sort((a, b) => b.amount - a.amount),
+        collectedToday: receptionCash?.total || 0,
+        collectedByMethod: receptionCash?.byMethod || [],
       },
     })
   } catch (error) {
