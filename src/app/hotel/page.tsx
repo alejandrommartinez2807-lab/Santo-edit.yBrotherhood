@@ -335,9 +335,9 @@ export default function HotelLandingPage() {
   return (
     <main>
       {/* ==================== HERO cinematográfico ==================== */}
-      {/* En el teléfono la portada cubre la PANTALLA COMPLETA al entrar
-          (100svh): la franja de sellos queda debajo del pliegue, sin asomarse. */}
-      <section className="relative isolate min-h-[100svh] overflow-hidden sm:min-h-[92vh]">
+      {/* La portada cubre la PANTALLA COMPLETA al entrar (teléfono y compu):
+          la franja de sellos queda debajo del pliegue, sin asomarse. */}
+      <section className="relative isolate min-h-[100svh] overflow-hidden">
         {extras?.heroUrl ? (
           // Portada personalizada por el dueño: una sola imagen.
           // eslint-disable-next-line @next/next/no-img-element
@@ -362,10 +362,11 @@ export default function HotelLandingPage() {
             />
           </picture>
         )}
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/60 via-black/40 to-black/55 sm:via-black/50 sm:to-black/45" />
-        <div className="absolute inset-x-0 bottom-0 -z-10 h-36 bg-gradient-to-t from-[var(--brand-cream)] to-transparent" />
+        {/* Escrim único: más oscuro en la base (la fachada iluminada lavaba la
+            parte baja en blanco); adiós al degradado crema que hacía de velo. */}
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
 
-        <div className="mx-auto flex min-h-[100svh] max-w-4xl flex-col items-center justify-center px-6 py-24 text-center sm:min-h-[92vh] sm:py-28">
+        <div className="mx-auto flex min-h-[100svh] max-w-4xl flex-col items-center justify-center px-6 py-24 text-center sm:py-28">
           {starCount > 0 && (
             <div className="flex items-center gap-1.5 text-[var(--brand-primary)] drop-shadow-[0_1px_6px_rgba(0,0,0,0.55)]">
               {Array.from({ length: starCount }).map((_, i) => (
@@ -404,16 +405,20 @@ export default function HotelLandingPage() {
         </div>
       </section>
 
-      {/* ==================== Franja de sellos ==================== */}
-      <div className="border-y border-[var(--brand-primary)]/15 bg-[var(--brand-surface-2)]">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-10 gap-y-3 px-6 py-6">
+      {/* ==================== Franja de sellos ====================
+          Banda oscura que CONTINÚA el hero (antes era una barra crema que
+          cortaba la estética entre la portada y el contenido). */}
+      <div className="bg-[#171410]">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-10 gap-y-3 px-6 py-7">
           {hallmarkList.map((h, i) => (
             <span key={h} className="flex items-center gap-10">
-              {i > 0 && <span className="hidden h-1 w-1 rounded-full bg-[var(--brand-primary)]/60 sm:block" />}
-              <span className="font-serif text-[1.05rem] italic text-[var(--brand-ink)]">{h}</span>
+              {i > 0 && <span className="hidden h-1 w-1 rounded-full bg-[var(--brand-primary)]/70 sm:block" />}
+              <span className="font-serif text-[1.05rem] italic text-[#e8d9b0]">{h}</span>
             </span>
           ))}
         </div>
+        {/* Filete dorado de remate hacia el contenido marfil */}
+        <div className="h-px bg-gradient-to-r from-transparent via-[var(--brand-primary)]/50 to-transparent" />
       </div>
 
       {/* ==================== Experiencia ==================== */}
