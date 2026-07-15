@@ -209,7 +209,7 @@ function AuditoriaPageContent() {
       if (actionFilter) params.set("action", actionFilter)
       if (fromDate) params.set("fromDate", fromDate)
       if (toDate) params.set("toDate", toDate)
-      params.set("limit", "200")
+      params.set("limit", "500")
 
       const res = await fetch(`/api/audit-logs?${params.toString()}`, {
         headers: authHeaders(),
@@ -286,6 +286,45 @@ function AuditoriaPageContent() {
     setToDate("")
   }
 
+  // Accesos rápidos de fecha: un toque en vez de armar el rango a mano.
+  function applyDatePreset(preset: "today" | "yesterday" | "week") {
+    const todayKey = caracasDayKey(new Date())
+
+    if (preset === "today") {
+      setFromDate(todayKey)
+      setToDate(todayKey)
+      return
+    }
+
+    if (preset === "yesterday") {
+      const yesterday = new Date()
+      yesterday.setDate(yesterday.getDate() - 1)
+      const yesterdayKey = caracasDayKey(yesterday)
+      setFromDate(yesterdayKey)
+      setToDate(yesterdayKey)
+      return
+    }
+
+    const weekAgo = new Date()
+    weekAgo.setDate(weekAgo.getDate() - 6)
+    setFromDate(caracasDayKey(weekAgo))
+    setToDate(todayKey)
+  }
+
+  const activePreset = (() => {
+    if (!fromDate || !toDate) return ""
+    const todayKey = caracasDayKey(new Date())
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterdayKey = caracasDayKey(yesterday)
+    const weekAgo = new Date()
+    weekAgo.setDate(weekAgo.getDate() - 6)
+    if (fromDate === todayKey && toDate === todayKey) return "today"
+    if (fromDate === yesterdayKey && toDate === yesterdayKey) return "yesterday"
+    if (fromDate === caracasDayKey(weekAgo) && toDate === todayKey) return "week"
+    return ""
+  })()
+
   const inputClass =
     "rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
 
@@ -327,6 +366,42 @@ function AuditoriaPageContent() {
           <>
             {/* Filtros */}
             <div className="mt-6 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
+              {/* Rango de fechas en un toque */}
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                {(
+                  [
+                    { key: "today", label: "Hoy" },
+                    { key: "yesterday", label: "Ayer" },
+                    { key: "week", label: "Últimos 7 días" },
+                  ] as const
+                ).map((preset) => (
+                  <button
+                    key={preset.key}
+                    type="button"
+                    onClick={() => applyDatePreset(preset.key)}
+                    className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase tracking-[0.08em] transition ${
+                      activePreset === preset.key
+                        ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white"
+                        : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-primary)] hover:border-[var(--brand-primary)]"
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+                {(fromDate || toDate) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFromDate("")
+                      setToDate("")
+                    }}
+                    className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-xs font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)]/60"
+                  >
+                    Todas las fechas
+                  </button>
+                )}
+              </div>
+
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="flex flex-col gap-1 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                   Usuario
@@ -474,8 +549,37 @@ function AuditoriaPageContent() {
               </div>
             ) : (
               <div className="mt-6 space-y-6">
+                {/* Navegador por día: cuántas acciones hubo cada día y salto
+                    directo a ese día en la línea de tiempo. */}
+                {groups.length > 1 && (
+                  <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
+                    <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                      Registros por día
+                    </p>
+                    <div className="mt-2.5 flex flex-wrap gap-2">
+                      {groups.map(([dayKey, dayLogs]) => (
+                        <button
+                          key={dayKey}
+                          type="button"
+                          onClick={() =>
+                            document
+                              .getElementById(`audit-day-${dayKey}`)
+                              ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                          }
+                          className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-xs font-black text-[var(--brand-ink-3)] transition hover:border-[var(--brand-primary)]"
+                        >
+                          {dayLabel(dayKey)}
+                          <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--brand-cream)] px-1.5 text-[0.62rem] text-[var(--brand-primary)]">
+                            {dayLogs.length}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {groups.map(([dayKey, dayLogs]) => (
-                  <section key={dayKey}>
+                  <section key={dayKey} id={`audit-day-${dayKey}`} className="scroll-mt-16">
                     <div className="sticky top-0 z-10 -mx-1 mb-2 bg-[var(--brand-cream)]/95 px-1 py-1 backdrop-blur">
                       <h2 className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.12em] text-white">
                         {dayLabel(dayKey)}
