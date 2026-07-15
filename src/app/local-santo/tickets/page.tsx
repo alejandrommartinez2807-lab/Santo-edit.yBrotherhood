@@ -17,7 +17,7 @@ import {
   Truck,
   X,
 } from "lucide-react";
-import ModuleAccessGuard from "@/components/ModuleAccessGuard";
+import ModuleAccessGuard, { useHotelMode } from "@/components/ModuleAccessGuard";
 import { formatUSD, formatVES } from "@/utils/formatCurrency";
 import type { LocalOrder, OpenAccount, OrderItem } from "@/types/localOrders";
 import {
@@ -644,6 +644,8 @@ function readPendingAutoTicket(): PendingAutoTicket | null {
 }
 
 function TicketsPageContent() {
+  // Con la recepción activa los tickets hablan de room service.
+  const hotelMode = useHotelMode();
   const [adminPassword, setAdminPassword] = useState("");
   const [orders, setOrders] = useState<LocalOrder[]>([]);
   const [openAccounts, setOpenAccounts] = useState<OpenAccount[]>([]);
@@ -840,7 +842,9 @@ function TicketsPageContent() {
                 Impresión operativa
               </h1>
               <p className="mt-3 max-w-3xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
-                Genera tickets de caja, cocina, delivery y cuentas abiertas para imprimir desde el navegador. Esta fase no activa impresora automática ni modifica pedidos, cobros o cierres.
+                {hotelMode
+                  ? "Genera tickets de caja, cocina, room service y cuentas abiertas para imprimir desde el navegador. Esta fase no activa impresora automática ni modifica pedidos, cobros o cierres."
+                  : "Genera tickets de caja, cocina, delivery y cuentas abiertas para imprimir desde el navegador. Esta fase no activa impresora automática ni modifica pedidos, cobros o cierres."}
               </p>
             </div>
 

@@ -15,7 +15,7 @@ import {
   UserRound,
   Utensils,
 } from "lucide-react";
-import ModuleAccessGuard from "@/components/ModuleAccessGuard";
+import ModuleAccessGuard, { useHotelMode } from "@/components/ModuleAccessGuard";
 import { OpenAccountsPanel } from "@/components/local/OpenAccountsPanel";
 import { LocalTableQrLinksPanel } from "@/components/local/LocalTableQrLinksPanel";
 import {
@@ -139,6 +139,8 @@ function getOpenAccountPendingUSD(account: OpenAccount | null) {
 }
 
 function MesoneroContent() {
+  // Con la recepción activa el módulo habla de habitaciones y mesas.
+  const hotelMode = useHotelMode();
   const [adminPassword, setAdminPassword] = useState("");
   const [orders, setOrders] = useState<LocalOrder[]>([]);
   const [openAccounts, setOpenAccounts] = useState<OpenAccount[]>([]);
@@ -492,9 +494,9 @@ function MesoneroContent() {
                   Mesonero
                 </h1>
                 <p className="mt-3 max-w-3xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
-                  Abre cuentas por mesa, revisa pedidos locales activos y asocia
-                  pedidos a la cuenta correcta. Caja sigue siendo quien confirma
-                  cobros y cierra cuentas.
+                  {hotelMode
+                    ? "Abre cuentas por habitación o mesa, revisa consumos activos y asocia cada pedido a la cuenta correcta. Caja sigue siendo quien confirma cobros y cierra cuentas."
+                    : "Abre cuentas por mesa, revisa pedidos locales activos y asocia pedidos a la cuenta correcta. Caja sigue siendo quien confirma cobros y cierra cuentas."}
                 </p>
               </div>
 

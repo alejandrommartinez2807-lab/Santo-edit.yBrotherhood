@@ -3581,17 +3581,42 @@ export default function PedidosPage() {
                 Restaurante y room service
               </span>
               <span className="mt-0.5 block text-sm font-medium text-[var(--brand-ink-2)]">
-                Caja, cocina, menú, delivery e inventario del punto de venta.
+                Registrar pedidos, caja, cocina, carta y los pedidos en curso del punto de venta.
               </span>
             </span>
-            <span className="shrink-0 rounded-full border border-[var(--brand-primary)]/35 px-4 py-1.5 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[var(--brand-primary-dark)]">
-              {showRestaurantModules ? "Ocultar" : "Abrir"}
+            <span
+              className={`shrink-0 rounded-full border px-4 py-1.5 text-[0.65rem] font-bold uppercase tracking-[0.14em] ${
+                !showRestaurantModules && activeOrders.length > 0
+                  ? "border-[var(--brand-primary)] bg-[var(--brand-primary)]/10 text-[var(--brand-primary-dark)]"
+                  : "border-[var(--brand-primary)]/35 text-[var(--brand-primary-dark)]"
+              }`}
+            >
+              {showRestaurantModules
+                ? "Ocultar"
+                : activeOrders.length > 0
+                  ? `Abrir · ${activeOrders.length} en curso`
+                  : "Abrir"}
             </span>
           </button>
         )}
 
         {(!isHotelFrontDeskVisible || showRestaurantModules) && (
         <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {/* Registrar un pedido es la acción #1 del punto de venta: entrada
+              propia y clara, separada de los módulos de gestión. */}
+          <ModuleAccessCard
+            href="/carta"
+            icon={<Plus size={24} />}
+            eyebrow={isHotelFrontDeskVisible ? "Room service" : "Nuevo pedido"}
+            title="Registrar pedido"
+            description={
+              isHotelFrontDeskVisible
+                ? "Abre la carta y registra un consumo a una habitación o mesa; es el mismo menú que abre el QR del huésped."
+                : "Abre el menú público y registra un pedido en el local."
+            }
+            metric="Abrir carta"
+          />
+
           {isCashierModuleVisible && (
             <ModuleAccessCard
               href="/local-santo/caja"
@@ -3906,6 +3931,16 @@ export default function PedidosPage() {
           </section>
         )}
 
+        {/* En modo hotel los pedidos viven DENTRO de la sección "Restaurante y
+            room service": la recepción abre esa sección cuando toca operar el
+            punto de venta y el resto del panel queda limpio. */}
+        {(!isHotelFrontDeskVisible || showRestaurantModules) && (
+        <>
+        {isHotelFrontDeskVisible && (
+          <p className="mt-7 text-[0.65rem] font-bold uppercase tracking-[0.24em] text-[var(--brand-primary-dark)]">
+            Restaurante y room service · pedidos en curso
+          </p>
+        )}
         <section className="sticky top-0 z-30 mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -4567,6 +4602,8 @@ export default function PedidosPage() {
               )
             })}
           </section>
+        )}
+        </>
         )}
       </div>
 
