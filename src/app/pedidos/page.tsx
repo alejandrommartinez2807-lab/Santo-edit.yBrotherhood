@@ -3476,7 +3476,13 @@ export default function PedidosPage() {
                   </button>
                 </div>
 
-                <p className="mt-4 text-xs font-black uppercase tracking-[0.32em] text-[var(--brand-primary)]">
+                <p
+                  className={
+                    isHotelFrontDeskVisible
+                      ? "mt-4 text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[var(--brand-primary-dark)]"
+                      : "mt-4 text-xs font-black uppercase tracking-[0.32em] text-[var(--brand-primary)]"
+                  }
+                >
                   {businessConfig.businessName}
                 </p>
 
@@ -3490,7 +3496,13 @@ export default function PedidosPage() {
                   {isHotelFrontDeskVisible ? "Panel del hotel" : "Control de pedidos"}
                 </h1>
 
-                <p className="mt-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
+                <p
+                  className={
+                    isHotelFrontDeskVisible
+                      ? "mt-2 text-sm font-medium leading-6 text-[var(--brand-ink-2)]"
+                      : "mt-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70"
+                  }
+                >
                   {isHotelFrontDeskVisible
                     ? `${businessConfig.businessShortDescription} · Acceso ${localAccessRoleLabel || "privado"} · Plan ${planLabel}`
                     : `${businessConfig.businessShortDescription} · Plan ${planLabel} · Acceso ${localAccessRoleLabel || "privado"} · ${visibleOperationalModules}/${visibleOperationalModulesLimit} módulos visibles · Vista ${businessConfig.defaultViewMode}${isPanelSoundAvailable ? " · Sonidos permitidos" : " · Sonidos no activos"}`}
@@ -3509,7 +3521,7 @@ export default function PedidosPage() {
                 {/* En modo hotel estas métricas son del POS: se rotulan como
                     room service para que el panel hable de hotel primero. */}
                 {isHotelFrontDeskVisible && (
-                  <p className="mb-1.5 text-[0.62rem] font-black uppercase tracking-[0.2em] text-[var(--brand-primary)]/80">
+                  <p className="mb-1.5 text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[var(--brand-primary-dark)]">
                     Room service · restaurante
                   </p>
                 )}
