@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { formatUSD, formatVES } from "@/utils/formatCurrency"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
+import CurrentBranchBanner from "@/components/local/CurrentBranchBanner"
 import {
   PAYMENT_FILTERS,
   REPORT_VIEW_MODES,
@@ -311,6 +312,9 @@ function DayClosesPageContent() {
     window.localStorage.setItem(ADMIN_STORAGE_KEY, password)
     setAdminPassword(password)
     loadDayCloses(password)
+    // Nombres de sede SIEMPRE: cada cierre lleva su etiqueta de sede aunque
+    // no estés en el consolidado (pedido del dueño: que se note la sede).
+    loadBranchNames(password)
   }
 
   async function copySummary(close: SavedDayClose) {
@@ -333,6 +337,7 @@ function DayClosesPageContent() {
       setAdminPassword(savedPassword)
       setPasswordInput(savedPassword)
       loadDayCloses(savedPassword)
+      loadBranchNames(savedPassword)
     }
   })
 
@@ -390,6 +395,35 @@ function DayClosesPageContent() {
     () => getRangeReport(filteredDayCloses),
     [filteredDayCloses]
   )
+
+  // Desglose por sede del consolidado: cuánto cerró CADA sede en el rango
+  // filtrado (mismos totales que arriba, agrupados por sucursal).
+  const branchBreakdown = useMemo(() => {
+    if (!showAllBranches) return []
+
+    const groups = new Map<string, SavedDayClose[]>()
+
+    for (const close of filteredDayCloses) {
+      const key = close.branchId || "sin-sede"
+      const list = groups.get(key) || []
+      list.push(close)
+      groups.set(key, list)
+    }
+
+    return Array.from(groups.entries())
+      .map(([branchId, closes]) => ({
+        branchId,
+        name:
+          branchId === "sin-sede"
+            ? "Sin sede registrada"
+            : branchNames[branchId] || "Sede sin nombre",
+        totals: getDayCloseTotals(closes),
+      }))
+      .sort(
+        (first, second) =>
+          second.totals.realCollectedUSD - first.totals.realCollectedUSD,
+      )
+  }, [showAllBranches, filteredDayCloses, branchNames])
 
   const todayRangeValue = getTodayDateInputValue()
   const lastSevenDaysStartValue = getDateInputValueDaysAgo(6)
@@ -559,6 +593,10 @@ function DayClosesPageContent() {
           </div>
         </header>
 
+        {/* Sede activa bien visible: los cierres que ves (y los que hagas)
+            pertenecen a ESTA sede, salvo que actives el consolidado. */}
+        {!showAllBranches && <CurrentBranchBanner />}
+
         <section className="sticky top-0 z-30 mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-white p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -581,6 +619,26 @@ function DayClosesPageContent() {
               <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
                 {filteredDayCloses.length} cierre(s) en pantalla · Cobrado {formatUSD(filteredTotals.realCollectedUSD)} · Gastos {formatUSD(filteredTotals.expensesTotalUSD)} · Neto {formatUSD(filteredTotals.netEstimatedUSD)} · Pendiente {formatUSD(filteredTotals.realPendingUSD)} · Modo {reportViewMode}
               </p>
+
+              {showAllBranches && branchBreakdown.length > 0 && (
+                <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                  {branchBreakdown.map((entry) => (
+                    <div
+                      key={entry.branchId}
+                      className="rounded-xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-3 py-2"
+                    >
+                      <p className="text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                        {entry.name} · {entry.totals.cierres} cierre{entry.totals.cierres === 1 ? "" : "s"}
+                      </p>
+                      <p className="mt-0.5 text-xs font-bold text-[var(--brand-ink-2)]/75">
+                        Cobrado {formatUSD(entry.totals.realCollectedUSD)} · Gastos{" "}
+                        {formatUSD(entry.totals.expensesTotalUSD)} · Neto{" "}
+                        {formatUSD(entry.totals.netEstimatedUSD)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <button
@@ -775,7 +833,7 @@ function DayClosesPageContent() {
                 key={close.id}
                 close={close}
                 branchLabel={
-                  showAllBranches && close.branchId
+                  close.branchId
                     ? branchNames[close.branchId] || "Sede sin nombre"
                     : ""
                 }

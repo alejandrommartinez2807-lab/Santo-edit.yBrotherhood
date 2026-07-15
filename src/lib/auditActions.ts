@@ -21,6 +21,7 @@ export type AuditAction =
   | "supplier_purchase.deleted"
   | "supplier_purchase.payment.created"
   | "inventory.transferred"
+  | "inventory.restock.notified"
   | "business_config.updated"
   | "staff.created"
   | "staff.updated"
@@ -46,6 +47,7 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   "supplier_purchase.deleted": "Compra a proveedor eliminada",
   "supplier_purchase.payment.created": "Abono a proveedor registrado",
   "inventory.transferred": "Inventario transferido entre sedes",
+  "inventory.restock.notified": "Aviso de reposición enviado a dueños",
   "business_config.updated": "Configuración del negocio actualizada",
   "staff.created": "Usuario de personal creado",
   "staff.updated": "Usuario de personal editado",

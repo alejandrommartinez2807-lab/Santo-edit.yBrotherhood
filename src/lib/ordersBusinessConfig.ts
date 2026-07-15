@@ -150,6 +150,8 @@ export type BusinessConfig = {
   postSaleSurveyAspects: string
   // Alarma de anulación (toast + push a dueño/encargado), apagable.
   cancellationAlertsEnabled: boolean
+  // Push de reposición de inventario (agotados/bajos) a dueños, apagable.
+  inventoryRestockPushEnabled: boolean
   // Guía paso a paso y advertencias del checkout público (configurables).
   publicOrderStepsEnabled: boolean
   publicPrepayNoticeEnabled: boolean
@@ -305,6 +307,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   postSaleSurveyDelayMinutes: 40,
   postSaleSurveyAspects: "Sabor de la comida, Tiempo de entrega, Atención",
   cancellationAlertsEnabled: true,
+  inventoryRestockPushEnabled: true,
   publicOrderStepsEnabled: true,
   publicPrepayNoticeEnabled: true,
   publicPrepayNoticeText: "",
@@ -742,6 +745,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     cancellationAlertsEnabled: normalizeBooleanConfig(
       source.cancellationAlertsEnabled,
       DEFAULT_BUSINESS_CONFIG.cancellationAlertsEnabled
+    ),
+    inventoryRestockPushEnabled: normalizeBooleanConfig(
+      source.inventoryRestockPushEnabled,
+      DEFAULT_BUSINESS_CONFIG.inventoryRestockPushEnabled
     ),
     publicOrderStepsEnabled: normalizeBooleanConfig(
       source.publicOrderStepsEnabled,

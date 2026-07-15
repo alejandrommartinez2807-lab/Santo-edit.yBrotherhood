@@ -175,6 +175,8 @@ type BusinessConfig = {
   postSaleSurveyAspects: string;
   // Alarma de anulación (toast + push), apagable.
   cancellationAlertsEnabled: boolean;
+  // Push de reposición de inventario (agotados/bajos) a dueños, apagable.
+  inventoryRestockPushEnabled: boolean;
   // Guía paso a paso y advertencias del checkout público.
   publicOrderStepsEnabled: boolean;
   publicPrepayNoticeEnabled: boolean;
@@ -348,6 +350,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   postSaleSurveyDelayMinutes: 40,
   postSaleSurveyAspects: "Sabor de la comida, Tiempo de entrega, Atención",
   cancellationAlertsEnabled: true,
+  inventoryRestockPushEnabled: true,
   publicOrderStepsEnabled: true,
   publicPrepayNoticeEnabled: true,
   publicPrepayNoticeText: "",
@@ -1068,6 +1071,10 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     cancellationAlertsEnabled: normalizeBoolean(
       source.cancellationAlertsEnabled,
       DEFAULT_BUSINESS_CONFIG.cancellationAlertsEnabled,
+    ),
+    inventoryRestockPushEnabled: normalizeBoolean(
+      source.inventoryRestockPushEnabled,
+      DEFAULT_BUSINESS_CONFIG.inventoryRestockPushEnabled,
     ),
     publicOrderStepsEnabled: normalizeBoolean(
       source.publicOrderStepsEnabled,
@@ -2869,6 +2876,31 @@ export default function BusinessConfigPage() {
                   Aviso rojo en el panel + notificación al teléfono del dueño y
                   encargados suscritos cuando se anula un pedido. Desmárcalo si
                   no quieres estas alertas.
+                </span>
+              </span>
+            </label>
+
+            <label className="mt-3 flex items-start gap-3">
+              <input
+                type="checkbox"
+                checked={businessConfig.inventoryRestockPushEnabled}
+                onChange={(e) =>
+                  setBusinessConfig((c) => ({
+                    ...c,
+                    inventoryRestockPushEnabled: e.target.checked,
+                  }))
+                }
+                className="mt-0.5 h-5 w-5 accent-[var(--brand-primary)]"
+              />
+              <span>
+                <span className="block text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
+                  Notificación de reposición de inventario
+                </span>
+                <span className="mt-0.5 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                  Cuando una sede tenga productos agotados o con stock bajo,
+                  el dueño y encargados suscritos reciben la notificación en su
+                  teléfono aunque la app esté cerrada (máximo una cada 12 horas
+                  por sede, y solo si la situación cambió).
                 </span>
               </span>
             </label>

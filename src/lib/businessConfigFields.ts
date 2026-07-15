@@ -54,6 +54,9 @@ export const SIMPLE_BUSINESS_CONFIG_FIELDS: readonly SimpleConfigField[] = [
   },
   // Alarma de anulación (toast rojo + push a dueño/encargado), apagable.
   { key: "cancellationAlertsEnabled", type: "boolean", default: true },
+  // Push de reposición de inventario (agotados/stock bajo) a los equipos
+  // suscritos del dueño/encargado, apagable.
+  { key: "inventoryRestockPushEnabled", type: "boolean", default: true },
   // Guía paso a paso y advertencias del checkout público (Fase avisos):
   // el dueño decide si se muestran y puede escribir su propio texto de
   // "paga antes de que tu pedido se procese".

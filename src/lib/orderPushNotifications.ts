@@ -213,6 +213,47 @@ export async function deleteStaffAlertPushSubscription(endpoint: string): Promis
   }
 }
 
+// Envío genérico a los equipos suscritos del dueño/encargado (alertas de
+// anulación, reposición de inventario, etc.). Filtra por sede: llegan a los
+// equipos de esa sede + los suscritos sin sede fija. Nunca lanza.
+export async function sendStaffAlertPush(
+  branchId: string | null | undefined,
+  payload: { title: string; body: string; url?: string },
+): Promise<void> {
+  if (!isPushConfigured()) return
+
+  try {
+    const supabase = getSupabaseAdmin()
+    let query = supabase
+      .from("push_subscriptions")
+      .select("endpoint, subscription")
+      .eq("order_id", STAFF_ALERTS_ORDER_ID)
+
+    if (branchId) {
+      query = query.or(`branch_id.eq.${branchId},branch_id.is.null`)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw new Error(error.message)
+    if (!data?.length) return
+
+    await sendPushToSubscriptionRows(
+      data,
+      JSON.stringify({
+        title: payload.title,
+        body: payload.body,
+        url: payload.url || "/pedidos",
+      }),
+    )
+  } catch (error) {
+    captureError(error, {
+      route: "lib/orderPushNotifications",
+      action: "sendStaffAlertPush",
+    })
+  }
+}
+
 // Alarma de anulación: avisa a los equipos suscritos del dueño/encargado que
 // un pedido fue anulado, con quién lo hizo y qué productos llevaba. Nunca
 // lanza: un fallo de push no puede tumbar la anulación en caja.

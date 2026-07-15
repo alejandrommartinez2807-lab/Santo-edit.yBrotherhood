@@ -4614,6 +4614,10 @@ export default function PedidosPage() {
       {isCloseModalOpen && (
         <ModalShell onClose={() => setIsCloseModalOpen(false)} title="Cierre del día">
           <div className="space-y-4">
+            {/* El cierre es POR SEDE: este banner deja claro cuál sede se
+                está cerrando (los números de abajo son solo de esa sede). */}
+            <CurrentBranchBanner />
+
             <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] p-4">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
@@ -4624,7 +4628,7 @@ export default function PedidosPage() {
                     Cierre operativo
                   </h2>
                   <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-                    Revisa primero los números generales. Los detalles quedan organizados abajo en secciones desplegables para no sobrecargar la pantalla.
+                    Este cierre corresponde SOLO a la sede seleccionada arriba: cada sede hace su propio cierre del día. Revisa primero los números generales; los detalles quedan abajo en secciones desplegables.
                   </p>
                 </div>
 
