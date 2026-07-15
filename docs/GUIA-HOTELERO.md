@@ -109,6 +109,21 @@ sincronización bidireccional), facturas con formato fijo.
 
 ## 9. Claves y accesos
 
-Cada rol tiene su clave (recepción/caja, limpieza, gerente, dueño) y solo ve
-sus módulos — se administran en **Panel → Usuarios**. El QR de cada reserva y
-los QR por mesa/habitación se imprimen desde **Sucursales → Mesas y QR**.
+El panel privado vive en **/admin** (los enlaces viejos a /pedidos redirigen
+solos). Cada usuario entra con su nombre de usuario + contraseña y solo ve sus
+módulos — se administran en **Panel → Usuarios**. El QR de cada reserva y los
+QR por habitación/mesa se imprimen desde **Sucursales → Mesas y QR**.
+
+**Usuarios predeterminados del hotel** (los que tendría un hotel real; cámbiales
+la contraseña al entregar):
+
+| Usuario | Nombre | Puesto | Contraseña | Qué ve |
+| --- | --- | --- | --- | --- |
+| `gerencia` | Gabriela Rondón | Gerente general | `gerencia1234` | Todo el PMS + POS + reportes |
+| `recepcion` | María Fernanda León | Recepción / front desk | `recepcion1234` | Panel del hotel, reservas, calendario, habitaciones, folio, limpieza, huéspedes, caja |
+| `amadellaves` | Carmen Díaz | Ama de llaves | `llaves1234` | Limpieza y habitaciones |
+| `roomservice` | José Gregorio Silva | Room service | `roomservice1234` | Cocina, tickets y entregas |
+| `auditor` | Luis Medina | Auditor nocturno | `auditor1234` | Cierre de día, reportes del hotel, cierres y facturación |
+
+Además siguen existiendo las claves por rol del `.env` (dueño, soporte) para
+administrar todo.
