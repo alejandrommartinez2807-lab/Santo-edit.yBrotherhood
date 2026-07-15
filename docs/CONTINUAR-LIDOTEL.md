@@ -35,7 +35,7 @@ commit + verificación por fase, y deploy al final.
 
 ---
 
-## BACKLOG (en orden)
+## BACKLOG (en orden) — ✅ TODO HECHO el 2026-07-15 (ver "Estado" abajo)
 
 ### 1. Reservar: las habitaciones deben LUCIR (imágenes grandes)
 Hoy `/hotel/reservar` muestra una miniatura de 96×64. Rediseñar la tarjeta de
@@ -91,6 +91,29 @@ logueado (la prueba el usuario) y los QR por habitación (Sucursales → Mesas y
 sirve, pero el rótulo dice "mesas").
 
 ---
+
+## Estado al cierre de la sesión 2026-07-15 (backlog v3 completado)
+
+- **1-2 Reservar**: tarjetas con foto grande (h-44/52) + badge "N fotos · ver
+  galería" + lightbox compartido (`src/app/hotel/PhotoLightbox.tsx`), nombre
+  serif, descripción, chip "Quedan X" (ámbar ≤3 / verde).
+- **3 Campos configurables**: `hotelBookingFields` en business_config (SIN
+  migración; el normalizador canónico de ordersBusinessConfig ya lo contempla).
+  Editor en Página del hotel (No pedir / Opcional / Obligatorio para cédula,
+  email, dirección, hora de llegada, solicitudes). El SERVIDOR valida los
+  obligatorios (400) y guarda todo en la nota de la reserva
+  (`Documento: … · Dirección: … · Llegada: …`). Lib: `src/lib/hotelBooking.ts`.
+- **4 QR descargable**: `src/app/hotel/ReservationQr.tsx` (blob → descarga
+  `reserva-CODIGO.png`, fallback abre pestaña) en la confirmación y mi-reserva.
+- **5 Términos**: `hotelTermsText` en business_config (vacío ⇒ default estándar
+  Marriott/Hilton/IHG en `DEFAULT_HOTEL_TERMS`); checkbox obligatorio en el
+  formulario + `termsAccepted: true` exigido por el POST público (400);
+  página /hotel/terminos; editor con botón "Usar texto estándar". Los QA
+  scripts ya envían termsAccepted (nuevo check B6).
+- **6 Hotel-ificación**: `useHotelMode()` exportado por ModuleAccessGuard
+  (navModules trae rooms/hotelReservations). Nav: Delivery→"Room service",
+  Mesas y QR→"QR habitaciones". Textos de caja, cocina, delivery, reportes,
+  clientes, menú y mesas hablan de hotel/room service.
 
 ## Estado al cierre de la sesión 2026-07-14/15
 
