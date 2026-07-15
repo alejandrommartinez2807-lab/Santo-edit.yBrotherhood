@@ -34,6 +34,7 @@ import {
 } from "@/lib/localAccess"
 import { getModulePlanAccess, type LocalModuleKey } from "@/lib/localPlans"
 import { resolveBranchId, resolveScopedBranchId } from "@/lib/branch"
+import { maybeDispatchPostSaleSurveys } from "@/lib/surveyAutoSend"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
 import { DataUrlImageError, assertDataUrlImage, sanitizeUploadedImageFileName } from "@/lib/dataUrlImages"
@@ -211,6 +212,11 @@ export async function GET(request: NextRequest) {
       trainingConfig as unknown as Record<string, unknown>,
       "trainingMode",
     ).effectiveEnabled
+
+    // Aprovecha el polling del panel para despachar las encuestas post-venta
+    // automáticas pendientes (throttled; nunca bloquea esta respuesta).
+    maybeDispatchPostSaleSurveys()
+
     const allOrders = await getOrders(
       await resolveScopedBranchId(request, access.role),
     )

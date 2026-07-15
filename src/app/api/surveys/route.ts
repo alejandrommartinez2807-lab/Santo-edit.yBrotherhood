@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { resolveBranchId } from "@/lib/branch"
 import { getSurveyResults, markOrderSurveySent } from "@/lib/surveys"
+import { dispatchPostSaleSurveys } from "@/lib/surveyAutoSend"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 
 export const runtime = "nodejs"
@@ -85,9 +86,22 @@ export async function POST(request: NextRequest) {
     if (!roleCheck.ok) return roleCheck.response
 
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
+    const action = String(body.action || "")
+
+    // Corre el despacho automático AHORA (para probar la conexión de
+    // WhatsApp Business sin esperar el disparo del polling). Solo dueño.
+    if (action === "dispatch") {
+      const roleGate = checkRole(request, ["owner", "support"])
+      if (!roleGate.ok) return roleGate.response
+
+      const result = await dispatchPostSaleSurveys()
+
+      return NextResponse.json(result)
+    }
+
     const orderId = String(body.orderId || "").trim().toLowerCase()
 
-    if (String(body.action || "") !== "markSent" || !orderId.startsWith("ord-")) {
+    if (action !== "markSent" || !orderId.startsWith("ord-")) {
       return NextResponse.json({ error: "Acción no válida" }, { status: 400 })
     }
 
