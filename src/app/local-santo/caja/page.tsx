@@ -121,6 +121,12 @@ function CajaPageContent() {
   const [canSplitBill, setCanSplitBill] = useState(false)
   // Flujo de caja→cocina elegido por el dueño en Configuración.
   const [kitchenFlowMode, setKitchenFlowMode] = useState<KitchenFlowMode>("kitchen")
+  // Encuesta post-venta por WhatsApp (configurable por el dueño).
+  const [postSaleSurvey, setPostSaleSurvey] = useState({
+    enabled: false,
+    message: "",
+    reviewUrl: "",
+  })
 
   const pendingStatusRef = useRef<Map<string, OrderStatus>>(new Map())
   const isLoggedIn = adminPassword.length > 0
@@ -152,6 +158,11 @@ function CajaPageContent() {
       setLocalTables(normalizeLocalTablesForMap(businessConfig.localTables))
       setCanSplitBill(Boolean(businessConfig.splitBillEnabled))
       setKitchenFlowMode(normalizeKitchenFlowMode(businessConfig.kitchenFlowMode))
+      setPostSaleSurvey({
+        enabled: businessConfig.postSaleSurveyEnabled !== false,
+        message: String(businessConfig.postSaleSurveyMessage || ""),
+        reviewUrl: String(businessConfig.googleReviewUrl || ""),
+      })
     } catch {
       setLocalTables(DEFAULT_LOCAL_TABLES)
     }
@@ -1033,6 +1044,9 @@ function CajaPageContent() {
                 onResetStaffItems={() => resetStaffItems(order)}
                 isConfirmingStaff={confirmingStaffOrderId === order.id}
                 isAttachingToOpenAccount={attachingOpenAccountOrderId === order.id}
+                postSaleSurveyEnabled={postSaleSurvey.enabled}
+                postSaleSurveyMessage={postSaleSurvey.message}
+                googleReviewUrl={postSaleSurvey.reviewUrl}
               />
             ))}
           </section>

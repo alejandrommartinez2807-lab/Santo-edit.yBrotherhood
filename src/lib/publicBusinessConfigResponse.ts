@@ -371,6 +371,10 @@ export function buildPublicBusinessConfigResponse(
     mainWhatsapp: cleanWhatsappNumber(config.mainWhatsapp),
     deliveryWhatsapp: cleanWhatsappNumber(config.deliveryWhatsapp),
     orderHelpWhatsappEnabled: config.orderHelpWhatsappEnabled !== false,
+    // Encuesta post-venta: la leen los paneles internos (caja/pedidos) que se
+    // alimentan de esta misma respuesta. No expone nada sensible.
+    postSaleSurveyEnabled: config.postSaleSurveyEnabled !== false,
+    postSaleSurveyMessage: cleanText(config.postSaleSurveyMessage),
     exchangeRateMode:
       normalizeText(config.exchangeRateMode) === "manual"
         ? "manual"

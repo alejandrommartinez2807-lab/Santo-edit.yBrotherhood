@@ -138,6 +138,7 @@ import {
   normalizePhoneForWhatsApp,
   buildCourierHandoffText,
   buildDeliveryWhatsAppUrl,
+  buildPostSaleSurveyWhatsAppUrl,
   matchesPanelPaymentFilter,
   matchesPanelScopeFilter,
   matchesPanelSearch,
@@ -4386,6 +4387,22 @@ export default function PedidosPage() {
                       >
                         <MessageCircle size={16} />
                         Avisar por WhatsApp que está listo
+                      </a>
+                    ) : null}
+
+                    {businessConfig.postSaleSurveyEnabled &&
+                    order.status === "Entregado" &&
+                    normalizePhoneForWhatsApp(order.customerPhone || "") ? (
+                      <a
+                        href={buildPostSaleSurveyWhatsAppUrl(order, {
+                          customMessage: businessConfig.postSaleSurveyMessage,
+                        })}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-green-600 bg-white px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.1em] text-green-700 transition hover:bg-green-50"
+                      >
+                        <MessageCircle size={16} />
+                        Enviar encuesta post-venta
                       </a>
                     ) : null}
 
