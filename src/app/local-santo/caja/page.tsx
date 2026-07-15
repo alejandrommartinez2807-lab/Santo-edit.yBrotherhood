@@ -81,6 +81,12 @@ import {
   ModalShell,
   SelectBox,
 } from "./components"
+import CajaRecepcion from "./recepcion"
+
+// Submódulos de la caja en modo hotel: recepción (folios y depósitos de
+// estadías) y restaurante (el POS de siempre: mesas, room service, delivery).
+type HotelCajaTab = "recepcion" | "restaurante"
+const HOTEL_CAJA_TAB_KEY = "caja_hotel_submodulo"
 
 export default function CajaPage() {
   return (
@@ -93,6 +99,8 @@ export default function CajaPage() {
 function CajaPageContent() {
   // Con la recepción activa el módulo habla de hotel (consumos, room service).
   const hotelMode = useHotelMode()
+  // Pestaña activa del modo hotel (se recuerda por equipo).
+  const [hotelTab, setHotelTab] = useState<HotelCajaTab>("recepcion")
   const [adminPassword, setAdminPassword] = useState("")
   const [passwordInput, setPasswordInput] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -506,6 +514,10 @@ function CajaPageContent() {
 
     loadLocalTables()
 
+    // Última pestaña usada en este equipo (recepción por defecto).
+    const savedTab = window.localStorage.getItem(HOTEL_CAJA_TAB_KEY)
+    if (savedTab === "restaurante" || savedTab === "recepcion") setHotelTab(savedTab)
+
     if (savedPassword) {
       setAdminPassword(savedPassword)
       setPasswordInput(savedPassword)
@@ -514,6 +526,15 @@ function CajaPageContent() {
       loadPaymentProofs(savedPassword, true)
     }
   })
+
+  function selectHotelTab(tab: HotelCajaTab) {
+    setHotelTab(tab)
+    try {
+      window.localStorage.setItem(HOTEL_CAJA_TAB_KEY, tab)
+    } catch {
+      // Sin almacenamiento, la pestaña simplemente no se recuerda.
+    }
+  }
 
   useEffect(() => {
     // Difiere la restauración de sesión un tick para no hacer setState
@@ -756,26 +777,61 @@ function CajaPageContent() {
                 </div>
 
                 <p className="mt-4 text-xs font-bold uppercase tracking-[0.32em] text-[var(--brand-primary)]">{BRAND.name}</p>
-                <h1 className="font-serif mt-1 text-4xl leading-tight text-[var(--brand-ink-3)] sm:text-5xl font-semibold">Módulo caja</h1>
+                <h1 className="font-serif mt-1 text-4xl leading-tight text-[var(--brand-ink-3)] sm:text-5xl font-semibold">
+                  {hotelMode ? "Caja del hotel" : "Módulo caja"}
+                </h1>
                 <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
                   {hotelMode
-                    ? "Caja confirma los consumos del hotel (room service y restaurante), registra pagos y decide cuándo enviar a cocina. Cuando cocina marca listo, caja avisa la entrega a la habitación o mesa."
+                    ? hotelTab === "recepcion"
+                      ? "Recepción cobra las estadías: folios de huéspedes, salidas del día y depósitos de reservas. Los consumos del restaurante se cobran en su submódulo."
+                      : "El POS del restaurante del hotel: confirma consumos (mesas y room service), registra pagos y decide cuándo enviar a cocina."
                     : "Caja confirma pedidos, registra pagos y decide cuándo enviar a cocina. Cuando cocina marca listo, caja puede avisar la salida y cerrar la entrega."}
                 </p>
+
+                {/* Submódulos del hotel: caja de recepción y caja del restaurante */}
+                {hotelMode && (
+                  <div className="mt-4 inline-flex rounded-full border border-[var(--brand-primary)]/30 bg-[var(--brand-cream)] p-1">
+                    {([
+                      { key: "recepcion", label: "Caja recepción" },
+                      { key: "restaurante", label: "Caja restaurante" },
+                    ] as { key: HotelCajaTab; label: string }[]).map((tab) => (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        onClick={() => selectHotelTab(tab.key)}
+                        className={`rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] transition ${
+                          hotelTab === tab.key
+                            ? "bg-[var(--brand-primary)] text-white shadow-sm"
+                            : "text-[var(--brand-primary)] hover:bg-white"
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div className="grid gap-2 sm:grid-cols-6 lg:w-[900px]">
-                <MetricCard label="Pendientes" value={pendingPaymentCount} />
-                <MetricCard label="Por revisar" value={pendingStaffReviewCount} tone={pendingStaffReviewCount > 0 ? "yellow" : "soft"} />
-                <MetricCard label="Parciales" value={partialPaymentCount} tone="yellow" />
-                <MetricCard label="Listos" value={readyCount} tone="soft" />
-                <MetricCard label={hotelMode ? "Room service" : "Delivery"} value={deliveryCount} tone="soft" />
-                <MetricCard label="Comprobantes" value={pendingPaymentProofsCount} tone={pendingPaymentProofsCount > 0 ? "yellow" : "soft"} />
-              </div>
+              {(!hotelMode || hotelTab === "restaurante") && (
+                <div className="grid gap-2 sm:grid-cols-6 lg:w-[900px]">
+                  <MetricCard label="Pendientes" value={pendingPaymentCount} />
+                  <MetricCard label="Por revisar" value={pendingStaffReviewCount} tone={pendingStaffReviewCount > 0 ? "yellow" : "soft"} />
+                  <MetricCard label="Parciales" value={partialPaymentCount} tone="yellow" />
+                  <MetricCard label="Listos" value={readyCount} tone="soft" />
+                  <MetricCard label={hotelMode ? "Room service" : "Delivery"} value={deliveryCount} tone="soft" />
+                  <MetricCard label="Comprobantes" value={pendingPaymentProofsCount} tone={pendingPaymentProofsCount > 0 ? "yellow" : "soft"} />
+                </div>
+              )}
             </div>
           </div>
         </header>
 
+        {/* ===== Submódulo CAJA RECEPCIÓN (solo hotel) ===== */}
+        {hotelMode && hotelTab === "recepcion" && <CajaRecepcion adminPassword={adminPassword} />}
+
+        {/* ===== Submódulo CAJA RESTAURANTE (el POS de siempre) ===== */}
+        {(!hotelMode || hotelTab === "restaurante") && (
+          <>
         {(pendingPaymentProofsCount > 0 || paymentProofsMessage) && (
           <section className={`mt-4 rounded-[1.4rem] border p-4 shadow-sm ${pendingPaymentProofsCount > 0 ? "border-[var(--brand-primary)] bg-[var(--brand-accent-100)]" : "border-orange-400 bg-orange-100"}`}>
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -1028,6 +1084,8 @@ function CajaPageContent() {
               />
             ))}
           </section>
+        )}
+          </>
         )}
       </div>
 

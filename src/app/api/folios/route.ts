@@ -109,7 +109,9 @@ async function buildFolioView(reservationId: string, branchId: string | null) {
 // GET ?reservationId= : devuelve folio + líneas + huésped + reserva (sin crear).
 export async function GET(request: NextRequest) {
   try {
-    const access = await checkFolioAccess(request, ["owner", "manager", "waiter", "support"])
+    // "cashier" = recepción/caja del hotel: cobra folios (su acceso real lo
+    // decide el módulo `folio` por usuario, no solo el rol).
+    const access = await checkFolioAccess(request, ["owner", "manager", "waiter", "support", "cashier"])
     if (!access.ok) return access.response
 
     const reservationId = cleanText(request.nextUrl.searchParams.get("reservationId"))
@@ -141,7 +143,7 @@ export async function POST(request: NextRequest) {
   if (guardResponse) return guardResponse
 
   try {
-    const access = await checkFolioAccess(request, ["owner", "manager", "waiter"])
+    const access = await checkFolioAccess(request, ["owner", "manager", "waiter", "cashier"])
     if (!access.ok) return access.response
 
     const branchId = await resolveBranchId(request)

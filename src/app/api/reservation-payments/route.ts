@@ -21,7 +21,7 @@ function cleanText(value: unknown) {
 // caja vea a quién pertenece cada pago y cuánto falta por abonar.
 export async function GET(request: NextRequest) {
   try {
-    const access = await checkPaymentsAccess(request, ["owner", "manager", "support"])
+    const access = await checkPaymentsAccess(request, ["owner", "manager", "support", "cashier"])
     if (!access.ok) return access.response
     const branchId = await resolveBranchId(request)
     // Ventana amplia hacia atrás para resolver también los pagos de estadías
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
   if (guardResponse) return guardResponse
 
   try {
-    const access = await checkPaymentsAccess(request, ["owner", "manager"])
+    const access = await checkPaymentsAccess(request, ["owner", "manager", "cashier"])
     if (!access.ok) return access.response
     const branchId = await resolveBranchId(request)
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
