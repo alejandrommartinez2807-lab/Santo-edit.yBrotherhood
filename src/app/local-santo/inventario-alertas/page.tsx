@@ -527,7 +527,7 @@ function LoginScreen({
             </button>
 
             <a
-              href="/local-santo"
+              href="/admin"
               className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-4 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
             >
               <ArrowLeft size={17} />
@@ -740,7 +740,7 @@ function InventoryAlertsPageContent() {
           <div className="grid gap-5 p-5 lg:grid-cols-[1.4fr_0.6fr] lg:items-center lg:p-7">
             <div>
               <a
-                href="/local-santo"
+                href="/admin"
                 className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
               >
                 <ArrowLeft size={16} />

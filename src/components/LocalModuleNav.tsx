@@ -190,7 +190,7 @@ export default function LocalModuleNav({
         >
           {showPanelLink ? (
             <a
-              href="/local-santo"
+              href="/admin"
               className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)] bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
             >
               <LayoutGrid size={13} />

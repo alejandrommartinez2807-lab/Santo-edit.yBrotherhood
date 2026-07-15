@@ -453,7 +453,7 @@ function AccessScreen({
           <div className={`${needsLogin ? "mt-4" : "mt-6"} grid gap-3 ${needsLogin || !showBack ? "" : "sm:grid-cols-2"}`}>
             {showBack ? (
               <a
-                href="/local-santo"
+                href="/admin"
                 className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
               >
                 <ArrowLeft size={17} />

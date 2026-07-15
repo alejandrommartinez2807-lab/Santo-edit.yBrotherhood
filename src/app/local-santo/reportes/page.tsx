@@ -320,7 +320,7 @@ function ReportesPageContent() {
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
       <div className="mx-auto w-full max-w-5xl">
-        <Link href="/local-santo" className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)] print:hidden">
+        <Link href="/admin" className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)] print:hidden">
           <ArrowLeft size={16} /> Volver al panel
         </Link>
 

@@ -330,7 +330,7 @@ function ControlGastosContent() {
       <div className="mx-auto w-full max-w-4xl">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
-            href="/local-santo"
+            href="/admin"
             className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]/70"
           >
             Panel

@@ -113,7 +113,7 @@ function CrmContent() {
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
       <div className="mx-auto w-full max-w-3xl">
-        <Link href="/local-santo" className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+        <Link href="/admin" className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
           <ArrowLeft size={16} /> Volver al panel
         </Link>
         <div className="mt-4 flex items-center gap-3">

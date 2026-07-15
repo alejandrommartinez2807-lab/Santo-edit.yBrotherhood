@@ -250,7 +250,7 @@ function SubrecetasContent() {
             <ArrowLeft size={16} /> Inventario
           </Link>
           <Link
-            href="/local-santo"
+            href="/admin"
             className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]/70"
           >
             Panel

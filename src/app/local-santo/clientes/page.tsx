@@ -516,7 +516,7 @@ function FrequentCustomersPageContent() {
       <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-6 text-[var(--brand-ink-3)]">
         <section className="mx-auto max-w-xl rounded-[1.5rem] border-4 border-[var(--brand-primary)] bg-white p-5 shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
           <a
-            href="/local-santo"
+            href="/admin"
             className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
           >
             <ArrowLeft size={16} />
@@ -581,7 +581,7 @@ function FrequentCustomersPageContent() {
               <div>
                 <div className="flex flex-wrap gap-2">
                   <a
-                    href="/local-santo"
+                    href="/admin"
                     className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     <ArrowLeft size={16} />

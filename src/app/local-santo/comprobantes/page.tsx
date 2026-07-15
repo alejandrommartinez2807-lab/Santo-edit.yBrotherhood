@@ -332,7 +332,7 @@ export default function PaymentProofsPage() {
             <div className="grid gap-5 px-5 py-6 lg:grid-cols-[1fr_auto] lg:items-center lg:px-7">
               <div>
                 <a
-                  href="/local-santo"
+                  href="/admin"
                   className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
                 >
                   <ArrowLeft size={16} />

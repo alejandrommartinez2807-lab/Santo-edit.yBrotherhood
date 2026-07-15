@@ -502,7 +502,7 @@ function MesoneroContent() {
 
               <div className="flex flex-wrap gap-2">
                 <a
-                  href="/local-santo"
+                  href="/admin"
                   className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-yellow-50"
                 >
                   <ArrowLeft size={16} />

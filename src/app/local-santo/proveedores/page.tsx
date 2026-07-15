@@ -138,7 +138,7 @@ function ProveedoresPageContent() {
       <div className="mx-auto w-full max-w-2xl">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
-            href="/local-santo"
+            href="/admin"
             className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
           >
             <ArrowLeft size={16} /> Volver al panel

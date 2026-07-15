@@ -42,7 +42,7 @@ export default function AccesoPage() {
         setError("Usuario o contraseña incorrectos.")
         return
       }
-      router.push("/local-santo")
+      router.push("/admin")
     } catch {
       setError("No se pudo iniciar sesión. Intenta de nuevo.")
     } finally {
@@ -80,7 +80,7 @@ export default function AccesoPage() {
               Sesión iniciada como <strong>{sessionEmail}</strong>
             </p>
             <button
-              onClick={() => router.push("/local-santo")}
+              onClick={() => router.push("/admin")}
               className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]"
             >
               Entrar al panel
