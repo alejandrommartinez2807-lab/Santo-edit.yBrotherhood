@@ -170,8 +170,12 @@ import {
 } from "./components"
 import CurrentBranchBanner from "@/components/local/CurrentBranchBanner"
 import PaymentProofAlertToast from "@/components/PaymentProofAlertToast"
+import OrderCancellationAlertToast, {
+  type CancelledOrderAlert,
+} from "@/components/OrderCancellationAlertToast"
 import OrderPaymentProofsList from "@/components/OrderPaymentProofsList"
 import { usePaymentProofAlerts } from "@/hooks/usePaymentProofAlerts"
+import { useStaffAlertsPush } from "@/hooks/useStaffAlertsPush"
 
 export default function PedidosPage() {
   const [adminPassword, setAdminPassword] = useState("")
@@ -189,6 +193,9 @@ export default function PedidosPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [highlightedIds, setHighlightedIds] = useState<string[]>([])
   const [newOrderToast, setNewOrderToast] = useState<NewOrderToast | null>(null)
+  // Alarma de anulación (dueño/gerencia): queda fija hasta que la cierren.
+  const [cancelledOrderAlert, setCancelledOrderAlert] =
+    useState<CancelledOrderAlert | null>(null)
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false)
   const [closeSummaryMessage, setCloseSummaryMessage] = useState<string | null>(
     null
@@ -282,6 +289,10 @@ export default function PedidosPage() {
     enabled: isLoggedIn,
     onNewProof: () => playPanelSound("payment"),
   })
+
+  // Push "pedido anulado" para este equipo (dueño/encargado): llega aunque
+  // la app esté cerrada. El toast rojo del panel funciona sin esto.
+  const staffAlertsPush = useStaffAlertsPush(adminPassword, isLoggedIn)
 
   function getPanelAudioContext() {
     try {
@@ -816,6 +827,30 @@ export default function PedidosPage() {
         const deliveredChange = changedOrders.find(
           (order) => order.status === "Entregado"
         )
+
+        // Alarma de anulación: toast rojo persistente + sonido de advertencia
+        // para que gerencia/dueño lo vea sí o sí.
+        const cancelledChange = changedOrders.find(
+          (order) => order.status === "Cancelado"
+        )
+
+        if (cancelledChange) {
+          const cancelledTotals = getOrderTotals(cancelledChange)
+
+          setCancelledOrderAlert({
+            orderId: cancelledChange.id,
+            number: getDisplayOrderNumber(cancelledChange),
+            customerName: cancelledChange.customerName || "Cliente",
+            itemsSummary: (cancelledChange.items || [])
+              .map(
+                (item) =>
+                  `${Math.max(1, Number(item.quantity || 1))}x ${item.name}`
+              )
+              .join(", "),
+            totalUSD: cancelledTotals.totalUSD,
+          })
+          playPanelSound("warning")
+        }
 
         if (readyChange) {
           playPanelSound("ready")
@@ -3286,6 +3321,10 @@ export default function PedidosPage() {
         alert={paymentProofAlerts.newProofAlert}
         onDismiss={paymentProofAlerts.dismissNewProofAlert}
       />
+      <OrderCancellationAlertToast
+        alert={cancelledOrderAlert}
+        onDismiss={() => setCancelledOrderAlert(null)}
+      />
       {newOrderToast && (
         <div className="fixed right-4 top-4 z-50 max-w-sm rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] p-4 shadow-2xl shadow-black/20">
           <div className="flex gap-3">
@@ -3434,6 +3473,29 @@ export default function PedidosPage() {
                     {isPanelSoundActive ? "Sonido activo" : isPanelSoundAvailable ? "Activar sonido" : "Sonido no activo"}
                   </button>
 
+                  {staffAlertsPush.state !== "unavailable" && (
+                    <button
+                      type="button"
+                      onClick={() => void staffAlertsPush.toggle()}
+                      disabled={staffAlertsPush.state === "working"}
+                      title="Notificación en este equipo cuando se anule un pedido, aunque la app esté cerrada"
+                      className={`inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition disabled:opacity-60 ${
+                        staffAlertsPush.state === "on"
+                          ? "border-red-600 bg-red-50 text-red-700 hover:bg-red-100"
+                          : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)] hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
+                      }`}
+                    >
+                      {staffAlertsPush.state === "working" ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <BellRing size={16} />
+                      )}
+                      {staffAlertsPush.state === "on"
+                        ? "Alerta de anulación activa"
+                        : "Alertas de anulación"}
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={handleLogout}
@@ -3459,6 +3521,12 @@ export default function PedidosPage() {
                 {soundMessage && (
                   <p className="mt-2 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-3 py-2 text-xs font-black text-[var(--brand-ink-2)]">
                     {soundMessage}
+                  </p>
+                )}
+
+                {staffAlertsPush.message && (
+                  <p className="mt-2 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-3 py-2 text-xs font-black text-[var(--brand-ink-2)]">
+                    {staffAlertsPush.message}
                   </p>
                 )}
 
