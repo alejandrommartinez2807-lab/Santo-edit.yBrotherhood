@@ -19,6 +19,7 @@ import {
   type HotelBookingFieldsConfig,
 } from "@/lib/hotelBooking"
 import PhotoLightbox, { type LightboxPhoto } from "../PhotoLightbox"
+import ReservationQr from "../ReservationQr"
 
 type Quote = {
   nights: number
@@ -57,11 +58,6 @@ function rememberReservation(code: string, phone: string) {
   } catch {
     // Sin almacenamiento el flujo sigue igual, solo sin autocompletar.
   }
-}
-
-// QR del código para escanear en recepción (mismo patrón que los QR de mesas).
-function buildQrImageUrl(data: string, size = 220) {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=12&ecc=H&data=${encodeURIComponent(data)}`
 }
 
 function toISO(d: Date) {
@@ -202,18 +198,8 @@ export default function HotelReservarPage() {
         <p className="my-2 text-4xl font-black tracking-[0.2em] text-[var(--brand-primary-dark)]">
           {created.code}
         </p>
-        <div className="mt-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={buildQrImageUrl(created.code)}
-            alt={`QR de la reserva ${created.code}`}
-            width={180}
-            height={180}
-            className="h-44 w-44"
-          />
-          <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]">
-            Muestra este QR en recepción
-          </p>
+        <div className="mt-2 w-full max-w-sm">
+          <ReservationQr code={created.code} />
         </div>
         <div className="mt-2 w-full max-w-sm rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 text-left font-bold">
           <p className="flex items-center gap-2"><BedDouble size={16} /> {created.roomTypeName}</p>

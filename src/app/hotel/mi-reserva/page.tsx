@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, CalendarRange, CheckCircle2, Loader2, Star } from "lucide-react"
 import { BRAND } from "@/lib/brand"
+import ReservationQr from "../ReservationQr"
 
 type Reservation = {
   code: string
@@ -167,6 +168,13 @@ export default function MiReservaPage() {
               <p className="mt-1 font-bold text-[var(--brand-ink-2)]">{reservation.adults} adulto(s){reservation.children ? ` · ${reservation.children} niño(s)` : ""}</p>
               <p className="mt-2 text-2xl font-black text-[var(--brand-ink-3)]">${reservation.totalAmount}</p>
             </div>
+
+            {/* QR de la reserva (mientras la estadía siga viva) */}
+            {!FINISHED_STATUSES.has(String(reservation.status || "")) && (
+              <div className="mt-4">
+                <ReservationQr code={reservation.code} />
+              </div>
+            )}
 
             {/* Reseña */}
             <div className="mt-4 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-4">
