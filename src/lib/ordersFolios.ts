@@ -37,6 +37,13 @@ export async function getFolioItems(folioId: string, branchId?: string | null): 
   return store.getFolioItems(folioId, branchId)
 }
 
+export async function getFolioItemsInRange(
+  filters: { from: string; to: string },
+  branchId?: string | null,
+): Promise<FolioItem[]> {
+  return store.getFolioItemsInRange(filters, branchId)
+}
+
 export async function addFolioItem(input: AddFolioItemInput, branchId?: string | null): Promise<FolioItem> {
   return store.addFolioItem(input, branchId)
 }

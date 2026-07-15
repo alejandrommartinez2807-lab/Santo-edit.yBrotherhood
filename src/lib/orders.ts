@@ -190,6 +190,7 @@ export {
   getChargedOrderIds,
   getFolioByReservation,
   getFolioItems,
+  getFolioItemsInRange,
   getGuest,
   hasRoomCharge,
   openFolio,

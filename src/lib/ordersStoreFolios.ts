@@ -280,6 +280,30 @@ export async function deleteFolioItem(id: string, branchId?: string | null): Pro
   return { ok: true }
 }
 
+/**
+ * Líneas de folio del periodo [from, to) por fecha de creación (hora Caracas).
+ * Para reportes: ingresos por categoría (habitación, restaurante, servicio,
+ * paquete…) y pagos por método.
+ */
+export async function getFolioItemsInRange(
+  filters: { from: string; to: string },
+  branchId?: string | null,
+): Promise<FolioItem[]> {
+  if (!filters.from || !filters.to) return []
+  const supabase = getSupabaseAdmin()
+  let query = supabase
+    .from("folio_items")
+    .select("*")
+    .gte("created_at", `${filters.from}T00:00:00-04:00`)
+    .lt("created_at", `${filters.to}T00:00:00-04:00`)
+    .order("created_at", { ascending: true })
+    .limit(2000)
+  if (branchId) query = query.eq("branch_id", branchId)
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+  return (data ?? []).map((raw) => mapFolioItem(raw as Row))
+}
+
 /** IDs de pedidos del POS ya cargados a algún folio (para no duplicar). */
 export async function getChargedOrderIds(branchId?: string | null): Promise<string[]> {
   const supabase = getSupabaseAdmin()
