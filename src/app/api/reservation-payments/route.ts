@@ -17,23 +17,46 @@ function cleanText(value: unknown) {
   return String(value || "").trim()
 }
 
-// GET : depósitos reportados + reservas próximas (para asociar).
+// GET : depósitos reportados + reservas con contexto (fechas, total) para que
+// caja vea a quién pertenece cada pago y cuánto falta por abonar.
 export async function GET(request: NextRequest) {
   try {
     const access = await checkPaymentsAccess(request, ["owner", "manager", "support"])
     if (!access.ok) return access.response
     const branchId = await resolveBranchId(request)
-    const today = new Date().toISOString().slice(0, 10)
-    const to = `${new Date().getFullYear() + 1}-01-01`
+    // Ventana amplia hacia atrás para resolver también los pagos de estadías
+    // pasadas que siguen en el historial (la lista trae 200 pagos máx.).
+    const from = new Date(Date.now() - 180 * 86_400_000).toISOString().slice(0, 10)
+    const to = `${new Date().getFullYear() + 1}-12-31`
     const [payments, reservations] = await Promise.all([
       getReservationPayments({}, branchId),
-      getHotelReservations({ from: today, to }, branchId),
+      getHotelReservations({ from, to }, branchId),
     ])
+    const today = new Date().toISOString().slice(0, 10)
+    const summarize = (r: (typeof reservations)[number]) => ({
+      id: r.id,
+      guestName: r.guestName,
+      code: r.code,
+      status: r.status,
+      checkInDate: r.checkInDate,
+      checkOutDate: r.checkOutDate,
+      nights: r.nights,
+      totalAmount: r.totalAmount,
+      source: r.source,
+    })
+    // Para el formulario: estadías activas o por llegar.
     const upcoming = reservations
-      .filter((r) => r.status === "pendiente" || r.status === "confirmada" || r.status === "checkin")
-      .map((r) => ({ id: r.id, guestName: r.guestName, code: r.code, status: r.status }))
-      .slice(0, 80)
-    return NextResponse.json({ ok: true, payments, reservations: upcoming })
+      .filter(
+        (r) =>
+          (r.status === "pendiente" || r.status === "confirmada" || r.status === "checkin") &&
+          r.checkOutDate >= today,
+      )
+      .map(summarize)
+      .slice(0, 120)
+    // Para la lista: cualquier reserva referenciada por un pago.
+    const referencedIds = new Set(payments.map((p) => p.reservationId))
+    const referenced = reservations.filter((r) => referencedIds.has(r.id)).map(summarize)
+    return NextResponse.json({ ok: true, payments, reservations: upcoming, referenced })
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "No se pudieron cargar los pagos" },
