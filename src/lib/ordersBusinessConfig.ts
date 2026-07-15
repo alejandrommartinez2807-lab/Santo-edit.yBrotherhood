@@ -142,6 +142,11 @@ export type BusinessConfig = {
   // plantilla estándar con mini encuesta.
   postSaleSurveyEnabled: boolean
   postSaleSurveyMessage: string
+  // Guía paso a paso y advertencias del checkout público (configurables).
+  publicOrderStepsEnabled: boolean
+  publicPrepayNoticeEnabled: boolean
+  publicPrepayNoticeText: string
+  publicOpenAccountHintHighlighted: boolean
   exchangeRateMode: ExchangeRateMode
   manualExchangeRate: number
   deliveryEnabled: boolean
@@ -288,6 +293,10 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   orderWhatsappStageButtonsEnabled: true,
   postSaleSurveyEnabled: true,
   postSaleSurveyMessage: "",
+  publicOrderStepsEnabled: true,
+  publicPrepayNoticeEnabled: true,
+  publicPrepayNoticeText: "",
+  publicOpenAccountHintHighlighted: true,
   exchangeRateMode: "automatic",
   manualExchangeRate: 0,
   deliveryEnabled: true,
@@ -704,6 +713,19 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       DEFAULT_BUSINESS_CONFIG.postSaleSurveyEnabled
     ),
     postSaleSurveyMessage: String(source.postSaleSurveyMessage || "").trim(),
+    publicOrderStepsEnabled: normalizeBooleanConfig(
+      source.publicOrderStepsEnabled,
+      DEFAULT_BUSINESS_CONFIG.publicOrderStepsEnabled
+    ),
+    publicPrepayNoticeEnabled: normalizeBooleanConfig(
+      source.publicPrepayNoticeEnabled,
+      DEFAULT_BUSINESS_CONFIG.publicPrepayNoticeEnabled
+    ),
+    publicPrepayNoticeText: String(source.publicPrepayNoticeText || "").trim(),
+    publicOpenAccountHintHighlighted: normalizeBooleanConfig(
+      source.publicOpenAccountHintHighlighted,
+      DEFAULT_BUSINESS_CONFIG.publicOpenAccountHintHighlighted
+    ),
     deliveryEnabled: normalizeBooleanConfig(
       source.deliveryEnabled,
       DEFAULT_BUSINESS_CONFIG.deliveryEnabled

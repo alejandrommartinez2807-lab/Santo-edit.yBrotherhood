@@ -375,6 +375,11 @@ export function buildPublicBusinessConfigResponse(
     // alimentan de esta misma respuesta. No expone nada sensible.
     postSaleSurveyEnabled: config.postSaleSurveyEnabled !== false,
     postSaleSurveyMessage: cleanText(config.postSaleSurveyMessage),
+    // Guía y advertencias del checkout público (configurables por el dueño).
+    publicOrderStepsEnabled: config.publicOrderStepsEnabled !== false,
+    publicPrepayNoticeEnabled: config.publicPrepayNoticeEnabled !== false,
+    publicPrepayNoticeText: cleanText(config.publicPrepayNoticeText),
+    publicOpenAccountHintHighlighted: config.publicOpenAccountHintHighlighted !== false,
     exchangeRateMode:
       normalizeText(config.exchangeRateMode) === "manual"
         ? "manual"

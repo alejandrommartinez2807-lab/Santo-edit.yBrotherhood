@@ -97,6 +97,10 @@ import PublicBranchPicker, {
   usePublicBranchSelection,
 } from "@/components/PublicBranchPicker";
 import {
+  PublicCheckoutSteps,
+  PublicPrepayNotice,
+} from "@/components/PublicCheckoutGuide";
+import {
   doesPlanAllowLocalOrders,
   doesPlanAllowDelivery,
   getActivePublicLocalTableNames,
@@ -1777,6 +1781,7 @@ export default function CartDrawer({
           "Cliente",
         customerPhone:
           cleanText(data.order?.customerPhone) || customerPhone.trim(),
+        orderType,
         totalUSD: Number(
           data.order?.totalUSD || data.order?.totalPrice || totalUSD || 0,
         ),
@@ -1867,6 +1872,7 @@ export default function CartDrawer({
           id: "Guardado sin conexión",
           customerName: customerName.trim() || "Cliente",
           customerPhone: customerPhone.trim(),
+          orderType,
           totalUSD,
           hasStaffConfirmationItems,
           staffConfirmationProductNames,
@@ -2495,6 +2501,21 @@ export default function CartDrawer({
                     </div>
                   )}
 
+                {/* Recordatorio de pago anticipado en la confirmación: para
+                    Pick up / Delivery el pedido no entra a preparación hasta
+                    confirmar el pago (configurable por el dueño). */}
+                {publicConfig.publicPrepayNoticeEnabled &&
+                  lastOrderCanReportPayment &&
+                  !lastCreatedOrder.offline &&
+                  (lastCreatedOrder.orderType === "Para llevar" ||
+                    lastCreatedOrder.orderType === "Delivery") && (
+                    <div className="text-left">
+                      <PublicPrepayNotice
+                        text={publicConfig.publicPrepayNoticeText}
+                      />
+                    </div>
+                  )}
+
                 {/* Pasos de pago unificados con la página de seguimiento
                     (/pedido/[id]): mismos datos de pago filtrados a los
                     métodos elegidos y mismo formulario de reporte (métodos
@@ -2563,18 +2584,45 @@ export default function CartDrawer({
                   label="¿En qué sede estás pidiendo?"
                 />
 
+                {/* Guía paso a paso del pedido (configurable por el dueño):
+                    qué botón tocar y qué sigue, según el tipo de pedido. */}
+                {publicConfig.publicOrderStepsEnabled && (
+                  <PublicCheckoutSteps
+                    orderType={orderType}
+                    submitLabel={
+                      publicConfig.publicCartLocalOrderButtonText ||
+                      "Registrar pedido local"
+                    }
+                    prepayEnabled={publicConfig.publicPrepayNoticeEnabled}
+                  />
+                )}
+
                 {/* Aviso para mesas con cuenta: la segunda vez no hace falta
                     volver a identificarse, solo indicar la misma mesa. Solo
-                    aplica si el negocio tiene cuentas abiertas activas. */}
-                {orderType === "Comer aquí" && publicConfig.openAccountsEnabled && (
-                  <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.06)] px-4 py-2.5">
-                    <p className="text-[0.7rem] font-bold leading-4 text-[var(--brand-ink-2)]/65">
-                      ¿Ya abriste una cuenta en tu mesa? No hace falta poner
-                      tus datos otra vez: indica la misma mesa y tu pedido se
-                      suma solo.
-                    </p>
-                  </div>
-                )}
+                    aplica si el negocio tiene cuentas abiertas activas. El
+                    dueño puede pedir que se vea RESALTADO (por defecto). */}
+                {orderType === "Comer aquí" &&
+                  publicConfig.openAccountsEnabled &&
+                  (publicConfig.publicOpenAccountHintHighlighted ? (
+                    <div className="rounded-2xl border-[3px] border-[var(--brand-primary)] bg-[var(--brand-accent)]/25 px-4 py-3.5 shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.2)]">
+                      <p className="inline-flex items-center gap-2 text-[0.7rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                        <Table2 size={15} className="shrink-0" />
+                        ¿Ya abriste una cuenta en tu mesa?
+                      </p>
+                      <p className="mt-1.5 text-[0.85rem] font-black leading-5 text-[var(--brand-ink)]">
+                        No hace falta poner tus datos otra vez: indica la misma
+                        mesa y tu pedido se suma solo a tu cuenta.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.06)] px-4 py-2.5">
+                      <p className="text-[0.7rem] font-bold leading-4 text-[var(--brand-ink-2)]/65">
+                        ¿Ya abriste una cuenta en tu mesa? No hace falta poner
+                        tus datos otra vez: indica la misma mesa y tu pedido se
+                        suma solo.
+                      </p>
+                    </div>
+                  ))}
 
                 <div>
                   <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
@@ -2853,6 +2901,11 @@ export default function CartDrawer({
                     pago luego pre-carga ese método. */}
                 {isTakeawayOrder && (
                   <div className="space-y-5 sm:space-y-4">
+                    {publicConfig.publicPrepayNoticeEnabled && (
+                      <PublicPrepayNotice
+                        text={publicConfig.publicPrepayNoticeText}
+                      />
+                    )}
                     {renderCheckoutPaymentSection()}
                   </div>
                 )}
@@ -2862,6 +2915,11 @@ export default function CartDrawer({
                   // pago mixto, costo) son el único nivel de borde para que
                   // el formulario respire y no se vea comprimido.
                   <div className="space-y-5 sm:space-y-4">
+                    {publicConfig.publicPrepayNoticeEnabled && (
+                      <PublicPrepayNotice
+                        text={publicConfig.publicPrepayNoticeText}
+                      />
+                    )}
                     {/* 1. Ubicación primero (como las apps grandes): define el
                         costo del envío y la cobertura antes de pedir datos. */}
                     {isDistancePricingEnabled && (
