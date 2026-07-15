@@ -16,6 +16,7 @@ import {
   KeyRound,
   Mail,
   MapPin,
+  MessageCircle,
   PartyPopper,
   Phone,
   Quote,
@@ -73,8 +74,21 @@ type Profile = {
   checkinTime: string
   checkoutTime: string
 }
+type SiteExtras = {
+  heroUrl: string
+  tagline: string
+  stars: number
+  hallmarks: string
+  quote: string
+  mapsQuery: string
+  whatsapp: string
+  instagram: string
+  facebook: string
+  tiktok: string
+}
 type RoomQuote = { total: number; averageRate: number }
 type RoomTypePhoto = { url: string; caption: string }
+type RoomTypeDetails = { beds: string; sizeM2: string; view: string; amenities: string }
 type RoomType = {
   roomTypeId: string
   name: string
@@ -82,6 +96,7 @@ type RoomType = {
   capacity: number
   freeCount: number
   photos?: RoomTypePhoto[]
+  details?: RoomTypeDetails | null
   quote: RoomQuote
 }
 type Review = { guestName: string; rating: number; comment: string }
@@ -95,6 +110,7 @@ function isoInDays(days: number) {
 
 export default function HotelLandingPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [extras, setExtras] = useState<SiteExtras | null>(null)
   const [types, setTypes] = useState<RoomType[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
   const [ratingAvg, setRatingAvg] = useState(0)
@@ -111,7 +127,10 @@ export default function HotelLandingPage() {
   useEffect(() => {
     fetch("/api/public/hotel/profile", { cache: "no-store" })
       .then((r) => r.json())
-      .then((d) => setProfile(d.enabled ? d.profile : null))
+      .then((d) => {
+        setProfile(d.enabled ? d.profile : null)
+        setExtras(d.enabled && d.extras ? d.extras : null)
+      })
       .catch(() => setProfile(null))
       .finally(() => setLoaded(true))
   }, [])
@@ -146,6 +165,37 @@ export default function HotelLandingPage() {
     .map((a) => a.trim())
     .filter(Boolean)
 
+  // Contenido editable de la landing con defaults del template: el dueño lo
+  // cambia desde Panel → Página del hotel sin tocar código.
+  const heroUrl = extras?.heroUrl || HERO
+  const tagline = extras?.tagline || BRAND.tagline
+  const starCount = extras ? extras.stars : 5
+  const hallmarks = (extras?.hallmarks || "")
+    .split(/[,\n]/)
+    .map((h) => h.trim())
+    .filter(Boolean)
+  const hallmarkList = hallmarks.length > 0 ? hallmarks.slice(0, 6) : HALLMARKS
+  const bandQuote = extras?.quote || "Una experiencia inolvidable en el corazón de Valencia."
+  const mapsQuery =
+    extras?.mapsQuery ||
+    profile?.address ||
+    "Lidotel Valencia Avenida 4 Valencia Carabobo Venezuela"
+  const whatsappDigits = (extras?.whatsapp || "").replace(/\D+/g, "")
+  const whatsappUrl = whatsappDigits
+    ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent("Hola, quiero información para reservar")}`
+    : ""
+  const socialLinks = [
+    extras?.instagram
+      ? { label: "Instagram", url: `https://instagram.com/${extras.instagram.replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//, "")}` }
+      : null,
+    extras?.facebook
+      ? { label: "Facebook", url: /^https?:\/\//.test(extras.facebook) ? extras.facebook : `https://facebook.com/${extras.facebook}` }
+      : null,
+    extras?.tiktok
+      ? { label: "TikTok", url: `https://tiktok.com/@${extras.tiktok.replace(/^@/, "").replace(/^https?:\/\/(www\.)?tiktok\.com\/@?/, "")}` }
+      : null,
+  ].filter((s): s is { label: string; url: string } => Boolean(s))
+
   // Galería: mezcla las fotos de todos los tipos (sin repetir la portada dos
   // veces seguidas del mismo tipo) y muestra hasta 8.
   const galleryPhotos = useMemo(() => {
@@ -166,18 +216,20 @@ export default function HotelLandingPage() {
       {/* ==================== HERO cinematográfico ==================== */}
       <section className="relative isolate min-h-[92vh] overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={HERO} alt={BRAND.name} className="absolute inset-0 -z-10 h-full w-full object-cover" />
+        <img src={heroUrl} alt={BRAND.name} className="absolute inset-0 -z-10 h-full w-full object-cover" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/60 via-black/50 to-black/45" />
         <div className="absolute inset-x-0 bottom-0 -z-10 h-36 bg-gradient-to-t from-[var(--brand-cream)] to-transparent" />
 
         <div className="mx-auto flex min-h-[92vh] max-w-4xl flex-col items-center justify-center px-6 py-28 text-center">
-          <div className="flex items-center gap-1.5 text-[var(--brand-primary)]">
-            {[0, 1, 2, 3, 4].map((i) => (
-              <Star key={i} size={16} fill="currentColor" strokeWidth={0} />
-            ))}
-          </div>
+          {starCount > 0 && (
+            <div className="flex items-center gap-1.5 text-[var(--brand-primary)]">
+              {Array.from({ length: starCount }).map((_, i) => (
+                <Star key={i} size={16} fill="currentColor" strokeWidth={0} />
+              ))}
+            </div>
+          )}
           <p className="mt-5 text-[0.72rem] font-bold uppercase tracking-[0.32em] text-[#e6cf9a]">
-            Hotel 5 estrellas · Valencia
+            {tagline}
           </p>
           <h1 className="mt-5 font-serif text-6xl font-semibold leading-[1] text-white drop-shadow-lg sm:text-7xl md:text-8xl">
             {profile?.headline || BRAND.name}
@@ -210,7 +262,7 @@ export default function HotelLandingPage() {
       {/* ==================== Franja de sellos ==================== */}
       <div className="border-y border-[var(--brand-primary)]/15 bg-[var(--brand-surface-2)]">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-10 gap-y-3 px-6 py-6">
-          {HALLMARKS.map((h, i) => (
+          {hallmarkList.map((h, i) => (
             <span key={h} className="flex items-center gap-10">
               {i > 0 && <span className="hidden h-1 w-1 rounded-full bg-[var(--brand-primary)]/60 sm:block" />}
               <span className="font-serif text-[1.05rem] italic text-[var(--brand-ink)]">{h}</span>
@@ -290,12 +342,47 @@ export default function HotelLandingPage() {
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-3 py-1 text-xs text-[var(--brand-ink-2)]">
                     <Users size={13} /> Hasta {t.capacity}
                   </span>
+                  {t.details?.beds && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-3 py-1 text-xs text-[var(--brand-ink-2)]">
+                      <BedDouble size={13} /> {t.details.beds}
+                    </span>
+                  )}
+                  {t.details?.sizeM2 && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-3 py-1 text-xs text-[var(--brand-ink-2)]">
+                      {t.details.sizeM2} m²
+                    </span>
+                  )}
+                  {t.details?.view && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-3 py-1 text-xs text-[var(--brand-ink-2)]">
+                      <Compass size={13} /> {t.details.view}
+                    </span>
+                  )}
                   {t.freeCount > 0 && (
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-primary)]/40 px-3 py-1 text-xs font-medium text-[var(--brand-primary-dark)]">
                       Disponible
                     </span>
                   )}
                 </div>
+                {(t.details?.amenities || "").trim() && (
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
+                    {(t.details?.amenities || "")
+                      .split(/[,\n]/)
+                      .map((a) => a.trim())
+                      .filter(Boolean)
+                      .slice(0, 6)
+                      .map((a) => {
+                        const Icon = amenityIcon(a)
+                        return (
+                          <span
+                            key={a}
+                            className="inline-flex items-center gap-1.5 text-xs text-[var(--brand-ink-2)]"
+                          >
+                            <Icon size={13} className="text-[var(--brand-primary)]" /> {a}
+                          </span>
+                        )
+                      })}
+                  </div>
+                )}
                 <div className="mt-6 flex items-end justify-between border-t border-black/5 pt-5">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--brand-ink-2)]">Desde</p>
@@ -366,12 +453,12 @@ export default function HotelLandingPage() {
       {/* ==================== Banda de invitación (parallax) ==================== */}
       <section className="relative isolate overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={HERO} alt="" className="absolute inset-0 -z-10 h-full w-full object-cover" />
+        <img src={heroUrl} alt="" className="absolute inset-0 -z-10 h-full w-full object-cover" />
         <div className="absolute inset-0 -z-10 bg-black/70" />
         <div className="mx-auto max-w-3xl px-6 py-28 text-center">
           <Sparkles className="mx-auto text-[var(--brand-primary)]" size={28} />
           <p className="mt-6 font-serif text-3xl font-medium italic leading-snug text-white sm:text-4xl">
-            “Una experiencia inolvidable en el corazón de Valencia.”
+            “{bandQuote}”
           </p>
           <Link
             href="/hotel/reservar"
@@ -534,6 +621,33 @@ export default function HotelLandingPage() {
                     <Mail size={16} className="shrink-0 text-[var(--brand-primary)]" /> {profile.email}
                   </p>
                 )}
+                {whatsappUrl && (
+                  <p>
+                    <a
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 px-4 py-2 text-sm font-semibold text-[var(--brand-primary-dark)] transition-colors hover:bg-[var(--brand-primary)] hover:text-white"
+                    >
+                      <MessageCircle size={16} /> Escríbenos por WhatsApp
+                    </a>
+                  </p>
+                )}
+                {socialLinks.length > 0 && (
+                  <p className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-sm">
+                    {socialLinks.map((s) => (
+                      <a
+                        key={s.label}
+                        href={s.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-semibold text-[var(--brand-primary-dark)] transition-colors hover:underline"
+                      >
+                        {s.label}
+                      </a>
+                    ))}
+                  </p>
+                )}
                 {!profile?.address && !profile?.phone && !profile?.email && loaded && (
                   <p className="text-[var(--brand-ink-2)]">Escríbenos para reservar.</p>
                 )}
@@ -542,8 +656,8 @@ export default function HotelLandingPage() {
           </div>
           <div className="mt-6 overflow-hidden rounded-2xl border border-[var(--brand-primary)]/15">
             <iframe
-              title="Ubicación de Lidotel Valencia"
-              src="https://maps.google.com/maps?q=Lidotel%20Valencia%20Avenida%204%20Valencia%20Carabobo%20Venezuela&z=15&output=embed"
+              title={`Ubicación de ${BRAND.name}`}
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(mapsQuery)}&z=15&output=embed`}
               className="h-80 w-full grayscale-[0.3] contrast-110"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
@@ -569,6 +683,19 @@ export default function HotelLandingPage() {
           <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
         </Link>
       </section>
+
+      {/* ==================== WhatsApp flotante ==================== */}
+      {whatsappUrl && (
+        <a
+          href={whatsappUrl}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Escríbenos por WhatsApp"
+          className="fixed bottom-5 right-5 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#25d366] text-white shadow-lg shadow-black/25 transition-transform hover:scale-105"
+        >
+          <MessageCircle size={26} />
+        </a>
+      )}
 
       {/* ==================== Lightbox de fotos ==================== */}
       {lightbox && (

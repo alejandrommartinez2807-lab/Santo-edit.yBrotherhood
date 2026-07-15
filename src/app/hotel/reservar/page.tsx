@@ -35,6 +35,7 @@ type AvailableType = {
   capacity: number
   freeCount: number
   photos?: { url: string; caption: string }[]
+  details?: { beds: string; sizeM2: string; view: string; amenities: string } | null
   quote: Quote
 }
 type Created = {
@@ -352,6 +353,21 @@ export default function HotelReservarPage() {
                           <span className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-primary)]/25 px-3 py-1 text-xs font-bold text-[var(--brand-ink-2)]">
                             <Users size={13} /> Hasta {type.capacity}
                           </span>
+                          {type.details?.beds && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-primary)]/25 px-3 py-1 text-xs font-bold text-[var(--brand-ink-2)]">
+                              <BedDouble size={13} /> {type.details.beds}
+                            </span>
+                          )}
+                          {type.details?.sizeM2 && (
+                            <span className="inline-flex items-center rounded-full border border-[var(--brand-primary)]/25 px-3 py-1 text-xs font-bold text-[var(--brand-ink-2)]">
+                              {type.details.sizeM2} m²
+                            </span>
+                          )}
+                          {type.details?.view && (
+                            <span className="inline-flex items-center rounded-full border border-[var(--brand-primary)]/25 px-3 py-1 text-xs font-bold text-[var(--brand-ink-2)]">
+                              {type.details.view}
+                            </span>
+                          )}
                           {type.quote.seasonApplied && (
                             <span className="inline-flex items-center rounded-full border border-[var(--brand-primary)]/25 px-3 py-1 text-xs font-bold text-[var(--brand-primary-dark)]">
                               Temporada {type.quote.seasonNames.join(", ")}

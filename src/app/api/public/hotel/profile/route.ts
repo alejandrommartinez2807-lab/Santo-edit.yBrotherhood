@@ -32,7 +32,9 @@ export async function GET(request: NextRequest) {
 
     const branchId = await resolveBranchId(request)
     const profile = await getHotelProfile(branchId)
-    return noStore({ ok: true, enabled: true, profile })
+    // Extras editables de la landing (portada, sellos, redes, WhatsApp): son
+    // contenido público por diseño, así que viajan junto al perfil.
+    return noStore({ ok: true, enabled: true, profile, extras: config.hotelSiteExtras })
   } catch (error) {
     captureError(error, { route: "/api/public/hotel/profile", action: "GET" })
     return noStore({ ok: false, error: "No se pudo cargar" }, { status: 500 })

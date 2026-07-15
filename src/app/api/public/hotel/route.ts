@@ -57,6 +57,7 @@ async function getBookingContext() {
     enabled: access.includedInPlan && access.effectiveEnabled,
     bookingFields: config.hotelBookingFields as HotelBookingFieldsConfig,
     termsText: config.hotelTermsText || DEFAULT_HOTEL_TERMS,
+    roomTypeDetails: config.hotelRoomTypeDetails,
   }
 }
 
@@ -83,7 +84,7 @@ export async function GET(request: NextRequest) {
   if (rateLimitResponse) return rateLimitResponse
 
   try {
-    const { enabled, bookingFields, termsText } = await getBookingContext()
+    const { enabled, bookingFields, termsText, roomTypeDetails } = await getBookingContext()
     if (!enabled) return noStoreResponse({ ok: true, enabled: false, types: [] })
 
     const checkIn = normalizeStayDate(request.nextUrl.searchParams.get("checkIn"))
@@ -113,11 +114,18 @@ export async function GET(request: NextRequest) {
       restrictions,
     })
 
+    // Detalle comercial por tipo (camas, m², vista, amenidades) para que la
+    // tarjeta pública venda de verdad, como en los motores de reserva reales.
+    const typesWithDetails = types.map((t) => ({
+      ...t,
+      details: roomTypeDetails[t.roomTypeId] || null,
+    }))
+
     return noStoreResponse({
       ok: true,
       enabled: true,
       nights: nightsBetween(checkIn, checkOut),
-      types,
+      types: typesWithDetails,
       bookingFields,
       termsText,
     })

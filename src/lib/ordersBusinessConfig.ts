@@ -21,6 +21,13 @@ import {
   type HotelBookingFieldsConfig,
 } from "./hotelBooking"
 import {
+  DEFAULT_HOTEL_SITE_EXTRAS,
+  normalizeHotelRoomTypeDetails,
+  normalizeHotelSiteExtras,
+  type HotelRoomTypeDetailsMap,
+  type HotelSiteExtras,
+} from "./hotelSite"
+import {
   normalizeLocalModuleList,
   normalizeLocalPlanKey,
   getModulePlanAccess,
@@ -224,6 +231,10 @@ export type BusinessConfig = {
   // obligatorios; texto de términos y condiciones (vacío = default estándar).
   hotelBookingFields: HotelBookingFieldsConfig
   hotelTermsText: string
+  // Hotel: contenido editable extra de la landing (portada, sellos, redes) y
+  // detalle comercial por tipo de habitación (camas, m², vista, amenidades).
+  hotelSiteExtras: HotelSiteExtras
+  hotelRoomTypeDetails: HotelRoomTypeDetailsMap
   updatedAt?: string
 }
 
@@ -387,6 +398,8 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   allowCloseWithPendingPayments: true,
   hotelBookingFields: { ...DEFAULT_HOTEL_BOOKING_FIELDS },
   hotelTermsText: "",
+  hotelSiteExtras: { ...DEFAULT_HOTEL_SITE_EXTRAS },
+  hotelRoomTypeDetails: {},
 }
 
 function normalizeBooleanConfig(value: unknown, fallback: boolean) {
@@ -1041,6 +1054,8 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     ),
     hotelBookingFields: normalizeHotelBookingFields(source.hotelBookingFields),
     hotelTermsText: String(source.hotelTermsText || "").trim(),
+    hotelSiteExtras: normalizeHotelSiteExtras(source.hotelSiteExtras),
+    hotelRoomTypeDetails: normalizeHotelRoomTypeDetails(source.hotelRoomTypeDetails),
     updatedAt: source.updatedAt ? String(source.updatedAt) : undefined,
   }
 }

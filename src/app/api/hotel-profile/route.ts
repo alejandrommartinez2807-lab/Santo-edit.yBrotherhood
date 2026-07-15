@@ -8,6 +8,7 @@ import {
 import { resolveBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 import { DEFAULT_HOTEL_TERMS, normalizeHotelBookingFields } from "@/lib/hotelBooking"
+import { normalizeHotelRoomTypeDetails, normalizeHotelSiteExtras } from "@/lib/hotelSite"
 
 import { checkHotelLandingAccess } from "./guard"
 
@@ -30,6 +31,8 @@ export async function GET(request: NextRequest) {
       bookingFields: config.hotelBookingFields,
       termsText: config.hotelTermsText,
       termsDefault: DEFAULT_HOTEL_TERMS,
+      siteExtras: config.hotelSiteExtras,
+      roomTypeDetails: config.hotelRoomTypeDetails,
     })
   } catch (error) {
     return NextResponse.json(
@@ -70,15 +73,27 @@ export async function POST(request: NextRequest) {
       branchId,
     )
 
-    // Formulario de reserva + términos: viven en business_config (a nivel de
-    // negocio; la demo es una propiedad). Solo se tocan si el editor los envía.
-    if (body.bookingFields !== undefined || body.termsText !== undefined) {
+    // Formulario de reserva + términos + extras de la landing + detalle por
+    // tipo: viven en business_config (a nivel de negocio; la demo es una
+    // propiedad). Solo se tocan si el editor los envía.
+    if (
+      body.bookingFields !== undefined ||
+      body.termsText !== undefined ||
+      body.siteExtras !== undefined ||
+      body.roomTypeDetails !== undefined
+    ) {
       await saveBusinessConfig({
         ...(body.bookingFields !== undefined
           ? { hotelBookingFields: normalizeHotelBookingFields(body.bookingFields) }
           : {}),
         ...(body.termsText !== undefined
           ? { hotelTermsText: cleanText(body.termsText).slice(0, 8000) }
+          : {}),
+        ...(body.siteExtras !== undefined
+          ? { hotelSiteExtras: normalizeHotelSiteExtras(body.siteExtras) }
+          : {}),
+        ...(body.roomTypeDetails !== undefined
+          ? { hotelRoomTypeDetails: normalizeHotelRoomTypeDetails(body.roomTypeDetails) }
           : {}),
       })
     }
@@ -90,6 +105,8 @@ export async function POST(request: NextRequest) {
       bookingFields: config.hotelBookingFields,
       termsText: config.hotelTermsText,
       termsDefault: DEFAULT_HOTEL_TERMS,
+      siteExtras: config.hotelSiteExtras,
+      roomTypeDetails: config.hotelRoomTypeDetails,
     })
   } catch (error) {
     return NextResponse.json(

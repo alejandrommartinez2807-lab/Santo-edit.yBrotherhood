@@ -12,6 +12,14 @@ import {
   type HotelBookingFieldMode,
   type HotelBookingFieldsConfig,
 } from "@/lib/hotelBooking"
+import {
+  DEFAULT_HOTEL_SITE_EXTRAS,
+  normalizeHotelRoomTypeDetails,
+  normalizeHotelSiteExtras,
+  type HotelRoomTypeDetails,
+  type HotelRoomTypeDetailsMap,
+  type HotelSiteExtras,
+} from "@/lib/hotelSite"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -58,6 +66,9 @@ function PaginaHotelContent() {
   )
   const [termsText, setTermsText] = useState("")
   const [termsDefault, setTermsDefault] = useState("")
+  const [siteExtras, setSiteExtras] = useState<HotelSiteExtras>({ ...DEFAULT_HOTEL_SITE_EXTRAS })
+  const [roomTypeDetails, setRoomTypeDetails] = useState<HotelRoomTypeDetailsMap>({})
+  const [roomTypes, setRoomTypes] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [denied, setDenied] = useState(false)
   const [error, setError] = useState("")
@@ -80,6 +91,21 @@ function PaginaHotelContent() {
       setBookingFields(normalizeHotelBookingFields(data.bookingFields))
       setTermsText(String(data.termsText || ""))
       setTermsDefault(String(data.termsDefault || ""))
+      setSiteExtras(normalizeHotelSiteExtras(data.siteExtras))
+      setRoomTypeDetails(normalizeHotelRoomTypeDetails(data.roomTypeDetails))
+
+      // Tipos de habitación para el detalle comercial (camas, m², vista…).
+      const roomsRes = await fetch("/api/rooms", { headers: authHeaders(), cache: "no-store" })
+      if (roomsRes.ok) {
+        const roomsData = await roomsRes.json()
+        const types = Array.isArray(roomsData.roomTypes) ? roomsData.roomTypes : []
+        setRoomTypes(
+          types.map((t: { id: unknown; name: unknown }) => ({
+            id: String(t.id || ""),
+            name: String(t.name || ""),
+          })),
+        )
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
     } finally {
@@ -102,6 +128,19 @@ function PaginaHotelContent() {
     setSaved(false)
   }
 
+  function setExtra<K extends keyof HotelSiteExtras>(key: K, value: HotelSiteExtras[K]) {
+    setSiteExtras((x) => ({ ...x, [key]: value }))
+    setSaved(false)
+  }
+
+  function setTypeDetail(typeId: string, key: keyof HotelRoomTypeDetails, value: string) {
+    setRoomTypeDetails((map) => {
+      const current = map[typeId] || { beds: "", sizeM2: "", view: "", amenities: "" }
+      return { ...map, [typeId]: { ...current, [key]: value } }
+    })
+    setSaved(false)
+  }
+
   async function save() {
     setBusy(true)
     setError("")
@@ -109,13 +148,15 @@ function PaginaHotelContent() {
       const res = await fetch("/api/hotel-profile", {
         method: "POST",
         headers: authHeaders(),
-        body: JSON.stringify({ ...profile, bookingFields, termsText }),
+        body: JSON.stringify({ ...profile, bookingFields, termsText, siteExtras, roomTypeDetails }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "No se pudo guardar")
       setProfile({ ...EMPTY, ...(data.profile || {}) })
       setBookingFields(normalizeHotelBookingFields(data.bookingFields))
       setTermsText(String(data.termsText || ""))
+      setSiteExtras(normalizeHotelSiteExtras(data.siteExtras))
+      setRoomTypeDetails(normalizeHotelRoomTypeDetails(data.roomTypeDetails))
       setSaved(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
@@ -165,6 +206,79 @@ function PaginaHotelContent() {
                 <input type="time" value={profile.checkoutTime} onChange={(e) => set("checkoutTime", e.target.value)} className="w-full bg-transparent font-bold outline-none" />
               </label>
             </div>
+            {/* Portada y estilo de la landing */}
+            <div className="rounded-xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/50 p-4">
+              <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">Portada y estilo</p>
+              <p className="text-xs font-bold text-[var(--brand-ink-2)]/70">
+                Los textos vacíos usan el diseño de fábrica. La foto de portada acepta un enlace
+                (puedes subirla en Habitaciones → Fotos por tipo y copiar el enlace).
+              </p>
+              <div className="mt-3 grid gap-3">
+                <input value={siteExtras.heroUrl} onChange={(e) => setExtra("heroUrl", e.target.value)} placeholder="Foto de portada (enlace https://…)" className={inputClass} />
+                <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+                  <input value={siteExtras.tagline} onChange={(e) => setExtra("tagline", e.target.value)} placeholder="Frase corta bajo las estrellas (Hotel 5 estrellas · Valencia)" className={inputClass} />
+                  <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-2.5 font-bold">
+                    <span className="text-xs font-bold uppercase text-[var(--brand-primary)]">Estrellas</span>
+                    <select
+                      value={siteExtras.stars}
+                      onChange={(e) => setExtra("stars", Number(e.target.value))}
+                      className="bg-transparent font-bold outline-none"
+                    >
+                      {[5, 4, 3, 2, 1, 0].map((n) => (
+                        <option key={n} value={n}>{n === 0 ? "Ocultar" : `${n}★`}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <input value={siteExtras.hallmarks} onChange={(e) => setExtra("hallmarks", e.target.value)} placeholder="Sellos separados por coma (5 Estrellas, Suites, Spa & Bienestar…)" className={inputClass} />
+                <input value={siteExtras.quote} onChange={(e) => setExtra("quote", e.target.value)} placeholder="Cita de la banda con foto (Una experiencia inolvidable…)" className={inputClass} />
+                <input value={siteExtras.mapsQuery} onChange={(e) => setExtra("mapsQuery", e.target.value)} placeholder="Búsqueda del mapa de Google (vacío = usa la dirección)" className={inputClass} />
+              </div>
+            </div>
+
+            {/* WhatsApp y redes sociales */}
+            <div className="rounded-xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/50 p-4">
+              <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">WhatsApp y redes</p>
+              <p className="text-xs font-bold text-[var(--brand-ink-2)]/70">
+                Con WhatsApp lleno aparece el botón flotante y el enlace en contacto.
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <input value={siteExtras.whatsapp} onChange={(e) => setExtra("whatsapp", e.target.value)} placeholder="WhatsApp con código de país (58241…)" className={inputClass} />
+                <input value={siteExtras.instagram} onChange={(e) => setExtra("instagram", e.target.value)} placeholder="Instagram (usuario)" className={inputClass} />
+                <input value={siteExtras.facebook} onChange={(e) => setExtra("facebook", e.target.value)} placeholder="Facebook (usuario o enlace)" className={inputClass} />
+                <input value={siteExtras.tiktok} onChange={(e) => setExtra("tiktok", e.target.value)} placeholder="TikTok (usuario)" className={inputClass} />
+              </div>
+            </div>
+
+            {/* Detalle comercial por tipo de habitación */}
+            {roomTypes.length > 0 && (
+              <div className="rounded-xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/50 p-4">
+                <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">
+                  Detalle por tipo de habitación
+                </p>
+                <p className="text-xs font-bold text-[var(--brand-ink-2)]/70">
+                  Camas, tamaño, vista y amenidades salen en la tarjeta pública de cada tipo
+                  (como en los hoteles grandes). Deja vacío lo que no aplique.
+                </p>
+                <div className="mt-3 grid gap-3">
+                  {roomTypes.map((t) => {
+                    const d = roomTypeDetails[t.id] || { beds: "", sizeM2: "", view: "", amenities: "" }
+                    return (
+                      <div key={t.id} className="rounded-lg border border-[var(--brand-primary)]/15 bg-white p-3">
+                        <p className="text-sm font-bold text-[var(--brand-ink-3)]">{t.name}</p>
+                        <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                          <input value={d.beds} onChange={(e) => setTypeDetail(t.id, "beds", e.target.value)} placeholder="Camas (1 king…)" className={inputClass} />
+                          <input value={d.sizeM2} onChange={(e) => setTypeDetail(t.id, "sizeM2", e.target.value)} placeholder="Tamaño m²" className={inputClass} />
+                          <input value={d.view} onChange={(e) => setTypeDetail(t.id, "view", e.target.value)} placeholder="Vista (ciudad…)" className={inputClass} />
+                        </div>
+                        <input value={d.amenities} onChange={(e) => setTypeDetail(t.id, "amenities", e.target.value)} placeholder="Amenidades del tipo separadas por coma (wifi, A/C, TV, minibar…)" className={`${inputClass} mt-2`} />
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Qué datos pide el formulario de reserva pública */}
             <div className="rounded-xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/50 p-4">
               <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">
