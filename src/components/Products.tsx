@@ -80,12 +80,12 @@ const DEFAULT_PUBLIC_MENU_CONFIG: Required<PublicMenuConfig> = {
   publicComboButtonText: "Ver combos",
   publicCustomizeButtonText: "Elige tus ingredientes",
   publicCustomizerTitle: "Elige tus ingredientes",
-  // Defaults alineados al tema oscuro Brotherhood; la config del admin
+  // Defaults alineados a la paleta champán clara del hotel; la config del admin
   // (business_config) sigue mandando si trae valores propios.
-  productCardBackgroundColor: "#141414",
-  productCardTextColor: "#fafaf9",
-  productCardBorderColor: "#2a2a2a",
-  productCardButtonColor: "#f5a623",
+  productCardBackgroundColor: "#ffffff",
+  productCardTextColor: "#171410",
+  productCardBorderColor: "#ddd0b6",
+  productCardButtonColor: "#b08d4c",
   publicCategoryOrder: DEFAULT_PUBLIC_CATEGORY_ORDER,
   publicHiddenCategories: [],
   publicProductCardSize: "grande",

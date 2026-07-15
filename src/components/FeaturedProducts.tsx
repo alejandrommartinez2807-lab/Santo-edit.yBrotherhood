@@ -80,16 +80,16 @@ export default function FeaturedProducts({
               businessConfig.publicCustomizerTitle || ""
             ).trim(),
             productCardBackgroundColor: String(
-              businessConfig.productCardBackgroundColor || "#141414"
+              businessConfig.productCardBackgroundColor || "#ffffff"
             ).trim(),
             productCardTextColor: String(
-              businessConfig.productCardTextColor || "#fafaf9"
+              businessConfig.productCardTextColor || "#171410"
             ).trim(),
             productCardBorderColor: String(
-              businessConfig.productCardBorderColor || "#2a2a2a"
+              businessConfig.productCardBorderColor || "#ddd0b6"
             ).trim(),
             productCardButtonColor: String(
-              businessConfig.productCardButtonColor || "#f5a623"
+              businessConfig.productCardButtonColor || "#b08d4c"
             ).trim(),
           }
         }
@@ -149,10 +149,10 @@ export default function FeaturedProducts({
     config.featuredProductsText ||
     "Una selección rápida para pedir lo más recomendado del menú."
   const productCardStyle = {
-    "--product-card-bg": config.productCardBackgroundColor || "#141414",
-    "--product-card-text": config.productCardTextColor || "#fafaf9",
-    "--product-card-border": config.productCardBorderColor || "#2a2a2a",
-    "--product-card-button": config.productCardButtonColor || "#f5a623",
+    "--product-card-bg": config.productCardBackgroundColor || "#ffffff",
+    "--product-card-text": config.productCardTextColor || "#171410",
+    "--product-card-border": config.productCardBorderColor || "#ddd0b6",
+    "--product-card-button": config.productCardButtonColor || "#b08d4c",
   } as CSSProperties
 
   return (

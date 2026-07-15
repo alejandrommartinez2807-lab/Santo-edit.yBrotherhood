@@ -2185,9 +2185,9 @@ export default function CartDrawer({
   );
   const productCardStyle = {
     "--product-card-bg": publicConfig.productCardBackgroundColor || "#ffffff",
-    "--product-card-text": publicConfig.productCardTextColor || "#4a0000",
-    "--product-card-border": publicConfig.productCardBorderColor || "#a00000",
-    "--product-card-button": publicConfig.productCardButtonColor || "#ffd23c",
+    "--product-card-text": publicConfig.productCardTextColor || "#171410",
+    "--product-card-border": publicConfig.productCardBorderColor || "#ddd0b6",
+    "--product-card-button": publicConfig.productCardButtonColor || "#b08d4c",
   } as CSSProperties;
 
   if (!isOpen) return null;

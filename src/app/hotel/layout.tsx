@@ -1,15 +1,20 @@
 import Link from "next/link"
 import type { ReactNode } from "react"
 import { BRAND } from "@/lib/brand"
+import { HOTEL_PUBLIC_THEME_STYLE } from "@/components/hotelPublicTheme"
 import HotelHeader from "./HotelHeader"
 
 // Layout premium compartido por las páginas públicas del hotel (landing,
 // reservar, mi-reserva): header fijo (transparente sobre el hero, marfil al
-// hacer scroll) + footer. Da un marco de 5★ consistente.
+// hacer scroll) + footer. Da un marco de 5★ consistente, con paleta champán
+// fija (la personalización de colores del dueño aplica al menú, no aquí).
 export default function HotelLayout({ children }: { children: ReactNode }) {
   const year = new Date().getFullYear()
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--brand-cream)] text-[var(--brand-ink)]">
+    <div
+      style={HOTEL_PUBLIC_THEME_STYLE}
+      className="flex min-h-screen flex-col bg-[var(--brand-cream)] text-[var(--brand-ink)]"
+    >
       <HotelHeader />
 
       <div className="flex-1">{children}</div>

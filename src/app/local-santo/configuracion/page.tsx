@@ -279,23 +279,23 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   pricesIncludeIva: true,
   igtfEnabled: true,
   igtfRate: 3,
-  themePrimaryColor: "#f5a623",
-  themeCreamColor: "#0d0d0d",
-  themeAccentColor: "#ffb340",
-  productCardBackgroundColor: "#141414",
-  productCardTextColor: "#ffffff",
-  productCardBorderColor: "#f5a623",
-  productCardButtonColor: "#f5a623",
-  publicTagline: "Smash Burgers, Combos y Sides",
+  themePrimaryColor: "#b08d4c",
+  themeCreamColor: "#faf8f3",
+  themeAccentColor: "#b08d4c",
+  productCardBackgroundColor: "#ffffff",
+  productCardTextColor: "#171410",
+  productCardBorderColor: "#ddd0b6",
+  productCardButtonColor: "#b08d4c",
+  publicTagline: BRAND.tagline,
   publicInfoTitle: `Visita ${BRAND.name}`,
   publicInfoText:
-    "Somos simples: porque nos gustan las buenas burgers. Ingredientes de calidad y mucho sabor. Abre nuestra ubicación en Google Maps o escribe por WhatsApp para coordinar tu pedido. Delivery & Pick Up en Valencia y San Diego.",
+    "Room service y restaurante del hotel: pide a tu habitación escaneando el QR o visítanos. Abre la ubicación en Google Maps o escríbenos por WhatsApp para coordinar tu pedido.",
   scheduleTitle: "Horario",
-  scheduleLine1: "Martes a domingo: 5:00 p.m. a 11:30 p.m.",
-  scheduleLine2: "Lunes: cerrado",
+  scheduleLine1: "Room service: 7:00 a. m. a 11:00 p. m.",
+  scheduleLine2: "Recepción: 24 horas",
   reviewsTitle: "Reseñas",
   reviewsText:
-    "Después de probar tu pedido, puedes apoyar el negocio dejando tu reseña o compartiendo la página. Gracias por el apoyo, frater.",
+    "Después de tu pedido o tu estadía, puedes apoyar al hotel dejando tu reseña o compartiendo la página. Gracias por elegirnos.",
   quickOrderTitle: "Pedido rápido",
   quickOrderText:
     "Agrega productos al carrito y registra el pedido en el local o envíalo directamente por WhatsApp.",
@@ -509,6 +509,20 @@ const MODULE_ICON_BY_KEY: Partial<Record<LocalModuleKey, ReactNode>> = {
 };
 
 const VISUAL_COLOR_PRESETS = [
+  {
+    id: "hotel-champagne",
+    label: "Champán del hotel",
+    description: "Marfil y oro champán 5★ (el tema de fábrica del hotel).",
+    values: {
+      themePrimaryColor: "#b08d4c",
+      themeAccentColor: "#b08d4c",
+      themeCreamColor: "#faf8f3",
+      productCardBackgroundColor: "#ffffff",
+      productCardTextColor: "#171410",
+      productCardBorderColor: "#ddd0b6",
+      productCardButtonColor: "#b08d4c",
+    },
+  },
   {
     id: "santo-classic",
     label: "Santo clásico",

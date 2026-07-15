@@ -22,13 +22,13 @@ type PublicPromotionConfig = {
   productCardButtonColor?: string
 }
 
-// Defaults alineados al tema oscuro Brotherhood; los valores que el admin
+// Defaults alineados a la paleta champán del hotel; los valores que el admin
 // guarde en business_config siguen teniendo prioridad.
 const DEFAULT_PROMOTION_COLORS = {
-  productCardBackgroundColor: "#141414",
-  productCardTextColor: "#fafaf9",
-  productCardBorderColor: "#2a2a2a",
-  productCardButtonColor: "#f5a623",
+  productCardBackgroundColor: "#ffffff",
+  productCardTextColor: "#171410",
+  productCardBorderColor: "#ddd0b6",
+  productCardButtonColor: "#b08d4c",
 }
 
 function normalizeText(value: unknown) {
