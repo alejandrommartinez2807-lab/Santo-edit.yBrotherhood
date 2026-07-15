@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -14,7 +15,7 @@ import {
   Table2,
   Truck,
 } from "lucide-react";
-import ModuleAccessGuard from "@/components/ModuleAccessGuard";
+import ModuleAccessGuard, { useHotelMode } from "@/components/ModuleAccessGuard";
 import type { LocalOrder, OrderItem, OrderStatus } from "@/types/localOrders";
 import {
   formatDate,
@@ -499,7 +500,10 @@ function ProductGroupCard({
   );
 }
 
-function KitchenItemsPageContent() {
+// Tablero "por producto" reutilizable: como página propia (restaurante) o
+// EMBEBIDO como submódulo dentro de Cocina (modo hotel). El embed omite el
+// encabezado de página y agrega su propia fila de actualización.
+export function KitchenByProductBoard({ embedded = false }: { embedded?: boolean }) {
   const [adminPassword, setAdminPassword] = useState("");
   const [orders, setOrders] = useState<LocalOrder[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -639,55 +643,8 @@ function KitchenItemsPageContent() {
     0,
   );
 
-  return (
-    <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-5 text-[var(--brand-ink-3)] sm:px-6 lg:px-8">
-      <section className="mx-auto flex w-full max-w-7xl flex-col gap-5">
-        <div className="overflow-hidden rounded-[2rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
-          <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
-
-          <div className="p-5">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                  Cocina premium
-                </p>
-                <h1 className="font-serif mt-1 text-3xl leading-tight text-[var(--brand-ink-3)] sm:text-5xl font-semibold">
-                  Cocina por producto
-                </h1>
-                <p className="mt-3 max-w-3xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
-                  Agrupa los productos de los pedidos activos para que cocina prepare por cantidad, mesa y notas. En esta fase se marca listo el pedido completo; todavía no guarda estados individuales por producto.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <a
-                  href="/admin"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
-                >
-                  <ArrowLeft size={16} />
-                  Panel
-                </a>
-                <a
-                  href="/local-santo/cocina"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
-                >
-                  <CookingPot size={16} />
-                  Cocina normal
-                </a>
-                <button
-                  type="button"
-                  onClick={() => loadOrders(true)}
-                  disabled={isLoading}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
-                >
-                  {isLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-                  Actualizar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
+  const boardContent = (
+    <>
         {message ? (
           <div className="rounded-[1.5rem] border border-[var(--brand-primary)]/40 bg-white px-5 py-4 text-sm font-bold text-[var(--brand-primary)] shadow-sm">
             {message}
@@ -779,15 +736,112 @@ function KitchenItemsPageContent() {
           </div>
           Esta vista ayuda a cocina a preparar por producto y cantidad. No registra cobros, no cambia cierres, no descuenta inventario y no guarda todavía estados individuales por cada producto.
         </section>
+    </>
+  );
+
+  // Embebido (submódulo de Cocina en el hotel): sin <main> ni encabezado de
+  // página; solo una fila compacta de actualización + el tablero.
+  if (embedded) {
+    return (
+      <div className="mt-4 flex flex-col gap-4">
+        <div className="flex items-center justify-end">
+          <button
+            type="button"
+            onClick={() => loadOrders(true)}
+            disabled={isLoading}
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-2.5 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+          >
+            {isLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+            Actualizar
+          </button>
+        </div>
+        {boardContent}
+      </div>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-5 text-[var(--brand-ink-3)] sm:px-6 lg:px-8">
+      <section className="mx-auto flex w-full max-w-7xl flex-col gap-5">
+        <div className="overflow-hidden rounded-[2rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
+          <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
+
+          <div className="p-5">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  Cocina premium
+                </p>
+                <h1 className="font-serif mt-1 text-3xl leading-tight text-[var(--brand-ink-3)] sm:text-5xl font-semibold">
+                  Cocina por producto
+                </h1>
+                <p className="mt-3 max-w-3xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
+                  Agrupa los productos de los pedidos activos para que cocina prepare por cantidad, mesa y notas. En esta fase se marca listo el pedido completo; todavía no guarda estados individuales por producto.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <a
+                  href="/admin"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                >
+                  <ArrowLeft size={16} />
+                  Panel
+                </a>
+                <a
+                  href="/local-santo/cocina"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                >
+                  <CookingPot size={16} />
+                  Cocina normal
+                </a>
+                <button
+                  type="button"
+                  onClick={() => loadOrders(true)}
+                  disabled={isLoading}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+                >
+                  {isLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                  Actualizar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {boardContent}
       </section>
     </main>
   );
 }
 
+// En modo hotel la vista por producto vive DENTRO de Cocina (submódulo): la
+// ruta vieja redirige para no tener dos módulos de cocina en el panel.
+function KitchenItemsStandalone() {
+  const hotelMode = useHotelMode();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (hotelMode) router.replace("/local-santo/cocina?vista=productos");
+  }, [hotelMode, router]);
+
+  if (hotelMode) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[var(--brand-cream)]">
+        <p className="inline-flex items-center gap-2 font-bold text-[var(--brand-ink-2)]">
+          <Loader2 className="animate-spin" size={18} /> Abriendo Cocina → Por producto…
+        </p>
+      </main>
+    );
+  }
+
+  return <KitchenByProductBoard />;
+}
+
 export default function KitchenItemsPage() {
   return (
     <ModuleAccessGuard moduleKey="kitchenItems" moduleName="Cocina por producto">
-      <KitchenItemsPageContent />
+      <KitchenItemsStandalone />
     </ModuleAccessGuard>
   );
 }

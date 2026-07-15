@@ -138,9 +138,13 @@ export default function LocalModuleNav({
     tables: "QR habitaciones",
     reservations: "Reservas rest.",
   }
-  const entries = NAV_ENTRIES.filter((entry) => allowed.has(entry.key)).map((entry) =>
-    hotelMode && hotelLabels[entry.key] ? { ...entry, label: hotelLabels[entry.key] } : entry,
-  )
+  const entries = NAV_ENTRIES.filter((entry) => allowed.has(entry.key))
+    // En hotel, "Cocina por producto" es un submódulo DENTRO de Cocina: sin
+    // chip propio (la ruta vieja redirige sola a Cocina → Por producto).
+    .filter((entry) => !(hotelMode && entry.key === "kitchenItems"))
+    .map((entry) =>
+      hotelMode && hotelLabels[entry.key] ? { ...entry, label: hotelLabels[entry.key] } : entry,
+    )
   const showPanelLink = allowed.has("mainPanel")
 
   const selectedBranch =

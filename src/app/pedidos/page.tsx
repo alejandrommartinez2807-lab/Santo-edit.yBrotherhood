@@ -3787,7 +3787,9 @@ export default function PedidosPage() {
             />
           )}
 
-          {isKitchenItemsModuleVisible && (
+          {/* En hotel, "Por producto" es un submódulo dentro de Cocina: sin
+              tarjeta propia (evita las "dos cocinas" en el panel). */}
+          {isKitchenItemsModuleVisible && !isHotelFrontDeskVisible && (
             <ModuleAccessCard
               href="/local-santo/cocina-productos"
               icon={<CookingPot size={24} />}
