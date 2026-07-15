@@ -91,26 +91,26 @@ function NotificacionesContent() {
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
       <div className="mx-auto w-full max-w-3xl">
-        <Link href="/admin" className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+        <Link href="/admin" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
           <ArrowLeft size={16} /> Volver al panel
         </Link>
         <div className="mt-4 flex items-center gap-3">
           <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--brand-accent)] text-[var(--brand-primary)]"><Bell size={24} /></span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Notificaciones</h1>
+            <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Notificaciones</h1>
             <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">Envía el aviso por WhatsApp con el mensaje ya listo.</p>
           </div>
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
             Tu clave no tiene permiso para notificaciones, o el módulo está desactivado.
           </p>
         ) : (
           <>
             <div className="mt-6 flex flex-wrap gap-2">
               {KINDS.map((k) => (
-                <button key={k.key} onClick={() => setKind(k.key)} className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${kind === k.key ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white" : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-primary)]"}`}>
+                <button key={k.key} onClick={() => setKind(k.key)} className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase ${kind === k.key ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white" : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-primary)]"}`}>
                   {k.label}
                 </button>
               ))}
@@ -121,7 +121,7 @@ function NotificacionesContent() {
             {loading ? (
               <p className="mt-8 inline-flex items-center gap-2 font-bold"><Loader2 className="animate-spin" size={18} /> Cargando…</p>
             ) : reservations.length === 0 ? (
-              <p className="mt-8 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-8 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
                 No hay reservas próximas.
               </p>
             ) : (
@@ -129,13 +129,13 @@ function NotificacionesContent() {
                 {reservations.map((r) => {
                   const sent = sentKeys.has(`${r.id}:${kind}`)
                   return (
-                    <li key={r.id} className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
+                    <li key={r.id} className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="font-black text-[var(--brand-ink-3)]">{r.guestName} <span className="text-sm text-[var(--brand-ink-2)]/45">#{r.code}</span></p>
+                          <p className="font-bold text-[var(--brand-ink-3)]">{r.guestName} <span className="text-sm text-[var(--brand-ink-2)]/45">#{r.code}</span></p>
                           <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">{r.checkInDate} → {r.checkOutDate} · {r.guestPhone || "sin teléfono"}</p>
                         </div>
-                        <button onClick={() => sendWhatsApp(r)} className="inline-flex items-center gap-1 rounded-full bg-green-600 px-4 py-2 text-xs font-black uppercase text-white">
+                        <button onClick={() => sendWhatsApp(r)} className="inline-flex items-center gap-1 rounded-full bg-green-600 px-4 py-2 text-xs font-bold uppercase text-white">
                           <MessageCircle size={14} /> {sent ? "Reenviar" : "WhatsApp"}
                         </button>
                       </div>

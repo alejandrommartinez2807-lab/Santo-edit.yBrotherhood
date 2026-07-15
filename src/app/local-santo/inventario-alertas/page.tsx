@@ -439,9 +439,9 @@ function SummaryCard({
         : "border-[var(--brand-primary)]/25 bg-white";
 
   return (
-    <article className={`rounded-[1.75rem] border-2 p-5 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.08)] ${toneClasses}`}>
-      <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">{label}</p>
-      <strong className="mt-2 block text-3xl font-black text-[var(--brand-ink-3)]">{value}</strong>
+    <article className={`rounded-[1.75rem] border p-5 shadow-sm ${toneClasses}`}>
+      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">{label}</p>
+      <strong className="mt-2 block text-3xl font-bold text-[var(--brand-ink-3)]">{value}</strong>
       <p className="mt-2 text-sm font-bold leading-5 text-[var(--brand-ink-2)]/70">{detail}</p>
     </article>
   );
@@ -467,17 +467,17 @@ function LoginScreen({
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-3)]">
       <section className="mx-auto flex min-h-[80vh] w-full max-w-md items-center">
-        <div className="w-full overflow-hidden rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.14)]">
+        <div className="w-full overflow-hidden rounded-[2rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
           <div className="h-6 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="p-6 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] text-[var(--brand-ink)]">
               <ShieldAlert size={30} />
             </div>
-            <p className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-[var(--brand-primary)]">
+            <p className="mt-5 text-xs font-bold uppercase tracking-[0.22em] text-[var(--brand-primary)]">
               Inventario premium
             </p>
-            <h1 className="mt-2 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+            <h1 className="font-serif mt-2 text-4xl leading-tight text-[var(--brand-ink-3)] font-semibold">
               Alertas de inventario
             </h1>
             <p className="mx-auto mt-4 max-w-sm text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
@@ -485,10 +485,10 @@ function LoginScreen({
             </p>
 
             <div className="mt-6 text-left">
-              <label className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+              <label className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
                 Clave privada
               </label>
-              <div className="mt-2 flex overflow-hidden rounded-2xl border-2 border-[var(--brand-primary)] bg-white">
+              <div className="mt-2 flex overflow-hidden rounded-2xl border border-[var(--brand-primary)]/40 bg-white">
                 <input
                   value={password}
                   onChange={(event) => onPasswordChange(event.target.value)}
@@ -496,13 +496,13 @@ function LoginScreen({
                     if (event.key === "Enter") onLogin();
                   }}
                   type={showPassword ? "text" : "password"}
-                  className="min-w-0 flex-1 px-4 py-3 text-sm font-black outline-none"
+                  className="min-w-0 flex-1 px-4 py-3 text-sm font-bold outline-none"
                   placeholder="Clave del dueño o soporte"
                 />
                 <button
                   type="button"
                   onClick={onTogglePassword}
-                  className="border-l-2 border-[var(--brand-primary)] px-4 text-[var(--brand-primary)]"
+                  className="border-l border-[var(--brand-primary)] px-4 text-[var(--brand-primary)]"
                   aria-label={showPassword ? "Ocultar clave" : "Mostrar clave"}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -511,7 +511,7 @@ function LoginScreen({
             </div>
 
             {message ? (
-              <p className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-black text-red-700">
+              <p className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
                 {message}
               </p>
             ) : null}
@@ -520,7 +520,7 @@ function LoginScreen({
               type="button"
               onClick={onLogin}
               disabled={isLoading}
-              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-4 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-60"
+              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-4 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-60"
             >
               {isLoading ? <Loader2 className="animate-spin" size={17} /> : <LogIn size={17} />}
               Entrar
@@ -528,7 +528,7 @@ function LoginScreen({
 
             <a
               href="/admin"
-              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-4 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+              className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-4 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
             >
               <ArrowLeft size={17} />
               Volver al panel
@@ -735,21 +735,21 @@ function InventoryAlertsPageContent() {
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-6 text-[var(--brand-ink-3)] sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
-        <header className="overflow-hidden rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.12)]">
+        <header className="overflow-hidden rounded-[2rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
           <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:30px_30px] bg-[position:0_0,0_15px,15px_-15px,0] bg-[var(--brand-cream)]" />
           <div className="grid gap-5 p-5 lg:grid-cols-[1.4fr_0.6fr] lg:items-center lg:p-7">
             <div>
               <a
                 href="/admin"
-                className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
               >
                 <ArrowLeft size={16} />
                 Volver al panel
               </a>
-              <p className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-[var(--brand-primary)]">
+              <p className="mt-5 text-xs font-bold uppercase tracking-[0.22em] text-[var(--brand-primary)]">
                 Inventario premium ligero
               </p>
-              <h1 className="mt-2 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.7)] sm:text-5xl">
+              <h1 className="font-serif mt-2 text-4xl leading-tight text-[var(--brand-ink-3)] sm:text-5xl font-semibold">
                 Alertas de inventario
               </h1>
               <p className="mt-4 max-w-3xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
@@ -757,8 +757,8 @@ function InventoryAlertsPageContent() {
               </p>
             </div>
 
-            <div className="rounded-[1.5rem] border-2 border-[var(--brand-primary)]/25 bg-yellow-50 p-4">
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+            <div className="rounded-[1.5rem] border border-[var(--brand-primary)]/25 bg-yellow-50 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
                 Próxima acción sugerida
               </p>
               <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
@@ -767,7 +767,7 @@ function InventoryAlertsPageContent() {
               <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
                 <a
                   href="/local-santo/inventario"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
                 >
                   <PackageCheck size={16} />
                   Abrir inventario
@@ -776,7 +776,7 @@ function InventoryAlertsPageContent() {
                   type="button"
                   onClick={() => loadData(password)}
                   disabled={isLoading}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-60"
                 >
                   {isLoading ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />}
                   Actualizar
@@ -784,7 +784,7 @@ function InventoryAlertsPageContent() {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] sm:col-span-2 lg:col-span-1"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] sm:col-span-2 lg:col-span-1"
                 >
                   Cambiar clave
                 </button>
@@ -794,7 +794,7 @@ function InventoryAlertsPageContent() {
         </header>
 
         {message ? (
-          <section className="rounded-[1.5rem] border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-5 py-4 text-sm font-black leading-6 text-[var(--brand-ink)]">
+          <section className="rounded-[1.5rem] border border-yellow-400 bg-[var(--brand-accent-100)] px-5 py-4 text-sm font-bold leading-6 text-[var(--brand-ink)]">
             {message}
           </section>
         ) : null}
@@ -825,13 +825,13 @@ function InventoryAlertsPageContent() {
         </section>
 
         <section className="grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
-          <div className="rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white p-5 shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.1)]">
+          <div className="rounded-[2rem] border border-[var(--brand-primary)]/45 bg-white p-5 shadow-sm">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   Revisión de alertas
                 </p>
-                <h2 className="mt-1 text-2xl font-black uppercase text-[var(--brand-ink-3)]">
+                <h2 className="font-serif mt-1 text-2xl text-[var(--brand-ink-3)] font-semibold">
                   Pendientes de inventario
                 </h2>
                 <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -840,7 +840,7 @@ function InventoryAlertsPageContent() {
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row lg:min-w-[420px]">
-                <div className="flex flex-1 items-center gap-2 rounded-full border-2 border-[var(--brand-primary)]/35 bg-white px-4 py-2">
+                <div className="flex flex-1 items-center gap-2 rounded-full border border-[var(--brand-primary)]/35 bg-white px-4 py-2">
                   <Search size={17} className="text-[var(--brand-primary)]" />
                   <input
                     value={searchText}
@@ -853,7 +853,7 @@ function InventoryAlertsPageContent() {
                 <select
                   value={filter}
                   onChange={(event) => setFilter(event.target.value as "all" | AlertLevel)}
-                  className="rounded-full border-2 border-[var(--brand-primary)]/35 bg-white px-4 py-2 text-sm font-black text-[var(--brand-ink)] outline-none"
+                  className="rounded-full border border-[var(--brand-primary)]/35 bg-white px-4 py-2 text-sm font-bold text-[var(--brand-ink)] outline-none"
                 >
                   <option value="all">Todas</option>
                   <option value="critical">Críticas</option>
@@ -868,7 +868,7 @@ function InventoryAlertsPageContent() {
                 filteredAlerts.map((alert) => (
                   <article
                     key={alert.id}
-                    className={`rounded-[1.5rem] border-2 p-4 ${getAlertClasses(alert.level)}`}
+                    className={`rounded-[1.5rem] border p-4 ${getAlertClasses(alert.level)}`}
                   >
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div>
@@ -880,11 +880,11 @@ function InventoryAlertsPageContent() {
                           ) : (
                             <CheckCircle2 size={19} />
                           )}
-                          <strong className="text-sm font-black uppercase tracking-[0.08em]">
+                          <strong className="text-sm font-bold uppercase tracking-[0.08em]">
                             {alert.title}
                           </strong>
                           {alert.category ? (
-                            <span className="rounded-full border border-current px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] opacity-80">
+                            <span className="rounded-full border border-current px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] opacity-80">
                               {alert.category}
                             </span>
                           ) : null}
@@ -894,37 +894,37 @@ function InventoryAlertsPageContent() {
 
                       <div className="grid gap-2 text-left lg:min-w-[210px]">
                         {typeof alert.quantity === "number" && alert.unit ? (
-                          <div className="rounded-2xl border border-current/25 bg-white/55 px-3 py-2 text-xs font-black">
+                          <div className="rounded-2xl border border-current/25 bg-white/55 px-3 py-2 text-xs font-bold">
                             Actual: {formatQuantity(alert.quantity, alert.unit)}
                           </div>
                         ) : null}
                         {alert.minimumStock && alert.minimumStock > 0 && alert.unit ? (
-                          <div className="rounded-2xl border border-current/25 bg-white/55 px-3 py-2 text-xs font-black">
+                          <div className="rounded-2xl border border-current/25 bg-white/55 px-3 py-2 text-xs font-bold">
                             Mínimo: {formatQuantity(alert.minimumStock, alert.unit)}
                           </div>
                         ) : null}
                         {alert.suggestedQuantity && alert.suggestedQuantity > 0 && alert.unit ? (
-                          <div className="rounded-2xl border border-current/25 bg-white/55 px-3 py-2 text-xs font-black">
+                          <div className="rounded-2xl border border-current/25 bg-white/55 px-3 py-2 text-xs font-bold">
                             Sugerido: {formatQuantity(alert.suggestedQuantity, alert.unit)}
                           </div>
                         ) : null}
                         {alert.suggestedCostUSD && alert.suggestedCostUSD > 0 ? (
-                          <div className="rounded-2xl border border-current/25 bg-white/55 px-3 py-2 text-xs font-black">
+                          <div className="rounded-2xl border border-current/25 bg-white/55 px-3 py-2 text-xs font-bold">
                             Estimado: {formatUSD(alert.suggestedCostUSD)}
                           </div>
                         ) : null}
                       </div>
                     </div>
 
-                    <p className="mt-3 rounded-2xl border border-current/25 bg-white/60 px-3 py-2 text-xs font-black uppercase tracking-[0.08em]">
+                    <p className="mt-3 rounded-2xl border border-current/25 bg-white/60 px-3 py-2 text-xs font-bold uppercase tracking-[0.08em]">
                       Acción: {alert.actionLabel}
                     </p>
                   </article>
                 ))
               ) : (
-                <div className="rounded-[1.5rem] border-2 border-green-400 bg-green-50 p-6 text-center text-green-800">
+                <div className="rounded-[1.5rem] border border-green-400 bg-green-50 p-6 text-center text-green-800">
                   <CheckCircle2 className="mx-auto" size={30} />
-                  <h3 className="mt-3 text-xl font-black uppercase">Sin alertas en esta vista</h3>
+                  <h3 className="mt-3 text-xl font-bold uppercase">Sin alertas en esta vista</h3>
                   <p className="mt-2 text-sm font-bold leading-6">
                     No hay pendientes con los filtros actuales. Puedes cambiar la búsqueda o revisar el inventario completo.
                   </p>
@@ -934,17 +934,17 @@ function InventoryAlertsPageContent() {
           </div>
 
           <aside className="flex flex-col gap-4">
-            <section className="rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white p-5 shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.1)]">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+            <section className="rounded-[2rem] border border-[var(--brand-primary)]/45 bg-white p-5 shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Recetas
               </p>
-              <h2 className="mt-1 text-2xl font-black uppercase text-[var(--brand-ink-3)]">
+              <h2 className="font-serif mt-1 text-2xl text-[var(--brand-ink-3)] font-semibold">
                 Cobertura {recipeCoverage}%
               </h2>
               <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
                 Productos activos con receta configurada para descuento automático cuando un pedido se marca entregado.
               </p>
-              <div className="mt-4 grid gap-2 text-sm font-black">
+              <div className="mt-4 grid gap-2 text-sm font-bold">
                 <div className="flex justify-between rounded-2xl border border-[var(--brand-primary)]/20 bg-yellow-50 px-4 py-3">
                   <span>Productos activos</span>
                   <span>{menuProducts.length}</span>
@@ -960,11 +960,11 @@ function InventoryAlertsPageContent() {
               </div>
             </section>
 
-            <section className="rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white p-5 shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.1)]">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+            <section className="rounded-[2rem] border border-[var(--brand-primary)]/45 bg-white p-5 shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Movimientos recientes
               </p>
-              <h2 className="mt-1 text-2xl font-black uppercase text-[var(--brand-ink-3)]">
+              <h2 className="font-serif mt-1 text-2xl text-[var(--brand-ink-3)] font-semibold">
                 Últimos cambios
               </h2>
 
@@ -973,11 +973,11 @@ function InventoryAlertsPageContent() {
                   recentMovements.map((movement) => (
                     <article
                       key={movement.id}
-                      className={`rounded-[1.25rem] border-2 p-3 ${getMovementClasses(movement.movementType)}`}
+                      className={`rounded-[1.25rem] border p-3 ${getMovementClasses(movement.movementType)}`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <strong className="block text-sm font-black uppercase leading-5">
+                          <strong className="block text-sm font-bold uppercase leading-5">
                             {movement.itemName || "Insumo"}
                           </strong>
                           <p className="mt-1 text-xs font-bold leading-5">
@@ -989,7 +989,7 @@ function InventoryAlertsPageContent() {
                       <p className="mt-2 text-xs font-bold leading-5 opacity-80">
                         {movement.reason || "Movimiento registrado"}
                       </p>
-                      <p className="mt-1 text-[11px] font-black uppercase tracking-[0.1em] opacity-70">
+                      <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.1em] opacity-70">
                         {movement.createdAt ? formatDate(movement.createdAt) : movement.dateLabel || "Sin fecha"}
                       </p>
                     </article>

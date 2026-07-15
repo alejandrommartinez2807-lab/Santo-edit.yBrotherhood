@@ -336,7 +336,7 @@ function ReservasHotelContent() {
   }
 
   const inputClass =
-    "rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
+    "rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
 
   // Búsqueda por código (escaneado del QR del huésped), nombre o teléfono.
   const [search, setSearch] = useState("")
@@ -363,7 +363,7 @@ function ReservasHotelContent() {
       <div className="mx-auto w-full max-w-3xl">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
         >
           <ArrowLeft size={16} /> Volver al panel
         </Link>
@@ -373,7 +373,7 @@ function ReservasHotelContent() {
             <CalendarRange size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Reservas del hotel</h1>
+            <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Reservas del hotel</h1>
             <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
               Reservas por rango de noches con disponibilidad, tarifa y check-in / check-out.
             </p>
@@ -381,15 +381,15 @@ function ReservasHotelContent() {
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
             Tu clave no tiene permiso para usar reservas del hotel, o el módulo está desactivado.
           </p>
         ) : (
           <>
             {/* Rango + disponibilidad */}
-            <div className="mt-6 grid gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-3">
-              <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
-                <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Entrada</span>
+            <div className="mt-6 grid gap-2 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-3">
+              <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
+                <span className="text-xs font-bold uppercase text-[var(--brand-primary)]">Entrada</span>
                 <input
                   type="date"
                   value={checkIn}
@@ -401,8 +401,8 @@ function ReservasHotelContent() {
                   className="w-full bg-transparent font-bold outline-none"
                 />
               </label>
-              <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
-                <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Salida</span>
+              <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
+                <span className="text-xs font-bold uppercase text-[var(--brand-primary)]">Salida</span>
                 <input
                   type="date"
                   value={checkOut}
@@ -411,7 +411,7 @@ function ReservasHotelContent() {
                   className="w-full bg-transparent font-bold outline-none"
                 />
               </label>
-              <div className="flex items-center justify-center rounded-xl bg-[var(--brand-cream)] px-4 py-2.5 text-center text-sm font-black text-[var(--brand-ink-3)]">
+              <div className="flex items-center justify-center rounded-xl bg-[var(--brand-cream)] px-4 py-2.5 text-center text-sm font-bold text-[var(--brand-ink-3)]">
                 {validRange ? (
                   <span>
                     {nights} noche{nights === 1 ? "" : "s"} · {availableRooms.length} libre
@@ -424,7 +424,7 @@ function ReservasHotelContent() {
             </div>
 
             {/* Alta de reserva */}
-            <div className="mt-4 grid gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-2">
+            <div className="mt-4 grid gap-2 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-2">
               <input
                 value={guestName}
                 onChange={(e) => setGuestName(e.target.value)}
@@ -445,8 +445,8 @@ function ReservasHotelContent() {
                   </option>
                 ))}
               </select>
-              <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold">
-                <span className="text-xs font-black uppercase text-[var(--brand-primary)]">$/noche</span>
+              <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold">
+                <span className="text-xs font-bold uppercase text-[var(--brand-primary)]">$/noche</span>
                 <input
                   type="number"
                   min={0}
@@ -457,7 +457,7 @@ function ReservasHotelContent() {
                 />
               </label>
               {seasonQuote?.seasonApplied && (
-                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-2.5 text-sm font-bold text-[var(--brand-primary)] sm:col-span-2">
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-2.5 text-sm font-bold text-[var(--brand-primary)] sm:col-span-2">
                   <span>
                     Temporada {seasonQuote.seasonNames.join(", ")}: ~${seasonQuote.averageRate}/noche
                     (total ${seasonQuote.total})
@@ -466,14 +466,14 @@ function ReservasHotelContent() {
                     <button
                       type="button"
                       onClick={() => setRate(String(seasonQuote.averageRate))}
-                      className="rounded-full border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-1 text-xs font-black uppercase text-[var(--brand-primary)]"
+                      className="rounded-full border border-[var(--brand-primary)]/30 bg-white px-3 py-1 text-xs font-bold uppercase text-[var(--brand-primary)]"
                     >
                       Aplicar
                     </button>
                   )}
                 </div>
               )}
-              <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3">
+              <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3">
                 <Users size={16} className="shrink-0 text-[var(--brand-primary)]" />
                 <input
                   type="number"
@@ -484,8 +484,8 @@ function ReservasHotelContent() {
                   placeholder="Adultos"
                 />
               </label>
-              <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3">
-                <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Niños</span>
+              <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3">
+                <span className="text-xs font-bold uppercase text-[var(--brand-primary)]">Niños</span>
                 <input
                   type="number"
                   min={0}
@@ -501,7 +501,7 @@ function ReservasHotelContent() {
                 placeholder="Nota (opcional): llegada tarde, cuna…"
                 className={`${inputClass} sm:col-span-2`}
               />
-              <div className="flex items-center justify-between rounded-xl bg-[var(--brand-cream)] px-4 py-3 font-black text-[var(--brand-ink-3)] sm:col-span-2">
+              <div className="flex items-center justify-between rounded-xl bg-[var(--brand-cream)] px-4 py-3 font-bold text-[var(--brand-ink-3)] sm:col-span-2">
                 <span>Total estadía</span>
                 <span>
                   ${total} <span className="text-sm font-bold text-[var(--brand-ink-2)]/60">({nights}n × ${effectiveRate})</span>
@@ -510,7 +510,7 @@ function ReservasHotelContent() {
               <button
                 onClick={create}
                 disabled={busy || !guestName.trim() || !validRange}
-                className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50 sm:col-span-2"
+                className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-bold uppercase text-white disabled:opacity-50 sm:col-span-2"
               >
                 <Plus size={16} /> Crear reserva
               </button>
@@ -519,7 +519,7 @@ function ReservasHotelContent() {
             {error && <p className="mt-3 font-bold text-red-600">{error}</p>}
 
             {/* Buscar por código escaneado, nombre o teléfono */}
-            <div className="mt-8 flex items-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-3">
+            <div className="mt-8 flex items-center gap-2 rounded-2xl border border-[var(--brand-primary)]/20 bg-white px-4 py-3">
               <Search size={18} className="shrink-0 text-[var(--brand-primary-dark)]" />
               <input
                 value={search}
@@ -544,7 +544,7 @@ function ReservasHotelContent() {
                 <Loader2 className="animate-spin" size={18} /> Cargando…
               </p>
             ) : upcoming.length === 0 ? (
-              <p className="mt-8 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]">
+              <p className="mt-8 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]">
                 {search.trim()
                   ? `Ninguna reserva coincide con “${search.trim()}”.`
                   : "No hay reservas próximas. Crea la primera arriba."}
@@ -554,11 +554,11 @@ function ReservasHotelContent() {
                 {upcoming.map((reservation) => (
                   <li
                     key={reservation.id}
-                    className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4"
+                    className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-lg font-black text-[var(--brand-ink-3)]">
+                        <p className="text-lg font-bold text-[var(--brand-ink-3)]">
                           {reservation.guestName}
                           <span className="ml-2 text-sm font-bold text-[var(--brand-ink-2)]/45">
                             #{reservation.code}
@@ -581,7 +581,7 @@ function ReservasHotelContent() {
                             </span>
                           )}
                         </p>
-                        <p className="mt-1 text-sm font-black text-[var(--brand-ink-3)]">
+                        <p className="mt-1 text-sm font-bold text-[var(--brand-ink-3)]">
                           ${reservation.totalAmount}
                           <span className="ml-1 text-xs font-bold text-[var(--brand-ink-2)]/55">
                             ({reservation.nights}n × ${reservation.ratePerNight})
@@ -592,7 +592,7 @@ function ReservasHotelContent() {
                         )}
                       </div>
                       <span
-                        className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${STATUS_STYLES[reservation.status]}`}
+                        className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase ${STATUS_STYLES[reservation.status]}`}
                       >
                         {HOTEL_RESERVATION_STATUS_LABELS[reservation.status]}
                       </span>
@@ -603,7 +603,7 @@ function ReservasHotelContent() {
                         <button
                           onClick={() => setStatus(reservation, "confirmada")}
                           disabled={busy}
-                          className="inline-flex items-center gap-1 rounded-full border-2 border-blue-300 bg-blue-50 px-3 py-1.5 text-xs font-black uppercase text-blue-700 disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-full border border-blue-300 bg-blue-50 px-3 py-1.5 text-xs font-bold uppercase text-blue-700 disabled:opacity-50"
                         >
                           <Check size={14} /> Confirmar
                         </button>
@@ -612,7 +612,7 @@ function ReservasHotelContent() {
                         <button
                           onClick={() => setStatus(reservation, "checkin")}
                           disabled={busy}
-                          className="inline-flex items-center gap-1 rounded-full border-2 border-green-600/30 bg-green-50 px-3 py-1.5 text-xs font-black uppercase text-green-700 disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-full border border-green-600/30 bg-green-50 px-3 py-1.5 text-xs font-bold uppercase text-green-700 disabled:opacity-50"
                         >
                           <LogIn size={14} /> Check-in
                         </button>
@@ -621,7 +621,7 @@ function ReservasHotelContent() {
                         <button
                           onClick={() => setStatus(reservation, "checkout")}
                           disabled={busy}
-                          className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/30 bg-[var(--brand-cream)] px-3 py-1.5 text-xs font-black uppercase text-[var(--brand-primary)] disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-primary)]/30 bg-[var(--brand-cream)] px-3 py-1.5 text-xs font-bold uppercase text-[var(--brand-primary)] disabled:opacity-50"
                         >
                           <LogOut size={14} /> Check-out
                         </button>
@@ -631,14 +631,14 @@ function ReservasHotelContent() {
                           <button
                             onClick={() => setStatus(reservation, "no_show")}
                             disabled={busy}
-                            className="inline-flex items-center gap-1 rounded-full border-2 border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-black uppercase text-amber-700 disabled:opacity-50"
+                            className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-bold uppercase text-amber-700 disabled:opacity-50"
                           >
                             No llegó
                           </button>
                           <button
                             onClick={() => setStatus(reservation, "cancelada")}
                             disabled={busy}
-                            className="inline-flex items-center gap-1 rounded-full border-2 border-red-200 bg-red-50 px-3 py-1.5 text-xs font-black uppercase text-red-600 disabled:opacity-50"
+                            className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold uppercase text-red-600 disabled:opacity-50"
                           >
                             <X size={14} /> Cancelar
                           </button>
@@ -652,7 +652,7 @@ function ReservasHotelContent() {
                             editingId === reservation.id ? setEditingId("") : startEdit(reservation)
                           }
                           disabled={busy}
-                          className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-1.5 text-xs font-black uppercase text-[var(--brand-primary-dark)] disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-primary)]/30 bg-white px-3 py-1.5 text-xs font-bold uppercase text-[var(--brand-primary-dark)] disabled:opacity-50"
                         >
                           <Pencil size={13} /> {editingId === reservation.id ? "Cerrar" : "Editar"}
                         </button>
@@ -661,7 +661,7 @@ function ReservasHotelContent() {
                         onClick={() => remove(reservation)}
                         disabled={busy}
                         title="Eliminar reserva"
-                        className="ml-auto inline-flex items-center justify-center rounded-full border-2 border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
+                        className="ml-auto inline-flex items-center justify-center rounded-full border border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -670,9 +670,9 @@ function ReservasHotelContent() {
                     {/* Edición en sitio: extender estadía, cambiar habitación,
                         fechas o tarifa. El servidor valida solapes (409). */}
                     {editingId === reservation.id && (
-                      <div className="mt-3 grid gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3 sm:grid-cols-2">
-                        <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 font-bold">
-                          <span className="text-[10px] font-black uppercase text-[var(--brand-primary-dark)]">Entrada</span>
+                      <div className="mt-3 grid gap-2 rounded-xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3 sm:grid-cols-2">
+                        <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 font-bold">
+                          <span className="text-[10px] font-bold uppercase text-[var(--brand-primary-dark)]">Entrada</span>
                           <input
                             type="date"
                             value={editCheckIn}
@@ -680,8 +680,8 @@ function ReservasHotelContent() {
                             className="w-full bg-transparent font-bold outline-none"
                           />
                         </label>
-                        <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 font-bold">
-                          <span className="text-[10px] font-black uppercase text-[var(--brand-primary-dark)]">Salida</span>
+                        <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 font-bold">
+                          <span className="text-[10px] font-bold uppercase text-[var(--brand-primary-dark)]">Salida</span>
                           <input
                             type="date"
                             value={editCheckOut}
@@ -692,7 +692,7 @@ function ReservasHotelContent() {
                         <select
                           value={editRoomId}
                           onChange={(e) => setEditRoomId(e.target.value)}
-                          className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 font-bold outline-none"
+                          className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 font-bold outline-none"
                         >
                           {rooms
                             .filter((room) => room.active)
@@ -703,8 +703,8 @@ function ReservasHotelContent() {
                               </option>
                             ))}
                         </select>
-                        <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2">
-                          <span className="text-[10px] font-black uppercase text-[var(--brand-primary-dark)]">$/noche</span>
+                        <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2">
+                          <span className="text-[10px] font-bold uppercase text-[var(--brand-primary-dark)]">$/noche</span>
                           <input
                             type="number"
                             min={0}
@@ -716,7 +716,7 @@ function ReservasHotelContent() {
                         <button
                           onClick={() => saveEdit(reservation)}
                           disabled={busy || !editCheckIn || !editCheckOut || !editRoomId}
-                          className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-2.5 text-sm font-black uppercase text-[#171410] disabled:opacity-50 sm:col-span-2"
+                          className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-2.5 text-sm font-bold uppercase text-[#171410] disabled:opacity-50 sm:col-span-2"
                         >
                           <Check size={15} /> Guardar cambios
                         </button>

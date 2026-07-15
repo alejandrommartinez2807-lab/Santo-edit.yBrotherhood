@@ -206,14 +206,14 @@ function HousekeepingPageContent() {
   }
 
   const inputClass =
-    "rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 font-bold outline-none focus:border-[var(--brand-primary)]"
+    "rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 font-bold outline-none focus:border-[var(--brand-primary)]"
 
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
       <div className="mx-auto w-full max-w-3xl">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
         >
           <ArrowLeft size={16} /> Volver al panel
         </Link>
@@ -223,7 +223,7 @@ function HousekeepingPageContent() {
             <Sparkles size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Limpieza</h1>
+            <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Limpieza</h1>
             <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
               Estado de limpieza por habitación y tareas asignables. El check-out marca la
               habitación como sucia automáticamente.
@@ -232,7 +232,7 @@ function HousekeepingPageContent() {
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
             Tu clave no tiene permiso para usar limpieza, o el módulo está desactivado en la
             configuración del negocio.
           </p>
@@ -247,12 +247,12 @@ function HousekeepingPageContent() {
               {ROOM_STATUSES.map((status) => (
                 <span
                   key={status}
-                  className={`inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${ROOM_STYLES[status]}`}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold uppercase ${ROOM_STYLES[status]}`}
                 >
                   {statusCounts[status] || 0} {ROOM_LABELS[status]}
                 </span>
               ))}
-              <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)]/20 bg-white px-3 py-1.5 text-xs font-black uppercase text-[var(--brand-ink-2)]/70">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-primary)]/20 bg-white px-3 py-1.5 text-xs font-bold uppercase text-[var(--brand-ink-2)]/70">
                 <ClipboardList size={13} /> {openTaskCount} tareas abiertas
               </span>
             </div>
@@ -260,7 +260,7 @@ function HousekeepingPageContent() {
             {error && <p className="mt-3 font-bold text-red-600">{error}</p>}
 
             {rooms.length === 0 ? (
-              <p className="mt-8 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-8 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
                 No hay habitaciones aún. Créalas en el módulo Habitaciones para usar el tablero de
                 limpieza.
               </p>
@@ -273,12 +273,12 @@ function HousekeepingPageContent() {
                   return (
                     <li
                       key={room.id}
-                      className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4"
+                      className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="inline-flex items-center gap-2">
                           <BedDouble size={18} className="text-[var(--brand-primary)]" />
-                          <p className="text-lg font-black text-[var(--brand-ink-3)]">
+                          <p className="text-lg font-bold text-[var(--brand-ink-3)]">
                             {room.name}
                             {room.floor ? (
                               <span className="ml-2 text-sm font-bold text-[var(--brand-ink-2)]/55">
@@ -287,13 +287,13 @@ function HousekeepingPageContent() {
                             ) : null}
                           </p>
                           {room.outOfService && (
-                            <span className="text-xs font-black uppercase text-red-600">
+                            <span className="text-xs font-bold uppercase text-red-600">
                               Fuera de servicio
                             </span>
                           )}
                         </div>
                         <span
-                          className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${
+                          className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase ${
                             ROOM_STYLES[room.housekeepingStatus] || ROOM_STYLES.limpia
                           }`}
                         >
@@ -308,7 +308,7 @@ function HousekeepingPageContent() {
                             key={status}
                             onClick={() => setRoomStatus(room, status)}
                             disabled={busy || room.housekeepingStatus === status}
-                            className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase disabled:opacity-40 ${
+                            className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase disabled:opacity-40 ${
                               room.housekeepingStatus === status
                                 ? ROOM_STYLES[status]
                                 : "border-[var(--brand-primary)]/20 bg-white text-[var(--brand-ink-2)]/70"
@@ -325,13 +325,13 @@ function HousekeepingPageContent() {
                           {openTasks.map((task) => (
                             <li
                               key={task.id}
-                              className="flex flex-wrap items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-3 py-2"
+                              className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-3 py-2"
                             >
-                              <span className="rounded-full border-2 border-[var(--brand-primary)]/20 bg-white px-2 py-0.5 text-[11px] font-black uppercase text-[var(--brand-ink-2)]/70">
+                              <span className="rounded-full border border-[var(--brand-primary)]/20 bg-white px-2 py-0.5 text-[11px] font-bold uppercase text-[var(--brand-ink-2)]/70">
                                 {TASK_TYPE_LABELS[task.type] || task.type}
                               </span>
                               <span
-                                className={`text-[11px] font-black uppercase ${
+                                className={`text-[11px] font-bold uppercase ${
                                   task.status === "en_proceso"
                                     ? "text-blue-600"
                                     : "text-amber-600"
@@ -356,7 +356,7 @@ function HousekeepingPageContent() {
                                   title={
                                     task.status === "pendiente" ? "Empezar" : "Marcar hecha"
                                   }
-                                  className="inline-flex items-center justify-center rounded-full border-2 border-green-600/30 bg-green-50 p-1.5 text-green-700 disabled:opacity-50"
+                                  className="inline-flex items-center justify-center rounded-full border border-green-600/30 bg-green-50 p-1.5 text-green-700 disabled:opacity-50"
                                 >
                                   {task.status === "pendiente" ? (
                                     <Play size={14} />
@@ -368,7 +368,7 @@ function HousekeepingPageContent() {
                                   onClick={() => removeTask(task)}
                                   disabled={busy}
                                   title="Eliminar tarea"
-                                  className="inline-flex items-center justify-center rounded-full border-2 border-red-200 bg-white p-1.5 text-red-600 disabled:opacity-50"
+                                  className="inline-flex items-center justify-center rounded-full border border-red-200 bg-white p-1.5 text-red-600 disabled:opacity-50"
                                 >
                                   <Trash2 size={14} />
                                 </button>
@@ -403,7 +403,7 @@ function HousekeepingPageContent() {
                             setAddingFor((current) => (current === room.id ? null : room.id))
                           }
                           disabled={busy}
-                          className="ml-auto inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-xs font-black uppercase text-[var(--brand-primary)] disabled:opacity-50"
+                          className="ml-auto inline-flex items-center gap-1 rounded-full border border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-xs font-bold uppercase text-[var(--brand-primary)] disabled:opacity-50"
                         >
                           <Plus size={14} /> Tarea
                         </button>
@@ -411,7 +411,7 @@ function HousekeepingPageContent() {
 
                       {/* Formulario de nueva tarea */}
                       {addingFor === room.id && (
-                        <div className="mt-3 grid gap-2 rounded-xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3 sm:grid-cols-2">
+                        <div className="mt-3 grid gap-2 rounded-xl border border-dashed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3 sm:grid-cols-2">
                           <select
                             value={taskType}
                             onChange={(e) => setTaskType(e.target.value)}
@@ -438,7 +438,7 @@ function HousekeepingPageContent() {
                           <button
                             onClick={() => addTask(room)}
                             disabled={busy}
-                            className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-2 text-sm font-black uppercase text-white disabled:opacity-50 sm:col-span-2"
+                            className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-2 text-sm font-bold uppercase text-white disabled:opacity-50 sm:col-span-2"
                           >
                             <Plus size={16} /> Asignar tarea
                           </button>

@@ -139,13 +139,13 @@ function ProveedoresPageContent() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
             href="/admin"
-            className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
           >
             <ArrowLeft size={16} /> Volver al panel
           </Link>
           <Link
             href="/local-santo/compras"
-            className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/25 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]"
           >
             <ShoppingCart size={14} /> Historial de compras
           </Link>
@@ -156,7 +156,7 @@ function ProveedoresPageContent() {
             <Truck size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Proveedores</h1>
+            <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Proveedores</h1>
             <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
               Lista de proveedores del local: contacto y teléfono para tus compras.
             </p>
@@ -164,38 +164,38 @@ function ProveedoresPageContent() {
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
             Solo el dueño puede gestionar los proveedores, y el módulo debe estar activo desde la
             configuración del negocio. Inicia sesión como dueño.
           </p>
         ) : (
           <>
-            <div className="mt-6 grid gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-[1fr_1fr_auto]">
+            <div className="mt-6 grid gap-2 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-[1fr_1fr_auto]">
               <input
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && create()}
                 placeholder="Nombre del proveedor"
-                className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)] sm:col-span-3"
+                className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)] sm:col-span-3"
               />
               <input
                 value={newContact}
                 onChange={(e) => setNewContact(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && create()}
                 placeholder="Contacto (opcional)"
-                className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
+                className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
               />
               <input
                 value={newPhone}
                 onChange={(e) => setNewPhone(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && create()}
                 placeholder="Teléfono (opcional)"
-                className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
+                className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
               />
               <button
                 onClick={create}
                 disabled={busy || !newName.trim()}
-                className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-bold uppercase text-white disabled:opacity-50"
               >
                 <Plus size={16} /> Crear
               </button>
@@ -208,7 +208,7 @@ function ProveedoresPageContent() {
                 <Loader2 className="animate-spin" size={18} /> Cargando…
               </p>
             ) : suppliers.length === 0 ? (
-              <p className="mt-8 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-8 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
                 Aún no hay proveedores. Agrega el primero arriba.
               </p>
             ) : (
@@ -216,7 +216,7 @@ function ProveedoresPageContent() {
                 {suppliers.map((s) => (
                   <li
                     key={s.id}
-                    className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4"
+                    className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <input
@@ -225,13 +225,13 @@ function ProveedoresPageContent() {
                           const v = e.target.value.trim()
                           if (v && v !== s.name) patch(s.id, { name: v })
                         }}
-                        className="min-w-0 flex-1 rounded-lg border-2 border-transparent bg-transparent px-2 py-1 text-lg font-black text-[var(--brand-ink-3)] outline-none hover:border-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)]"
+                        className="min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-2 py-1 text-lg font-bold text-[var(--brand-ink-3)] outline-none hover:border-[var(--brand-primary)]/20 focus:border-[var(--brand-primary)]"
                       />
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => patch(s.id, { isActive: !s.isActive })}
                           disabled={busy}
-                          className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${
+                          className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase ${
                             s.isActive
                               ? "border-green-600/30 bg-green-50 text-green-700"
                               : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]/60"
@@ -243,7 +243,7 @@ function ProveedoresPageContent() {
                           onClick={() => remove(s)}
                           disabled={busy}
                           title="Eliminar proveedor"
-                          className="inline-flex items-center justify-center rounded-full border-2 border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
+                          className="inline-flex items-center justify-center rounded-full border border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -251,7 +251,7 @@ function ProveedoresPageContent() {
                     </div>
 
                     <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                      <label className="flex items-center gap-2 rounded-lg border-2 border-[var(--brand-primary)]/15 px-3 py-2">
+                      <label className="flex items-center gap-2 rounded-lg border border-[var(--brand-primary)]/15 px-3 py-2">
                         <User size={15} className="shrink-0 text-[var(--brand-primary)]" />
                         <input
                           defaultValue={s.contactName}
@@ -263,7 +263,7 @@ function ProveedoresPageContent() {
                           className="min-w-0 flex-1 bg-transparent text-sm font-bold outline-none"
                         />
                       </label>
-                      <label className="flex items-center gap-2 rounded-lg border-2 border-[var(--brand-primary)]/15 px-3 py-2">
+                      <label className="flex items-center gap-2 rounded-lg border border-[var(--brand-primary)]/15 px-3 py-2">
                         <Phone size={15} className="shrink-0 text-[var(--brand-primary)]" />
                         <input
                           defaultValue={s.phone}

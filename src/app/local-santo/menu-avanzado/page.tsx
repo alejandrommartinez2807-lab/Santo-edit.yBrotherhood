@@ -558,13 +558,13 @@ export default function AdvancedMenuPage() {
   if (!isLoggedIn) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-3)]">
-        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.14)]">
+        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
           <div className="h-6 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="px-6 py-6">
             <a
               href="/admin"
-              className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
             >
               <ArrowLeft size={16} />
               Volver
@@ -579,11 +579,11 @@ export default function AdvancedMenuPage() {
               className="mx-auto mt-6 h-28 w-28 object-contain"
             />
 
-            <p className="mt-5 text-center text-xs font-black uppercase tracking-[0.28em] text-[var(--brand-primary)]">
+            <p className="mt-5 text-center text-xs font-bold uppercase tracking-[0.28em] text-[var(--brand-primary)]">
               Menú avanzado
             </p>
 
-            <h1 className="mt-2 text-center text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+            <h1 className="font-serif mt-2 text-center text-4xl leading-tight text-[var(--brand-ink-3)] font-semibold">
               Productos configurables
             </h1>
 
@@ -594,7 +594,7 @@ export default function AdvancedMenuPage() {
 
           <div className="space-y-4 px-6 pb-6">
             <div>
-              <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Clave de acceso
               </label>
 
@@ -607,7 +607,7 @@ export default function AdvancedMenuPage() {
                     if (event.key === "Enter") handleLogin()
                   }}
                   placeholder="Ingresa la clave del local"
-                  className="w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                  className="w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                 />
 
                 <button
@@ -621,7 +621,7 @@ export default function AdvancedMenuPage() {
             </div>
 
             {errorMessage && (
-              <div className="rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
+              <div className="rounded-2xl border border-red-500/35 bg-red-100 px-4 py-3">
                 <p className="text-sm font-bold leading-6 text-red-800">
                   {errorMessage}
                 </p>
@@ -632,7 +632,7 @@ export default function AdvancedMenuPage() {
               type="button"
               onClick={handleLogin}
               disabled={isLoading}
-              className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-[1.02] disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-sm transition hover:scale-[1.02] disabled:opacity-60"
             >
               {isLoading ? <Loader2 size={21} className="animate-spin" /> : <LogIn size={21} />}
               {isLoading ? "Validando acceso" : "Entrar al menú avanzado"}
@@ -646,7 +646,7 @@ export default function AdvancedMenuPage() {
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-3 py-4 text-[var(--brand-ink-3)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <header className="overflow-hidden rounded-[1.6rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
+        <header className="overflow-hidden rounded-[1.6rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
           <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="p-4 sm:p-5">
@@ -655,7 +655,7 @@ export default function AdvancedMenuPage() {
                 <div className="flex flex-wrap gap-2">
                   <a
                     href="/admin"
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     <ArrowLeft size={16} />
                     Volver al panel
@@ -663,7 +663,7 @@ export default function AdvancedMenuPage() {
 
                   <a
                     href="/local-santo/menu"
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     <PackageCheck size={16} />
                     Menú editable
@@ -673,7 +673,7 @@ export default function AdvancedMenuPage() {
                     type="button"
                     onClick={() => loadProducts(adminPassword, true)}
                     disabled={isLoading}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
                   >
                     {isLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                     Actualizar
@@ -682,17 +682,17 @@ export default function AdvancedMenuPage() {
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     Cerrar sesión
                   </button>
                 </div>
 
-                <p className="mt-4 text-xs font-black uppercase tracking-[0.32em] text-[var(--brand-primary)]">
+                <p className="mt-4 text-xs font-bold uppercase tracking-[0.32em] text-[var(--brand-primary)]">
                   {BRAND.name}
                 </p>
 
-                <h1 className="mt-1 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl">
+                <h1 className="font-serif mt-1 text-4xl leading-tight text-[var(--brand-ink-3)] sm:text-5xl font-semibold">
                   Productos configurables
                 </h1>
 
@@ -717,24 +717,24 @@ export default function AdvancedMenuPage() {
         {(errorMessage || successMessage) && (
           <section className="mt-4 space-y-3">
             {errorMessage && (
-              <div className="rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
-                <p className="text-sm font-black text-red-800">{errorMessage}</p>
+              <div className="rounded-2xl border border-red-500/35 bg-red-100 px-4 py-3">
+                <p className="text-sm font-bold text-red-800">{errorMessage}</p>
               </div>
             )}
 
             {successMessage && (
-              <div className="rounded-2xl border-2 border-green-500/35 bg-green-50 px-4 py-3">
-                <p className="text-sm font-black text-green-800">{successMessage}</p>
+              <div className="rounded-2xl border border-green-500/35 bg-green-50 px-4 py-3">
+                <p className="text-sm font-bold text-green-800">{successMessage}</p>
               </div>
             )}
           </section>
         )}
 
         <section className="mt-4 grid gap-4 lg:grid-cols-[360px_1fr]">
-          <aside className="rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+          <aside className="rounded-[1.5rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   Seleccionar producto
                 </p>
                 <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/65">
@@ -750,14 +750,14 @@ export default function AdvancedMenuPage() {
                 value={searchText}
                 onChange={(event) => setSearchText(event.target.value)}
                 placeholder="Buscar producto"
-                className="w-full rounded-full border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                className="w-full rounded-full border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
               />
             </div>
 
             <div className="mt-4 max-h-[620px] space-y-2 overflow-y-auto pr-1">
               {filteredProducts.length === 0 ? (
-                <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4 text-center">
-                  <p className="text-sm font-black text-[var(--brand-primary)]">
+                <div className="rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4 text-center">
+                  <p className="text-sm font-bold text-[var(--brand-primary)]">
                     No hay productos para mostrar.
                   </p>
                   <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -776,14 +776,14 @@ export default function AdvancedMenuPage() {
                       key={product.id}
                       type="button"
                       onClick={() => selectProduct(product)}
-                      className={`w-full rounded-2xl border-2 p-3 text-left transition active:scale-[0.99] ${
+                      className={`w-full rounded-2xl border p-3 text-left transition active:scale-[0.99] ${
                         isSelected
-                          ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.12)]"
+                          ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] shadow-sm"
                           : "border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] text-[var(--brand-ink-2)] hover:border-[var(--brand-primary)] hover:bg-yellow-50"
                       }`}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 border-[var(--brand-primary)]/20 bg-white">
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--brand-primary)]/20 bg-white">
                           {product.image ? (
                             <Image
                               src={product.image}
@@ -799,10 +799,10 @@ export default function AdvancedMenuPage() {
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <p className="line-clamp-2 text-sm font-black uppercase leading-tight">
+                          <p className="line-clamp-2 text-sm font-bold uppercase leading-tight">
                             {product.name}
                           </p>
-                          <p className="mt-1 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]/75">
+                          <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]/75">
                             {product.category} · {formatUSD(product.price)}
                           </p>
                           <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/60">
@@ -817,11 +817,11 @@ export default function AdvancedMenuPage() {
             </div>
           </aside>
 
-          <section className="rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+          <section className="rounded-[1.5rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm">
             {!selectedProduct ? (
-              <div className="flex min-h-[420px] flex-col items-center justify-center rounded-[1.4rem] border-2 border-dashed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-6 py-14 text-center">
+              <div className="flex min-h-[420px] flex-col items-center justify-center rounded-[1.4rem] border border-dashed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-6 py-14 text-center">
                 <SlidersHorizontal size={54} className="text-[var(--brand-primary)]" />
-                <h2 className="mt-5 text-3xl font-black uppercase text-[var(--brand-primary)]">
+                <h2 className="font-serif mt-5 text-3xl text-[var(--brand-ink-3)] font-semibold">
                   Selecciona un producto
                 </h2>
                 <p className="mx-auto mt-3 max-w-md text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -830,29 +830,29 @@ export default function AdvancedMenuPage() {
               </div>
             ) : (
               <div>
-                <div className="flex flex-col gap-3 border-b-2 border-[var(--brand-primary)]/15 pb-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="flex flex-col gap-3 border-b border-[var(--brand-primary)]/15 pb-4 lg:flex-row lg:items-start lg:justify-between">
                   <div>
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Configurando
                     </p>
-                    <h2 className="mt-1 text-3xl font-black uppercase leading-none text-[var(--brand-primary)]">
+                    <h2 className="font-serif mt-1 text-3xl leading-tight text-[var(--brand-ink-3)] font-semibold">
                       {selectedProduct.name}
                     </h2>
                     <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/65">
                       {selectedProduct.category} · {formatUSD(selectedProduct.price)} · Actualizado: {formatDate(selectedProduct.updatedAt)}
                     </p>
                     {hasUnsavedChanges && (
-                      <p className="mt-2 inline-flex items-center gap-2 rounded-full border-2 border-yellow-500 bg-[var(--brand-accent-100)] px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]">
+                      <p className="mt-2 inline-flex items-center gap-2 rounded-full border border-yellow-500 bg-[var(--brand-accent-100)] px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)]">
                         Cambios sin guardar
                       </p>
                     )}
                   </div>
 
-                  <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3 lg:w-[320px]">
-                    <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+                  <div className="rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3 lg:w-[320px]">
+                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
                       Resumen
                     </p>
-                    <p className="mt-1 text-sm font-black leading-5 text-[var(--brand-ink-2)]">
+                    <p className="mt-1 text-sm font-bold leading-5 text-[var(--brand-ink-2)]">
                       {premiumSummary}
                     </p>
                   </div>
@@ -860,7 +860,7 @@ export default function AdvancedMenuPage() {
 
                 <div className="mt-4 grid gap-4 xl:grid-cols-2">
                   <div className="xl:col-span-2">
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Tipo de producto
                     </p>
                     <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
@@ -869,13 +869,13 @@ export default function AdvancedMenuPage() {
                           key={option.value}
                           type="button"
                           onClick={() => updateForm("productType", option.value)}
-                          className={`rounded-2xl border-2 p-3 text-left transition active:scale-[0.99] ${
+                          className={`rounded-2xl border p-3 text-left transition active:scale-[0.99] ${
                             form.productType === option.value
                               ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                               : "border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] text-[var(--brand-primary)] hover:border-[var(--brand-primary)]"
                           }`}
                         >
-                          <p className="text-xs font-black uppercase tracking-[0.12em]">
+                          <p className="text-xs font-bold uppercase tracking-[0.12em]">
                             {option.label}
                           </p>
                           <p className="mt-2 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/65">
@@ -887,7 +887,7 @@ export default function AdvancedMenuPage() {
                   </div>
 
                   <div className="xl:col-span-2">
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Canales de venta
                     </p>
                     <div className="mt-2 grid gap-2 sm:grid-cols-3">
@@ -899,7 +899,7 @@ export default function AdvancedMenuPage() {
                             key={option.value}
                             type="button"
                             onClick={() => toggleSalesChannel(option.value)}
-                            className={`rounded-2xl border-2 px-4 py-3 text-xs font-black uppercase tracking-[0.12em] ${
+                            className={`rounded-2xl border px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] ${
                               checked
                                 ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                                 : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-primary)]"
@@ -1023,8 +1023,8 @@ export default function AdvancedMenuPage() {
                 </div>
 
                 {warnings.length > 0 && (
-                  <div className="mt-4 rounded-2xl border-2 border-yellow-400 bg-[var(--brand-accent-100)] p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-amber)]">
+                  <div className="mt-4 rounded-2xl border border-yellow-400 bg-[var(--brand-accent-100)] p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-amber)]">
                       Revisión recomendada
                     </p>
                     <ul className="mt-2 space-y-1 text-sm font-bold leading-6 text-[#5a3700]">
@@ -1040,7 +1040,7 @@ export default function AdvancedMenuPage() {
                     type="button"
                     onClick={saveAdvancedConfiguration}
                     disabled={isSaving || !selectedProduct}
-                    className="inline-flex min-h-[50px] w-full max-w-[310px] items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50"
+                    className="inline-flex min-h-[50px] w-full max-w-[310px] items-center justify-center gap-2 rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50"
                   >
                     {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                     Guardar configuración
@@ -1049,7 +1049,7 @@ export default function AdvancedMenuPage() {
                   <button
                     type="button"
                     onClick={() => setShowPreview((value) => !value)}
-                    className="inline-flex min-h-[50px] w-full max-w-[310px] items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+                    className="inline-flex min-h-[50px] w-full max-w-[310px] items-center justify-center gap-2 rounded-2xl border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]"
                   >
                     {showPreview ? <EyeOff size={18} /> : <Eye size={18} />}
                     {showPreview ? "Ocultar vista técnica" : "Ver vista técnica"}
@@ -1057,8 +1057,8 @@ export default function AdvancedMenuPage() {
                 </div>
 
                 {showPreview && (
-                  <div className="mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-ink-3)] p-4 text-[var(--brand-cream)]">
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-accent)]">
+                  <div className="mt-4 rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-[var(--brand-ink-3)] p-4 text-[var(--brand-cream)]">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-accent)]">
                       Vista técnica guardada
                     </p>
                     <pre className="mt-3 max-h-[360px] overflow-auto whitespace-pre-wrap text-xs font-bold leading-5">

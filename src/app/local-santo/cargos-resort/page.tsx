@@ -169,14 +169,14 @@ function CargosResortContent() {
   )
 
   const inputClass =
-    "rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
+    "rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
 
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
       <div className="mx-auto w-full max-w-3xl">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
         >
           <ArrowLeft size={16} /> Volver al panel
         </Link>
@@ -186,7 +186,7 @@ function CargosResortContent() {
             <Store size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Cargar a la habitación</h1>
+            <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Cargar a la habitación</h1>
             <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
               Carga consumo del bar, spa o tienda a la cuenta del huésped en casa.
             </p>
@@ -194,7 +194,7 @@ function CargosResortContent() {
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
             Tu clave no tiene permiso para cargar al resort, o el módulo está desactivado.
           </p>
         ) : loading ? (
@@ -204,8 +204,8 @@ function CargosResortContent() {
         ) : (
           <>
             {/* Selección de huésped */}
-            <div className="mt-6 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
-              <p className="text-xs font-black uppercase text-[var(--brand-primary)]">Huésped en casa</p>
+            <div className="mt-6 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
+              <p className="text-xs font-bold uppercase text-[var(--brand-primary)]">Huésped en casa</p>
               <select
                 value={selectedId}
                 onChange={(e) => selectReservation(e.target.value)}
@@ -232,19 +232,19 @@ function CargosResortContent() {
                 <Loader2 className="animate-spin" size={18} /> Abriendo folio…
               </p>
             ) : selectedId && !folio ? (
-              <p className="mt-6 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-6 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
                 Ese huésped aún no tiene folio abierto. Haz el check-in desde el módulo Folio.
               </p>
             ) : folio ? (
               <>
                 {/* Saldo */}
-                <div className="mt-6 flex items-center justify-between rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
-                  <span className="text-sm font-black uppercase text-[var(--brand-primary)]">Saldo actual</span>
-                  <span className="text-2xl font-black text-[var(--brand-ink-3)]">${balance}</span>
+                <div className="mt-6 flex items-center justify-between rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
+                  <span className="text-sm font-bold uppercase text-[var(--brand-primary)]">Saldo actual</span>
+                  <span className="text-2xl font-bold text-[var(--brand-ink-3)]">${balance}</span>
                 </div>
 
                 {/* Nuevo cargo */}
-                <div className="mt-4 grid gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-4">
+                <div className="mt-4 grid gap-2 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-4">
                   <select value={outlet} onChange={(e) => setOutlet(e.target.value)} className={inputClass}>
                     {OUTLETS.map((o) => (
                       <option key={o} value={o}>
@@ -269,7 +269,7 @@ function CargosResortContent() {
                   <button
                     onClick={addCharge}
                     disabled={busy || !(Number(amount) > 0)}
-                    className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50 sm:col-span-4"
+                    className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-bold uppercase text-white disabled:opacity-50 sm:col-span-4"
                   >
                     <Plus size={16} /> Cargar a la habitación
                   </button>
@@ -277,8 +277,8 @@ function CargosResortContent() {
 
                 {/* Servicios por cobrar */}
                 {chargeableServices.length > 0 && (
-                  <div className="mt-4 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-4">
-                    <p className="text-xs font-black uppercase text-[var(--brand-primary)]">Servicios reservados por cobrar</p>
+                  <div className="mt-4 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-4">
+                    <p className="text-xs font-bold uppercase text-[var(--brand-primary)]">Servicios reservados por cobrar</p>
                     <ul className="mt-2 space-y-2">
                       {chargeableServices.map((s) => (
                         <li key={s.id} className="flex items-center justify-between gap-3 rounded-lg bg-[var(--brand-cream)] px-3 py-2">
@@ -289,11 +289,11 @@ function CargosResortContent() {
                               {s.time ? ` · ${s.time}` : ""} · {s.people}p
                             </p>
                           </div>
-                          <span className="font-black text-[var(--brand-ink-3)]">${s.amount}</span>
+                          <span className="font-bold text-[var(--brand-ink-3)]">${s.amount}</span>
                           <button
                             onClick={() => postFolio({ action: "chargeService", folioId: folio.id, bookingId: s.id })}
                             disabled={busy}
-                            className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-black uppercase text-white disabled:opacity-50"
+                            className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-bold uppercase text-white disabled:opacity-50"
                           >
                             <Plus size={13} /> Cargar
                           </button>
@@ -305,7 +305,7 @@ function CargosResortContent() {
 
                 {/* Cargos del resort ya hechos */}
                 <div className="mt-4">
-                  <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                  <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                     <Receipt size={16} /> Cargos del resort en esta estadía
                   </h2>
                   {resortItems.length === 0 ? (
@@ -313,9 +313,9 @@ function CargosResortContent() {
                   ) : (
                     <ul className="mt-2 space-y-2">
                       {resortItems.map((i) => (
-                        <li key={i.id} className="flex items-center justify-between gap-3 rounded-xl border-2 border-[var(--brand-primary)]/15 bg-white px-3 py-2">
+                        <li key={i.id} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--brand-primary)]/15 bg-white px-3 py-2">
                           <span className="font-bold text-[var(--brand-ink-3)]">{i.description}</span>
-                          <span className="font-black text-[var(--brand-ink-3)]">${i.amount}</span>
+                          <span className="font-bold text-[var(--brand-ink-3)]">${i.amount}</span>
                         </li>
                       ))}
                     </ul>

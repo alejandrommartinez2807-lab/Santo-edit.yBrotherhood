@@ -174,13 +174,13 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
   }
 
   const inputClass =
-    "w-full rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 font-bold outline-none focus:border-[var(--brand-primary)]"
+    "w-full rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 font-bold outline-none focus:border-[var(--brand-primary)]"
   const labelClass =
-    "text-[0.65rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-3)]"
+    "text-[0.65rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-ink-3)]"
 
   return (
-    <section className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5">
-      <h2 className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+    <section className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5">
+      <h2 className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
         <Settings2 size={16} /> Configuración por sede
       </h2>
       <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
@@ -261,7 +261,7 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
                   key={option.value || "inherit"}
                   type="button"
                   onClick={() => setRateMode(option.value)}
-                  className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${
+                  className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase ${
                     rateMode === option.value
                       ? "border-green-600/30 bg-green-50 text-green-700"
                       : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]/60"
@@ -305,7 +305,7 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
                   setUseOwnTables(false)
                   setTables([])
                 }}
-                className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${
+                className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase ${
                   !useOwnTables
                     ? "border-green-600/30 bg-green-50 text-green-700"
                     : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]/60"
@@ -319,7 +319,7 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
                   setUseOwnTables(true)
                   setTables((current) => (current.length ? current : [{ ...EMPTY_TABLE }]))
                 }}
-                className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${
+                className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase ${
                   useOwnTables
                     ? "border-green-600/30 bg-green-50 text-green-700"
                     : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]/60"
@@ -351,7 +351,7 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
                       type="button"
                       onClick={() => setTables((current) => current.filter((_, i) => i !== index))}
                       title="Quitar mesa"
-                      className="inline-flex items-center justify-center rounded-full border-2 border-red-200 bg-white p-2 text-red-600"
+                      className="inline-flex items-center justify-center rounded-full border border-red-200 bg-white p-2 text-red-600"
                     >
                       <Trash2 size={15} />
                     </button>
@@ -360,7 +360,7 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
                 <button
                   type="button"
                   onClick={() => setTables((current) => [...current, { ...EMPTY_TABLE }])}
-                  className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-xs font-black uppercase text-[var(--brand-primary)]"
+                  className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-xs font-bold uppercase text-[var(--brand-primary)]"
                 >
                   <Plus size={14} /> Agregar mesa
                 </button>
@@ -382,7 +382,7 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
               type="button"
               onClick={save}
               disabled={saving || tablesInvalid}
-              className="inline-flex items-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-2.5 text-sm font-black uppercase text-white disabled:opacity-50"
+              className="inline-flex items-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-2.5 text-sm font-bold uppercase text-white disabled:opacity-50"
             >
               {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
               Guardar sede
@@ -409,7 +409,7 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
                   type="button"
                   onClick={copyFromBranch}
                   disabled={saving || !copyFrom}
-                  className="inline-flex items-center gap-1 rounded-xl border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-sm font-black uppercase text-[var(--brand-primary)] disabled:opacity-50"
+                  className="inline-flex items-center gap-1 rounded-xl border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-sm font-bold uppercase text-[var(--brand-primary)] disabled:opacity-50"
                 >
                   <Copy size={15} /> Copiar
                 </button>

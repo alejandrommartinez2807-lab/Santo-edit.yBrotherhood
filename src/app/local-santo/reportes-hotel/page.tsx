@@ -115,14 +115,14 @@ function ReportesHotelContent() {
     "w-full bg-transparent font-bold outline-none"
 
   const cardClass =
-    "rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4"
+    "rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4"
 
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
       <div className="mx-auto w-full max-w-3xl">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
         >
           <ArrowLeft size={16} /> Volver al panel
         </Link>
@@ -132,7 +132,7 @@ function ReportesHotelContent() {
             <BarChart3 size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Reportes del hotel</h1>
+            <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Reportes del hotel</h1>
             <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
               Ocupación, tarifa media (ADR) e ingreso por habitación disponible (RevPAR) del periodo.
             </p>
@@ -140,30 +140,30 @@ function ReportesHotelContent() {
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
             Tu clave no tiene permiso para ver los reportes del hotel, o el módulo está desactivado.
           </p>
         ) : (
           <>
             {/* Periodo */}
-            <div className="mt-6 grid gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-4">
-              <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold sm:col-span-1">
-                <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Desde</span>
+            <div className="mt-6 grid gap-2 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-4">
+              <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold sm:col-span-1">
+                <span className="text-xs font-bold uppercase text-[var(--brand-primary)]">Desde</span>
                 <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={inputClass} />
               </label>
-              <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold sm:col-span-1">
-                <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Hasta</span>
+              <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold sm:col-span-1">
+                <span className="text-xs font-bold uppercase text-[var(--brand-primary)]">Hasta</span>
                 <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={inputClass} />
               </label>
               <button
                 onClick={() => preset("this")}
-                className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-xs font-black uppercase text-[var(--brand-primary)]"
+                className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-xs font-bold uppercase text-[var(--brand-primary)]"
               >
                 Este mes
               </button>
               <button
                 onClick={() => preset("last")}
-                className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-xs font-black uppercase text-[var(--brand-primary)]"
+                className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-xs font-bold uppercase text-[var(--brand-primary)]"
               >
                 Mes pasado
               </button>
@@ -176,7 +176,7 @@ function ReportesHotelContent() {
                 <Loader2 className="animate-spin" size={18} /> Calculando…
               </p>
             ) : !report || report.daysInPeriod <= 0 ? (
-              <p className="mt-8 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-8 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
                 Elige un rango válido (la fecha “hasta” debe ser posterior a “desde”).
               </p>
             ) : (
@@ -184,26 +184,26 @@ function ReportesHotelContent() {
                 {/* KPIs principales */}
                 <div className="mt-6 grid gap-3 sm:grid-cols-3">
                   <div className={cardClass}>
-                    <p className="inline-flex items-center gap-1 text-xs font-black uppercase text-[var(--brand-primary)]">
+                    <p className="inline-flex items-center gap-1 text-xs font-bold uppercase text-[var(--brand-primary)]">
                       <Percent size={14} /> Ocupación
                     </p>
-                    <p className="mt-1 text-3xl font-black text-[var(--brand-ink-3)]">{occupancyPct}%</p>
+                    <p className="mt-1 text-3xl font-bold text-[var(--brand-ink-3)]">{occupancyPct}%</p>
                     <p className="text-sm font-bold text-[var(--brand-ink-2)]/60">
                       {report.roomNightsSold} de {report.roomNightsAvailable} noches
                     </p>
                   </div>
                   <div className={cardClass}>
-                    <p className="inline-flex items-center gap-1 text-xs font-black uppercase text-[var(--brand-primary)]">
+                    <p className="inline-flex items-center gap-1 text-xs font-bold uppercase text-[var(--brand-primary)]">
                       <DollarSign size={14} /> ADR
                     </p>
-                    <p className="mt-1 text-3xl font-black text-[var(--brand-ink-3)]">${report.adr}</p>
+                    <p className="mt-1 text-3xl font-bold text-[var(--brand-ink-3)]">${report.adr}</p>
                     <p className="text-sm font-bold text-[var(--brand-ink-2)]/60">tarifa media / noche vendida</p>
                   </div>
                   <div className={cardClass}>
-                    <p className="inline-flex items-center gap-1 text-xs font-black uppercase text-[var(--brand-primary)]">
+                    <p className="inline-flex items-center gap-1 text-xs font-bold uppercase text-[var(--brand-primary)]">
                       <TrendingUp size={14} /> RevPAR
                     </p>
-                    <p className="mt-1 text-3xl font-black text-[var(--brand-ink-3)]">${report.revPar}</p>
+                    <p className="mt-1 text-3xl font-bold text-[var(--brand-ink-3)]">${report.revPar}</p>
                     <p className="text-sm font-bold text-[var(--brand-ink-2)]/60">ingreso / habitación disponible</p>
                   </div>
                 </div>
@@ -211,19 +211,19 @@ function ReportesHotelContent() {
                 {/* Detalle */}
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <div className={cardClass}>
-                    <p className="inline-flex items-center gap-1 text-xs font-black uppercase text-[var(--brand-primary)]">
+                    <p className="inline-flex items-center gap-1 text-xs font-bold uppercase text-[var(--brand-primary)]">
                       <DollarSign size={14} /> Ingreso de habitaciones
                     </p>
-                    <p className="mt-1 text-2xl font-black text-[var(--brand-ink-3)]">${report.roomRevenue}</p>
+                    <p className="mt-1 text-2xl font-bold text-[var(--brand-ink-3)]">${report.roomRevenue}</p>
                     <p className="text-sm font-bold text-[var(--brand-ink-2)]/60">
                       {report.reservationsCounted} reserva(s) en el periodo
                     </p>
                   </div>
                   <div className={cardClass}>
-                    <p className="inline-flex items-center gap-1 text-xs font-black uppercase text-[var(--brand-primary)]">
+                    <p className="inline-flex items-center gap-1 text-xs font-bold uppercase text-[var(--brand-primary)]">
                       <BedDouble size={14} /> Inventario
                     </p>
-                    <p className="mt-1 text-2xl font-black text-[var(--brand-ink-3)]">
+                    <p className="mt-1 text-2xl font-bold text-[var(--brand-ink-3)]">
                       {report.roomCount} habitación(es)
                     </p>
                     <p className="inline-flex items-center gap-1 text-sm font-bold text-[var(--brand-ink-2)]/60">
@@ -238,7 +238,7 @@ function ReportesHotelContent() {
                     {Object.entries(report.countsByStatus).map(([status, count]) => (
                       <span
                         key={status}
-                        className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)]/20 bg-white px-3 py-1.5 text-xs font-black uppercase text-[var(--brand-ink-2)]/70"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-primary)]/20 bg-white px-3 py-1.5 text-xs font-bold uppercase text-[var(--brand-ink-2)]/70"
                       >
                         {count} {STATUS_LABELS[status] || status}
                       </span>
@@ -247,8 +247,8 @@ function ReportesHotelContent() {
                 )}
 
                 {/* Explicación */}
-                <div className="mt-6 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-4 text-sm font-bold text-[var(--brand-ink-2)]/70">
-                  <p className="mb-1 text-xs font-black uppercase text-[var(--brand-primary)]">Cómo se calcula</p>
+                <div className="mt-6 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-4 text-sm font-bold text-[var(--brand-ink-2)]/70">
+                  <p className="mb-1 text-xs font-bold uppercase text-[var(--brand-primary)]">Cómo se calcula</p>
                   <p>· <b>Ocupación</b> = noches vendidas ÷ noches disponibles (habitaciones × días).</p>
                   <p>· <b>ADR</b> = ingreso de habitaciones ÷ noches vendidas.</p>
                   <p>· <b>RevPAR</b> = ingreso ÷ noches disponibles (= ADR × ocupación).</p>

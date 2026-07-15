@@ -426,7 +426,7 @@ function DayClosesPageContent() {
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-3 py-4 text-[var(--brand-ink-3)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <header className="overflow-hidden rounded-[1.6rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
+        <header className="overflow-hidden rounded-[1.6rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
           <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="p-4 sm:p-5">
@@ -435,7 +435,7 @@ function DayClosesPageContent() {
                 <div className="flex flex-wrap gap-2">
                   <a
                     href="/admin"
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     <ArrowLeft size={16} />
                     Volver al panel
@@ -445,7 +445,7 @@ function DayClosesPageContent() {
                     type="button"
                     onClick={() => loadDayCloses()}
                     disabled={isLoading}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
                   >
                     {isLoading ? (
                       <Loader2 size={16} className="animate-spin" />
@@ -459,7 +459,7 @@ function DayClosesPageContent() {
                     type="button"
                     onClick={exportFilteredDayCloses}
                     disabled={!filteredDayCloses.length}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
                   >
                     <Download size={16} />
                     Exportar CSV
@@ -468,7 +468,7 @@ function DayClosesPageContent() {
                   <button
                     type="button"
                     onClick={() => setIsGuideOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     <FileText size={16} />
                     Cómo leer
@@ -481,18 +481,18 @@ function DayClosesPageContent() {
                       setIsClearHistoryModalOpen(true)
                     }}
                     disabled={!dayCloses.length || isLoading || isClearingHistory}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-red-600 bg-red-50 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                    className="inline-flex items-center gap-2 rounded-full border border-red-600 bg-red-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-red-700 transition hover:bg-red-100 disabled:opacity-50"
                   >
                     <AlertTriangle size={16} />
                     Borrar historial
                   </button>
                 </div>
 
-                <p className="mt-4 text-xs font-black uppercase tracking-[0.32em] text-[var(--brand-primary)]">
+                <p className="mt-4 text-xs font-bold uppercase tracking-[0.32em] text-[var(--brand-primary)]">
                   {BRAND.name}
                 </p>
 
-                <h1 className="mt-1 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl">
+                <h1 className="font-serif mt-1 text-4xl leading-tight text-[var(--brand-ink-3)] sm:text-5xl font-semibold">
                   Historial de cierres
                 </h1>
 
@@ -532,13 +532,13 @@ function DayClosesPageContent() {
           </div>
         </header>
 
-        <section className="sticky top-0 z-30 mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-white p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+        <section className="sticky top-0 z-30 mt-4 rounded-[1.4rem] border border-[var(--brand-primary)]/40 bg-white p-3 shadow-sm">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Controles del historial
               </p>
-              <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-full border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-1.5 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+              <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-full border border-[var(--brand-primary)]/30 bg-white px-3 py-1.5 text-[0.66rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                 <input
                   type="checkbox"
                   checked={showAllBranches}
@@ -558,7 +558,7 @@ function DayClosesPageContent() {
             <button
               type="button"
               onClick={() => setAreFiltersVisible((currentValue) => !currentValue)}
-              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
             >
               {areFiltersVisible ? <EyeOff size={16} /> : <Eye size={16} />}
               {areFiltersVisible ? "Ocultar controles" : "Mostrar controles"}
@@ -577,7 +577,7 @@ function DayClosesPageContent() {
                     value={searchText}
                     onChange={(event) => setSearchText(event.target.value)}
                     placeholder="Buscar por fecha, ID, estado o texto del cierre"
-                    className="w-full rounded-full border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                    className="w-full rounded-full border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
@@ -590,7 +590,7 @@ function DayClosesPageContent() {
                         key={filter}
                         type="button"
                         onClick={() => setPaymentFilter(filter)}
-                        className={`shrink-0 rounded-full border-2 px-4 py-3 text-[0.68rem] font-black uppercase tracking-[0.1em] transition ${
+                        className={`shrink-0 rounded-full border px-4 py-3 text-[0.68rem] font-bold uppercase tracking-[0.1em] transition ${
                           isActive
                             ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                             : "border-[var(--brand-primary)]/35 bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
@@ -618,7 +618,7 @@ function DayClosesPageContent() {
                   <button
                     type="button"
                     onClick={applyTodayRange}
-                    className={`rounded-full border-2 px-4 py-3 text-[0.68rem] font-black uppercase tracking-[0.1em] transition ${
+                    className={`rounded-full border px-4 py-3 text-[0.68rem] font-bold uppercase tracking-[0.1em] transition ${
                       isTodayRangeActive
                         ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[var(--brand-accent-200)]"
                         : "border-[var(--brand-primary)]/35 bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
@@ -629,7 +629,7 @@ function DayClosesPageContent() {
                   <button
                     type="button"
                     onClick={applyLastSevenDaysRange}
-                    className={`rounded-full border-2 px-4 py-3 text-[0.68rem] font-black uppercase tracking-[0.1em] transition ${
+                    className={`rounded-full border px-4 py-3 text-[0.68rem] font-bold uppercase tracking-[0.1em] transition ${
                       isLastSevenDaysRangeActive
                         ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[var(--brand-accent-200)]"
                         : "border-[var(--brand-primary)]/35 bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
@@ -640,7 +640,7 @@ function DayClosesPageContent() {
                   <button
                     type="button"
                     onClick={clearRangeFilters}
-                    className={`rounded-full border-2 px-4 py-3 text-[0.68rem] font-black uppercase tracking-[0.1em] transition ${
+                    className={`rounded-full border px-4 py-3 text-[0.68rem] font-bold uppercase tracking-[0.1em] transition ${
                       isAllRangeActive
                         ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[var(--brand-accent-200)]"
                         : "border-[var(--brand-primary)]/35 bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
@@ -687,7 +687,7 @@ function DayClosesPageContent() {
           )}
 
           {errorMessage && (
-            <div className="mt-3 rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
+            <div className="mt-3 rounded-2xl border border-red-500/35 bg-red-100 px-4 py-3">
               <p className="text-sm font-bold leading-6 text-red-800">
                 {errorMessage}
               </p>
@@ -695,8 +695,8 @@ function DayClosesPageContent() {
           )}
 
           {copyMessage && (
-            <div className="mt-3 rounded-2xl border-2 border-green-500/35 bg-green-50 px-4 py-3">
-              <p className="text-sm font-black text-green-700">
+            <div className="mt-3 rounded-2xl border border-green-500/35 bg-green-50 px-4 py-3">
+              <p className="text-sm font-bold text-green-700">
                 {copyMessage}
               </p>
             </div>
@@ -715,14 +715,14 @@ function DayClosesPageContent() {
         )}
 
         {isLoading && dayCloses.length === 0 ? (
-          <section className="mt-5 rounded-[2rem] border-2 border-[var(--brand-primary)] bg-white px-6 py-14 text-center shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]">
+          <section className="mt-5 rounded-[2rem] border border-[var(--brand-primary)]/40 bg-white px-6 py-14 text-center shadow-sm">
             <Loader2 className="mx-auto animate-spin text-[var(--brand-primary)]" size={42} />
-            <h2 className="mt-5 text-3xl font-black uppercase text-[var(--brand-primary)]">
+            <h2 className="font-serif mt-5 text-3xl text-[var(--brand-ink-3)] font-semibold">
               Cargando cierres
             </h2>
           </section>
         ) : filteredDayCloses.length === 0 ? (
-          <section className="mt-5 rounded-[2rem] border-2 border-[var(--brand-primary)] bg-white px-6 py-14 text-center shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]">
+          <section className="mt-5 rounded-[2rem] border border-[var(--brand-primary)]/40 bg-white px-6 py-14 text-center shadow-sm">
             <Image
               src={BRAND.logoUrl || "/logoremovebg.png"}
               alt={BRAND.name}
@@ -732,7 +732,7 @@ function DayClosesPageContent() {
               className="mx-auto h-28 w-28 object-contain"
             />
 
-            <h2 className="mt-5 text-3xl font-black uppercase text-[var(--brand-primary)]">
+            <h2 className="font-serif mt-5 text-3xl text-[var(--brand-ink-3)] font-semibold">
               Sin cierres para mostrar
             </h2>
 
@@ -815,7 +815,7 @@ function ClearHistoryModal({
             type="button"
             onClick={onClose}
             disabled={isClearing}
-            className="flex items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+            className="flex items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-4 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
           >
             <X size={17} />
             Cancelar
@@ -825,7 +825,7 @@ function ClearHistoryModal({
             type="button"
             onClick={onConfirm}
             disabled={!canConfirm}
-            className="flex items-center justify-center gap-3 rounded-full border-2 border-red-700 bg-red-600 px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex items-center justify-center gap-3 rounded-full border border-red-700 bg-red-600 px-5 py-4 text-xs font-bold uppercase tracking-[0.12em] text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isClearing ? (
               <Loader2 size={17} className="animate-spin" />
@@ -838,8 +838,8 @@ function ClearHistoryModal({
       }
     >
       <div className="space-y-4">
-        <div className="rounded-[1.4rem] border-2 border-red-500 bg-red-50 p-4 text-red-800">
-          <p className="text-sm font-black uppercase tracking-[0.16em]">
+        <div className="rounded-[1.4rem] border border-red-500 bg-red-50 p-4 text-red-800">
+          <p className="text-sm font-bold uppercase tracking-[0.16em]">
             Acción delicada
           </p>
           <p className="mt-2 text-sm font-bold leading-6">
@@ -852,8 +852,8 @@ function ClearHistoryModal({
           <InfoBox label="Se borrará" value="Solo historial de cierres" />
         </div>
 
-        <label className="block rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
-          <span className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+        <label className="block rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-white p-4">
+          <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
             Escribe BORRAR HISTORIAL para confirmar
           </span>
           <input
@@ -861,7 +861,7 @@ function ClearHistoryModal({
             onChange={(event) => onChangeConfirmation(event.target.value)}
             disabled={isClearing}
             placeholder="BORRAR HISTORIAL"
-            className="mt-3 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-black uppercase text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/35 focus:border-[var(--brand-primary)] disabled:opacity-50"
+            className="mt-3 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold uppercase text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/35 focus:border-[var(--brand-primary)] disabled:opacity-50"
           />
         </label>
       </div>
@@ -879,13 +879,13 @@ function LoginBox({
 }: LoginBoxProps) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-3)]">
-      <div className="w-full max-w-md overflow-hidden rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.14)]">
+      <div className="w-full max-w-md overflow-hidden rounded-[2rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
         <div className="h-6 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
         <div className="px-6 py-6">
           <a
             href="/admin"
-            className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
           >
             <ArrowLeft size={16} />
             Volver
@@ -900,11 +900,11 @@ function LoginBox({
             className="mx-auto mt-6 h-28 w-28 object-contain"
           />
 
-          <p className="mt-5 text-center text-xs font-black uppercase tracking-[0.28em] text-[var(--brand-primary)]">
+          <p className="mt-5 text-center text-xs font-bold uppercase tracking-[0.28em] text-[var(--brand-primary)]">
             Acceso privado
           </p>
 
-          <h1 className="mt-2 text-center text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+          <h1 className="font-serif mt-2 text-center text-4xl leading-tight text-[var(--brand-ink-3)] font-semibold">
             Historial de cierres
           </h1>
 
@@ -915,7 +915,7 @@ function LoginBox({
 
         <div className="space-y-4 px-6 pb-6">
           <div>
-            <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+            <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
               Clave de acceso
             </label>
 
@@ -928,7 +928,7 @@ function LoginBox({
                   if (event.key === "Enter") handleLogin()
                 }}
                 placeholder="Ingresa la clave del local"
-                className="w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                className="w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
               />
 
               <button
@@ -942,7 +942,7 @@ function LoginBox({
           </div>
 
           {errorMessage && (
-            <div className="rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
+            <div className="rounded-2xl border border-red-500/35 bg-red-100 px-4 py-3">
               <p className="text-sm font-bold leading-6 text-red-800">
                 {errorMessage}
               </p>
@@ -952,7 +952,7 @@ function LoginBox({
           <button
             type="button"
             onClick={handleLogin}
-            className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-[1.02]"
+            className="flex w-full items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-sm transition hover:scale-[1.02]"
           >
             <LogIn size={21} />
             Entrar al historial
@@ -975,24 +975,24 @@ function CloseCard({
   const paymentState = getClosePaymentState(close)
 
   return (
-    <article className="overflow-hidden rounded-[1.6rem] border-2 border-[var(--brand-primary)] bg-white shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]">
-      <div className="border-b-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-4 py-4">
+    <article className="overflow-hidden rounded-[1.6rem] border border-[var(--brand-primary)]/40 bg-white shadow-sm">
+      <div className="border-b border-[var(--brand-primary)] bg-[var(--brand-cream)] px-4 py-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 <CalendarDays size={16} />
                 {formatDate(close.createdAt)}
               </p>
 
               <span
-                className={`inline-flex rounded-full border-2 px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] ${paymentState.className}`}
+                className={`inline-flex rounded-full border px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] ${paymentState.className}`}
               >
                 {paymentState.label}
               </span>
             </div>
 
-            <h2 className="mt-2 text-3xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+            <h2 className="font-serif mt-2 text-3xl leading-tight text-[var(--brand-ink-3)] font-semibold">
               {getCloseTitle(close)}
             </h2>
             <p className="mt-2 text-xs font-bold text-[var(--brand-ink-2)]/60">
@@ -1000,11 +1000,11 @@ function CloseCard({
             </p>
           </div>
 
-          <div className="rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-right">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+          <div className="rounded-2xl border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-right">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
               Cobrado real
             </p>
-            <p className="mt-1 text-2xl font-black text-[var(--brand-ink-3)]">
+            <p className="mt-1 text-2xl font-bold text-[var(--brand-ink-3)]">
               {formatUSD(close.realCollectedUSD)}
             </p>
           </div>
@@ -1046,7 +1046,7 @@ function CloseCard({
           <button
             type="button"
             onClick={onOpen}
-            className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
           >
             <FileText size={17} />
             Ver detalle
@@ -1056,7 +1056,7 @@ function CloseCard({
             type="button"
             onClick={onCopy}
             disabled={!close.summaryText}
-            className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
           >
             <Clipboard size={17} />
             Copiar resumen
@@ -1101,7 +1101,7 @@ function CloseDetailModal({
             type="button"
             onClick={onCopy}
             disabled={!close.summaryText}
-            className="flex items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] outline-none transition hover:bg-[var(--brand-accent-200)] focus-visible:ring-4 focus-visible:ring-[var(--brand-accent)]/70 disabled:opacity-50"
+            className="flex items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-4 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] outline-none transition hover:bg-[var(--brand-accent-200)] focus-visible:ring-4 focus-visible:ring-[var(--brand-accent)]/70 disabled:opacity-50"
           >
             <Clipboard size={17} />
             Copiar
@@ -1111,7 +1111,7 @@ function CloseDetailModal({
             type="button"
             onClick={() => downloadCloseSummary(close)}
             disabled={!close.summaryText}
-            className="flex items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] outline-none transition hover:bg-[var(--brand-accent-100)] focus-visible:ring-4 focus-visible:ring-[var(--brand-accent)]/70 disabled:opacity-50"
+            className="flex items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-4 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] outline-none transition hover:bg-[var(--brand-accent-100)] focus-visible:ring-4 focus-visible:ring-[var(--brand-accent)]/70 disabled:opacity-50"
           >
             <Download size={17} />
             TXT
@@ -1120,7 +1120,7 @@ function CloseDetailModal({
           <button
             type="button"
             onClick={() => downloadSingleCloseCsv(close)}
-            className="flex items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] outline-none transition hover:bg-[var(--brand-accent-100)] focus-visible:ring-4 focus-visible:ring-[var(--brand-accent)]/70"
+            className="flex items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-4 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] outline-none transition hover:bg-[var(--brand-accent-100)] focus-visible:ring-4 focus-visible:ring-[var(--brand-accent)]/70"
           >
             <FileText size={17} />
             CSV
@@ -1129,7 +1129,7 @@ function CloseDetailModal({
           <button
             type="button"
             onClick={() => downloadSingleCloseDetailedCsv(close)}
-            className="flex items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] outline-none transition hover:bg-[var(--brand-accent-100)] focus-visible:ring-4 focus-visible:ring-[var(--brand-accent)]/70"
+            className="flex items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-4 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] outline-none transition hover:bg-[var(--brand-accent-100)] focus-visible:ring-4 focus-visible:ring-[var(--brand-accent)]/70"
           >
             <FileText size={17} />
             Excel completo
@@ -1139,7 +1139,7 @@ function CloseDetailModal({
             type="button"
             onClick={() => printCloseSummary(close)}
             disabled={!close.summaryText}
-            className="flex items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] outline-none transition hover:bg-[var(--brand-accent-100)] focus-visible:ring-4 focus-visible:ring-[var(--brand-accent)]/70 disabled:opacity-50"
+            className="flex items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-4 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] outline-none transition hover:bg-[var(--brand-accent-100)] focus-visible:ring-4 focus-visible:ring-[var(--brand-accent)]/70 disabled:opacity-50"
           >
             <Printer size={17} />
             Imprimir
@@ -1148,7 +1148,7 @@ function CloseDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] outline-none transition hover:bg-[var(--brand-accent-100)] focus-visible:ring-4 focus-visible:ring-[var(--brand-accent)]/70 xl:col-auto"
+            className="flex items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-4 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] outline-none transition hover:bg-[var(--brand-accent-100)] focus-visible:ring-4 focus-visible:ring-[var(--brand-accent)]/70 xl:col-auto"
           >
             <X size={17} />
             Cerrar
@@ -1157,13 +1157,13 @@ function CloseDetailModal({
       }
     >
       <div className="space-y-4">
-        <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-white p-4">
+        <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/40 bg-white p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 {close.id}
               </p>
-              <h3 className="mt-2 text-2xl font-black uppercase text-[var(--brand-ink-3)]">
+              <h3 className="mt-2 text-2xl font-bold uppercase text-[var(--brand-ink-3)]">
                 {getCloseTitle(close)}
               </h3>
               <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/65">
@@ -1172,7 +1172,7 @@ function CloseDetailModal({
             </div>
 
             <span
-              className={`inline-flex w-fit rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] ${paymentState.className}`}
+              className={`inline-flex w-fit rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] ${paymentState.className}`}
             >
               {paymentState.label}
             </span>
@@ -1231,7 +1231,7 @@ function CloseDetailModal({
 
           {close.fiscalOrders > 0 && (
             <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3">
-              <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-emerald-800">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.14em] text-emerald-800">
                 Desglose fiscal del cierre
               </p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -1434,7 +1434,7 @@ function CloseDetailModal({
             />
           </div>
 
-          <p className="mt-4 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
+          <p className="mt-4 rounded-2xl border border-[var(--brand-primary)]/20 bg-white px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
             Este bloque resume las compras relacionadas con inventario que quedaron dentro del cierre. Los descuentos por receta se ejecutan cuando los pedidos se marcan como entregados y se revisan mejor desde el módulo de inventario.
           </p>
         </DetailToggleSection>
@@ -1444,7 +1444,7 @@ function CloseDetailModal({
           description="Texto completo guardado con el cierre para enviar, imprimir o revisar fuera del sistema."
           defaultOpen={showAdvancedSections}
         >
-          <pre className="max-h-[420px] overflow-y-auto whitespace-pre-wrap rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 text-sm font-bold leading-6 text-[var(--brand-ink-2)]">
+          <pre className="max-h-[420px] overflow-y-auto whitespace-pre-wrap rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4 text-sm font-bold leading-6 text-[var(--brand-ink-2)]">
             {close.summaryText || "Sin resumen guardado."}
           </pre>
         </DetailToggleSection>
@@ -1469,14 +1469,14 @@ function DetailToggleSection({
   const [isOpen, setIsOpen] = useState(Boolean(defaultOpen))
 
   return (
-    <section className="overflow-hidden rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white">
+    <section className="overflow-hidden rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-white">
       <button
         type="button"
         onClick={() => setIsOpen((currentValue) => !currentValue)}
         className="flex w-full flex-col gap-3 px-4 py-4 text-left outline-none transition hover:bg-yellow-50 focus-visible:ring-4 focus-visible:ring-[var(--brand-accent)]/70 sm:flex-row sm:items-center sm:justify-between"
       >
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
             {title}
           </p>
           <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -1486,18 +1486,18 @@ function DetailToggleSection({
 
         <div className="flex shrink-0 items-center gap-2">
           {badge && (
-            <span className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink)]">
+            <span className="rounded-full border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-ink)]">
               {badge}
             </span>
           )}
-          <span className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+          <span className="rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
             {isOpen ? "Ocultar" : "Mostrar"}
           </span>
         </div>
       </button>
 
       {isOpen && (
-        <div className="border-t-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4">
+        <div className="border-t border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4">
           {children}
         </div>
       )}
@@ -1517,17 +1517,17 @@ function SmartAlerts({
   compact?: boolean
 }) {
   return (
-    <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
+    <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-white p-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
             {title}
           </p>
           <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
             {description}
           </p>
         </div>
-        <span className="w-fit rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]">
+        <span className="w-fit rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-3 py-1.5 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)]">
           {alerts.length} alerta(s)
         </span>
       </div>
@@ -1561,9 +1561,9 @@ function SmartAlertCard({ alert }: { alert: SmartAlert }) {
           : "bg-white text-[var(--brand-primary)]"
 
   return (
-    <div className={`rounded-2xl border-2 p-4 ${toneStyle}`}>
+    <div className={`rounded-2xl border p-4 ${toneStyle}`}>
       <div className="flex gap-3">
-        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-current ${iconStyle}`}>
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-current ${iconStyle}`}>
           {alert.tone === "good" ? (
             <CheckCircle2 size={20} />
           ) : (
@@ -1573,11 +1573,11 @@ function SmartAlertCard({ alert }: { alert: SmartAlert }) {
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-            <p className="text-sm font-black uppercase leading-5">
+            <p className="text-sm font-bold uppercase leading-5">
               {alert.title}
             </p>
             {alert.value && (
-              <p className="shrink-0 text-sm font-black text-[var(--brand-primary)]">
+              <p className="shrink-0 text-sm font-bold text-[var(--brand-primary)]">
                 {alert.value}
               </p>
             )}
@@ -1606,7 +1606,7 @@ function ModeSelector({
     <div className="mt-3 rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-white p-3">
       <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+          <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
             Modo de vista
           </p>
           <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -1623,7 +1623,7 @@ function ModeSelector({
                 key={item.mode}
                 type="button"
                 onClick={() => onChange(item.mode)}
-                className={`shrink-0 rounded-full border-2 px-4 py-3 text-[0.68rem] font-black uppercase tracking-[0.1em] transition ${
+                className={`shrink-0 rounded-full border px-4 py-3 text-[0.68rem] font-bold uppercase tracking-[0.1em] transition ${
                   isActive
                     ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[var(--brand-accent-200)]"
                     : "border-[var(--brand-primary)]/35 bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
@@ -1658,7 +1658,7 @@ function ReportGuideModal({
         <button
           type="button"
           onClick={onClose}
-          className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]"
+          className="flex w-full items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-4 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)]"
         >
           <X size={17} />
           Cerrar guía
@@ -1666,11 +1666,11 @@ function ReportGuideModal({
       }
     >
       <div className="space-y-4">
-        <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-white p-4">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+        <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/40 bg-white p-4">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
             Vista actual: {activeMode.label}
           </p>
-          <h3 className="mt-2 text-2xl font-black uppercase text-[var(--brand-ink-3)]">
+          <h3 className="mt-2 text-2xl font-bold uppercase text-[var(--brand-ink-3)]">
             Lee primero lo simple y abre lo avanzado solo cuando haga falta
           </h3>
           <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -1724,7 +1724,7 @@ function ReportGuideModal({
         </div>
 
         <SectionTitle>Cómo entender las barras</SectionTitle>
-        <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
+        <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-white p-4">
           <p className="text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
             Las barras amarillas son comparación visual: mientras más larga está la barra,
             más peso tiene ese dato dentro del rango. El monto exacto siempre aparece escrito
@@ -1778,8 +1778,8 @@ function ReportGuideModal({
 
 function GuideCard({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4">
-      <p className="text-sm font-black uppercase text-[var(--brand-ink-3)]">{title}</p>
+    <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4">
+      <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">{title}</p>
       <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
         {text}
       </p>
@@ -1799,14 +1799,14 @@ function DateFilterInput({
 }) {
   return (
     <label className="block">
-      <span className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+      <span className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
         {label}
       </span>
       <input
         type="date"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-1 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-black text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+        className="mt-1 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
       />
     </label>
   )
@@ -1847,14 +1847,14 @@ function RangeReport({
   const showAdvancedSections = viewMode === "Avanzado"
 
   return (
-    <section className="mt-5 overflow-hidden rounded-[1.6rem] border-2 border-[var(--brand-primary)] bg-white shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]">
-      <div className="border-b-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-4 py-4 sm:px-5">
+    <section className="mt-5 overflow-hidden rounded-[1.6rem] border border-[var(--brand-primary)]/40 bg-white shadow-sm">
+      <div className="border-b border-[var(--brand-primary)] bg-[var(--brand-cream)] px-4 py-4 sm:px-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.24em] text-[var(--brand-primary)]">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--brand-primary)]">
               Reporte del rango filtrado
             </p>
-            <h2 className="mt-1 text-3xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+            <h2 className="font-serif mt-1 text-3xl leading-tight text-[var(--brand-ink-3)] font-semibold">
               Resumen del negocio
             </h2>
             <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -1862,11 +1862,11 @@ function RangeReport({
             </p>
           </div>
 
-          <div className="rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-right">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+          <div className="rounded-2xl border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-right">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
               Promedio cobrado
             </p>
-            <p className="mt-1 text-2xl font-black text-[var(--brand-ink-3)]">
+            <p className="mt-1 text-2xl font-bold text-[var(--brand-ink-3)]">
               {formatUSD(averageCollected)}
             </p>
           </div>
@@ -2355,8 +2355,8 @@ function ChartPanel({
   children: ReactNode
 }) {
   return (
-    <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+    <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-white p-4">
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
         {title}
       </p>
       <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -2447,7 +2447,7 @@ function ChartBar({
     <div className="rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-sm font-black uppercase text-[var(--brand-ink-3)]">
+          <p className="truncate text-sm font-bold uppercase text-[var(--brand-ink-3)]">
             {label}
           </p>
           {detail && (
@@ -2456,7 +2456,7 @@ function ChartBar({
             </p>
           )}
         </div>
-        <p className="shrink-0 text-sm font-black text-[var(--brand-primary)]">{value}</p>
+        <p className="shrink-0 text-sm font-bold text-[var(--brand-primary)]">{value}</p>
       </div>
 
       <div className="mt-3 h-3 overflow-hidden rounded-full border border-[var(--brand-primary)]/20 bg-white">
@@ -2487,11 +2487,11 @@ function HighlightBox({
   detail: string
 }) {
   return (
-    <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4">
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+    <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4">
+      <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
         {title}
       </p>
-      <p className="mt-2 text-xl font-black uppercase leading-tight text-[var(--brand-ink-3)]">
+      <p className="mt-2 text-xl font-bold uppercase leading-tight text-[var(--brand-ink-3)]">
         {main}
       </p>
       <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -2518,11 +2518,11 @@ function MetricCard({
         : "border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-primary)]"
 
   return (
-    <div className={`rounded-[1.2rem] border-2 p-3 ${style}`}>
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em]">
+    <div className={`rounded-[1.2rem] border p-3 ${style}`}>
+      <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em]">
         {label}
       </p>
-      <p className="mt-1 break-words text-2xl font-black">{value}</p>
+      <p className="mt-1 break-words text-2xl font-bold">{value}</p>
     </div>
   )
 }
@@ -2530,10 +2530,10 @@ function MetricCard({
 function MiniMetric({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-3 py-2">
-      <p className="text-[0.58rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+      <p className="text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
         {label}
       </p>
-      <p className="mt-1 break-words text-sm font-black text-[var(--brand-ink-3)]">
+      <p className="mt-1 break-words text-sm font-bold text-[var(--brand-ink-3)]">
         {value}
       </p>
     </div>
@@ -2542,11 +2542,11 @@ function MiniMetric({ label, value }: { label: string; value: string | number })
 
 function InfoBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3">
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+    <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3">
+      <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
         {label}
       </p>
-      <p className="mt-1 break-words text-sm font-black text-[var(--brand-ink-3)]">
+      <p className="mt-1 break-words text-sm font-bold text-[var(--brand-ink-3)]">
         {value || "—"}
       </p>
     </div>
@@ -2555,7 +2555,7 @@ function InfoBox({ label, value }: { label: string; value: string }) {
 
 function SectionTitle({ children }: { children: ReactNode }) {
   return (
-    <p className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+    <p className="rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
       {children}
     </p>
   )
@@ -2575,8 +2575,8 @@ function SummaryList({
   showDelivery?: boolean
 }) {
   return (
-    <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+    <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-white p-4">
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
         {title}
       </p>
 
@@ -2593,7 +2593,7 @@ function SummaryList({
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-black uppercase text-[var(--brand-ink-3)]">
+                  <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">
                     {item.label}
                   </p>
                   <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/60">
@@ -2602,16 +2602,16 @@ function SummaryList({
                 </div>
 
                 <div className="text-right">
-                  <p className="text-base font-black text-[var(--brand-primary)]">
+                  <p className="text-base font-bold text-[var(--brand-primary)]">
                     {formatUSD(item.totalUSD)}
                   </p>
                   {showVES && item.totalVES && item.totalVES > 0 && (
-                    <p className="mt-1 text-xs font-black text-[var(--brand-ink-2)]/65">
+                    <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
                       Bs {formatVES(item.totalVES)}
                     </p>
                   )}
                   {showDelivery && item.deliveryCostUSD && item.deliveryCostUSD > 0 && (
-                    <p className="mt-1 text-xs font-black text-[var(--brand-ink-2)]/65">
+                    <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
                       Delivery {formatUSD(item.deliveryCostUSD)}
                     </p>
                   )}
@@ -2627,8 +2627,8 @@ function SummaryList({
 
 function ExpensesList({ expenses }: { expenses: DayCloseExpense[] }) {
   return (
-    <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+    <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-white p-4">
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
         Gastos del cierre
       </p>
 
@@ -2645,10 +2645,10 @@ function ExpensesList({ expenses }: { expenses: DayCloseExpense[] }) {
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-black uppercase text-[var(--brand-ink-3)]">
+                  <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">
                     {expense.concept}
                   </p>
-                  <p className="mt-1 text-xs font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]">
+                  <p className="mt-1 text-xs font-bold uppercase tracking-[0.08em] text-[var(--brand-primary)]">
                     {expense.expenseType || "Gasto operativo"} · {expense.category} · {expense.method}
                   </p>
                   {expense.provider && (
@@ -2669,16 +2669,16 @@ function ExpensesList({ expenses }: { expenses: DayCloseExpense[] }) {
                 </div>
 
                 <div className="shrink-0 text-right">
-                  <p className="text-base font-black text-[var(--brand-primary)]">
+                  <p className="text-base font-bold text-[var(--brand-primary)]">
                     {formatUSD(expense.equivalentUSD)}
                   </p>
                   {expense.amountUSD > 0 && (
-                    <p className="mt-1 text-xs font-black text-[var(--brand-ink-2)]/65">
+                    <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
                       Divisas {formatUSD(expense.amountUSD)}
                     </p>
                   )}
                   {expense.amountVES > 0 && (
-                    <p className="mt-1 text-xs font-black text-[var(--brand-ink-2)]/65">
+                    <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
                       Bs {formatVES(expense.amountVES)}
                     </p>
                   )}
@@ -2694,8 +2694,8 @@ function ExpensesList({ expenses }: { expenses: DayCloseExpense[] }) {
 
 function ProductsSoldList({ products }: { products: ProductSold[] }) {
   return (
-    <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
-      <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+    <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-white p-4">
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
         Productos vendidos
       </p>
 
@@ -2712,7 +2712,7 @@ function ProductsSoldList({ products }: { products: ProductSold[] }) {
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-black uppercase text-[var(--brand-ink-3)]">
+                  <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">
                     {product.name}
                   </p>
                   <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/60">
@@ -2721,16 +2721,16 @@ function ProductsSoldList({ products }: { products: ProductSold[] }) {
                 </div>
 
                 <div className="text-right">
-                  <p className="text-base font-black text-[var(--brand-primary)]">
+                  <p className="text-base font-bold text-[var(--brand-primary)]">
                     {formatUSD(product.totalUSD)}
                   </p>
                   {product.totalVES > 0 && (
-                    <p className="mt-1 text-xs font-black text-[var(--brand-ink-2)]/65">
+                    <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
                       Bs {formatVES(product.totalVES)}
                     </p>
                   )}
                   {product.onlyCurrency && (
-                    <p className="mt-1 text-xs font-black text-[var(--brand-ink-2)]/65">
+                    <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
                       Solo divisas
                     </p>
                   )}
@@ -2757,17 +2757,17 @@ function ModalShell({
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-[var(--brand-ink-3)]/60 px-3 py-3 backdrop-blur-sm sm:items-center sm:px-4 sm:py-4">
-      <div className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-[2rem] border-4 border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-ink-3)] shadow-2xl shadow-black/45">
+      <div className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-[2rem] border border-[var(--brand-primary)]/45 bg-[var(--brand-cream)] text-[var(--brand-ink-3)] shadow-2xl shadow-black/45">
         <div className="h-5 shrink-0 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
-        <div className="flex shrink-0 items-start justify-between gap-4 border-b-2 border-[var(--brand-primary)] bg-white px-4 py-4 sm:px-6 sm:py-5">
-          <h2 className="text-2xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-3xl">
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-[var(--brand-primary)] bg-white px-4 py-4 sm:px-6 sm:py-5">
+          <h2 className="font-serif text-2xl leading-tight text-[var(--brand-ink-3)] sm:text-3xl font-semibold">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] text-[var(--brand-ink)]"
           >
             <X size={24} />
           </button>
@@ -2778,7 +2778,7 @@ function ModalShell({
         </div>
 
         {footer && (
-          <div className="shrink-0 border-t-2 border-[var(--brand-primary)] bg-white px-4 py-3 sm:px-6">
+          <div className="shrink-0 border-t border-[var(--brand-primary)] bg-white px-4 py-3 sm:px-6">
             {footer}
           </div>
         )}

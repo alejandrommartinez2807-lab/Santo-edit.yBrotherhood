@@ -1051,13 +1051,13 @@ function DeliveryPageContent() {
   if (!isLoggedIn) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-3)]">
-        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.14)]">
+        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
           <div className="h-6 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="px-6 py-6">
             <a
               href="/admin"
-              className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
             >
               <ArrowLeft size={16} />
               Volver
@@ -1072,11 +1072,11 @@ function DeliveryPageContent() {
               className="mx-auto mt-6 h-28 w-28 object-contain"
             />
 
-            <p className="mt-5 text-center text-xs font-black uppercase tracking-[0.28em] text-[var(--brand-primary)]">
+            <p className="mt-5 text-center text-xs font-bold uppercase tracking-[0.28em] text-[var(--brand-primary)]">
               Acceso privado
             </p>
 
-            <h1 className="mt-2 text-center text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+            <h1 className="font-serif mt-2 text-center text-4xl leading-tight text-[var(--brand-ink-3)] font-semibold">
               Delivery
             </h1>
 
@@ -1087,7 +1087,7 @@ function DeliveryPageContent() {
 
           <div className="space-y-4 px-6 pb-6">
             <div>
-              <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Clave de acceso
               </label>
 
@@ -1100,7 +1100,7 @@ function DeliveryPageContent() {
                     if (event.key === "Enter") handleLogin()
                   }}
                   placeholder="Ingresa la clave del local"
-                  className="w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                  className="w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                 />
 
                 <button
@@ -1116,7 +1116,7 @@ function DeliveryPageContent() {
             <button
               type="button"
               onClick={handleLogin}
-              className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-[1.02]"
+              className="flex w-full items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-sm transition hover:scale-[1.02]"
             >
               <LogIn size={21} />
               Entrar a delivery
@@ -1130,14 +1130,14 @@ function DeliveryPageContent() {
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-3 py-4 text-[var(--brand-ink-3)] sm:px-6 lg:px-8">
       {toastMessage && (
-        <div className="fixed right-4 top-4 z-50 max-w-sm rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-2xl shadow-black/20">
+        <div className="fixed right-4 top-4 z-50 max-w-sm rounded-[1.4rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-2xl shadow-black/20">
           <div className="flex gap-3">
             <Truck className="mt-1 text-[var(--brand-primary)]" size={24} />
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Delivery
               </p>
-              <p className="mt-1 text-sm font-black leading-6 text-[var(--brand-ink-3)]">
+              <p className="mt-1 text-sm font-bold leading-6 text-[var(--brand-ink-3)]">
                 {toastMessage}
               </p>
             </div>
@@ -1146,7 +1146,7 @@ function DeliveryPageContent() {
       )}
 
       <div className="mx-auto max-w-7xl">
-        <header className="overflow-hidden rounded-[1.6rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
+        <header className="overflow-hidden rounded-[1.6rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
           <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="p-4 sm:p-5">
@@ -1156,17 +1156,17 @@ function DeliveryPageContent() {
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
                   >
                     Cambiar de usuario
                   </button>
                 </div>
 
-                <p className="mt-4 text-xs font-black uppercase tracking-[0.32em] text-[var(--brand-primary)]">
+                <p className="mt-4 text-xs font-bold uppercase tracking-[0.32em] text-[var(--brand-primary)]">
                   {BRAND.name}
                 </p>
 
-                <h1 className="mt-1 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl">
+                <h1 className="font-serif mt-1 text-4xl leading-tight text-[var(--brand-ink-3)] sm:text-5xl font-semibold">
                   {hotelMode ? "Room service / domicilio" : "Módulo delivery"}
                 </h1>
 
@@ -1192,10 +1192,10 @@ function DeliveryPageContent() {
           </div>
         </header>
 
-        <section className="sticky top-0 z-30 mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-white p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+        <section className="sticky top-0 z-30 mt-4 rounded-[1.4rem] border border-[var(--brand-primary)]/40 bg-white p-3 shadow-sm">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Controles de delivery
               </p>
               <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
@@ -1208,7 +1208,7 @@ function DeliveryPageContent() {
               <button
                 type="button"
                 onClick={() => loadOrders()}
-                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:scale-105"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:scale-105"
               >
                 {isLoading ? (
                   <Loader2 size={17} className="animate-spin" />
@@ -1221,7 +1221,7 @@ function DeliveryPageContent() {
               <button
                 type="button"
                 onClick={() => setShowControls((value) => !value)}
-                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
               >
                 {showControls ? <EyeOff size={17} /> : <Eye size={17} />}
                 {showControls ? "Ocultar filtros" : "Mostrar filtros"}
@@ -1238,7 +1238,7 @@ function DeliveryPageContent() {
                     value={searchTerm}
                     onChange={(event) => setSearchTerm(event.target.value)}
                     placeholder="Buscar por cliente, teléfono, zona, dirección, pedido o producto"
-                    className="w-full rounded-full border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-12 py-3 text-sm font-black text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                    className="w-full rounded-full border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-12 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
@@ -1251,7 +1251,7 @@ function DeliveryPageContent() {
                         key={filter}
                         type="button"
                         onClick={() => setActiveFilter(filter)}
-                        className={`shrink-0 rounded-full border-2 px-4 py-2.5 text-xs font-black uppercase transition ${
+                        className={`shrink-0 rounded-full border px-4 py-2.5 text-xs font-bold uppercase transition ${
                           isActive
                             ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                             : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
@@ -1272,14 +1272,14 @@ function DeliveryPageContent() {
               </div>
             </div>
           ) : (
-            <div className="mt-3 rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]/70">
+            <div className="mt-3 rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]/70">
               Filtros ocultos · {filteredOrders.length} delivery(s) en pantalla · Total {formatUSD(metrics.filteredTotal)} · Delivery {formatUSD(metrics.filteredDelivery)} · {activeFilter}
               {searchTerm.trim() ? ` · Búsqueda: ${searchTerm.trim()}` : ""}
             </div>
           )}
 
           {errorMessage && (
-            <div className="mt-3 rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
+            <div className="mt-3 rounded-2xl border border-red-500/35 bg-red-100 px-4 py-3">
               <p className="text-sm font-bold leading-6 text-red-800">
                 {errorMessage}
               </p>
@@ -1288,7 +1288,7 @@ function DeliveryPageContent() {
         </section>
 
         {filteredOrders.length === 0 ? (
-          <section className="mt-5 rounded-[2rem] border-2 border-[var(--brand-primary)] bg-white px-6 py-14 text-center shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]">
+          <section className="mt-5 rounded-[2rem] border border-[var(--brand-primary)]/40 bg-white px-6 py-14 text-center shadow-sm">
             <Image
               src={BRAND.logoUrl || "/logoremovebg.png"}
               alt={BRAND.name}
@@ -1298,7 +1298,7 @@ function DeliveryPageContent() {
               className="mx-auto h-28 w-28 object-contain"
             />
 
-            <h2 className="mt-5 text-3xl font-black uppercase text-[var(--brand-primary)]">
+            <h2 className="font-serif mt-5 text-3xl text-[var(--brand-ink-3)] font-semibold">
               Sin deliveries para mostrar
             </h2>
 
@@ -1325,22 +1325,22 @@ function DeliveryPageContent() {
               return (
                 <article
                   key={order.id}
-                  className={`overflow-hidden rounded-[1.6rem] border-2 bg-white shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)] transition ${
+                  className={`overflow-hidden rounded-[1.6rem] border bg-white shadow-sm transition ${
                     isHighlighted
                       ? "border-red-500 ring-4 ring-red-300"
                       : "border-[var(--brand-primary)]"
                   }`}
                 >
-                  <div className="border-b-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-4 py-4">
+                  <div className="border-b border-[var(--brand-primary)] bg-[var(--brand-cream)] px-4 py-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-4xl font-black leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+                          <p className="text-4xl font-bold leading-none text-[var(--brand-primary)]">
                             {displayNumber}
                           </p>
 
                           <span
-                            className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-black uppercase ${getStatusStyle(
+                            className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold uppercase ${getStatusStyle(
                               order.status
                             )}`}
                           >
@@ -1349,7 +1349,7 @@ function DeliveryPageContent() {
                           </span>
 
                           <span
-                            className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-black uppercase ${getPaymentStatusStyle(
+                            className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-bold uppercase ${getPaymentStatusStyle(
                               orderPayment.status
                             )}`}
                           >
@@ -1358,7 +1358,7 @@ function DeliveryPageContent() {
 
                           {hasRequiredStaffConfirmation && (
                             <span
-                              className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-black uppercase ${
+                              className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-bold uppercase ${
                                 hasPendingStaffConfirmation
                                   ? "bg-[var(--brand-accent)] text-[var(--brand-ink-2)]"
                                   : "bg-green-500 text-white"
@@ -1375,10 +1375,10 @@ function DeliveryPageContent() {
                       </div>
 
                       <div className="text-right">
-                        <p className="text-3xl font-black leading-none text-[var(--brand-ink-3)]">
+                        <p className="text-3xl font-bold leading-none text-[var(--brand-ink-3)]">
                           {formatUSD(orderTotals.totalUSD)}
                         </p>
-                        <p className="mt-1 text-xs font-black text-[var(--brand-primary)]">
+                        <p className="mt-1 text-xs font-bold text-[var(--brand-primary)]">
                           Delivery {formatUSD(orderTotals.deliveryCostUSD)}
                         </p>
                       </div>
@@ -1393,8 +1393,8 @@ function DeliveryPageContent() {
                       <InfoBox label="Método indicado" value={order.paymentMethod || "Por confirmar"} />
                     </div>
 
-                    <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4">
-                      <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4">
+                      <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                         <MapPin size={16} />
                         Dirección de entrega
                       </p>
@@ -1419,7 +1419,7 @@ function DeliveryPageContent() {
                             // la vista en esta misma tarjeta.
                           }
                         }}
-                        className={`mt-3 flex w-full items-center justify-center gap-2 rounded-full border-2 px-4 py-3 text-xs font-black uppercase tracking-[0.1em] transition ${
+                        className={`mt-3 flex w-full items-center justify-center gap-2 rounded-full border px-4 py-3 text-xs font-bold uppercase tracking-[0.1em] transition ${
                           copiedCourierOrderId === order.id
                             ? "border-green-600 bg-green-600 text-white"
                             : "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white hover:opacity-90"
@@ -1485,14 +1485,14 @@ function DeliveryPageContent() {
                     </div>
 
                     {hasRequiredStaffConfirmation && !hasPendingStaffConfirmation && (
-                      <div className="rounded-[1.2rem] border-2 border-green-500 bg-green-50 px-4 py-3 text-xs font-black leading-5 text-green-800">
+                      <div className="rounded-[1.2rem] border border-green-500 bg-green-50 px-4 py-3 text-xs font-bold leading-5 text-green-800">
                         Revisión del personal confirmada. Delivery puede coordinar la entrega con mayor seguridad.
                         {order.staffConfirmationUpdatedAt ? ` Última revisión: ${formatDate(order.staffConfirmationUpdatedAt)}${order.staffConfirmationUpdatedBy ? ` · ${order.staffConfirmationUpdatedBy}` : ""}.` : ""}
                       </div>
                     )}
 
-                    <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
-                      <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-white p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                         Productos
                       </p>
 
@@ -1509,7 +1509,7 @@ function DeliveryPageContent() {
                             >
                               <div className="flex items-start justify-between gap-3">
                                 <p>{item.name} x{item.quantity}</p>
-                                <p className="shrink-0 font-black text-[var(--brand-primary)]">
+                                <p className="shrink-0 font-bold text-[var(--brand-primary)]">
                                   {formatUSD(subtotal)}
                                 </p>
                               </div>
@@ -1522,7 +1522,7 @@ function DeliveryPageContent() {
 
                                 {requiresItemConfirmation && (
                                   <span
-                                    className={`rounded-full px-2.5 py-1 text-[0.62rem] font-black uppercase ${
+                                    className={`rounded-full px-2.5 py-1 text-[0.62rem] font-bold uppercase ${
                                       itemConfirmed
                                         ? "bg-green-100 text-green-700"
                                         : "bg-[var(--brand-accent-200)] text-[var(--brand-amber)]"
@@ -1543,8 +1543,8 @@ function DeliveryPageContent() {
                       </div>
                     </div>
 
-                    <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4">
-                      <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                         Estado de caja
                       </p>
 
@@ -1576,7 +1576,7 @@ function DeliveryPageContent() {
                           success
                         />
                       ) : (
-                        <div className="rounded-2xl border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3 text-xs font-black text-[var(--brand-amber)]">
+                        <div className="rounded-2xl border border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3 text-xs font-bold text-[var(--brand-amber)]">
                           No se muestra WhatsApp porque el teléfono no es válido.
                         </div>
                       )}
@@ -1585,7 +1585,7 @@ function DeliveryPageContent() {
                         type="button"
                         onClick={() => reportDeliveryToCashier(order)}
                         disabled={order.status !== "Listo" || deliveryReported || isReporting}
-                        className={`flex w-full items-center justify-center gap-2 rounded-full border-2 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                        className={`flex w-full items-center justify-center gap-2 rounded-full border px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-60 ${
                           deliveryReported
                             ? "border-green-600 bg-green-100 text-green-700"
                             : "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:scale-[1.01]"
@@ -1602,13 +1602,13 @@ function DeliveryPageContent() {
                       </button>
 
                       {deliveryReported && (
-                        <div className="rounded-2xl border-2 border-green-500 bg-green-50 px-4 py-3 text-xs font-black leading-5 text-green-800">
+                        <div className="rounded-2xl border border-green-500 bg-green-50 px-4 py-3 text-xs font-bold leading-5 text-green-800">
                           Entrega reportada. Caja debe revisar y confirmar finalmente como Entregado.
                         </div>
                       )}
                     </div>
 
-                    <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-3 text-xs font-black leading-5 text-[var(--brand-ink-2)]/70">
+                    <div className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white px-4 py-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
                       El botón “Llegué” solo envía WhatsApp. El botón “Reportar entrega a caja” no cambia el estado principal; Caja confirma Entregado.
                     </div>
                   </div>
@@ -1637,22 +1637,22 @@ function MetricCard({
       : "border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-primary)]"
 
   return (
-    <div className={`rounded-[1.2rem] border-2 p-3 ${style}`}>
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em]">
+    <div className={`rounded-[1.2rem] border p-3 ${style}`}>
+      <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em]">
         {label}
       </p>
-      <p className="mt-1 text-2xl font-black">{value}</p>
+      <p className="mt-1 text-2xl font-bold">{value}</p>
     </div>
   )
 }
 
 function InfoBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3">
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+    <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3">
+      <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
         {label}
       </p>
-      <p className="mt-1 break-words text-sm font-black text-[var(--brand-ink-3)]">
+      <p className="mt-1 break-words text-sm font-bold text-[var(--brand-ink-3)]">
         {value || "—"}
       </p>
     </div>
@@ -1661,11 +1661,11 @@ function InfoBox({ label, value }: { label: string; value: string }) {
 
 function WarningBox({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-[1.2rem] border-2 border-yellow-400 bg-[var(--brand-accent-100)] p-4">
+    <div className="rounded-[1.2rem] border border-yellow-400 bg-[var(--brand-accent-100)] p-4">
       <div className="flex gap-3">
         <AlertTriangle className="mt-0.5 shrink-0 text-[var(--brand-amber)]" size={21} />
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-amber)]">
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-amber)]">
             {title}
           </p>
           <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/75">
@@ -1699,7 +1699,7 @@ function WhatsAppButton({
       href={href}
       target="_blank"
       rel="noreferrer"
-      className={`inline-flex items-center justify-center gap-2 rounded-full border-2 px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.1em] transition ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-3 text-center text-[0.68rem] font-bold uppercase tracking-[0.1em] transition ${className}`}
     >
       {label === "Llegué" ? <MapPin size={16} /> : <MessageCircle size={16} />}
       {label}

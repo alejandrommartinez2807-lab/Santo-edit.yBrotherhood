@@ -287,14 +287,14 @@ function AuditoriaPageContent() {
   }
 
   const inputClass =
-    "rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+    "rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
 
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
       <div className="mx-auto w-full max-w-3xl">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
         >
           <ArrowLeft size={16} /> Volver al panel
         </Link>
@@ -304,7 +304,7 @@ function AuditoriaPageContent() {
             <ShieldCheck size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase leading-none text-[var(--brand-ink-3)]">
+            <h1 className="font-serif text-2xl leading-tight text-[var(--brand-ink-3)] font-semibold">
               Auditoría
             </h1>
             <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/65">
@@ -314,7 +314,7 @@ function AuditoriaPageContent() {
         </div>
 
         {denied ? (
-          <div className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5">
+          <div className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5">
             <p className="font-bold text-[var(--brand-ink-3)]">
               Solo el dueño o soporte pueden ver la bitácora.
             </p>
@@ -326,9 +326,9 @@ function AuditoriaPageContent() {
         ) : (
           <>
             {/* Filtros */}
-            <div className="mt-6 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
+            <div className="mt-6 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
               <div className="grid gap-3 sm:grid-cols-2">
-                <label className="flex flex-col gap-1 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                <label className="flex flex-col gap-1 text-[0.68rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                   Usuario
                   <select
                     value={actorFilter}
@@ -343,7 +343,7 @@ function AuditoriaPageContent() {
                     ))}
                   </select>
                 </label>
-                <label className="flex flex-col gap-1 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                <label className="flex flex-col gap-1 text-[0.68rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                   Acción
                   <select
                     value={actionFilter}
@@ -358,7 +358,7 @@ function AuditoriaPageContent() {
                     ))}
                   </select>
                 </label>
-                <label className="flex flex-col gap-1 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                <label className="flex flex-col gap-1 text-[0.68rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                   Desde
                   <input
                     type="date"
@@ -367,7 +367,7 @@ function AuditoriaPageContent() {
                     className={inputClass}
                   />
                 </label>
-                <label className="flex flex-col gap-1 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                <label className="flex flex-col gap-1 text-[0.68rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                   Hasta
                   <input
                     type="date"
@@ -383,14 +383,14 @@ function AuditoriaPageContent() {
                   <button
                     onClick={loadLogs}
                     disabled={loading}
-                    className="inline-flex items-center gap-1.5 rounded-xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-3 py-2 text-xs font-black uppercase text-white disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--brand-primary)]/40 bg-[var(--brand-primary)] px-3 py-2 text-xs font-bold uppercase text-white disabled:opacity-50"
                   >
                     <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Actualizar
                   </button>
                   {hasActiveFilters && (
                     <button
                       onClick={clearFilters}
-                      className="inline-flex items-center gap-1.5 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-xs font-black uppercase text-[var(--brand-primary)]"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-xs font-bold uppercase text-[var(--brand-primary)]"
                     >
                       Limpiar filtros
                     </button>
@@ -405,8 +405,8 @@ function AuditoriaPageContent() {
             </div>
 
             {!loading && actorSummary.length > 0 && (
-              <div className="mt-4 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
-                <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+              <div className="mt-4 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
+                <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                   Qué hizo cada usuario
                 </p>
                 <div className="mt-2.5 flex flex-wrap gap-2">
@@ -417,7 +417,7 @@ function AuditoriaPageContent() {
                         key={actor.name}
                         type="button"
                         onClick={() => setActorFilter(isActive ? "" : actor.name)}
-                        className={`inline-flex items-center gap-2 rounded-full border-2 px-3 py-1.5 text-xs font-black transition ${
+                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold transition ${
                           isActive
                             ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white"
                             : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-3)] hover:border-[var(--brand-primary)]"
@@ -440,11 +440,11 @@ function AuditoriaPageContent() {
                 {actorFilter && (
                   <p className="mt-2.5 text-xs font-bold text-[var(--brand-ink-2)]/65">
                     Mostrando solo lo que hizo{" "}
-                    <span className="font-black text-[var(--brand-primary)]">{actorFilter}</span>.{" "}
+                    <span className="font-bold text-[var(--brand-primary)]">{actorFilter}</span>.{" "}
                     <button
                       type="button"
                       onClick={() => setActorFilter("")}
-                      className="font-black text-[var(--brand-primary)] underline"
+                      className="font-bold text-[var(--brand-primary)] underline"
                     >
                       Ver a todos
                     </button>
@@ -454,7 +454,7 @@ function AuditoriaPageContent() {
             )}
 
             {error && (
-              <p className="mt-3 rounded-2xl border-2 border-red-300 bg-red-50 px-4 py-3 font-bold text-red-700">
+              <p className="mt-3 rounded-2xl border border-red-300 bg-red-50 px-4 py-3 font-bold text-red-700">
                 {error}
               </p>
             )}
@@ -464,8 +464,8 @@ function AuditoriaPageContent() {
                 <Loader2 className="animate-spin" size={18} /> Cargando…
               </p>
             ) : visibleLogs.length === 0 ? (
-              <div className="mt-6 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-6 text-center">
-                <p className="font-black uppercase tracking-[0.1em] text-[var(--brand-ink-3)]">
+              <div className="mt-6 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-6 text-center">
+                <p className="font-bold uppercase tracking-[0.1em] text-[var(--brand-ink-3)]">
                   Sin registros
                 </p>
                 <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/60">
@@ -477,7 +477,7 @@ function AuditoriaPageContent() {
                 {groups.map(([dayKey, dayLogs]) => (
                   <section key={dayKey}>
                     <div className="sticky top-0 z-10 -mx-1 mb-2 bg-[var(--brand-cream)]/95 px-1 py-1 backdrop-blur">
-                      <h2 className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.12em] text-white">
+                      <h2 className="inline-flex items-center gap-2 rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-white">
                         {dayLabel(dayKey)}
                         <span className="text-white/70">· {dayLogs.length}</span>
                       </h2>
@@ -493,10 +493,10 @@ function AuditoriaPageContent() {
                         return (
                           <li
                             key={log.id}
-                            className="flex gap-3 rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-white p-3.5"
+                            className="flex gap-3 rounded-2xl border border-[var(--brand-primary)]/15 bg-white p-3.5"
                           >
                             <span
-                              className={`mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 ${category.ring}`}
+                              className={`mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${category.ring}`}
                               title={category.label}
                             >
                               <Icon size={17} />
@@ -504,7 +504,7 @@ function AuditoriaPageContent() {
 
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-                                <p className="text-sm font-black text-[var(--brand-primary)]">
+                                <p className="text-sm font-bold text-[var(--brand-primary)]">
                                   {actorName(log)}
                                 </p>
                                 <span className="text-[0.7rem] font-bold text-[var(--brand-ink-2)]/55">
@@ -513,7 +513,7 @@ function AuditoriaPageContent() {
                               </div>
 
                               <p className="mt-0.5 text-xs font-bold text-[var(--brand-ink-2)]/75">
-                                <span className="font-black text-[var(--brand-ink-3)]">
+                                <span className="font-bold text-[var(--brand-ink-3)]">
                                   {log.actionLabel}
                                 </span>
                                 {entityLabel ? ` · ${entityLabel}` : ""}

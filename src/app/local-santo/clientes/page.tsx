@@ -514,23 +514,23 @@ function FrequentCustomersPageContent() {
   if (!adminPassword) {
     return (
       <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-6 text-[var(--brand-ink-3)]">
-        <section className="mx-auto max-w-xl rounded-[1.5rem] border-4 border-[var(--brand-primary)] bg-white p-5 shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
+        <section className="mx-auto max-w-xl rounded-[1.5rem] border border-[var(--brand-primary)]/45 bg-white p-5 shadow-sm">
           <a
             href="/admin"
-            className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
           >
             <ArrowLeft size={16} />
             Volver
           </a>
 
-          <div className="mt-5 flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]">
+          <div className="mt-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] text-[var(--brand-ink)]">
             <UserRound size={28} />
           </div>
 
-          <p className="mt-5 text-xs font-black uppercase tracking-[0.28em] text-[var(--brand-primary)]">
+          <p className="mt-5 text-xs font-bold uppercase tracking-[0.28em] text-[var(--brand-primary)]">
             Acceso privado
           </p>
-          <h1 className="mt-2 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+          <h1 className="font-serif mt-2 text-4xl leading-tight text-[var(--brand-ink-3)] font-semibold">
             Clientes frecuentes
           </h1>
           <p className="mt-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -545,7 +545,7 @@ function FrequentCustomersPageContent() {
               onKeyDown={(event) => {
                 if (event.key === "Enter") handleLogin()
               }}
-              className="rounded-2xl border-2 border-[var(--brand-primary)]/30 bg-[var(--brand-cream)] px-4 py-3 text-sm font-black outline-none focus:border-[var(--brand-primary)]"
+              className="rounded-2xl border border-[var(--brand-primary)]/30 bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
               placeholder="Clave privada"
             />
 
@@ -553,7 +553,7 @@ function FrequentCustomersPageContent() {
               type="button"
               onClick={handleLogin}
               disabled={isLoading || !passwordInput.trim()}
-              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
             >
               {isLoading ? <Loader2 size={16} className="animate-spin" /> : <LogIn size={16} />}
               Entrar
@@ -561,7 +561,7 @@ function FrequentCustomersPageContent() {
           </div>
 
           {errorMessage && (
-            <p className="mt-4 rounded-2xl border-2 border-red-300 bg-red-50 px-4 py-3 text-sm font-black text-red-700">
+            <p className="mt-4 rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
               {errorMessage}
             </p>
           )}
@@ -573,7 +573,7 @@ function FrequentCustomersPageContent() {
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-3 py-4 text-[var(--brand-ink-3)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <header className="overflow-hidden rounded-[1.6rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
+        <header className="overflow-hidden rounded-[1.6rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
           <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="p-4 sm:p-5">
@@ -582,7 +582,7 @@ function FrequentCustomersPageContent() {
                 <div className="flex flex-wrap gap-2">
                   <a
                     href="/admin"
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     <ArrowLeft size={16} />
                     Volver al panel
@@ -592,7 +592,7 @@ function FrequentCustomersPageContent() {
                     type="button"
                     onClick={() => loadCustomers()}
                     disabled={isLoading}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
                   >
                     {isLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                     Actualizar
@@ -601,17 +601,17 @@ function FrequentCustomersPageContent() {
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     Cerrar sesión
                   </button>
                 </div>
 
-                <p className="mt-4 text-xs font-black uppercase tracking-[0.32em] text-[var(--brand-primary)]">
+                <p className="mt-4 text-xs font-bold uppercase tracking-[0.32em] text-[var(--brand-primary)]">
                   {businessConfig.businessName}
                 </p>
 
-                <h1 className="mt-1 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl">
+                <h1 className="font-serif mt-1 text-4xl leading-tight text-[var(--brand-ink-3)] sm:text-5xl font-semibold">
                   Clientes frecuentes
                 </h1>
 
@@ -633,13 +633,13 @@ function FrequentCustomersPageContent() {
         </header>
 
         {!canUseCustomers && (
-          <section className="mt-4 rounded-[1.4rem] border-2 border-yellow-400 bg-[var(--brand-accent-100)] p-4">
+          <section className="mt-4 rounded-[1.4rem] border border-yellow-400 bg-[var(--brand-accent-100)] p-4">
             <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] text-[var(--brand-ink)]">
                 <ShieldAlert size={22} />
               </div>
               <div>
-                <p className="text-sm font-black uppercase tracking-[0.16em] text-[var(--brand-amber)]">
+                <p className="text-sm font-bold uppercase tracking-[0.16em] text-[var(--brand-amber)]">
                   Módulo no activo
                 </p>
                 <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
@@ -652,10 +652,10 @@ function FrequentCustomersPageContent() {
 
         {canUseCustomers && (
           <>
-            <section className="sticky top-0 z-20 mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-white p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+            <section className="sticky top-0 z-20 mt-4 rounded-[1.4rem] border border-[var(--brand-primary)]/40 bg-white p-3 shadow-sm">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Seguimiento de clientes
                   </p>
                   <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
@@ -663,29 +663,29 @@ function FrequentCustomersPageContent() {
                   </p>
                 </div>
 
-                <label className="flex min-w-0 items-center gap-2 rounded-full border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-2">
+                <label className="flex min-w-0 items-center gap-2 rounded-full border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-2">
                   <Search size={16} className="text-[var(--brand-primary)]" />
                   <input
                     value={searchText}
                     onChange={(event) => setSearchText(event.target.value)}
                     placeholder="Buscar por nombre, teléfono o producto"
-                    className="min-w-0 flex-1 bg-transparent text-sm font-black text-[var(--brand-ink-2)] outline-none placeholder:text-[var(--brand-ink-2)]/45"
+                    className="min-w-0 flex-1 bg-transparent text-sm font-bold text-[var(--brand-ink-2)] outline-none placeholder:text-[var(--brand-ink-2)]/45"
                   />
                 </label>
               </div>
             </section>
 
             {topCustomer && (
-              <section className="mt-4 rounded-[1.6rem] border-4 border-[var(--brand-primary)] bg-[var(--brand-accent)] p-4 text-[var(--brand-ink)] shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
+              <section className="mt-4 rounded-[1.6rem] border border-[var(--brand-primary)]/45 bg-[var(--brand-accent)] p-4 text-[var(--brand-ink)] shadow-sm">
                 <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
                   <div>
-                    <p className="text-xs font-black uppercase tracking-[0.22em]">
+                    <p className="text-xs font-bold uppercase tracking-[0.22em]">
                       Cliente con más movimiento
                     </p>
-                    <h2 className="mt-2 text-3xl font-black uppercase leading-none sm:text-4xl">
+                    <h2 className="font-serif mt-2 text-3xl leading-tight sm:text-4xl font-semibold">
                       {topCustomer.name}
                     </h2>
-                    <p className="mt-2 text-sm font-black">
+                    <p className="mt-2 text-sm font-bold">
                       {topCustomer.orderCount} pedido(s) · {formatUSD(topCustomer.totalSpentUSD)} · Último pedido {formatDate(topCustomer.lastOrderAt)}
                     </p>
                   </div>
@@ -695,13 +695,13 @@ function FrequentCustomersPageContent() {
                       href={buildWhatsAppUrl(topCustomer)}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-cream)]"
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-cream)]"
                     >
                       <MessageCircle size={16} />
                       Escribir por WhatsApp
                     </a>
                   ) : (
-                    <span className="rounded-full border-2 border-[var(--brand-primary)]/40 bg-white/50 px-5 py-3 text-center text-xs font-black uppercase tracking-[0.14em]">
+                    <span className="rounded-full border border-[var(--brand-primary)]/40 bg-white/50 px-5 py-3 text-center text-xs font-bold uppercase tracking-[0.14em]">
                       Sin WhatsApp válido
                     </span>
                   )}
@@ -716,19 +716,19 @@ function FrequentCustomersPageContent() {
                 return (
                   <article
                     key={customer.key}
-                    className="rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_7px_0_rgba(var(--brand-primary-rgb),0.10)]"
+                    className="rounded-[1.5rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm"
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] text-[var(--brand-ink)]">
                         {index === 0 ? <Star size={22} /> : <UserRound size={22} />}
                       </div>
 
-                      <span className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-3 py-1 text-[0.58rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                      <span className="rounded-full border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-3 py-1 text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
                         {customer.orderCount} pedido(s)
                       </span>
                     </div>
 
-                    <h2 className="mt-4 text-2xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_2px_0_rgba(var(--brand-accent-rgb),0.75)]">
+                    <h2 className="font-serif mt-4 text-2xl leading-tight text-[var(--brand-ink-3)] font-semibold">
                       {customer.name}
                     </h2>
 
@@ -747,11 +747,11 @@ function FrequentCustomersPageContent() {
                       </p>
                     </div>
 
-                    <div className="mt-4 rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3">
-                      <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <div className="mt-4 rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3">
+                      <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                         Preferencias
                       </p>
-                      <p className="mt-1 text-sm font-black text-[var(--brand-ink-2)]">
+                      <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]">
                         Tipo frecuente: {customer.preferredType}
                       </p>
 
@@ -760,7 +760,7 @@ function FrequentCustomersPageContent() {
                           customer.products.map((product) => (
                             <span
                               key={product.name}
-                              className="rounded-full border border-[var(--brand-primary)]/20 bg-white px-3 py-1 text-[0.68rem] font-black text-[var(--brand-primary)]"
+                              className="rounded-full border border-[var(--brand-primary)]/20 bg-white px-3 py-1 text-[0.68rem] font-bold text-[var(--brand-primary)]"
                             >
                               {product.name} x{product.quantity}
                             </span>
@@ -778,13 +778,13 @@ function FrequentCustomersPageContent() {
                         href={whatsappUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+                        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-3 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
                       >
                         <MessageCircle size={16} />
                         Escribir por WhatsApp
                       </a>
                     ) : (
-                      <div className="mt-4 rounded-full border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-3 text-center text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]/70">
+                      <div className="mt-4 rounded-full border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-3 text-center text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]/70">
                         Teléfono no válido para WhatsApp
                       </div>
                     )}
@@ -794,8 +794,8 @@ function FrequentCustomersPageContent() {
             </section>
 
             {!filteredCustomers.length && (
-              <section className="mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)]/20 bg-white p-5 text-center">
-                <p className="text-sm font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <section className="mt-4 rounded-[1.4rem] border border-[var(--brand-primary)]/20 bg-white p-5 text-center">
+                <p className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   Sin clientes para mostrar
                 </p>
                 <p className="mt-2 text-sm font-bold text-[var(--brand-ink-2)]/65">
@@ -807,7 +807,7 @@ function FrequentCustomersPageContent() {
         )}
 
         {errorMessage && (
-          <section className="mt-4 rounded-[1.4rem] border-2 border-red-300 bg-red-50 p-4 text-sm font-black text-red-700">
+          <section className="mt-4 rounded-[1.4rem] border border-red-300 bg-red-50 p-4 text-sm font-bold text-red-700">
             {errorMessage}
           </section>
         )}
@@ -835,11 +835,11 @@ function MetricCard({
           : "border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] text-[var(--brand-primary)]"
 
   return (
-    <div className={`rounded-2xl border-2 p-3 ${toneClass}`}>
-      <p className="text-[0.58rem] font-black uppercase tracking-[0.16em] opacity-75">
+    <div className={`rounded-2xl border p-3 ${toneClass}`}>
+      <p className="text-[0.58rem] font-bold uppercase tracking-[0.16em] opacity-75">
         {label}
       </p>
-      <p className="mt-1 text-2xl font-black leading-none">{value}</p>
+      <p className="mt-1 text-2xl font-bold leading-none">{value}</p>
     </div>
   )
 }

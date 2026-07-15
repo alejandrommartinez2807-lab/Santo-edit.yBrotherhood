@@ -15,11 +15,11 @@ import {
 
 export function MetricCard({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] p-3 text-[var(--brand-primary)]">
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em]">
+    <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] p-3 text-[var(--brand-primary)]">
+      <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em]">
         {label}
       </p>
-      <p className="mt-1 text-2xl font-black leading-tight">{value}</p>
+      <p className="mt-1 text-2xl font-bold leading-tight">{value}</p>
     </div>
   )
 }
@@ -39,7 +39,7 @@ export function InputField({
 }) {
   return (
     <div>
-      <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+      <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
         {label}
       </label>
       <input
@@ -47,7 +47,7 @@ export function InputField({
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         inputMode={inputMode}
-        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+        className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
       />
     </div>
   )
@@ -68,7 +68,7 @@ export function AdvancedTextArea({
 }) {
   return (
     <div>
-      <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+      <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
         {label}
       </label>
       <textarea
@@ -76,7 +76,7 @@ export function AdvancedTextArea({
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         rows={7}
-        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+        className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
       />
       {helper && (
         <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/58">
@@ -106,14 +106,14 @@ export function ToggleCard({
     <button
       type="button"
       onClick={() => onChange(!checked)}
-      className={`group flex min-h-[76px] items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 text-left transition active:scale-[0.99] ${
+      className={`group flex min-h-[76px] items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition active:scale-[0.99] ${
         checked
-          ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] shadow-[0_3px_0_rgba(var(--brand-primary-rgb),0.10)]"
+          ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] shadow-sm"
           : "border-[var(--brand-primary)]/35 bg-white text-[var(--brand-primary)] hover:border-[var(--brand-primary)] hover:bg-yellow-50"
       }`}
     >
       <span className="min-w-0">
-        <span className="block text-xs font-black uppercase leading-tight tracking-[0.13em]">
+        <span className="block text-xs font-bold uppercase leading-tight tracking-[0.13em]">
           {title}
         </span>
         <span className="mt-1 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/58">
@@ -122,7 +122,7 @@ export function ToggleCard({
       </span>
 
       <span
-        className={`inline-flex h-8 shrink-0 items-center rounded-xl border-2 px-3 text-[0.58rem] font-black uppercase tracking-[0.09em] ${
+        className={`inline-flex h-8 shrink-0 items-center rounded-xl border px-3 text-[0.58rem] font-bold uppercase tracking-[0.09em] ${
           checked
             ? "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)]"
             : "border-[var(--brand-primary)]/30 bg-[var(--brand-cream)] text-[var(--brand-primary)]/65"
@@ -135,10 +135,10 @@ export function ToggleCard({
 }
 
 const ROW_INPUT_CLASS =
-  "w-full rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]"
+  "w-full rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]"
 
 const SECTION_CLASS =
-  "rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4"
+  "rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4"
 
 function SectionHeader({
   title,
@@ -154,7 +154,7 @@ function SectionHeader({
   return (
     <div className="flex flex-wrap items-start justify-between gap-2">
       <div>
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
           {title}
         </p>
         {helper && (
@@ -164,7 +164,7 @@ function SectionHeader({
       <button
         type="button"
         onClick={onAdd}
-        className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink)]"
+        className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-3 py-1.5 text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-ink)]"
       >
         <Plus size={14} />
         {addLabel}
@@ -191,7 +191,7 @@ function IconButton({
       disabled={disabled}
       aria-label={label}
       title={label}
-      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border-2 border-[var(--brand-primary)]/30 bg-white text-[var(--brand-primary)] disabled:opacity-35"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--brand-primary)]/30 bg-white text-[var(--brand-primary)] disabled:opacity-35"
     >
       {children}
     </button>
@@ -234,7 +234,7 @@ export function VariationsBuilder({
 
       <div className="mt-3 space-y-4">
         {groups.map((group, groupIndex) => (
-          <div key={group.id || groupIndex} className="rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white p-3">
+          <div key={group.id || groupIndex} className="rounded-2xl border border-[var(--brand-primary)]/25 bg-white p-3">
             <div className="flex flex-wrap items-center gap-2">
               <input
                 value={group.name}
@@ -254,13 +254,13 @@ export function VariationsBuilder({
             </div>
 
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <div className="inline-flex overflow-hidden rounded-xl border-2 border-[var(--brand-primary)]/25">
+              <div className="inline-flex overflow-hidden rounded-xl border border-[var(--brand-primary)]/25">
                 {(["single", "multiple"] as const).map((type) => (
                   <button
                     key={type}
                     type="button"
                     onClick={() => onUpdateGroup(groupIndex, { type })}
-                    className={`px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] ${
+                    className={`px-3 py-1.5 text-[0.62rem] font-bold uppercase tracking-[0.1em] ${
                       group.type === type
                         ? "bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                         : "bg-white text-[var(--brand-primary)]"
@@ -274,7 +274,7 @@ export function VariationsBuilder({
               <button
                 type="button"
                 onClick={() => onUpdateGroup(groupIndex, { required: !group.required })}
-                className={`rounded-xl border-2 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] ${
+                className={`rounded-xl border px-3 py-1.5 text-[0.62rem] font-bold uppercase tracking-[0.1em] ${
                   group.required
                     ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                     : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-primary)]"
@@ -284,7 +284,7 @@ export function VariationsBuilder({
               </button>
 
               {group.type === "multiple" && (
-                <label className="inline-flex items-center gap-1 text-[0.62rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]">
+                <label className="inline-flex items-center gap-1 text-[0.62rem] font-bold uppercase tracking-[0.08em] text-[var(--brand-primary)]">
                   Máx
                   <input
                     value={group.maxSelections ? String(group.maxSelections) : ""}
@@ -308,7 +308,7 @@ export function VariationsBuilder({
                     placeholder="Opción (ej: Grande)"
                     className={`${ROW_INPUT_CLASS} flex-1 min-w-[140px]`}
                   />
-                  <label className="inline-flex items-center gap-1 text-[0.62rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]">
+                  <label className="inline-flex items-center gap-1 text-[0.62rem] font-bold uppercase tracking-[0.08em] text-[var(--brand-primary)]">
                     ± USD
                     <input
                       value={value.priceDelta ? String(value.priceDelta) : ""}
@@ -323,7 +323,7 @@ export function VariationsBuilder({
                   <button
                     type="button"
                     onClick={() => onUpdateValue(groupIndex, valueIndex, { isActive: value.isActive === false })}
-                    className={`rounded-lg border-2 px-2 py-1.5 text-[0.55rem] font-black uppercase tracking-[0.08em] ${
+                    className={`rounded-lg border px-2 py-1.5 text-[0.55rem] font-bold uppercase tracking-[0.08em] ${
                       value.isActive === false
                         ? "border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] text-[var(--brand-primary)]/55"
                         : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)]"
@@ -340,7 +340,7 @@ export function VariationsBuilder({
               <button
                 type="button"
                 onClick={() => onAddValue(groupIndex)}
-                className="inline-flex items-center gap-1 rounded-full border-2 border-dashed border-[var(--brand-primary)]/40 bg-white px-3 py-1.5 text-[0.6rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]"
+                className="inline-flex items-center gap-1 rounded-full border border-dashed border-[var(--brand-primary)]/40 bg-white px-3 py-1.5 text-[0.6rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]"
               >
                 <Plus size={13} />
                 Agregar opción
@@ -381,7 +381,7 @@ export function AddonsBuilder({
 
       <div className="mt-3 space-y-2">
         {addons.map((addon, index) => (
-          <div key={addon.id || index} className="flex flex-wrap items-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white p-2">
+          <div key={addon.id || index} className="flex flex-wrap items-center gap-2 rounded-2xl border border-[var(--brand-primary)]/25 bg-white p-2">
             <input
               value={addon.name}
               onChange={(event) => onUpdate(index, { name: event.target.value })}
@@ -394,7 +394,7 @@ export function AddonsBuilder({
               placeholder="Categoría"
               className={`${ROW_INPUT_CLASS} w-28`}
             />
-            <label className="inline-flex items-center gap-1 text-[0.62rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]">
+            <label className="inline-flex items-center gap-1 text-[0.62rem] font-bold uppercase tracking-[0.08em] text-[var(--brand-primary)]">
               USD
               <input
                 value={addon.price ? String(addon.price) : ""}
@@ -404,7 +404,7 @@ export function AddonsBuilder({
                 className={`${ROW_INPUT_CLASS} w-20`}
               />
             </label>
-            <label className="inline-flex items-center gap-1 text-[0.62rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]">
+            <label className="inline-flex items-center gap-1 text-[0.62rem] font-bold uppercase tracking-[0.08em] text-[var(--brand-primary)]">
               Máx
               <input
                 value={addon.maxQuantity ? String(addon.maxQuantity) : ""}
@@ -453,7 +453,7 @@ export function IngredientsBuilder({
 
       <div className="mt-3 space-y-2">
         {rows.map((row, index) => (
-          <div key={row.id || index} className="flex flex-wrap items-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white p-2">
+          <div key={row.id || index} className="flex flex-wrap items-center gap-2 rounded-2xl border border-[var(--brand-primary)]/25 bg-white p-2">
             <input
               value={row.name}
               onChange={(event) => onUpdate(index, { name: event.target.value })}
@@ -484,7 +484,7 @@ export function IngredientsBuilder({
             )}
 
             {inventoryOptions.length > 0 && row.inventoryItemId && (
-              <label className="inline-flex items-center gap-1 text-[0.62rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]">
+              <label className="inline-flex items-center gap-1 text-[0.62rem] font-bold uppercase tracking-[0.08em] text-[var(--brand-primary)]">
                 Cant.
                 <input
                   value={row.inventoryQuantity ? String(row.inventoryQuantity) : ""}
@@ -498,7 +498,7 @@ export function IngredientsBuilder({
             )}
 
             {showExtraPrice && (
-              <label className="inline-flex items-center gap-1 text-[0.62rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]">
+              <label className="inline-flex items-center gap-1 text-[0.62rem] font-bold uppercase tracking-[0.08em] text-[var(--brand-primary)]">
                 Extra USD
                 <input
                   value={row.extraPrice ? String(row.extraPrice) : ""}
@@ -556,7 +556,7 @@ export function ComboBuilder({
 
       <div className="mt-3 space-y-2">
         {rows.map((row, index) => (
-          <div key={row.id || index} className="flex flex-wrap items-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white p-2">
+          <div key={row.id || index} className="flex flex-wrap items-center gap-2 rounded-2xl border border-[var(--brand-primary)]/25 bg-white p-2">
             <select
               value={row.productId ? String(row.productId) : ""}
               onChange={(event) => {
@@ -583,7 +583,7 @@ export function ComboBuilder({
               placeholder="Nombre visible (ej: Hamburguesa clásica)"
               className={`${ROW_INPUT_CLASS} flex-1 min-w-[150px]`}
             />
-            <label className="inline-flex items-center gap-1 text-[0.62rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]">
+            <label className="inline-flex items-center gap-1 text-[0.62rem] font-bold uppercase tracking-[0.08em] text-[var(--brand-primary)]">
               Cant.
               <input
                 value={row.quantity ? String(row.quantity) : ""}

@@ -1793,7 +1793,7 @@ export default function OwnerDashboardPage() {
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-3 py-4 text-[var(--brand-ink-3)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <header className="overflow-hidden rounded-[1.6rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
+        <header className="overflow-hidden rounded-[1.6rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
           <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="p-4 sm:p-5">
@@ -1802,7 +1802,7 @@ export default function OwnerDashboardPage() {
                 <div className="flex flex-wrap gap-2">
                   <a
                     href="/admin"
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     <ArrowLeft size={16} />
                     Volver al panel
@@ -1812,7 +1812,7 @@ export default function OwnerDashboardPage() {
                     type="button"
                     onClick={() => loadDashboardData()}
                     disabled={isLoading}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
                   >
                     {isLoading ? (
                       <Loader2 size={16} className="animate-spin" />
@@ -1825,17 +1825,17 @@ export default function OwnerDashboardPage() {
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     Cerrar sesión
                   </button>
                 </div>
 
-                <p className="mt-4 text-xs font-black uppercase tracking-[0.32em] text-[var(--brand-primary)]">
+                <p className="mt-4 text-xs font-bold uppercase tracking-[0.32em] text-[var(--brand-primary)]">
                   {BRAND.name}
                 </p>
 
-                <h1 className="mt-1 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl">
+                <h1 className="font-serif mt-1 text-4xl leading-tight text-[var(--brand-ink-3)] sm:text-5xl font-semibold">
                   Resumen del dueño
                 </h1>
 
@@ -1869,10 +1869,10 @@ export default function OwnerDashboardPage() {
           </div>
         </header>
 
-        <section className="sticky top-0 z-30 mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-white p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+        <section className="sticky top-0 z-30 mt-4 rounded-[1.4rem] border border-[var(--brand-primary)]/40 bg-white p-3 shadow-sm">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Vista del resumen
               </p>
               <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
@@ -1883,7 +1883,7 @@ export default function OwnerDashboardPage() {
             <button
               type="button"
               onClick={() => setAreControlsVisible((currentValue) => !currentValue)}
-              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
             >
               {areControlsVisible ? <EyeOff size={16} /> : <Eye size={16} />}
               {areControlsVisible ? "Ocultar filtros" : "Mostrar filtros"}
@@ -1916,7 +1916,7 @@ export default function OwnerDashboardPage() {
               </div>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[var(--brand-ink-2)]/60">
+                <span className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[var(--brand-ink-2)]/60">
                   Alcance
                 </span>
                 <button
@@ -1927,7 +1927,7 @@ export default function OwnerDashboardPage() {
                     loadDashboardData(adminPassword, nextConsolidated)
                   }}
                   disabled={isLoading}
-                  className={`inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition disabled:opacity-50 ${
+                  className={`inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] transition disabled:opacity-50 ${
                     consolidated
                       ? "bg-[var(--brand-primary)] text-white"
                       : "bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
@@ -1965,14 +1965,14 @@ export default function OwnerDashboardPage() {
                   value={searchText}
                   onChange={(event) => setSearchText(event.target.value)}
                   placeholder="Buscar en pedidos que requieren revisión"
-                  className="w-full rounded-full border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                  className="w-full rounded-full border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                 />
               </div>
             </>
           )}
 
           {errorMessage && (
-            <div className="mt-3 rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
+            <div className="mt-3 rounded-2xl border border-red-500/35 bg-red-100 px-4 py-3">
               <p className="text-sm font-bold leading-6 text-red-800">
                 {errorMessage}
               </p>
@@ -2248,8 +2248,8 @@ export default function OwnerDashboardPage() {
             description="Lista rápida de pedidos con pago pendiente, pago parcial, listos sin entregar, cancelados o delivery reportado."
           >
             {filteredAttentionOrders.length === 0 ? (
-              <div className="rounded-[1.2rem] border-2 border-green-500 bg-green-50 p-4 text-green-800">
-                <p className="text-sm font-black uppercase tracking-[0.14em]">
+              <div className="rounded-[1.2rem] border border-green-500 bg-green-50 p-4 text-green-800">
+                <p className="text-sm font-bold uppercase tracking-[0.14em]">
                   Sin pedidos pendientes de revisión
                 </p>
                 <p className="mt-2 text-sm font-bold leading-6">
@@ -2287,13 +2287,13 @@ function LoginBox({
 }) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-3)]">
-      <div className="w-full max-w-md overflow-hidden rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.14)]">
+      <div className="w-full max-w-md overflow-hidden rounded-[2rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
         <div className="h-6 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
         <div className="px-6 py-6">
           <a
             href="/admin"
-            className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
           >
             <ArrowLeft size={16} />
             Volver
@@ -2308,11 +2308,11 @@ function LoginBox({
             className="mx-auto mt-6 h-28 w-28 object-contain"
           />
 
-          <p className="mt-5 text-center text-xs font-black uppercase tracking-[0.28em] text-[var(--brand-primary)]">
+          <p className="mt-5 text-center text-xs font-bold uppercase tracking-[0.28em] text-[var(--brand-primary)]">
             Acceso privado
           </p>
 
-          <h1 className="mt-2 text-center text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+          <h1 className="font-serif mt-2 text-center text-4xl leading-tight text-[var(--brand-ink-3)] font-semibold">
             Resumen del dueño
           </h1>
 
@@ -2323,7 +2323,7 @@ function LoginBox({
 
         <div className="space-y-4 px-6 pb-6">
           <div>
-            <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+            <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
               Clave de acceso
             </label>
 
@@ -2336,7 +2336,7 @@ function LoginBox({
                   if (event.key === "Enter") handleLogin()
                 }}
                 placeholder="Ingresa la clave del local"
-                className="w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                className="w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
               />
 
               <button
@@ -2350,7 +2350,7 @@ function LoginBox({
           </div>
 
           {errorMessage && (
-            <div className="rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
+            <div className="rounded-2xl border border-red-500/35 bg-red-100 px-4 py-3">
               <p className="text-sm font-bold leading-6 text-red-800">
                 {errorMessage}
               </p>
@@ -2360,7 +2360,7 @@ function LoginBox({
           <button
             type="button"
             onClick={handleLogin}
-            className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-[1.02]"
+            className="flex w-full items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-sm transition hover:scale-[1.02]"
           >
             <LogIn size={21} />
             Entrar al resumen
@@ -2384,7 +2384,7 @@ function RangeButton({
     <button
       type="button"
       onClick={onClick}
-      className={`shrink-0 rounded-full border-2 px-4 py-3 text-[0.68rem] font-black uppercase tracking-[0.1em] transition ${
+      className={`shrink-0 rounded-full border px-4 py-3 text-[0.68rem] font-bold uppercase tracking-[0.1em] transition ${
         active
           ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
           : "border-[var(--brand-primary)]/35 bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
@@ -2406,14 +2406,14 @@ function DateFilterInput({
 }) {
   return (
     <label className="block">
-      <span className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+      <span className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
         {label}
       </span>
       <input
         type="date"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-black text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+        className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
       />
     </label>
   )
@@ -2436,11 +2436,11 @@ function MetricCard({
         : "border-[var(--brand-primary)]/20 bg-[var(--brand-cream)]"
 
   return (
-    <div className={`rounded-[1.2rem] border-2 px-4 py-3 ${toneClass}`}>
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+    <div className={`rounded-[1.2rem] border px-4 py-3 ${toneClass}`}>
+      <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
         {label}
       </p>
-      <p className="mt-1 break-words text-xl font-black text-[var(--brand-ink-3)]">
+      <p className="mt-1 break-words text-xl font-bold text-[var(--brand-ink-3)]">
         {value}
       </p>
     </div>
@@ -2468,17 +2468,17 @@ function BigMetricCard({
         : "border-[var(--brand-primary)] bg-white"
 
   return (
-    <article className={`rounded-[1.5rem] border-2 p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)] ${toneClass}`}>
+    <article className={`rounded-[1.5rem] border p-4 shadow-sm ${toneClass}`}>
       <div className="flex items-start gap-3">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] text-[var(--brand-ink)]">
           {icon}
         </div>
 
         <div className="min-w-0">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
             {title}
           </p>
-          <p className="mt-2 break-words text-3xl font-black leading-none text-[var(--brand-ink-3)]">
+          <p className="mt-2 break-words text-3xl font-bold leading-none text-[var(--brand-ink-3)]">
             {mainValue}
           </p>
           <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -2500,9 +2500,9 @@ function PanelCard({
   children: ReactNode
 }) {
   return (
-    <section className="rounded-[1.6rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+    <section className="rounded-[1.6rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm">
       <div className="mb-4">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
           {title}
         </p>
         <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -2517,11 +2517,11 @@ function PanelCard({
 
 function InfoBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3">
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+    <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3">
+      <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
         {label}
       </p>
-      <p className="mt-1 break-words text-sm font-black text-[var(--brand-ink-3)]">
+      <p className="mt-1 break-words text-sm font-bold text-[var(--brand-ink-3)]">
         {value || "—"}
       </p>
     </div>
@@ -2548,9 +2548,9 @@ function AlertCard({ alert }: { alert: DashboardAlert }) {
           : "bg-white text-[var(--brand-primary)]"
 
   return (
-    <div className={`rounded-2xl border-2 p-4 ${toneClass}`}>
+    <div className={`rounded-2xl border p-4 ${toneClass}`}>
       <div className="flex gap-3">
-        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-current ${iconClass}`}>
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-current ${iconClass}`}>
           {alert.tone === "good" ? (
             <CheckCircle2 size={20} />
           ) : (
@@ -2560,11 +2560,11 @@ function AlertCard({ alert }: { alert: DashboardAlert }) {
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-            <p className="text-sm font-black uppercase leading-5">
+            <p className="text-sm font-bold uppercase leading-5">
               {alert.title}
             </p>
             {alert.value && (
-              <p className="shrink-0 text-sm font-black text-[var(--brand-primary)]">
+              <p className="shrink-0 text-sm font-bold text-[var(--brand-primary)]">
                 {alert.value}
               </p>
             )}
@@ -2607,7 +2607,7 @@ function RankingList({
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="break-words text-sm font-black uppercase text-[var(--brand-ink-3)]">
+                  <p className="break-words text-sm font-bold uppercase text-[var(--brand-ink-3)]">
                     {index + 1}. {item.label}
                   </p>
                   <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/60">
@@ -2616,11 +2616,11 @@ function RankingList({
                 </div>
 
                 <div className="shrink-0 text-right">
-                  <p className="text-base font-black text-[var(--brand-primary)]">
+                  <p className="text-base font-bold text-[var(--brand-primary)]">
                     {item.value}
                   </p>
                   {item.subValue && (
-                    <p className="mt-1 text-xs font-black text-[var(--brand-ink-2)]/65">
+                    <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
                       {item.subValue}
                     </p>
                   )}
@@ -2648,7 +2648,7 @@ function QuickReadLine({
       <div className="flex gap-3">
         <div className="mt-0.5 text-[var(--brand-primary)]">{icon}</div>
         <div>
-          <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+          <p className="text-[0.68rem] font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
             {label}
           </p>
           <p className="mt-1 text-sm font-bold leading-5 text-[var(--brand-ink-3)]">
@@ -2679,27 +2679,27 @@ function AttentionOrderCard({ order }: { order: LocalOrder }) {
     )
 
   return (
-    <article className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4">
+    <article className="rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-3 py-1 text-xs font-black uppercase text-[var(--brand-primary)]">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-3 py-1 text-xs font-bold uppercase text-[var(--brand-primary)]">
               {statusIcon}
               {getDisplayOrderNumber(order)}
             </span>
 
-            <span className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1 text-xs font-black uppercase text-[var(--brand-ink-2)]">
+            <span className="rounded-full border border-[var(--brand-primary)]/25 bg-white px-3 py-1 text-xs font-bold uppercase text-[var(--brand-ink-2)]">
               {payment.status}
             </span>
 
             {isReportedDelivery && (
-              <span className="rounded-full border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-3 py-1 text-xs font-black uppercase text-[var(--brand-amber)]">
+              <span className="rounded-full border border-yellow-400 bg-[var(--brand-accent-100)] px-3 py-1 text-xs font-bold uppercase text-[var(--brand-amber)]">
                 Delivery reportado
               </span>
             )}
           </div>
 
-          <h3 className="mt-3 text-xl font-black uppercase text-[var(--brand-ink-3)]">
+          <h3 className="mt-3 text-xl font-bold uppercase text-[var(--brand-ink-3)]">
             {order.customerName || "Cliente"}
           </h3>
 
@@ -2708,14 +2708,14 @@ function AttentionOrderCard({ order }: { order: LocalOrder }) {
           </p>
         </div>
 
-        <div className="rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-right">
-          <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+        <div className="rounded-2xl border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-right">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
             Total
           </p>
-          <p className="mt-1 text-xl font-black text-[var(--brand-ink-3)]">
+          <p className="mt-1 text-xl font-bold text-[var(--brand-ink-3)]">
             {formatUSD(totals.totalUSD)}
           </p>
-          <p className="mt-1 text-xs font-black text-[var(--brand-ink-2)]/65">
+          <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
             Pendiente {formatUSD(payment.pendingUSD)}
           </p>
         </div>

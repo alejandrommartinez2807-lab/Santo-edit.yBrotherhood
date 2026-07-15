@@ -104,7 +104,7 @@ function ReservasOnlineContent() {
       <div className="mx-auto w-full max-w-3xl">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
         >
           <ArrowLeft size={16} /> Volver al panel
         </Link>
@@ -114,7 +114,7 @@ function ReservasOnlineContent() {
             <Globe size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Reservas online</h1>
+            <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Reservas online</h1>
             <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
               El huésped reserva desde la web; la reserva entra <b>pendiente</b> para que la confirmes.
             </p>
@@ -122,14 +122,14 @@ function ReservasOnlineContent() {
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
             Tu clave no tiene permiso para ver las reservas online, o el módulo está desactivado.
           </p>
         ) : (
           <>
             {/* Enlace público */}
-            <div className="mt-6 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
-              <p className="text-xs font-black uppercase text-[var(--brand-primary)]">Enlace público de reservas</p>
+            <div className="mt-6 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
+              <p className="text-xs font-bold uppercase text-[var(--brand-primary)]">Enlace público de reservas</p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <code className="min-w-0 flex-1 truncate rounded-xl bg-[var(--brand-cream)] px-3 py-2 font-bold text-[var(--brand-ink-3)]">
                   {publicUrl}
@@ -138,7 +138,7 @@ function ReservasOnlineContent() {
                   href="/hotel/reservar"
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 rounded-xl border-2 border-[var(--brand-primary)] bg-white px-3 py-2 text-xs font-black uppercase text-[var(--brand-primary)]"
+                  className="inline-flex items-center gap-1 rounded-xl border border-[var(--brand-primary)]/40 bg-white px-3 py-2 text-xs font-bold uppercase text-[var(--brand-primary)]"
                 >
                   <ExternalLink size={14} /> Abrir
                 </a>
@@ -153,11 +153,11 @@ function ReservasOnlineContent() {
 
             {/* Reservas web */}
             <div className="mt-6 flex items-center justify-between">
-              <h2 className="text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+              <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                 Reservas recibidas por la web
               </h2>
               {pendingCount > 0 && (
-                <span className="rounded-full border-2 border-amber-300 bg-amber-50 px-3 py-1 text-xs font-black uppercase text-amber-700">
+                <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-bold uppercase text-amber-700">
                   {pendingCount} por confirmar
                 </span>
               )}
@@ -168,16 +168,16 @@ function ReservasOnlineContent() {
                 <Loader2 className="animate-spin" size={18} /> Cargando…
               </p>
             ) : webReservations.length === 0 ? (
-              <p className="mt-4 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-4 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
                 Aún no hay reservas hechas desde la web. Comparte el enlace de arriba.
               </p>
             ) : (
               <ul className="mt-4 space-y-3">
                 {webReservations.map((r) => (
-                  <li key={r.id} className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
+                  <li key={r.id} className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-lg font-black text-[var(--brand-ink-3)]">
+                        <p className="text-lg font-bold text-[var(--brand-ink-3)]">
                           {r.guestName}
                           <span className="ml-2 text-sm font-bold text-[var(--brand-ink-2)]/45">#{r.code}</span>
                         </p>
@@ -189,7 +189,7 @@ function ReservasOnlineContent() {
                           {r.guestPhone && <span>{r.guestPhone}</span>}
                         </p>
                       </div>
-                      <span className="rounded-full border-2 border-[var(--brand-primary)]/20 bg-white px-3 py-1.5 text-xs font-black uppercase text-[var(--brand-ink-2)]/70">
+                      <span className="rounded-full border border-[var(--brand-primary)]/20 bg-white px-3 py-1.5 text-xs font-bold uppercase text-[var(--brand-ink-2)]/70">
                         {STATUS_LABELS[r.status] || r.status}
                       </span>
                     </div>

@@ -208,7 +208,7 @@ function ModuleCheckboxes({
         return (
           <label
             key={moduleOption.key}
-            className={`flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-xs font-black uppercase tracking-[0.08em] ${
+            className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] ${
               checked
                 ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                 : "border-[var(--brand-primary)]/20 bg-white text-[var(--brand-ink-2)]/70"
@@ -250,7 +250,7 @@ function BranchCheckboxes({
 
   return (
     <div className="space-y-2">
-      <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/20 bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)]">
+      <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/20 bg-white px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-[var(--brand-ink-2)]">
         <input
           type="checkbox"
           checked={allBranches}
@@ -265,7 +265,7 @@ function BranchCheckboxes({
             return (
               <label
                 key={branch.id}
-                className={`flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-xs font-black uppercase tracking-[0.08em] ${
+                className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] ${
                   checked
                     ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                     : "border-[var(--brand-primary)]/20 bg-white text-[var(--brand-ink-2)]/70"
@@ -315,7 +315,7 @@ function StaffFormFields({
           placeholder="Usuario: maria"
           value={form.username}
           onChange={(e) => setForm({ ...form, username: normalizeStaffUsername(e.target.value) })}
-          className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+          className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
         />
         <input
           required={requirePassword}
@@ -323,14 +323,14 @@ function StaffFormFields({
           placeholder={requirePassword ? "Clave inicial" : "Nueva clave (opcional)"}
           value={form.password}
           onChange={(e) => setForm({ ...form, password: e.target.value })}
-          className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+          className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
         />
         <input
           type="text"
           placeholder="Nombre visible"
           value={form.displayName}
           onChange={(e) => setForm({ ...form, displayName: e.target.value })}
-          className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+          className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
         />
         <select
           value={form.role}
@@ -343,14 +343,14 @@ function StaffFormFields({
               allBranches: role === "owner" || role === "support" ? true : form.allBranches,
             })
           }}
-          className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+          className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
         >
           {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
         </select>
       </div>
 
-      <div className="rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4">
-        <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">Sedes permitidas</p>
+      <div className="rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4">
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]">Sedes permitidas</p>
         <div className="mt-3">
           <BranchCheckboxes
             branches={branches}
@@ -362,10 +362,10 @@ function StaffFormFields({
         </div>
       </div>
 
-      <div className="rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4">
+      <div className="rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">Módulos permitidos</p>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]">Módulos permitidos</p>
             <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/60">
               {form.permissionsMode === "role" ? "Usando permisos del rol." : "Permisos personalizados para este trabajador."}
             </p>
@@ -380,7 +380,7 @@ function StaffFormFields({
                 allowedModules: permissionsMode === "custom" ? visibleModules : getRoleDefaultModules(form.role),
               })
             }}
-            className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.1em] outline-none focus:border-[var(--brand-primary)]"
+            className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.1em] outline-none focus:border-[var(--brand-primary)]"
           >
             <option value="role">Por rol</option>
             <option value="custom">Personalizados</option>
@@ -574,7 +574,7 @@ function UsuariosContent() {
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
       <div className="mx-auto w-full max-w-7xl">
-        <Link href="/admin" className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+        <Link href="/admin" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
           <ArrowLeft size={16} /> Volver al panel
         </Link>
 
@@ -584,51 +584,51 @@ function UsuariosContent() {
               <ShieldCheck size={24} />
             </span>
             <div>
-              <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Usuarios del personal</h1>
+              <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Usuarios del personal</h1>
               <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
                 Crea usuarios simples por nombre, asigna sedes y controla módulos reales.
               </p>
             </div>
           </div>
-          <span className="w-fit rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+          <span className="w-fit rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
             {staff.filter((u) => u.is_active).length} activo(s)
           </span>
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white p-5 text-sm font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/25 bg-white p-5 text-sm font-bold text-[var(--brand-primary)]">
             Solo dueño o soporte pueden gestionar usuarios. Inicia sesión con un usuario autorizado en <Link href="/acceso" className="underline">/acceso</Link>.
           </p>
         ) : (
           <>
-            <form onSubmit={handleCreate} className="mt-6 rounded-[1.6rem] border-2 border-[var(--brand-primary)]/20 bg-white p-5">
-              <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">Nuevo trabajador</p>
+            <form onSubmit={handleCreate} className="mt-6 rounded-[1.6rem] border border-[var(--brand-primary)]/20 bg-white p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">Nuevo trabajador</p>
               <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/65">
                 El dueño escribe un usuario como <strong>maria</strong>. Internamente, si Supabase lo necesita, se crea como usuario técnico.
               </p>
               <div className="mt-4">
                 <StaffFormFields form={form} setForm={setForm} branches={activeBranches} requirePassword />
               </div>
-              <button type="submit" disabled={creating} className="mt-4 inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-60">
+              <button type="submit" disabled={creating} className="mt-4 inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-60">
                 {creating ? <Loader2 className="animate-spin" size={16} /> : <UserPlus size={16} />} Crear usuario
               </button>
             </form>
 
             {error ? <p className="mt-3 text-sm font-bold text-red-700">{error}</p> : null}
 
-            <div className="mt-6 overflow-hidden rounded-[1.6rem] border-2 border-[var(--brand-primary)]/20 bg-white">
+            <div className="mt-6 overflow-hidden rounded-[1.6rem] border border-[var(--brand-primary)]/20 bg-white">
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-[var(--brand-primary)]/10 text-left text-sm">
                   <thead className="bg-[var(--brand-primary)] text-white">
                     <tr>
-                      <th className="px-4 py-3 text-xs font-black uppercase tracking-[0.12em]">Trabajador</th>
-                      <th className="px-4 py-3 text-xs font-black uppercase tracking-[0.12em]">Usuario</th>
-                      <th className="px-4 py-3 text-xs font-black uppercase tracking-[0.12em]">Rol</th>
-                      <th className="px-4 py-3 text-xs font-black uppercase tracking-[0.12em]">Sedes</th>
-                      <th className="px-4 py-3 text-xs font-black uppercase tracking-[0.12em]">Módulos</th>
-                      <th className="px-4 py-3 text-xs font-black uppercase tracking-[0.12em]">Estado</th>
-                      <th className="px-4 py-3 text-xs font-black uppercase tracking-[0.12em]">Último acceso</th>
-                      <th className="px-4 py-3 text-xs font-black uppercase tracking-[0.12em]">Acciones</th>
+                      <th className="px-4 py-3 text-xs font-bold uppercase tracking-[0.12em]">Trabajador</th>
+                      <th className="px-4 py-3 text-xs font-bold uppercase tracking-[0.12em]">Usuario</th>
+                      <th className="px-4 py-3 text-xs font-bold uppercase tracking-[0.12em]">Rol</th>
+                      <th className="px-4 py-3 text-xs font-bold uppercase tracking-[0.12em]">Sedes</th>
+                      <th className="px-4 py-3 text-xs font-bold uppercase tracking-[0.12em]">Módulos</th>
+                      <th className="px-4 py-3 text-xs font-bold uppercase tracking-[0.12em]">Estado</th>
+                      <th className="px-4 py-3 text-xs font-bold uppercase tracking-[0.12em]">Último acceso</th>
+                      <th className="px-4 py-3 text-xs font-bold uppercase tracking-[0.12em]">Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--brand-primary)]/10">
@@ -638,11 +638,11 @@ function UsuariosContent() {
                       <tr><td colSpan={8} className="px-4 py-8 text-center font-bold text-[var(--brand-ink-2)]/60">Aún no hay usuarios. Crea el primero arriba.</td></tr>
                     ) : staff.map((u) => (
                       <tr key={u.id} className={u.is_active ? "bg-white" : "bg-[var(--brand-primary)]/5"}>
-                        <td className="px-4 py-3 align-top font-black text-[var(--brand-ink-3)]">{u.displayName || u.full_name || u.username}</td>
+                        <td className="px-4 py-3 align-top font-bold text-[var(--brand-ink-3)]">{u.displayName || u.full_name || u.username}</td>
                         <td className="px-4 py-3 align-top font-bold text-[var(--brand-ink-2)]/75">{u.username}</td>
                         <td className="px-4 py-3 align-top font-bold">{ROLE_LABEL[u.role] || u.role}</td>
                         <td className="max-w-[220px] px-4 py-3 align-top">
-                          <span className={`inline-block rounded-full px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.06em] ${
+                          <span className={`inline-block rounded-full px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.06em] ${
                             u.allBranches
                               ? "bg-amber-100 text-amber-800"
                               : u.allowedBranchIds.length
@@ -654,25 +654,25 @@ function UsuariosContent() {
                         </td>
                         <td className="max-w-[320px] px-4 py-3 align-top">
                           <p className="font-bold text-[var(--brand-ink-2)]/75">{summarizeModules(u.allowedModules || [])}</p>
-                          <p className="mt-1 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]">
+                          <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--brand-primary)]">
                             {u.permissionsMode === "custom" ? "Permisos personalizados" : "Permisos por rol"}
                           </p>
                         </td>
                         <td className="px-4 py-3 align-top">
-                          <span className={`rounded-full px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.08em] ${u.is_active ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>
+                          <span className={`rounded-full px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.08em] ${u.is_active ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"}`}>
                             {u.is_active ? "Activo" : "Inactivo"}
                           </span>
                         </td>
                         <td className="px-4 py-3 align-top font-bold text-[var(--brand-ink-2)]/60">{formatDate(u.lastAccessAt)}</td>
                         <td className="px-4 py-3 align-top">
                           <div className="flex flex-wrap gap-2">
-                            <button onClick={() => beginEdit(u)} disabled={busyId === u.id} className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/40 bg-white px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] disabled:opacity-50">
+                            <button onClick={() => beginEdit(u)} disabled={busyId === u.id} className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-primary)]/40 bg-white px-3 py-1.5 text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] disabled:opacity-50">
                               <Pencil size={13} /> Editar
                             </button>
-                            <button onClick={() => toggleActive(u)} disabled={busyId === u.id} className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)] bg-white px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] disabled:opacity-50">
+                            <button onClick={() => toggleActive(u)} disabled={busyId === u.id} className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-primary)]/40 bg-white px-3 py-1.5 text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] disabled:opacity-50">
                               <Power size={13} /> {u.is_active ? "Desactivar" : "Activar"}
                             </button>
-                            <button onClick={() => resetPassword(u)} disabled={busyId === u.id} className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/40 bg-white px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] disabled:opacity-50">
+                            <button onClick={() => resetPassword(u)} disabled={busyId === u.id} className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-primary)]/40 bg-white px-3 py-1.5 text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] disabled:opacity-50">
                               <KeyRound size={13} /> Reset clave
                             </button>
                           </div>
@@ -686,22 +686,22 @@ function UsuariosContent() {
 
             {editingId ? (
               <div className="fixed inset-0 z-50 flex items-end justify-center bg-[var(--brand-ink-3)]/55 px-4 py-4 backdrop-blur-sm sm:items-center">
-                <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] border-4 border-[var(--brand-primary)] bg-[var(--brand-cream)] p-5 shadow-2xl">
+                <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] border border-[var(--brand-primary)]/45 bg-[var(--brand-cream)] p-5 shadow-2xl">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">Editar trabajador</p>
-                      <h2 className="mt-1 text-2xl font-black uppercase text-[var(--brand-ink-3)]">Permisos, sedes y datos</h2>
+                      <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">Editar trabajador</p>
+                      <h2 className="font-serif mt-1 text-2xl text-[var(--brand-ink-3)] font-semibold">Permisos, sedes y datos</h2>
                     </div>
-                    <button onClick={() => setEditingId(null)} className="rounded-full border-2 border-[var(--brand-primary)] bg-white p-2 text-[var(--brand-primary)]"><X size={20} /></button>
+                    <button onClick={() => setEditingId(null)} className="rounded-full border border-[var(--brand-primary)]/40 bg-white p-2 text-[var(--brand-primary)]"><X size={20} /></button>
                   </div>
                   <div className="mt-4">
                     <StaffFormFields form={editForm} setForm={setEditForm} branches={activeBranches} requirePassword={false} />
                   </div>
                   <div className="mt-5 flex flex-wrap gap-2">
-                    <button onClick={() => saveEdit(editingId)} disabled={busyId === editingId} className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-60">
+                    <button onClick={() => saveEdit(editingId)} disabled={busyId === editingId} className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-60">
                       {busyId === editingId ? <Loader2 className="animate-spin" size={16} /> : <Check size={16} />} Guardar cambios
                     </button>
-                    <button onClick={() => setEditingId(null)} className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                    <button onClick={() => setEditingId(null)} className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                       <X size={16} /> Cancelar
                     </button>
                   </div>

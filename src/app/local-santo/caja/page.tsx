@@ -712,20 +712,20 @@ function CajaPageContent() {
         onDismiss={paymentProofAlerts.dismissNewProofAlert}
       />
       <div className="mx-auto max-w-7xl">
-        <header className="overflow-hidden rounded-[1.6rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
+        <header className="overflow-hidden rounded-[1.6rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
           <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
           <div className="p-4 sm:p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <div className="flex flex-wrap gap-2">
-                  <a href="/admin" className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]">
+                  <a href="/admin" className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]">
                     <ArrowLeft size={16} /> Panel
                   </a>
-                  <button type="button" onClick={() => { loadOrders(); loadOpenAccounts(adminPassword, true); loadLocalTables(); }} disabled={isLoading} className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50">
+                  <button type="button" onClick={() => { loadOrders(); loadOpenAccounts(adminPassword, true); loadLocalTables(); }} disabled={isLoading} className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50">
                     {isLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                     Actualizar
                   </button>
-                  <a href="/local-santo/comprobantes" className={`inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition ${pendingPaymentProofsCount > 0 ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[var(--brand-accent-200)]" : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"}`}>
+                  <a href="/local-santo/comprobantes" className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] transition ${pendingPaymentProofsCount > 0 ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[var(--brand-accent-200)]" : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"}`}>
                     <UploadCloud size={16} />
                     Comprobantes{pendingPaymentProofsCount > 0 ? ` · ${pendingPaymentProofsCount}` : ""}
                   </a>
@@ -737,7 +737,7 @@ function CajaPageContent() {
                         : soundControls.activateSound
                     }
                     disabled={!soundControls.businessAllowsSound}
-                    className={`inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-55 ${
+                    className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-55 ${
                       soundControls.isSoundEnabled
                         ? "border-green-600 bg-green-100 text-green-700 hover:bg-green-200"
                         : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
@@ -750,13 +750,13 @@ function CajaPageContent() {
                         ? "Permitir avisos en este equipo"
                         : "Sonidos desactivados por configuración"}
                   </button>
-                  <button type="button" onClick={handleLogout} className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]">
+                  <button type="button" onClick={handleLogout} className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]">
                     Cambiar de usuario
                   </button>
                 </div>
 
-                <p className="mt-4 text-xs font-black uppercase tracking-[0.32em] text-[var(--brand-primary)]">{BRAND.name}</p>
-                <h1 className="mt-1 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl">Módulo caja</h1>
+                <p className="mt-4 text-xs font-bold uppercase tracking-[0.32em] text-[var(--brand-primary)]">{BRAND.name}</p>
+                <h1 className="font-serif mt-1 text-4xl leading-tight text-[var(--brand-ink-3)] sm:text-5xl font-semibold">Módulo caja</h1>
                 <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
                   {hotelMode
                     ? "Caja confirma los consumos del hotel (room service y restaurante), registra pagos y decide cuándo enviar a cocina. Cuando cocina marca listo, caja avisa la entrega a la habitación o mesa."
@@ -777,10 +777,10 @@ function CajaPageContent() {
         </header>
 
         {(pendingPaymentProofsCount > 0 || paymentProofsMessage) && (
-          <section className={`mt-4 rounded-[1.4rem] border-2 p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)] ${pendingPaymentProofsCount > 0 ? "border-[var(--brand-primary)] bg-[var(--brand-accent-100)]" : "border-orange-400 bg-orange-100"}`}>
+          <section className={`mt-4 rounded-[1.4rem] border p-4 shadow-sm ${pendingPaymentProofsCount > 0 ? "border-[var(--brand-primary)] bg-[var(--brand-accent-100)]" : "border-orange-400 bg-orange-100"}`}>
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   <UploadCloud size={18} />
                   Comprobantes de pago
                 </p>
@@ -800,11 +800,11 @@ function CajaPageContent() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => loadPaymentProofs(adminPassword)} disabled={isLoadingPaymentProofs} className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-yellow-50 disabled:opacity-50">
+                <button type="button" onClick={() => loadPaymentProofs(adminPassword)} disabled={isLoadingPaymentProofs} className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-yellow-50 disabled:opacity-50">
                   {isLoadingPaymentProofs ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                   Revisar estado
                 </button>
-                <a href="/local-santo/comprobantes" className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)]">
+                <a href="/local-santo/comprobantes" className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-primary)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)]">
                   Abrir comprobantes
                 </a>
               </div>
@@ -812,10 +812,10 @@ function CajaPageContent() {
           </section>
         )}
 
-        <section className="mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.08)]">
+        <section className="mt-4 rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-white p-3 shadow-sm">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Mapa de mesas
               </p>
               <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -825,7 +825,7 @@ function CajaPageContent() {
             <button
               type="button"
               onClick={() => setShowTablesMap((value) => !value)}
-              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
             >
               {showTablesMap ? <EyeOff size={17} /> : <Eye size={17} />}
               {showTablesMap ? "Ocultar mapa" : "Mostrar mapa"}
@@ -851,16 +851,16 @@ function CajaPageContent() {
               />
             </div>
           ) : (
-            <p className="mt-3 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]/70">
+            <p className="mt-3 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]/70">
               Mapa oculto. Los pedidos y cobros siguen visibles abajo.
             </p>
           )}
         </section>
 
-        <section className="mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.08)]">
+        <section className="mt-4 rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-white p-3 shadow-sm">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 QR y enlaces por mesa
               </p>
               <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -870,7 +870,7 @@ function CajaPageContent() {
             <button
               type="button"
               onClick={() => setShowQrLinks((value) => !value)}
-              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
             >
               {showQrLinks ? <EyeOff size={17} /> : <Eye size={17} />}
               {showQrLinks ? "Ocultar QR" : "Mostrar QR"}
@@ -887,7 +887,7 @@ function CajaPageContent() {
               />
             </div>
           ) : (
-            <p className="mt-3 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]/70">
+            <p className="mt-3 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]/70">
               QR ocultos. Usa “Mostrar QR” solo cuando necesites copiar, imprimir o revisar enlaces de mesa.
             </p>
           )}
@@ -915,10 +915,10 @@ function CajaPageContent() {
           }}
         />
 
-        <section className="sticky top-0 z-30 mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-white p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+        <section className="sticky top-0 z-30 mt-4 rounded-[1.4rem] border border-[var(--brand-primary)]/40 bg-white p-3 shadow-sm">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Controles de caja
               </p>
               <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
@@ -929,7 +929,7 @@ function CajaPageContent() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => { loadOrders(); loadOpenAccounts(adminPassword, true); loadLocalTables(); }} disabled={isLoading} className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50">
+              <button type="button" onClick={() => { loadOrders(); loadOpenAccounts(adminPassword, true); loadLocalTables(); }} disabled={isLoading} className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50">
                 {isLoading ? <Loader2 size={17} className="animate-spin" /> : <RefreshCw size={17} />}
                 Actualizar
               </button>
@@ -937,7 +937,7 @@ function CajaPageContent() {
               <button
                 type="button"
                 onClick={() => setShowControls((value) => !value)}
-                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
               >
                 {showControls ? <EyeOff size={17} /> : <Eye size={17} />}
                 {showControls ? "Ocultar filtros" : "Mostrar filtros"}
@@ -950,14 +950,14 @@ function CajaPageContent() {
               <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
                 <div className="relative">
                   <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--brand-primary)]" />
-                  <input value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="Buscar por pedido, cliente, teléfono, mesa, zona o producto" className="w-full rounded-full border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]" />
+                  <input value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="Buscar por pedido, cliente, teléfono, mesa, zona o producto" className="w-full rounded-full border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]" />
                 </div>
                 <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {selectedCashTableName && (
                     <button
                       type="button"
                       onClick={() => setSelectedCashTableName("")}
-                      className="shrink-0 rounded-full border-2 border-yellow-500 bg-[var(--brand-accent-100)] px-4 py-3 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+                      className="shrink-0 rounded-full border border-yellow-500 bg-[var(--brand-accent-100)] px-4 py-3 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
                     >
                       Mesa: {selectedCashTableName} · limpiar
                     </button>
@@ -965,7 +965,7 @@ function CajaPageContent() {
                   {CASH_FILTERS.map((filter) => {
                     const isActive = activeFilter === filter
                     return (
-                      <button key={filter} type="button" onClick={() => setActiveFilter(filter)} className={`shrink-0 rounded-full border-2 px-4 py-3 text-xs font-black uppercase tracking-[0.1em] transition ${isActive ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]" : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"}`}>
+                      <button key={filter} type="button" onClick={() => setActiveFilter(filter)} className={`shrink-0 rounded-full border px-4 py-3 text-xs font-bold uppercase tracking-[0.1em] transition ${isActive ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]" : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"}`}>
                         {filter}
                       </button>
                     )
@@ -980,7 +980,7 @@ function CajaPageContent() {
               </div>
             </div>
           ) : (
-            <div className="mt-3 rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]/70">
+            <div className="mt-3 rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]/70">
               Filtros ocultos · {filteredOrders.length} pedido(s) en pantalla · Pendiente visible {formatUSD(filteredPendingUSD)} · {activeFilter}
               {selectedCashTableName ? ` · Mesa: ${selectedCashTableName}` : ""}
               {searchText.trim() ? ` · Búsqueda: ${searchText.trim()}` : ""}
@@ -988,22 +988,22 @@ function CajaPageContent() {
           )}
 
           {accountMessage && (
-            <div className="mt-3 rounded-2xl border-2 border-green-600/35 bg-green-100 px-4 py-3">
+            <div className="mt-3 rounded-2xl border border-green-600/35 bg-green-100 px-4 py-3">
               <p className="text-sm font-bold leading-6 text-green-800">{accountMessage}</p>
             </div>
           )}
 
           {errorMessage && (
-            <div className="mt-3 rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
+            <div className="mt-3 rounded-2xl border border-red-500/35 bg-red-100 px-4 py-3">
               <p className="text-sm font-bold leading-6 text-red-800">{errorMessage}</p>
             </div>
           )}
         </section>
 
         {filteredOrders.length === 0 ? (
-          <section className="mt-5 rounded-[2rem] border-2 border-[var(--brand-primary)] bg-white px-6 py-14 text-center shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]">
+          <section className="mt-5 rounded-[2rem] border border-[var(--brand-primary)]/40 bg-white px-6 py-14 text-center shadow-sm">
             <Image src={BRAND.logoUrl || "/logoremovebg.png"} alt={BRAND.name} width={112} height={112} unoptimized className="mx-auto h-28 w-28 object-contain" />
-            <h2 className="mt-5 text-3xl font-black uppercase text-[var(--brand-primary)]">Sin pedidos para caja</h2>
+            <h2 className="font-serif mt-5 text-3xl text-[var(--brand-ink-3)] font-semibold">Sin pedidos para caja</h2>
             <p className="mx-auto mt-3 max-w-md text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">Cambia el filtro o espera nuevos pedidos.</p>
           </section>
         ) : (
@@ -1040,8 +1040,8 @@ function CajaPageContent() {
           }
         }}>
           <div className="space-y-4">
-            <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+            <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-white p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 {getDisplayOrderNumber(paymentModalOrder)} · {paymentModalOrder.customerName || "Cliente"}
               </p>
               <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -1056,10 +1056,10 @@ function CajaPageContent() {
             </div>
 
             {paymentOpenAccount && (
-              <div className="rounded-[1.4rem] border-2 border-green-600 bg-green-50 p-4">
+              <div className="rounded-[1.4rem] border border-green-600 bg-green-50 p-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div>
-                    <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-green-700">
+                    <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-green-700">
                       <Link2 size={16} />
                       Pedido dentro de cuenta abierta
                     </p>
@@ -1067,7 +1067,7 @@ function CajaPageContent() {
                       Este cobro pertenece a la cuenta de {paymentOpenAccount.tableNumber || paymentModalOrder.tableNumber}. Caja está cobrando este pedido seleccionado, no cerrando la cuenta completa. El total de la cuenta se recalcula con los cobros reales guardados por pedido.
                     </p>
                   </div>
-                  <div className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border-2 border-green-600 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-green-700">
+                  <div className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-green-600 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-green-700">
                     Cuenta activa
                   </div>
                 </div>
@@ -1079,16 +1079,16 @@ function CajaPageContent() {
                   <InfoBox label="Pendiente al guardar" value={formatUSD(paymentOpenAccountPendingAfterDraft)} />
                 </div>
 
-                <div className="mt-3 rounded-2xl border-2 border-yellow-500 bg-yellow-50 px-3 py-3 text-xs font-bold leading-5 text-[var(--brand-ink)]">
+                <div className="mt-3 rounded-2xl border border-yellow-500 bg-yellow-50 px-3 py-3 text-xs font-bold leading-5 text-[var(--brand-ink)]">
                   Cerrar la cuenta no registra cobro ni marca pedidos como pagados. Revisa el pendiente antes de cerrar administrativamente desde el panel de cuentas.
                 </div>
 
                 {Array.isArray(paymentOpenAccount.orders) && paymentOpenAccount.orders.length > 0 && (
                   <div className="mt-3 rounded-2xl border border-green-600/25 bg-white px-3 py-3">
-                    <p className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-green-700">Pedidos asociados</p>
+                    <p className="text-[0.65rem] font-bold uppercase tracking-[0.16em] text-green-700">Pedidos asociados</p>
                     <div className="mt-2 space-y-1">
                       {paymentOpenAccount.orders.slice(0, 4).map((accountOrder) => (
-                        <div key={accountOrder.id} className="flex items-center justify-between gap-3 text-xs font-black text-[#234000]">
+                        <div key={accountOrder.id} className="flex items-center justify-between gap-3 text-xs font-bold text-[#234000]">
                           <span>{accountOrder.displayNumber || accountOrder.id} · {accountOrder.status}</span>
                           <span>{formatUSD(Number(accountOrder.pendingUSD || 0))} pendiente</span>
                         </div>
@@ -1100,14 +1100,14 @@ function CajaPageContent() {
             )}
 
             {paymentDraft.status !== "Pagado" && (
-              <div className="rounded-[1.4rem] border-2 border-yellow-400 bg-[var(--brand-accent-100)] p-4">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-amber)]">Ayuda rápida</p>
+              <div className="rounded-[1.4rem] border border-yellow-400 bg-[var(--brand-accent-100)] p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-amber)]">Ayuda rápida</p>
                 <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
                   Pendiente actual: {formatUSD(paymentDraft.pendingUSD)}. En bolívares serían Bs {formatVES(pendingVESForPayment)} según la tasa del pedido.
                 </p>
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  <button type="button" onClick={completePaymentPendingInVES} disabled={paymentDraft.pendingUSD <= 0 || paymentExchangeRate <= 0} className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50">Completar pendiente en Bs</button>
-                  <button type="button" onClick={completePaymentPendingInUSD} disabled={paymentDraft.pendingUSD <= 0} className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50">Completar pendiente en divisas</button>
+                  <button type="button" onClick={completePaymentPendingInVES} disabled={paymentDraft.pendingUSD <= 0 || paymentExchangeRate <= 0} className="rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50">Completar pendiente en Bs</button>
+                  <button type="button" onClick={completePaymentPendingInUSD} disabled={paymentDraft.pendingUSD <= 0} className="rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50">Completar pendiente en divisas</button>
                 </div>
               </div>
             )}
@@ -1122,17 +1122,17 @@ function CajaPageContent() {
             <SelectBox label="Delivery pagado en" value={paymentForm.deliveryPaymentIn} onChange={(value) => updatePaymentForm("deliveryPaymentIn", value as DeliveryPaymentIn)} options={DELIVERY_PAYMENT_OPTIONS} />
 
             <div>
-              <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">Nota de pago</label>
-              <textarea value={paymentForm.paymentNote} onChange={(event) => updatePaymentForm("paymentNote", event.target.value)} placeholder="Ejemplo: Cliente pagó productos mixto y delivery por pago móvil." rows={4} className="mt-2 w-full resize-none rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]" />
+              <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">Nota de pago</label>
+              <textarea value={paymentForm.paymentNote} onChange={(event) => updatePaymentForm("paymentNote", event.target.value)} placeholder="Ejemplo: Cliente pagó productos mixto y delivery por pago móvil." rows={4} className="mt-2 w-full resize-none rounded-2xl border border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]" />
             </div>
 
             {paymentMessage && (
-              <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-3">
-                <p className="text-sm font-black text-[var(--brand-ink-2)]">{paymentMessage}</p>
+              <div className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white px-4 py-3">
+                <p className="text-sm font-bold text-[var(--brand-ink-2)]">{paymentMessage}</p>
               </div>
             )}
 
-            <button type="button" onClick={savePayment} disabled={isSavingPayment} className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50">
+            <button type="button" onClick={savePayment} disabled={isSavingPayment} className="flex w-full items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50">
               {isSavingPayment && <Loader2 size={18} className="animate-spin" />}
               Guardar cobro
             </button>

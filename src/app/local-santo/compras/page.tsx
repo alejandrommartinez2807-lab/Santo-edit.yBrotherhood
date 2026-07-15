@@ -365,13 +365,13 @@ function ComprasPageContent() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
             href="/local-santo/proveedores"
-            className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
           >
             <ArrowLeft size={16} /> Proveedores
           </Link>
           <Link
             href="/admin"
-            className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]/70"
+            className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]/70"
           >
             Panel
           </Link>
@@ -382,7 +382,7 @@ function ComprasPageContent() {
             <ShoppingCart size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Compras a proveedores</h1>
+            <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Compras a proveedores</h1>
             <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
               Registra e historiza las compras de cada proveedor.
             </p>
@@ -390,12 +390,12 @@ function ComprasPageContent() {
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
             Solo el dueño puede registrar compras, y el módulo de proveedores debe estar activo desde
             la configuración del negocio. Inicia sesión como dueño.
           </p>
         ) : suppliers.length === 0 ? (
-          <p className="mt-8 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/65">
+          <p className="mt-8 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/65">
             Primero agrega proveedores en{" "}
             <Link href="/local-santo/proveedores" className="text-[var(--brand-primary)] underline">
               Proveedores
@@ -405,13 +405,13 @@ function ComprasPageContent() {
         ) : (
           <>
             {/* Formulario de nueva compra */}
-            <div className="mt-6 grid gap-3 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-2">
-              <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] sm:col-span-2">
+            <div className="mt-6 grid gap-3 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-2">
+              <label className="flex flex-col gap-1 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] sm:col-span-2">
                 Proveedor
                 <select
                   value={supplierId}
                   onChange={(e) => setSupplierId(e.target.value)}
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
                 >
                   <option value="">Selecciona un proveedor…</option>
                   {suppliers.map((s) => (
@@ -423,37 +423,37 @@ function ComprasPageContent() {
                 </select>
               </label>
 
-              <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+              <label className="flex flex-col gap-1 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                 Fecha
                 <input
                   type="date"
                   value={date}
                   max={todayISO()}
                   onChange={(e) => setDate(e.target.value)}
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+              <label className="flex flex-col gap-1 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                 N° documento / factura
                 <input
                   value={documentNumber}
                   onChange={(e) => setDocumentNumber(e.target.value)}
                   placeholder="Opcional"
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
                 />
               </label>
 
-              <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] sm:col-span-2">
+              <label className="flex flex-col gap-1 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] sm:col-span-2">
                 Vencimiento (opcional)
                 <input
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
                 />
               </label>
 
-              <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+              <label className="flex flex-col gap-1 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                 Total USD
                 <input
                   type="number"
@@ -462,10 +462,10 @@ function ComprasPageContent() {
                   value={totalUSD}
                   onChange={(e) => setTotalUSD(e.target.value)}
                   placeholder="0.00"
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+              <label className="flex flex-col gap-1 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                 Total Bs (opcional)
                 <input
                   type="number"
@@ -474,24 +474,24 @@ function ComprasPageContent() {
                   value={totalVES}
                   onChange={(e) => setTotalVES(e.target.value)}
                   placeholder="0.00"
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
                 />
               </label>
 
-              <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] sm:col-span-2">
+              <label className="flex flex-col gap-1 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] sm:col-span-2">
                 Nota
                 <input
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="Opcional (qué se compró, condiciones…)"
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
                 />
               </label>
 
               {/* Relación opcional con inventario (solo si el módulo está activo) */}
               {inventoryItems.length > 0 && (
-                <div className="rounded-xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3 sm:col-span-2">
-                  <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                <div className="rounded-xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3 sm:col-span-2">
+                  <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                     <input
                       type="checkbox"
                       checked={linkInventory}
@@ -506,7 +506,7 @@ function ComprasPageContent() {
                         <select
                           value={invItemId}
                           onChange={(e) => setInvItemId(e.target.value)}
-                          className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                          className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
                         >
                           <option value="">Selecciona un insumo…</option>
                           {inventoryItems.map((i) => (
@@ -522,7 +522,7 @@ function ComprasPageContent() {
                           value={invQty}
                           onChange={(e) => setInvQty(e.target.value)}
                           placeholder={`Cantidad${invItemId ? ` (${inventoryItems.find((i) => i.id === invItemId)?.unit || ""})` : ""}`}
-                          className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                          className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
                         />
                       </div>
                       <p className="mt-2 text-[0.68rem] font-bold text-[var(--brand-ink-2)]/55">
@@ -538,7 +538,7 @@ function ComprasPageContent() {
                 <button
                   onClick={create}
                   disabled={busy || !supplierId}
-                  className="inline-flex items-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50"
+                  className="inline-flex items-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-bold uppercase text-white disabled:opacity-50"
                 >
                   <Plus size={16} /> Registrar compra
                 </button>
@@ -549,12 +549,12 @@ function ComprasPageContent() {
 
             {/* Filtro + total */}
             <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-              <label className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+              <label className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                 <Truck size={14} /> Filtrar
                 <select
                   value={filterSupplier}
                   onChange={(e) => setFilterSupplier(e.target.value)}
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
                 >
                   <option value="">Todos los proveedores</option>
                   {suppliers.map((s) => (
@@ -576,7 +576,7 @@ function ComprasPageContent() {
                 <Loader2 className="animate-spin" size={18} /> Cargando…
               </p>
             ) : purchases.length === 0 ? (
-              <p className="mt-6 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-6 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
                 Aún no hay compras registradas{filterSupplier ? " para este proveedor" : ""}.
               </p>
             ) : (
@@ -585,29 +585,29 @@ function ComprasPageContent() {
                   editingId === p.id ? (
                     <li
                       key={p.id}
-                      className="rounded-2xl border-2 border-[var(--brand-primary)] bg-white p-4"
+                      className="rounded-2xl border border-[var(--brand-primary)]/40 bg-white p-4"
                     >
-                      <p className="text-sm font-black text-[var(--brand-ink-3)]">{p.supplierName || "—"}</p>
+                      <p className="text-sm font-bold text-[var(--brand-ink-3)]">{p.supplierName || "—"}</p>
                       <div className="mt-3 grid gap-2 sm:grid-cols-2">
                         <input
                           type="date"
                           value={editDate}
                           max={todayISO()}
                           onChange={(e) => setEditDate(e.target.value)}
-                          className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+                          className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
                         />
                         <input
                           value={editDocument}
                           onChange={(e) => setEditDocument(e.target.value)}
                           placeholder="N° documento"
-                          className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+                          className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
                         />
                         <input
                           type="date"
                           value={editDue}
                           onChange={(e) => setEditDue(e.target.value)}
                           title="Vencimiento"
-                          className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)] sm:col-span-2"
+                          className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)] sm:col-span-2"
                         />
                         <input
                           type="number"
@@ -616,7 +616,7 @@ function ComprasPageContent() {
                           value={editUSD}
                           onChange={(e) => setEditUSD(e.target.value)}
                           placeholder="Total USD"
-                          className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+                          className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
                         />
                         <input
                           type="number"
@@ -625,27 +625,27 @@ function ComprasPageContent() {
                           value={editVES}
                           onChange={(e) => setEditVES(e.target.value)}
                           placeholder="Total Bs"
-                          className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+                          className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
                         />
                         <input
                           value={editNote}
                           onChange={(e) => setEditNote(e.target.value)}
                           placeholder="Nota"
-                          className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)] sm:col-span-2"
+                          className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)] sm:col-span-2"
                         />
                       </div>
                       <div className="mt-3 flex gap-2">
                         <button
                           onClick={() => saveEdit(p.id)}
                           disabled={busy}
-                          className="inline-flex items-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase text-white disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-2 text-xs font-bold uppercase text-white disabled:opacity-50"
                         >
                           <Check size={14} /> Guardar
                         </button>
                         <button
                           onClick={cancelEdit}
                           disabled={busy}
-                          className="inline-flex items-center gap-1 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-2 text-xs font-black uppercase text-[var(--brand-primary)] disabled:opacity-50"
+                          className="inline-flex items-center gap-1 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-2 text-xs font-bold uppercase text-[var(--brand-primary)] disabled:opacity-50"
                         >
                           <X size={14} /> Cancelar
                         </button>
@@ -654,17 +654,17 @@ function ComprasPageContent() {
                   ) : (
                     <li
                       key={p.id}
-                      className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4"
+                      className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4"
                     >
                      <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-lg font-black text-[var(--brand-ink-3)]">{p.supplierName || "—"}</p>
-                          <span className={`rounded-full px-2 py-0.5 text-[0.62rem] font-black uppercase tracking-[0.08em] ${STATUS_STYLES[p.paymentStatus]}`}>
+                          <p className="text-lg font-bold text-[var(--brand-ink-3)]">{p.supplierName || "—"}</p>
+                          <span className={`rounded-full px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.08em] ${STATUS_STYLES[p.paymentStatus]}`}>
                             {p.paymentStatus}
                           </span>
                           {p.isOverdue && (
-                            <span className="rounded-full bg-red-600 px-2 py-0.5 text-[0.62rem] font-black uppercase tracking-[0.08em] text-white">
+                            <span className="rounded-full bg-red-600 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.08em] text-white">
                               Vencida
                             </span>
                           )}
@@ -676,19 +676,19 @@ function ComprasPageContent() {
                         </p>
                         {p.note && <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/80">{p.note}</p>}
                         {p.inventoryItemName && p.inventoryQuantity > 0 && (
-                          <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-[var(--brand-accent)] px-2 py-0.5 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]">
+                          <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-[var(--brand-accent)] px-2 py-0.5 text-[0.68rem] font-bold uppercase tracking-[0.08em] text-[var(--brand-primary)]">
                             <Plus size={11} /> {p.inventoryQuantity} {p.inventoryUnit} a {p.inventoryItemName}
                           </p>
                         )}
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="text-right">
-                          <p className="text-lg font-black text-[var(--brand-ink-3)]">{usd(p.totalUSD)}</p>
+                          <p className="text-lg font-bold text-[var(--brand-ink-3)]">{usd(p.totalUSD)}</p>
                           {p.totalVES > 0 && (
                             <p className="text-xs font-bold text-[var(--brand-ink-2)]/55">Bs {p.totalVES.toFixed(2)}</p>
                           )}
                           {p.paymentStatus !== "Pagado" && (p.pendingUSD > 0 || p.pendingVES > 0) && (
-                            <p className="text-[0.68rem] font-black uppercase tracking-[0.06em] text-red-600">
+                            <p className="text-[0.68rem] font-bold uppercase tracking-[0.06em] text-red-600">
                               Pendiente {usd(p.pendingUSD)}
                               {p.pendingVES > 0 ? ` · Bs ${p.pendingVES.toFixed(2)}` : ""}
                             </p>
@@ -698,7 +698,7 @@ function ComprasPageContent() {
                           onClick={() => (payingId === p.id ? closePayments() : openPayments(p))}
                           disabled={busy}
                           title="Abonos / cuentas por pagar"
-                          className="inline-flex items-center justify-center rounded-full border-2 border-emerald-300 bg-white p-2 text-emerald-700 disabled:opacity-50"
+                          className="inline-flex items-center justify-center rounded-full border border-emerald-300 bg-white p-2 text-emerald-700 disabled:opacity-50"
                         >
                           <Wallet size={16} />
                         </button>
@@ -706,7 +706,7 @@ function ComprasPageContent() {
                           onClick={() => startEdit(p)}
                           disabled={busy}
                           title="Editar compra"
-                          className="inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-primary)]/25 bg-white p-2 text-[var(--brand-primary)] disabled:opacity-50"
+                          className="inline-flex items-center justify-center rounded-full border border-[var(--brand-primary)]/25 bg-white p-2 text-[var(--brand-primary)] disabled:opacity-50"
                         >
                           <Pencil size={16} />
                         </button>
@@ -714,7 +714,7 @@ function ComprasPageContent() {
                           onClick={() => remove(p)}
                           disabled={busy}
                           title="Eliminar compra"
-                          className="inline-flex items-center justify-center rounded-full border-2 border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
+                          className="inline-flex items-center justify-center rounded-full border border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -722,8 +722,8 @@ function ComprasPageContent() {
                      </div>
 
                       {payingId === p.id && (
-                        <div className="mt-4 rounded-xl border-2 border-emerald-200 bg-emerald-50/40 p-3">
-                          <p className="text-xs font-black uppercase tracking-[0.1em] text-emerald-800">
+                        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/40 p-3">
+                          <p className="text-xs font-bold uppercase tracking-[0.1em] text-emerald-800">
                             Abonos · pagado {usd(p.paidUSD)}
                             {p.paidVES > 0 ? ` · Bs ${p.paidVES.toFixed(2)}` : ""}
                           </p>
@@ -735,13 +735,13 @@ function ComprasPageContent() {
                                 value={payDate}
                                 max={todayISO()}
                                 onChange={(e) => setPayDate(e.target.value)}
-                                className="rounded-xl border-2 border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                                className="rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
                               />
                               <input
                                 value={payMethod}
                                 onChange={(e) => setPayMethod(e.target.value)}
                                 placeholder="Método (transferencia, efectivo…)"
-                                className="rounded-xl border-2 border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                                className="rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
                               />
                               <input
                                 type="number"
@@ -750,7 +750,7 @@ function ComprasPageContent() {
                                 value={payUSD}
                                 onChange={(e) => setPayUSD(e.target.value)}
                                 placeholder="Abono USD"
-                                className="rounded-xl border-2 border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                                className="rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
                               />
                               <input
                                 type="number"
@@ -759,18 +759,18 @@ function ComprasPageContent() {
                                 value={payVES}
                                 onChange={(e) => setPayVES(e.target.value)}
                                 placeholder="Abono Bs"
-                                className="rounded-xl border-2 border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                                className="rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
                               />
                               <input
                                 value={payReference}
                                 onChange={(e) => setPayReference(e.target.value)}
                                 placeholder="Referencia (opcional)"
-                                className="rounded-xl border-2 border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500 sm:col-span-2"
+                                className="rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500 sm:col-span-2"
                               />
                               <button
                                 onClick={() => registerPayment(p.id)}
                                 disabled={busy}
-                                className="inline-flex items-center justify-center gap-1 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black uppercase text-white disabled:opacity-50 sm:col-span-2"
+                                className="inline-flex items-center justify-center gap-1 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold uppercase text-white disabled:opacity-50 sm:col-span-2"
                               >
                                 <Plus size={14} /> Registrar abono
                               </button>
@@ -796,7 +796,7 @@ function ComprasPageContent() {
                                       {pay.paymentMethod ? ` · ${pay.paymentMethod}` : ""}
                                       {pay.reference ? ` · Ref. ${pay.reference}` : ""}
                                     </span>
-                                    <span className="font-black text-emerald-700">
+                                    <span className="font-bold text-emerald-700">
                                       {pay.amountUSD > 0 ? usd(pay.amountUSD) : ""}
                                       {pay.amountUSD > 0 && pay.amountVES > 0 ? " · " : ""}
                                       {pay.amountVES > 0 ? `Bs ${pay.amountVES.toFixed(2)}` : ""}

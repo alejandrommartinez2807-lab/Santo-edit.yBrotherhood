@@ -1109,13 +1109,13 @@ export default function LocalMenuPage() {
   if (!isLoggedIn) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-3)]">
-        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.14)]">
+        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
           <div className="h-6 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="px-6 py-6">
             <a
               href="/admin"
-              className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
             >
               <ArrowLeft size={16} />
               Volver
@@ -1130,11 +1130,11 @@ export default function LocalMenuPage() {
               className="mx-auto mt-6 h-28 w-28 object-contain"
             />
 
-            <p className="mt-5 text-center text-xs font-black uppercase tracking-[0.28em] text-[var(--brand-primary)]">
+            <p className="mt-5 text-center text-xs font-bold uppercase tracking-[0.28em] text-[var(--brand-primary)]">
               Menú editable
             </p>
 
-            <h1 className="mt-2 text-center text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+            <h1 className="font-serif mt-2 text-center text-4xl leading-tight text-[var(--brand-ink-3)] font-semibold">
               Productos del menú
             </h1>
 
@@ -1145,7 +1145,7 @@ export default function LocalMenuPage() {
 
           <div className="space-y-4 px-6 pb-6">
             <div>
-              <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Clave de acceso
               </label>
 
@@ -1158,7 +1158,7 @@ export default function LocalMenuPage() {
                     if (event.key === "Enter") handleLogin()
                   }}
                   placeholder="Ingresa la clave del local"
-                  className="w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                  className="w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                 />
 
                 <button
@@ -1172,7 +1172,7 @@ export default function LocalMenuPage() {
             </div>
 
             {errorMessage && (
-              <div className="rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
+              <div className="rounded-2xl border border-red-500/35 bg-red-100 px-4 py-3">
                 <p className="text-sm font-bold leading-6 text-red-800">
                   {errorMessage}
                 </p>
@@ -1183,7 +1183,7 @@ export default function LocalMenuPage() {
               type="button"
               onClick={handleLogin}
               disabled={isLoading}
-              className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-[1.02] disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-sm transition hover:scale-[1.02] disabled:opacity-60"
             >
               {isLoading ? <Loader2 size={21} className="animate-spin" /> : <LogIn size={21} />}
               {isLoading ? "Validando acceso" : "Entrar al menú"}
@@ -1197,7 +1197,7 @@ export default function LocalMenuPage() {
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-3 py-4 text-[var(--brand-ink-3)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <header className="overflow-hidden rounded-[1.6rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
+        <header className="overflow-hidden rounded-[1.6rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
           <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="p-4 sm:p-5">
@@ -1206,7 +1206,7 @@ export default function LocalMenuPage() {
                 <div className="flex flex-wrap gap-2">
                   <a
                     href="/admin"
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     <ArrowLeft size={16} />
                     Volver al panel
@@ -1216,7 +1216,7 @@ export default function LocalMenuPage() {
                     type="button"
                     onClick={() => loadMenuProducts()}
                     disabled={isLoading}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
                   >
                     {isLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                     Actualizar
@@ -1225,17 +1225,17 @@ export default function LocalMenuPage() {
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     Cerrar sesión
                   </button>
                 </div>
 
-                <p className="mt-4 text-xs font-black uppercase tracking-[0.32em] text-[var(--brand-primary)]">
+                <p className="mt-4 text-xs font-bold uppercase tracking-[0.32em] text-[var(--brand-primary)]">
                   {BRAND.name}
                 </p>
 
-                <h1 className="mt-1 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl">
+                <h1 className="font-serif mt-1 text-4xl leading-tight text-[var(--brand-ink-3)] sm:text-5xl font-semibold">
                   Menú editable
                 </h1>
 
@@ -1250,7 +1250,7 @@ export default function LocalMenuPage() {
                 <button
                   type="button"
                   onClick={() => setIsHeaderSummaryVisible((value) => !value)}
-                  className="inline-flex w-fit items-center justify-center gap-2 self-start rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] lg:self-end"
+                  className="inline-flex w-fit items-center justify-center gap-2 self-start rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] lg:self-end"
                 >
                   {isHeaderSummaryVisible ? <EyeOff size={16} /> : <Eye size={16} />}
                   {isHeaderSummaryVisible ? "Ocultar resumen" : "Ver resumen"}
@@ -1272,10 +1272,10 @@ export default function LocalMenuPage() {
         {/* Sede en edición: el menú guarda por sede (x-branch-id). */}
         <CurrentBranchBanner />
 
-        <section className="mt-4 rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+        <section className="mt-4 rounded-[1.5rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Crear o editar producto
               </p>
               <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -1287,7 +1287,7 @@ export default function LocalMenuPage() {
               <button
                 type="button"
                 onClick={() => setIsFormVisible((value) => !value)}
-                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)]"
               >
                 {isFormVisible ? <EyeOff size={16} /> : <Eye size={16} />}
                 {isFormVisible ? "Ocultar formulario" : "Mostrar formulario"}
@@ -1298,7 +1298,7 @@ export default function LocalMenuPage() {
                   type="button"
                   onClick={importBaseMenu}
                   disabled={isImporting || isSaving}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
                 >
                   {isImporting ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
                   Cargar menú de plantilla
@@ -1312,13 +1312,13 @@ export default function LocalMenuPage() {
               <InputField label="Nombre" value={form.name} onChange={(value) => updateForm("name", value)} placeholder="Ej: Smash burger doble" full />
 
               <div>
-                <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   Categoría
                 </label>
                 <select
                   value={form.category}
                   onChange={(event) => updateForm("category", event.target.value)}
-                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                 >
                   {CATEGORY_OPTIONS.map((category) => (
                     <option key={category} value={category}>
@@ -1335,13 +1335,13 @@ export default function LocalMenuPage() {
               <InputField label="Precio USD" value={form.price} onChange={(value) => updateForm("price", value)} placeholder="Ej: 4.50" inputMode="decimal" />
 
               <div>
-                <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   Modo de pago
                 </label>
                 <select
                   value={form.paymentMode}
                   onChange={(event) => updateForm("paymentMode", normalizePaymentMode(event.target.value))}
-                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                 >
                   <option value="mixto">Mixto · USD y referencia Bs</option>
                   <option value="divisa">Solo divisas</option>
@@ -1350,10 +1350,10 @@ export default function LocalMenuPage() {
 
               <InputField label="Orden" value={form.sortOrder} onChange={(value) => updateForm("sortOrder", value)} placeholder="Ej: 13" inputMode="numeric" />
 
-              <section className="lg:col-span-2 rounded-[1.35rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.08)]">
+              <section className="lg:col-span-2 rounded-[1.35rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Opciones del producto
                     </p>
                     <p className="mt-1 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/65">
@@ -1363,20 +1363,20 @@ export default function LocalMenuPage() {
                     </p>
                   </div>
 
-                  <span className="w-fit rounded-full border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                  <span className="w-fit rounded-full border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-3 py-1.5 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                     Se ve en el menú público
                   </span>
                 </div>
 
                 <div className="mt-4 grid gap-3 lg:grid-cols-2">
                   <div>
-                    <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Tipo de producto
                     </label>
                     <select
                       value={form.productType}
                       onChange={(event) => updateForm("productType", normalizeProductType(event.target.value))}
-                      className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                      className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                     >
                       {PRODUCT_TYPE_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
@@ -1399,13 +1399,13 @@ export default function LocalMenuPage() {
 
                   {fiscal.enabled && (
                     <div>
-                      <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                      <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                         IVA del producto
                       </label>
                       <select
                         value={form.ivaRate}
                         onChange={(e) => updateForm("ivaRate", e.target.value)}
-                        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
+                        className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
                       >
                         <option value="">{`Por defecto del negocio (${fiscal.ivaDefaultRate}%)`}</option>
                         <option value="16">16% (general)</option>
@@ -1416,7 +1416,7 @@ export default function LocalMenuPage() {
                   )}
 
                   <div className="lg:col-span-2">
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Canales disponibles
                     </p>
                     <div className="mt-2 grid gap-2 sm:grid-cols-3">
@@ -1428,13 +1428,13 @@ export default function LocalMenuPage() {
                             key={channel.value}
                             type="button"
                             onClick={() => toggleSalesChannel(channel.value)}
-                            className={`rounded-2xl border-2 p-3 text-left transition ${
+                            className={`rounded-2xl border p-3 text-left transition ${
                               checked
                                 ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                                 : "border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] text-[var(--brand-primary)] hover:border-[var(--brand-primary)]"
                             }`}
                           >
-                            <span className="block text-xs font-black uppercase tracking-[0.12em]">
+                            <span className="block text-xs font-bold uppercase tracking-[0.12em]">
                               {channel.label}
                             </span>
                             <span className="mt-1 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/62">
@@ -1477,8 +1477,8 @@ export default function LocalMenuPage() {
                     helper="El cliente podrá pedir el producto sin estos ingredientes."
                   />
 
-                  <div className="lg:col-span-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <div className="lg:col-span-2 rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Regla de selección de adicionales
                     </p>
                     <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -1528,10 +1528,10 @@ export default function LocalMenuPage() {
                 </div>
               </section>
 
-              <div className="lg:col-span-2 rounded-[1.25rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+              <div className="lg:col-span-2 rounded-[1.25rem] border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div>
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Imagen del producto
                     </p>
                     <p className="mt-1 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/65">
@@ -1556,7 +1556,7 @@ export default function LocalMenuPage() {
                       type="button"
                       onClick={() => imageInputRef.current?.click()}
                       disabled={isUploadingImage}
-                      className={`inline-flex min-h-[42px] items-center justify-center gap-2 rounded-xl border-2 border-[var(--brand-primary)] px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.12em] transition disabled:cursor-not-allowed ${
+                      className={`inline-flex min-h-[42px] items-center justify-center gap-2 rounded-xl border border-[var(--brand-primary)]/40 px-4 py-2 text-[0.68rem] font-bold uppercase tracking-[0.12em] transition disabled:cursor-not-allowed ${
                         isUploadingImage
                           ? "bg-[var(--brand-accent-100)] text-[var(--brand-primary)]/60"
                           : "bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[var(--brand-accent-200)]"
@@ -1584,7 +1584,7 @@ export default function LocalMenuPage() {
                     full
                   />
 
-                  <div className="overflow-hidden rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white">
+                  <div className="overflow-hidden rounded-2xl border border-[var(--brand-primary)]/20 bg-white">
                     {form.image ? (
                       <NextImage
                         src={form.image}
@@ -1597,7 +1597,7 @@ export default function LocalMenuPage() {
                     ) : (
                       <div className="flex h-36 flex-col items-center justify-center gap-2 text-center text-[var(--brand-primary)]/55">
                         <ImageIcon size={24} />
-                        <span className="px-3 text-xs font-black uppercase tracking-[0.12em]">
+                        <span className="px-3 text-xs font-bold uppercase tracking-[0.12em]">
                           Sin imagen
                         </span>
                       </div>
@@ -1607,7 +1607,7 @@ export default function LocalMenuPage() {
               </div>
 
               <div className="lg:col-span-2">
-                <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   Descripción
                 </label>
                 <textarea
@@ -1615,7 +1615,7 @@ export default function LocalMenuPage() {
                   onChange={(event) => updateForm("description", event.target.value)}
                   placeholder="Describe ingredientes, presentación o condición especial del producto"
                   rows={4}
-                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                  className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                 />
               </div>
 
@@ -1646,7 +1646,7 @@ export default function LocalMenuPage() {
                   type="button"
                   onClick={() => saveProduct()}
                   disabled={isSaving || isUploadingImage}
-                  className="inline-flex min-h-[48px] w-full max-w-[280px] items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50"
+                  className="inline-flex min-h-[48px] w-full max-w-[280px] items-center justify-center gap-2 rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50"
                 >
                   {isSaving ? <Loader2 size={18} className="animate-spin" /> : <PackageCheck size={18} />}
                   Guardar producto
@@ -1656,7 +1656,7 @@ export default function LocalMenuPage() {
                   type="button"
                   onClick={resetForm}
                   disabled={isSaving}
-                  className="min-h-[48px] w-full max-w-[280px] rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                  className="min-h-[48px] w-full max-w-[280px] rounded-2xl border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
                 >
                   Limpiar formulario
                 </button>
@@ -1668,23 +1668,23 @@ export default function LocalMenuPage() {
         {(errorMessage || successMessage) && (
           <section className="mt-4 space-y-3">
             {errorMessage && (
-              <div className="rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
-                <p className="text-sm font-black text-red-800">{errorMessage}</p>
+              <div className="rounded-2xl border border-red-500/35 bg-red-100 px-4 py-3">
+                <p className="text-sm font-bold text-red-800">{errorMessage}</p>
               </div>
             )}
 
             {successMessage && (
-              <div className="rounded-2xl border-2 border-green-500/35 bg-green-50 px-4 py-3">
-                <p className="text-sm font-black text-green-800">{successMessage}</p>
+              <div className="rounded-2xl border border-green-500/35 bg-green-50 px-4 py-3">
+                <p className="text-sm font-bold text-green-800">{successMessage}</p>
               </div>
             )}
           </section>
         )}
 
-        <section className="sticky top-0 z-30 mt-4 overflow-hidden rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-white shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+        <section className="sticky top-0 z-30 mt-4 overflow-hidden rounded-[1.4rem] border border-[var(--brand-primary)]/40 bg-white shadow-sm">
           <div className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Productos del menú
               </p>
               <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
@@ -1696,7 +1696,7 @@ export default function LocalMenuPage() {
               <button
                 type="button"
                 onClick={() => setAreProductFiltersVisible((value) => !value)}
-                className={`inline-flex items-center justify-center gap-2 rounded-full border-2 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] transition ${
+                className={`inline-flex items-center justify-center gap-2 rounded-full border px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] transition ${
                   areProductFiltersVisible
                     ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                     : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
@@ -1710,7 +1710,7 @@ export default function LocalMenuPage() {
                 <button
                   type="button"
                   onClick={clearProductFilters}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                 >
                   <XCircle size={16} />
                   Limpiar
@@ -1720,7 +1720,7 @@ export default function LocalMenuPage() {
           </div>
 
           {areProductFiltersVisible && (
-            <div className="border-t-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3">
+            <div className="border-t border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3">
               <div className="grid gap-3 lg:grid-cols-[1fr_auto_auto] lg:items-center">
                 <div className="relative">
                   <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--brand-primary)]" />
@@ -1728,14 +1728,14 @@ export default function LocalMenuPage() {
                     value={searchText}
                     onChange={(event) => setSearchText(event.target.value)}
                     placeholder="Buscar producto, categoría, descripción o imagen"
-                    className="w-full rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                    className="w-full rounded-full border border-[var(--brand-primary)]/25 bg-white px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
                 <select
                   value={categoryFilter}
                   onChange={(event) => setCategoryFilter(event.target.value)}
-                  className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-full border border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] outline-none focus:border-[var(--brand-primary)]"
                 >
                   {categories.map((category) => (
                     <option key={category} value={category}>
@@ -1747,7 +1747,7 @@ export default function LocalMenuPage() {
                 <button
                   type="button"
                   onClick={() => setShowOnlyActive((value) => !value)}
-                  className={`rounded-full border-2 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] transition ${
+                  className={`rounded-full border px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] transition ${
                     showOnlyActive
                       ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                       : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
@@ -1761,9 +1761,9 @@ export default function LocalMenuPage() {
         </section>
 
         {filteredProducts.length === 0 ? (
-          <section className="mt-5 rounded-[2rem] border-2 border-[var(--brand-primary)] bg-white px-6 py-14 text-center shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]">
+          <section className="mt-5 rounded-[2rem] border border-[var(--brand-primary)]/40 bg-white px-6 py-14 text-center shadow-sm">
             <PackageCheck className="mx-auto text-[var(--brand-primary)]" size={54} />
-            <h2 className="mt-5 text-3xl font-black uppercase text-[var(--brand-primary)]">
+            <h2 className="font-serif mt-5 text-3xl text-[var(--brand-ink-3)] font-semibold">
               Sin productos del menú
             </h2>
             <p className="mx-auto mt-3 max-w-md text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -1778,19 +1778,19 @@ export default function LocalMenuPage() {
                 : "border-red-500/45 bg-red-50 text-red-800"
 
               return (
-                <article key={product.id} className="overflow-hidden rounded-[1.6rem] border-2 border-[var(--brand-primary)] bg-white shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]">
-                  <div className="border-b-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-4 py-4">
+                <article key={product.id} className="overflow-hidden rounded-[1.6rem] border border-[var(--brand-primary)]/40 bg-white shadow-sm">
+                  <div className="border-b border-[var(--brand-primary)] bg-[var(--brand-cream)] px-4 py-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                        <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                           {product.category} · Orden {product.sortOrder || product.id}
                         </p>
-                        <h2 className="mt-1 text-2xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_2px_0_rgba(var(--brand-accent-rgb),0.75)]">
+                        <h2 className="font-serif mt-1 text-2xl leading-tight text-[var(--brand-ink-3)] font-semibold">
                           {product.name}
                         </h2>
                       </div>
 
-                      <span className={`inline-flex w-fit items-center gap-2 rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${activeClasses}`}>
+                      <span className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold uppercase ${activeClasses}`}>
                         {product.isActive ? <CheckCircle2 size={15} /> : <XCircle size={15} />}
                         {product.isActive ? "Activo" : "Inactivo"}
                       </span>
@@ -1799,7 +1799,7 @@ export default function LocalMenuPage() {
 
                   <div className="space-y-4 p-4">
                     <div className="grid gap-3 sm:grid-cols-[110px_1fr]">
-                      <div className="flex h-28 w-full items-center justify-center overflow-hidden rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)]">
+                      <div className="flex h-28 w-full items-center justify-center overflow-hidden rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)]">
                         {product.image ? (
                           <NextImage
                             src={product.image}
@@ -1825,13 +1825,13 @@ export default function LocalMenuPage() {
                     </div>
 
                     {product.description && (
-                      <p className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
+                      <p className="rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
                         {product.description}
                       </p>
                     )}
 
-                    <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-white p-3">
-                      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+                    <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-white p-3">
+                      <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
                         Resumen premium
                       </p>
                       <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
@@ -1847,7 +1847,7 @@ export default function LocalMenuPage() {
                       <button
                         type="button"
                         onClick={() => editProduct(product)}
-                        className="min-h-[44px] rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2.5 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink)]"
+                        className="min-h-[44px] rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-2.5 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-ink)]"
                       >
                         Editar
                       </button>
@@ -1856,7 +1856,7 @@ export default function LocalMenuPage() {
                         type="button"
                         onClick={() => saveProduct({ ...product, isFeatured: !product.isFeatured })}
                         disabled={isSaving}
-                        className="min-h-[44px] rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-4 py-2.5 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] disabled:opacity-50"
+                        className="min-h-[44px] rounded-2xl border border-[var(--brand-primary)]/40 bg-white px-4 py-2.5 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] disabled:opacity-50"
                       >
                         {product.isFeatured ? "Quitar destacado" : "Destacar"}
                       </button>
@@ -1865,7 +1865,7 @@ export default function LocalMenuPage() {
                         type="button"
                         onClick={() => saveProduct({ ...product, isActive: !product.isActive })}
                         disabled={isSaving}
-                        className="min-h-[44px] rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-4 py-2.5 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] disabled:opacity-50"
+                        className="min-h-[44px] rounded-2xl border border-[var(--brand-primary)]/40 bg-white px-4 py-2.5 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] disabled:opacity-50"
                       >
                         {product.isActive ? "Pausar" : "Activar"}
                       </button>
@@ -1874,7 +1874,7 @@ export default function LocalMenuPage() {
                         type="button"
                         onClick={() => deactivateProduct(product.id)}
                         disabled={deletingProductId === product.id}
-                        className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-red-100 px-4 py-2.5 text-xs font-black uppercase tracking-[0.1em] text-red-700 disabled:opacity-50"
+                        className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-red-100 px-4 py-2.5 text-xs font-bold uppercase tracking-[0.1em] text-red-700 disabled:opacity-50"
                       >
                         {deletingProductId === product.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
                         Desactivar
@@ -1908,7 +1908,7 @@ function InputField({
 }) {
   return (
     <div className={full ? "lg:col-span-2" : ""}>
-      <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+      <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
         {label}
       </label>
       <input
@@ -1916,7 +1916,7 @@ function InputField({
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         inputMode={inputMode}
-        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+        className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
       />
     </div>
   )
@@ -1955,16 +1955,16 @@ function TagListEditor({
 
   return (
     <div>
-      <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+      <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
         {label}
       </label>
-      <div className="mt-2 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-2.5 transition focus-within:border-[var(--brand-primary)]">
+      <div className="mt-2 rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-2.5 transition focus-within:border-[var(--brand-primary)]">
         {items.length > 0 ? (
           <div className="mb-2 flex flex-wrap gap-1.5">
             {items.map((item) => (
               <span
                 key={item}
-                className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-1 text-xs font-black text-[var(--brand-ink)]"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-primary)]/30 bg-white px-3 py-1 text-xs font-bold text-[var(--brand-ink)]"
               >
                 {item}
                 <button
@@ -1990,13 +1990,13 @@ function TagListEditor({
               }
             }}
             placeholder={placeholder}
-            className="min-w-0 flex-1 rounded-xl border-2 border-transparent bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]/40"
+            className="min-w-0 flex-1 rounded-xl border border-transparent bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]/40"
           />
           <button
             type="button"
             onClick={commitDraft}
             disabled={!draft.trim()}
-            className="inline-flex shrink-0 items-center gap-1 rounded-xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3 py-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:brightness-105 disabled:opacity-40"
+            className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-3 py-2 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:brightness-105 disabled:opacity-40"
           >
             <Plus size={14} /> Agregar
           </button>
@@ -2052,16 +2052,16 @@ function AddonPriceListEditor({
 
   return (
     <div>
-      <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+      <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
         {label}
       </label>
-      <div className="mt-2 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-2.5 transition focus-within:border-[var(--brand-primary)]">
+      <div className="mt-2 rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-2.5 transition focus-within:border-[var(--brand-primary)]">
         {rows.length > 0 ? (
           <div className="mb-2 flex flex-wrap gap-1.5">
             {rows.map((row) => (
               <span
                 key={row.name}
-                className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-1 text-xs font-black text-[var(--brand-ink)]"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-primary)]/30 bg-white px-3 py-1 text-xs font-bold text-[var(--brand-ink)]"
               >
                 {row.name}
                 {Number(row.price) > 0 ? (
@@ -2094,7 +2094,7 @@ function AddonPriceListEditor({
               }
             }}
             placeholder="Escribe un adicional"
-            className="min-w-0 flex-1 basis-40 rounded-xl border-2 border-transparent bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]/40"
+            className="min-w-0 flex-1 basis-40 rounded-xl border border-transparent bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]/40"
           />
           <input
             value={draftPrice}
@@ -2108,13 +2108,13 @@ function AddonPriceListEditor({
             placeholder="Precio $"
             inputMode="decimal"
             aria-label={`Precio del adicional de ${label}`}
-            className="w-24 shrink-0 rounded-xl border-2 border-transparent bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]/40"
+            className="w-24 shrink-0 rounded-xl border border-transparent bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]/40"
           />
           <button
             type="button"
             onClick={commitDraft}
             disabled={!draftName.trim()}
-            className="inline-flex shrink-0 items-center gap-1 rounded-xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3 py-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:brightness-105 disabled:opacity-40"
+            className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-3 py-2 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:brightness-105 disabled:opacity-40"
           >
             <Plus size={14} /> Agregar
           </button>
@@ -2150,15 +2150,15 @@ function ToggleCard({
     <button
       type="button"
       onClick={() => onChange(!checked)}
-      className={`group flex min-h-[48px] items-center justify-between gap-2 rounded-xl border-2 px-3 py-2 text-left transition active:scale-[0.99] ${
+      className={`group flex min-h-[48px] items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left transition active:scale-[0.99] ${
         checked
-          ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] shadow-[0_3px_0_rgba(var(--brand-primary-rgb),0.10)]"
+          ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] shadow-sm"
           : "border-[var(--brand-primary)]/35 bg-white text-[var(--brand-primary)] hover:border-[var(--brand-primary)] hover:bg-yellow-50"
       }`}
     >
       <span className="flex min-w-0 items-center gap-2">
         <span
-          className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 ${
+          className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border ${
             checked
               ? "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)]"
               : "border-[var(--brand-primary)]/35 bg-[var(--brand-cream)] text-[var(--brand-primary)]/70"
@@ -2168,7 +2168,7 @@ function ToggleCard({
         </span>
 
         <span className="min-w-0">
-          <span className="block text-[0.64rem] font-black uppercase leading-tight tracking-[0.13em]">
+          <span className="block text-[0.64rem] font-bold uppercase leading-tight tracking-[0.13em]">
             {title}
           </span>
           <span className="mt-0.5 hidden text-[0.66rem] font-bold leading-4 text-[var(--brand-ink-2)]/58 sm:line-clamp-1 sm:block">
@@ -2178,7 +2178,7 @@ function ToggleCard({
       </span>
 
       <span
-        className={`inline-flex h-7 shrink-0 items-center rounded-lg border-2 px-2 text-[0.54rem] font-black uppercase tracking-[0.09em] ${
+        className={`inline-flex h-7 shrink-0 items-center rounded-lg border px-2 text-[0.54rem] font-bold uppercase tracking-[0.09em] ${
           checked
             ? "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)]"
             : "border-[var(--brand-primary)]/30 bg-[var(--brand-cream)] text-[var(--brand-primary)]/65"
@@ -2207,11 +2207,11 @@ function MetricCard({
         : "border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-primary)]"
 
   return (
-    <div className={`min-w-0 overflow-hidden rounded-[1.2rem] border-2 p-3 ${style}`}>
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em]">
+    <div className={`min-w-0 overflow-hidden rounded-[1.2rem] border p-3 ${style}`}>
+      <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em]">
         {label}
       </p>
-      <p className="mt-1 break-words text-xl font-black leading-tight sm:text-2xl">
+      <p className="mt-1 break-words text-xl font-bold leading-tight sm:text-2xl">
         {value}
       </p>
     </div>
@@ -2220,11 +2220,11 @@ function MetricCard({
 
 function InfoBox({ label, value, icon }: { label: string; value: string; icon?: ReactNode }) {
   return (
-    <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3">
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+    <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3">
+      <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
         {label}
       </p>
-      <p className="mt-1 flex items-center gap-2 break-words text-sm font-black text-[var(--brand-ink-3)]">
+      <p className="mt-1 flex items-center gap-2 break-words text-sm font-bold text-[var(--brand-ink-3)]">
         {icon}
         {value || "—"}
       </p>

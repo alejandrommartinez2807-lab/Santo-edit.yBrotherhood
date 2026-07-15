@@ -125,30 +125,30 @@ function PaginaHotelContent() {
   }
 
   const inputClass =
-    "w-full rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
+    "w-full rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
 
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
       <div className="mx-auto w-full max-w-2xl">
-        <Link href="/admin" className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+        <Link href="/admin" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
           <ArrowLeft size={16} /> Volver al panel
         </Link>
         <div className="mt-4 flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Página del hotel</h1>
-          <a href="/hotel" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-xl border-2 border-[var(--brand-primary)] bg-white px-3 py-2 text-xs font-black uppercase text-[var(--brand-primary)]">
+          <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Página del hotel</h1>
+          <a href="/hotel" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-xl border border-[var(--brand-primary)]/40 bg-white px-3 py-2 text-xs font-bold uppercase text-[var(--brand-primary)]">
             <ExternalLink size={14} /> Ver /hotel
           </a>
         </div>
         <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">Contenido de tu landing pública.</p>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
             Tu clave no tiene permiso para editar la página, o el módulo está desactivado.
           </p>
         ) : loading ? (
           <p className="mt-8 inline-flex items-center gap-2 font-bold"><Loader2 className="animate-spin" size={18} /> Cargando…</p>
         ) : (
-          <div className="mt-6 grid gap-3 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
+          <div className="mt-6 grid gap-3 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
             <input value={profile.headline} onChange={(e) => set("headline", e.target.value)} placeholder="Titular (Bienvenido a…)" className={inputClass} />
             <textarea value={profile.about} onChange={(e) => set("about", e.target.value)} placeholder="Descripción del hotel" rows={4} className={inputClass} />
             <textarea value={profile.amenities} onChange={(e) => set("amenities", e.target.value)} placeholder="Amenidades (piscina, wifi, desayuno…)" rows={2} className={inputClass} />
@@ -156,18 +156,18 @@ function PaginaHotelContent() {
             <div className="grid gap-3 sm:grid-cols-2">
               <input value={profile.phone} onChange={(e) => set("phone", e.target.value)} placeholder="Teléfono" className={inputClass} />
               <input value={profile.email} onChange={(e) => set("email", e.target.value)} placeholder="Email" className={inputClass} />
-              <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
-                <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Check-in</span>
+              <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
+                <span className="text-xs font-bold uppercase text-[var(--brand-primary)]">Check-in</span>
                 <input type="time" value={profile.checkinTime} onChange={(e) => set("checkinTime", e.target.value)} className="w-full bg-transparent font-bold outline-none" />
               </label>
-              <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
-                <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Check-out</span>
+              <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
+                <span className="text-xs font-bold uppercase text-[var(--brand-primary)]">Check-out</span>
                 <input type="time" value={profile.checkoutTime} onChange={(e) => set("checkoutTime", e.target.value)} className="w-full bg-transparent font-bold outline-none" />
               </label>
             </div>
             {/* Qué datos pide el formulario de reserva pública */}
-            <div className="rounded-xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/50 p-4">
-              <p className="text-sm font-black uppercase text-[var(--brand-ink-3)]">
+            <div className="rounded-xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/50 p-4">
+              <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">
                 Formulario de reserva
               </p>
               <p className="text-xs font-bold text-[var(--brand-ink-2)]/70">
@@ -184,7 +184,7 @@ function PaginaHotelContent() {
                     <select
                       value={bookingFields[def.id]}
                       onChange={(e) => setFieldMode(def.id, e.target.value as HotelBookingFieldMode)}
-                      className="rounded-lg border-2 border-[var(--brand-primary)]/25 bg-white px-2 py-1.5 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+                      className="rounded-lg border border-[var(--brand-primary)]/25 bg-white px-2 py-1.5 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
                     >
                       <option value="off">No pedir</option>
                       <option value="optional">Opcional</option>
@@ -195,9 +195,9 @@ function PaginaHotelContent() {
               </div>
             </div>
             {/* Términos y condiciones de la reserva pública */}
-            <div className="rounded-xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/50 p-4">
+            <div className="rounded-xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/50 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-black uppercase text-[var(--brand-ink-3)]">
+                <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">
                   Términos y condiciones
                 </p>
                 <button
@@ -206,7 +206,7 @@ function PaginaHotelContent() {
                     setTermsText(termsDefault)
                     setSaved(false)
                   }}
-                  className="rounded-lg border-2 border-[var(--brand-primary)]/25 bg-white px-2.5 py-1 text-xs font-black uppercase text-[var(--brand-primary)]"
+                  className="rounded-lg border border-[var(--brand-primary)]/25 bg-white px-2.5 py-1 text-xs font-bold uppercase text-[var(--brand-primary)]"
                 >
                   Usar texto estándar
                 </button>
@@ -227,7 +227,7 @@ function PaginaHotelContent() {
               />
             </div>
             {error && <p className="font-bold text-red-600">{error}</p>}
-            <button onClick={save} disabled={busy} className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50">
+            <button onClick={save} disabled={busy} className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-bold uppercase text-white disabled:opacity-50">
               {busy ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />} {saved ? "Guardado ✓" : "Guardar página"}
             </button>
           </div>

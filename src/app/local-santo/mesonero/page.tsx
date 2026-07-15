@@ -480,17 +480,17 @@ function MesoneroContent() {
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-3 py-4 text-[var(--brand-ink-3)] sm:px-4 sm:py-6">
       <div className="mx-auto max-w-7xl">
-        <section className="overflow-hidden rounded-[1.8rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.14)]">
+        <section className="overflow-hidden rounded-[1.8rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
           <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="p-4 sm:p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
-                <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-[var(--brand-primary)]">
+                <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-[var(--brand-primary)]">
                   <UserRound size={18} />
                   Atención en mesa
                 </p>
-                <h1 className="mt-2 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl">
+                <h1 className="font-serif mt-2 text-4xl leading-tight text-[var(--brand-ink-3)] sm:text-5xl font-semibold">
                   Mesonero
                 </h1>
                 <p className="mt-3 max-w-3xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
@@ -503,14 +503,14 @@ function MesoneroContent() {
               <div className="flex flex-wrap gap-2">
                 <a
                   href="/admin"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-yellow-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-yellow-50"
                 >
                   <ArrowLeft size={16} />
                   Panel
                 </a>
                 <Link
                   href="/"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-yellow-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-yellow-50"
                 >
                   <Store size={16} />
                   Menú
@@ -519,7 +519,7 @@ function MesoneroContent() {
                   type="button"
                   onClick={() => { loadOrders(adminPassword); loadOpenAccounts(adminPassword, true); loadLocalTables(); }}
                   disabled={isLoading || !adminPassword}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
                 >
                   {isLoading ? (
                     <Loader2 size={16} className="animate-spin" />
@@ -532,7 +532,7 @@ function MesoneroContent() {
             </div>
 
             {message && (
-              <div className="mt-4 rounded-2xl border-2 border-orange-300 bg-orange-50 p-3 text-sm font-bold text-orange-900">
+              <div className="mt-4 rounded-2xl border border-orange-300 bg-orange-50 p-3 text-sm font-bold text-orange-900">
                 {message}
               </div>
             )}
@@ -611,13 +611,13 @@ function MesoneroContent() {
           }}
         />
 
-        <section className="mt-4 rounded-[1.6rem] border-4 border-[var(--brand-primary)] bg-white p-4 shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)] sm:p-5">
+        <section className="mt-4 rounded-[1.6rem] border border-[var(--brand-primary)]/45 bg-white p-4 shadow-sm sm:p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Pedidos locales activos
               </p>
-              <h2 className="mt-1 text-2xl font-black uppercase text-[var(--brand-ink-2)]">
+              <h2 className="font-serif mt-1 text-2xl text-[var(--brand-ink-2)] font-semibold">
                 Seguimiento rápido de mesas
               </h2>
               <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -625,7 +625,7 @@ function MesoneroContent() {
                 entrar en caja ni ver funciones administrativas.
               </p>
               {selectedTableName && (
-                <p className="mt-2 inline-flex rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent-100)] px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]">
+                <p className="mt-2 inline-flex rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent-100)] px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)]">
                   Filtro de mesa activo: {selectedTableName}
                 </p>
               )}
@@ -634,7 +634,7 @@ function MesoneroContent() {
 
           <div className="mt-4 grid gap-3 xl:grid-cols-2">
             {visibleActiveLocalOrders.length === 0 ? (
-              <div className="rounded-[1.2rem] border-2 border-dashed border-[var(--brand-primary)]/30 bg-[var(--brand-cream)] p-5 text-sm font-bold text-[var(--brand-ink-2)]/70 xl:col-span-2">
+              <div className="rounded-[1.2rem] border border-dashed border-[var(--brand-primary)]/30 bg-[var(--brand-cream)] p-5 text-sm font-bold text-[var(--brand-ink-2)]/70 xl:col-span-2">
                 {selectedTableName
                   ? `No hay pedidos activos para ${selectedTableName} en este momento.`
                   : "No hay pedidos activos de consumo local en este momento."}
@@ -660,7 +660,7 @@ function MesoneroContent() {
                 return (
                   <article
                     key={order.id}
-                    className={`rounded-[1.2rem] border-2 bg-[var(--brand-cream)] p-4 ${
+                    className={`rounded-[1.2rem] border bg-[var(--brand-cream)] p-4 ${
                       hasProductsToConfirm
                         ? "border-yellow-500"
                         : hasConfirmedProducts
@@ -670,11 +670,11 @@ function MesoneroContent() {
                   >
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
                           {getDisplayOrderNumber(order)} ·{" "}
                           {getDisplayTableNumber(order)}
                         </p>
-                        <h3 className="mt-1 text-lg font-black text-[var(--brand-ink-2)]">
+                        <h3 className="mt-1 text-lg font-bold text-[var(--brand-ink-2)]">
                           {order.customerName || "Cliente"}
                         </h3>
                         <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
@@ -683,18 +683,18 @@ function MesoneroContent() {
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {hasProductsToConfirm && (
-                          <span className="rounded-full border border-yellow-600 bg-[var(--brand-accent)] px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.10em] text-[var(--brand-ink)]">
+                          <span className="rounded-full border border-yellow-600 bg-[var(--brand-accent)] px-3 py-2 text-[0.66rem] font-bold uppercase tracking-[0.10em] text-[var(--brand-ink)]">
                             Revisar producto
                           </span>
                         )}
                         {!hasProductsToConfirm && hasConfirmedProducts && (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-green-700 bg-green-100 px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.10em] text-green-800">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-green-700 bg-green-100 px-3 py-2 text-[0.66rem] font-bold uppercase tracking-[0.10em] text-green-800">
                             <CheckCircle2 size={14} />
                             Revisado
                           </span>
                         )}
                         <span
-                          className={`rounded-full border px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.10em] ${
+                          className={`rounded-full border px-3 py-2 text-[0.66rem] font-bold uppercase tracking-[0.10em] ${
                             hasOpenAccount
                               ? "border-green-700 bg-green-100 text-green-800"
                               : "border-yellow-500 bg-[var(--brand-accent-100)] text-[var(--brand-ink)]"
@@ -706,8 +706,8 @@ function MesoneroContent() {
                     </div>
 
                     {linkedOpenAccount && hasOpenAccount && (
-                      <div className="mt-3 rounded-2xl border-2 border-green-700 bg-green-50 p-3">
-                        <p className="inline-flex items-center gap-2 text-[0.66rem] font-black uppercase tracking-[0.12em] text-green-800">
+                      <div className="mt-3 rounded-2xl border border-green-700 bg-green-50 p-3">
+                        <p className="inline-flex items-center gap-2 text-[0.66rem] font-bold uppercase tracking-[0.12em] text-green-800">
                           <Link2 size={15} />
                           Pedido dentro de cuenta abierta
                         </p>
@@ -718,8 +718,8 @@ function MesoneroContent() {
                     )}
 
                     {suggestedOpenAccount && (
-                      <div className="mt-3 rounded-2xl border-2 border-yellow-500 bg-[var(--brand-accent-100)] p-3">
-                        <p className="inline-flex items-center gap-2 text-[0.66rem] font-black uppercase tracking-[0.12em] text-[var(--brand-amber)]">
+                      <div className="mt-3 rounded-2xl border border-yellow-500 bg-[var(--brand-accent-100)] p-3">
+                        <p className="inline-flex items-center gap-2 text-[0.66rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-amber)]">
                           <Link2 size={15} />
                           Cuenta abierta detectada
                         </p>
@@ -730,7 +730,7 @@ function MesoneroContent() {
                           type="button"
                           onClick={() => attachOrderToOpenAccount(order, suggestedOpenAccount)}
                           disabled={isAttachingThisOrder}
-                          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_4px_0_rgba(0,0,0,0.10)] transition hover:bg-[var(--brand-accent-200)] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+                          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_4px_0_rgba(0,0,0,0.10)] transition hover:bg-[var(--brand-accent-200)] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
                         >
                           {isAttachingThisOrder ? (
                             <Loader2 size={16} className="animate-spin" />
@@ -743,8 +743,8 @@ function MesoneroContent() {
                     )}
 
                     {hasProductsToConfirm && (
-                      <div className="mt-3 rounded-2xl border-2 border-yellow-500 bg-[var(--brand-accent-100)] p-3">
-                        <p className="inline-flex items-center gap-2 text-[0.66rem] font-black uppercase tracking-[0.12em] text-[var(--brand-amber)]">
+                      <div className="mt-3 rounded-2xl border border-yellow-500 bg-[var(--brand-accent-100)] p-3">
+                        <p className="inline-flex items-center gap-2 text-[0.66rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-amber)]">
                           <Eye size={15} />
                           Productos por confirmar
                         </p>
@@ -755,7 +755,7 @@ function MesoneroContent() {
                           type="button"
                           onClick={() => confirmStaffItems(order)}
                           disabled={isConfirmingThisOrder}
-                          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-green-800 bg-green-700 px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-white shadow-[0_4px_0_rgba(0,0,0,0.18)] transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+                          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-green-800 bg-green-700 px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-white shadow-[0_4px_0_rgba(0,0,0,0.18)] transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
                         >
                           {isConfirmingThisOrder ? (
                             <Loader2 size={16} className="animate-spin" />
@@ -768,8 +768,8 @@ function MesoneroContent() {
                     )}
 
                     {!hasProductsToConfirm && hasConfirmedProducts && (
-                      <div className="mt-3 rounded-2xl border-2 border-green-700 bg-green-50 p-3">
-                        <p className="inline-flex items-center gap-2 text-[0.66rem] font-black uppercase tracking-[0.12em] text-green-800">
+                      <div className="mt-3 rounded-2xl border border-green-700 bg-green-50 p-3">
+                        <p className="inline-flex items-center gap-2 text-[0.66rem] font-bold uppercase tracking-[0.12em] text-green-800">
                           <CheckCircle2 size={15} />
                           Revisión confirmada
                         </p>
@@ -780,7 +780,7 @@ function MesoneroContent() {
                           type="button"
                           onClick={() => resetStaffItems(order)}
                           disabled={isConfirmingThisOrder}
-                          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] shadow-[0_4px_0_rgba(0,0,0,0.10)] transition hover:bg-yellow-50 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+                          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] shadow-[0_4px_0_rgba(0,0,0,0.10)] transition hover:bg-yellow-50 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
                         >
                           {isConfirmingThisOrder ? (
                             <Loader2 size={16} className="animate-spin" />
@@ -794,7 +794,7 @@ function MesoneroContent() {
 
                     {order.items.length > 0 && (
                       <div className="mt-3 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-3">
-                        <p className="text-[0.62rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]/70">
+                        <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]/70">
                           Productos
                         </p>
                         <div className="mt-2 space-y-2">
@@ -805,7 +805,7 @@ function MesoneroContent() {
                             >
                               <div className="flex items-start justify-between gap-2">
                                 <p>{item.name} x{item.quantity}</p>
-                                <p className="shrink-0 font-black text-[var(--brand-primary)]">
+                                <p className="shrink-0 font-bold text-[var(--brand-primary)]">
                                   {formatUSD(Number(item.price || 0) * Number(item.quantity || 0))}
                                 </p>
                               </div>
@@ -869,12 +869,12 @@ function MesoneroMetric({
         : "border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] text-[var(--brand-ink-2)]";
 
   return (
-    <div className={`rounded-[1.2rem] border-2 p-4 ${toneClass}`}>
-      <p className="inline-flex items-center gap-2 text-[0.62rem] font-black uppercase tracking-[0.14em] opacity-75">
+    <div className={`rounded-[1.2rem] border p-4 ${toneClass}`}>
+      <p className="inline-flex items-center gap-2 text-[0.62rem] font-bold uppercase tracking-[0.14em] opacity-75">
         {icon}
         {label}
       </p>
-      <p className={`${compactText ? "text-lg" : "text-2xl"} mt-2 font-black`}>
+      <p className={`${compactText ? "text-lg" : "text-2xl"} mt-2 font-bold`}>
         {value}
       </p>
     </div>
@@ -884,10 +884,10 @@ function MesoneroMetric({
 function OrderMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white px-3 py-2">
-      <p className="text-[0.58rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]/60">
+      <p className="text-[0.58rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]/60">
         {label}
       </p>
-      <p className="mt-1 text-sm font-black text-[var(--brand-ink-2)]">{value}</p>
+      <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]">{value}</p>
     </div>
   );
 }

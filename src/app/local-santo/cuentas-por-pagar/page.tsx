@@ -201,13 +201,13 @@ function CuentasPorPagarContent() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
             href="/local-santo/control-gastos"
-            className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
           >
             <ArrowLeft size={16} /> Control de gastos
           </Link>
           <Link
             href="/local-santo/compras"
-            className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]/70"
+            className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]/70"
           >
             Registrar compra →
           </Link>
@@ -218,7 +218,7 @@ function CuentasPorPagarContent() {
             <Wallet size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">
+            <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">
               Cuentas por pagar
             </h1>
             <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
@@ -228,7 +228,7 @@ function CuentasPorPagarContent() {
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
             Para ver las cuentas por pagar necesitas iniciar sesión como dueño y
             tener activo el módulo de Proveedores/Compras desde la configuración
             del negocio.
@@ -261,7 +261,7 @@ function CuentasPorPagarContent() {
                 <Loader2 className="animate-spin" size={18} /> Cargando…
               </p>
             ) : pending.length === 0 ? (
-              <p className="mt-6 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-6 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
                 No tienes cuentas por pagar. Todas las compras están al día. 🎉
               </p>
             ) : (
@@ -269,18 +269,18 @@ function CuentasPorPagarContent() {
                 {groups.map((group) => (
                   <div
                     key={group.name}
-                    className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4"
+                    className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-lg font-black text-[var(--brand-ink-3)]">
+                      <p className="text-lg font-bold text-[var(--brand-ink-3)]">
                         {group.name}
                       </p>
                       <div className="text-right">
-                        <p className="text-sm font-black text-red-600">
+                        <p className="text-sm font-bold text-red-600">
                           {usd(group.pendingUSD)} por pagar
                         </p>
                         {group.overdueUSD > 0 && (
-                          <p className="text-[0.68rem] font-black uppercase tracking-[0.06em] text-red-600">
+                          <p className="text-[0.68rem] font-bold uppercase tracking-[0.06em] text-red-600">
                             {usd(group.overdueUSD)} vencido
                           </p>
                         )}
@@ -291,18 +291,18 @@ function CuentasPorPagarContent() {
                       {group.items.map((p) => (
                         <li
                           key={p.id}
-                          className="rounded-xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3"
+                          className="rounded-xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3"
                         >
                           <div className="flex flex-wrap items-start justify-between gap-2">
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-2">
                                 <span
-                                  className={`rounded-full px-2 py-0.5 text-[0.6rem] font-black uppercase tracking-[0.08em] ${STATUS_STYLES[p.paymentStatus]}`}
+                                  className={`rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.08em] ${STATUS_STYLES[p.paymentStatus]}`}
                                 >
                                   {p.paymentStatus}
                                 </span>
                                 {p.isOverdue && (
-                                  <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[0.6rem] font-black uppercase tracking-[0.08em] text-white">
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.08em] text-white">
                                     <AlertTriangle size={10} /> Vencida
                                   </span>
                                 )}
@@ -314,7 +314,7 @@ function CuentasPorPagarContent() {
                               </p>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-black text-red-600">
+                              <p className="text-sm font-bold text-red-600">
                                 {usd(p.pendingUSD)}
                                 {p.pendingVES > 0 ? ` · Bs ${p.pendingVES.toFixed(2)}` : ""}
                               </p>
@@ -323,7 +323,7 @@ function CuentasPorPagarContent() {
                                   payingId === p.id ? setPayingId(null) : openPay(p)
                                 }
                                 disabled={busy}
-                                className="mt-1 inline-flex items-center gap-1 rounded-lg border-2 border-emerald-300 bg-white px-3 py-1.5 text-[0.68rem] font-black uppercase text-emerald-700 disabled:opacity-50"
+                                className="mt-1 inline-flex items-center gap-1 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-[0.68rem] font-bold uppercase text-emerald-700 disabled:opacity-50"
                               >
                                 <Wallet size={13} /> Abonar
                               </button>
@@ -331,19 +331,19 @@ function CuentasPorPagarContent() {
                           </div>
 
                           {payingId === p.id && (
-                            <div className="mt-3 grid gap-2 border-t-2 border-emerald-200 pt-3 sm:grid-cols-2">
+                            <div className="mt-3 grid gap-2 border-t border-emerald-200 pt-3 sm:grid-cols-2">
                               <input
                                 type="date"
                                 value={payDate}
                                 max={todayISO()}
                                 onChange={(e) => setPayDate(e.target.value)}
-                                className="rounded-xl border-2 border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                                className="rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
                               />
                               <input
                                 value={payMethod}
                                 onChange={(e) => setPayMethod(e.target.value)}
                                 placeholder="Método (transferencia, efectivo…)"
-                                className="rounded-xl border-2 border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                                className="rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
                               />
                               <input
                                 type="number"
@@ -352,7 +352,7 @@ function CuentasPorPagarContent() {
                                 value={payUSD}
                                 onChange={(e) => setPayUSD(e.target.value)}
                                 placeholder="Abono USD"
-                                className="rounded-xl border-2 border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                                className="rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
                               />
                               <input
                                 type="number"
@@ -361,18 +361,18 @@ function CuentasPorPagarContent() {
                                 value={payVES}
                                 onChange={(e) => setPayVES(e.target.value)}
                                 placeholder="Abono Bs"
-                                className="rounded-xl border-2 border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
+                                className="rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500"
                               />
                               <input
                                 value={payReference}
                                 onChange={(e) => setPayReference(e.target.value)}
                                 placeholder="Referencia (opcional)"
-                                className="rounded-xl border-2 border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500 sm:col-span-2"
+                                className="rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-emerald-500 sm:col-span-2"
                               />
                               <button
                                 onClick={() => registerPayment(p.id)}
                                 disabled={busy}
-                                className="inline-flex items-center justify-center gap-1 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-black uppercase text-white disabled:opacity-50 sm:col-span-2"
+                                className="inline-flex items-center justify-center gap-1 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold uppercase text-white disabled:opacity-50 sm:col-span-2"
                               >
                                 <Plus size={14} /> Registrar abono
                               </button>
@@ -405,16 +405,16 @@ function SummaryCard({
 }) {
   return (
     <div
-      className={`rounded-xl border-2 p-3 ${
+      className={`rounded-xl border p-3 ${
         tone === "warning"
           ? "border-amber-300 bg-amber-50"
           : "border-[var(--brand-primary)]/15 bg-white"
       }`}
     >
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/55">
+      <p className="text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/55">
         {label}
       </p>
-      <p className="mt-1 text-xl font-black text-[var(--brand-ink-3)]">{value}</p>
+      <p className="mt-1 text-xl font-bold text-[var(--brand-ink-3)]">{value}</p>
       {hint && (
         <p className="mt-0.5 text-[0.68rem] font-bold text-[var(--brand-ink-2)]/55">
           {hint}

@@ -488,14 +488,14 @@ function HabitacionesPageContent() {
   }
 
   const inputClass =
-    "rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
+    "rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
 
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
       <div className="mx-auto w-full max-w-3xl">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
         >
           <ArrowLeft size={16} /> Volver al panel
         </Link>
@@ -505,7 +505,7 @@ function HabitacionesPageContent() {
             <BedDouble size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Habitaciones</h1>
+            <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Habitaciones</h1>
             <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
               Catálogo de habitaciones y tipos con tarifa base, capacidad y estado de limpieza.
             </p>
@@ -513,7 +513,7 @@ function HabitacionesPageContent() {
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
             Tu clave no tiene permiso para usar habitaciones, o el módulo está desactivado en la
             configuración del negocio.
           </p>
@@ -521,10 +521,10 @@ function HabitacionesPageContent() {
           <>
             {/* Tipos de habitación */}
             <section className="mt-6">
-              <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+              <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                 <Tag size={16} /> Tipos de habitación
               </h2>
-              <div className="mt-3 grid gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-4">
+              <div className="mt-3 grid gap-2 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-4">
                 <input
                   value={typeName}
                   onChange={(e) => setTypeName(e.target.value)}
@@ -550,7 +550,7 @@ function HabitacionesPageContent() {
                 <button
                   onClick={createType}
                   disabled={busy || !typeName.trim()}
-                  className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50 sm:col-span-4"
+                  className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-bold uppercase text-white disabled:opacity-50 sm:col-span-4"
                 >
                   <Plus size={16} /> Agregar tipo
                 </button>
@@ -561,7 +561,7 @@ function HabitacionesPageContent() {
                   {roomTypes.map((type) => (
                     <li
                       key={type.id}
-                      className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)]/20 bg-white px-3 py-1.5 text-sm font-bold"
+                      className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/20 bg-white px-3 py-1.5 text-sm font-bold"
                     >
                       <span className="text-[var(--brand-ink-3)]">{type.name}</span>
                       <span className="text-[var(--brand-ink-2)]/60">
@@ -584,20 +584,20 @@ function HabitacionesPageContent() {
             {/* Galería de fotos por tipo (se muestra en la página pública) */}
             {roomTypes.length > 0 && (
               <section className="mt-8">
-                <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                   <ImageIcon size={16} /> Fotos por tipo
                 </h2>
                 <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]">
                   Estas fotos salen en la página pública: en la tarjeta del tipo y en la galería del
                   hotel. Pega el enlace directo de la imagen (http…jpg/png/webp).
                 </p>
-                <div className="mt-3 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
+                <div className="mt-3 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
                   <div className="flex flex-wrap gap-2">
                     {roomTypes.map((type) => (
                       <button
                         key={type.id}
                         onClick={() => setPhotoTypeId(type.id === photoTypeId ? "" : type.id)}
-                        className={`inline-flex items-center gap-1.5 rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold uppercase ${
                           type.id === photoTypeId
                             ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-[#171410]"
                             : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]"
@@ -616,7 +616,7 @@ function HabitacionesPageContent() {
                     .map((type) => (
                       <div key={type.id} className="mt-4">
                         {type.photos.length === 0 ? (
-                          <p className="rounded-xl border-2 border-dashed border-[var(--brand-primary)]/25 p-4 text-sm font-bold text-[var(--brand-ink-2)]">
+                          <p className="rounded-xl border border-dashed border-[var(--brand-primary)]/25 p-4 text-sm font-bold text-[var(--brand-ink-2)]">
                             {type.name} aún no tiene fotos. Agrega la primera abajo: será la portada
                             de la tarjeta en la página pública.
                           </p>
@@ -625,7 +625,7 @@ function HabitacionesPageContent() {
                             {type.photos.map((photo, index) => (
                               <li
                                 key={`${photo.url}-${index}`}
-                                className="overflow-hidden rounded-xl border-2 border-[var(--brand-primary)]/20"
+                                className="overflow-hidden rounded-xl border border-[var(--brand-primary)]/20"
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
@@ -691,12 +691,12 @@ function HabitacionesPageContent() {
                           <button
                             onClick={() => addPhoto(type)}
                             disabled={busy || !photoUrl.trim()}
-                            className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-[#171410] disabled:opacity-50"
+                            className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-bold uppercase text-[#171410] disabled:opacity-50"
                           >
                             <Plus size={16} /> Agregar
                           </button>
                           <label
-                            className={`inline-flex cursor-pointer items-center justify-center gap-1 rounded-xl border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-sm font-black uppercase text-[var(--brand-primary-dark)] ${
+                            className={`inline-flex cursor-pointer items-center justify-center gap-1 rounded-xl border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold uppercase text-[var(--brand-primary-dark)] ${
                               busy ? "pointer-events-none opacity-50" : ""
                             }`}
                           >
@@ -722,10 +722,10 @@ function HabitacionesPageContent() {
 
             {/* Alta de habitación */}
             <section className="mt-8">
-              <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+              <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                 <Plus size={16} /> Nueva habitación
               </h2>
-              <div className="mt-3 grid gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-2">
+              <div className="mt-3 grid gap-2 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-2">
                 <input
                   value={roomName}
                   onChange={(e) => setRoomName(e.target.value)}
@@ -775,21 +775,21 @@ function HabitacionesPageContent() {
                 <button
                   onClick={createRoom}
                   disabled={busy || !roomName.trim()}
-                  className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50 sm:col-span-2"
+                  className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-bold uppercase text-white disabled:opacity-50 sm:col-span-2"
                 >
                   <Plus size={16} /> Agregar habitación
                 </button>
               </div>
 
               {/* Alta en serie: pisos completos sin cargar una por una */}
-              <h3 className="mt-6 flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+              <h3 className="mt-6 flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                 <BedDouble size={16} /> Crear en serie (piso completo)
               </h3>
               <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]">
                 Crea habitaciones numeradas de una sola vez: elige el tipo y el rango
                 (por ejemplo 501 a 520). Las que ya existan se saltan.
               </p>
-              <div className="mt-3 grid gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-6">
+              <div className="mt-3 grid gap-2 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-6">
                 <select
                   value={bulkTypeId}
                   onChange={(e) => setBulkTypeId(e.target.value)}
@@ -835,7 +835,7 @@ function HabitacionesPageContent() {
                 <button
                   onClick={createRoomsBulk}
                   disabled={busy || !bulkTypeId || !bulkFrom.trim() || !bulkTo.trim()}
-                  className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-[#171410] disabled:opacity-50 sm:col-span-6"
+                  className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-bold uppercase text-[#171410] disabled:opacity-50 sm:col-span-6"
                 >
                   <Plus size={16} /> Crear serie
                 </button>
@@ -855,7 +855,7 @@ function HabitacionesPageContent() {
                 <Loader2 className="animate-spin" size={18} /> Cargando…
               </p>
             ) : rooms.length === 0 ? (
-              <p className="mt-8 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-8 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
                 Aún no hay habitaciones. Crea un tipo y luego agrega habitaciones.
               </p>
             ) : (
@@ -863,11 +863,11 @@ function HabitacionesPageContent() {
                 {rooms.map((room) => (
                   <li
                     key={room.id}
-                    className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4"
+                    className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-lg font-black text-[var(--brand-ink-3)]">
+                        <p className="text-lg font-bold text-[var(--brand-ink-3)]">
                           {room.name}
                           {room.floor ? (
                             <span className="ml-2 text-sm font-bold text-[var(--brand-ink-2)]/55">
@@ -890,7 +890,7 @@ function HabitacionesPageContent() {
                         )}
                       </div>
                       <span
-                        className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${
+                        className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase ${
                           HOUSEKEEPING_STYLES[room.housekeepingStatus] || HOUSEKEEPING_STYLES.limpia
                         }`}
                       >
@@ -944,7 +944,7 @@ function HabitacionesPageContent() {
                           key={status}
                           onClick={() => setHousekeeping(room, status)}
                           disabled={busy || room.housekeepingStatus === status}
-                          className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase disabled:opacity-40 ${
+                          className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase disabled:opacity-40 ${
                             room.housekeepingStatus === status
                               ? HOUSEKEEPING_STYLES[status]
                               : "border-[var(--brand-primary)]/20 bg-white text-[var(--brand-ink-2)]/70"
@@ -956,7 +956,7 @@ function HabitacionesPageContent() {
                       <button
                         onClick={() => saveRoomPatch(room, { outOfService: !room.outOfService })}
                         disabled={busy}
-                        className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase disabled:opacity-40 ${
+                        className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase disabled:opacity-40 ${
                           room.outOfService
                             ? "border-red-300 bg-red-50 text-red-600"
                             : "border-[var(--brand-primary)]/20 bg-white text-[var(--brand-ink-2)]/70"
@@ -968,7 +968,7 @@ function HabitacionesPageContent() {
                         onClick={() => removeRoom(room)}
                         disabled={busy}
                         title="Eliminar habitación"
-                        className="ml-auto inline-flex items-center justify-center rounded-full border-2 border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
+                        className="ml-auto inline-flex items-center justify-center rounded-full border border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -982,7 +982,7 @@ function HabitacionesPageContent() {
                           setNotesDraft((draft) => ({ ...draft, [room.id]: e.target.value }))
                         }
                         placeholder="Notas internas (vista al jardín, ruido del ascensor…)"
-                        className="w-full rounded-xl border-2 border-[var(--brand-primary)]/15 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+                        className="w-full rounded-xl border border-[var(--brand-primary)]/15 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
                       />
                       {(notesDraft[room.id] ?? room.notes) !== room.notes && (
                         <button
@@ -996,7 +996,7 @@ function HabitacionesPageContent() {
                             )
                           }
                           disabled={busy}
-                          className="shrink-0 rounded-xl bg-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase text-[#171410] disabled:opacity-50"
+                          className="shrink-0 rounded-xl bg-[var(--brand-primary)] px-4 py-2 text-xs font-bold uppercase text-[#171410] disabled:opacity-50"
                         >
                           Guardar
                         </button>

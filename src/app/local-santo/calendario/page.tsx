@@ -147,7 +147,7 @@ function CalendarioContent() {
       <div className="mx-auto w-full max-w-6xl">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
         >
           <ArrowLeft size={16} /> Volver al panel
         </Link>
@@ -157,7 +157,7 @@ function CalendarioContent() {
             <CalendarRange size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Calendario</h1>
+            <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Calendario</h1>
             <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
               Ocupación por habitación y día. Quién entra, quién sale y qué queda libre.
             </p>
@@ -165,7 +165,7 @@ function CalendarioContent() {
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
             Tu clave no tiene permiso para ver el calendario, o el módulo está desactivado.
           </p>
         ) : (
@@ -174,24 +174,24 @@ function CalendarioContent() {
             <div className="mt-6 flex flex-wrap items-center gap-2">
               <button
                 onClick={() => setStart(addDaysISO(start, -windowDays))}
-                className="inline-flex items-center gap-1 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-xs font-black uppercase text-[var(--brand-primary)]"
+                className="inline-flex items-center gap-1 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-xs font-bold uppercase text-[var(--brand-primary)]"
               >
                 <ChevronLeft size={14} /> Anterior
               </button>
               <button
                 onClick={() => setStart(todayISO())}
-                className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-xs font-black uppercase text-[var(--brand-primary)]"
+                className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-xs font-bold uppercase text-[var(--brand-primary)]"
               >
                 Hoy
               </button>
               <button
                 onClick={() => setStart(addDaysISO(start, windowDays))}
-                className="inline-flex items-center gap-1 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-xs font-black uppercase text-[var(--brand-primary)]"
+                className="inline-flex items-center gap-1 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-xs font-bold uppercase text-[var(--brand-primary)]"
               >
                 Siguiente <ChevronRight size={14} />
               </button>
-              <label className="ml-auto flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 font-bold">
-                <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Desde</span>
+              <label className="ml-auto flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 font-bold">
+                <span className="text-xs font-bold uppercase text-[var(--brand-primary)]">Desde</span>
                 <input
                   type="date"
                   value={start}
@@ -202,7 +202,7 @@ function CalendarioContent() {
               <select
                 value={windowDays}
                 onChange={(e) => setWindowDays(Number(e.target.value) || 14)}
-                className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 font-bold text-[var(--brand-ink-3)] outline-none"
+                className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 font-bold text-[var(--brand-ink-3)] outline-none"
               >
                 <option value={7}>7 días</option>
                 <option value={14}>14 días</option>
@@ -217,15 +217,15 @@ function CalendarioContent() {
                 <Loader2 className="animate-spin" size={18} /> Cargando…
               </p>
             ) : rooms.length === 0 ? (
-              <p className="mt-8 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-8 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
                 No hay habitaciones. Créalas en el módulo Habitaciones.
               </p>
             ) : (
-              <div className="mt-6 overflow-x-auto rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white">
+              <div className="mt-6 overflow-x-auto rounded-2xl border border-[var(--brand-primary)]/20 bg-white">
                 <table className="w-full border-collapse text-sm">
                   <thead>
                     <tr>
-                      <th className="sticky left-0 z-10 min-w-[120px] border-b-2 border-r-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-3 py-2 text-left text-xs font-black uppercase text-[var(--brand-primary)]">
+                      <th className="sticky left-0 z-10 min-w-[120px] border-b border-r border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-3 py-2 text-left text-xs font-bold uppercase text-[var(--brand-primary)]">
                         Habitación
                       </th>
                       {chart.days.map((d, i) => {
@@ -233,7 +233,7 @@ function CalendarioContent() {
                         return (
                           <th
                             key={d}
-                            className={`min-w-[38px] border-b-2 border-[var(--brand-primary)]/15 px-1 py-2 text-center text-[11px] font-black ${
+                            className={`min-w-[38px] border-b border-[var(--brand-primary)]/15 px-1 py-2 text-center text-[11px] font-bold ${
                               weekend ? "bg-[var(--brand-accent)]/40" : "bg-[var(--brand-cream)]"
                             }`}
                           >
@@ -250,7 +250,7 @@ function CalendarioContent() {
                   <tbody>
                     {chart.rows.map((row) => (
                       <tr key={row.room.id}>
-                        <td className="sticky left-0 z-10 border-r-2 border-b border-[var(--brand-primary)]/15 bg-white px-3 py-1.5 font-black text-[var(--brand-ink-3)]">
+                        <td className="sticky left-0 z-10 border-r border-b border-[var(--brand-primary)]/15 bg-white px-3 py-1.5 font-bold text-[var(--brand-ink-3)]">
                           {row.room.name}
                           {row.room.floor ? (
                             <span className="ml-1 text-[11px] font-bold text-[var(--brand-ink-2)]/45">
@@ -273,7 +273,7 @@ function CalendarioContent() {
                             className={`relative border-b border-l border-[var(--brand-primary)]/10 px-0.5 py-2 text-center align-middle ${STATE_STYLES[cell.state]}`}
                           >
                             {cell.state === "occupied" && cell.isStart ? (
-                              <span className="pointer-events-none absolute left-0.5 top-1/2 z-10 -translate-y-1/2 whitespace-nowrap rounded px-1 text-[10px] font-black text-white">
+                              <span className="pointer-events-none absolute left-0.5 top-1/2 z-10 -translate-y-1/2 whitespace-nowrap rounded px-1 text-[10px] font-bold text-white">
                                 <span
                                   className={`mr-1 inline-block h-1.5 w-1.5 rounded-full ${STATUS_DOT[cell.status || ""] || "bg-white"}`}
                                 />

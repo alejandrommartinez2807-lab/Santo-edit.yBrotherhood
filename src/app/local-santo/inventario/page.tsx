@@ -2306,13 +2306,13 @@ function InventoryPageContent() {
   if (!isLoggedIn) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-3)]">
-        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.14)]">
+        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
           <div className="h-6 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="px-6 py-6">
             <a
               href="/admin"
-              className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
             >
               <ArrowLeft size={16} />
               Volver
@@ -2327,11 +2327,11 @@ function InventoryPageContent() {
               className="mx-auto mt-6 h-28 w-28 object-contain"
             />
 
-            <p className="mt-5 text-center text-xs font-black uppercase tracking-[0.28em] text-[var(--brand-primary)]">
+            <p className="mt-5 text-center text-xs font-bold uppercase tracking-[0.28em] text-[var(--brand-primary)]">
               Inventario
             </p>
 
-            <h1 className="mt-2 text-center text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+            <h1 className="font-serif mt-2 text-center text-4xl leading-tight text-[var(--brand-ink-3)] font-semibold">
               Control de stock
             </h1>
 
@@ -2342,7 +2342,7 @@ function InventoryPageContent() {
 
           <div className="space-y-4 px-6 pb-6">
             <div>
-              <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Clave de acceso
               </label>
 
@@ -2355,7 +2355,7 @@ function InventoryPageContent() {
                     if (event.key === "Enter") handleLogin()
                   }}
                   placeholder="Ingresa la clave del local"
-                  className="w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                  className="w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                 />
 
                 <button
@@ -2369,7 +2369,7 @@ function InventoryPageContent() {
             </div>
 
             {errorMessage && (
-              <div className="rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
+              <div className="rounded-2xl border border-red-500/35 bg-red-100 px-4 py-3">
                 <p className="text-sm font-bold leading-6 text-red-800">
                   {errorMessage}
                 </p>
@@ -2380,7 +2380,7 @@ function InventoryPageContent() {
               type="button"
               onClick={handleLogin}
               disabled={isLoading}
-              className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-[1.02] disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-sm transition hover:scale-[1.02] disabled:opacity-60"
             >
               {isLoading ? <Loader2 size={21} className="animate-spin" /> : <LogIn size={21} />}
               {isLoading ? "Validando acceso" : "Entrar al inventario"}
@@ -2395,31 +2395,31 @@ function InventoryPageContent() {
     <main className="min-h-screen bg-[var(--brand-cream)] px-3 py-4 text-[var(--brand-ink-3)] sm:px-6 lg:px-8">
       {isResetInventoryOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--brand-ink-3)]/55 px-4 py-6 backdrop-blur-sm">
-          <div className="w-full max-w-xl overflow-hidden rounded-[1.6rem] border-4 border-red-700 bg-white shadow-2xl">
+          <div className="w-full max-w-xl overflow-hidden rounded-[1.6rem] border border-red-700 bg-white shadow-2xl">
             <div className="h-4 bg-red-700" />
             <div className="p-5">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-red-700">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-red-700">
                 Reinicio seguro de inventario
               </p>
-              <h2 className="mt-2 text-2xl font-black uppercase leading-tight text-[var(--brand-primary)]">
+              <h2 className="font-serif mt-2 text-2xl leading-tight text-[var(--brand-ink-3)] font-semibold">
                 Reiniciar cantidades a cero
               </h2>
               <p className="mt-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
                 Esta acción conserva productos, costos, stock mínimo, recetas e historial. Solo coloca en cero las cantidades actuales y guarda un movimiento de ajuste por cada producto con stock.
               </p>
 
-              <div className="mt-4 rounded-2xl border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3 text-sm font-black leading-6 text-[var(--brand-amber)]">
+              <div className="mt-4 rounded-2xl border border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-amber)]">
                 No borra recetas ni elimina productos. Sirve para empezar un conteo físico desde cero sin perder configuración.
               </div>
 
-              <label className="mt-5 block text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <label className="mt-5 block text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Escribe REINICIAR para confirmar
               </label>
               <input
                 value={resetInventoryConfirmation}
                 onChange={(event) => setResetInventoryConfirmation(event.target.value)}
                 placeholder="REINICIAR"
-                className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-black uppercase text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold uppercase text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
               />
 
               <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
@@ -2430,7 +2430,7 @@ function InventoryPageContent() {
                     setResetInventoryConfirmation("")
                   }}
                   disabled={isResettingInventory}
-                  className="rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                  className="rounded-2xl border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
                 >
                   Cancelar
                 </button>
@@ -2438,7 +2438,7 @@ function InventoryPageContent() {
                   type="button"
                   onClick={resetInventoryQuantities}
                   disabled={isResettingInventory}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-red-700 bg-red-100 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-red-700 disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-red-700 bg-red-100 px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-red-700 disabled:opacity-50"
                 >
                   {isResettingInventory ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                   {isResettingInventory ? "Reiniciando" : "Reiniciar cantidades"}
@@ -2449,7 +2449,7 @@ function InventoryPageContent() {
         </div>
       )}
       <div className="mx-auto max-w-7xl">
-        <header className="overflow-hidden rounded-[1.6rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
+        <header className="overflow-hidden rounded-[1.6rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
           <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="p-4 sm:p-5">
@@ -2458,7 +2458,7 @@ function InventoryPageContent() {
                 <div className="flex flex-wrap gap-2">
                   <a
                     href="/admin"
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     <ArrowLeft size={16} />
                     Volver al panel
@@ -2468,7 +2468,7 @@ function InventoryPageContent() {
                     type="button"
                     onClick={() => loadInventory()}
                     disabled={isLoading}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
                   >
                     {isLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                     Actualizar
@@ -2478,7 +2478,7 @@ function InventoryPageContent() {
                     type="button"
                     onClick={() => setIsResetInventoryOpen(true)}
                     disabled={isResettingInventory || inventoryTotals.activeItems === 0}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-red-600 bg-red-50 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center gap-2 rounded-full border border-red-600 bg-red-50 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <RefreshCw size={15} />
                     Reiniciar cantidades
@@ -2487,17 +2487,17 @@ function InventoryPageContent() {
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     Cerrar sesión
                   </button>
                 </div>
 
-                <p className="mt-4 text-xs font-black uppercase tracking-[0.32em] text-[var(--brand-primary)]">
+                <p className="mt-4 text-xs font-bold uppercase tracking-[0.32em] text-[var(--brand-primary)]">
                   {businessConfig.businessName}
                 </p>
 
-                <h1 className="mt-1 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl">
+                <h1 className="font-serif mt-1 text-4xl leading-tight text-[var(--brand-ink-3)] sm:text-5xl font-semibold">
                   Inventario real
                 </h1>
 
@@ -2518,11 +2518,11 @@ function InventoryPageContent() {
         </header>
 
         {!canUseInventory && (
-          <section className="mt-4 rounded-[1.5rem] border-2 border-yellow-400 bg-[var(--brand-accent-100)] p-4">
+          <section className="mt-4 rounded-[1.5rem] border border-yellow-400 bg-[var(--brand-accent-100)] p-4">
             <div className="flex gap-3">
               <AlertTriangle className="mt-1 shrink-0 text-[var(--brand-amber)]" size={26} />
               <div>
-                <p className="text-sm font-black uppercase text-[var(--brand-amber)]">
+                <p className="text-sm font-bold uppercase text-[var(--brand-amber)]">
                   Inventario no activo
                 </p>
                 <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
@@ -2535,10 +2535,10 @@ function InventoryPageContent() {
 
         {canUseInventory && (
           <>
-            <section className="sticky top-0 z-40 mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-white p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]">
+            <section className="sticky top-0 z-40 mt-4 rounded-[1.4rem] border border-[var(--brand-primary)]/40 bg-white p-3 shadow-sm">
               <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Módulos de inventario
                   </p>
                   <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -2558,11 +2558,11 @@ function InventoryPageContent() {
                 </div>
               </div>
 
-              <div id="inventario-modulo-activo" className="mt-3 rounded-[1.1rem] border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3">
-                <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <div id="inventario-modulo-activo" className="mt-3 rounded-[1.1rem] border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3">
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   Vista actual
                 </p>
-                <p className="mt-1 text-sm font-black text-[var(--brand-ink-3)]">
+                <p className="mt-1 text-sm font-bold text-[var(--brand-ink-3)]">
                   {activeInventoryModuleInfo.label}
                 </p>
                 <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -2572,10 +2572,10 @@ function InventoryPageContent() {
             </section>
 
             {activeInventoryModule === "alertas" && (
-            <section id="inventario-alertas" className="scroll-mt-28 mt-4 rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+            <section id="inventario-alertas" className="scroll-mt-28 mt-4 rounded-[1.5rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Alertas reales y compra sugerida
                   </p>
                   <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -2589,7 +2589,7 @@ function InventoryPageContent() {
                     setShowOnlyAlerts(true)
                     setActiveInventoryModule("productos")
                   }}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)]"
                 >
                   <AlertTriangle size={16} />
                   Ver productos con alerta
@@ -2597,8 +2597,8 @@ function InventoryPageContent() {
               </div>
 
               {!inventoryAlertSummary.hasAlerts ? (
-                <div className="mt-4 rounded-[1.3rem] border-2 border-green-500/35 bg-green-50 p-4">
-                  <p className="flex items-center gap-2 text-sm font-black uppercase text-green-800">
+                <div className="mt-4 rounded-[1.3rem] border border-green-500/35 bg-green-50 p-4">
+                  <p className="flex items-center gap-2 text-sm font-bold uppercase text-green-800">
                     <CheckCircle2 size={18} />
                     Inventario sin alertas críticas
                   </p>
@@ -2639,10 +2639,10 @@ function InventoryPageContent() {
                         )}
 
             {activeInventoryModule === "conteo" && (
-            <section id="inventario-conteo" className="scroll-mt-28 mt-4 rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+            <section id="inventario-conteo" className="scroll-mt-28 mt-4 rounded-[1.5rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Conteo físico y ajustes de cierre
                   </p>
                   <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -2654,7 +2654,7 @@ function InventoryPageContent() {
                   <button
                     type="button"
                     onClick={() => setIsPhysicalCountVisible((currentValue) => !currentValue)}
-                    className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)]"
                   >
                     {isPhysicalCountVisible ? <EyeOff size={16} /> : <Eye size={16} />}
                     {isPhysicalCountVisible ? "Ocultar conteo" : "Abrir conteo"}
@@ -2665,7 +2665,7 @@ function InventoryPageContent() {
                       type="button"
                       onClick={fillPhysicalCountWithCurrentInventory}
                       disabled={!activeInventoryItems.length || isApplyingPhysicalCount}
-                      className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
                     >
                       <RefreshCw size={16} />
                       Preparar conteo
@@ -2683,7 +2683,7 @@ function InventoryPageContent() {
                     <MetricCard label="Salidas por conteo" value={physicalCountSummary.negativeAdjustments} tone={physicalCountSummary.negativeAdjustments > 0 ? "danger" : "soft"} />
                   </div>
 
-                  <div className="rounded-[1.3rem] border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3 text-sm font-black leading-6 text-[var(--brand-amber)]">
+                  <div className="rounded-[1.3rem] border border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-amber)]">
                     Usa este conteo al cerrar o al iniciar el día. No borra productos ni recetas; solo corrige cantidades y deja auditoría.
                   </div>
 
@@ -2692,13 +2692,13 @@ function InventoryPageContent() {
                       value={physicalCountNote}
                       onChange={(event) => setPhysicalCountNote(event.target.value)}
                       placeholder="Nota general del conteo: Ej. conteo de cierre, revisión de nevera, conteo antes de abrir"
-                      className="w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                      className="w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                     />
 
                     <button
                       type="button"
                       onClick={() => setShowOnlyPhysicalCountDifferences((currentValue) => !currentValue)}
-                      className="rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+                      className="rounded-2xl border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]"
                     >
                       {showOnlyPhysicalCountDifferences ? "Ver todos" : "Solo diferencias"}
                     </button>
@@ -2707,7 +2707,7 @@ function InventoryPageContent() {
                       type="button"
                       onClick={clearPhysicalCount}
                       disabled={isApplyingPhysicalCount}
-                      className="rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                      className="rounded-2xl border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
                     >
                       Limpiar conteo
                     </button>
@@ -2727,14 +2727,14 @@ function InventoryPageContent() {
                       return (
                         <div
                           key={row.item.id}
-                          className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3"
+                          className="rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3"
                         >
                           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                             <div>
-                              <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                              <p className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                                 {row.item.category}
                               </p>
-                              <h3 className="mt-1 text-lg font-black uppercase text-[var(--brand-primary)]">
+                              <h3 className="mt-1 text-lg font-bold uppercase text-[var(--brand-primary)]">
                                 {row.item.name}
                               </h3>
                               <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
@@ -2742,7 +2742,7 @@ function InventoryPageContent() {
                               </p>
                             </div>
 
-                            <span className={`rounded-full border-2 px-3 py-1 text-xs font-black ${differenceTone}`}>
+                            <span className={`rounded-full border px-3 py-1 text-xs font-bold ${differenceTone}`}>
                               Diferencia: {row.hasValue ? `${differenceLabel} ${row.item.unit}` : "sin revisar"}
                             </span>
                           </div>
@@ -2754,13 +2754,13 @@ function InventoryPageContent() {
                               value={row.rawValue}
                               onChange={(event) => updatePhysicalCountValue(row.item.id, event.target.value)}
                               placeholder={`Contado real en ${row.item.unit}`}
-                              className="w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-base font-black text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]"
+                              className="w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]"
                             />
 
                             <button
                               type="button"
                               onClick={() => updatePhysicalCountValue(row.item.id, String(row.item.quantity || 0))}
-                              className="rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+                              className="rounded-2xl border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]"
                             >
                               Igual
                             </button>
@@ -2771,7 +2771,7 @@ function InventoryPageContent() {
                   </div>
 
                   {visiblePhysicalCountRows.length === 0 && (
-                    <div className="rounded-[1.3rem] border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4 text-sm font-black text-[var(--brand-ink-2)]/65">
+                    <div className="rounded-[1.3rem] border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4 text-sm font-bold text-[var(--brand-ink-2)]/65">
                       No hay diferencias para mostrar. Cambia una cantidad contada o desactiva “Solo diferencias”.
                     </div>
                   )}
@@ -2781,7 +2781,7 @@ function InventoryPageContent() {
                       type="button"
                       onClick={applyPhysicalCount}
                       disabled={isApplyingPhysicalCount || physicalCountSummary.reviewedCount === 0}
-                      className="inline-flex min-h-[48px] w-full max-w-[320px] items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50"
+                      className="inline-flex min-h-[48px] w-full max-w-[320px] items-center justify-center gap-2 rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50"
                     >
                       {isApplyingPhysicalCount ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
                       Aplicar conteo físico
@@ -2798,10 +2798,10 @@ function InventoryPageContent() {
                         )}
 
             {activeInventoryModule === "recetas" && (
-            <section id="inventario-recetas" className="scroll-mt-28 mt-4 rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+            <section id="inventario-recetas" className="scroll-mt-28 mt-4 rounded-[1.5rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Recetas de productos
                   </p>
                   <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -2812,7 +2812,7 @@ function InventoryPageContent() {
                 <button
                   type="button"
                   onClick={() => setIsRecipesVisible((currentValue) => !currentValue)}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)]"
                 >
                   {isRecipesVisible ? <EyeOff size={16} /> : <Eye size={16} />}
                   {isRecipesVisible ? "Ocultar recetas" : "Mostrar recetas"}
@@ -2821,22 +2821,22 @@ function InventoryPageContent() {
 
               {isRecipesVisible && (
                 <div className="mt-4 grid gap-4 xl:grid-cols-[1fr_1.1fr]">
-                  <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Crear o editar receta
                     </p>
 
                     <div className="mt-3 grid gap-3">
                       <div>
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                          <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                          <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                             Producto del menú
                           </label>
                           <button
                             type="button"
                             onClick={() => loadMenuProductsForRecipes()}
                             disabled={isLoading}
-                            className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-3 py-2 text-[0.65rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] disabled:opacity-50"
+                            className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-3 py-2 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] disabled:opacity-50"
                           >
                             {isLoading ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
                             Actualizar menú
@@ -2845,7 +2845,7 @@ function InventoryPageContent() {
                         <select
                           value={recipeForm.productId}
                           onChange={(event) => updateRecipeForm("productId", event.target.value)}
-                          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                          className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                         >
                           <option value="">Selecciona un producto</option>
                           {recipeMenuProducts.map((product) => (
@@ -2859,21 +2859,21 @@ function InventoryPageContent() {
                         </p>
                       </div>
 
-                      <div className="rounded-[1.2rem] border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3 text-sm font-black leading-6 text-[var(--brand-amber)]">
+                      <div className="rounded-[1.2rem] border border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-amber)]">
                         La receta se arma seleccionando insumos reales del inventario y presionando Agregar. La nota interna no descuenta inventario y no debe usarse para escribir cantidades como “1 salchicha”.
                       </div>
 
                       <div className="grid gap-3 sm:grid-cols-[1fr_140px_auto] sm:items-end">
                         <div>
                           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                            <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                            <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                               Insumo real del inventario
                             </label>
                             <button
                               type="button"
                               onClick={refreshRecipeInventoryOptions}
                               disabled={isLoading}
-                              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-3 py-2 text-[0.65rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] disabled:opacity-50"
+                              className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-3 py-2 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] disabled:opacity-50"
                             >
                               {isLoading ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
                               Actualizar insumos
@@ -2884,13 +2884,13 @@ function InventoryPageContent() {
                             value={recipeIngredientSearch}
                             onChange={(event) => setRecipeIngredientSearch(event.target.value)}
                             placeholder="Buscar insumo: pan, salchicha polaca, queso..."
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           />
 
                           <select
                             value={recipeForm.ingredientItemId}
                             onChange={(event) => updateRecipeForm("ingredientItemId", event.target.value)}
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           >
                             <option value="">Selecciona un insumo guardado</option>
                             {selectedRecipeIngredient &&
@@ -2907,14 +2907,14 @@ function InventoryPageContent() {
                           </select>
 
                           {recipeAvailableInventory.length === 0 && (
-                            <p className="mt-2 rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-white px-4 py-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
+                            <p className="mt-2 rounded-2xl border border-[var(--brand-primary)]/15 bg-white px-4 py-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
                               No hay insumos que coincidan con esa búsqueda. Créalo primero en “Nuevo producto o ajuste”, guarda inventario y luego presiona Actualizar insumos.
                             </p>
                           )}
                         </div>
 
                         <div>
-                          <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                          <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                             Cantidad que descuenta
                           </label>
                           <input
@@ -2923,22 +2923,22 @@ function InventoryPageContent() {
                             value={recipeForm.ingredientQuantity}
                             onChange={(event) => updateRecipeForm("ingredientQuantity", event.target.value)}
                             placeholder="Ej: 1"
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           />
                         </div>
 
                         <button
                           type="button"
                           onClick={addRecipeIngredient}
-                          className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]"
+                          className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)]"
                         >
                           <Plus size={16} />
                           Agregar insumo
                         </button>
                       </div>
 
-                      <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-white p-3">
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                      <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-white p-3">
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                           Insumos de esta receta
                         </p>
 
@@ -2951,7 +2951,7 @@ function InventoryPageContent() {
                             {recipeForm.ingredients.map((ingredient) => (
                               <span
                                 key={ingredient.itemId}
-                                className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-3 py-2 text-xs font-black text-[var(--brand-ink)]"
+                                className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-3 py-2 text-xs font-bold text-[var(--brand-ink)]"
                               >
                                 {ingredient.itemName}: {ingredient.quantity} {ingredient.unit}
                                 <button
@@ -2969,14 +2969,14 @@ function InventoryPageContent() {
                       </div>
 
                       <div>
-                        <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                        <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                           Nota interna de receta · no descuenta inventario
                         </label>
                         <input
                           value={recipeForm.note}
                           onChange={(event) => updateRecipeForm("note", event.target.value)}
                           placeholder="Ej: usar poca salsa, queso opcional o revisar porciones reales"
-                          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                          className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                         />
                         <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
                           Esta nota es solo informativa. Para que el inventario descuente, el insumo debe aparecer arriba en “Insumos de esta receta”.
@@ -2988,7 +2988,7 @@ function InventoryPageContent() {
                           type="button"
                           onClick={saveRecipe}
                           disabled={isSavingRecipe}
-                          className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50"
+                          className="inline-flex min-h-[46px] items-center justify-center gap-2 rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50"
                         >
                           {isSavingRecipe ? <Loader2 size={16} className="animate-spin" /> : <PackageCheck size={16} />}
                           Guardar receta
@@ -2998,7 +2998,7 @@ function InventoryPageContent() {
                           type="button"
                           onClick={resetRecipeForm}
                           disabled={isSavingRecipe}
-                          className="min-h-[46px] rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                          className="min-h-[46px] rounded-2xl border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
                         >
                           Limpiar receta
                         </button>
@@ -3006,8 +3006,8 @@ function InventoryPageContent() {
                     </div>
                   </div>
 
-                  <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-white p-4">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Recetas guardadas
                     </p>
                     {inventoryRecipes.length === 0 ? (
@@ -3017,13 +3017,13 @@ function InventoryPageContent() {
                     ) : (
                       <div className="mt-3 space-y-3">
                         {inventoryRecipes.map((recipe) => (
-                          <article key={recipe.id} className="rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4">
+                          <article key={recipe.id} className="rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4">
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                               <div>
-                                <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+                                <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
                                   {recipe.productCategory || "Producto"}
                                 </p>
-                                <h3 className="mt-1 text-lg font-black uppercase text-[var(--brand-ink-3)]">
+                                <h3 className="mt-1 text-lg font-bold uppercase text-[var(--brand-ink-3)]">
                                   {recipe.productName}
                                 </h3>
                               </div>
@@ -3032,7 +3032,7 @@ function InventoryPageContent() {
                                 <button
                                   type="button"
                                   onClick={() => editRecipe(recipe)}
-                                  className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+                                  className="rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]"
                                 >
                                   Editar
                                 </button>
@@ -3040,7 +3040,7 @@ function InventoryPageContent() {
                                   type="button"
                                   onClick={() => deleteRecipe(recipe.id)}
                                   disabled={deletingRecipeId === recipe.id}
-                                  className="inline-flex items-center gap-2 rounded-full bg-red-100 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-red-700 disabled:opacity-50"
+                                  className="inline-flex items-center gap-2 rounded-full bg-red-100 px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-red-700 disabled:opacity-50"
                                 >
                                   {deletingRecipeId === recipe.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                                   Eliminar
@@ -3050,7 +3050,7 @@ function InventoryPageContent() {
 
                             <div className="mt-3 flex flex-wrap gap-2">
                               {recipe.ingredients.map((ingredient) => (
-                                <span key={ingredient.itemId} className="rounded-full bg-white px-3 py-2 text-xs font-black text-[var(--brand-ink)]">
+                                <span key={ingredient.itemId} className="rounded-full bg-white px-3 py-2 text-xs font-bold text-[var(--brand-ink)]">
                                   {ingredient.itemName}: {ingredient.quantity} {ingredient.unit}
                                 </span>
                               ))}
@@ -3073,10 +3073,10 @@ function InventoryPageContent() {
                         )}
 
             {activeInventoryModule === "nuevo" && (
-            <section id="inventario-nuevo" className="scroll-mt-28 mt-4 rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+            <section id="inventario-nuevo" className="scroll-mt-28 mt-4 rounded-[1.5rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Nuevo producto o ajuste
                   </p>
                   <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
@@ -3087,7 +3087,7 @@ function InventoryPageContent() {
                 <button
                   type="button"
                   onClick={() => setIsFormVisible((currentValue) => !currentValue)}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
                 >
                   {isFormVisible ? <EyeOff size={17} /> : <Eye size={17} />}
                   {isFormVisible ? "Ocultar formulario" : "Mostrar formulario"}
@@ -3096,10 +3096,10 @@ function InventoryPageContent() {
 
               {isFormVisible && (
                 <div className="mt-4 grid gap-3 lg:grid-cols-2">
-                  <div className="lg:col-span-2 rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
+                  <div className="lg:col-span-2 rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-white p-4">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div>
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                           Producto rápido
                         </p>
                         <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -3110,7 +3110,7 @@ function InventoryPageContent() {
                       <button
                         type="button"
                         onClick={() => setAreQuickItemsVisible((currentValue) => !currentValue)}
-                        className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+                        className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
                       >
                         {areQuickItemsVisible ? <EyeOff size={16} /> : <Plus size={16} />}
                         {areQuickItemsVisible ? "Ocultar lista" : "Editar lista"}
@@ -3120,7 +3120,7 @@ function InventoryPageContent() {
                     <select
                       value={selectedQuickInventoryId}
                       onChange={(event) => applyQuickInventoryItem(event.target.value)}
-                      className="mt-3 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                      className="mt-3 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                     >
                       <option value="">Selecciona un producto rápido</option>
                       {quickInventoryItems.map((item) => (
@@ -3132,8 +3132,8 @@ function InventoryPageContent() {
                     </select>
 
                     {areQuickItemsVisible && (
-                      <div className="mt-4 rounded-[1.2rem] border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3">
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                      <div className="mt-4 rounded-[1.2rem] border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3">
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                           Administrar insumos rápidos
                         </p>
 
@@ -3142,13 +3142,13 @@ function InventoryPageContent() {
                             value={newQuickItemName}
                             onChange={(event) => setNewQuickItemName(event.target.value)}
                             placeholder="Ej: Carbón, salsa de ajo, envases"
-                            className="rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="rounded-2xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           />
 
                           <select
                             value={newQuickItemCategory}
                             onChange={(event) => setNewQuickItemCategory(event.target.value)}
-                            className="rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="rounded-2xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           >
                             {INVENTORY_CATEGORIES.map((category) => (
                               <option key={category} value={category}>
@@ -3160,7 +3160,7 @@ function InventoryPageContent() {
                           <select
                             value={newQuickItemUnit}
                             onChange={(event) => setNewQuickItemUnit(event.target.value)}
-                            className="rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="rounded-2xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           >
                             {UNIT_OPTIONS.map((unit) => (
                               <option key={unit} value={unit}>
@@ -3172,7 +3172,7 @@ function InventoryPageContent() {
                           <button
                             type="button"
                             onClick={addQuickInventoryItem}
-                            className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]"
+                            className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)]"
                           >
                             <Plus size={15} />
                             Agregar
@@ -3183,7 +3183,7 @@ function InventoryPageContent() {
                           {quickInventoryItems.map((item) => (
                             <span
                               key={item.id}
-                              className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)]/20 bg-white px-3 py-2 text-xs font-black text-[var(--brand-ink)]"
+                              className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/20 bg-white px-3 py-2 text-xs font-bold text-[var(--brand-ink)]"
                             >
                               {item.name}
                               <button
@@ -3201,7 +3201,7 @@ function InventoryPageContent() {
                         <button
                           type="button"
                           onClick={restoreDefaultQuickInventoryItems}
-                          className="mt-3 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+                          className="mt-3 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]"
                         >
                           Restaurar lista base
                         </button>
@@ -3210,7 +3210,7 @@ function InventoryPageContent() {
                   </div>
 
                   <div className="lg:col-span-2">
-                    <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Nombre
                     </label>
                     <input
@@ -3220,18 +3220,18 @@ function InventoryPageContent() {
                         updateForm("name", event.target.value)
                       }}
                       placeholder="Ej: Pan de perro, salchichas, papas, refrescos"
-                      className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                      className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Categoría
                     </label>
                     <select
                       value={form.category}
                       onChange={(event) => updateForm("category", event.target.value)}
-                      className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                      className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                     >
                       {!INVENTORY_CATEGORIES.includes(form.category) && (
                         <option value={form.category}>{form.category}</option>
@@ -3245,13 +3245,13 @@ function InventoryPageContent() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Unidad
                     </label>
                     <select
                       value={form.unit}
                       onChange={(event) => updateForm("unit", event.target.value)}
-                      className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                      className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                     >
                       {!UNIT_OPTIONS.includes(form.unit) && (
                         <option value={form.unit}>{form.unit}</option>
@@ -3265,7 +3265,7 @@ function InventoryPageContent() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Cantidad actual
                     </label>
                     <input
@@ -3274,12 +3274,12 @@ function InventoryPageContent() {
                       value={form.quantity}
                       onChange={(event) => updateForm("quantity", event.target.value)}
                       placeholder="Ej: 24"
-                      className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                      className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Stock mínimo
                     </label>
                     <input
@@ -3288,12 +3288,12 @@ function InventoryPageContent() {
                       value={form.minimumStock}
                       onChange={(event) => updateForm("minimumStock", event.target.value)}
                       placeholder="Ej: 5"
-                      className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                      className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Costo aproximado USD
                     </label>
                     <input
@@ -3302,12 +3302,12 @@ function InventoryPageContent() {
                       value={form.costUSD}
                       onChange={(event) => updateForm("costUSD", event.target.value)}
                       placeholder="Opcional"
-                      className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                      className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Costo aproximado Bs
                     </label>
                     <input
@@ -3316,12 +3316,12 @@ function InventoryPageContent() {
                       value={form.costVES}
                       onChange={(event) => updateForm("costVES", event.target.value)}
                       placeholder="Opcional"
-                      className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                      className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Equiv. costo USD
                     </label>
                     <input
@@ -3330,39 +3330,39 @@ function InventoryPageContent() {
                       value={form.equivalentCostUSD}
                       onChange={(event) => updateForm("equivalentCostUSD", event.target.value)}
                       placeholder="Opcional si ya escribiste USD"
-                      className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                      className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Nota
                     </label>
                     <input
                       value={form.note}
                       onChange={(event) => updateForm("note", event.target.value)}
                       placeholder="Ej: comprar antes del fin de semana"
-                      className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                      className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                     />
                   </div>
 
-                  <div className="lg:col-span-2 rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
+                  <div className="lg:col-span-2 rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-white p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                           Relación con gastos
                         </p>
                         <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
                           Si esta entrada viene de una compra, puedes guardar el movimiento de inventario y registrar el gasto del día en el mismo paso.
                         </p>
                         {entryQuantityDelta > 0 && (
-                          <p className="mt-2 rounded-2xl bg-[var(--brand-cream)] px-3 py-2 text-xs font-black uppercase tracking-[0.08em] text-[var(--brand-primary)]">
+                          <p className="mt-2 rounded-2xl bg-[var(--brand-cream)] px-3 py-2 text-xs font-bold uppercase tracking-[0.08em] text-[var(--brand-primary)]">
                             Entrada detectada: +{entryQuantityDelta} {form.unit}
                           </p>
                         )}
                       </div>
 
-                      <label className={`inline-flex items-center gap-2 rounded-full border-2 px-4 py-3 text-xs font-black uppercase tracking-[0.1em] ${
+                      <label className={`inline-flex items-center gap-2 rounded-full border px-4 py-3 text-xs font-bold uppercase tracking-[0.1em] ${
                         canShowExpenseLink
                           ? "cursor-pointer border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                           : "cursor-not-allowed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] text-[var(--brand-primary)]/55"
@@ -3381,13 +3381,13 @@ function InventoryPageContent() {
                     </div>
 
                     {!canRegisterExpenses && (
-                      <p className="mt-3 rounded-2xl border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3 text-xs font-black leading-5 text-[var(--brand-amber)]">
+                      <p className="mt-3 rounded-2xl border border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3 text-xs font-bold leading-5 text-[var(--brand-amber)]">
                         El módulo de gastos no está activo. Puedes mover inventario, pero no registrar gasto automático desde aquí.
                       </p>
                     )}
 
                     {canRegisterExpenses && entryQuantityDelta <= 0 && (
-                      <p className="mt-3 rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
+                      <p className="mt-3 rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
                         Para registrar un gasto desde inventario, la cantidad actual debe quedar mayor que la cantidad anterior.
                       </p>
                     )}
@@ -3395,25 +3395,25 @@ function InventoryPageContent() {
                     {registerExpenseWithEntry && canShowExpenseLink && (
                       <div className="mt-4 grid gap-3 lg:grid-cols-2">
                         <div className="lg:col-span-2">
-                          <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                          <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                             Concepto del gasto
                           </label>
                           <input
                             value={expenseForm.concept}
                             onChange={(event) => updateExpenseForm("concept", event.target.value)}
                             placeholder={`Compra de ${form.name || "producto"}`}
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           />
                         </div>
 
                         <div>
-                          <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                          <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                             Categoría del gasto
                           </label>
                           <select
                             value={expenseForm.category}
                             onChange={(event) => updateExpenseForm("category", event.target.value)}
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           >
                             {EXPENSE_CATEGORIES.map((category) => (
                               <option key={category} value={category}>
@@ -3424,13 +3424,13 @@ function InventoryPageContent() {
                         </div>
 
                         <div>
-                          <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                          <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                             Método
                           </label>
                           <select
                             value={expenseForm.method}
                             onChange={(event) => updateExpenseForm("method", event.target.value)}
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           >
                             {EXPENSE_METHODS.map((method) => (
                               <option key={method} value={method}>
@@ -3441,7 +3441,7 @@ function InventoryPageContent() {
                         </div>
 
                         <div>
-                          <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                          <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                             Monto en divisas
                           </label>
                           <input
@@ -3450,12 +3450,12 @@ function InventoryPageContent() {
                             value={expenseForm.amountUSD}
                             onChange={(event) => updateExpenseForm("amountUSD", event.target.value)}
                             placeholder="Ej: 18.00"
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           />
                         </div>
 
                         <div>
-                          <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                          <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                             Monto en bolívares
                           </label>
                           <input
@@ -3464,12 +3464,12 @@ function InventoryPageContent() {
                             value={expenseForm.amountVES}
                             onChange={(event) => updateExpenseForm("amountVES", event.target.value)}
                             placeholder="Ej: 1200,00"
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           />
                         </div>
 
                         <div className="lg:col-span-2">
-                          <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                          <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                             Equivalente total USD
                           </label>
                           <input
@@ -3478,7 +3478,7 @@ function InventoryPageContent() {
                             value={expenseForm.equivalentUSD}
                             onChange={(event) => updateExpenseForm("equivalentUSD", event.target.value)}
                             placeholder="Obligatorio si el gasto incluye bolívares"
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           />
                           <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
                             Si pagaste solo en divisas, el sistema usa ese monto como equivalente. Si pagaste bolívares o mixto, escribe el equivalente total para que el cierre calcule bien el neto.
@@ -3486,14 +3486,14 @@ function InventoryPageContent() {
                         </div>
 
                         <div className="lg:col-span-2">
-                          <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                          <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                             Nota del gasto
                           </label>
                           <input
                             value={expenseForm.note}
                             onChange={(event) => updateExpenseForm("note", event.target.value)}
                             placeholder="Ej: compra de insumos para el fin de semana"
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                           />
                         </div>
                       </div>
@@ -3505,7 +3505,7 @@ function InventoryPageContent() {
                       type="button"
                       onClick={saveItem}
                       disabled={isSaving}
-                      className="inline-flex min-h-[48px] w-full max-w-[280px] items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50"
+                      className="inline-flex min-h-[48px] w-full max-w-[280px] items-center justify-center gap-2 rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50"
                     >
                       {isSaving ? <Loader2 size={18} className="animate-spin" /> : <PackageCheck size={18} />}
                       Guardar inventario
@@ -3515,7 +3515,7 @@ function InventoryPageContent() {
                       type="button"
                       onClick={resetForm}
                       disabled={isSaving}
-                      className="min-h-[48px] w-full max-w-[280px] rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                      className="min-h-[48px] w-full max-w-[280px] rounded-2xl border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
                     >
                       Limpiar formulario
                     </button>
@@ -3529,24 +3529,24 @@ function InventoryPageContent() {
             {(errorMessage || successMessage) && (
               <section className="mt-4">
                 {errorMessage && (
-                  <div className="rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
-                    <p className="text-sm font-black text-red-800">{errorMessage}</p>
+                  <div className="rounded-2xl border border-red-500/35 bg-red-100 px-4 py-3">
+                    <p className="text-sm font-bold text-red-800">{errorMessage}</p>
                   </div>
                 )}
 
                 {successMessage && (
-                  <div className="rounded-2xl border-2 border-green-500/35 bg-green-50 px-4 py-3">
-                    <p className="text-sm font-black text-green-800">{successMessage}</p>
+                  <div className="rounded-2xl border border-green-500/35 bg-green-50 px-4 py-3">
+                    <p className="text-sm font-bold text-green-800">{successMessage}</p>
                   </div>
                 )}
               </section>
             )}
 
             {activeInventoryModule === "productos" && (
-            <section id="inventario-productos" className="scroll-mt-28 sticky top-0 z-30 mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-white p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+            <section id="inventario-productos" className="scroll-mt-28 sticky top-0 z-30 mt-4 rounded-[1.4rem] border border-[var(--brand-primary)]/40 bg-white p-3 shadow-sm">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Productos de inventario
                   </p>
                   <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -3559,7 +3559,7 @@ function InventoryPageContent() {
                   <button
                     type="button"
                     onClick={() => setAreInventoryFiltersVisible((currentValue) => !currentValue)}
-                    className={`inline-flex items-center justify-center gap-2 rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] ${
+                    className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] ${
                       areInventoryFiltersVisible || hasActiveInventoryFilters
                         ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                         : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)]"
@@ -3577,7 +3577,7 @@ function InventoryPageContent() {
                         setCategoryFilter("Todas")
                         setShowOnlyAlerts(false)
                       }}
-                      className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+                      className="rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]"
                     >
                       Limpiar
                     </button>
@@ -3596,14 +3596,14 @@ function InventoryPageContent() {
                       value={searchText}
                       onChange={(event) => setSearchText(event.target.value)}
                       placeholder="Buscar por nombre, categoría, unidad o nota"
-                      className="w-full rounded-full border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                      className="w-full rounded-full border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                     />
                   </div>
 
                   <select
                     value={categoryFilter}
                     onChange={(event) => setCategoryFilter(event.target.value)}
-                    className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] outline-none focus:border-[var(--brand-primary)]"
+                    className="rounded-full border border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] outline-none focus:border-[var(--brand-primary)]"
                   >
                     {categories.map((category) => (
                       <option key={category} value={category}>
@@ -3615,7 +3615,7 @@ function InventoryPageContent() {
                   <button
                     type="button"
                     onClick={() => setShowOnlyAlerts((currentValue) => !currentValue)}
-                    className={`rounded-full border-2 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] transition ${
+                    className={`rounded-full border px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] transition ${
                       showOnlyAlerts
                         ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                         : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
@@ -3625,7 +3625,7 @@ function InventoryPageContent() {
                   </button>
                 </div>
               ) : hasActiveInventoryFilters ? (
-                <div className="mt-3 rounded-[1.1rem] border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3">
+                <div className="mt-3 rounded-[1.1rem] border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3">
                   <p className="text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
                     Filtros activos:
                     {searchText.trim() ? ` búsqueda “${searchText.trim()}”` : ""}
@@ -3639,10 +3639,10 @@ function InventoryPageContent() {
                         )}
 
             {activeInventoryModule === "movimientos" && (
-            <section id="inventario-historial" className="scroll-mt-28 mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.08)]">
+            <section id="inventario-historial" className="scroll-mt-28 mt-4 rounded-[1.4rem] border border-[var(--brand-primary)]/25 bg-white p-4 shadow-sm">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Historial completo de inventario
                   </p>
                   <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -3654,7 +3654,7 @@ function InventoryPageContent() {
                   <button
                     type="button"
                     onClick={() => setAreMovementsVisible((currentValue) => !currentValue)}
-                    className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)]"
                   >
                     {areMovementsVisible ? <EyeOff size={16} /> : <Eye size={16} />}
                     {areMovementsVisible ? "Ocultar" : "Mostrar"}
@@ -3664,7 +3664,7 @@ function InventoryPageContent() {
                     <button
                       type="button"
                       onClick={() => setAreMovementFiltersVisible((currentValue) => !currentValue)}
-                      className={`inline-flex items-center justify-center gap-2 rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] ${
+                      className={`inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] ${
                         areMovementFiltersVisible || hasActiveMovementFilters
                           ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                           : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)]"
@@ -3679,7 +3679,7 @@ function InventoryPageContent() {
                     <button
                       type="button"
                       onClick={copyInventoryMovementSummary}
-                      className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]"
                     >
                       Copiar resumen
                     </button>
@@ -3689,7 +3689,7 @@ function InventoryPageContent() {
                     type="button"
                     onClick={() => loadInventory()}
                     disabled={isLoading}
-                    className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] disabled:opacity-50"
                   >
                     {isLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                     Actualizar
@@ -3708,10 +3708,10 @@ function InventoryPageContent() {
                     <MovementSummaryBox label="Eliminados" value={filteredMovementSummary.deletions} />
                   </div>
 
-                  <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3">
+                  <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                           Resumen por producto
                         </p>
                         <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -3721,7 +3721,7 @@ function InventoryPageContent() {
                       <button
                         type="button"
                         onClick={() => setIsMovementProductSummaryVisible((currentValue) => !currentValue)}
-                        className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+                        className="rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]"
                       >
                         {isMovementProductSummaryVisible ? "Ocultar resumen" : "Ver resumen"}
                       </button>
@@ -3737,12 +3737,12 @@ function InventoryPageContent() {
                           movementProductSummary.slice(0, 9).map((productSummary) => (
                             <div
                               key={productSummary.itemName}
-                              className="rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-white px-4 py-3"
+                              className="rounded-2xl border border-[var(--brand-primary)]/15 bg-white px-4 py-3"
                             >
-                              <p className="text-sm font-black uppercase leading-tight text-[var(--brand-ink-3)]">
+                              <p className="text-sm font-bold uppercase leading-tight text-[var(--brand-ink-3)]">
                                 {productSummary.itemName}
                               </p>
-                              <p className="mt-1 text-[0.65rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                              <p className="mt-1 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                                 {productSummary.movements} movimiento(s)
                               </p>
                               <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
@@ -3759,7 +3759,7 @@ function InventoryPageContent() {
                   </div>
 
                   {!areMovementFiltersVisible && (
-                    <div className="flex flex-col gap-3 rounded-[1.2rem] border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-3 rounded-[1.2rem] border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                       <p className="text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
                         {hasActiveMovementFilters
                           ? "Hay filtros activos. Presiona Mostrar filtros para cambiarlos o Limpiar filtros para ver todo."
@@ -3777,7 +3777,7 @@ function InventoryPageContent() {
                               setMovementOriginFilter("Todos")
                               setMovementDateFilter("")
                             }}
-                            className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+                            className="rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]"
                           >
                             Limpiar filtros
                           </button>
@@ -3785,7 +3785,7 @@ function InventoryPageContent() {
                         <button
                           type="button"
                           onClick={() => setAreMovementFiltersVisible(true)}
-                          className="rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]"
+                          className="rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)]"
                         >
                           Mostrar filtros
                         </button>
@@ -3794,15 +3794,15 @@ function InventoryPageContent() {
                   )}
 
                   {areMovementFiltersVisible && (
-                    <div className="rounded-[1.3rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3">
+                    <div className="rounded-[1.3rem] border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                           Filtros del historial
                         </p>
                         <button
                           type="button"
                           onClick={() => setAreMovementFiltersVisible(false)}
-                          className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+                          className="rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]"
                         >
                           Minimizar filtros
                         </button>
@@ -3818,14 +3818,14 @@ function InventoryPageContent() {
                             value={movementSearchText}
                             onChange={(event) => setMovementSearchText(event.target.value)}
                             placeholder="Buscar movimiento, producto, motivo o nota"
-                            className="w-full rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                            className="w-full rounded-full border border-[var(--brand-primary)]/25 bg-white px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                           />
                         </div>
 
                         <select
                           value={movementItemFilter}
                           onChange={(event) => setMovementItemFilter(event.target.value)}
-                          className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] outline-none focus:border-[var(--brand-primary)]"
+                          className="rounded-full border border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] outline-none focus:border-[var(--brand-primary)]"
                         >
                           {movementItemOptions.map((itemName) => (
                             <option key={itemName} value={itemName}>
@@ -3837,7 +3837,7 @@ function InventoryPageContent() {
                         <select
                           value={movementTypeFilter}
                           onChange={(event) => setMovementTypeFilter(event.target.value)}
-                          className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] outline-none focus:border-[var(--brand-primary)]"
+                          className="rounded-full border border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] outline-none focus:border-[var(--brand-primary)]"
                         >
                           {movementTypeOptions.map((movementType) => (
                             <option key={movementType} value={movementType}>
@@ -3849,7 +3849,7 @@ function InventoryPageContent() {
                         <select
                           value={movementOriginFilter}
                           onChange={(event) => setMovementOriginFilter(event.target.value)}
-                          className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] outline-none focus:border-[var(--brand-primary)]"
+                          className="rounded-full border border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] outline-none focus:border-[var(--brand-primary)]"
                         >
                           {[
                             "Todos",
@@ -3871,13 +3871,13 @@ function InventoryPageContent() {
                           type="date"
                           value={movementDateFilter}
                           onChange={(event) => setMovementDateFilter(event.target.value)}
-                          className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] outline-none focus:border-[var(--brand-primary)]"
+                          className="rounded-full border border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] outline-none focus:border-[var(--brand-primary)]"
                         />
 
                         <select
                           value={movementSortMode}
                           onChange={(event) => setMovementSortMode(event.target.value as "recent" | "oldest")}
-                          className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] outline-none focus:border-[var(--brand-primary)]"
+                          className="rounded-full border border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] outline-none focus:border-[var(--brand-primary)]"
                         >
                           <option value="recent">Más recientes</option>
                           <option value="oldest">Más antiguos</option>
@@ -3888,28 +3888,28 @@ function InventoryPageContent() {
                         <button
                           type="button"
                           onClick={() => setMovementDateFilter(getTodayDateKeyInCaracas())}
-                          className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+                          className="rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]"
                         >
                           Hoy
                         </button>
                         <button
                           type="button"
                           onClick={() => setMovementOriginFilter("Gasto")}
-                          className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+                          className="rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]"
                         >
                           Solo gastos
                         </button>
                         <button
                           type="button"
                           onClick={() => setMovementOriginFilter("Reinicio")}
-                          className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+                          className="rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]"
                         >
                           Reinicios
                         </button>
                         <button
                           type="button"
                           onClick={() => setMovementOriginFilter("Venta")}
-                          className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+                          className="rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]"
                         >
                           Ventas
                         </button>
@@ -3923,7 +3923,7 @@ function InventoryPageContent() {
                             setMovementDateFilter("")
                             setMovementSortMode("recent")
                           }}
-                          className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+                          className="rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]"
                         >
                           Limpiar filtros
                         </button>
@@ -3936,7 +3936,7 @@ function InventoryPageContent() {
                       Todavía no hay movimientos guardados. Cuando registres una entrada, salida, ajuste, reinicio o eliminación, aparecerá aquí.
                     </p>
                   ) : filteredInventoryMovements.length === 0 ? (
-                    <p className="rounded-2xl border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-4 text-sm font-bold leading-6 text-[var(--brand-amber)]">
+                    <p className="rounded-2xl border border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-4 text-sm font-bold leading-6 text-[var(--brand-amber)]">
                       No hay movimientos que coincidan con los filtros actuales. Limpia los filtros para ver el historial completo.
                     </p>
                   ) : (
@@ -3948,14 +3948,14 @@ function InventoryPageContent() {
                         return (
                           <article
                             key={movement.id}
-                            className={`rounded-2xl border-2 p-4 ${movementTone}`}
+                            className={`rounded-2xl border p-4 ${movementTone}`}
                           >
                             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                               <div>
-                                <p className="text-[0.62rem] font-black uppercase tracking-[0.16em]">
+                                <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em]">
                                   {movement.movementType} · {originLabel}
                                 </p>
-                                <h3 className="mt-1 text-base font-black uppercase text-[var(--brand-ink-3)]">
+                                <h3 className="mt-1 text-base font-bold uppercase text-[var(--brand-ink-3)]">
                                   {movement.itemName}
                                 </h3>
                                 <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
@@ -3964,10 +3964,10 @@ function InventoryPageContent() {
                               </div>
 
                               <div className="text-left sm:text-right">
-                                <p className="text-lg font-black text-[var(--brand-primary)]">
+                                <p className="text-lg font-bold text-[var(--brand-primary)]">
                                   {movement.previousQuantity} → {movement.finalQuantity}
                                 </p>
-                                <p className="text-xs font-black text-[var(--brand-ink-2)]/65">
+                                <p className="text-xs font-bold text-[var(--brand-ink-2)]/65">
                                   Movido: {movement.quantityMoved} {movement.unit}
                                 </p>
                               </div>
@@ -3998,7 +3998,7 @@ function InventoryPageContent() {
                   )}
                 </div>
               ) : (
-                <p className="mt-4 rounded-2xl border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-amber)]">
+                <p className="mt-4 rounded-2xl border border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-amber)]">
                   Historial oculto. Hay {inventoryMovements.length} movimiento(s) guardado(s).
                 </p>
               )}
@@ -4007,9 +4007,9 @@ function InventoryPageContent() {
                         )}
 
             {activeInventoryModule === "productos" && (filteredInventory.length === 0 ? (
-              <section className="mt-5 rounded-[2rem] border-2 border-[var(--brand-primary)] bg-white px-6 py-14 text-center shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]">
+              <section className="mt-5 rounded-[2rem] border border-[var(--brand-primary)]/40 bg-white px-6 py-14 text-center shadow-sm">
                 <PackageCheck className="mx-auto text-[var(--brand-primary)]" size={54} />
-                <h2 className="mt-5 text-3xl font-black uppercase text-[var(--brand-primary)]">
+                <h2 className="font-serif mt-5 text-3xl text-[var(--brand-ink-3)] font-semibold">
                   Sin productos de inventario
                 </h2>
                 <p className="mx-auto mt-3 max-w-md text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -4030,20 +4030,20 @@ function InventoryPageContent() {
                   return (
                     <article
                       key={item.id}
-                      className="overflow-hidden rounded-[1.6rem] border-2 border-[var(--brand-primary)] bg-white shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]"
+                      className="overflow-hidden rounded-[1.6rem] border border-[var(--brand-primary)]/40 bg-white shadow-sm"
                     >
-                      <div className="border-b-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-4 py-4">
+                      <div className="border-b border-[var(--brand-primary)] bg-[var(--brand-cream)] px-4 py-4">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div>
-                            <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                            <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                               {item.category}
                             </p>
-                            <h2 className="mt-1 text-2xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_2px_0_rgba(var(--brand-accent-rgb),0.75)]">
+                            <h2 className="font-serif mt-1 text-2xl leading-tight text-[var(--brand-ink-3)] font-semibold">
                               {item.name}
                             </h2>
                           </div>
 
-                          <span className={`inline-flex w-fit items-center gap-2 rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${statusClasses}`}>
+                          <span className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold uppercase ${statusClasses}`}>
                             {status.tone === "good" ? <CheckCircle2 size={15} /> : status.tone === "warning" ? <AlertTriangle size={15} /> : <XCircle size={15} />}
                             {status.label}
                           </span>
@@ -4060,8 +4060,8 @@ function InventoryPageContent() {
                         </div>
 
                         {item.note && (
-                          <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3">
-                            <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+                          <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3">
+                            <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
                               Nota
                             </p>
                             <p className="mt-1 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
@@ -4078,7 +4078,7 @@ function InventoryPageContent() {
                           <button
                             type="button"
                             onClick={() => adjustItemQuantity(item, 1)}
-                            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2.5 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink)]"
+                            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-2.5 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-ink)]"
                           >
                             <Plus size={16} />
                             Entrada
@@ -4087,7 +4087,7 @@ function InventoryPageContent() {
                           <button
                             type="button"
                             onClick={() => adjustItemQuantity(item, -1)}
-                            className="min-h-[44px] rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-4 py-2.5 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]"
+                            className="min-h-[44px] rounded-2xl border border-[var(--brand-primary)]/40 bg-white px-4 py-2.5 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]"
                           >
                             Salida
                           </button>
@@ -4095,7 +4095,7 @@ function InventoryPageContent() {
                           <button
                             type="button"
                             onClick={() => editItem(item)}
-                            className="min-h-[44px] rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-4 py-2.5 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]"
+                            className="min-h-[44px] rounded-2xl border border-[var(--brand-primary)]/40 bg-white px-4 py-2.5 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]"
                           >
                             Editar
                           </button>
@@ -4104,7 +4104,7 @@ function InventoryPageContent() {
                             type="button"
                             onClick={() => deleteItem(item.id)}
                             disabled={deletingItemId === item.id}
-                            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-red-100 px-4 py-2.5 text-xs font-black uppercase tracking-[0.1em] text-red-700 disabled:opacity-50"
+                            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-2xl bg-red-100 px-4 py-2.5 text-xs font-bold uppercase tracking-[0.1em] text-red-700 disabled:opacity-50"
                           >
                             {deletingItemId === item.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
                             Eliminar
@@ -4136,9 +4136,9 @@ function InventoryModuleButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex min-h-[42px] w-full items-center justify-center rounded-2xl border-2 px-3 py-2 text-center text-[0.66rem] font-black uppercase leading-tight tracking-[0.1em] transition ${
+      className={`flex min-h-[42px] w-full items-center justify-center rounded-2xl border px-3 py-2 text-center text-[0.66rem] font-bold uppercase leading-tight tracking-[0.1em] transition ${
         active
-          ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.16)]"
+          ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] shadow-sm"
           : "border-[var(--brand-primary)]/35 bg-[var(--brand-cream)] text-[var(--brand-primary)] hover:border-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
       }`}
     >
@@ -4166,8 +4166,8 @@ function InventoryAlertBox({
         : "border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] text-[var(--brand-ink-2)]"
 
   return (
-    <div className={`rounded-[1.2rem] border-2 p-4 ${style}`}>
-      <p className="text-xs font-black uppercase tracking-[0.16em]">
+    <div className={`rounded-[1.2rem] border p-4 ${style}`}>
+      <p className="text-xs font-bold uppercase tracking-[0.16em]">
         {title}
       </p>
       {items.length === 0 ? (
@@ -4175,12 +4175,12 @@ function InventoryAlertBox({
       ) : (
         <ul className="mt-3 space-y-2">
           {items.slice(0, 5).map((item) => (
-            <li key={item} className="text-sm font-black leading-5">
+            <li key={item} className="text-sm font-bold leading-5">
               {item}
             </li>
           ))}
           {items.length > 5 && (
-            <li className="text-xs font-black uppercase tracking-[0.12em] opacity-70">
+            <li className="text-xs font-bold uppercase tracking-[0.12em] opacity-70">
               +{items.length - 5} más
             </li>
           )}
@@ -4209,11 +4209,11 @@ function MetricCard({
           : "border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-primary)]"
 
   return (
-    <div className={`min-w-0 overflow-hidden rounded-[1.2rem] border-2 p-3 ${style}`}>
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em]">
+    <div className={`min-w-0 overflow-hidden rounded-[1.2rem] border p-3 ${style}`}>
+      <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em]">
         {label}
       </p>
-      <p className="mt-1 break-words text-xl font-black leading-tight sm:text-2xl">{value}</p>
+      <p className="mt-1 break-words text-xl font-bold leading-tight sm:text-2xl">{value}</p>
     </div>
   )
 }
@@ -4226,22 +4226,22 @@ function MovementSummaryBox({
   value: string | number
 }) {
   return (
-    <div className="rounded-[1.1rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3">
-      <p className="text-[0.6rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+    <div className="rounded-[1.1rem] border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3">
+      <p className="text-[0.6rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
         {label}
       </p>
-      <p className="mt-1 text-lg font-black text-[var(--brand-ink-3)]">{value}</p>
+      <p className="mt-1 text-lg font-bold text-[var(--brand-ink-3)]">{value}</p>
     </div>
   )
 }
 
 function InfoBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3">
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+    <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3">
+      <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
         {label}
       </p>
-      <p className="mt-1 break-words text-sm font-black text-[var(--brand-ink-3)]">
+      <p className="mt-1 break-words text-sm font-bold text-[var(--brand-ink-3)]">
         {value || "—"}
       </p>
     </div>

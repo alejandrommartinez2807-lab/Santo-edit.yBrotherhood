@@ -107,12 +107,12 @@ function PaquetesContent() {
   }
 
   const inputClass =
-    "rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
+    "rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
 
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
       <div className="mx-auto w-full max-w-3xl">
-        <Link href="/admin" className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+        <Link href="/admin" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
           <ArrowLeft size={16} /> Volver al panel
         </Link>
         <div className="mt-4 flex items-center gap-3">
@@ -120,22 +120,22 @@ function PaquetesContent() {
             <Gift size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Paquetes</h1>
+            <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Paquetes</h1>
             <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">Todo incluido a un precio; se carga al folio del huésped.</p>
           </div>
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
             Tu clave no tiene permiso para paquetes, o el módulo está desactivado.
           </p>
         ) : (
           <>
             {/* Nuevo paquete */}
-            <div className="mt-6 grid gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-4">
+            <div className="mt-6 grid gap-2 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-4">
               <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre (Luna de miel…)" className={`${inputClass} sm:col-span-2`} />
               <input type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Precio" className={inputClass} />
-              <button onClick={createPackage} disabled={busy || !name.trim()} className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50">
+              <button onClick={createPackage} disabled={busy || !name.trim()} className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-bold uppercase text-white disabled:opacity-50">
                 <Plus size={16} /> Crear
               </button>
               <input value={includes} onChange={(e) => setIncludes(e.target.value)} placeholder="Incluye (2 cenas, spa, tour…)" className={`${inputClass} sm:col-span-4`} />
@@ -143,7 +143,7 @@ function PaquetesContent() {
 
             {/* Aplicar a estadía */}
             {inHouse.length > 0 && packages.length > 0 && (
-              <div className="mt-4 grid gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-4 sm:grid-cols-3">
+              <div className="mt-4 grid gap-2 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-4 sm:grid-cols-3">
                 <select value={applyPkg} onChange={(e) => setApplyPkg(e.target.value)} className={inputClass}>
                   <option value="">Paquete…</option>
                   {packages.filter((p) => p.active).map((p) => (
@@ -156,7 +156,7 @@ function PaquetesContent() {
                     <option key={r.id} value={r.id}>{r.guestName}</option>
                   ))}
                 </select>
-                <button onClick={apply} disabled={busy || !applyPkg || !applyRes} className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50">
+                <button onClick={apply} disabled={busy || !applyPkg || !applyRes} className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-bold uppercase text-white disabled:opacity-50">
                   Cargar al folio
                 </button>
               </div>
@@ -169,23 +169,23 @@ function PaquetesContent() {
             {loading ? (
               <p className="mt-8 inline-flex items-center gap-2 font-bold"><Loader2 className="animate-spin" size={18} /> Cargando…</p>
             ) : packages.length === 0 ? (
-              <p className="mt-8 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-8 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
                 Aún no hay paquetes. Crea el primero arriba.
               </p>
             ) : (
               <ul className="mt-6 space-y-3">
                 {packages.map((p) => (
-                  <li key={p.id} className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
+                  <li key={p.id} className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-lg font-black text-[var(--brand-ink-3)]">{p.name} <span className="text-sm text-[var(--brand-ink-2)]/55">${p.price}</span></p>
+                        <p className="text-lg font-bold text-[var(--brand-ink-3)]">{p.name} <span className="text-sm text-[var(--brand-ink-2)]/55">${p.price}</span></p>
                         {p.includes && <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">Incluye: {p.includes}</p>}
                       </div>
                       <button
                         onClick={() => { if (window.confirm(`¿Eliminar el paquete "${p.name}"?`)) post({ action: "deletePackage", id: p.id }) }}
                         disabled={busy}
                         title="Eliminar"
-                        className="inline-flex items-center justify-center rounded-full border-2 border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
+                        className="inline-flex items-center justify-center rounded-full border border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
                       >
                         <Trash2 size={16} />
                       </button>

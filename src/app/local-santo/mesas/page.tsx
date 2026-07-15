@@ -235,22 +235,22 @@ function MesasContent() {
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-6 text-[var(--brand-ink-3)] print:bg-white">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
-        <section className="rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white p-5 shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.12)] print:border-0 print:shadow-none">
+        <section className="rounded-[2rem] border border-[var(--brand-primary)]/45 bg-white p-5 shadow-sm print:border-0 print:shadow-none">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <Link
                 href="/admin"
-                className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-yellow-50 print:hidden"
+                className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-yellow-50 print:hidden"
               >
                 <ArrowLeft size={15} />
                 Volver al panel
               </Link>
 
-              <p className="mt-5 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <p className="mt-5 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 <Table2 size={18} />
                 {hotelMode ? "QR por habitación y mesa" : "Mesas y QR"}
               </p>
-              <h1 className="mt-2 text-3xl font-black uppercase text-[var(--brand-ink-3)] sm:text-4xl">
+              <h1 className="font-serif mt-2 text-3xl text-[var(--brand-ink-3)] sm:text-4xl font-semibold">
                 {businessName}
               </h1>
               <p className="mt-3 max-w-3xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -265,7 +265,7 @@ function MesasContent() {
                 type="button"
                 onClick={loadTablesAndOrders}
                 disabled={isLoading}
-                className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-yellow-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-yellow-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isLoading ? <Loader2 className="animate-spin" size={16} /> : <RefreshCw size={16} />}
                 Actualizar
@@ -274,7 +274,7 @@ function MesasContent() {
               <button
                 type="button"
                 onClick={handlePrint}
-                className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)]"
+                className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-primary)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)]"
               >
                 <Printer size={16} />
                 Imprimir QR
@@ -283,37 +283,37 @@ function MesasContent() {
           </div>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5 print:grid-cols-5">
-            <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
-              <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">Mesas activas</p>
-              <p className="mt-2 text-3xl font-black text-[var(--brand-ink-3)]">{activeTables.length}</p>
+            <div className="rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">Mesas activas</p>
+              <p className="mt-2 text-3xl font-bold text-[var(--brand-ink-3)]">{activeTables.length}</p>
             </div>
-            <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
-              <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">Ocupadas</p>
-              <p className="mt-2 text-3xl font-black text-[var(--brand-ink-3)]">{occupiedTableCount}</p>
+            <div className="rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">Ocupadas</p>
+              <p className="mt-2 text-3xl font-bold text-[var(--brand-ink-3)]">{occupiedTableCount}</p>
             </div>
-            <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
-              <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">Libres</p>
-              <p className="mt-2 text-3xl font-black text-[var(--brand-ink-3)]">{freeTableCount}</p>
+            <div className="rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">Libres</p>
+              <p className="mt-2 text-3xl font-bold text-[var(--brand-ink-3)]">{freeTableCount}</p>
             </div>
-            <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
-              <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">Pedidos local</p>
-              <p className="mt-2 text-3xl font-black text-[var(--brand-ink-3)]">{localOrders.length}</p>
+            <div className="rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">Pedidos local</p>
+              <p className="mt-2 text-3xl font-bold text-[var(--brand-ink-3)]">{localOrders.length}</p>
             </div>
-            <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
-              <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">Cuentas abiertas</p>
-              <p className="mt-2 text-3xl font-black text-[var(--brand-ink-3)]">{activeOpenAccounts.length}</p>
+            <div className="rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">Cuentas abiertas</p>
+              <p className="mt-2 text-3xl font-bold text-[var(--brand-ink-3)]">{activeOpenAccounts.length}</p>
             </div>
           </div>
 
           {lastUpdatedAt && (
-            <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-[var(--brand-cream)] px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]/70 print:hidden">
+            <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-[var(--brand-cream)] px-4 py-2 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]/70 print:hidden">
               <Store size={14} />
               Actualizado {lastUpdatedAt}
             </p>
           )}
 
           {errorMessage && (
-            <p className="mt-4 rounded-2xl border-2 border-red-300 bg-red-50 px-4 py-3 text-sm font-bold text-red-700 print:hidden">
+            <p className="mt-4 rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-bold text-red-700 print:hidden">
               {errorMessage}
             </p>
           )}
@@ -332,11 +332,11 @@ function MesasContent() {
         />
 
         {selectedTableName && (
-          <section className="rounded-[1.5rem] border-4 border-[var(--brand-primary)] bg-white p-4 shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)] print:hidden">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">Mesa seleccionada</p>
+          <section className="rounded-[1.5rem] border border-[var(--brand-primary)]/45 bg-white p-4 shadow-sm print:hidden">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">Mesa seleccionada</p>
             <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">{selectedTableName}</p>
+                <p className="text-2xl font-bold uppercase text-[var(--brand-ink-3)]">{selectedTableName}</p>
                 <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/70">
                   {selectedTableOrders.length} pedido(s) y {selectedTableOpenAccounts.length} cuenta(s) abierta(s) relacionados con esta mesa.
                 </p>
@@ -344,32 +344,32 @@ function MesasContent() {
               <button
                 type="button"
                 onClick={() => setSelectedTableName("")}
-                className="rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-yellow-50"
+                className="rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-yellow-50"
               >
                 Ver todas
               </button>
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3">
-                <p className="text-[0.62rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]/70">Total mesa/cuenta</p>
-                <p className="mt-1 text-xl font-black text-[var(--brand-ink-3)]">${selectedTableTotalUSD.toFixed(2)}</p>
+              <div className="rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3">
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]/70">Total mesa/cuenta</p>
+                <p className="mt-1 text-xl font-bold text-[var(--brand-ink-3)]">${selectedTableTotalUSD.toFixed(2)}</p>
               </div>
-              <div className="rounded-2xl border-2 border-yellow-500 bg-[var(--brand-accent-100)] p-3">
-                <p className="text-[0.62rem] font-black uppercase tracking-[0.14em] text-[var(--brand-amber)]">Pendiente</p>
-                <p className="mt-1 text-xl font-black text-[var(--brand-ink)]">${selectedTablePendingUSD.toFixed(2)}</p>
+              <div className="rounded-2xl border border-yellow-500 bg-[var(--brand-accent-100)] p-3">
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[var(--brand-amber)]">Pendiente</p>
+                <p className="mt-1 text-xl font-bold text-[var(--brand-ink)]">${selectedTablePendingUSD.toFixed(2)}</p>
               </div>
-              <div className="rounded-2xl border-2 border-green-700 bg-green-50 p-3">
-                <p className="text-[0.62rem] font-black uppercase tracking-[0.14em] text-green-700">Estado cuenta</p>
-                <p className="mt-1 text-xl font-black text-green-800">{selectedTableOpenAccounts.length ? "Abierta" : "Sin cuenta"}</p>
+              <div className="rounded-2xl border border-green-700 bg-green-50 p-3">
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-green-700">Estado cuenta</p>
+                <p className="mt-1 text-xl font-bold text-green-800">{selectedTableOpenAccounts.length ? "Abierta" : "Sin cuenta"}</p>
               </div>
             </div>
 
             {selectedTableOpenAccounts.length > 0 && (
               <div className="mt-4 space-y-2">
                 {selectedTableOpenAccounts.map((account) => (
-                  <div key={account.id} className="rounded-2xl border-2 border-green-700 bg-green-50 p-3 text-sm font-bold leading-6 text-[#234000]">
-                    <p className="font-black uppercase tracking-[0.12em] text-green-700">Cuenta abierta · {account.customerName || account.tableNumber}</p>
+                  <div key={account.id} className="rounded-2xl border border-green-700 bg-green-50 p-3 text-sm font-bold leading-6 text-[#234000]">
+                    <p className="font-bold uppercase tracking-[0.12em] text-green-700">Cuenta abierta · {account.customerName || account.tableNumber}</p>
                     <p>{getOpenAccountOrdersCount(account)} pedido(s) asociados · total ${Number(account.totalEstimatedUSD || 0).toFixed(2)} · pendiente ${Number(account.pendingUSD || 0).toFixed(2)}</p>
                     <p className="mt-1 text-xs font-bold text-[#234000]/70">Cerrar la cuenta no registra cobro. Caja debe cobrar pedidos reales.</p>
                   </div>

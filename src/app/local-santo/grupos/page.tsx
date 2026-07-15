@@ -129,14 +129,14 @@ function GruposContent() {
   }
 
   const inputClass =
-    "rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
+    "rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
 
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
       <div className="mx-auto w-full max-w-3xl">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
         >
           <ArrowLeft size={16} /> Volver al panel
         </Link>
@@ -146,7 +146,7 @@ function GruposContent() {
             <Lock size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Bloqueos de habitación</h1>
+            <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Bloqueos de habitación</h1>
             <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
               Aparta una habitación por un rango (mantenimiento, evento). No se podrá reservar en la
               web y sale marcada en el calendario.
@@ -155,13 +155,13 @@ function GruposContent() {
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
             Tu clave no tiene permiso para gestionar bloqueos, o el módulo está desactivado.
           </p>
         ) : (
           <>
             {/* Nuevo bloqueo */}
-            <div className="mt-6 grid gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-2">
+            <div className="mt-6 grid gap-2 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-2">
               <select value={roomId} onChange={(e) => setRoomId(e.target.value)} className={inputClass}>
                 <option value="">Habitación a bloquear…</option>
                 {rooms.map((room) => (
@@ -177,8 +177,8 @@ function GruposContent() {
                 placeholder="Motivo (mantenimiento, evento…)"
                 className={inputClass}
               />
-              <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
-                <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Desde</span>
+              <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
+                <span className="text-xs font-bold uppercase text-[var(--brand-primary)]">Desde</span>
                 <input
                   type="date"
                   value={fromDate}
@@ -190,8 +190,8 @@ function GruposContent() {
                   className="w-full bg-transparent font-bold outline-none"
                 />
               </label>
-              <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
-                <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Hasta</span>
+              <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
+                <span className="text-xs font-bold uppercase text-[var(--brand-primary)]">Hasta</span>
                 <input
                   type="date"
                   value={toDate}
@@ -203,7 +203,7 @@ function GruposContent() {
               <button
                 onClick={createBlock}
                 disabled={busy || !roomId}
-                className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50 sm:col-span-2"
+                className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-bold uppercase text-white disabled:opacity-50 sm:col-span-2"
               >
                 <Plus size={16} /> Bloquear habitación
               </button>
@@ -217,16 +217,16 @@ function GruposContent() {
                 <Loader2 className="animate-spin" size={18} /> Cargando…
               </p>
             ) : blocks.length === 0 ? (
-              <p className="mt-8 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-8 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
                 No hay bloqueos activos. Crea uno arriba cuando una habitación no se pueda vender.
               </p>
             ) : (
               <ul className="mt-8 space-y-3">
                 {blocks.map((block) => (
-                  <li key={block.id} className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
+                  <li key={block.id} className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-lg font-black text-[var(--brand-ink-3)]">
+                        <p className="text-lg font-bold text-[var(--brand-ink-3)]">
                           {roomNameById.get(block.roomId) || "Habitación"}
                         </p>
                         <p className="flex flex-wrap items-center gap-x-3 text-sm font-bold text-[var(--brand-ink-2)]/70">
@@ -240,7 +240,7 @@ function GruposContent() {
                         onClick={() => removeBlock(block)}
                         disabled={busy}
                         title="Quitar bloqueo"
-                        className="inline-flex items-center justify-center rounded-full border-2 border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
+                        className="inline-flex items-center justify-center rounded-full border border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
                       >
                         <Trash2 size={16} />
                       </button>

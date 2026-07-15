@@ -151,8 +151,8 @@ function isActiveOrder(order: LocalOrder) {
 function TicketLine({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-3 border-b border-dashed border-[var(--brand-ink-3)]/20 py-1.5 text-[12px]">
-      <span className="font-black uppercase tracking-[0.12em] text-[var(--brand-ink-3)]/65">{label}</span>
-      <span className="text-right font-black text-[var(--brand-ink-3)]">{value}</span>
+      <span className="font-bold uppercase tracking-[0.12em] text-[var(--brand-ink-3)]/65">{label}</span>
+      <span className="text-right font-bold text-[var(--brand-ink-3)]">{value}</span>
     </div>
   );
 }
@@ -164,7 +164,7 @@ function OpenAccountTicketNotice({ order }: { order: LocalOrder }) {
   if (!label || !operationalText) return null;
 
   return (
-    <div className="mt-3 rounded-xl border border-[var(--brand-primary)]/25 bg-red-50 p-3 text-[12px] font-black leading-5 text-[var(--brand-primary)]">
+    <div className="mt-3 rounded-xl border border-[var(--brand-primary)]/25 bg-red-50 p-3 text-[12px] font-bold leading-5 text-[var(--brand-primary)]">
       <p>{label}</p>
       <p className="mt-1 text-[11px] font-bold text-[var(--brand-ink)]/75">{operationalText}</p>
     </div>
@@ -181,7 +181,7 @@ function TicketItemLine({ item, showPrices }: { item: OrderItem; showPrices: boo
 
   return (
     <div className="border-b border-dashed border-[var(--brand-ink-3)]/20 py-2">
-      <div className="flex items-start justify-between gap-3 text-[13px] font-black text-[var(--brand-ink-3)]">
+      <div className="flex items-start justify-between gap-3 text-[13px] font-bold text-[var(--brand-ink-3)]">
         <span>
           {item.quantity} x {item.name}
         </span>
@@ -193,19 +193,19 @@ function TicketItemLine({ item, showPrices }: { item: OrderItem; showPrices: boo
       ) : null}
 
       {requiresStaffConfirmation ? (
-        <p className="mt-1 rounded-xl border border-yellow-500 bg-[var(--brand-accent-100)] px-2 py-1 text-[11px] font-black leading-4 text-[var(--brand-amber)]">
+        <p className="mt-1 rounded-xl border border-yellow-500 bg-[var(--brand-accent-100)] px-2 py-1 text-[11px] font-bold leading-4 text-[var(--brand-amber)]">
           Revisar con el personal antes de preparar o entregar.
         </p>
       ) : null}
 
       {staffConfirmationConfirmed ? (
-        <p className="mt-1 rounded-xl border border-green-500/35 bg-green-50 px-2 py-1 text-[11px] font-black leading-4 text-green-700">
+        <p className="mt-1 rounded-xl border border-green-500/35 bg-green-50 px-2 py-1 text-[11px] font-bold leading-4 text-green-700">
           Confirmado por el personal.
         </p>
       ) : null}
 
       {note ? (
-        <p className="mt-1 rounded-xl border border-[var(--brand-primary)]/20 bg-red-50 px-2 py-1 text-[11px] font-black leading-4 text-[var(--brand-primary)]">
+        <p className="mt-1 rounded-xl border border-[var(--brand-primary)]/20 bg-red-50 px-2 py-1 text-[11px] font-bold leading-4 text-[var(--brand-primary)]">
           Nota: {note}
         </p>
       ) : null}
@@ -231,19 +231,19 @@ function KitchenTicket({ order }: { order: LocalOrder }) {
       <OpenAccountTicketNotice order={order} />
 
       {order.customerNote ? (
-        <div className="mt-3 rounded-xl border border-[var(--brand-primary)]/25 bg-red-50 p-3 text-[12px] font-black leading-5 text-[var(--brand-primary)]">
+        <div className="mt-3 rounded-xl border border-[var(--brand-primary)]/25 bg-red-50 p-3 text-[12px] font-bold leading-5 text-[var(--brand-primary)]">
           Nota general: {order.customerNote}
         </div>
       ) : null}
 
       {hasProductsToConfirm ? (
-        <div className="mt-3 rounded-xl border border-yellow-500 bg-[var(--brand-accent-100)] p-3 text-[12px] font-black leading-5 text-[var(--brand-amber)]">
+        <div className="mt-3 rounded-xl border border-yellow-500 bg-[var(--brand-accent-100)] p-3 text-[12px] font-bold leading-5 text-[var(--brand-amber)]">
           Productos por confirmar: {productsToConfirmText}.
         </div>
       ) : null}
 
       {!hasProductsToConfirm && hasConfirmedProducts ? (
-        <div className="mt-3 rounded-xl border border-green-500/35 bg-green-50 p-3 text-[12px] font-black leading-5 text-green-700">
+        <div className="mt-3 rounded-xl border border-green-500/35 bg-green-50 p-3 text-[12px] font-bold leading-5 text-green-700">
           Revisión confirmada por el personal.
         </div>
       ) : null}
@@ -276,13 +276,13 @@ function CashierTicket({ order }: { order: LocalOrder }) {
       <OpenAccountTicketNotice order={order} />
 
       {hasProductsToConfirm ? (
-        <div className="mt-3 rounded-xl border border-yellow-500 bg-[var(--brand-accent-100)] p-3 text-[12px] font-black leading-5 text-[var(--brand-amber)]">
+        <div className="mt-3 rounded-xl border border-yellow-500 bg-[var(--brand-accent-100)] p-3 text-[12px] font-bold leading-5 text-[var(--brand-amber)]">
           Productos por confirmar: {productsToConfirmText}.
         </div>
       ) : null}
 
       {!hasProductsToConfirm && hasConfirmedProducts ? (
-        <div className="mt-3 rounded-xl border border-green-500/35 bg-green-50 p-3 text-[12px] font-black leading-5 text-green-700">
+        <div className="mt-3 rounded-xl border border-green-500/35 bg-green-50 p-3 text-[12px] font-bold leading-5 text-green-700">
           Revisión confirmada por el personal.
         </div>
       ) : null}
@@ -334,13 +334,13 @@ function DeliveryTicket({ order }: { order: LocalOrder }) {
       <OpenAccountTicketNotice order={order} />
 
       {hasProductsToConfirm ? (
-        <div className="mt-3 rounded-xl border border-yellow-500 bg-[var(--brand-accent-100)] p-3 text-[12px] font-black leading-5 text-[var(--brand-amber)]">
+        <div className="mt-3 rounded-xl border border-yellow-500 bg-[var(--brand-accent-100)] p-3 text-[12px] font-bold leading-5 text-[var(--brand-amber)]">
           Productos por confirmar: {productsToConfirmText}.
         </div>
       ) : null}
 
       {!hasProductsToConfirm && hasConfirmedProducts ? (
-        <div className="mt-3 rounded-xl border border-green-500/35 bg-green-50 p-3 text-[12px] font-black leading-5 text-green-700">
+        <div className="mt-3 rounded-xl border border-green-500/35 bg-green-50 p-3 text-[12px] font-bold leading-5 text-green-700">
           Revisión confirmada por el personal.
         </div>
       ) : null}
@@ -377,7 +377,7 @@ function AccountTicket({ account, ordersById }: { account: OpenAccount; ordersBy
       <TicketLine label="Pendiente" value={formatUSD(account.pendingUSD || 0)} />
 
       {account.note ? (
-        <div className="mt-3 rounded-xl border border-[var(--brand-primary)]/25 bg-red-50 p-3 text-[12px] font-black leading-5 text-[var(--brand-primary)]">
+        <div className="mt-3 rounded-xl border border-[var(--brand-primary)]/25 bg-red-50 p-3 text-[12px] font-bold leading-5 text-[var(--brand-primary)]">
           Nota de cuenta: {account.note}
         </div>
       ) : null}
@@ -386,7 +386,7 @@ function AccountTicket({ account, ordersById }: { account: OpenAccount; ordersBy
       {linkedOrders.length ? (
         linkedOrders.map((order) => (
           <div key={order.id} className="border-b border-dashed border-[var(--brand-ink-3)]/25 py-3">
-            <div className="flex items-center justify-between gap-3 text-[12px] font-black text-[var(--brand-ink-3)]">
+            <div className="flex items-center justify-between gap-3 text-[12px] font-bold text-[var(--brand-ink-3)]">
               <span>{getDisplayOrderNumber(order)}</span>
               <span>{formatUSD(getOrderTotals(order).totalUSD)}</span>
             </div>
@@ -394,17 +394,17 @@ function AccountTicket({ account, ordersById }: { account: OpenAccount; ordersBy
               {order.status} · {getOrderPayment(order).status}
             </p>
             {getOrderOpenAccountLabel(order) ? (
-              <p className="mt-1 rounded-xl border border-[var(--brand-primary)]/20 bg-red-50 px-2 py-1 text-[11px] font-black leading-4 text-[var(--brand-primary)]">
+              <p className="mt-1 rounded-xl border border-[var(--brand-primary)]/20 bg-red-50 px-2 py-1 text-[11px] font-bold leading-4 text-[var(--brand-primary)]">
                 {getOrderOpenAccountLabel(order)}
               </p>
             ) : null}
             {hasStaffConfirmationItems(order) ? (
-              <p className="mt-1 rounded-xl border border-yellow-500 bg-[var(--brand-accent-100)] px-2 py-1 text-[11px] font-black leading-4 text-[var(--brand-amber)]">
+              <p className="mt-1 rounded-xl border border-yellow-500 bg-[var(--brand-accent-100)] px-2 py-1 text-[11px] font-bold leading-4 text-[var(--brand-amber)]">
                 Revisar: {buildStaffConfirmationText(order)}.
               </p>
             ) : null}
             {!hasStaffConfirmationItems(order) && hasConfirmedStaffConfirmationItems(order) ? (
-              <p className="mt-1 rounded-xl border border-green-500/35 bg-green-50 px-2 py-1 text-[11px] font-black leading-4 text-green-700">
+              <p className="mt-1 rounded-xl border border-green-500/35 bg-green-50 px-2 py-1 text-[11px] font-bold leading-4 text-green-700">
                 Revisión confirmada por el personal.
               </p>
             ) : null}
@@ -435,7 +435,7 @@ function AccountTicket({ account, ordersById }: { account: OpenAccount; ordersBy
 
 function TicketSectionTitle({ children }: { children: ReactNode }) {
   return (
-    <p className="mt-4 border-b-2 border-[var(--brand-ink-3)] pb-1 text-center text-[12px] font-black uppercase tracking-[0.18em] text-[var(--brand-ink-3)]">
+    <p className="mt-4 border-b border-[var(--brand-ink-3)] pb-1 text-center text-[12px] font-bold uppercase tracking-[0.18em] text-[var(--brand-ink-3)]">
       {children}
     </p>
   );
@@ -454,9 +454,9 @@ function TicketShell({
 }) {
   return (
     <article className="ticket-paper mx-auto w-full max-w-[380px] bg-white p-5 font-mono text-[var(--brand-ink-3)] shadow-xl print:shadow-none">
-      <div className="border-b-2 border-[var(--brand-ink-3)] pb-3 text-center">
-        <p className="text-[18px] font-black uppercase leading-none">{BRAND.name}</p>
-        <p className="mt-1 text-[12px] font-black uppercase tracking-[0.16em]">{title}</p>
+      <div className="border-b border-[var(--brand-ink-3)] pb-3 text-center">
+        <p className="text-[18px] font-bold uppercase leading-none">{BRAND.name}</p>
+        <p className="mt-1 text-[12px] font-bold uppercase tracking-[0.16em]">{title}</p>
         <p className="mt-1 text-[11px] font-bold text-[var(--brand-ink-3)]/65">{subtitle}</p>
         <p className="mt-2 text-[10px] font-bold text-[var(--brand-ink-3)]/60">
           Generado: {formatDate(new Date().toISOString())}
@@ -464,17 +464,17 @@ function TicketShell({
       </div>
 
       {orderNumber ? (
-        <div className="border-b-2 border-dashed border-[var(--brand-ink-3)] py-3 text-center">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--brand-ink-3)]/60">
+        <div className="border-b border-dashed border-[var(--brand-ink-3)] py-3 text-center">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--brand-ink-3)]/60">
             Número de pedido
           </p>
-          <p className="mt-1 text-[34px] font-black uppercase leading-none">{orderNumber}</p>
+          <p className="mt-1 text-[34px] font-bold uppercase leading-none">{orderNumber}</p>
         </div>
       ) : null}
 
       <div className="py-3">{children}</div>
 
-      <div className="border-t-2 border-[var(--brand-ink-3)] pt-3 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--brand-ink-3)]/65">
+      <div className="border-t border-[var(--brand-ink-3)] pt-3 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--brand-ink-3)]/65">
         Revisa el pedido antes de entregar o cobrar.
       </div>
     </article>
@@ -498,16 +498,16 @@ function OrderTicketCard({ order, onSelect }: { order: LocalOrder; onSelect: (ta
 
   return (
     <article
-      className={`rounded-[1.75rem] border-2 bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.08)] ${
+      className={`rounded-[1.75rem] border bg-white p-4 shadow-sm ${
         hasProductsToConfirm ? "border-yellow-500" : "border-[var(--brand-primary)]"
       }`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
             {getDisplayOrderNumber(order)} · {getDisplayOrderType(order)}
           </p>
-          <h2 className="mt-1 text-xl font-black uppercase leading-tight text-[var(--brand-ink)]">
+          <h2 className="mt-1 text-xl font-bold uppercase leading-tight text-[var(--brand-ink)]">
             {order.customerName || "Cliente"}
           </h2>
           <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/70">
@@ -516,33 +516,33 @@ function OrderTicketCard({ order, onSelect }: { order: LocalOrder; onSelect: (ta
         </div>
 
         <div className="text-right">
-          <p className="text-2xl font-black text-[var(--brand-primary)]">{formatUSD(totals.totalUSD)}</p>
-          <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/60">
+          <p className="text-2xl font-bold text-[var(--brand-primary)]">{formatUSD(totals.totalUSD)}</p>
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/60">
             {(order.items || []).length} producto{(order.items || []).length === 1 ? "" : "s"}
           </p>
         </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <span className={`rounded-full border px-3 py-1 text-xs font-black ${getOrderStatusClasses(order.status)}`}>
+        <span className={`rounded-full border px-3 py-1 text-xs font-bold ${getOrderStatusClasses(order.status)}`}>
           {order.status}
         </span>
-        <span className={`rounded-full border px-3 py-1 text-xs font-black ${getPaymentStatusClasses(payment.status)}`}>
+        <span className={`rounded-full border px-3 py-1 text-xs font-bold ${getPaymentStatusClasses(payment.status)}`}>
           {payment.status}
         </span>
         {hasProductsToConfirm ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-yellow-500 bg-[var(--brand-accent-100)] px-3 py-1 text-xs font-black text-[var(--brand-amber)]">
+          <span className="inline-flex items-center gap-1 rounded-full border border-yellow-500 bg-[var(--brand-accent-100)] px-3 py-1 text-xs font-bold text-[var(--brand-amber)]">
             <Eye size={13} />
             Revisar producto
           </span>
         ) : null}
         {!hasProductsToConfirm && hasConfirmedProducts ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-green-500/35 bg-green-50 px-3 py-1 text-xs font-black text-green-700">
+          <span className="inline-flex items-center gap-1 rounded-full border border-green-500/35 bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
             Confirmado
           </span>
         ) : null}
         {order.openAccountTable ? (
-          <span className="rounded-full border border-[var(--brand-primary)]/25 bg-red-50 px-3 py-1 text-xs font-black text-[var(--brand-primary)]">
+          <span className="rounded-full border border-[var(--brand-primary)]/25 bg-red-50 px-3 py-1 text-xs font-bold text-[var(--brand-primary)]">
             {getOrderOpenAccountLabel(order)}
           </span>
         ) : null}
@@ -552,7 +552,7 @@ function OrderTicketCard({ order, onSelect }: { order: LocalOrder; onSelect: (ta
         <button
           type="button"
           onClick={() => onSelect({ kind: "cashier", order })}
-          className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+          className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
         >
           <CreditCard size={16} />
           Caja
@@ -560,7 +560,7 @@ function OrderTicketCard({ order, onSelect }: { order: LocalOrder; onSelect: (ta
         <button
           type="button"
           onClick={() => onSelect({ kind: "kitchen", order })}
-          className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+          className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
         >
           <CookingPot size={16} />
           Cocina
@@ -569,7 +569,7 @@ function OrderTicketCard({ order, onSelect }: { order: LocalOrder; onSelect: (ta
           type="button"
           onClick={() => onSelect({ kind: "delivery", order })}
           disabled={!isDelivery}
-          className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:cursor-not-allowed disabled:opacity-45"
+          className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:cursor-not-allowed disabled:opacity-45"
         >
           <Truck size={16} />
           Delivery
@@ -581,13 +581,13 @@ function OrderTicketCard({ order, onSelect }: { order: LocalOrder; onSelect: (ta
 
 function AccountTicketCard({ account, onSelect }: { account: OpenAccount; onSelect: (target: TicketTarget) => void }) {
   return (
-    <article className="rounded-[1.75rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.08)]">
+    <article className="rounded-[1.75rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
             Cuenta abierta
           </p>
-          <h2 className="mt-1 text-xl font-black uppercase leading-tight text-[var(--brand-ink)]">
+          <h2 className="mt-1 text-xl font-bold uppercase leading-tight text-[var(--brand-ink)]">
             {account.tableNumber || "Mesa sin nombre"}
           </h2>
           <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/70">
@@ -595,8 +595,8 @@ function AccountTicketCard({ account, onSelect }: { account: OpenAccount; onSele
           </p>
         </div>
         <div className="text-right">
-          <p className="text-2xl font-black text-[var(--brand-primary)]">{formatUSD(account.totalEstimatedUSD || 0)}</p>
-          <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/60">
+          <p className="text-2xl font-bold text-[var(--brand-primary)]">{formatUSD(account.totalEstimatedUSD || 0)}</p>
+          <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/60">
             Pendiente {formatUSD(account.pendingUSD || 0)}
           </p>
         </div>
@@ -605,7 +605,7 @@ function AccountTicketCard({ account, onSelect }: { account: OpenAccount; onSele
       <button
         type="button"
         onClick={() => onSelect({ kind: "account", account })}
-        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
       >
         <ReceiptText size={16} />
         Ver ticket de cuenta
@@ -832,13 +832,13 @@ function TicketsPageContent() {
       `}</style>
 
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-5">
-        <div className="rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white p-5 shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.12)]">
+        <div className="rounded-[2rem] border border-[var(--brand-primary)]/45 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Tickets base
               </p>
-              <h1 className="mt-1 text-3xl font-black uppercase leading-none text-[var(--brand-primary)] sm:text-5xl">
+              <h1 className="font-serif mt-1 text-3xl leading-tight text-[var(--brand-ink-3)] sm:text-5xl font-semibold">
                 Impresión operativa
               </h1>
               <p className="mt-3 max-w-3xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
@@ -851,7 +851,7 @@ function TicketsPageContent() {
             <div className="flex flex-wrap gap-3">
               <a
                 href="/admin"
-                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
               >
                 <ArrowLeft size={16} />
                 Volver
@@ -860,7 +860,7 @@ function TicketsPageContent() {
                 type="button"
                 onClick={() => loadTicketsData(true)}
                 disabled={isLoading}
-                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
               >
                 {isLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                 Actualizar
@@ -870,36 +870,36 @@ function TicketsPageContent() {
         </div>
 
         {message ? (
-          <div className="rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white px-5 py-4 text-sm font-black text-[var(--brand-primary)] shadow-[0_7px_0_rgba(var(--brand-primary-rgb),0.08)]">
+          <div className="rounded-[1.5rem] border border-[var(--brand-primary)]/40 bg-white px-5 py-4 text-sm font-bold text-[var(--brand-primary)] shadow-sm">
             {message}
           </div>
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-4">
-          <div className="rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_7px_0_rgba(var(--brand-primary-rgb),0.08)]">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">Pedidos activos</p>
-            <p className="mt-2 text-3xl font-black text-[var(--brand-ink)]">{filteredOrders.length}</p>
+          <div className="rounded-[1.5rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">Pedidos activos</p>
+            <p className="mt-2 text-3xl font-bold text-[var(--brand-ink)]">{filteredOrders.length}</p>
           </div>
-          <div className="rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_7px_0_rgba(var(--brand-primary-rgb),0.08)]">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">Cuentas abiertas</p>
-            <p className="mt-2 text-3xl font-black text-[var(--brand-ink)]">{visibleOpenAccounts.length}</p>
+          <div className="rounded-[1.5rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">Cuentas abiertas</p>
+            <p className="mt-2 text-3xl font-bold text-[var(--brand-ink)]">{visibleOpenAccounts.length}</p>
           </div>
-          <div className="rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_7px_0_rgba(var(--brand-primary-rgb),0.08)]">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">Delivery</p>
-            <p className="mt-2 text-3xl font-black text-[var(--brand-ink)]">
+          <div className="rounded-[1.5rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">Delivery</p>
+            <p className="mt-2 text-3xl font-bold text-[var(--brand-ink)]">
               {filteredOrders.filter(isDeliveryOrder).length}
             </p>
           </div>
-          <div className="rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_7px_0_rgba(var(--brand-primary-rgb),0.08)]">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">Pendiente</p>
-            <p className="mt-2 text-3xl font-black text-[var(--brand-ink)]">
+          <div className="rounded-[1.5rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">Pendiente</p>
+            <p className="mt-2 text-3xl font-bold text-[var(--brand-ink)]">
               {formatUSD(filteredOrders.reduce((total, order) => total + getOrderPayment(order).pendingUSD, 0))}
             </p>
           </div>
         </div>
 
-        <div className="rounded-[1.75rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.08)]">
-          <label className="flex items-center gap-3 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3">
+        <div className="rounded-[1.75rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm">
+          <label className="flex items-center gap-3 rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3">
             <Search size={18} className="text-[var(--brand-primary)]" />
             <input
               value={searchText}
@@ -914,11 +914,11 @@ function TicketsPageContent() {
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-[var(--brand-primary)]">
               <ReceiptText size={22} />
-              <h2 className="text-2xl font-black uppercase">Pedidos para ticket</h2>
+              <h2 className="font-serif text-2xl font-semibold">Pedidos para ticket</h2>
             </div>
 
             {isLoading && !orders.length ? (
-              <div className="rounded-[1.75rem] border-2 border-[var(--brand-primary)] bg-white p-8 text-center text-sm font-black text-[var(--brand-primary)]">
+              <div className="rounded-[1.75rem] border border-[var(--brand-primary)]/40 bg-white p-8 text-center text-sm font-bold text-[var(--brand-primary)]">
                 <Loader2 className="mx-auto mb-3 animate-spin" size={28} />
                 Cargando pedidos para tickets.
               </div>
@@ -929,7 +929,7 @@ function TicketsPageContent() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-[1.75rem] border-2 border-[var(--brand-primary)] bg-white p-8 text-center text-sm font-black text-[var(--brand-primary)]">
+              <div className="rounded-[1.75rem] border border-[var(--brand-primary)]/40 bg-white p-8 text-center text-sm font-bold text-[var(--brand-primary)]">
                 No hay pedidos activos que coincidan con la búsqueda.
               </div>
             )}
@@ -938,7 +938,7 @@ function TicketsPageContent() {
           <aside className="space-y-4">
             <div className="flex items-center gap-2 text-[var(--brand-primary)]">
               <Table2 size={22} />
-              <h2 className="text-2xl font-black uppercase">Cuentas abiertas</h2>
+              <h2 className="font-serif text-2xl font-semibold">Cuentas abiertas</h2>
             </div>
 
             {visibleOpenAccounts.length ? (
@@ -948,13 +948,13 @@ function TicketsPageContent() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-[1.75rem] border-2 border-[var(--brand-primary)] bg-white p-6 text-center text-sm font-black text-[var(--brand-primary)]">
+              <div className="rounded-[1.75rem] border border-[var(--brand-primary)]/40 bg-white p-6 text-center text-sm font-bold text-[var(--brand-primary)]">
                 No hay cuentas abiertas disponibles para ticket.
               </div>
             )}
 
-            <div className="rounded-[1.75rem] border-2 border-[var(--brand-primary)]/35 bg-[var(--brand-accent-100)] p-5 text-sm font-bold leading-6 text-[var(--brand-ink)]">
-              <div className="mb-2 flex items-center gap-2 font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+            <div className="rounded-[1.75rem] border border-[var(--brand-primary)]/35 bg-[var(--brand-accent-100)] p-5 text-sm font-bold leading-6 text-[var(--brand-ink)]">
+              <div className="mb-2 flex items-center gap-2 font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                 <Clock size={18} />
                 Importante
               </div>
@@ -967,9 +967,9 @@ function TicketsPageContent() {
       {selectedTarget ? (
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[var(--brand-ink-3)]/70 px-4 py-6 backdrop-blur-sm">
           <div className="ticket-print-zone w-full max-w-2xl rounded-[2rem] bg-[var(--brand-cream)] p-4 shadow-2xl">
-            <div className="ticket-print-actions mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-3">
+            <div className="ticket-print-actions mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[1.5rem] border border-[var(--brand-primary)]/40 bg-white p-3">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   {TICKET_KIND_LABELS[selectedTarget.kind]}
                 </p>
                 <p className="text-sm font-bold text-[var(--brand-ink-2)]/70">
@@ -981,7 +981,7 @@ function TicketsPageContent() {
                 <button
                   type="button"
                   onClick={printSelectedTicket}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
                 >
                   <Printer size={16} />
                   Imprimir
@@ -989,7 +989,7 @@ function TicketsPageContent() {
                 <button
                   type="button"
                   onClick={() => setSelectedTarget(null)}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                 >
                   <X size={16} />
                   Cerrar

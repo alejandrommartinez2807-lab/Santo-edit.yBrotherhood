@@ -142,14 +142,14 @@ function PlanesTarifaContent() {
   }
 
   const inputClass =
-    "rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
+    "rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
 
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
       <div className="mx-auto w-full max-w-3xl">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
         >
           <ArrowLeft size={16} /> Volver al panel
         </Link>
@@ -159,7 +159,7 @@ function PlanesTarifaContent() {
             <SlidersHorizontal size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Tarifas avanzadas</h1>
+            <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Tarifas avanzadas</h1>
             <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
               Reglas de venta por fecha: estancia mínima y días cerrados a llegada/salida. Aplican al
               motor de reservas online.
@@ -168,13 +168,13 @@ function PlanesTarifaContent() {
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
             Tu clave no tiene permiso para tarifas avanzadas, o el módulo está desactivado.
           </p>
         ) : (
           <>
             {/* Nueva restricción */}
-            <div className="mt-6 grid gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-2">
+            <div className="mt-6 grid gap-2 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-2">
               <select value={roomTypeId} onChange={(e) => setRoomTypeId(e.target.value)} className={inputClass}>
                 <option value="">Todos los tipos</option>
                 {roomTypes.map((t) => (
@@ -183,8 +183,8 @@ function PlanesTarifaContent() {
                   </option>
                 ))}
               </select>
-              <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold">
-                <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Mín. noches</span>
+              <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold">
+                <span className="text-xs font-bold uppercase text-[var(--brand-primary)]">Mín. noches</span>
                 <input
                   type="number"
                   min={1}
@@ -193,8 +193,8 @@ function PlanesTarifaContent() {
                   className="w-full bg-transparent font-bold outline-none"
                 />
               </label>
-              <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
-                <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Desde</span>
+              <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
+                <span className="text-xs font-bold uppercase text-[var(--brand-primary)]">Desde</span>
                 <input
                   type="date"
                   value={fromDate}
@@ -206,8 +206,8 @@ function PlanesTarifaContent() {
                   className="w-full bg-transparent font-bold outline-none"
                 />
               </label>
-              <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
-                <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Hasta</span>
+              <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
+                <span className="text-xs font-bold uppercase text-[var(--brand-primary)]">Hasta</span>
                 <input
                   type="date"
                   value={toDate}
@@ -216,18 +216,18 @@ function PlanesTarifaContent() {
                   className="w-full bg-transparent font-bold outline-none"
                 />
               </label>
-              <label className="inline-flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold">
+              <label className="inline-flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold">
                 <input type="checkbox" checked={cta} onChange={(e) => setCta(e.target.checked)} className="h-4 w-4" />
                 Cerrado a llegada (CTA)
               </label>
-              <label className="inline-flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold">
+              <label className="inline-flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold">
                 <input type="checkbox" checked={ctd} onChange={(e) => setCtd(e.target.checked)} className="h-4 w-4" />
                 Cerrado a salida (CTD)
               </label>
               <button
                 onClick={createRestriction}
                 disabled={busy}
-                className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50 sm:col-span-2"
+                className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-bold uppercase text-white disabled:opacity-50 sm:col-span-2"
               >
                 <Plus size={16} /> Agregar restricción
               </button>
@@ -241,16 +241,16 @@ function PlanesTarifaContent() {
                 <Loader2 className="animate-spin" size={18} /> Cargando…
               </p>
             ) : restrictions.length === 0 ? (
-              <p className="mt-8 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-8 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
                 Sin restricciones. Por defecto se acepta cualquier estadía de 1 noche en adelante.
               </p>
             ) : (
               <ul className="mt-8 space-y-3">
                 {restrictions.map((r) => (
-                  <li key={r.id} className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
+                  <li key={r.id} className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-lg font-black text-[var(--brand-ink-3)]">
+                        <p className="text-lg font-bold text-[var(--brand-ink-3)]">
                           {r.roomTypeId ? typeNameById.get(r.roomTypeId) || "Tipo" : "Todos los tipos"}
                         </p>
                         <p className="flex flex-wrap items-center gap-x-3 text-sm font-bold text-[var(--brand-ink-2)]/70">
@@ -269,7 +269,7 @@ function PlanesTarifaContent() {
                         onClick={() => removeRestriction(r)}
                         disabled={busy}
                         title="Quitar"
-                        className="inline-flex items-center justify-center rounded-full border-2 border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
+                        className="inline-flex items-center justify-center rounded-full border border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
                       >
                         <Trash2 size={16} />
                       </button>

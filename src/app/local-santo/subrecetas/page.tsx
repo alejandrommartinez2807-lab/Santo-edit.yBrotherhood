@@ -245,13 +245,13 @@ function SubrecetasContent() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
             href="/local-santo/inventario"
-            className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
           >
             <ArrowLeft size={16} /> Inventario
           </Link>
           <Link
             href="/admin"
-            className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]/70"
+            className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]/70"
           >
             Panel
           </Link>
@@ -262,7 +262,7 @@ function SubrecetasContent() {
             <ChefHat size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Subrecetas</h1>
+            <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Subrecetas</h1>
             <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
               Preparaciones base reutilizables hechas con insumos del inventario.
             </p>
@@ -270,29 +270,29 @@ function SubrecetasContent() {
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
             Inicia sesión como dueño y activa el módulo de Subrecetas desde la
             configuración del negocio para usarlo.
           </p>
         ) : (
           <>
             {/* Formulario */}
-            <div className="mt-6 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+            <div className="mt-6 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
                 {editingId ? "Editar subreceta" : "Nueva subreceta"}
               </p>
 
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] sm:col-span-2">
+                <label className="flex flex-col gap-1 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] sm:col-span-2">
                   Nombre
                   <input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Ej: Carne mechada, Masa de pizza…"
-                    className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                    className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
                   />
                 </label>
-                <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                <label className="flex flex-col gap-1 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                   Rinde (cantidad)
                   <input
                     type="number"
@@ -300,26 +300,26 @@ function SubrecetasContent() {
                     step="0.001"
                     value={yieldQuantity}
                     onChange={(e) => setYieldQuantity(e.target.value)}
-                    className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                    className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
                   />
                 </label>
-                <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                <label className="flex flex-col gap-1 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                   Unidad de rendimiento
                   <input
                     value={yieldUnit}
                     onChange={(e) => setYieldUnit(e.target.value)}
                     placeholder="porción, kg, litro…"
-                    className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                    className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
                   />
                 </label>
               </div>
 
               {/* Ingredientes */}
-              <p className="mt-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+              <p className="mt-4 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                 Ingredientes (del inventario)
               </p>
               {inventory.length === 0 ? (
-                <p className="mt-2 rounded-xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3 text-xs font-bold text-[var(--brand-ink-2)]/60">
+                <p className="mt-2 rounded-xl border border-dashed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3 text-xs font-bold text-[var(--brand-ink-2)]/60">
                   No hay insumos activos en inventario. Puedes crear la subreceta
                   igual y agregar ingredientes cuando cargues insumos.
                 </p>
@@ -338,7 +338,7 @@ function SubrecetasContent() {
                               ),
                             )
                           }
-                          className="min-w-0 flex-1 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                          className="min-w-0 flex-1 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
                         >
                           <option value="">Insumo…</option>
                           {inventory.map((i) => (
@@ -360,7 +360,7 @@ function SubrecetasContent() {
                             )
                           }
                           placeholder="Cant."
-                          className="w-24 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                          className="w-24 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
                         />
                         <span className="w-16 shrink-0 text-xs font-bold text-[var(--brand-ink-2)]/55">
                           {item?.unit || ""}
@@ -374,7 +374,7 @@ function SubrecetasContent() {
                                 : current,
                             )
                           }
-                          className="rounded-lg border-2 border-red-200 bg-white p-1.5 text-red-600"
+                          className="rounded-lg border border-red-200 bg-white p-1.5 text-red-600"
                           title="Quitar ingrediente"
                         >
                           <X size={14} />
@@ -387,27 +387,27 @@ function SubrecetasContent() {
                     onClick={() =>
                       setRows((current) => [...current, { itemId: "", quantity: "" }])
                     }
-                    className="inline-flex items-center gap-1 rounded-lg border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.66rem] font-black uppercase text-[var(--brand-primary)]"
+                    className="inline-flex items-center gap-1 rounded-lg border border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.66rem] font-bold uppercase text-[var(--brand-primary)]"
                   >
                     <Plus size={13} /> Agregar ingrediente
                   </button>
                 </div>
               )}
 
-              <label className="mt-4 flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+              <label className="mt-4 flex flex-col gap-1 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                 Nota
                 <input
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="Opcional (preparación, tiempos…)"
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
                 />
               </label>
 
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                 <p className="text-xs font-bold text-[var(--brand-ink-2)]/65">
                   Costo estimado:{" "}
-                  <span className="font-black text-[var(--brand-ink-3)]">{usd(draftCost)}</span>
+                  <span className="font-bold text-[var(--brand-ink-3)]">{usd(draftCost)}</span>
                   {draftYield > 0 && (
                     <>
                       {" "}· {usd(draftCost / draftYield)} por {yieldUnit.trim() || "unidad"}
@@ -419,7 +419,7 @@ function SubrecetasContent() {
                     <button
                       onClick={resetForm}
                       disabled={busy}
-                      className="inline-flex items-center gap-1 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-2.5 text-xs font-black uppercase text-[var(--brand-primary)] disabled:opacity-50"
+                      className="inline-flex items-center gap-1 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-2.5 text-xs font-bold uppercase text-[var(--brand-primary)] disabled:opacity-50"
                     >
                       Cancelar
                     </button>
@@ -427,7 +427,7 @@ function SubrecetasContent() {
                   <button
                     onClick={save}
                     disabled={busy || !name.trim()}
-                    className="inline-flex items-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-2.5 text-xs font-black uppercase text-white disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-2.5 text-xs font-bold uppercase text-white disabled:opacity-50"
                   >
                     <Plus size={15} /> {editingId ? "Guardar cambios" : "Crear subreceta"}
                   </button>
@@ -443,7 +443,7 @@ function SubrecetasContent() {
                 <Loader2 className="animate-spin" size={18} /> Cargando…
               </p>
             ) : subrecipes.length === 0 ? (
-              <p className="mt-6 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-6 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
                 Aún no hay subrecetas. Crea la primera arriba.
               </p>
             ) : (
@@ -454,14 +454,14 @@ function SubrecetasContent() {
                   return (
                     <li
                       key={sr.id}
-                      className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4"
+                      className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4"
                     >
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="text-lg font-black text-[var(--brand-ink-3)]">
+                          <p className="text-lg font-bold text-[var(--brand-ink-3)]">
                             {sr.name}
                             {!sr.isActive && (
-                              <span className="ml-2 rounded-full bg-zinc-100 px-2 py-0.5 text-[0.6rem] font-black uppercase text-zinc-600">
+                              <span className="ml-2 rounded-full bg-zinc-100 px-2 py-0.5 text-[0.6rem] font-bold uppercase text-zinc-600">
                                 Inactiva
                               </span>
                             )}
@@ -473,7 +473,7 @@ function SubrecetasContent() {
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="text-right">
-                            <p className="text-sm font-black text-[var(--brand-ink-3)]">{usd(cost)}</p>
+                            <p className="text-sm font-bold text-[var(--brand-ink-3)]">{usd(cost)}</p>
                             <p className="text-[0.66rem] font-bold text-[var(--brand-ink-2)]/55">
                               {usd(perUnit)} / {sr.yieldUnit}
                             </p>
@@ -482,7 +482,7 @@ function SubrecetasContent() {
                             onClick={() => startEdit(sr)}
                             disabled={busy}
                             title="Editar"
-                            className="inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-primary)]/25 bg-white p-2 text-[var(--brand-primary)] disabled:opacity-50"
+                            className="inline-flex items-center justify-center rounded-full border border-[var(--brand-primary)]/25 bg-white p-2 text-[var(--brand-primary)] disabled:opacity-50"
                           >
                             <Pencil size={15} />
                           </button>
@@ -490,7 +490,7 @@ function SubrecetasContent() {
                             onClick={() => remove(sr)}
                             disabled={busy}
                             title="Eliminar"
-                            className="inline-flex items-center justify-center rounded-full border-2 border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
+                            className="inline-flex items-center justify-center rounded-full border border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
                           >
                             <Trash2 size={15} />
                           </button>

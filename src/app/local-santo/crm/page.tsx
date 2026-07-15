@@ -108,12 +108,12 @@ function CrmContent() {
   }
 
   const inputClass =
-    "rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
+    "rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
 
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
       <div className="mx-auto w-full max-w-3xl">
-        <Link href="/admin" className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+        <Link href="/admin" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
           <ArrowLeft size={16} /> Volver al panel
         </Link>
         <div className="mt-4 flex items-center gap-3">
@@ -121,26 +121,26 @@ function CrmContent() {
             <UserRound size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">CRM de huéspedes</h1>
+            <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">CRM de huéspedes</h1>
             <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">Fichas con etiquetas, VIP y notas para fidelizar.</p>
           </div>
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
             Tu clave no tiene permiso para el CRM, o el módulo está desactivado.
           </p>
         ) : (
           <>
-            <div className="mt-6 grid gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-2">
+            <div className="mt-6 grid gap-2 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-2">
               <input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Nombre del huésped" className={inputClass} />
               <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Teléfono" className={inputClass} />
               <input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Etiquetas (habitual, luna de miel…)" className={inputClass} />
-              <label className="inline-flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold">
+              <label className="inline-flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold">
                 <input type="checkbox" checked={vip} onChange={(e) => setVip(e.target.checked)} className="h-4 w-4" /> VIP
               </label>
               <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Notas (preferencias, alergias…)" className={`${inputClass} sm:col-span-2`} />
-              <button onClick={addProfile} disabled={busy || !fullName.trim()} className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50 sm:col-span-2">
+              <button onClick={addProfile} disabled={busy || !fullName.trim()} className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-bold uppercase text-white disabled:opacity-50 sm:col-span-2">
                 <Plus size={16} /> Agregar ficha
               </button>
             </div>
@@ -152,18 +152,18 @@ function CrmContent() {
             {loading ? (
               <p className="mt-8 inline-flex items-center gap-2 font-bold"><Loader2 className="animate-spin" size={18} /> Cargando…</p>
             ) : filtered.length === 0 ? (
-              <p className="mt-8 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-8 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
                 {profiles.length === 0 ? "Aún no hay fichas de huéspedes." : "Sin resultados para la búsqueda."}
               </p>
             ) : (
               <ul className="mt-6 space-y-3">
                 {filtered.map((p) => (
-                  <li key={p.id} className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
+                  <li key={p.id} className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="font-black text-[var(--brand-ink-3)]">
+                        <p className="font-bold text-[var(--brand-ink-3)]">
                           {p.fullName}
-                          {p.vip && <span className="ml-2 inline-flex items-center gap-1 text-xs font-black uppercase text-amber-600"><Star size={12} className="fill-amber-400 text-amber-400" /> VIP</span>}
+                          {p.vip && <span className="ml-2 inline-flex items-center gap-1 text-xs font-bold uppercase text-amber-600"><Star size={12} className="fill-amber-400 text-amber-400" /> VIP</span>}
                         </p>
                         <p className="flex flex-wrap items-center gap-x-3 text-sm font-bold text-[var(--brand-ink-2)]/65">
                           {p.phone && <span>{p.phone}</span>}
@@ -175,7 +175,7 @@ function CrmContent() {
                         onClick={() => { if (window.confirm(`¿Eliminar la ficha de ${p.fullName}?`)) post({ action: "delete", id: p.id }) }}
                         disabled={busy}
                         title="Eliminar"
-                        className="inline-flex items-center justify-center rounded-full border-2 border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
+                        className="inline-flex items-center justify-center rounded-full border border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
                       >
                         <Trash2 size={16} />
                       </button>

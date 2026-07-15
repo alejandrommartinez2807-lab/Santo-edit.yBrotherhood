@@ -414,27 +414,27 @@ export default function SupportPage() {
   if (!isAuthorized) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-3)]">
-        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.14)]">
+        <div className="w-full max-w-md overflow-hidden rounded-[2rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
           <div className="h-6 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="px-6 py-6">
             <a
               href="/admin"
-              className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
             >
               <ArrowLeft size={16} />
               Volver
             </a>
 
-            <div className="mx-auto mt-6 flex h-24 w-24 items-center justify-center rounded-[1.8rem] border-4 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] shadow-[0_7px_0_rgba(var(--brand-primary-rgb),0.14)]">
+            <div className="mx-auto mt-6 flex h-24 w-24 items-center justify-center rounded-[1.8rem] border border-[var(--brand-primary)]/45 bg-[var(--brand-accent)] text-[var(--brand-ink)] shadow-sm">
               <Wrench size={42} />
             </div>
 
-            <p className="mt-5 text-center text-xs font-black uppercase tracking-[0.28em] text-[var(--brand-primary)]">
+            <p className="mt-5 text-center text-xs font-bold uppercase tracking-[0.28em] text-[var(--brand-primary)]">
               Acceso privado
             </p>
 
-            <h1 className="mt-2 text-center text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+            <h1 className="font-serif mt-2 text-center text-4xl leading-tight text-[var(--brand-ink-3)] font-semibold">
               Soporte
             </h1>
 
@@ -445,7 +445,7 @@ export default function SupportPage() {
 
           <div className="space-y-4 px-6 pb-6">
             <div>
-              <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Clave de soporte
               </label>
 
@@ -458,7 +458,7 @@ export default function SupportPage() {
                     if (event.key === "Enter") handleLogin()
                   }}
                   placeholder="Ingresa la clave de soporte"
-                  className="w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                  className="w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                 />
 
                 <button
@@ -472,7 +472,7 @@ export default function SupportPage() {
             </div>
 
             {message && (
-              <div className="rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
+              <div className="rounded-2xl border border-red-500/35 bg-red-100 px-4 py-3">
                 <p className="text-sm font-bold leading-6 text-red-800">
                   {message}
                 </p>
@@ -483,7 +483,7 @@ export default function SupportPage() {
               type="button"
               onClick={handleLogin}
               disabled={authStatus === "checking"}
-              className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-[1.02] disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-sm transition hover:scale-[1.02] disabled:opacity-60"
             >
               {authStatus === "checking" ? (
                 <Loader2 size={21} className="animate-spin" />
@@ -501,7 +501,7 @@ export default function SupportPage() {
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-3 py-4 text-[var(--brand-ink-3)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <header className="overflow-hidden rounded-[1.6rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
+        <header className="overflow-hidden rounded-[1.6rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
           <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="p-4 sm:p-5">
@@ -510,7 +510,7 @@ export default function SupportPage() {
                 <div className="flex flex-wrap gap-2">
                   <a
                     href="/admin"
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     <ArrowLeft size={16} />
                     Volver al panel
@@ -519,7 +519,7 @@ export default function SupportPage() {
                   <button
                     type="button"
                     onClick={() => loadSupportStatus()}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
                   >
                     <RefreshCw size={16} />
                     Revisar estado
@@ -528,17 +528,17 @@ export default function SupportPage() {
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     Cerrar sesión
                   </button>
                 </div>
 
-                <p className="mt-4 text-xs font-black uppercase tracking-[0.32em] text-[var(--brand-primary)]">
+                <p className="mt-4 text-xs font-bold uppercase tracking-[0.32em] text-[var(--brand-primary)]">
                   {status?.business.name || BRAND.name}
                 </p>
 
-                <h1 className="mt-1 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl">
+                <h1 className="font-serif mt-1 text-4xl leading-tight text-[var(--brand-ink-3)] sm:text-5xl font-semibold">
                   Soporte privado
                 </h1>
 
@@ -547,7 +547,7 @@ export default function SupportPage() {
                 </p>
 
                 {status && (
-                  <p className="mt-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-ink)]/70">
+                  <p className="mt-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-ink)]/70">
                     Acceso: {status.access.roleLabel} · Última revisión: {formatDate(status.checkedAt)}
                   </p>
                 )}
@@ -564,8 +564,8 @@ export default function SupportPage() {
         </header>
 
         {message && (
-          <section className="mt-4 rounded-[1.4rem] border-2 border-yellow-400 bg-[var(--brand-accent-100)] p-4">
-            <p className="text-sm font-black leading-6 text-[var(--brand-amber)]">
+          <section className="mt-4 rounded-[1.4rem] border border-yellow-400 bg-[var(--brand-accent-100)] p-4">
+            <p className="text-sm font-bold leading-6 text-[var(--brand-amber)]">
               {message}
             </p>
           </section>
@@ -585,13 +585,13 @@ export default function SupportPage() {
                     key={plan.key}
                     type="button"
                     onClick={() => updatePlan(plan.key)}
-                    className={`rounded-[1.2rem] border-2 p-4 text-left transition ${
+                    className={`rounded-[1.2rem] border p-4 text-left transition ${
                       active
                         ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                         : "border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] text-[var(--brand-ink-3)] hover:border-[var(--brand-primary)]"
                     }`}
                   >
-                    <p className="text-sm font-black uppercase">
+                    <p className="text-sm font-bold uppercase">
                       {plan.label}
                     </p>
                     <p className="mt-2 text-xs font-bold leading-5">
@@ -617,8 +617,8 @@ export default function SupportPage() {
               />
             </div>
 
-            <div className="mt-4 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
-              <p className="text-sm font-black uppercase text-[var(--brand-primary)]">
+            <div className="mt-4 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
+              <p className="text-sm font-bold uppercase text-[var(--brand-primary)]">
                 {activePlanDefinition.label}
                 {planDraft.membershipPlanMode === "custom" ? " · Personalizado" : ""}
               </p>
@@ -631,7 +631,7 @@ export default function SupportPage() {
               type="button"
               onClick={savePlanDraft}
               disabled={isSavingPlan}
-              className="mt-4 flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50"
+              className="mt-4 flex w-full items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50"
             >
               {isSavingPlan ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
               Guardar plan y módulos
@@ -760,11 +760,11 @@ function MetricCard({
         : "border-[var(--brand-primary)]/20 bg-[var(--brand-cream)]"
 
   return (
-    <div className={`rounded-[1.2rem] border-2 px-4 py-3 ${toneClass}`}>
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+    <div className={`rounded-[1.2rem] border px-4 py-3 ${toneClass}`}>
+      <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
         {label}
       </p>
-      <p className="mt-1 break-words text-xl font-black text-[var(--brand-ink-3)]">
+      <p className="mt-1 break-words text-xl font-bold text-[var(--brand-ink-3)]">
         {value}
       </p>
     </div>
@@ -781,9 +781,9 @@ function PanelCard({
   children: ReactNode
 }) {
   return (
-    <section className="rounded-[1.6rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+    <section className="rounded-[1.6rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm">
       <div className="mb-4">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
           {title}
         </p>
         <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -811,13 +811,13 @@ function ModeButton({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-[1.2rem] border-2 p-4 text-left transition ${
+      className={`rounded-[1.2rem] border p-4 text-left transition ${
         active
           ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
           : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-3)] hover:border-[var(--brand-primary)]"
       }`}
     >
-      <p className="text-sm font-black uppercase">{label}</p>
+      <p className="text-sm font-bold uppercase">{label}</p>
       <p className="mt-2 text-xs font-bold leading-5">{description}</p>
     </button>
   )
@@ -853,7 +853,7 @@ function ModulePlanCard({
 }) {
   return (
     <div
-      className={`rounded-[1.25rem] border-2 p-4 ${
+      className={`rounded-[1.25rem] border p-4 ${
         included
           ? "border-green-500/45 bg-green-50"
           : "border-[var(--brand-primary)]/20 bg-[var(--brand-cream)]"
@@ -861,7 +861,7 @@ function ModulePlanCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-black uppercase text-[var(--brand-ink-3)]">
+          <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">
             {getSupportModuleLabel(moduleItem)}
           </p>
           <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
@@ -870,7 +870,7 @@ function ModulePlanCard({
         </div>
 
         <span
-          className={`shrink-0 rounded-full px-3 py-1 text-[0.62rem] font-black uppercase ${
+          className={`shrink-0 rounded-full px-3 py-1 text-[0.62rem] font-bold uppercase ${
             included ? "bg-green-500 text-white" : "bg-[var(--brand-ink-3)] text-white"
           }`}
         >
@@ -879,11 +879,11 @@ function ModulePlanCard({
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        <span className="rounded-full border border-[var(--brand-primary)]/20 bg-white px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+        <span className="rounded-full border border-[var(--brand-primary)]/20 bg-white px-3 py-1 text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
           Desde {moduleItem.minimumPlanLabel}
         </span>
         {moduleItem.comingSoon && (
-          <span className="rounded-full border border-yellow-500/50 bg-[var(--brand-accent-100)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-amber)]">
+          <span className="rounded-full border border-yellow-500/50 bg-[var(--brand-accent-100)] px-3 py-1 text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-amber)]">
             Próximamente
           </span>
         )}
@@ -899,7 +899,7 @@ function ModulePlanCard({
         <button
           type="button"
           onClick={() => onChange(!included)}
-          className={`mt-4 w-full rounded-full border-2 px-4 py-3 text-xs font-black uppercase tracking-[0.12em] transition ${
+          className={`mt-4 w-full rounded-full border px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] transition ${
             included
               ? "border-red-600 bg-white text-red-700 hover:bg-red-50"
               : "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[var(--brand-accent-200)]"
@@ -921,13 +921,13 @@ function ModulePlanCard({
 function CheckRow({ check }: { check: SupportCheck }) {
   return (
     <div
-      className={`rounded-2xl border-2 p-4 ${
+      className={`rounded-2xl border p-4 ${
         check.ok ? "border-green-500/45 bg-green-50" : "border-red-500/45 bg-red-50"
       }`}
     >
       <div className="flex gap-3">
         <div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 ${
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border ${
             check.ok
               ? "border-green-700 bg-green-500 text-white"
               : "border-red-700 bg-red-600 text-white"
@@ -937,7 +937,7 @@ function CheckRow({ check }: { check: SupportCheck }) {
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-black uppercase text-[var(--brand-ink-3)]">
+          <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">
             {check.label}
           </p>
           <p className="mt-1 text-sm font-bold leading-5 text-[var(--brand-ink-2)]/70">
@@ -954,13 +954,13 @@ function ConfigRow({ label, ok }: { label: string; ok: boolean }) {
     <div className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3">
       <div className="flex items-center gap-2">
         <KeyRound size={16} className="text-[var(--brand-primary)]" />
-        <p className="text-sm font-black uppercase text-[var(--brand-ink-3)]">
+        <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">
           {label}
         </p>
       </div>
 
       <span
-        className={`rounded-full px-3 py-1 text-[0.68rem] font-black uppercase ${
+        className={`rounded-full px-3 py-1 text-[0.68rem] font-bold uppercase ${
           ok ? "bg-green-500 text-white" : "bg-red-100 text-red-700"
         }`}
       >
@@ -972,11 +972,11 @@ function ConfigRow({ label, ok }: { label: string; ok: boolean }) {
 
 function InfoBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3">
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+    <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3">
+      <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
         {label}
       </p>
-      <p className="mt-1 break-words text-sm font-black text-[var(--brand-ink-3)]">
+      <p className="mt-1 break-words text-sm font-bold text-[var(--brand-ink-3)]">
         {value || "—"}
       </p>
     </div>

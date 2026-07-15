@@ -331,13 +331,13 @@ function ControlGastosContent() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
             href="/admin"
-            className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]/70"
+            className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]/70"
           >
             Panel
           </Link>
           <Link
             href="/local-santo/cierres"
-            className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]/70"
+            className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]/70"
           >
             Cierre del día →
           </Link>
@@ -348,7 +348,7 @@ function ControlGastosContent() {
             <Wallet size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">
+            <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">
               Control de gastos
             </h1>
             <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
@@ -359,11 +359,11 @@ function ControlGastosContent() {
 
         {/* Alcance: esta sede o negocio completo (solo dueño/soporte) */}
         {canConsolidate && (
-          <div className="mt-6 inline-flex rounded-full border-2 border-[var(--brand-primary)]/20 bg-white p-1">
+          <div className="mt-6 inline-flex rounded-full border border-[var(--brand-primary)]/20 bg-white p-1">
             <button
               type="button"
               onClick={() => setScope("branch")}
-              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.1em] transition ${
+              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] transition ${
                 scope === "branch"
                   ? "bg-[var(--brand-primary)] text-white"
                   : "text-[var(--brand-primary)]"
@@ -374,7 +374,7 @@ function ControlGastosContent() {
             <button
               type="button"
               onClick={() => setScope("all")}
-              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.1em] transition ${
+              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] transition ${
                 scope === "all"
                   ? "bg-[var(--brand-primary)] text-white"
                   : "text-[var(--brand-primary)]"
@@ -386,9 +386,9 @@ function ControlGastosContent() {
         )}
 
         {/* Resumen del día */}
-        <section className="mt-4 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
+        <section className="mt-4 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
               Resumen de hoy
               {reports?.scope === "all" ? " · Negocio completo" : " · Esta sede"}
             </p>
@@ -442,11 +442,11 @@ function ControlGastosContent() {
               {alerts.slice(0, 4).map((alert, index) => (
                 <div
                   key={`${alert.title}-${index}`}
-                  className={`flex items-start gap-2 rounded-xl border-2 px-3 py-2 ${ALERT_STYLES[alert.level]}`}
+                  className={`flex items-start gap-2 rounded-xl border px-3 py-2 ${ALERT_STYLES[alert.level]}`}
                 >
                   <AlertTriangle size={16} className="mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-sm font-black">{alert.title}</p>
+                    <p className="text-sm font-bold">{alert.title}</p>
                     <p className="text-xs font-bold opacity-80">{alert.detail}</p>
                   </div>
                 </div>
@@ -467,12 +467,12 @@ function ControlGastosContent() {
               <Link
                 key={card.key}
                 href={card.href}
-                className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 transition hover:border-[var(--brand-primary)]"
+                className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4 transition hover:border-[var(--brand-primary)]"
               >
                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand-accent)] text-[var(--brand-primary)]">
                   {card.icon}
                 </span>
-                <p className="mt-2 text-sm font-black uppercase text-[var(--brand-ink-3)]">
+                <p className="mt-2 text-sm font-bold uppercase text-[var(--brand-ink-3)]">
                   {card.title}
                 </p>
                 <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/60">
@@ -484,12 +484,12 @@ function ControlGastosContent() {
         )}
 
         {/* Gastos del día (esta sede) */}
-        <section className="mt-4 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
+        <section className="mt-4 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
               Gastos del día · esta sede
             </p>
-            <span className="text-sm font-black text-[var(--brand-ink-3)]">
+            <span className="text-sm font-bold text-[var(--brand-ink-3)]">
               {usd(dayExpenseTotalUSD)}
             </span>
           </div>
@@ -500,12 +500,12 @@ function ControlGastosContent() {
               value={concept}
               onChange={(e) => setConcept(e.target.value)}
               placeholder="Concepto (ej. verduras, gas, sueldo…)"
-              className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)] sm:col-span-2"
+              className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)] sm:col-span-2"
             />
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+              className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
             >
               {EXPENSE_CATEGORIES.map((c) => (
                 <option key={c} value={c}>
@@ -517,7 +517,7 @@ function ControlGastosContent() {
               value={method}
               onChange={(e) => setMethod(e.target.value)}
               placeholder="Método (efectivo, pago móvil…)"
-              className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+              className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
             />
             <input
               type="number"
@@ -526,19 +526,19 @@ function ControlGastosContent() {
               value={amountUSD}
               onChange={(e) => setAmountUSD(e.target.value)}
               placeholder="Monto USD"
-              className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+              className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
             />
             <input
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Nota (opcional)"
-              className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+              className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
             />
             <div className="sm:col-span-2">
               <button
                 onClick={addExpense}
                 disabled={busy}
-                className="inline-flex items-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50"
+                className="inline-flex items-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-bold uppercase text-white disabled:opacity-50"
               >
                 <Plus size={16} /> Registrar gasto
               </button>
@@ -556,7 +556,7 @@ function ControlGastosContent() {
                 <Loader2 className="animate-spin" size={18} /> Cargando…
               </p>
             ) : dayExpenses.length === 0 ? (
-              <p className="rounded-xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4 text-sm font-bold text-[var(--brand-ink-2)]/60">
+              <p className="rounded-xl border border-dashed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4 text-sm font-bold text-[var(--brand-ink-2)]/60">
                 Aún no hay gastos registrados hoy en esta sede.
               </p>
             ) : (
@@ -564,10 +564,10 @@ function ControlGastosContent() {
                 {dayExpenses.map((expense) => (
                   <li
                     key={expense.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl border-2 border-[var(--brand-primary)]/15 bg-white px-3 py-2"
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[var(--brand-primary)]/15 bg-white px-3 py-2"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-black text-[var(--brand-ink-3)]">
+                      <p className="text-sm font-bold text-[var(--brand-ink-3)]">
                         {expense.concept}
                       </p>
                       <p className="text-xs font-bold text-[var(--brand-ink-2)]/55">
@@ -577,14 +577,14 @@ function ControlGastosContent() {
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-black text-[var(--brand-ink-3)]">
+                      <span className="text-sm font-bold text-[var(--brand-ink-3)]">
                         {usd(expense.equivalentUSD || expense.amountUSD)}
                       </span>
                       <button
                         onClick={() => removeExpense(expense)}
                         disabled={busy}
                         title="Eliminar gasto"
-                        className="inline-flex items-center justify-center rounded-full border-2 border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
+                        className="inline-flex items-center justify-center rounded-full border border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
                       >
                         <Trash2 size={15} />
                       </button>
@@ -625,16 +625,16 @@ function SummaryCard({
 }) {
   return (
     <div
-      className={`rounded-xl border-2 p-3 ${
+      className={`rounded-xl border p-3 ${
         tone === "warning"
           ? "border-amber-300 bg-amber-50"
           : "border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]"
       }`}
     >
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/55">
+      <p className="text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/55">
         {label}
       </p>
-      <p className="mt-1 text-xl font-black text-[var(--brand-ink-3)]">{value}</p>
+      <p className="mt-1 text-xl font-bold text-[var(--brand-ink-3)]">{value}</p>
       {hint && (
         <p className="mt-0.5 text-[0.68rem] font-bold text-[var(--brand-ink-2)]/55">
           {hint}

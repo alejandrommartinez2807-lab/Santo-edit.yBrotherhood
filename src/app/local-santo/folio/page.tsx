@@ -261,14 +261,14 @@ function FolioContent() {
   const closed = folio?.status === "cerrado"
 
   const inputClass =
-    "rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
+    "rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
 
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
       <div className="mx-auto w-full max-w-3xl">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
         >
           <ArrowLeft size={16} /> Volver al panel
         </Link>
@@ -278,7 +278,7 @@ function FolioContent() {
             <Receipt size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Folio del huésped</h1>
+            <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Folio del huésped</h1>
             <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
               Ficha del huésped, cargos y pagos de la estadía, con check-in y check-out.
             </p>
@@ -286,14 +286,14 @@ function FolioContent() {
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
             Tu clave no tiene permiso para usar el folio, o el módulo está desactivado.
           </p>
         ) : (
           <>
             {/* Selector de reserva */}
-            <div className="mt-6 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
-              <label className="text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+            <div className="mt-6 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
+              <label className="text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                 Estadía
               </label>
               {loading ? (
@@ -326,8 +326,8 @@ function FolioContent() {
             {reservation && (
               <>
                 {/* Ficha del huésped */}
-                <section className="mt-4 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
-                  <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                <section className="mt-4 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
+                  <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                     <UserRound size={16} /> Ficha del huésped
                   </h2>
                   <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -394,7 +394,7 @@ function FolioContent() {
                     <button
                       onClick={() => post({ action: "open", guest: guestPayload() }, "reload")}
                       disabled={busy || !g.fullName.trim()}
-                      className="mt-3 inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50"
+                      className="mt-3 inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-bold uppercase text-white disabled:opacity-50"
                     >
                       <Receipt size={16} /> Check-in · abrir folio
                     </button>
@@ -403,12 +403,12 @@ function FolioContent() {
 
                 {/* Folio */}
                 {folio && (
-                  <section className="mt-4 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
+                  <section className="mt-4 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
                     <div className="flex items-center justify-between">
-                      <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                      <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                         <Receipt size={16} /> Folio {closed ? "(cerrado)" : ""}
                       </h2>
-                      <span className="text-lg font-black text-[var(--brand-ink-3)]">
+                      <span className="text-lg font-bold text-[var(--brand-ink-3)]">
                         Saldo: ${balance}
                       </span>
                     </div>
@@ -429,7 +429,7 @@ function FolioContent() {
                               </p>
                             </div>
                             <span
-                              className={`font-black ${item.kind === "pago" ? "text-green-700" : "text-[var(--brand-ink-3)]"}`}
+                              className={`font-bold ${item.kind === "pago" ? "text-green-700" : "text-[var(--brand-ink-3)]"}`}
                             >
                               {item.kind === "pago" ? "-" : ""}${item.amount}
                             </span>
@@ -541,8 +541,8 @@ function FolioContent() {
 
                         {/* Cargar servicios del resort a la habitación */}
                         {chargeableServices.length > 0 && (
-                          <div className="mt-5 rounded-xl border-2 border-dashed border-[var(--brand-primary)]/25 p-3">
-                            <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                          <div className="mt-5 rounded-xl border border-dashed border-[var(--brand-primary)]/25 p-3">
+                            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                               <Plus size={15} /> Cargar servicios del resort
                             </p>
                             <ul className="mt-2 space-y-2">
@@ -558,13 +558,13 @@ function FolioContent() {
                                       {service.time ? ` · ${service.time}` : ""} · {service.people}p
                                     </p>
                                   </div>
-                                  <span className="font-black text-[var(--brand-ink-3)]">${service.amount}</span>
+                                  <span className="font-bold text-[var(--brand-ink-3)]">${service.amount}</span>
                                   <button
                                     onClick={() =>
                                       post({ action: "chargeService", folioId: folio.id, bookingId: service.id })
                                     }
                                     disabled={busy}
-                                    className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-black uppercase text-white disabled:opacity-50"
+                                    className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-bold uppercase text-white disabled:opacity-50"
                                   >
                                     <Plus size={13} /> Cargar
                                   </button>
@@ -575,8 +575,8 @@ function FolioContent() {
                         )}
 
                         {/* Cargar consumo del restaurante a la habitación */}
-                        <div className="mt-5 rounded-xl border-2 border-dashed border-[var(--brand-primary)]/25 p-3">
-                          <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                        <div className="mt-5 rounded-xl border border-dashed border-[var(--brand-primary)]/25 p-3">
+                          <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                             <UtensilsCrossed size={15} /> Cargar consumo del restaurante
                           </p>
                           {chargeableOrders.length === 0 ? (
@@ -600,13 +600,13 @@ function FolioContent() {
                                       {order.tableNumber ? ` · ${order.tableNumber}` : ""} · {order.status}
                                     </p>
                                   </div>
-                                  <span className="font-black text-[var(--brand-ink-3)]">${order.total}</span>
+                                  <span className="font-bold text-[var(--brand-ink-3)]">${order.total}</span>
                                   <button
                                     onClick={() =>
                                       post({ action: "chargeOrder", folioId: folio.id, orderId: order.id })
                                     }
                                     disabled={busy}
-                                    className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-black uppercase text-white disabled:opacity-50"
+                                    className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-primary)] px-3 py-1.5 text-xs font-bold uppercase text-white disabled:opacity-50"
                                   >
                                     <Plus size={13} /> Cargar
                                   </button>
@@ -619,7 +619,7 @@ function FolioContent() {
                         <button
                           onClick={() => post({ action: "close", folioId: folio.id }, "reload")}
                           disabled={busy}
-                          className="mt-4 inline-flex w-full items-center justify-center gap-1 rounded-xl border-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-4 py-3 text-sm font-black uppercase text-[var(--brand-primary)] disabled:opacity-50"
+                          className="mt-4 inline-flex w-full items-center justify-center gap-1 rounded-xl border border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold uppercase text-[var(--brand-primary)] disabled:opacity-50"
                         >
                           <LogOut size={16} /> Check-out · cerrar folio
                         </button>

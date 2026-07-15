@@ -206,14 +206,14 @@ function TarifasPageContent() {
   }, [roomTypes, previewTypeId, previewIn, previewOut, seasons])
 
   const inputClass =
-    "rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
+    "rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
 
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
       <div className="mx-auto w-full max-w-3xl">
         <Link
           href="/admin"
-          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
         >
           <ArrowLeft size={16} /> Volver al panel
         </Link>
@@ -223,7 +223,7 @@ function TarifasPageContent() {
             <Tag size={24} />
           </span>
           <div>
-            <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Tarifas por temporada</h1>
+            <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Tarifas por temporada</h1>
             <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
               Ajusta el precio por noche en rangos de fechas. Al crear una reserva se sugiere la
               tarifa automáticamente.
@@ -232,7 +232,7 @@ function TarifasPageContent() {
         </div>
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5 font-bold text-[var(--brand-primary)]">
             Tu clave no tiene permiso para usar tarifas, o el módulo está desactivado en la
             configuración del negocio.
           </p>
@@ -240,10 +240,10 @@ function TarifasPageContent() {
           <>
             {/* Alta de temporada */}
             <section className="mt-6">
-              <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+              <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                 <Plus size={16} /> Nueva temporada
               </h2>
-              <div className="mt-3 grid gap-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-2">
+              <div className="mt-3 grid gap-2 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4 sm:grid-cols-2">
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -266,8 +266,8 @@ function TarifasPageContent() {
                   <option value="fija">Precio fijo por noche</option>
                   <option value="factor">Factor sobre la tarifa base</option>
                 </select>
-                <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
-                  <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Desde</span>
+                <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
+                  <span className="text-xs font-bold uppercase text-[var(--brand-primary)]">Desde</span>
                   <input
                     type="date"
                     value={startDate}
@@ -279,8 +279,8 @@ function TarifasPageContent() {
                     className="w-full bg-transparent font-bold outline-none"
                   />
                 </label>
-                <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
-                  <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Hasta</span>
+                <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 px-4 py-2.5 font-bold">
+                  <span className="text-xs font-bold uppercase text-[var(--brand-primary)]">Hasta</span>
                   <input
                     type="date"
                     value={endDate}
@@ -319,7 +319,7 @@ function TarifasPageContent() {
                 <button
                   onClick={createSeason}
                   disabled={busy || !name.trim()}
-                  className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase text-white disabled:opacity-50 sm:col-span-2"
+                  className="inline-flex items-center justify-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-bold uppercase text-white disabled:opacity-50 sm:col-span-2"
                 >
                   <Plus size={16} /> Agregar temporada
                 </button>
@@ -329,10 +329,10 @@ function TarifasPageContent() {
             {/* Previsualización */}
             {roomTypes.length > 0 && (
               <section className="mt-6">
-                <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                   <CalendarRange size={16} /> Probar una estadía
                 </h2>
-                <div className="mt-3 grid gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-4 sm:grid-cols-3">
+                <div className="mt-3 grid gap-2 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-4 sm:grid-cols-3">
                   <select
                     value={previewTypeId}
                     onChange={(e) => setPreviewTypeId(e.target.value)}
@@ -345,8 +345,8 @@ function TarifasPageContent() {
                       </option>
                     ))}
                   </select>
-                  <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 px-3 py-2.5 font-bold">
-                    <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Entrada</span>
+                  <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 px-3 py-2.5 font-bold">
+                    <span className="text-xs font-bold uppercase text-[var(--brand-primary)]">Entrada</span>
                     <input
                       type="date"
                       value={previewIn}
@@ -358,8 +358,8 @@ function TarifasPageContent() {
                       className="w-full bg-transparent font-bold outline-none"
                     />
                   </label>
-                  <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 px-3 py-2.5 font-bold">
-                    <span className="text-xs font-black uppercase text-[var(--brand-primary)]">Salida</span>
+                  <label className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 px-3 py-2.5 font-bold">
+                    <span className="text-xs font-bold uppercase text-[var(--brand-primary)]">Salida</span>
                     <input
                       type="date"
                       value={previewOut}
@@ -368,7 +368,7 @@ function TarifasPageContent() {
                       className="w-full bg-transparent font-bold outline-none"
                     />
                   </label>
-                  <div className="rounded-xl bg-[var(--brand-cream)] px-4 py-3 font-black text-[var(--brand-ink-3)] sm:col-span-3">
+                  <div className="rounded-xl bg-[var(--brand-cream)] px-4 py-3 font-bold text-[var(--brand-ink-3)] sm:col-span-3">
                     {preview.nights > 0 ? (
                       <span>
                         {preview.nights} noche(s) · Total ${preview.total}{" "}
@@ -401,7 +401,7 @@ function TarifasPageContent() {
                 <Loader2 className="animate-spin" size={18} /> Cargando…
               </p>
             ) : seasons.length === 0 ? (
-              <p className="mt-8 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-8 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
                 Aún no hay temporadas. Crea la primera arriba (ej. &quot;Temporada alta&quot; con precio fijo).
               </p>
             ) : (
@@ -409,7 +409,7 @@ function TarifasPageContent() {
                 {seasons.map((season) => (
                   <li
                     key={season.id}
-                    className={`rounded-2xl border-2 bg-white p-4 ${
+                    className={`rounded-2xl border bg-white p-4 ${
                       season.active
                         ? "border-[var(--brand-primary)]/20"
                         : "border-[var(--brand-primary)]/10 opacity-60"
@@ -417,7 +417,7 @@ function TarifasPageContent() {
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-lg font-black text-[var(--brand-ink-3)]">
+                        <p className="text-lg font-bold text-[var(--brand-ink-3)]">
                           {season.name}
                           <span className="ml-2 text-sm font-bold text-[var(--brand-ink-2)]/55">
                             {season.roomTypeId
@@ -441,7 +441,7 @@ function TarifasPageContent() {
                         <button
                           onClick={() => toggleActive(season)}
                           disabled={busy}
-                          className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase disabled:opacity-50 ${
+                          className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase disabled:opacity-50 ${
                             season.active
                               ? "border-green-600/30 bg-green-50 text-green-700"
                               : "border-[var(--brand-primary)]/20 bg-white text-[var(--brand-ink-2)]/60"
@@ -453,7 +453,7 @@ function TarifasPageContent() {
                           onClick={() => removeSeason(season)}
                           disabled={busy}
                           title="Eliminar temporada"
-                          className="inline-flex items-center justify-center rounded-full border-2 border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
+                          className="inline-flex items-center justify-center rounded-full border border-red-200 bg-white p-2 text-red-600 disabled:opacity-50"
                         >
                           <Trash2 size={16} />
                         </button>

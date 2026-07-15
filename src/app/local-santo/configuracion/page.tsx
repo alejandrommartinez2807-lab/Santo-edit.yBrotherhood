@@ -2497,28 +2497,28 @@ export default function BusinessConfigPage() {
       <main className="flex min-h-screen items-center justify-center bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-3)]">
         <form
           onSubmit={handleLogin}
-          className="w-full max-w-md overflow-hidden rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.14)]"
+          className="w-full max-w-md overflow-hidden rounded-[2rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm"
         >
           <div className="h-6 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="px-6 py-6">
             <Link
               href="/admin"
-              className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]"
             >
               <ArrowLeft size={16} />
               Volver
             </Link>
 
-            <div className="mx-auto mt-6 flex h-24 w-24 items-center justify-center rounded-[1.8rem] border-4 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] shadow-[0_7px_0_rgba(var(--brand-primary-rgb),0.14)]">
+            <div className="mx-auto mt-6 flex h-24 w-24 items-center justify-center rounded-[1.8rem] border border-[var(--brand-primary)]/45 bg-[var(--brand-accent)] text-[var(--brand-ink)] shadow-sm">
               <Settings2 size={42} />
             </div>
 
-            <p className="mt-5 text-center text-xs font-black uppercase tracking-[0.28em] text-[var(--brand-primary)]">
+            <p className="mt-5 text-center text-xs font-bold uppercase tracking-[0.28em] text-[var(--brand-primary)]">
               Configuración privada
             </p>
 
-            <h1 className="mt-2 text-center text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+            <h1 className="font-serif mt-2 text-center text-4xl leading-tight text-[var(--brand-ink-3)] font-semibold">
               Negocio
             </h1>
 
@@ -2530,7 +2530,7 @@ export default function BusinessConfigPage() {
 
           <div className="space-y-4 px-6 pb-6">
             <div>
-              <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Clave del dueño
               </label>
 
@@ -2540,7 +2540,7 @@ export default function BusinessConfigPage() {
                   value={passwordInput}
                   onChange={(event) => setPasswordInput(event.target.value)}
                   placeholder="Ingresa la clave privada"
-                  className="w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                  className="w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 pr-12 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                 />
 
                 <button
@@ -2554,7 +2554,7 @@ export default function BusinessConfigPage() {
             </div>
 
             {errorMessage && (
-              <div className="rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
+              <div className="rounded-2xl border border-red-500/35 bg-red-100 px-4 py-3">
                 <p className="text-sm font-bold leading-6 text-red-800">
                   {errorMessage}
                 </p>
@@ -2564,7 +2564,7 @@ export default function BusinessConfigPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-[1.02] disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] shadow-sm transition hover:scale-[1.02] disabled:opacity-60"
             >
               {isLoading ? (
                 <Loader2 size={21} className="animate-spin" />
@@ -2582,7 +2582,7 @@ export default function BusinessConfigPage() {
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-3 py-4 text-[var(--brand-ink-3)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <header className="overflow-hidden rounded-[1.6rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
+        <header className="overflow-hidden rounded-[1.6rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
           <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="p-4 sm:p-5">
@@ -2591,7 +2591,7 @@ export default function BusinessConfigPage() {
                 <div className="flex flex-wrap gap-2">
                   <Link
                     href="/admin"
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     <ArrowLeft size={16} />
                     Volver al panel
@@ -2601,7 +2601,7 @@ export default function BusinessConfigPage() {
                     type="button"
                     onClick={() => loadBusinessConfig(adminPassword)}
                     disabled={isLoading}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
                   >
                     {isLoading ? (
                       <Loader2 size={16} className="animate-spin" />
@@ -2614,18 +2614,18 @@ export default function BusinessConfigPage() {
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     <LogOut size={16} />
                     Cerrar sesión
                   </button>
                 </div>
 
-                <p className="mt-4 text-xs font-black uppercase tracking-[0.32em] text-[var(--brand-primary)]">
+                <p className="mt-4 text-xs font-bold uppercase tracking-[0.32em] text-[var(--brand-primary)]">
                   {businessConfig.businessName}
                 </p>
 
-                <h1 className="mt-1 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl">
+                <h1 className="font-serif mt-1 text-4xl leading-tight text-[var(--brand-ink-3)] sm:text-5xl font-semibold">
                   Configuración del negocio
                 </h1>
 
@@ -2666,13 +2666,13 @@ export default function BusinessConfigPage() {
 
         {(errorMessage || successMessage) && (
           <section
-            className={`mt-4 rounded-[1.4rem] border-2 p-4 ${
+            className={`mt-4 rounded-[1.4rem] border p-4 ${
               errorMessage
                 ? "border-red-500/45 bg-red-50 text-red-800"
                 : "border-green-500/45 bg-green-50 text-green-800"
             }`}
           >
-            <p className="text-sm font-black leading-6">
+            <p className="text-sm font-bold leading-6">
               {errorMessage || successMessage}
             </p>
           </section>
@@ -2733,7 +2733,7 @@ export default function BusinessConfigPage() {
                 className="mt-0.5 h-5 w-5 accent-[var(--brand-primary)]"
               />
               <span>
-                <span className="block text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
+                <span className="block text-sm font-bold uppercase tracking-[0.06em] text-[var(--brand-ink)]">
                   Botón “¿Dudas con tu pedido? Escríbenos”
                 </span>
                 <span className="mt-0.5 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
@@ -2757,7 +2757,7 @@ export default function BusinessConfigPage() {
                 className="mt-0.5 h-5 w-5 accent-[var(--brand-primary)]"
               />
               <span>
-                <span className="block text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
+                <span className="block text-sm font-bold uppercase tracking-[0.06em] text-[var(--brand-ink)]">
                   Botones de aviso por WhatsApp en el panel
                 </span>
                 <span className="mt-0.5 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
@@ -2790,13 +2790,13 @@ export default function BusinessConfigPage() {
                         locationLabel: preset.locationLabel,
                       }))
                     }
-                    className={`rounded-2xl border-2 p-4 text-left transition ${
+                    className={`rounded-2xl border p-4 text-left transition ${
                       selected
                         ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                         : "border-[var(--brand-primary)]/20 bg-white text-[var(--brand-ink)] hover:border-[var(--brand-primary)]/50"
                     }`}
                   >
-                    <p className="text-sm font-black uppercase tracking-[0.06em]">
+                    <p className="text-sm font-bold uppercase tracking-[0.06em]">
                       {preset.label}
                     </p>
                     <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
@@ -2830,7 +2830,7 @@ export default function BusinessConfigPage() {
                 }
                 className="h-5 w-5 accent-[var(--brand-primary)]"
               />
-              <span className="text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
+              <span className="text-sm font-bold uppercase tracking-[0.06em] text-[var(--brand-ink)]">
                 Activar cálculo fiscal (IVA / IGTF)
               </span>
             </label>
@@ -2847,7 +2847,7 @@ export default function BusinessConfigPage() {
                       }))
                     }
                     placeholder="J-12345678-9"
-                    className={`w-full rounded-xl border-2 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)] ${
+                    className={`w-full rounded-xl border bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)] ${
                       businessConfig.rifNumber &&
                       !isValidRif(businessConfig.rifNumber)
                         ? "border-red-400"
@@ -2872,7 +2872,7 @@ export default function BusinessConfigPage() {
                       }))
                     }
                     placeholder="Nombre fiscal del negocio"
-                    className="w-full rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
+                    className="w-full rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
                   />
                 </Field>
                 <Field label="Dirección fiscal">
@@ -2885,7 +2885,7 @@ export default function BusinessConfigPage() {
                       }))
                     }
                     placeholder="Dirección registrada en el RIF"
-                    className="w-full rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
+                    className="w-full rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
                   />
                 </Field>
                 <Field label="IVA por defecto (%)">
@@ -2901,7 +2901,7 @@ export default function BusinessConfigPage() {
                         ivaDefaultRate: Number(e.target.value),
                       }))
                     }
-                    className="w-full rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
+                    className="w-full rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
                   />
                 </Field>
 
@@ -2954,7 +2954,7 @@ export default function BusinessConfigPage() {
                           igtfRate: Number(e.target.value),
                         }))
                       }
-                      className="w-full rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
+                      className="w-full rounded-xl border border-[var(--brand-primary)]/25 bg-white px-4 py-3 font-bold outline-none focus:border-[var(--brand-primary)]"
                     />
                   </Field>
                 )}
@@ -2970,10 +2970,10 @@ export default function BusinessConfigPage() {
           >
             <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_420px]">
               <div className="space-y-5">
-                <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4">
+                <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div>
-                      <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                         Paletas rápidas
                       </p>
                       <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -2981,7 +2981,7 @@ export default function BusinessConfigPage() {
                         La vista previa de la derecha cambia antes de guardar.
                       </p>
                     </div>
-                    <span className="w-fit rounded-full border-2 border-[var(--brand-primary)]/20 bg-white px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                    <span className="w-fit rounded-full border border-[var(--brand-primary)]/20 bg-white px-3 py-1.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                       Guardar publica
                     </span>
                   </div>
@@ -2992,7 +2992,7 @@ export default function BusinessConfigPage() {
                         key={preset.id}
                         type="button"
                         onClick={() => applyVisualColorPreset(preset.values)}
-                        className="rounded-[1.15rem] border-2 border-[var(--brand-primary)]/20 bg-white p-3 text-left transition hover:border-[var(--brand-primary)]/60"
+                        className="rounded-[1.15rem] border border-[var(--brand-primary)]/20 bg-white p-3 text-left transition hover:border-[var(--brand-primary)]/60"
                       >
                         <span className="flex items-center gap-1.5">
                           {Object.values(preset.values)
@@ -3005,7 +3005,7 @@ export default function BusinessConfigPage() {
                               />
                             ))}
                         </span>
-                        <span className="mt-3 block text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]">
+                        <span className="mt-3 block text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)]">
                           {preset.label}
                         </span>
                         <span className="mt-1 block text-[0.7rem] font-bold leading-4 text-[var(--brand-ink-2)]/65">
@@ -3016,8 +3016,8 @@ export default function BusinessConfigPage() {
                   </div>
                 </div>
 
-                <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/15 bg-white p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/15 bg-white p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Contenido conectado
                   </p>
                   <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -3028,21 +3028,21 @@ export default function BusinessConfigPage() {
                   <div className="mt-4 grid gap-2 sm:grid-cols-2">
                     <a
                       href="#informacion-publica-avanzada"
-                      className="inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+                      className="inline-flex items-center justify-center rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-3 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
                     >
                       Editar textos públicos
                     </a>
                     <a
                       href="#informacion-publica-avanzada"
-                      className="inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                      className="inline-flex items-center justify-center rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                     >
                       Editar barra y categorías
                     </a>
                   </div>
                 </div>
 
-                <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/15 bg-white p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/15 bg-white p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Colores principales
                   </p>
                   <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -3066,8 +3066,8 @@ export default function BusinessConfigPage() {
                   </div>
                 </div>
 
-                <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/15 bg-white p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/15 bg-white p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Colores de productos
                   </p>
                   <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -3094,22 +3094,22 @@ export default function BusinessConfigPage() {
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-2">
-                  <div className={`rounded-[1.2rem] border-2 p-3 ${cardTextContrastStatus.className}`}>
-                    <p className="text-[0.68rem] font-black uppercase tracking-[0.14em]">
+                  <div className={`rounded-[1.2rem] border p-3 ${cardTextContrastStatus.className}`}>
+                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.14em]">
                       Legibilidad de tarjetas
                     </p>
-                    <p className="mt-1 text-sm font-black">
+                    <p className="mt-1 text-sm font-bold">
                       {cardTextContrastStatus.label}
                     </p>
                     <p className="mt-1 text-[0.7rem] font-bold leading-4 opacity-80">
                       Ratio {cardTextContrastRatio.toFixed(1)}:1 · {cardTextContrastStatus.description}
                     </p>
                   </div>
-                  <div className={`rounded-[1.2rem] border-2 p-3 ${cardButtonContrastStatus.className}`}>
-                    <p className="text-[0.68rem] font-black uppercase tracking-[0.14em]">
+                  <div className={`rounded-[1.2rem] border p-3 ${cardButtonContrastStatus.className}`}>
+                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.14em]">
                       Legibilidad de botones
                     </p>
-                    <p className="mt-1 text-sm font-black">
+                    <p className="mt-1 text-sm font-bold">
                       {cardButtonContrastStatus.label}
                     </p>
                     <p className="mt-1 text-[0.7rem] font-bold leading-4 opacity-80">
@@ -3119,10 +3119,10 @@ export default function BusinessConfigPage() {
                 </div>
               </div>
 
-              <div className="rounded-[1.5rem] border-2 border-[var(--brand-primary)]/15 bg-white p-4 2xl:sticky 2xl:top-24 2xl:self-start">
+              <div className="rounded-[1.5rem] border border-[var(--brand-primary)]/15 bg-white p-4 2xl:sticky 2xl:top-24 2xl:self-start">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Vista previa en vivo
                     </p>
                     <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -3130,13 +3130,13 @@ export default function BusinessConfigPage() {
                       colores actuales. No incluye bloques fijos de ejemplo.
                     </p>
                   </div>
-                  <span className="w-fit rounded-full border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                  <span className="w-fit rounded-full border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-3 py-1.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                     Público
                   </span>
                 </div>
 
                 <div
-                  className="mt-4 overflow-hidden rounded-[1.6rem] border-2 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]"
+                  className="mt-4 overflow-hidden rounded-[1.6rem] border shadow-sm"
                   style={{
                     backgroundColor: businessConfig.themeCreamColor,
                     borderColor: businessConfig.themePrimaryColor,
@@ -3144,12 +3144,12 @@ export default function BusinessConfigPage() {
                   }}
                 >
                   <div
-                    className="border-b-2 bg-white px-4 py-4"
+                    className="border-b bg-white px-4 py-4"
                     style={{ borderColor: `${businessConfig.themePrimaryColor}22` }}
                   >
                     <div className="flex items-center gap-3">
                       <div
-                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 text-[0.58rem] font-black uppercase"
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border text-[0.58rem] font-bold uppercase"
                         style={{
                           backgroundColor: businessConfig.themeAccentColor,
                           borderColor: businessConfig.themePrimaryColor,
@@ -3160,25 +3160,25 @@ export default function BusinessConfigPage() {
                       </div>
                       <div className="min-w-0">
                         <p
-                          className="truncate text-lg font-black uppercase leading-none"
+                          className="truncate text-lg font-bold uppercase leading-none"
                           style={{ color: businessConfig.themePrimaryColor }}
                         >
                           {businessConfig.businessName || BRAND.name}
                         </p>
-                        <p className="mt-1 truncate text-xs font-black opacity-75">
+                        <p className="mt-1 truncate text-xs font-bold opacity-75">
                           Menú y pedidos
                         </p>
                       </div>
                     </div>
 
-                    <div className="mt-4 flex overflow-hidden rounded-[1.2rem] border-2 bg-white">
+                    <div className="mt-4 flex overflow-hidden rounded-[1.2rem] border bg-white">
                       {normalizePublicNavButtons(businessConfig.publicNavButtons)
                         .filter((button) => button.isVisible !== false)
                         .slice(0, 5)
                         .map((button) => (
                           <span
                             key={button.id}
-                            className="min-w-0 flex-1 border-r-2 px-1 py-3 text-center text-[0.54rem] font-black uppercase tracking-[0.05em] last:border-r-0"
+                            className="min-w-0 flex-1 border-r px-1 py-3 text-center text-[0.54rem] font-bold uppercase tracking-[0.05em] last:border-r-0"
                             style={{
                               borderColor: `${businessConfig.themePrimaryColor}22`,
                               color: businessConfig.themePrimaryColor,
@@ -3192,7 +3192,7 @@ export default function BusinessConfigPage() {
 
                   <div className="space-y-3 p-4">
                     <div
-                      className="rounded-[1.35rem] border-2 p-4"
+                      className="rounded-[1.35rem] border p-4"
                       style={{
                         backgroundColor: businessConfig.productCardBackgroundColor,
                         borderColor: businessConfig.themePrimaryColor,
@@ -3200,7 +3200,7 @@ export default function BusinessConfigPage() {
                       }}
                     >
                       <span
-                        className="inline-flex max-w-full rounded-full border-2 px-3 py-1.5 text-[0.58rem] font-black uppercase tracking-[0.12em]"
+                        className="inline-flex max-w-full rounded-full border px-3 py-1.5 text-[0.58rem] font-bold uppercase tracking-[0.12em]"
                         style={{
                           backgroundColor: businessConfig.themeAccentColor,
                           borderColor: businessConfig.themePrimaryColor,
@@ -3212,7 +3212,7 @@ export default function BusinessConfigPage() {
                         </span>
                       </span>
                       <h3
-                        className="mt-3 text-2xl font-black uppercase leading-none"
+                        className="mt-3 text-2xl font-bold uppercase leading-none"
                         style={{ color: businessConfig.themePrimaryColor }}
                       >
                         {businessConfig.publicMenuTitle || "Elige tu pedido"}
@@ -3223,11 +3223,11 @@ export default function BusinessConfigPage() {
                     </div>
 
                     <div
-                      className="rounded-[1.2rem] border-2 bg-white p-3"
+                      className="rounded-[1.2rem] border bg-white p-3"
                       style={{ borderColor: `${businessConfig.themePrimaryColor}22` }}
                     >
                       <div
-                        className="rounded-full border-2 px-4 py-3 text-xs font-bold opacity-70"
+                        className="rounded-full border px-4 py-3 text-xs font-bold opacity-70"
                         style={{
                           borderColor: `${businessConfig.themePrimaryColor}55`,
                           color: businessConfig.productCardTextColor,
@@ -3239,11 +3239,11 @@ export default function BusinessConfigPage() {
                     </div>
 
                     <div
-                      className="rounded-[1.2rem] border-2 bg-white p-3"
+                      className="rounded-[1.2rem] border bg-white p-3"
                       style={{ borderColor: `${businessConfig.themePrimaryColor}22` }}
                     >
                       <p
-                        className="text-[0.62rem] font-black uppercase tracking-[0.16em]"
+                        className="text-[0.62rem] font-bold uppercase tracking-[0.16em]"
                         style={{ color: businessConfig.themePrimaryColor }}
                       >
                         Categorías
@@ -3263,7 +3263,7 @@ export default function BusinessConfigPage() {
                         ].map((label, index) => (
                           <span
                             key={`${label}-${index}`}
-                            className="shrink-0 rounded-full border-2 px-3 py-2 text-[0.58rem] font-black uppercase tracking-[0.08em]"
+                            className="shrink-0 rounded-full border px-3 py-2 text-[0.58rem] font-bold uppercase tracking-[0.08em]"
                             style={{
                               backgroundColor:
                                 index === 0
@@ -3286,7 +3286,7 @@ export default function BusinessConfigPage() {
                     </div>
 
                     <div
-                      className="rounded-[1.2rem] border-2 p-3"
+                      className="rounded-[1.2rem] border p-3"
                       style={{
                         backgroundColor: businessConfig.productCardBackgroundColor,
                         borderColor: `${businessConfig.productCardBorderColor}66`,
@@ -3294,14 +3294,14 @@ export default function BusinessConfigPage() {
                       }}
                     >
                       <p
-                        className="text-[0.62rem] font-black uppercase tracking-[0.16em]"
+                        className="text-[0.62rem] font-bold uppercase tracking-[0.16em]"
                         style={{ color: businessConfig.productCardBorderColor }}
                       >
                         Textos conectados
                       </p>
                       <div className="mt-2 space-y-2 text-xs font-bold leading-5 opacity-85">
                         <p>
-                          <span className="font-black">{businessConfig.publicComboTitle || "Combos disponibles"}</span>
+                          <span className="font-bold">{businessConfig.publicComboTitle || "Combos disponibles"}</span>
                           {" · "}
                           {businessConfig.publicComboButtonText || "Ver combos"}
                         </p>
@@ -3310,7 +3310,7 @@ export default function BusinessConfigPage() {
                             "Los combos se manejan en divisas para mantener precios claros."}
                         </p>
                         <p>
-                          <span className="font-black">{businessConfig.publicInfoTitle || "Información final"}</span>
+                          <span className="font-bold">{businessConfig.publicInfoTitle || "Información final"}</span>
                           {" · "}
                           {businessConfig.scheduleTitle || "Horario"}
                         </p>
@@ -3329,19 +3329,19 @@ export default function BusinessConfigPage() {
             description="El dueño ve su plan. Soporte puede cambiar el plan o activar una combinación personalizada de módulos."
           >
             <div className="grid gap-4">
-              <div className="rounded-[1.3rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4">
+              <div className="rounded-[1.3rem] border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-black uppercase text-[var(--brand-primary)]">
+                  <p className="text-sm font-bold uppercase text-[var(--brand-primary)]">
                     {activePlan.label}
                   </p>
-                  <span className="rounded-full bg-white px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                  <span className="rounded-full bg-white px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                     {canEditPlan ? "Soporte" : "Dueño"}
                   </span>
                 </div>
                 <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
                   {activePlan.description}
                 </p>
-                <p className="mt-3 rounded-2xl bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]/70">
+                <p className="mt-3 rounded-2xl bg-white px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)]/70">
                   {businessConfig.membershipPlanMode === "custom"
                     ? "Configuración personalizada por soporte"
                     : "Plan fijo configurado por soporte"}
@@ -3349,8 +3349,8 @@ export default function BusinessConfigPage() {
               </div>
 
               {canEditPlan ? (
-                <div className="rounded-[1.3rem] border-2 border-[var(--brand-primary)]/20 bg-white p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <div className="rounded-[1.3rem] border border-[var(--brand-primary)]/20 bg-white p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Control de soporte
                   </p>
                   <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -3361,7 +3361,7 @@ export default function BusinessConfigPage() {
 
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                      <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                         Plan del cliente
                       </label>
                       <select
@@ -3371,7 +3371,7 @@ export default function BusinessConfigPage() {
                             event.target.value as LocalPlanKey,
                           )
                         }
-                        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-sm font-black text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                        className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                       >
                         {LOCAL_PLAN_DEFINITIONS.map((plan) => (
                           <option key={plan.key} value={plan.key}>
@@ -3382,7 +3382,7 @@ export default function BusinessConfigPage() {
                     </div>
 
                     <div>
-                      <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                      <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                         Modo de módulos
                       </label>
                       <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -3406,8 +3406,8 @@ export default function BusinessConfigPage() {
 
                   {businessConfig.membershipPlanMode === "custom" && (
                     <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                      <div className="rounded-[1.2rem] border-2 border-green-500/25 bg-green-50 p-4">
-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-green-800">
+                      <div className="rounded-[1.2rem] border border-green-500/25 bg-green-50 p-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-green-800">
                           Incluir además
                         </p>
                         <div className="mt-3 grid max-h-[340px] gap-2 overflow-auto pr-1">
@@ -3421,7 +3421,7 @@ export default function BusinessConfigPage() {
                                   "customIncludedModules",
                                 )
                               }
-                              className={`rounded-2xl border-2 px-3 py-2 text-left text-xs font-black uppercase tracking-[0.08em] transition ${
+                              className={`rounded-2xl border px-3 py-2 text-left text-xs font-bold uppercase tracking-[0.08em] transition ${
                                 businessConfig.customIncludedModules.includes(
                                   moduleItem.moduleKey,
                                 )
@@ -3435,8 +3435,8 @@ export default function BusinessConfigPage() {
                         </div>
                       </div>
 
-                      <div className="rounded-[1.2rem] border-2 border-red-500/25 bg-red-50 p-4">
-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-red-800">
+                      <div className="rounded-[1.2rem] border border-red-500/25 bg-red-50 p-4">
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-red-800">
                           Bloquear del plan
                         </p>
                         <div className="mt-3 grid max-h-[340px] gap-2 overflow-auto pr-1">
@@ -3450,7 +3450,7 @@ export default function BusinessConfigPage() {
                                   "customBlockedModules",
                                 )
                               }
-                              className={`rounded-2xl border-2 px-3 py-2 text-left text-xs font-black uppercase tracking-[0.08em] transition ${
+                              className={`rounded-2xl border px-3 py-2 text-left text-xs font-bold uppercase tracking-[0.08em] transition ${
                                 businessConfig.customBlockedModules.includes(
                                   moduleItem.moduleKey,
                                 )
@@ -3467,7 +3467,7 @@ export default function BusinessConfigPage() {
                   )}
                 </div>
               ) : (
-                <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/15 bg-white px-4 py-3">
+                <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/15 bg-white px-4 py-3">
                   <p className="text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
                     Para cambiar el plan o desbloquear módulos personalizados,
                     entra con la clave de soporte.
@@ -3488,27 +3488,27 @@ export default function BusinessConfigPage() {
           >
             <div className="grid gap-4">
               <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
-                <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+                <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
                   <div className="flex flex-wrap gap-2">
-                    <span className="rounded-full bg-white px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                    <span className="rounded-full bg-white px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                       {activeBranches.length} activas
                     </span>
-                    <span className="rounded-full bg-white px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                    <span className="rounded-full bg-white px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                       {inactiveBranchesCount} inactivas
                     </span>
-                    <span className="rounded-full bg-white px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                    <span className="rounded-full bg-white px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                       {branches.length} registradas
                     </span>
                   </div>
 
                   {branchesWarning && (
-                    <p className="mt-3 text-sm font-black leading-6 text-[var(--brand-amber)]">
+                    <p className="mt-3 text-sm font-bold leading-6 text-[var(--brand-amber)]">
                       {branchesWarning}
                     </p>
                   )}
 
                   {branchesMessage && (
-                    <p className="mt-3 rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-white px-4 py-3 text-sm font-black leading-5 text-[var(--brand-amber)]">
+                    <p className="mt-3 rounded-2xl border border-[var(--brand-primary)]/15 bg-white px-4 py-3 text-sm font-bold leading-5 text-[var(--brand-amber)]">
                       {branchesMessage}
                     </p>
                   )}
@@ -3527,7 +3527,7 @@ export default function BusinessConfigPage() {
                     type="button"
                     onClick={() => loadBranches(adminPassword)}
                     disabled={isLoadingBranches || isSavingBranches}
-                    className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
                   >
                     {isLoadingBranches ? (
                       <Loader2 size={16} className="animate-spin" />
@@ -3539,7 +3539,7 @@ export default function BusinessConfigPage() {
 
                   <Link
                     href="/local-santo/sucursales"
-                    className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
                   >
                     <Building2 size={16} />
                     Gestor completo
@@ -3550,7 +3550,7 @@ export default function BusinessConfigPage() {
               <div
                 className={`grid gap-3 ${!canEditBranches ? "opacity-65" : ""}`}
               >
-                <div className="grid gap-3 rounded-[1.3rem] border-2 border-[var(--brand-primary)]/20 bg-white p-4 lg:grid-cols-[1fr_auto] lg:items-end">
+                <div className="grid gap-3 rounded-[1.3rem] border border-[var(--brand-primary)]/20 bg-white p-4 lg:grid-cols-[1fr_auto] lg:items-end">
                   <TextInput
                     label="Nueva sucursal"
                     value={newBranchName}
@@ -3567,7 +3567,7 @@ export default function BusinessConfigPage() {
                       isSavingBranches ||
                       !newBranchName.trim()
                     }
-                    className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-4 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isSavingBranches ? (
                       <Loader2 size={16} className="animate-spin" />
@@ -3583,7 +3583,7 @@ export default function BusinessConfigPage() {
                     {branches.map((branch) => (
                       <div
                         key={branch.id}
-                        className="rounded-[1.3rem] border-2 border-[var(--brand-primary)]/20 bg-white p-4"
+                        className="rounded-[1.3rem] border border-[var(--brand-primary)]/20 bg-white p-4"
                       >
                         <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
                           <TextInput
@@ -3615,7 +3615,7 @@ export default function BusinessConfigPage() {
                                 isSavingBranches ||
                                 !branch.name.trim()
                               }
-                              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:cursor-not-allowed disabled:opacity-50"
+                              className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               <Save size={16} />
                               Guardar nombre
@@ -3629,7 +3629,7 @@ export default function BusinessConfigPage() {
                                 })
                               }
                               disabled={!canEditBranches || isSavingBranches}
-                              className={`inline-flex items-center justify-center gap-2 rounded-full border-2 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                              className={`inline-flex items-center justify-center gap-2 rounded-full border px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-50 ${
                                 branch.is_active
                                   ? "border-green-500/35 bg-green-50 text-green-700"
                                   : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-primary)]"
@@ -3648,7 +3648,7 @@ export default function BusinessConfigPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="rounded-[1.3rem] border-2 border-[var(--brand-primary)]/15 bg-white px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/65">
+                  <p className="rounded-[1.3rem] border border-[var(--brand-primary)]/15 bg-white px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/65">
                     No hay sucursales cargadas todavía o no se pudieron leer en
                     este momento.
                   </p>
@@ -3692,15 +3692,15 @@ export default function BusinessConfigPage() {
           >
             <div className={`grid gap-4 ${!canEditTables ? "opacity-65" : ""}`}>
               <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
-                <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+                <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
                   <div className="flex flex-wrap gap-2">
-                    <span className="rounded-full bg-white px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                    <span className="rounded-full bg-white px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                       {activeLocalTables.length} activas
                     </span>
-                    <span className="rounded-full bg-white px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                    <span className="rounded-full bg-white px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                       {inactiveLocalTablesCount} inactivas
                     </span>
-                    <span className="rounded-full bg-white px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                    <span className="rounded-full bg-white px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                       {businessConfig.localTables.length ||
                         DEFAULT_CONFIG_LOCAL_TABLES.length}{" "}
                       registradas
@@ -3720,7 +3720,7 @@ export default function BusinessConfigPage() {
                     type="button"
                     onClick={addLocalTableConfig}
                     disabled={!canEditTables}
-                    className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Plus size={16} />
                     Agregar mesa
@@ -3730,7 +3730,7 @@ export default function BusinessConfigPage() {
                     type="button"
                     onClick={restoreDefaultLocalTables}
                     disabled={!canEditTables}
-                    className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <RefreshCw size={16} />
                     Restaurar base
@@ -3738,7 +3738,7 @@ export default function BusinessConfigPage() {
 
                   <Link
                     href="/local-santo/mesas"
-                    className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
                     <Table2 size={16} />
                     Ver QR
@@ -3753,7 +3753,7 @@ export default function BusinessConfigPage() {
                 ).map((table, index, tableList) => (
                   <div
                     key={`${table.id || table.name || "mesa"}-${index}`}
-                    className="rounded-[1.3rem] border-2 border-[var(--brand-primary)]/20 bg-white p-4"
+                    className="rounded-[1.3rem] border border-[var(--brand-primary)]/20 bg-white p-4"
                   >
                     <div className="grid gap-3 lg:grid-cols-[1.15fr_0.9fr_120px_auto] lg:items-end">
                       <TextInput
@@ -3797,7 +3797,7 @@ export default function BusinessConfigPage() {
                         type="button"
                         onClick={() => removeLocalTableConfig(index)}
                         disabled={!canEditTables || tableList.length <= 1}
-                        className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-[0.65rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <Trash2 size={15} />
                         Quitar
@@ -3815,7 +3815,7 @@ export default function BusinessConfigPage() {
                         disabled={!canEditTables}
                       />
 
-                      <label className="flex items-center gap-3 rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3">
+                      <label className="flex items-center gap-3 rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3">
                         <input
                           type="checkbox"
                           checked={table.isActive !== false}
@@ -3827,7 +3827,7 @@ export default function BusinessConfigPage() {
                           }
                           className="h-5 w-5 accent-[var(--brand-primary)] disabled:cursor-not-allowed"
                         />
-                        <span className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                        <span className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                           Mesa activa
                         </span>
                       </label>
@@ -3845,10 +3845,10 @@ export default function BusinessConfigPage() {
             title="Módulos del negocio"
             description="Puedes activar o desactivar los módulos incluidos en tu plan. Los no incluidos quedan visibles con candado y no se pueden activar desde aquí."
           >
-            <div className="mb-4 rounded-[1.3rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+            <div className="mb-4 rounded-[1.3rem] border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
                     Activación rápida
                   </p>
                   <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -3859,7 +3859,7 @@ export default function BusinessConfigPage() {
                 <button
                   type="button"
                   onClick={activateAvailablePlanModules}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
                 >
                   <CheckCircle2 size={16} />
                   Activar disponibles
@@ -3896,8 +3896,8 @@ export default function BusinessConfigPage() {
             <div
               className={`grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center ${!canEditMenuProducts ? "opacity-65" : ""}`}
             >
-              <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   Editor operativo
                 </p>
                 <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
@@ -3911,7 +3911,7 @@ export default function BusinessConfigPage() {
 
               <Link
                 href="/local-santo/menu"
-                className={`inline-flex items-center justify-center gap-2 rounded-full border-2 px-6 py-4 text-xs font-black uppercase tracking-[0.12em] transition ${
+                className={`inline-flex items-center justify-center gap-2 rounded-full border px-6 py-4 text-xs font-bold uppercase tracking-[0.12em] transition ${
                   canEditMenuProducts
                     ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[var(--brand-accent-200)]"
                     : "pointer-events-none border-[var(--brand-primary)]/25 bg-white text-[var(--brand-primary)]/45"
@@ -3980,8 +3980,8 @@ export default function BusinessConfigPage() {
                   disabled={!canEditAdvancedPublic}
                 />
               </div>
-              <div className="rounded-[1.5rem] border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4">
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+              <div className="rounded-[1.5rem] border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
                   Textos del menú público
                 </p>
                 <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -4067,8 +4067,8 @@ export default function BusinessConfigPage() {
                 </div>
               </div>
 
-              <div className="rounded-[1.5rem] border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4 sm:col-span-2">
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+              <div className="rounded-[1.5rem] border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4 sm:col-span-2">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
                   Textos del carrito
                 </p>
                 <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -4125,7 +4125,7 @@ export default function BusinessConfigPage() {
                     disabled={!canEditAdvancedPublic}
                   />
                   <div className="sm:col-span-2 lg:col-span-3">
-                    <label className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/70">
+                    <label className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/70">
                       Tamaño de las tarjetas del menú
                     </label>
                     <div className="mt-2 grid gap-2 sm:grid-cols-3">
@@ -4152,13 +4152,13 @@ export default function BusinessConfigPage() {
                           onClick={() =>
                             updateConfig("publicProductCardSize", option.value)
                           }
-                          className={`rounded-xl border-2 px-3 py-3 text-left transition ${
+                          className={`rounded-xl border px-3 py-3 text-left transition ${
                             businessConfig.publicProductCardSize === option.value
                               ? "border-[var(--brand-primary)] bg-[rgba(var(--brand-primary-rgb),0.1)]"
                               : "border-[var(--brand-primary)]/25 bg-white hover:border-[var(--brand-primary)]/60"
                           }`}
                         >
-                          <span className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                          <span className="block text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
                             {option.label}
                           </span>
                           <span className="mt-1 block text-[0.66rem] font-bold leading-4 text-[var(--brand-ink-2)]/60">
@@ -4169,7 +4169,7 @@ export default function BusinessConfigPage() {
                     </div>
                   </div>
                   <div className="sm:col-span-2 lg:col-span-3">
-                    <label className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/70">
+                    <label className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/70">
                       Métodos de pago del carrito (uno por línea)
                     </label>
                     <textarea
@@ -4182,7 +4182,7 @@ export default function BusinessConfigPage() {
                       }
                       rows={4}
                       placeholder={DEFAULT_PUBLIC_PAYMENT_METHODS.join("\n")}
-                      className="mt-2 w-full rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+                      className="mt-2 w-full rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
                     />
                     <p className="mt-1 text-[0.68rem] font-bold text-[var(--brand-ink-2)]/55">
                       Opciones que el cliente elige al pagar en el carrito público
@@ -4191,7 +4191,7 @@ export default function BusinessConfigPage() {
                     </p>
                   </div>
                   <div className="sm:col-span-2 lg:col-span-3">
-                    <label className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/70">
+                    <label className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/70">
                       Datos de pago que ve el cliente (opcional)
                     </label>
                     <p className="mt-1 text-[0.68rem] font-bold text-[var(--brand-ink-2)]/55">
@@ -4205,7 +4205,7 @@ export default function BusinessConfigPage() {
                     <div className="mt-2 grid gap-3 sm:grid-cols-2">
                       {businessConfig.publicPaymentMethods.map((method) => (
                         <div key={method}>
-                          <label className="text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/60">
+                          <label className="text-[0.68rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/60">
                             Datos de {method}
                           </label>
                           <textarea
@@ -4231,14 +4231,14 @@ export default function BusinessConfigPage() {
                             }}
                             rows={3}
                             placeholder={"Banco: Banesco\nTeléfono: 0412-0000000\nCI: V-12.345.678"}
-                            className="mt-1.5 w-full rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-1.5 w-full rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
                           />
                         </div>
                       ))}
                     </div>
                   </div>
                   <div className="sm:col-span-2 lg:col-span-3">
-                    <label className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/70">
+                    <label className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/70">
                       Cupones de descuento (código y porcentaje por línea)
                     </label>
                     <textarea
@@ -4248,7 +4248,7 @@ export default function BusinessConfigPage() {
                       }
                       rows={3}
                       placeholder={"BIENVENIDO10 10\nFERIA15 15"}
-                      className="mt-2 w-full rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
+                      className="mt-2 w-full rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-[var(--brand-primary)]"
                     />
                     <p className="mt-1 text-[0.68rem] font-bold text-[var(--brand-ink-2)]/55">
                       El cliente escribe el código en el carrito y se le descuenta ese
@@ -4319,10 +4319,10 @@ export default function BusinessConfigPage() {
                 </div>
               </div>
 
-              <div className="rounded-[1.5rem] border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4 sm:col-span-2">
+              <div className="rounded-[1.5rem] border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4 sm:col-span-2">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
                       Barra superior pública
                     </p>
                     <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -4334,7 +4334,7 @@ export default function BusinessConfigPage() {
                     type="button"
                     onClick={resetPublicNavButtons}
                     disabled={!canEditAdvancedPublic}
-                    className="inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex items-center justify-center rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Restaurar botones
                   </button>
@@ -4345,7 +4345,7 @@ export default function BusinessConfigPage() {
                     (button, index) => (
                       <div
                         key={button.id}
-                        className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/15 bg-white p-3"
+                        className="rounded-[1.2rem] border border-[var(--brand-primary)]/15 bg-white p-3"
                       >
                         <div className="grid gap-3 lg:grid-cols-[auto_1fr_170px_1.2fr_90px] lg:items-end">
                           <label className="flex items-center gap-3 rounded-2xl bg-[var(--brand-cream)] px-3 py-3">
@@ -4360,7 +4360,7 @@ export default function BusinessConfigPage() {
                               }
                               className="h-5 w-5 accent-[var(--brand-primary)] disabled:cursor-not-allowed"
                             />
-                            <span className="text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                            <span className="text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                               Visible
                             </span>
                           </label>
@@ -4376,7 +4376,7 @@ export default function BusinessConfigPage() {
                           />
 
                           <div>
-                            <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                            <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                               Tipo
                             </label>
                             <select
@@ -4387,7 +4387,7 @@ export default function BusinessConfigPage() {
                                   kind: event.target.value as PublicNavButtonKind,
                                 })
                               }
-                              className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-[#f3ead7] disabled:text-[var(--brand-ink)]/50"
+                              className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-[#f3ead7] disabled:text-[var(--brand-ink)]/50"
                             >
                               <option value="section">Sección interna</option>
                               <option value="whatsapp">WhatsApp</option>
@@ -4439,10 +4439,10 @@ export default function BusinessConfigPage() {
                 </div>
               </div>
 
-              <div className="rounded-[1.5rem] border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4 sm:col-span-2">
+              <div className="rounded-[1.5rem] border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-4 sm:col-span-2">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
                       Orden de categorías públicas
                     </p>
                     <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -4455,7 +4455,7 @@ export default function BusinessConfigPage() {
                       type="button"
                       onClick={() => loadAvailableProducts()}
                       disabled={!canEditAdvancedPublic || isLoadingProducts}
-                      className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {isLoadingProducts ? (
                         <Loader2 size={14} className="animate-spin" />
@@ -4469,7 +4469,7 @@ export default function BusinessConfigPage() {
                       type="button"
                       onClick={resetPublicCategoryOrder}
                       disabled={!canEditAdvancedPublic}
-                      className="inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex items-center justify-center rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Restaurar orden
                     </button>
@@ -4485,10 +4485,10 @@ export default function BusinessConfigPage() {
                     return (
                       <div
                         key={category}
-                        className="grid gap-3 rounded-[1.2rem] border-2 border-[var(--brand-primary)]/15 bg-white p-3 sm:grid-cols-[1fr_auto_120px] sm:items-center"
+                        className="grid gap-3 rounded-[1.2rem] border border-[var(--brand-primary)]/15 bg-white p-3 sm:grid-cols-[1fr_auto_120px] sm:items-center"
                       >
                         <div>
-                          <p className="text-sm font-black uppercase text-[var(--brand-ink-3)]">
+                          <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">
                             {category}
                           </p>
                           <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/55">
@@ -4509,7 +4509,7 @@ export default function BusinessConfigPage() {
                             }
                             className="h-5 w-5 accent-[var(--brand-primary)] disabled:cursor-not-allowed"
                           />
-                          <span className="text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                          <span className="text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                             Visible
                           </span>
                         </label>
@@ -4602,8 +4602,8 @@ export default function BusinessConfigPage() {
                   lockedText={`No incluido en tu plan. Disponible desde ${promotionAccess.minimumPlanLabel}.`}
                 />
 
-                <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+                <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
                     Producto o combo relacionado
                   </p>
 
@@ -4613,7 +4613,7 @@ export default function BusinessConfigPage() {
                     onChange={(event) =>
                       applyPromotionProduct(Number(event.target.value || 0))
                     }
-                    className="mt-3 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-sm font-black text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-[#f3ead7] disabled:text-[var(--brand-ink)]/50"
+                    className="mt-3 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-[#f3ead7] disabled:text-[var(--brand-ink)]/50"
                   >
                     <option value={0}>Promoción general sin producto</option>
                     {availableProducts.map((product) => (
@@ -4629,7 +4629,7 @@ export default function BusinessConfigPage() {
                       type="button"
                       onClick={() => loadAvailableProducts()}
                       disabled={isLoadingProducts || !canEditPromotion}
-                      className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
                     >
                       {isLoadingProducts ? (
                         <Loader2 size={14} className="animate-spin" />
@@ -4644,7 +4644,7 @@ export default function BusinessConfigPage() {
                         type="button"
                         disabled={!canEditPromotion}
                         onClick={() => applyPromotionProduct(0)}
-                        className="inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
+                        className="inline-flex items-center justify-center rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
                       >
                         Quitar producto
                       </button>
@@ -4657,20 +4657,20 @@ export default function BusinessConfigPage() {
                   </p>
                 </div>
 
-                <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-white p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+                <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-white p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
                     Vista rápida
                   </p>
                   <div className="mt-3 grid grid-cols-[76px_1fr] items-center gap-3">
                     <div
                       aria-hidden="true"
-                      className="h-[76px] w-[76px] rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] bg-cover bg-center"
+                      className="h-[76px] w-[76px] rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] bg-cover bg-center"
                       style={{
                         backgroundImage: `url(${promotionPreviewImage})`,
                       }}
                     />
                     <div className="min-w-0">
-                      <p className="text-sm font-black uppercase leading-tight text-[var(--brand-ink-3)]">
+                      <p className="text-sm font-bold uppercase leading-tight text-[var(--brand-ink-3)]">
                         {businessConfig.promotionTitle || "Promoción especial"}
                       </p>
                       <p className="mt-1 line-clamp-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -4679,7 +4679,7 @@ export default function BusinessConfigPage() {
                           "Disponible por tiempo limitado."}
                       </p>
                       {businessConfig.promotionPriceUSD > 0 && (
-                        <p className="mt-2 text-lg font-black text-[var(--brand-primary)]">
+                        <p className="mt-2 text-lg font-bold text-[var(--brand-primary)]">
                           ${businessConfig.promotionPriceUSD.toFixed(2)}
                         </p>
                       )}
@@ -4722,11 +4722,11 @@ export default function BusinessConfigPage() {
                   disabled={!canEditPromotion}
                 />
                 <div>
-                  <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                  <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Imagen de promoción
                   </label>
 
-                  <div className="mt-2 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3">
+                  <div className="mt-2 rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3">
                     <input
                       ref={promotionImageInputRef}
                       type="file"
@@ -4744,7 +4744,7 @@ export default function BusinessConfigPage() {
                           updateConfig("promotionImage", event.target.value)
                         }
                         placeholder="Sube una foto o pega /producto.png o https://..."
-                        className="w-full rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-4 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-[#f3ead7] disabled:text-[var(--brand-ink)]/50"
+                        className="w-full rounded-2xl border border-[var(--brand-primary)]/20 bg-white px-4 py-4 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-[#f3ead7] disabled:text-[var(--brand-ink)]/50"
                       />
 
                       <button
@@ -4753,7 +4753,7 @@ export default function BusinessConfigPage() {
                           !canEditPromotion || isUploadingPromotionImage
                         }
                         onClick={() => promotionImageInputRef.current?.click()}
-                        className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {isUploadingPromotionImage ? (
                           <Loader2 size={16} className="animate-spin" />
@@ -4767,7 +4767,7 @@ export default function BusinessConfigPage() {
                     <div className="mt-3 grid gap-3 sm:grid-cols-[120px_1fr] sm:items-center">
                       <div
                         aria-hidden="true"
-                        className="flex h-[120px] w-full items-center justify-center rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-white bg-cover bg-center text-[var(--brand-primary)] sm:w-[120px]"
+                        className="flex h-[120px] w-full items-center justify-center rounded-2xl border border-[var(--brand-primary)]/15 bg-white bg-cover bg-center text-[var(--brand-primary)] sm:w-[120px]"
                         style={{
                           backgroundImage: promotionPreviewImage
                             ? `url(${promotionPreviewImage})`
@@ -4790,7 +4790,7 @@ export default function BusinessConfigPage() {
                               type="button"
                               disabled={!canEditPromotion}
                               onClick={useSelectedProductImageForPromotion}
-                              className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
+                              className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
                             >
                               <ImageIcon size={14} />
                               Usar imagen del producto
@@ -4802,7 +4802,7 @@ export default function BusinessConfigPage() {
                               type="button"
                               disabled={!canEditPromotion}
                               onClick={() => updateConfig("promotionImage", "")}
-                              className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
+                              className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
                             >
                               <XCircle size={14} />
                               Quitar imagen
@@ -4903,8 +4903,8 @@ export default function BusinessConfigPage() {
                   disabled={!canEditFeaturedProducts}
                 />
 
-                <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+                <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
                     Seleccionados
                   </p>
                   <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -4915,10 +4915,10 @@ export default function BusinessConfigPage() {
                 </div>
               </div>
 
-              <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+              <div className="rounded-[1.4rem] border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Productos disponibles
                     </p>
                     <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
@@ -4931,7 +4931,7 @@ export default function BusinessConfigPage() {
                     type="button"
                     onClick={() => loadAvailableProducts()}
                     disabled={isLoadingProducts}
-                    className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-2 text-[0.65rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
                   >
                     {isLoadingProducts ? (
                       <Loader2 size={14} className="animate-spin" />
@@ -4943,8 +4943,8 @@ export default function BusinessConfigPage() {
                 </div>
 
                 {productsWarning && (
-                  <div className="mt-3 rounded-2xl border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3">
-                    <p className="text-xs font-black leading-5 text-[var(--brand-amber)]">
+                  <div className="mt-3 rounded-2xl border border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3">
+                    <p className="text-xs font-bold leading-5 text-[var(--brand-amber)]">
                       {productsWarning}
                     </p>
                   </div>
@@ -4952,8 +4952,8 @@ export default function BusinessConfigPage() {
 
                 <div className="mt-4 grid max-h-[540px] gap-2 overflow-y-auto pr-1">
                   {availableProducts.length === 0 && (
-                    <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-white p-4 text-center">
-                      <p className="text-sm font-black uppercase text-[var(--brand-primary)]">
+                    <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-white p-4 text-center">
+                      <p className="text-sm font-bold uppercase text-[var(--brand-primary)]">
                         Sin productos disponibles
                       </p>
                       <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
@@ -4974,7 +4974,7 @@ export default function BusinessConfigPage() {
                         type="button"
                         disabled={!canEditFeaturedProducts}
                         onClick={() => void toggleFeaturedProduct(product.id)}
-                        className={`rounded-[1.2rem] border-2 p-3 text-left transition disabled:cursor-not-allowed ${
+                        className={`rounded-[1.2rem] border p-3 text-left transition disabled:cursor-not-allowed ${
                           isSelected
                             ? "border-green-500 bg-green-50"
                             : "border-[var(--brand-primary)]/20 bg-white hover:border-[var(--brand-primary)]"
@@ -4983,23 +4983,23 @@ export default function BusinessConfigPage() {
                         <div className="grid grid-cols-[72px_1fr] items-center gap-3">
                           <div
                             aria-hidden="true"
-                            className="h-[72px] w-[72px] shrink-0 rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] bg-cover bg-center"
+                            className="h-[72px] w-[72px] shrink-0 rounded-2xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] bg-cover bg-center"
                             style={{
                               backgroundImage: `url(${product.image || BRAND.logoUrl || "/logoremovebg.png"})`,
                             }}
                           />
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
-                              <p className="text-sm font-black uppercase leading-tight text-[var(--brand-ink-3)]">
+                              <p className="text-sm font-bold uppercase leading-tight text-[var(--brand-ink-3)]">
                                 {product.name}
                               </p>
                               {isSelected && (
-                                <span className="rounded-full bg-green-500 px-2 py-1 text-[0.6rem] font-black uppercase tracking-[0.1em] text-white">
+                                <span className="rounded-full bg-green-500 px-2 py-1 text-[0.6rem] font-bold uppercase tracking-[0.1em] text-white">
                                   Marcado
                                 </span>
                               )}
                             </div>
-                            <p className="mt-1 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                            <p className="mt-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                               {product.category} · ${product.price.toFixed(2)}
                             </p>
                             <p className="mt-1 line-clamp-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -5119,10 +5119,10 @@ export default function BusinessConfigPage() {
           </SectionCard>
         </section>
 
-        <section className="mt-6 rounded-[1.6rem] border-4 border-[var(--brand-primary)] bg-white p-4 shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
+        <section className="mt-6 rounded-[1.6rem] border border-[var(--brand-primary)]/45 bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                 Guardar cambios
               </p>
               <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -5135,7 +5135,7 @@ export default function BusinessConfigPage() {
               type="button"
               onClick={saveBusinessConfig}
               disabled={isSaving}
-              className="flex items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-8 py-4 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+              className="flex items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-8 py-4 text-sm font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
             >
               {isSaving ? (
                 <Loader2 size={18} className="animate-spin" />
@@ -5159,11 +5159,11 @@ function MetricCard({
   value: string | number;
 }) {
   return (
-    <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3">
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+    <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3">
+      <p className="text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
         {label}
       </p>
-      <p className="mt-1 break-words text-lg font-black text-[var(--brand-ink-3)]">
+      <p className="mt-1 break-words text-lg font-bold text-[var(--brand-ink-3)]">
         {value}
       </p>
     </div>
@@ -5179,7 +5179,7 @@ function isValidRif(value: string): boolean {
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+      <label className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
         {label}
       </label>
       {children}
@@ -5198,10 +5198,10 @@ function ColorField({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+      <label className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
         {label}
       </label>
-      <div className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2">
+      <div className="flex items-center gap-2 rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2">
         <input
           type="color"
           value={value}
@@ -5237,14 +5237,14 @@ function SectionCard({
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
 
   return (
-    <section className="rounded-[1.6rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+    <section className="rounded-[1.6rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] text-[var(--brand-ink)]">
             {icon}
           </div>
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
               {title}
             </p>
             <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -5255,7 +5255,7 @@ function SectionCard({
 
         <div className="flex flex-wrap items-center gap-2">
           {locked && (
-            <span className="inline-flex w-fit items-center gap-2 rounded-full bg-[var(--brand-ink-3)] px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.1em] text-white">
+            <span className="inline-flex w-fit items-center gap-2 rounded-full bg-[var(--brand-ink-3)] px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-white">
               <LockKeyhole size={13} />
               Bloqueado
             </span>
@@ -5264,7 +5264,7 @@ function SectionCard({
           <button
             type="button"
             onClick={() => setIsCollapsed((current) => !current)}
-            className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-3 py-2 text-[0.65rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-3 py-2 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
           >
             {isCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
             {isCollapsed ? "Mostrar" : "Minimizar"}
@@ -5273,8 +5273,8 @@ function SectionCard({
       </div>
 
       {!isCollapsed && locked && lockedText && (
-        <div className="mb-4 rounded-2xl border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3">
-          <p className="text-sm font-black leading-6 text-[var(--brand-amber)]">
+        <div className="mb-4 rounded-2xl border border-yellow-400 bg-[var(--brand-accent-100)] px-4 py-3">
+          <p className="text-sm font-bold leading-6 text-[var(--brand-amber)]">
             {lockedText}
           </p>
         </div>
@@ -5304,7 +5304,7 @@ function TextInput({
 }) {
   return (
     <div>
-      <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+      <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
         {label}
       </label>
       <input
@@ -5313,7 +5313,7 @@ function TextInput({
         disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-[#f3ead7] disabled:text-[var(--brand-ink)]/50"
+        className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-[#f3ead7] disabled:text-[var(--brand-ink)]/50"
       />
       {helper && (
         <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
@@ -5339,7 +5339,7 @@ function TextAreaInput({
 }) {
   return (
     <div>
-      <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+      <label className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
         {label}
       </label>
       <textarea
@@ -5348,7 +5348,7 @@ function TextAreaInput({
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         rows={7}
-        className="mt-2 w-full resize-none rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-sm font-bold leading-6 text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-[#f3ead7] disabled:text-[var(--brand-ink)]/50"
+        className="mt-2 w-full resize-none rounded-2xl border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-sm font-bold leading-6 text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-[#f3ead7] disabled:text-[var(--brand-ink)]/50"
       />
     </div>
   );
@@ -5369,13 +5369,13 @@ function ModeButton({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-[1.2rem] border-2 p-4 text-left transition ${
+      className={`rounded-[1.2rem] border p-4 text-left transition ${
         active
           ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
           : "border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] text-[var(--brand-ink-3)] hover:border-[var(--brand-primary)]"
       }`}
     >
-      <p className="text-sm font-black uppercase">{label}</p>
+      <p className="text-sm font-bold uppercase">{label}</p>
       <p className="mt-2 text-xs font-bold leading-5">{description}</p>
     </button>
   );
@@ -5416,8 +5416,8 @@ function LiveBcvRateHint({ manualActive }: { manualActive: boolean }) {
   }, []);
 
   return (
-    <div className="mt-3 rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3">
-      <p className="text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+    <div className="mt-3 rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3">
+      <p className="text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
         Referencia en vivo
       </p>
       <p className="mt-1 text-sm font-bold text-[var(--brand-ink)]">{bcvText}</p>
@@ -5449,7 +5449,7 @@ function ToggleRow({
 }) {
   return (
     <div
-      className={`rounded-[1.2rem] border-2 p-4 ${
+      className={`rounded-[1.2rem] border p-4 ${
         disabled
           ? "border-[var(--brand-primary)]/15 bg-[#f3ead7]"
           : checked
@@ -5459,11 +5459,11 @@ function ToggleRow({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] text-[var(--brand-ink)]">
             {disabled ? <LockKeyhole size={18} /> : icon}
           </div>
           <div>
-            <p className="text-sm font-black uppercase text-[var(--brand-ink-3)]">
+            <p className="text-sm font-bold uppercase text-[var(--brand-ink-3)]">
               {label}
             </p>
             <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
@@ -5476,7 +5476,7 @@ function ToggleRow({
           type="button"
           disabled={disabled}
           onClick={() => onChange(!checked)}
-          className={`h-8 w-14 shrink-0 rounded-full border-2 p-1 transition disabled:cursor-not-allowed disabled:opacity-60 ${
+          className={`h-8 w-14 shrink-0 rounded-full border p-1 transition disabled:cursor-not-allowed disabled:opacity-60 ${
             checked
               ? "border-green-600 bg-green-500"
               : "border-[var(--brand-primary)]/30 bg-white"
@@ -5492,7 +5492,7 @@ function ToggleRow({
       </div>
 
       {disabled && lockedText && (
-        <p className="mt-3 rounded-2xl border border-[var(--brand-primary)]/15 bg-white px-3 py-2 text-xs font-black leading-5 text-[var(--brand-primary)]">
+        <p className="mt-3 rounded-2xl border border-[var(--brand-primary)]/15 bg-white px-3 py-2 text-xs font-bold leading-5 text-[var(--brand-primary)]">
           {lockedText}
         </p>
       )}

@@ -292,22 +292,22 @@ function matchesSearch(group: ProductKitchenGroup, searchText: string) {
 
 function MetricCard({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="rounded-[1.45rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_7px_0_rgba(var(--brand-primary-rgb),0.08)]">
-      <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">{label}</p>
-      <p className="mt-2 text-3xl font-black text-[var(--brand-ink)]">{value}</p>
+    <div className="rounded-[1.45rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm">
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">{label}</p>
+      <p className="mt-2 text-3xl font-bold text-[var(--brand-ink)]">{value}</p>
     </div>
   );
 }
 
 function EmptyState({ isLoading }: { isLoading: boolean }) {
   return (
-    <section className="rounded-[2rem] border-2 border-[var(--brand-primary)] bg-white px-6 py-14 text-center shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.12)]">
+    <section className="rounded-[2rem] border border-[var(--brand-primary)]/40 bg-white px-6 py-14 text-center shadow-sm">
       {isLoading ? (
         <Loader2 className="mx-auto animate-spin text-[var(--brand-primary)]" size={36} />
       ) : (
         <CookingPot className="mx-auto text-[var(--brand-primary)]" size={42} />
       )}
-      <h2 className="mt-5 text-3xl font-black uppercase text-[var(--brand-primary)]">
+      <h2 className="font-serif mt-5 text-3xl text-[var(--brand-ink-3)] font-semibold">
         {isLoading ? "Cargando cocina" : "Sin productos visibles"}
       </h2>
       <p className="mx-auto mt-3 max-w-md text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
@@ -336,7 +336,7 @@ function ProductLineCard({
     <div className="rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-black uppercase text-[var(--brand-ink)]">
+          <p className="text-sm font-bold uppercase text-[var(--brand-ink)]">
             {getDisplayOrderNumber(order)} · {getDisplayTableNumber(order)}
           </p>
           <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/70">
@@ -345,27 +345,27 @@ function ProductLineCard({
         </div>
 
         <div className="flex flex-wrap justify-end gap-2">
-          <span className={`rounded-full border px-3 py-1 text-xs font-black ${getStatusClasses(order.status)}`}>
+          <span className={`rounded-full border px-3 py-1 text-xs font-bold ${getStatusClasses(order.status)}`}>
             {order.status}
           </span>
-          <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-black ${getElapsedStatusClasses(elapsedMinutes)}`}>
+          <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-bold ${getElapsedStatusClasses(elapsedMinutes)}`}>
             <Clock size={13} />
             {formatElapsedMinutes(elapsedMinutes)} · {getElapsedPriorityLabel(elapsedMinutes)}
           </span>
           {isDelivery ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-primary)] px-3 py-1 text-xs font-black text-white">
+            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-primary)] px-3 py-1 text-xs font-bold text-white">
               <Truck size={13} />
               Delivery
             </span>
           ) : null}
           {line.requiresStaffConfirmation ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-yellow-500 bg-[var(--brand-accent-100)] px-3 py-1 text-xs font-black text-[var(--brand-amber)]">
+            <span className="inline-flex items-center gap-1 rounded-full border border-yellow-500 bg-[var(--brand-accent-100)] px-3 py-1 text-xs font-bold text-[var(--brand-amber)]">
               <Eye size={13} />
               Revisar
             </span>
           ) : null}
           {line.staffConfirmationConfirmed ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-green-500/35 bg-green-50 px-3 py-1 text-xs font-black text-green-700">
+            <span className="inline-flex items-center gap-1 rounded-full border border-green-500/35 bg-green-50 px-3 py-1 text-xs font-bold text-green-700">
               <CheckCircle2 size={13} />
               Confirmado
             </span>
@@ -374,10 +374,10 @@ function ProductLineCard({
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className="rounded-full bg-[var(--brand-accent)] px-3 py-1 text-sm font-black text-[var(--brand-ink)]">
+        <span className="rounded-full bg-[var(--brand-accent)] px-3 py-1 text-sm font-bold text-[var(--brand-ink)]">
           Cantidad: {line.quantity}
         </span>
-        <span className="rounded-full border border-[var(--brand-primary)]/25 bg-white px-3 py-1 text-xs font-black uppercase text-[var(--brand-primary)]">
+        <span className="rounded-full border border-[var(--brand-primary)]/25 bg-white px-3 py-1 text-xs font-bold uppercase text-[var(--brand-primary)]">
           {getDisplayOrderType(order)}
         </span>
       </div>
@@ -389,25 +389,25 @@ function ProductLineCard({
       ) : null}
 
       {line.requiresStaffConfirmation ? (
-        <p className="mt-2 rounded-xl border border-yellow-500 bg-[var(--brand-accent-100)] px-3 py-2 text-xs font-black leading-5 text-[var(--brand-amber)]">
+        <p className="mt-2 rounded-xl border border-yellow-500 bg-[var(--brand-accent-100)] px-3 py-2 text-xs font-bold leading-5 text-[var(--brand-amber)]">
           Revisar con el personal antes de preparar este producto.
         </p>
       ) : null}
 
       {line.staffConfirmationConfirmed ? (
-        <p className="mt-2 rounded-xl border border-green-500/35 bg-green-50 px-3 py-2 text-xs font-black leading-5 text-green-700">
+        <p className="mt-2 rounded-xl border border-green-500/35 bg-green-50 px-3 py-2 text-xs font-bold leading-5 text-green-700">
           Revisión confirmada por el personal.
         </p>
       ) : null}
 
       {line.note ? (
-        <p className="mt-2 rounded-xl border border-yellow-400 bg-[var(--brand-accent-100)] px-3 py-2 text-xs font-black leading-5 text-[var(--brand-amber)]">
+        <p className="mt-2 rounded-xl border border-yellow-400 bg-[var(--brand-accent-100)] px-3 py-2 text-xs font-bold leading-5 text-[var(--brand-amber)]">
           Nota: {line.note}
         </p>
       ) : null}
 
       {order.customerNote ? (
-        <p className="mt-2 rounded-xl border border-[var(--brand-primary)]/20 bg-red-50 px-3 py-2 text-xs font-black leading-5 text-[var(--brand-primary)]">
+        <p className="mt-2 rounded-xl border border-[var(--brand-primary)]/20 bg-red-50 px-3 py-2 text-xs font-bold leading-5 text-[var(--brand-primary)]">
           Nota general: {order.customerNote}
         </p>
       ) : null}
@@ -417,7 +417,7 @@ function ProductLineCard({
           type="button"
           onClick={() => onMarkReady(order.id)}
           disabled={isUpdating}
-          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isUpdating ? <Loader2 size={15} className="animate-spin" /> : <PackageCheck size={15} />}
           Marcar pedido listo
@@ -437,14 +437,14 @@ function ProductGroupCard({
   updatingOrderId: string;
 }) {
   return (
-    <article className="overflow-hidden rounded-[1.8rem] border-2 border-[var(--brand-primary)] bg-white shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
-      <div className="border-b-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] p-4">
+    <article className="overflow-hidden rounded-[1.8rem] border border-[var(--brand-primary)]/40 bg-white shadow-sm">
+      <div className="border-b border-[var(--brand-primary)] bg-[var(--brand-cream)] p-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary)]">
               {group.category || "Producto"}
             </p>
-            <h2 className="mt-1 text-2xl font-black uppercase leading-tight text-[var(--brand-ink)]">
+            <h2 className="font-serif mt-1 text-2xl leading-tight text-[var(--brand-ink)] font-semibold">
               {group.productName}
             </h2>
             <p className="mt-2 text-sm font-bold text-[var(--brand-ink-2)]/70">
@@ -452,13 +452,13 @@ function ProductGroupCard({
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               {group.staffConfirmationLineCount > 0 ? (
-                <span className="inline-flex items-center gap-2 rounded-full border border-yellow-500 bg-[var(--brand-accent-100)] px-3 py-1.5 text-xs font-black uppercase tracking-[0.10em] text-[var(--brand-amber)]">
+                <span className="inline-flex items-center gap-2 rounded-full border border-yellow-500 bg-[var(--brand-accent-100)] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.10em] text-[var(--brand-amber)]">
                   <Eye size={14} />
                   {group.staffConfirmationLineCount} por revisar
                 </span>
               ) : null}
               {group.staffConfirmationConfirmedLineCount > 0 ? (
-                <span className="inline-flex items-center gap-2 rounded-full border border-green-500/35 bg-green-50 px-3 py-1.5 text-xs font-black uppercase tracking-[0.10em] text-green-700">
+                <span className="inline-flex items-center gap-2 rounded-full border border-green-500/35 bg-green-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.10em] text-green-700">
                   <CheckCircle2 size={14} />
                   {group.staffConfirmationConfirmedLineCount} confirmados
                 </span>
@@ -466,20 +466,20 @@ function ProductGroupCard({
             </div>
           </div>
 
-          <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-center text-[var(--brand-ink)]">
-            <p className="text-xs font-black uppercase tracking-[0.14em]">Total</p>
-            <p className="text-4xl font-black leading-none">{group.totalQuantity}</p>
+          <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-5 py-3 text-center text-[var(--brand-ink)]">
+            <p className="text-xs font-bold uppercase tracking-[0.14em]">Total</p>
+            <p className="text-4xl font-bold leading-none">{group.totalQuantity}</p>
           </div>
         </div>
 
         <div className="mt-4 grid gap-2 sm:grid-cols-3">
-          <div className="rounded-2xl bg-white px-3 py-2 text-center text-xs font-black uppercase tracking-[0.12em] text-orange-800">
+          <div className="rounded-2xl bg-white px-3 py-2 text-center text-xs font-bold uppercase tracking-[0.12em] text-orange-800">
             Preparando: {group.pendingOrderCount}
           </div>
-          <div className="rounded-2xl bg-white px-3 py-2 text-center text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-amber)]">
+          <div className="rounded-2xl bg-white px-3 py-2 text-center text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-amber)]">
             Listos: {group.readyOrderCount}
           </div>
-          <div className="rounded-2xl bg-white px-3 py-2 text-center text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+          <div className="rounded-2xl bg-white px-3 py-2 text-center text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
             Líneas: {group.lines.length}
           </div>
         </div>
@@ -642,16 +642,16 @@ function KitchenItemsPageContent() {
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-5 text-[var(--brand-ink-3)] sm:px-6 lg:px-8">
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-5">
-        <div className="overflow-hidden rounded-[2rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_12px_0_rgba(var(--brand-primary-rgb),0.12)]">
+        <div className="overflow-hidden rounded-[2rem] border border-[var(--brand-primary)]/45 bg-white shadow-sm">
           <div className="h-5 bg-[linear-gradient(45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(-45deg,var(--brand-primary)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,var(--brand-primary)_75%),linear-gradient(-45deg,transparent_75%,var(--brand-primary)_75%)] bg-[length:32px_32px] bg-[position:0_0,0_16px,16px_-16px,0] bg-[var(--brand-cream)]" />
 
           <div className="p-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   Cocina premium
                 </p>
-                <h1 className="mt-1 text-3xl font-black uppercase leading-none text-[var(--brand-primary)] sm:text-5xl">
+                <h1 className="font-serif mt-1 text-3xl leading-tight text-[var(--brand-ink-3)] sm:text-5xl font-semibold">
                   Cocina por producto
                 </h1>
                 <p className="mt-3 max-w-3xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
@@ -662,14 +662,14 @@ function KitchenItemsPageContent() {
               <div className="flex flex-wrap gap-3">
                 <a
                   href="/admin"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                 >
                   <ArrowLeft size={16} />
                   Panel
                 </a>
                 <a
                   href="/local-santo/cocina"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                 >
                   <CookingPot size={16} />
                   Cocina normal
@@ -678,7 +678,7 @@ function KitchenItemsPageContent() {
                   type="button"
                   onClick={() => loadOrders(true)}
                   disabled={isLoading}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-[var(--brand-accent)] px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
                 >
                   {isLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                   Actualizar
@@ -689,7 +689,7 @@ function KitchenItemsPageContent() {
         </div>
 
         {message ? (
-          <div className="rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white px-5 py-4 text-sm font-black text-[var(--brand-primary)] shadow-[0_7px_0_rgba(var(--brand-primary-rgb),0.08)]">
+          <div className="rounded-[1.5rem] border border-[var(--brand-primary)]/40 bg-white px-5 py-4 text-sm font-bold text-[var(--brand-primary)] shadow-sm">
             {message}
           </div>
         ) : null}
@@ -703,9 +703,9 @@ function KitchenItemsPageContent() {
           <MetricCard label="Confirmados" value={totalConfirmedStaffConfirmationLines} />
         </div>
 
-        <section className="sticky top-0 z-30 rounded-[1.75rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.08)]">
+        <section className="sticky top-0 z-30 rounded-[1.75rem] border border-[var(--brand-primary)]/40 bg-white p-4 shadow-sm">
           <div className="grid gap-3 xl:grid-cols-[1fr_auto]">
-            <label className="flex items-center gap-3 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3">
+            <label className="flex items-center gap-3 rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3">
               <Search size={18} className="text-[var(--brand-primary)]" />
               <input
                 value={searchText}
@@ -724,7 +724,7 @@ function KitchenItemsPageContent() {
                     key={filter}
                     type="button"
                     onClick={() => setActiveFilter(filter)}
-                    className={`shrink-0 rounded-full border-2 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] transition ${
+                    className={`shrink-0 rounded-full border px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] transition ${
                       isActive
                         ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                         : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
@@ -737,7 +737,7 @@ function KitchenItemsPageContent() {
             </div>
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/70">
+          <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/70">
             <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-cream)] px-3 py-1.5">
               <Clock size={14} />
               Filtro: {activeFilter}
@@ -772,8 +772,8 @@ function KitchenItemsPageContent() {
           <EmptyState isLoading={isLoading} />
         )}
 
-        <section className="rounded-[1.75rem] border-2 border-[var(--brand-primary)]/35 bg-[var(--brand-accent-100)] p-5 text-sm font-bold leading-6 text-[var(--brand-ink)]">
-          <div className="mb-2 flex items-center gap-2 font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+        <section className="rounded-[1.75rem] border border-[var(--brand-primary)]/35 bg-[var(--brand-accent-100)] p-5 text-sm font-bold leading-6 text-[var(--brand-ink)]">
+          <div className="mb-2 flex items-center gap-2 font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]">
             <CheckCircle2 size={18} />
             Alcance de esta fase
           </div>

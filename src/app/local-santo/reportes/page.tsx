@@ -79,7 +79,7 @@ function Delta({ pct }: { pct: number | null | undefined }) {
   const up = pct >= 0
   return (
     <span
-      className={`inline-flex items-center gap-0.5 text-[0.7rem] font-black ${
+      className={`inline-flex items-center gap-0.5 text-[0.7rem] font-bold ${
         up ? "text-green-600" : "text-red-600"
       }`}
     >
@@ -92,8 +92,8 @@ function Delta({ pct }: { pct: number | null | undefined }) {
 
 function Card({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5">
-      <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+    <section className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5">
+      <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]">
         {icon} {title}
       </p>
       <div className="mt-4">{children}</div>
@@ -320,7 +320,7 @@ function ReportesPageContent() {
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
       <div className="mx-auto w-full max-w-5xl">
-        <Link href="/admin" className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)] print:hidden">
+        <Link href="/admin" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)] print:hidden">
           <ArrowLeft size={16} /> Volver al panel
         </Link>
 
@@ -330,7 +330,7 @@ function ReportesPageContent() {
               <BarChart3 size={24} />
             </span>
             <div>
-              <h1 className="text-2xl font-black uppercase text-[var(--brand-ink-3)]">Reportes</h1>
+              <h1 className="font-serif text-2xl text-[var(--brand-ink-3)] font-semibold">Reportes</h1>
               <p className="text-sm font-bold text-[var(--brand-ink-2)]/65">
                 {hotelMode
                   ? "Resumen de ventas del restaurante y room service (los reportes de habitaciones viven en Reportes hotel)."
@@ -343,7 +343,7 @@ function ReportesPageContent() {
               <button
                 key={p.value}
                 onClick={() => setPeriod(p.value)}
-                className={`rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.1em] transition ${
+                className={`rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] transition ${
                   period === p.value
                     ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
                     : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-primary)]"
@@ -355,21 +355,21 @@ function ReportesPageContent() {
             <button
               onClick={exportCsv}
               disabled={!report}
-              className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] disabled:opacity-50"
+              className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-primary)]/25 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] disabled:opacity-50"
             >
               <Download size={14} /> CSV
             </button>
             <button
               onClick={() => window.print()}
               disabled={!report}
-              className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] disabled:opacity-50"
+              className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-primary)]/25 bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)] disabled:opacity-50"
             >
               <Printer size={14} /> Imprimir
             </button>
             {multiBranch && (
               <button
                 onClick={() => setConsolidated((v) => !v)}
-                className={`inline-flex items-center gap-1 rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.1em] transition ${
+                className={`inline-flex items-center gap-1 rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.1em] transition ${
                   consolidated
                     ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white"
                     : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-primary)]"
@@ -383,25 +383,25 @@ function ReportesPageContent() {
         </div>
 
         {period === "custom" && (
-          <div className="mt-4 flex flex-wrap items-end gap-4 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 print:hidden">
-            <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+          <div className="mt-4 flex flex-wrap items-end gap-4 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4 print:hidden">
+            <label className="flex flex-col gap-1 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
               Desde
               <input
                 type="date"
                 value={fromDate}
                 max={toDate || undefined}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
               />
             </label>
-            <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+            <label className="flex flex-col gap-1 text-xs font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]">
               Hasta
               <input
                 type="date"
                 value={toDate}
                 min={fromDate || undefined}
                 onChange={(e) => setToDate(e.target.value)}
-                className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
               />
             </label>
             <span className="pb-2 text-xs font-bold text-[var(--brand-ink-2)]/60">
@@ -413,7 +413,7 @@ function ReportesPageContent() {
         )}
 
         {denied ? (
-          <p className="mt-8 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white p-5 text-sm font-bold text-[var(--brand-primary)]">
+          <p className="mt-8 rounded-2xl border border-[var(--brand-primary)]/25 bg-white p-5 text-sm font-bold text-[var(--brand-primary)]">
             No tienes permiso para ver reportes. Inicia sesión como dueño, encargado o caja.
           </p>
         ) : loading ? (
@@ -431,9 +431,9 @@ function ReportesPageContent() {
                 ["Pendiente", usd(report.summary.pendingUSD), undefined],
                 ["Ticket prom.", usd(report.summary.avgTicket), report.comparison?.deltas.avgTicketPct],
               ] as [string, string, number | null | undefined][]).map(([label, value, pct]) => (
-                <div key={label} className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4">
-                  <p className="text-[0.62rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]/70">{label}</p>
-                  <p className="mt-1 text-2xl font-black text-[var(--brand-ink-3)]">{value}</p>
+                <div key={label} className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
+                  <p className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)]/70">{label}</p>
+                  <p className="mt-1 text-2xl font-bold text-[var(--brand-ink-3)]">{value}</p>
                   {pct !== undefined && report.comparison ? (
                     <div className="mt-1"><Delta pct={pct} /></div>
                   ) : null}
@@ -457,8 +457,8 @@ function ReportesPageContent() {
                         ? "border-yellow-300 bg-yellow-50 text-yellow-900"
                         : "border-[var(--brand-primary)]/20 bg-white text-[var(--brand-ink-2)]"
                   return (
-                    <div key={i} className={`rounded-2xl border-2 p-4 ${tone}`}>
-                      <p className="text-sm font-black">{alert.title}</p>
+                    <div key={i} className={`rounded-2xl border p-4 ${tone}`}>
+                      <p className="text-sm font-bold">{alert.title}</p>
                       <p className="mt-1 text-xs font-bold opacity-80">{alert.detail}</p>
                       <p className="mt-1 text-[0.68rem] font-bold opacity-70">→ {alert.action}</p>
                     </div>
@@ -481,7 +481,7 @@ function ReportesPageContent() {
                 <div className="mt-4 overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead>
-                      <tr className="text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]/70">
+                      <tr className="text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]/70">
                         <th className="pb-2">Sucursal</th>
                         <th className="pb-2 text-right">Pedidos</th>
                         <th className="pb-2 text-right">Total</th>
@@ -496,7 +496,7 @@ function ReportesPageContent() {
                           <tr key={b.id} className="border-t border-[var(--brand-primary)]/10">
                             <td className="py-2 font-bold text-[var(--brand-ink-3)]">{b.name}</td>
                             <td className="py-2 text-right font-bold">{b.orders}</td>
-                            <td className="py-2 text-right font-black text-[var(--brand-ink-3)]">{usd(b.totalUSD)}</td>
+                            <td className="py-2 text-right font-bold text-[var(--brand-ink-3)]">{usd(b.totalUSD)}</td>
                             <td className="py-2 text-right font-bold text-red-700">{usd(b.pendingUSD)}</td>
                             <td className="py-2 text-right font-bold">{((b.totalUSD / grand) * 100).toFixed(0)}%</td>
                           </tr>
@@ -580,9 +580,9 @@ function ReportesPageContent() {
                       ["Cobrado por envíos", usd(report.delivery.deliveryCostUSD)],
                       ["Envío promedio", usd(report.delivery.avgDeliveryUSD)],
                     ].map(([label, value]) => (
-                      <div key={label} className="rounded-xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3">
-                        <p className="text-[0.6rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">{label}</p>
-                        <p className="mt-1 text-lg font-black text-[var(--brand-ink-3)]">{value}</p>
+                      <div key={label} className="rounded-xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3">
+                        <p className="text-[0.6rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">{label}</p>
+                        <p className="mt-1 text-lg font-bold text-[var(--brand-ink-3)]">{value}</p>
                       </div>
                     ))}
                   </div>
@@ -600,20 +600,20 @@ function ReportesPageContent() {
                     ["Ganancia estimada", usd(report.productMargins.summary.estimatedGrossProfitUSD)],
                     ["Productos margen bajo", String(report.productMargins.summary.lowMarginCount)],
                   ].map(([label, value]) => (
-                    <div key={label} className="rounded-xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3">
-                      <p className="text-[0.6rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">{label}</p>
-                      <p className="mt-1 text-lg font-black text-[var(--brand-ink-3)]">{value}</p>
+                    <div key={label} className="rounded-xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3">
+                      <p className="text-[0.6rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">{label}</p>
+                      <p className="mt-1 text-lg font-bold text-[var(--brand-ink-3)]">{value}</p>
                     </div>
                   ))}
                 </div>
                 {report.productMargins.lowMargin.length > 0 ? (
                   <div className="mt-4">
-                    <p className="text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]/70">Productos con menor margen</p>
+                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]/70">Productos con menor margen</p>
                     <div className="mt-2 space-y-1">
                       {report.productMargins.lowMargin.map((p, i) => (
                         <div key={i} className="flex items-center justify-between rounded-lg border border-[var(--brand-primary)]/10 bg-white px-3 py-1.5 text-sm">
                           <span className="font-bold text-[var(--brand-ink-3)]">{p.productName}</span>
-                          <span className="font-black text-red-700">{p.marginPct === null ? "—" : `${p.marginPct}%`} <span className="font-bold text-[var(--brand-ink-2)]/55">({usd(p.costUSD)}/{usd(p.salePriceUSD)})</span></span>
+                          <span className="font-bold text-red-700">{p.marginPct === null ? "—" : `${p.marginPct}%`} <span className="font-bold text-[var(--brand-ink-2)]/55">({usd(p.costUSD)}/{usd(p.salePriceUSD)})</span></span>
                         </div>
                       ))}
                     </div>
@@ -632,9 +632,9 @@ function ReportesPageContent() {
               {report.inventoryHealth ? (
                 <Card title="Salud de inventario" icon={<Boxes size={16} />}>
                   <div className="flex items-center gap-4">
-                    <div className="rounded-xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3 text-center">
-                      <p className="text-3xl font-black text-red-700">{report.inventoryHealth.lowStockCount}</p>
-                      <p className="text-[0.58rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]/70">Insumos bajo mínimo</p>
+                    <div className="rounded-xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3 text-center">
+                      <p className="text-3xl font-bold text-red-700">{report.inventoryHealth.lowStockCount}</p>
+                      <p className="text-[0.58rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]/70">Insumos bajo mínimo</p>
                     </div>
                     <p className="text-xs font-bold text-[var(--brand-ink-2)]/60">{report.inventoryHealth.activeRecipes} recetas activas.</p>
                   </div>
@@ -643,7 +643,7 @@ function ReportesPageContent() {
                       {report.inventoryHealth.lowStockItems.map((it, i) => (
                         <div key={i} className="flex items-center justify-between rounded-lg border border-[var(--brand-primary)]/10 bg-white px-3 py-1.5 text-sm">
                           <span className="font-bold text-[var(--brand-ink-3)]">{it.name}</span>
-                          <span className="font-black text-red-700">{it.quantity}/{it.minimumStock} {it.unit}</span>
+                          <span className="font-bold text-red-700">{it.quantity}/{it.minimumStock} {it.unit}</span>
                         </div>
                       ))}
                     </div>
@@ -662,9 +662,9 @@ function ReportesPageContent() {
                       ["Vencido", usd(report.supplierPayables.summary.overdueUSD), "text-red-700"],
                       ["Vence pronto", usd(report.supplierPayables.summary.dueSoonUSD), "text-yellow-700"],
                     ].map(([label, value, tone]) => (
-                      <div key={label} className="rounded-xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3">
-                        <p className="text-[0.56rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]/70">{label}</p>
-                        <p className={`mt-1 text-base font-black ${tone}`}>{value}</p>
+                      <div key={label} className="rounded-xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3">
+                        <p className="text-[0.56rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-primary)]/70">{label}</p>
+                        <p className={`mt-1 text-base font-bold ${tone}`}>{value}</p>
                       </div>
                     ))}
                   </div>
@@ -673,7 +673,7 @@ function ReportesPageContent() {
                       {report.supplierPayables.bySupplier.slice(0, 6).map((s, i) => (
                         <div key={i} className="flex items-center justify-between rounded-lg border border-[var(--brand-primary)]/10 bg-white px-3 py-1.5 text-sm">
                           <span className="font-bold text-[var(--brand-ink-3)]">{s.supplierName}</span>
-                          <span className="font-black text-[var(--brand-ink-3)]">{usd(s.pendingUSD)}</span>
+                          <span className="font-bold text-[var(--brand-ink-3)]">{usd(s.pendingUSD)}</span>
                         </div>
                       ))}
                     </div>
