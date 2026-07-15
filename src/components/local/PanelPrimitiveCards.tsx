@@ -27,37 +27,39 @@ export function ModuleAccessCard({
   metric: string
   disabled?: boolean
 }) {
+  // Tarjeta sobria estilo hotel 5★: hairline, titular serif, hover sutil.
   const className =
-    "group flex min-h-[180px] flex-col justify-between rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 text-left shadow-[0_7px_0_rgba(var(--brand-primary-rgb),0.10)] transition hover:-translate-y-0.5 hover:bg-yellow-50"
+    "group flex min-h-[170px] flex-col justify-between rounded-2xl border border-[var(--brand-border)] bg-white p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)]/45 hover:shadow-md"
 
   const content = (
     <>
       <div>
         <div className="flex items-start justify-between gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--brand-primary)]/25 bg-[rgba(var(--brand-primary-rgb),0.10)] text-[var(--brand-primary-dark)]">
             {icon}
           </div>
 
-          <span className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-3 py-1 text-[0.58rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+          <span className="rounded-full border border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-3 py-1 text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[var(--brand-primary-dark)]">
             {metric}
           </span>
         </div>
 
-        <p className="mt-4 text-[0.62rem] font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+        <p className="mt-4 text-[0.6rem] font-bold uppercase tracking-[0.2em] text-[var(--brand-primary-dark)]">
           {eyebrow}
         </p>
 
-        <h2 className="mt-1 text-2xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_2px_0_rgba(var(--brand-accent-rgb),0.75)]">
+        <h2 className="mt-1 font-serif text-xl font-semibold leading-tight text-[var(--brand-ink-3)]">
           {title}
         </h2>
 
-        <p className="mt-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
+        <p className="mt-2 text-sm font-medium leading-6 text-[var(--brand-ink-2)]">
           {description}
         </p>
       </div>
 
-      <div className="mt-4 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-4 py-2 text-center text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] group-hover:bg-[var(--brand-accent)] group-hover:text-[var(--brand-ink)]">
+      <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.16em] text-[var(--brand-primary-dark)] transition-colors group-hover:text-[var(--brand-ink-3)]">
         {disabled ? "Disponible luego" : "Entrar"}
+        {!disabled && <span aria-hidden="true">→</span>}
       </div>
     </>
   )
@@ -125,15 +127,15 @@ export function MetricCard({
 }) {
   const style =
     tone === "yellow"
-      ? "border-yellow-400 bg-[var(--brand-accent-100)] text-[var(--brand-amber)]"
-      : "border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-primary)]"
+      ? "border-amber-300 bg-amber-50"
+      : "border-[var(--brand-border)] bg-white"
 
   return (
-    <div className={`min-w-0 overflow-hidden rounded-[1.2rem] border-2 p-3 ${style}`}>
-      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em]">
+    <div className={`min-w-0 overflow-hidden rounded-xl border p-3 shadow-sm ${style}`}>
+      <p className="text-[0.6rem] font-bold uppercase tracking-[0.18em] text-[var(--brand-primary-dark)]">
         {label}
       </p>
-      <p className="mt-1 whitespace-nowrap text-lg font-black leading-tight tracking-[-0.03em] sm:text-xl xl:text-2xl">
+      <p className="mt-1 whitespace-nowrap font-serif text-xl font-semibold leading-tight text-[var(--brand-ink-3)] sm:text-2xl">
         {value}
       </p>
     </div>

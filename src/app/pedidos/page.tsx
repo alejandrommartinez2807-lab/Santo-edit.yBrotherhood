@@ -178,6 +178,8 @@ export default function PedidosPage() {
   const [adminPassword, setAdminPassword] = useState("")
   const [passwordInput, setPasswordInput] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  // En modo hotel el POS de comida vive plegado en su propia sección.
+  const [showRestaurantModules, setShowRestaurantModules] = useState(false)
   const [orders, setOrders] = useState<LocalOrder[]>([])
   const [activeFilter, setActiveFilter] = useState<StatusFilter>("Activos")
   const [panelPaymentFilter, setPanelPaymentFilter] =
@@ -3227,7 +3229,7 @@ export default function PedidosPage() {
               Acceso privado
             </p>
 
-            <h1 className="mt-2 text-center text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+            <h1 className="mt-2 text-center font-serif text-4xl font-semibold leading-tight text-[var(--brand-ink-3)]">
               Panel privado
             </h1>
 
@@ -3454,7 +3456,13 @@ export default function PedidosPage() {
                   {businessConfig.businessName}
                 </p>
 
-                <h1 className="mt-1 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl">
+                <h1
+                  className={
+                    isHotelFrontDeskVisible
+                      ? "mt-1 font-serif text-4xl font-semibold leading-tight text-[var(--brand-ink-3)] sm:text-5xl"
+                      : "mt-1 text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl"
+                  }
+                >
                   {isHotelFrontDeskVisible ? "Panel del hotel" : "Control de pedidos"}
                 </h1>
 
@@ -3558,24 +3566,31 @@ export default function PedidosPage() {
           canUseOperationalPanel={canUseOperationalPanel}
         />
 
+        {/* En modo hotel el POS es UNA sección plegada: la recepción no
+            necesita 16 tarjetas de comida abiertas todo el turno. */}
         {isHotelFrontDeskVisible && (
-          <p className="mt-6 text-xs font-black uppercase tracking-[0.24em] text-[var(--brand-primary)]">
-            Restaurante y room service
-          </p>
+          <button
+            type="button"
+            onClick={() => setShowRestaurantModules((value) => !value)}
+            aria-expanded={showRestaurantModules}
+            className="mt-6 flex w-full items-center justify-between rounded-2xl border border-[var(--brand-border)] bg-white px-5 py-4 text-left shadow-sm transition hover:border-[var(--brand-primary)]/45"
+          >
+            <span>
+              <span className="block font-serif text-xl font-semibold text-[var(--brand-ink-3)]">
+                Restaurante y room service
+              </span>
+              <span className="mt-0.5 block text-sm font-medium text-[var(--brand-ink-2)]">
+                Caja, cocina, menú, delivery e inventario del punto de venta.
+              </span>
+            </span>
+            <span className="shrink-0 rounded-full border border-[var(--brand-primary)]/35 px-4 py-1.5 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[var(--brand-primary-dark)]">
+              {showRestaurantModules ? "Ocultar" : "Abrir"}
+            </span>
+          </button>
         )}
 
+        {(!isHotelFrontDeskVisible || showRestaurantModules) && (
         <section className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {isOwnerDashboardModuleVisible && (
-            <ModuleAccessCard
-              href="/local-santo/dueno"
-              icon={<PackageCheck size={24} />}
-              eyebrow="Dueño"
-              title="Resumen del negocio"
-              description="Revisa ventas, cobros, gastos, delivery, pendientes y alertas importantes del día."
-              metric="Resumen"
-            />
-          )}
-
           {isCashierModuleVisible && (
             <ModuleAccessCard
               href="/local-santo/caja"
@@ -3741,17 +3756,6 @@ export default function PedidosPage() {
             />
           )}
 
-          {isRolesModuleVisible && (
-            <ModuleAccessCard
-              href="/local-santo/usuarios"
-              icon={<CheckCircle2 size={24} />}
-              eyebrow="Equipo"
-              title="Usuarios"
-              description="Administra accesos del personal por rol para dueño, caja, cocina, delivery y soporte."
-              metric="Roles"
-            />
-          )}
-
           {isReservationsModuleVisible && (
             <ModuleAccessCard
               href="/local-santo/reservas"
@@ -3763,13 +3767,43 @@ export default function PedidosPage() {
             />
           )}
 
+        </section>
+        )}
+
+        {/* Administración del negocio: transversal al hotel y al restaurante. */}
+        <p className="mt-7 text-[0.65rem] font-bold uppercase tracking-[0.24em] text-[var(--brand-primary-dark)]">
+          Administración
+        </p>
+        <section className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {isOwnerDashboardModuleVisible && (
+            <ModuleAccessCard
+              href="/local-santo/dueno"
+              icon={<PackageCheck size={24} />}
+              eyebrow="Dueño"
+              title="Resumen del negocio"
+              description="Ventas, cobros, gastos, pendientes y alertas importantes del día."
+              metric="Resumen"
+            />
+          )}
+
+          {isRolesModuleVisible && (
+            <ModuleAccessCard
+              href="/local-santo/usuarios"
+              icon={<CheckCircle2 size={24} />}
+              eyebrow="Equipo"
+              title="Usuarios"
+              description="Accesos del personal por rol: recepción, caja, limpieza, gerencia y dueño."
+              metric="Roles"
+            />
+          )}
+
           {isBranchesModuleVisible && (
             <ModuleAccessCard
               href="/local-santo/sucursales"
               icon={<MapPin size={24} />}
               eyebrow="Sedes"
               title="Sucursales"
-              description="Gestiona sedes del negocio y separa pedidos, menú, inventario, caja y reportes por sucursal."
+              description="Sedes del negocio con datos, QR imprimibles y configuración propia."
               metric="Sedes"
             />
           )}
@@ -3780,7 +3814,7 @@ export default function PedidosPage() {
               icon={<MapPin size={24} />}
               eyebrow="Configuración"
               title="Negocio"
-              description="Datos del local, módulos visibles, tasa, sonidos y reglas operativas."
+              description="Datos del negocio, módulos visibles, tasa, sonidos y reglas operativas."
               metric="Ajustes"
             />
           )}
@@ -3791,7 +3825,7 @@ export default function PedidosPage() {
               icon={<ShieldCheck size={24} />}
               eyebrow="Auditoría"
               title="Auditoría"
-              description="Registro de quién hizo qué, cuándo y desde dónde: cobros, cambios de estado, cierres, configuración y usuarios."
+              description="Quién hizo qué, cuándo y desde dónde: cobros, cambios, cierres y usuarios."
               metric="Bitácora"
             />
           )}

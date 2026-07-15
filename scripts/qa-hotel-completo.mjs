@@ -64,6 +64,11 @@ try {
   check("A4 rango invertido en GET → sin tipos (sin 500)", r.status === 200 && (r.data.types || []).length === 0)
 
   // ============ B. CLIENTE PÚBLICO: reservas con errores (5 POST) ============
+  // Pausa preventiva: si esta ronda corre justo después de otra (o de la ronda
+  // 2), el rate limit público (8 POST/min) sigue caliente y daría 429 falsos.
+  results.push("… pausa 62s por rate limit público …")
+  await sleep(62_000)
+
   r = await pub("/api/public/hotel", { method: "POST", body: bookBody({ roomTypeId: IND.id, guestName: "Cliente QA", guestPhone: "04140000001", checkIn: A2, checkOut: A }) })
   check("B1 reservar con rango invertido → 400", r.status === 400, r.data?.error)
 
@@ -80,11 +85,7 @@ try {
   check("B5 teléfono inválido → 400", r.status === 400, r.data?.error)
 
   // ============ C. Reserva feliz + caracteres especiales (2 POST) ============
-  // Pausa por el rate limit público (8 POST/min): así el script puede correrse
-  // varias veces seguidas (o después de la ronda 2) sin falsos negativos.
-  results.push("… pausa 62s por rate limit público …")
-  await sleep(62_000)
-
+  // B(5) + C(2) = 7 POST caben en la misma ventana de 8/min tras la pausa.
   r = await pub("/api/public/hotel", { method: "POST", body: bookBody({ roomTypeId: IND.id, guestName: "María José Pérez QA", guestPhone: "04141112233", checkIn: A, checkOut: A2, note: "Llegada tarde ~23:00" }) })
   const happy = r.data?.reservation
   check("C1 reserva feliz → código + total", Boolean(happy?.code) && happy.totalAmount === happy.ratePerNight * 2, `code=${happy?.code} total=$${happy?.totalAmount} ${happy ? "" : `status=${r.status} ${r.data?.error || ""}`}`)

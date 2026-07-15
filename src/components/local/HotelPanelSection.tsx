@@ -1,12 +1,12 @@
 "use client"
 
-// Sección hotelera del panel principal: recepción de un vistazo (llegadas,
-// salidas, en casa, ocupación, limpieza) + accesos a los módulos del PMS
-// agrupados como en un hotel (Recepción → Dinero → Resort y huésped).
-// Autocontenida: hace sus propios fetch con la clave de sesión del staff y
-// desaparece sola si el negocio no tiene módulos hoteleros activos.
+// Sección hotelera del panel principal, al estilo de un PMS 5★: la recepción
+// abre el turno viendo llegadas y salidas de HOY con nombre y habitación,
+// los indicadores del día y accesos compactos a los módulos del PMS
+// (Recepción → Dinero → Resort y huésped). Autocontenida: hace sus propios
+// fetch con la clave de sesión y desaparece si el negocio no es hotel.
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   BadgeDollarSign,
   BedDouble,
@@ -18,6 +18,8 @@ import {
   Globe,
   Gift,
   KeyRound,
+  LogIn,
+  LogOut,
   MessagesSquare,
   Moon,
   ReceiptText,
@@ -29,19 +31,23 @@ import {
   Wallet,
   Wand2,
 } from "lucide-react"
-import { ModuleAccessCard, MetricCard } from "./PanelPrimitiveCards"
+import type { LucideIcon } from "lucide-react"
+import { MetricCard } from "./PanelPrimitiveCards"
 import { getModulePlanAccess, type LocalPlanConfigLike } from "@/lib/localPlans"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
 
 type HotelReservation = {
+  id: string
   roomId: string
+  guestName: string
   checkInDate: string
   checkOutDate: string
   status: string
 }
 type HotelRoom = {
   id: string
+  name?: string
   active: boolean
   outOfService: boolean
   housekeepingStatus?: string
@@ -68,10 +74,55 @@ const BLOCKING_STATUSES = new Set(["pendiente", "confirmada", "checkin"])
 
 function SectionKicker({ label }: { label: string }) {
   return (
-    <p className="mt-6 text-xs font-black uppercase tracking-[0.24em] text-[var(--brand-primary)]">
+    <p className="mt-7 text-[0.65rem] font-bold uppercase tracking-[0.24em] text-[var(--brand-primary-dark)]">
       {label}
     </p>
   )
+}
+
+// Ficha compacta de módulo: densa y silenciosa, para que 20+ módulos no
+// abrumen. El detalle de cada módulo vive dentro de su propia página.
+function ModuleTile({
+  href,
+  icon: Icon,
+  title,
+  metric,
+}: {
+  href: string
+  icon: LucideIcon
+  title: string
+  metric: string
+}) {
+  return (
+    <a
+      href={href}
+      className="group flex items-center gap-3 rounded-xl border border-[var(--brand-border)] bg-white px-3.5 py-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)]/45 hover:shadow-md"
+    >
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--brand-primary)]/25 bg-[rgba(var(--brand-primary-rgb),0.10)] text-[var(--brand-primary-dark)]">
+        <Icon size={17} strokeWidth={1.75} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-serif text-[15px] font-semibold leading-tight text-[var(--brand-ink-3)]">
+          {title}
+        </span>
+        <span className="block truncate text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-ink-2)]">
+          {metric}
+        </span>
+      </span>
+      <span
+        aria-hidden="true"
+        className="text-[var(--brand-primary-dark)] opacity-0 transition-opacity group-hover:opacity-100"
+      >
+        →
+      </span>
+    </a>
+  )
+}
+
+const STAY_STATUS_LABELS: Record<string, string> = {
+  pendiente: "Pendiente",
+  confirmada: "Confirmada",
+  checkin: "En casa",
 }
 
 export default function HotelPanelSection({
@@ -169,15 +220,21 @@ export default function HotelPanelSection({
     }
   }, [canLoadBoard, showReservations, showHousekeeping, showRooms])
 
+  const roomNameById = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const room of rooms) if (room.name) map.set(room.id, room.name)
+    return map
+  }, [rooms])
+
   if (!receptionVisible && !moneyVisible && !resortVisible) return null
 
   const today = toISO(new Date())
-  const arrivalsToday = reservations.filter(
+  const arrivals = reservations.filter(
     (r) => r.checkInDate === today && (r.status === "pendiente" || r.status === "confirmada")
-  ).length
-  const departuresToday = reservations.filter(
+  )
+  const departures = reservations.filter(
     (r) => r.checkOutDate === today && r.status === "checkin"
-  ).length
+  )
   const inHouse = reservations.filter((r) => r.status === "checkin").length
   const serviceRooms = rooms.filter((room) => room.active && !room.outOfService)
   const occupiedToday = new Set(
@@ -201,106 +258,131 @@ export default function HotelPanelSection({
   ).length
   const metric = (value: string) => (loaded ? value : "…")
 
+  const stayLine = (stay: HotelReservation, kind: "in" | "out") => (
+    <li key={stay.id} className="flex items-center gap-2.5 py-2">
+      {kind === "in" ? (
+        <LogIn size={15} className="shrink-0 text-green-700" />
+      ) : (
+        <LogOut size={15} className="shrink-0 text-[var(--brand-primary-dark)]" />
+      )}
+      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-[var(--brand-ink-3)]">
+        {stay.guestName}
+      </span>
+      <span className="shrink-0 rounded-full border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-ink-2)]">
+        Hab {roomNameById.get(stay.roomId) || "—"}
+      </span>
+      <span className="hidden shrink-0 text-[0.62rem] font-bold uppercase tracking-[0.1em] text-[var(--brand-ink-2)] sm:inline">
+        {STAY_STATUS_LABELS[stay.status] || stay.status}
+      </span>
+    </li>
+  )
+
   return (
-    <section className="mt-4 rounded-[1.6rem] border-2 border-[var(--brand-primary)]/30 bg-[var(--brand-surface-2)]/60 p-4">
+    <section className="mt-5 rounded-2xl border border-[var(--brand-border)] bg-white/60 p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.2em] text-[var(--brand-primary)]">
-          <Building2 size={18} />
-          Hotel · hoy
-        </p>
+        <h2 className="inline-flex items-center gap-2.5 font-serif text-2xl font-semibold text-[var(--brand-ink-3)]">
+          <Building2 size={21} className="text-[var(--brand-primary-dark)]" />
+          El hotel hoy
+        </h2>
         {showTapeChart && (
           <a
             href="/local-santo/calendario"
-            className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)]/35 bg-white px-4 py-1.5 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[var(--brand-primary-dark)] transition hover:border-[var(--brand-primary)]"
           >
-            <CalendarDays size={14} /> Ver calendario
+            <CalendarDays size={14} /> Calendario
           </a>
         )}
       </div>
 
       {canLoadBoard && (
-        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
-          <MetricCard label="Llegadas hoy" value={metric(String(arrivalsToday))} tone={arrivalsToday > 0 ? "yellow" : "red"} />
-          <MetricCard label="Salidas hoy" value={metric(String(departuresToday))} tone={departuresToday > 0 ? "yellow" : "red"} />
-          <MetricCard label="En casa" value={metric(String(inHouse))} />
-          <MetricCard label="Ocupación" value={metric(`${occupancyPct}%`)} />
-          <MetricCard label="Por limpiar" value={metric(String(dirtyRooms))} tone={dirtyRooms > 0 ? "yellow" : "red"} />
-        </div>
+        <>
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+            <MetricCard label="Llegadas hoy" value={metric(String(arrivals.length))} tone={arrivals.length > 0 ? "yellow" : "red"} />
+            <MetricCard label="Salidas hoy" value={metric(String(departures.length))} tone={departures.length > 0 ? "yellow" : "red"} />
+            <MetricCard label="En casa" value={metric(String(inHouse))} />
+            <MetricCard label="Ocupación" value={metric(`${occupancyPct}%`)} />
+            <MetricCard label="Por limpiar" value={metric(String(dirtyRooms))} tone={dirtyRooms > 0 ? "yellow" : "red"} />
+          </div>
+
+          {/* Turno de recepción: quién llega y quién sale HOY, con nombre. */}
+          {(arrivals.length > 0 || departures.length > 0) && (
+            <div className="mt-3 grid gap-3 lg:grid-cols-2">
+              <div className="rounded-xl border border-[var(--brand-border)] bg-white p-4 shadow-sm">
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[var(--brand-primary-dark)]">
+                  Llegadas de hoy
+                </p>
+                {arrivals.length === 0 ? (
+                  <p className="mt-2 text-sm font-medium text-[var(--brand-ink-2)]">
+                    Sin llegadas pendientes.
+                  </p>
+                ) : (
+                  <ul className="mt-1 divide-y divide-black/5">
+                    {arrivals.slice(0, 6).map((stay) => stayLine(stay, "in"))}
+                  </ul>
+                )}
+                {showReservations && arrivals.length > 0 && (
+                  <a
+                    href="/local-santo/reservas-hotel"
+                    className="mt-1 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary-dark)] hover:text-[var(--brand-ink-3)]"
+                  >
+                    Hacer check-in →
+                  </a>
+                )}
+              </div>
+              <div className="rounded-xl border border-[var(--brand-border)] bg-white p-4 shadow-sm">
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.2em] text-[var(--brand-primary-dark)]">
+                  Salidas de hoy
+                </p>
+                {departures.length === 0 ? (
+                  <p className="mt-2 text-sm font-medium text-[var(--brand-ink-2)]">
+                    Sin salidas programadas.
+                  </p>
+                ) : (
+                  <ul className="mt-1 divide-y divide-black/5">
+                    {departures.slice(0, 6).map((stay) => stayLine(stay, "out"))}
+                  </ul>
+                )}
+                {showFolio && departures.length > 0 && (
+                  <a
+                    href="/local-santo/folio"
+                    className="mt-1 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-[0.14em] text-[var(--brand-primary-dark)] hover:text-[var(--brand-ink-3)]"
+                  >
+                    Cobrar y hacer check-out →
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {receptionVisible && (
         <>
           <SectionKicker label="Recepción" />
-          <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="mt-2 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {showReservations && (
-              <ModuleAccessCard
-                href="/local-santo/reservas-hotel"
-                icon={<CalendarRange size={24} />}
-                eyebrow="Recepción"
-                title="Reservas"
-                description="Crea estadías por noches, confirma llegadas y haz check-in y check-out."
-                metric={metric(`${arrivalsToday} llegan hoy`)}
-              />
+              <ModuleTile href="/local-santo/reservas-hotel" icon={CalendarRange} title="Reservas" metric={metric(`${arrivals.length} llegan hoy`)} />
             )}
             {showTapeChart && (
-              <ModuleAccessCard
-                href="/local-santo/calendario"
-                icon={<CalendarDays size={24} />}
-                eyebrow="Recepción"
-                title="Calendario"
-                description="Mapa de habitaciones por día: libres, ocupadas, bloqueadas y fuera de servicio."
-                metric={metric(`${occupancyPct}% hoy`)}
-              />
+              <ModuleTile href="/local-santo/calendario" icon={CalendarDays} title="Calendario" metric={metric(`${occupancyPct}% hoy`)} />
             )}
             {showRooms && (
-              <ModuleAccessCard
-                href="/local-santo/habitaciones"
-                icon={<BedDouble size={24} />}
-                eyebrow="Recepción"
-                title="Habitaciones"
-                description="Tipos, tarifas base y estado de cada habitación del hotel."
-                metric={metric(`${Math.max(serviceRooms.length - occupiedToday.size, 0)} libres`)}
-              />
+              <ModuleTile href="/local-santo/habitaciones" icon={BedDouble} title="Habitaciones" metric={metric(`${Math.max(serviceRooms.length - occupiedToday.size, 0)} libres`)} />
             )}
             {showFolio && (
-              <ModuleAccessCard
-                href="/local-santo/folio"
-                icon={<KeyRound size={24} />}
-                eyebrow="Recepción"
-                title="Folio del huésped"
-                description="Ficha del huésped, cargos, pagos y check-out con saldo en cero."
-                metric={metric(`${inHouse} en casa`)}
-              />
+              <ModuleTile href="/local-santo/folio" icon={KeyRound} title="Folio del huésped" metric={metric(`${inHouse} en casa`)} />
             )}
             {showHousekeeping && (
-              <ModuleAccessCard
-                href="/local-santo/housekeeping"
-                icon={<Sparkles size={24} />}
-                eyebrow="Recepción"
-                title="Limpieza"
-                description="Tablero de housekeeping: habitaciones sucias, tareas y asignaciones."
-                metric={metric(`${dirtyRooms} por limpiar`)}
-              />
+              <ModuleTile href="/local-santo/housekeeping" icon={Sparkles} title="Limpieza" metric={metric(`${dirtyRooms} por limpiar`)} />
             )}
             {showBookingEngine && (
-              <ModuleAccessCard
-                href="/local-santo/reservas-online"
-                icon={<Globe size={24} />}
-                eyebrow="Recepción"
-                title="Reservas online"
-                description="Reservas que entran solas desde la página pública del hotel."
-                metric="Web"
-              />
+              <ModuleTile href="/local-santo/reservas-online" icon={Globe} title="Reservas online" metric="Página pública" />
             )}
             {showGuestPortal && (
-              <ModuleAccessCard
-                href="/local-santo/portal-huesped"
-                icon={<UserRound size={24} />}
-                eyebrow="Recepción"
-                title="Portal del huésped"
-                description="Consulta de reservas por código y reseñas que dejan los huéspedes."
-                metric="Portal"
-              />
+              <ModuleTile href="/local-santo/portal-huesped" icon={UserRound} title="Portal del huésped" metric="Consultas y reseñas" />
+            )}
+            {showGroups && (
+              <ModuleTile href="/local-santo/grupos" icon={Users} title="Grupos y bloqueos" metric="Apartar habitaciones" />
             )}
           </div>
         </>
@@ -309,66 +391,24 @@ export default function HotelPanelSection({
       {moneyVisible && (
         <>
           <SectionKicker label="Dinero del hotel" />
-          <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="mt-2 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {showRateSeasons && (
-              <ModuleAccessCard
-                href="/local-santo/tarifas"
-                icon={<Tags size={24} />}
-                eyebrow="Dinero"
-                title="Tarifas"
-                description="Temporadas altas y bajas: precios por fecha que aplican solos al reservar."
-                metric="Temporadas"
-              />
+              <ModuleTile href="/local-santo/tarifas" icon={Tags} title="Tarifas" metric="Temporadas" />
             )}
             {showAdvancedRates && (
-              <ModuleAccessCard
-                href="/local-santo/planes-tarifa"
-                icon={<Wand2 size={24} />}
-                eyebrow="Dinero"
-                title="Planes de tarifa"
-                description="Restricciones de venta: estadía mínima y fechas cerradas a llegada o salida."
-                metric="Reglas"
-              />
+              <ModuleTile href="/local-santo/planes-tarifa" icon={Wand2} title="Planes de tarifa" metric="Reglas de venta" />
             )}
             {showOnlinePayments && (
-              <ModuleAccessCard
-                href="/local-santo/pagos-online"
-                icon={<Wallet size={24} />}
-                eyebrow="Dinero"
-                title="Pagos y depósitos"
-                description="Depósitos reportados por huéspedes: confírmalos o recházalos con respaldo."
-                metric="Depósitos"
-              />
+              <ModuleTile href="/local-santo/pagos-online" icon={Wallet} title="Pagos y depósitos" metric="Confirmar reportados" />
             )}
             {showInvoicing && (
-              <ModuleAccessCard
-                href="/local-santo/facturacion"
-                icon={<ReceiptText size={24} />}
-                eyebrow="Dinero"
-                title="Facturación"
-                description="Facturas con número correlativo e IVA a partir del folio del huésped."
-                metric="Facturas"
-              />
+              <ModuleTile href="/local-santo/facturacion" icon={ReceiptText} title="Facturación" metric="Correlativo + IVA" />
             )}
             {showNightAudit && (
-              <ModuleAccessCard
-                href="/local-santo/cierre-dia"
-                icon={<Moon size={24} />}
-                eyebrow="Dinero"
-                title="Cierre de día"
-                description="Night audit: cierra el día hotelero y deja el corte registrado."
-                metric="Auditoría"
-              />
+              <ModuleTile href="/local-santo/cierre-dia" icon={Moon} title="Cierre de día" metric="Night audit" />
             )}
             {showHotelReports && (
-              <ModuleAccessCard
-                href="/local-santo/reportes-hotel"
-                icon={<BadgeDollarSign size={24} />}
-                eyebrow="Dinero"
-                title="Reportes del hotel"
-                description="Ocupación, tarifa promedio (ADR) y RevPAR por período."
-                metric="ADR · RevPAR"
-              />
+              <ModuleTile href="/local-santo/reportes-hotel" icon={BadgeDollarSign} title="Reportes del hotel" metric="Ocupación · ADR · RevPAR" />
             )}
           </div>
         </>
@@ -377,96 +417,30 @@ export default function HotelPanelSection({
       {resortVisible && (
         <>
           <SectionKicker label="Resort y huésped" />
-          <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="mt-2 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {showResortServices && (
-              <ModuleAccessCard
-                href="/local-santo/servicios"
-                icon={<Sparkles size={24} />}
-                eyebrow="Resort"
-                title="Servicios"
-                description="Spa, tours, clases y experiencias con cupo por franja horaria."
-                metric="Catálogo"
-              />
+              <ModuleTile href="/local-santo/servicios" icon={Sparkles} title="Servicios" metric="Spa, tours, eventos" />
             )}
             {showResortCharges && (
-              <ModuleAccessCard
-                href="/local-santo/cargos-resort"
-                icon={<ClipboardList size={24} />}
-                eyebrow="Resort"
-                title="Cargos a la habitación"
-                description="Carga consumos de bar, spa o tienda directo al folio del huésped."
-                metric="A folio"
-              />
+              <ModuleTile href="/local-santo/cargos-resort" icon={ClipboardList} title="Cargos a la habitación" metric="Bar · spa · tienda" />
             )}
             {showPackages && (
-              <ModuleAccessCard
-                href="/local-santo/paquetes"
-                icon={<Gift size={24} />}
-                eyebrow="Resort"
-                title="Paquetes"
-                description="Combos de estadía + servicios que se aplican a la reserva en un clic."
-                metric="Combos"
-              />
+              <ModuleTile href="/local-santo/paquetes" icon={Gift} title="Paquetes" metric="Combos de estadía" />
             )}
             {showReviews && (
-              <ModuleAccessCard
-                href="/local-santo/resenas"
-                icon={<Star size={24} />}
-                eyebrow="Huésped"
-                title="Reseñas"
-                description="Modera opiniones de huéspedes y decide cuáles se publican en la página."
-                metric="Opiniones"
-              />
+              <ModuleTile href="/local-santo/resenas" icon={Star} title="Reseñas" metric="Moderar opiniones" />
             )}
             {showCrm && (
-              <ModuleAccessCard
-                href="/local-santo/crm"
-                icon={<Users size={24} />}
-                eyebrow="Huésped"
-                title="CRM de huéspedes"
-                description="Fichas con historial, etiquetas, VIP y notas para atender mejor."
-                metric="Fichas"
-              />
-            )}
-            {showGroups && (
-              <ModuleAccessCard
-                href="/local-santo/grupos"
-                icon={<Users size={24} />}
-                eyebrow="Recepción"
-                title="Grupos y bloqueos"
-                description="Aparta habitaciones por rango para mantenimiento, eventos o grupos."
-                metric="Bloqueos"
-              />
+              <ModuleTile href="/local-santo/crm" icon={Users} title="CRM de huéspedes" metric="Fichas y VIP" />
             )}
             {showChannels && (
-              <ModuleAccessCard
-                href="/local-santo/canales"
-                icon={<Globe size={24} />}
-                eyebrow="Canales"
-                title="Canales y OTAs"
-                description="Feed iCal con las fechas ocupadas para sincronizar calendarios externos."
-                metric="iCal"
-              />
+              <ModuleTile href="/local-santo/canales" icon={Globe} title="Canales y OTAs" metric="Feed iCal" />
             )}
             {showNotifications && (
-              <ModuleAccessCard
-                href="/local-santo/notificaciones"
-                icon={<MessagesSquare size={24} />}
-                eyebrow="Huésped"
-                title="Notificaciones"
-                description="Avisos de reserva y llegada listos para enviar por WhatsApp."
-                metric="WhatsApp"
-              />
+              <ModuleTile href="/local-santo/notificaciones" icon={MessagesSquare} title="Notificaciones" metric="Avisos WhatsApp" />
             )}
             {showHotelLanding && (
-              <ModuleAccessCard
-                href="/local-santo/pagina-hotel"
-                icon={<BellRing size={24} />}
-                eyebrow="Página pública"
-                title="Página del hotel"
-                description="Edita el texto, amenidades y datos de contacto de la página pública."
-                metric="Landing"
-              />
+              <ModuleTile href="/local-santo/pagina-hotel" icon={BellRing} title="Página del hotel" metric="Editar la pública" />
             )}
           </div>
         </>
