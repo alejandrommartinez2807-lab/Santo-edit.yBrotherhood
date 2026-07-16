@@ -47,6 +47,14 @@ export async function updateRoomHousekeeping(
   return roomsStore.updateRoomHousekeeping(id, status, branchId)
 }
 
+export async function updateRoomIcalUrl(
+  roomId: string,
+  url: string,
+  branchId?: string | null,
+): Promise<void> {
+  return roomsStore.updateRoomIcalUrl(roomId, url, branchId)
+}
+
 export async function deleteRoom(id: string, branchId?: string | null) {
   return roomsStore.deleteRoom(id, branchId)
 }

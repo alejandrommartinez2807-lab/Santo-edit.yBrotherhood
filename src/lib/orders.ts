@@ -157,6 +157,7 @@ export {
   saveRoom,
   saveRoomType,
   updateRoomHousekeeping,
+  updateRoomIcalUrl,
   uploadRoomTypePhoto,
 } from "./ordersRooms"
 

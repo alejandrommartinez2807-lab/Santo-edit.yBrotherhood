@@ -71,6 +71,8 @@ export type Room = {
   outOfService: boolean
   amenities: string
   notes: string
+  /** URL del calendario iCal externo (Airbnb/Booking) que importa esta hab. */
+  icalImportUrl: string
   sortOrder: number
   active: boolean
   createdAt: string
@@ -138,11 +140,31 @@ function mapRoom(raw: Row): Room {
     outOfService: raw.out_of_service === true,
     amenities: cleanText(raw.amenities),
     notes: cleanText(raw.notes),
+    icalImportUrl: cleanText(raw.ical_import_url),
     sortOrder: num(raw.sort_order, 0),
     active: raw.active !== false,
     createdAt: String(raw.created_at || ""),
     updatedAt: String(raw.updated_at || ""),
   }
+}
+
+/**
+ * Guarda SOLO la URL iCal externa de una habitación (P3-G). Vive aparte de
+ * saveRoom para que el resto del CRUD no dependa de la migración 0043.
+ */
+export async function updateRoomIcalUrl(
+  roomId: string,
+  url: string,
+  branchId?: string | null,
+): Promise<void> {
+  const supabase = getSupabaseAdmin()
+  let query = supabase
+    .from("rooms")
+    .update({ ical_import_url: cleanText(url), updated_at: new Date().toISOString() })
+    .eq("id", roomId)
+  if (branchId) query = query.eq("branch_id", branchId)
+  const { error } = await query
+  if (error) throw new Error(error.message)
 }
 
 // ---------------- Tipos de habitación ----------------

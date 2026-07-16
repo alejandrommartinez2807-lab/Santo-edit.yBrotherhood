@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getBusinessConfig, getHotelReservations } from "@/lib/orders"
+import { getBusinessConfig, getHotelReservations, getRoomBlocks } from "@/lib/orders"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import { isBlockingHotelStatus } from "@/lib/hotelReservationConflicts"
@@ -30,10 +30,17 @@ export async function GET(request: NextRequest) {
     const branchId = await resolveBranchId(request)
     const today = new Date().toISOString().slice(0, 10)
     const to = `${new Date().getFullYear() + 2}-01-01`
-    const reservations = await getHotelReservations({ from: today, to }, branchId)
+    // ?roomId= produce el calendario de UNA habitación (para pegarlo en el
+    // anuncio de Airbnb/Booking de esa habitación en particular).
+    const roomId = String(request.nextUrl.searchParams.get("roomId") || "").trim()
+    const [reservations, blocks] = await Promise.all([
+      getHotelReservations({ from: today, to }, branchId),
+      getRoomBlocks({ from: today, to }, branchId).catch(() => []),
+    ])
 
     const events: IcalEvent[] = reservations
       .filter((r) => isBlockingHotelStatus(r.status) || r.status === "checkout")
+      .filter((r) => !roomId || r.roomId === roomId)
       .map((r) => ({
         uid: `res-${r.id}@santo-hotel`,
         start: r.checkInDate,
@@ -41,7 +48,20 @@ export async function GET(request: NextRequest) {
         summary: `Ocupada · ${r.guestName || r.code || ""}`.trim(),
       }))
 
-    const ics = buildIcal(events, "Disponibilidad hotel")
+    // Los bloqueos manuales también cierran fechas hacia las OTAs. Los de
+    // fuente "ical" NO se re-exportan (vinieron de otra OTA: evita el eco).
+    for (const block of blocks) {
+      if (block.source === "ical") continue
+      if (roomId && block.roomId !== roomId) continue
+      events.push({
+        uid: `block-${block.id}@santo-hotel`,
+        start: block.fromDate,
+        end: block.toDate,
+        summary: "No disponible",
+      })
+    }
+
+    const ics = buildIcal(events, roomId ? "Disponibilidad habitación" : "Disponibilidad hotel")
     return new NextResponse(ics, {
       status: 200,
       headers: {

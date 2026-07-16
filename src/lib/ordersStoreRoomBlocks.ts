@@ -16,6 +16,8 @@ export type RoomBlock = {
   fromDate: string
   toDate: string
   reason: string
+  /** "manual" (staff) | "ical" (creado por la sincronización con OTAs). */
+  source: string
   createdAt: string
 }
 
@@ -25,6 +27,9 @@ export type SaveRoomBlockInput = {
   fromDate: string
   toDate: string
   reason?: string
+  /** Solo la sincronización iCal lo manda; el flujo manual no lo toca
+   *  (así sigue funcionando aunque la migración 0043 no esté aplicada). */
+  source?: string
 }
 
 export type GetRoomBlocksFilters = {
@@ -39,6 +44,7 @@ function mapRoomBlock(raw: Row): RoomBlock {
     fromDate: normalizeStayDate(raw.from_date),
     toDate: normalizeStayDate(raw.to_date),
     reason: cleanText(raw.reason),
+    source: cleanText(raw.source) || "manual",
     createdAt: String(raw.created_at || ""),
   }
 }
@@ -70,12 +76,15 @@ export async function saveRoomBlock(
   branchId?: string | null,
 ): Promise<RoomBlock> {
   const supabase = getSupabaseAdmin()
-  const fields = {
+  const fields: Record<string, unknown> = {
     room_id: cleanText(input.roomId) || null,
     from_date: normalizeStayDate(input.fromDate),
     to_date: normalizeStayDate(input.toDate),
     reason: cleanText(input.reason),
   }
+  // La columna source solo viaja cuando el llamador la manda (sync iCal):
+  // el flujo manual no depende de que la migración 0043 esté aplicada.
+  if (input.source) fields.source = cleanText(input.source)
 
   if (input.id) {
     let updateQuery = supabase.from("room_blocks").update(fields).eq("id", input.id)
