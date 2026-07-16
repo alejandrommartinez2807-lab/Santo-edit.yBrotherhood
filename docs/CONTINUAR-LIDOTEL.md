@@ -26,9 +26,30 @@ El v7 (competir cerrando brechas) queda como historia cumplida.
 |---|---|---|---|
 | V8-A | Conector Odoo: lib pura + conexión + API + pantalla "Probar conexión" | ✅ `df5f820`+`f3aada1` | 0045 ✅ aplicada |
 | V8-B | El botón "Sincronizar ahora": huéspedes→res.partner, productos→product.product (idempotente, con dry-run) | ✅ `b0b896e` + **probado contra Odoo real** | — |
-| V8-C | Dinero a Odoo: facturas→account.move, pagos→account.payment | ⬜ siguiente | — |
-| V8-D | Tiempo real: eventos a Odoo reusando webhooks (P2-E) | ⬜ | — |
-| V8-E | Proveedores con interfaz lista (fiscal/OTA/C2P/email, provider manual) | ⬜ | — |
+| V8-C | Dinero a Odoo: reservas→sale.order, facturas→account.move (borrador), pagos confirmados→account.payment | ✅ `5bbce5b` (2026-07-16) | — (0045 ya lo preveía) |
+| V8-D | Tiempo real: interruptor "Sincronizar en vivo" — Odoo es un destino más de los eventos P2-E | ✅ `e4e7791` (2026-07-16) | — |
+| V8-E | Proveedores con interfaz lista (fiscal/OTA/C2P/email, provider manual) | ✅ `b889048` (2026-07-16) | — (sin secretos; estado en business_config) |
+
+> **Notas V8-C/D/E (2026-07-16):**
+> - V8-C: el "Sincronizar ahora" ahora también empuja el dinero. Los clientes se
+>   resuelven en Odoo por huésped ya sincronizado (mapa `guest`) o buscando por
+>   RIF/nombre (crea si falta). El IVA usa el impuesto de venta de Odoo con la
+>   misma tasa si existe (asiento cuadrado); si no, va como línea aparte. La
+>   línea del sale.order usa un producto genérico "Estadía de hotel"
+>   (default_code HOTEL-STAY) creado al vuelo. Si falta la app Ventas o
+>   Contabilidad en ese Odoo, la entidad lo reporta claro y no revienta.
+>   Idempotencia por fingerprint local (los values con partner_id no entran al
+>   hash); los write quitan *_line_ids para no duplicar líneas.
+> - V8-D: `pushOdooLiveEvent` vive dentro de `dispatchHotelWebhooks` (todos los
+>   puntos de disparo lo ganan gratis). Gate: conexión activa + API key +
+>   interruptor liveSync. Best-effort con tope duro de 8s; si Odoo no responde,
+>   el dato queda para la próxima sincronización manual (mismo mapa). El evento
+>   pago_confirmado ahora incluye paymentId/reservationId en el payload.
+> - V8-E: tarjeta `ProviderConnectionCard` montada en Facturación (fiscal),
+>   Canales (channel), Pagos online (gateway) y CRM (email); catálogo puro en
+>   `src/lib/providerIntegrations.ts` + API `/api/provider-integrations`.
+>   Estado/notas en business_config clave `providerIntegrations` (SIN
+>   credenciales; las reales irán en tabla service-role al enchufarse).
 
 > **✅ VERIFICADO CONTRA UN ODOO REAL (2026-07-16, trial jhfbffbbffb.odoo.com):**
 > Probar conexión → uid 2 · dry-run correcto (17 productos por crear) ·

@@ -189,3 +189,28 @@ Todos viven en el panel y se apagan/prenden por módulo en Configuración.
   marca real de entrada y salida desde el panel de cada empleado. Sin nómina.
 - **Respaldo y datos (Configuración)** — qué se respalda y cada cuánto, más
   el botón de export total: tus datos son tuyos. Detalle en `docs/RESPALDO.md`.
+
+## 11. Odoo y proveedores externos (tanda "complementar Odoo")
+
+No competimos con Odoo: nos enchufamos. El cliente que ya lleva su
+contabilidad/ERP en Odoo nos suma como capa hotelera y sincroniza con un botón.
+
+- **Odoo / ERP (panel → Odoo)** — pega URL, base de datos, usuario y API Key
+  (trámite en `docs/CONEXIONES-PROVEEDORES.md`, sección 1), "Probar conexión"
+  y listo. **Sincronizar ahora** empuja huéspedes (→ contactos), productos
+  (→ productos), reservas (→ presupuestos de venta), facturas (→ asientos en
+  borrador que el contador revisa) y pagos confirmados (→ cobros). Es
+  idempotente: correrlo mil veces no duplica nada, y hay modo "Simular" que
+  no escribe. Si al Odoo del cliente le falta la app Ventas o Contabilidad,
+  el resultado lo dice claro en vez de fallar.
+- **Sincronizar en vivo (mismo módulo)** — interruptor: cada reserva creada o
+  confirmada, check-in/out y pago confirmado se empuja solo a Odoo al momento.
+  Si Odoo está caído, el hotel sigue normal y el dato se pone al día en la
+  próxima sincronización manual.
+- **Conexiones con proveedores (tarjetas en cada módulo)** — Facturación
+  (fiscal SENIAT), Canales (channel manager de pago), Pagos online (C2P del
+  banco) y CRM → Campañas (envío de correos) muestran una tarjeta "Conexión
+  con proveedor": qué funciona HOY en modo manual, qué credencial falta, el
+  trámite paso a paso y un registro del avance (manual / en trámite /
+  credenciales listas). Cuando el dueño trae la credencial, se enchufa el
+  proveedor real sin rehacer nada.
