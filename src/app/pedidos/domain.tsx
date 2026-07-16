@@ -554,7 +554,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   fiscalInvoicingModuleEnabled: true,
   guestMembershipsModuleEnabled: true,
   webhooksModuleEnabled: true,
-  odooSyncModuleEnabled: true,
+  odooSyncModuleEnabled: false, // dormido: se enciende en Configuración cuando el cliente usa Odoo
   staffShiftsModuleEnabled: true,
   channelManagerModuleEnabled: true,
   deliveryEnabled: true,

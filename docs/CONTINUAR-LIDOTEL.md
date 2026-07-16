@@ -25,10 +25,22 @@ El v7 (competir cerrando brechas) queda como historia cumplida.
 | Fase | Qué | Estado | Migración |
 |---|---|---|---|
 | V8-A | Conector Odoo: lib pura + conexión + API + pantalla "Probar conexión" | ✅ `df5f820`+`f3aada1` | 0045 ✅ aplicada |
-| V8-B | Sincronización maestra (el botón): huéspedes/productos | ⬜ siguiente | — |
-| V8-C | Dinero a Odoo: facturas→account.move, pagos→account.payment | ⬜ | — |
+| V8-B | El botón "Sincronizar ahora": huéspedes→res.partner, productos→product.product (idempotente, con dry-run) | ✅ `b0b896e` | — |
+| V8-C | Dinero a Odoo: facturas→account.move, pagos→account.payment | ⬜ siguiente | — |
 | V8-D | Tiempo real: eventos a Odoo reusando webhooks (P2-E) | ⬜ | — |
 | V8-E | Proveedores con interfaz lista (fiscal/OTA/C2P/email, provider manual) | ⬜ | — |
+
+> **Pendiente de verificación en vivo:** el usuario eligió construir V8-B con
+> dry-run (sin instancia Odoo). El dry-run se verifica offline; la **escritura
+> real** (`dryRun:false`) queda lista pero sin probar contra un Odoo real. Al
+> conseguir un trial (odoo.com), probar: Probar conexión → uid, luego Sincronizar
+> ahora dos veces y confirmar que la 2a no duplica.
+>
+> **PUBLICADO DORMIDO (2026-07-16):** el módulo `odooSync` nace con el interruptor
+> APAGADO (`odooSyncModuleEnabled: false` en las 4 copias de default/preset). El
+> código está desplegado pero invisible/inactivo en el demo hasta que el dueño lo
+> encienda en Configuración → Módulos cuando aparezca un cliente con Odoo. Así el
+> deploy no cambió nada de lo que ya funciona.
 
 ## ⚡ ESTADO 2026-07-16 (tarde) — TANDA v7 COMPLETA, MIGRADA Y **EN VIVO**
 

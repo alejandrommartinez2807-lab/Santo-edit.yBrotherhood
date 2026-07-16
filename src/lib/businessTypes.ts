@@ -105,7 +105,7 @@ export const BUSINESS_TYPE_PRESETS: BusinessTypePreset[] = [
       fiscalInvoicingModuleEnabled: true,
       guestMembershipsModuleEnabled: true,
       webhooksModuleEnabled: true,
-      odooSyncModuleEnabled: true,
+      odooSyncModuleEnabled: false, // dormido: preset hotel no enciende Odoo hasta que el cliente lo use
       staffShiftsModuleEnabled: true,
       channelManagerModuleEnabled: true,
       // Room service: caja + cocina sí; sin mesas de restaurante
