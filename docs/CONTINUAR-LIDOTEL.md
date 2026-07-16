@@ -30,6 +30,18 @@ El v7 (competir cerrando brechas) queda como historia cumplida.
 | V8-D | Tiempo real: interruptor "Sincronizar en vivo" — Odoo es un destino más de los eventos P2-E | ✅ `e4e7791` (2026-07-16) | — |
 | V8-E | Proveedores con interfaz lista (fiscal/OTA/C2P/email, provider manual) | ✅ `b889048` (2026-07-16) | — (sin secretos; estado en business_config) |
 
+> **✅ V8-C y V8-D VERIFICADAS CONTRA EL ODOO REAL (trial, 2026-07-16 tarde):**
+> 12 reservas → sale.order en borrador con ref=código y total EXACTO (sin el
+> impuesto default de Odoo) · factura demo A-1 (Maria Gonzalez, 225+IVA 36=261)
+> → account.move en borrador cuadrado con línea "IVA 16%" de respaldo ·
+> idempotencia (2ª pasada 0 creados) · EN VIVO: pago confirmado → account.payment
+> apareció solo (memo con código de reserva) sin duplicarse al re-confirmar, y
+> confirmar una reserva actualizó la nota del sale.order existente. Fixes de la
+> prueba en `ad8b89e` (Odoo 18: tax_ids en la línea de venta, memo en el pago,
+> tasa fracción→porcentaje). Datos QA limpiados (pago borrado en ambos lados,
+> reserva devuelta a pendiente, liveSync APAGADO — el demo queda dormido).
+> QA post-cambios: 54/54 + 25/25 en verde.
+>
 > **Notas V8-C/D/E (2026-07-16):**
 > - V8-C: el "Sincronizar ahora" ahora también empuja el dinero. Los clientes se
 >   resuelven en Odoo por huésped ya sincronizado (mapa `guest`) o buscando por
