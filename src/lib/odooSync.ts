@@ -173,6 +173,14 @@ export function mapProductToOdoo(product: LocalProduct): Record<string, unknown>
 export type SyncMapEntry = { localId: string; odooId: number; recordHash: string }
 export type PlannedRecord = { localId: string; hash: string }
 
+/** Un registro local listo para Odoo: su id local y los valores del modelo. */
+export type SyncableRecord = { localId: string; values: Record<string, unknown> }
+
+/** Deriva los PlannedRecord (localId + hash de los valores) para planificar. */
+export function toPlannedRecords(records: SyncableRecord[]): PlannedRecord[] {
+  return records.map((r) => ({ localId: r.localId, hash: recordHash(r.values) }))
+}
+
 export type SyncPlan = {
   toCreate: PlannedRecord[]
   toUpdate: Array<PlannedRecord & { odooId: number }>

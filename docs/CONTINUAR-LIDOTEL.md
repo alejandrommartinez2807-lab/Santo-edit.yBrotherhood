@@ -24,8 +24,8 @@ El v7 (competir cerrando brechas) queda como historia cumplida.
 
 | Fase | Qué | Estado | Migración |
 |---|---|---|---|
-| V8-A | Conector Odoo (fundación: lib pura + tests) | 🚧 en curso | 0045 ⏳ PENDIENTE de aplicar |
-| V8-B | Sincronización maestra (el botón): huéspedes/productos | ⬜ | — |
+| V8-A | Conector Odoo: lib pura + conexión + API + pantalla "Probar conexión" | ✅ `df5f820`+`f3aada1` | 0045 ✅ aplicada |
+| V8-B | Sincronización maestra (el botón): huéspedes/productos | ⬜ siguiente | — |
 | V8-C | Dinero a Odoo: facturas→account.move, pagos→account.payment | ⬜ | — |
 | V8-D | Tiempo real: eventos a Odoo reusando webhooks (P2-E) | ⬜ | — |
 | V8-E | Proveedores con interfaz lista (fiscal/OTA/C2P/email, provider manual) | ⬜ | — |

@@ -1,6 +1,6 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { cleanText } from "@/lib/localOrderHelpers"
-import { normalizeOdooBaseUrl } from "@/lib/odooSync"
+import { normalizeOdooBaseUrl, type SyncMapEntry } from "@/lib/odooSync"
 import { type Row } from "./ordersStoreMappers"
 
 // ============================================================
@@ -107,5 +107,50 @@ export async function updateOdooConnectionState(
   let q = supabase.from("odoo_integration").update(patch)
   q = branchId ? q.eq("branch_id", branchId) : q.is("branch_id", null)
   const { error } = await q
+  if (error) throw new Error(error.message)
+}
+
+// ---------------- mapa de sincronización (idempotencia) ----------------
+
+/** El id de Odoo + hash ya sincronizado por cada registro local de un tipo. */
+export async function getOdooSyncMap(
+  branchId: string | null | undefined,
+  localType: string,
+): Promise<SyncMapEntry[]> {
+  const supabase = getSupabaseAdmin()
+  let query = supabase
+    .from("odoo_sync_map")
+    .select("local_id, odoo_id, record_hash")
+    .eq("local_type", cleanText(localType))
+    .limit(5000)
+  query = branchId ? query.eq("branch_id", branchId) : query.is("branch_id", null)
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+  return (data ?? []).map((raw) => ({
+    localId: String((raw as Row).local_id || ""),
+    odooId: Number((raw as Row).odoo_id) || 0,
+    recordHash: String((raw as Row).record_hash || ""),
+  }))
+}
+
+/** Registra/actualiza el mapeo local↔Odoo tras crear o actualizar en Odoo. */
+export async function upsertOdooSyncEntry(
+  entry: { localType: string; localId: string; odooModel: string; odooId: number; recordHash: string },
+  branchId?: string | null,
+): Promise<void> {
+  const supabase = getSupabaseAdmin()
+  const payload = {
+    branch_id: branchId ?? null,
+    local_type: cleanText(entry.localType),
+    local_id: cleanText(entry.localId),
+    odoo_model: cleanText(entry.odooModel),
+    odoo_id: entry.odooId,
+    record_hash: cleanText(entry.recordHash),
+    synced_at: new Date().toISOString(),
+  }
+  // Clave única (branch_id, local_type, local_id) ⇒ upsert idempotente.
+  const { error } = await supabase
+    .from("odoo_sync_map")
+    .upsert(payload, { onConflict: "branch_id,local_type,local_id" })
   if (error) throw new Error(error.message)
 }

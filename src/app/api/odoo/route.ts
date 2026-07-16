@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getOdooIntegration, saveOdooIntegration, updateOdooConnectionState } from "@/lib/orders"
 import { odooAuthenticate } from "@/lib/odooClient"
+import { runOdooSync } from "@/lib/odooSyncEngine"
 import { resolveBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 
@@ -103,6 +104,12 @@ export async function POST(request: NextRequest) {
       }
       if (!result.ok) return NextResponse.json({ ok: false, error: result.error }, { status: 200 })
       return NextResponse.json({ ok: true, uid: result.uid, message: `Conectado como uid ${result.uid}` })
+    }
+
+    if (action === "sync") {
+      const report = await runOdooSync(branchId, { dryRun: body.dryRun !== false })
+      // dryRun por defecto: solo se escribe en Odoo si el cliente pide dryRun:false.
+      return NextResponse.json({ ok: report.ok, report }, { status: report.ok ? 200 : 200 })
     }
 
     return NextResponse.json({ error: "Acción no reconocida" }, { status: 400 })

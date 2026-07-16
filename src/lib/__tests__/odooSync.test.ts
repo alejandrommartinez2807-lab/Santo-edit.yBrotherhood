@@ -10,6 +10,7 @@ import {
   readAuthUid,
   recordHash,
   summarizeSyncPlan,
+  toPlannedRecords,
   type SyncMapEntry,
 } from "@/lib/odooSync"
 
@@ -149,5 +150,18 @@ describe("planSync (idempotencia)", () => {
   it("resume el plan de forma legible", () => {
     const plan = planSync([{ localId: "g3", hash: "z" }], existing)
     expect(summarizeSyncPlan(plan)).toBe("1 nuevos · 0 actualizados · 0 sin cambios")
+  })
+})
+
+describe("toPlannedRecords", () => {
+  it("deriva localId + hash de los valores", () => {
+    const planned = toPlannedRecords([
+      { localId: "g1", values: { name: "Ana" } },
+      { localId: "g2", values: { name: "Beto" } },
+    ])
+    expect(planned.map((p) => p.localId)).toEqual(["g1", "g2"])
+    expect(planned[0].hash).toMatch(/^[0-9a-f]{8}$/)
+    // mismo valor ⇒ mismo hash (idempotencia estable entre corridas)
+    expect(toPlannedRecords([{ localId: "g1", values: { name: "Ana" } }])[0].hash).toBe(planned[0].hash)
   })
 })

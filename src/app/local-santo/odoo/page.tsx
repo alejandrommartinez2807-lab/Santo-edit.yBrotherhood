@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, CheckCircle2, Link2, Loader2, PlugZap, Save, XCircle } from "lucide-react"
+import { ArrowLeft, CheckCircle2, Link2, Loader2, PlugZap, RefreshCw, Save, XCircle } from "lucide-react"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
@@ -19,6 +19,9 @@ type OdooView = {
   lastSyncAt: string
   lastResult: string
 }
+
+type SyncEntityResult = { entity: string; model: string; created: number; updated: number; unchanged: number; errors: string[] }
+type SyncReport = { ok: boolean; dryRun: boolean; message: string; entities: SyncEntityResult[] }
 
 function authHeaders(): HeadersInit {
   const password = typeof window !== "undefined" ? window.sessionStorage.getItem(OWNER_STORAGE_KEY) || "" : ""
@@ -40,6 +43,9 @@ function OdooContent() {
   const [busy, setBusy] = useState(false)
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null)
+  const [syncing, setSyncing] = useState(false)
+  const [dryRun, setDryRun] = useState(true)
+  const [syncReport, setSyncReport] = useState<SyncReport | null>(null)
 
   const [view, setView] = useState<OdooView | null>(null)
   const [baseUrl, setBaseUrl] = useState("")
@@ -118,6 +124,27 @@ function OdooContent() {
       setError(e instanceof Error ? e.message : "Error")
     } finally {
       setBusy(false)
+    }
+  }
+
+  async function runSync() {
+    setSyncing(true)
+    setSyncReport(null)
+    setError("")
+    try {
+      const res = await fetch("/api/odoo", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ action: "sync", dryRun }),
+      })
+      const data = await res.json()
+      if (data.report) setSyncReport(data.report as SyncReport)
+      else throw new Error(data.error || "No se pudo sincronizar")
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error")
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -202,9 +229,47 @@ function OdooContent() {
               </section>
             )}
 
-            <p className="mt-4 rounded-2xl border border-dashed border-[var(--brand-primary)]/25 bg-white p-4 text-xs font-bold text-[var(--brand-ink-2)]/60">
-              Próximo paso: el botón <b>“Sincronizar ahora”</b> (huéspedes y productos → Odoo) llega en la siguiente fase. Primero deja la conexión probada.
-            </p>
+            {view?.configured && (
+              <section className="mt-4 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
+                <p className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]"><RefreshCw size={15} /> Sincronizar con Odoo</p>
+                <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/55">
+                  Empuja tus huéspedes (→ contactos) y productos (→ productos) a Odoo. Es idempotente: correrlo dos veces no duplica nada.
+                </p>
+                <label className="mt-3 flex items-center gap-2 text-sm font-bold text-[var(--brand-ink-2)]/80">
+                  <input type="checkbox" checked={dryRun} onChange={(e) => setDryRun(e.target.checked)} className="h-4 w-4 accent-[var(--brand-primary)]" />
+                  Simular (no escribe en Odoo, solo muestra qué haría)
+                </label>
+                <button onClick={runSync} disabled={syncing || busy} className={`mt-3 inline-flex items-center justify-center gap-1 rounded-xl px-4 py-3 text-sm font-black uppercase disabled:opacity-50 ${dryRun ? "border border-[var(--brand-primary)]/40 bg-white text-[var(--brand-primary-dark)]" : "bg-[var(--brand-primary)] text-white"}`}>
+                  {syncing ? <Loader2 className="animate-spin" size={15} /> : <RefreshCw size={15} />} {dryRun ? "Simular sincronización" : "Sincronizar ahora"}
+                </button>
+
+                {syncReport && (
+                  <div className="mt-3 rounded-xl border border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3">
+                    <p className={`text-sm font-black ${syncReport.ok ? "text-[var(--brand-ink-3)]" : "text-red-600"}`}>
+                      {syncReport.dryRun ? "Simulación" : "Sincronización"}: {syncReport.message}
+                    </p>
+                    <ul className="mt-2 space-y-1 text-xs font-bold text-[var(--brand-ink-2)]/70">
+                      {syncReport.entities.map((en) => (
+                        <li key={en.entity}>
+                          {en.entity}: {syncReport.dryRun ? "crearía" : "creados"} {en.created} · {syncReport.dryRun ? "actualizaría" : "actualizados"} {en.updated} · sin cambios {en.unchanged}
+                          {en.errors.length > 0 && <span className="text-red-600"> · {en.errors.length} errores</span>}
+                        </li>
+                      ))}
+                    </ul>
+                    {syncReport.entities.some((en) => en.errors.length > 0) && (
+                      <ul className="mt-2 space-y-0.5 text-xs font-bold text-red-600">
+                        {syncReport.entities.flatMap((en) => en.errors).slice(0, 6).map((err, i) => (
+                          <li key={i}>· {err}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+                {!view.hasApiKey && (
+                  <p className="mt-2 text-xs font-bold text-amber-700">Falta la API Key para escribir en Odoo. La simulación funciona igual.</p>
+                )}
+              </section>
+            )}
           </>
         )}
       </div>
