@@ -123,17 +123,18 @@ más comunes de la industria:
 | Error típico de la industria | Cómo estamos cubiertos |
 | --- | --- |
 | **Overbooking** (vender la misma habitación dos veces) | El servidor reconfirma disponibilidad justo antes de crear cada reserva; probado con dos clientes en paralelo por la última habitación: solo uno gana. |
-| **Overbooking entre canales** (Booking/Airbnb + directo) | Exportamos el calendario iCal de ocupación; si vendes en OTAs, usa **bloqueos** para apartar el cupo que les des. La sincronización automática bidireccional es ampliable a futuro. |
+| **Overbooking entre canales** (Booking/Airbnb + directo) | iCal en AMBAS direcciones: exportamos la ocupación (general y por habitación) e **importamos** el calendario de cada anuncio externo con "Sincronizar ahora" (Canales/OTAs); las fechas vendidas afuera se apartan solas como bloqueos. |
 | **Front desk lento / flujos rígidos** | Todo a 1–2 clics; con 200 habitaciones cada pantalla responde en menos de medio segundo (probado). |
 | **Meses de entrenamiento** (el 52% de los gerentes reporta 4 meses a 3 años en sistemas legacy) | Panel en español simple + esta guía; el flujo completo (reserva→check-in→cargos→check-out) son 4 botones. |
 | **No poder modificar reservas** | Editar extiende estadías, cambia habitación/fechas/tarifa con validación de choques. |
 | **Cierres/cuadres manuales** | Cierre de día (night audit), reportes de ocupación/ADR/RevPAR y facturación con correlativo. |
 | **Datos que se pierden** | Todo queda en la base con auditoría de quién hizo cada cobro/cambio. |
 
-Limitaciones honestas (ampliables cuando haga falta): pagos online = depósito
-reportado y confirmado a mano (sin pasarela), notificaciones = enlaces de
-WhatsApp con un clic (no envío automático), OTAs = exportación iCal (no
-sincronización bidireccional), facturas con formato fijo.
+Limitaciones honestas (ampliables cuando haga falta): pagos online = el
+huésped reporta su abono desde el teléfono y recepción lo confirma (sin
+pasarela bancaria automática), notificaciones = enlaces de WhatsApp con un
+clic (no envío masivo automático), OTAs = sincronización por iCal (no API
+nativa de Booking/Airbnb), facturas con formato fijo.
 
 ## 9. Claves y accesos
 
@@ -155,3 +156,36 @@ la contraseña al entregar):
 
 Además siguen existiendo las claves por rol del `.env` (dueño, soporte) para
 administrar todo.
+
+## 10. Crecimiento y back-office (módulos de la tanda "cerrar brechas")
+
+Todos viven en el panel y se apagan/prenden por módulo en Configuración.
+
+- **Cobro online (Pagos y depósitos)** — el huésped abona su reserva desde el
+  teléfono (pago móvil, Zelle, transferencia, Binance) con referencia y
+  captura; cae en Caja recepción como "por confirmar" y recepción concilia
+  contra el total de la reserva.
+- **Exportes contables (Facturación → Exportes)** — libro de ventas estilo
+  SENIAT, resumen mensual de cierres y export total, en CSV que Excel abre
+  sin caracteres rotos. Para convivir con el contador, no reemplazarlo.
+- **Membresías** — niveles con % de descuento, asignación a huéspedes del CRM
+  y **pase de invitado** transferible: el código aplicado al reservar sugiere
+  el descuento (recepción confirma) y registra quién refirió.
+- **Campañas (CRM → Campañas y listas)** — segmenta huéspedes (estuvo entre
+  fechas, gastó más de X, cumple años este mes, con/sin membresía, VIP),
+  copia los teléfonos para WhatsApp con un clic o exporta CSV con el mensaje
+  personalizado por huésped; plantillas editables con {nombre} y {hotel}.
+- **Integraciones (webhooks)** — avisa a otros sistemas (POST JSON firmado
+  HMAC) cuando hay reserva creada/confirmada, pago confirmado, check-in o
+  check-out. Botón "Probar" incluido. Contrato completo en `docs/API-HOTEL.md`.
+- **Todas las propiedades (Reportes del hotel)** — si hay 2+ sedes, el dueño
+  ve una tabla consolidada: ocupación, ingreso, ADR y llegadas/salidas de HOY
+  por propiedad, más los totales del grupo (calculados desde las sumas).
+- **Canales/OTAs con importación iCal** — cada habitación tiene su URL de
+  exportación (pégala en su anuncio de Airbnb/Booking) y acepta la URL del
+  calendario externo: "Sincronizar ahora" aparta como bloqueos las fechas
+  vendidas afuera. Los bloqueos manuales jamás se tocan.
+- **Turnos** — planificación semanal por persona (mañana/tarde/noche) con
+  marca real de entrada y salida desde el panel de cada empleado. Sin nómina.
+- **Respaldo y datos (Configuración)** — qué se respalda y cada cuánto, más
+  el botón de export total: tus datos son tuyos. Detalle en `docs/RESPALDO.md`.

@@ -5137,6 +5137,27 @@ export default function BusinessConfigPage() {
           </SectionCard>
         </section>
 
+        {/* P3-I · Respaldo y datos: enlace a la página de export total. */}
+        <section className="mt-6 rounded-[1.6rem] border border-[var(--brand-primary)]/25 bg-white p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                Respaldo y datos
+              </p>
+              <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
+                Tus datos son tuyos: descarga el export total (reservas, folios,
+                facturas, clientes) y revisa cómo se respalda el sistema.
+              </p>
+            </div>
+            <Link
+              href="/local-santo/respaldo"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)]/40 bg-white px-5 py-3 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+            >
+              Abrir Respaldo y datos
+            </Link>
+          </div>
+        </section>
+
         <section className="mt-6 rounded-[1.6rem] border border-[var(--brand-primary)]/45 bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>

@@ -49,7 +49,6 @@ const cleanup = {
 
 const roomsData = (await staff("/api/rooms")).data
 const IND = roomsData.roomTypes.find((t) => t.name === "Individual")
-const SUITE = roomsData.roomTypes.find((t) => t.name === "Suite Ejecutiva")
 const indRooms = roomsData.rooms.filter((r) => r.roomTypeId === IND.id && r.active && !r.outOfService)
 
 try {

@@ -58,7 +58,6 @@ try {
   check("A1 disponibilidad rango válido ofrece los 3 tipos", typesOffered.length === 3, typesOffered.map((t) => `${t.name}:${t.freeCount}`).join(" "))
   check("A2 cotización correcta (2 noches × tarifa)", typesOffered.every((t) => t.quote.total === t.quote.averageRate * 2))
   check("A3 fotos vienen en la oferta pública", typesOffered.every((t) => Array.isArray(t.photos) && t.photos.length > 0))
-  const freeIndBase = typesOffered.find((t) => t.roomTypeId === IND.id)?.freeCount ?? 0
 
   r = await pub(`/api/public/hotel?checkIn=${A2}&checkOut=${A}`)
   check("A4 rango invertido en GET → sin tipos (sin 500)", r.status === 200 && (r.data.types || []).length === 0)
