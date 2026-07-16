@@ -15,6 +15,7 @@ import {
   recordHash,
   stripLineFields,
   summarizeSyncPlan,
+  taxRateToPercent,
   toPlannedRecords,
   type SyncMapEntry,
 } from "@/lib/odooSync"
@@ -172,6 +173,22 @@ describe("toPlannedRecords", () => {
 })
 
 describe("V8-C · dinero a Odoo (mapeos puros)", () => {
+  it("taxRateToPercent acepta fracción (0.16) y porcentaje (16)", () => {
+    expect(taxRateToPercent(0.16)).toBeCloseTo(16)
+    expect(taxRateToPercent(16)).toBe(16)
+    expect(taxRateToPercent(0)).toBe(0)
+    expect(taxRateToPercent("basura")).toBe(0)
+  })
+
+  it("la línea de IVA usa el porcentaje aunque la tasa local sea fracción", () => {
+    const values = mapInvoiceToAccountMove(
+      { number: 9, serie: "A", subtotal: 225, taxRate: 0.16, tax: 36 },
+      { partnerId: 1, taxId: null },
+    )
+    const lines = values.invoice_line_ids as unknown[][]
+    expect((lines[1][2] as Record<string, unknown>).name).toBe("IVA 16%")
+  })
+
   it("odooDate recorta a YYYY-MM-DD y tolera basura", () => {
     expect(odooDate("2026-07-16T14:30:00.000Z")).toBe("2026-07-16")
     expect(odooDate("2026-07-16")).toBe("2026-07-16")
@@ -221,7 +238,7 @@ describe("V8-C · dinero a Odoo (mapeos puros)", () => {
     expect(values.partner_type).toBe("customer")
     expect(values.partner_id).toBe(42)
     expect(values.amount).toBe(50)
-    expect(values.ref).toBe("Reserva WBZNT · zelle · REF123")
+    expect(values.memo).toBe("Reserva WBZNT · zelle · REF123")
     expect(values.date).toBe("2026-07-16")
   })
 
@@ -238,6 +255,8 @@ describe("V8-C · dinero a Odoo (mapeos puros)", () => {
     expect(line.product_id).toBe(77)
     expect(line.product_uom_qty).toBe(3)
     expect(line.price_unit).toBe(110)
+    // sin impuesto: el total del presupuesto debe ser exactamente el local
+    expect(line.tax_ids).toEqual([[6, 0, []]])
   })
 
   it("stripLineFields quita las líneas para que un write no las duplique", () => {

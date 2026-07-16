@@ -177,6 +177,15 @@ export function odooDate(iso: unknown): string {
   return match ? match[1] : ""
 }
 
+/**
+ * El módulo local de facturación guarda la tasa como FRACCIÓN (0.16); Odoo y
+ * los humanos hablan en porcentaje (16). Normaliza cualquiera de las dos.
+ */
+export function taxRateToPercent(rate: unknown): number {
+  const n = Math.max(0, Number(rate) || 0)
+  return n > 0 && n <= 1 ? n * 100 : n
+}
+
 export type LocalInvoiceForOdoo = {
   number: number
   serie: string
@@ -215,7 +224,7 @@ export function mapInvoiceToAccountMove(
     lines.push([
       0,
       0,
-      { name: `IVA ${Math.max(0, Number(invoice.taxRate) || 0)}%`, quantity: 1, price_unit: tax, tax_ids: [] },
+      { name: `IVA ${taxRateToPercent(invoice.taxRate)}%`, quantity: 1, price_unit: tax, tax_ids: [] },
     ])
   }
   const values: Record<string, unknown> = {
@@ -253,7 +262,8 @@ export function mapPaymentToOdoo(
     partner_id: opts.partnerId,
     amount: Math.max(0, Number(payment.amount) || 0),
   }
-  if (refParts.length > 0) values.ref = refParts.join(" · ")
+  // memo = referencia del pago desde Odoo 18 (antes "ref"; Online está al día).
+  if (refParts.length > 0) values.memo = refParts.join(" · ")
   const date = odooDate(payment.createdAt)
   if (date) values.date = date
   return values
@@ -291,6 +301,10 @@ export function mapReservationToSaleOrder(
           name: `Estadía ${nights} noche(s) (${reservation.checkInDate} → ${reservation.checkOutDate})`,
           product_uom_qty: nights,
           price_unit: Math.max(0, Number(reservation.ratePerNight) || 0),
+          // Sin impuesto: la tarifa local YA es el precio final del huésped.
+          // Si no, Odoo aplica su impuesto por defecto e infla el total.
+          // (tax_ids: nombre del campo desde Odoo 17; Odoo Online siempre está al día.)
+          tax_ids: [[6, 0, []]],
         },
       ],
     ],

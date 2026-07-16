@@ -26,6 +26,7 @@ import {
   planSync,
   recordHash,
   stripLineFields,
+  taxRateToPercent,
   toPlannedRecords,
   type SyncableRecord,
 } from "@/lib/odooSync"
@@ -416,7 +417,8 @@ export async function runOdooSync(
           if (!inv) return null
           const partnerId = await ensurePartnerId(helpers, { name: inv.customerName, vat: inv.customerRif })
           if (!partnerId) return null
-          const taxId = await findSaleTaxId(helpers, inv.taxRate)
+          // La tasa local viene como fracción (0.16); Odoo la guarda como 16.
+          const taxId = await findSaleTaxId(helpers, taxRateToPercent(inv.taxRate))
           return mapInvoiceToAccountMove(inv, { partnerId, taxId })
         },
         prepareUpdate: stripLineFields,
