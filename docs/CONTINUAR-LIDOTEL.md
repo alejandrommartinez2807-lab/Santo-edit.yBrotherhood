@@ -1,5 +1,35 @@
 # Continuar el demo Lidotel — prompt + backlog (v7 · 2026-07-15)
 
+## ⚡ ESTADO 2026-07-16 — TANDA v7 COMPLETA (9/9 fases commiteadas)
+
+Las NUEVE brechas del PROMPT v7 están construidas, verificadas y commiteadas
+en `demo-lidotel` (tsc + eslint 0/0 + 442 tests + QA 54/54 y 25/25 en verde):
+
+| Fase | Qué | Commit | Migración |
+|---|---|---|---|
+| P1-A | Cobro online (abonar desde el teléfono) | `55fe91f` | 0040 ✅ aplicada |
+| P1-B | Exportes contables CSV | `355320f` | — |
+| P2-C | Membresías + pase de invitado | `427e622` | 0041 ✅ aplicada |
+| P2-D | Campañas/listas desde el CRM | `ca81366` | — |
+| P2-E | Webhooks firmados + docs/API-HOTEL.md | `1a61a57` | **0042 ⏳ PENDIENTE** |
+| P2-F | Dueño consolidado multi-propiedad | `26cce98` | — |
+| P3-G | iCal import por habitación (Canales) | `9264d8f` | **0043 ⏳ PENDIENTE** |
+| P3-H | Turnos/asistencia del personal | `d5ecb25` | **0044 ⏳ PENDIENTE** |
+| P3-I | Respaldo y datos + RESPALDO.md | `d8b4aa7` | — |
+
+**AL VOLVER, EN ESTE ORDEN:**
+1. Aplicar en Supabase (`edxbuggbqcrsaynxysuj`) las migraciones **0042, 0043 y
+   0044** (los flujos ya avisan "aplica la migración X" mientras tanto; nada
+   se rompe sin ellas — verificado).
+2. Probar los 3 flujos que esperaban tabla: registrar un webhook (botón
+   Probar con webhook.site), pegar una URL iCal y "Sincronizar ahora"
+   (Canales), y planificar un turno + marcar entrada (Turnos).
+3. QA 54 + 25 de nuevo y **deploy**: `npx vercel --prod --scope
+   carlos-projects8` DESDE el worktree (NO se deployó: los módulos nuevos
+   fallarían en vivo sin las migraciones).
+4. Capturas Edge/CDP de los módulos nuevos y actualizar la tabla de
+   auditoría v6 (sigue a medias: 7 módulos ✔).
+
 ## PROMPT v7 (copiar/pegar) — CERRAR LAS BRECHAS CONTRA ODOO (plantilla base)
 
 > Lidotel es la PLANTILLA BASE del producto hotelero: todo lo que se construya
