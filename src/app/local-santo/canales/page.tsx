@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, ExternalLink, Loader2, Radio, RefreshCcw } from "lucide-react"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
+import ProviderConnectionCard from "@/components/local/ProviderConnectionCard"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -77,6 +78,8 @@ function CanalesContent() {
         </div>
 
         <RoomSyncSection copiedKey={copied} onCopy={copy} />
+
+        <ProviderConnectionCard providerId="channel" />
       </div>
     </main>
   )

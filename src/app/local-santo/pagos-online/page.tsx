@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
+import ProviderConnectionCard from "@/components/local/ProviderConnectionCard"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
 const METHODS = ["pago_movil", "zelle", "transferencia", "tarjeta", "efectivo", "otro"]
@@ -456,6 +457,8 @@ function PagosContent() {
                 })}
               </ul>
             )}
+
+            <ProviderConnectionCard providerId="gateway" />
           </>
         )}
       </div>

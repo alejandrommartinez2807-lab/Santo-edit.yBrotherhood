@@ -26,6 +26,10 @@ import {
   type CampaignTemplate,
 } from "./hotelCampaigns"
 import {
+  normalizeProviderIntegrations,
+  type ProviderIntegrationsConfig,
+} from "./providerIntegrations"
+import {
   DEFAULT_HOTEL_SITE_EXTRAS,
   DEFAULT_HOTEL_UPSELL,
   normalizeHotelRoomTypeDetails,
@@ -251,6 +255,9 @@ export type BusinessConfig = {
   hotelUpsell: HotelUpsellConfig
   // Hotel: plantillas de mensaje para campañas del CRM ({nombre}, {hotel}).
   hotelCampaignTemplates: CampaignTemplate[]
+  // Proveedores externos (fiscal/OTA/C2P/email): estado del trámite y notas.
+  // SIN secretos: las credenciales reales irán en tabla dedicada al enchufarse.
+  providerIntegrations: ProviderIntegrationsConfig
   updatedAt?: string
 }
 
@@ -422,6 +429,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   hotelRoomTypeDetails: {},
   hotelUpsell: { ...DEFAULT_HOTEL_UPSELL },
   hotelCampaignTemplates: DEFAULT_CAMPAIGN_TEMPLATES.map((t) => ({ ...t })),
+  providerIntegrations: normalizeProviderIntegrations(undefined),
 }
 
 function normalizeBooleanConfig(value: unknown, fallback: boolean) {
@@ -1096,6 +1104,7 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     hotelRoomTypeDetails: normalizeHotelRoomTypeDetails(source.hotelRoomTypeDetails),
     hotelUpsell: normalizeHotelUpsell(source.hotelUpsell),
     hotelCampaignTemplates: normalizeCampaignTemplates(source.hotelCampaignTemplates),
+    providerIntegrations: normalizeProviderIntegrations(source.providerIntegrations),
     updatedAt: source.updatedAt ? String(source.updatedAt) : undefined,
   }
 }

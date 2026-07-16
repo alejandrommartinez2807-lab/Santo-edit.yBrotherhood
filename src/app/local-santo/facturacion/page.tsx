@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Download, FileText, Loader2, Plus } from "lucide-react"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
+import ProviderConnectionCard from "@/components/local/ProviderConnectionCard"
 import { downloadCsv } from "@/lib/csv"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
@@ -162,6 +163,8 @@ function FacturacionContent() {
             )}
 
             <AccountingExports />
+
+            <ProviderConnectionCard providerId="fiscal" />
           </>
         )}
       </div>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, Copy, Download, Loader2, Megaphone, Plus, Save, Star, Trash2, UserRound } from "lucide-react"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
+import ProviderConnectionCard from "@/components/local/ProviderConnectionCard"
 import {
   campaignPhoneList,
   filterCampaignRows,
@@ -450,6 +451,8 @@ function CrmContent() {
                 ))}
               </ul>
             )}
+
+            <ProviderConnectionCard providerId="email" />
           </>
         )}
       </div>
