@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, FileText, Loader2, Plus } from "lucide-react"
+import { ArrowLeft, Download, FileText, Loader2, Plus } from "lucide-react"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
+import { downloadCsv } from "@/lib/csv"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -159,9 +160,81 @@ function FacturacionContent() {
                 ))}
               </ul>
             )}
+
+            <AccountingExports />
           </>
         )}
       </div>
     </main>
+  )
+}
+
+// P1-B · Exportes contables: CSV para el contador (libro de ventas SENIAT,
+// resumen de cierres del hotel y export total). El BOM UTF-8 lo pone downloadCsv.
+function AccountingExports() {
+  const [from, setFrom] = useState("")
+  const [to, setTo] = useState("")
+  const [busy, setBusy] = useState("")
+  const [error, setError] = useState("")
+
+  async function download(type: string) {
+    setBusy(type)
+    setError("")
+    try {
+      const params = new URLSearchParams({ type })
+      if (from) params.set("from", from)
+      if (to) params.set("to", to)
+      const res = await fetch(`/api/accounting-exports?${params.toString()}`, {
+        headers: authHeaders(),
+        cache: "no-store",
+      })
+      const data = await res.json()
+      if (!res.ok || data.ok === false) throw new Error(data.error || "No se pudo generar el exporte")
+      if (!data.csv) throw new Error("El exporte llegó vacío")
+      downloadCsv(String(data.filename || `${type}.csv`), String(data.csv))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error")
+    } finally {
+      setBusy("")
+    }
+  }
+
+  const btn =
+    "inline-flex items-center justify-center gap-2 rounded-xl border border-[var(--brand-primary)]/30 bg-white px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
+  const dateInput =
+    "mt-1 block rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 font-bold outline-none focus:border-[var(--brand-primary)]"
+
+  return (
+    <div className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-5">
+      <p className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+        <Download size={16} /> Exportes contables
+      </p>
+      <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/60">
+        CSV listos para tu contador (abren en Excel sin acentos rotos). El documento fiscal lo emite la máquina fiscal SENIAT; aquí entregas los datos. Tus datos son tuyos.
+      </p>
+      <div className="mt-3 flex flex-wrap items-end gap-3">
+        <label className="text-xs font-bold uppercase text-[var(--brand-primary)]">
+          Desde
+          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={dateInput} />
+        </label>
+        <label className="text-xs font-bold uppercase text-[var(--brand-primary)]">
+          Hasta
+          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={dateInput} />
+        </label>
+        <span className="pb-2 text-xs font-bold text-[var(--brand-ink-2)]/50">Vacío = todo el histórico</span>
+      </div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        <button type="button" disabled={busy !== ""} onClick={() => download("sales-book")} className={btn}>
+          {busy === "sales-book" ? <Loader2 size={15} className="animate-spin" /> : <FileText size={15} />} Libro de ventas (SENIAT)
+        </button>
+        <button type="button" disabled={busy !== ""} onClick={() => download("day-closes")} className={btn}>
+          {busy === "day-closes" ? <Loader2 size={15} className="animate-spin" /> : <FileText size={15} />} Resumen de cierres
+        </button>
+        <button type="button" disabled={busy !== ""} onClick={() => download("full")} className={btn}>
+          {busy === "full" ? <Loader2 size={15} className="animate-spin" /> : <FileText size={15} />} Export total (todo)
+        </button>
+      </div>
+      {error && <p className="mt-3 font-bold text-red-600">{error}</p>}
+    </div>
   )
 }
