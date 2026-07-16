@@ -1,4 +1,34 @@
-# Continuar el demo Lidotel — prompt + backlog (v7 · 2026-07-15)
+# Continuar el demo Lidotel — prompt + backlog (v8 · 2026-07-16)
+
+## 🧭 GIRO ESTRATÉGICO v8 (2026-07-16) — COMPLEMENTAR ODOO, NO COMPETIR
+
+Decisión del dueño: **igualar a Odoo (contabilidad/ERP completo) es demasiado
+complicado y no vale la pena.** El nuevo rumbo:
+
+- **No competimos con Odoo. Lo complementamos.** El cliente que ya usa Odoo nos
+  suma y las fallas hoteleras de Odoo (PMS débil: tape chart, housekeeping, room
+  service ligado al folio, channel manager, portal huésped) desaparecen porque
+  las cubrimos nosotros. **Un solo sistema, no dos separados.**
+- **Lo más importante: fácil de incorporar → con UN BOTÓN se sincronizan todos
+  los datos** (huéspedes, productos, facturas, pagos) hacia Odoo, vía su API
+  externa (JSON-RPC en `/jsonrpc`).
+- Si algún día el cliente quiere migrar del todo a nuestro sistema, ya nos eligió.
+- Las brechas que dependen de terceros (fiscal SENIAT, OTAs, banco C2P, email) se
+  dejan **con interfaz lista y provider "manual"**, igual que el cobro online del
+  v7. La guía de trámites está en **docs/CONEXIONES-PROVEEDORES.md**.
+
+El **PROMPT v8** (más abajo) reencuadra el trabajo alrededor del conector Odoo.
+El v7 (competir cerrando brechas) queda como historia cumplida.
+
+### Estado v8 (avance)
+
+| Fase | Qué | Estado | Migración |
+|---|---|---|---|
+| V8-A | Conector Odoo (fundación: lib pura + tests) | 🚧 en curso | 0045 ⏳ PENDIENTE de aplicar |
+| V8-B | Sincronización maestra (el botón): huéspedes/productos | ⬜ | — |
+| V8-C | Dinero a Odoo: facturas→account.move, pagos→account.payment | ⬜ | — |
+| V8-D | Tiempo real: eventos a Odoo reusando webhooks (P2-E) | ⬜ | — |
+| V8-E | Proveedores con interfaz lista (fiscal/OTA/C2P/email, provider manual) | ⬜ | — |
 
 ## ⚡ ESTADO 2026-07-16 (tarde) — TANDA v7 COMPLETA, MIGRADA Y **EN VIVO**
 
@@ -35,6 +65,101 @@ en `demo-lidotel` (tsc + eslint 0/0 + 442 tests + QA 54/54 y 25/25 en verde):
 | P3-I | Respaldo y datos + RESPALDO.md | `d8b4aa7` | — |
 
 (Los pasos "al volver" de la versión anterior ya se ejecutaron: migraciones aplicadas, flujos probados, QA en verde y deploy verificado en vivo.)
+
+## PROMPT v8 (copiar/pegar) — CONECTOR ODOO: SINCRONIZAR CON UN BOTÓN
+
+> Lidotel es la PLANTILLA BASE. Objetivo de esta tanda: dejar de competir con
+> Odoo y convertirnos en su COMPLEMENTO hotelero, con sincronización de UN BOTÓN.
+> El cliente que ya usa Odoo nos enchufa y no maneja dos sistemas separados.
+
+```
+Continúo el demo Lidotel (PMS hotelero, plantilla base). Lee las memorias
+santo-edit-hotel-deploy, santo-edit-hotel-pms-build y lidotel-estrategia-odoo,
+y docs/CONTINUAR-LIDOTEL.md + docs/CONEXIONES-PROVEEDORES.md del worktree ANTES
+de tocar código.
+
+Reglas fijas (idénticas al v7, no negociables):
+- Worktree: D:/Santo edit/.claude/worktrees/nice-visvesvaraya-5726a1 (rama
+  demo-lidotel). NUNCA desde D:\Santo edit. Deploy al final: npx vercel --prod
+  --scope carlos-projects8 DESDE el worktree.
+- Dev: el usuario corre npm run dev en 3000 (verificar con curl). NUNCA npm run
+  build con el dev vivo. Verificación: tsc + eslint + vitest --dir ./src + curl
+  con x-admin-password (quitar las comillas del .env.local) + Origin
+  http://localhost:3000. Capturas: Edge headless + CDP (Claude in Chrome NO
+  alcanza localhost).
+- QA: node scripts/qa-hotel-completo.mjs (54) + qa-hotel-ronda2.mjs (25). NO
+  editar archivos mientras corren. JAMÁS meter un await entre pickFreeRoomOfType
+  y saveHotelReservation en /api/public/hotel (carrera E2/E3).
+- Migraciones: Claude escribe el .sql (numeración siguiente; la 0044 fue la
+  última) y SE DETIENE para que el usuario la aplique antes de seguir esa fase.
+- Módulos nuevos = interruptor + plan: registrar en localPlans
+  (LOCAL_MODULE_DEFINITIONS con ownerConfigKey) y cablear el default en las TRES
+  copias de BusinessConfig (ordersBusinessConfig.ts, configuracion/page.tsx,
+  pedidos/domain.tsx) — el test businessConfigModuleKeys lo vigila.
+- Método: UNA fase → migración (si aplica) → lib pura con tests → API con guard
+  por rol+módulo → UI champán fina (AA, español neutro) → commit → siguiente.
+
+PRINCIPIO CLAVE: NO construir contabilidad. Somos la capa hotelera que se
+ENCHUFA a Odoo y le manda los datos. Odoo sigue siendo el ERP; nosotros el PMS.
+
+Odoo API: usar JSON-RPC (POST a {url}/jsonrpc), NO XML-RPC.
+- Auth: service "common", method "authenticate", args [db, login, apikey, {}] → uid.
+- Datos: service "object", method "execute_kw", args [db, uid, apikey, model,
+  method, [args], {kwargs}]. Modelos: res.partner (huésped/cliente),
+  product.product (producto), account.move (factura), account.payment (pago),
+  sale.order (reserva). Idempotencia: guardar el id de Odoo por registro local en
+  una tabla de mapeo y saltar lo que no cambió (hash del registro).
+- El secreto (API key) NO va en business_config (se sirve público): va en tabla
+  dedicada solo service-role.
+
+FASES (en orden):
+
+V8-A · CONECTOR ODOO (fundación)  ← EMPEZAR AQUÍ
+  Migración 0045: odoo_integration (branch_id, base_url, db_name, login,
+  api_key, active, last_sync_at, last_uid) + odoo_sync_map (branch_id,
+  local_type, local_id, odoo_model, odoo_id, record_hash, synced_at). RLS on.
+  Lib pura src/lib/odooSync.ts + tests: normalizeOdooBaseUrl, buildAuthCall,
+  buildExecuteCall, parseJsonRpcResult (detecta el error de Odoo), recordHash
+  estable, mapGuestToPartner/mapProductToOdoo, planSync (toCreate/toUpdate/
+  unchanged contra el sync_map). Transporte server-only src/lib/odooClient.ts
+  (fetch a /jsonrpc, best-effort con captureError). Módulo nuevo "odooSync"
+  (label "Odoo / ERP") en localPlans + 3 copias. API /api/odoo (guard
+  owner/manager): action "testConnection" (auth y devuelve uid) y "saveConfig".
+  UI /local-santo/odoo: form (URL, base de datos, usuario, API key) + botón
+  "Probar conexión" (muestra "Conectado como uid N" o el error).
+  Aceptación: guardar config y probar conexión contra una instancia Odoo
+  (odoo.com de prueba) → uid válido.
+
+V8-B · SINCRONIZACIÓN MAESTRA (el botón)
+  Botón "Sincronizar ahora": empuja huéspedes (guest_profiles → res.partner) y
+  productos (menú → product.product) a Odoo, idempotente vía odoo_sync_map
+  (crea los nuevos, actualiza los cambiados por hash, salta los iguales). Barra
+  de progreso + log del resultado (N creados, M actualizados, K sin cambios,
+  errores). Modo "dry-run" (simular sin escribir). Aceptación: sincronizar el
+  demo dos veces seguidas; la segunda no crea duplicados.
+
+V8-C · EL DINERO A ODOO
+  Facturas del hotel → account.move (borrador), pagos → account.payment,
+  reserva → sale.order, para que la contabilidad de Odoo vea el ingreso
+  hotelero sin doble captura. Respetar impuestos/tasas ya existentes (fiscal.ts).
+  Aceptación: una factura demo aparece en Odoo como asiento en borrador cuadrado.
+
+V8-D · TIEMPO REAL (reusar webhooks P2-E)
+  Nuevo destino de webhook con provider "odoo": al confirmar reserva, pago,
+  check-in/out, empujar el cambio a Odoo al vuelo (best-effort, con la misma
+  infra firmada de hotelWebhookDispatch). Un interruptor "sincronizar en vivo".
+  Aceptación: hacer check-in en el demo y ver el partner/sale actualizarse solo.
+
+V8-E · PROVEEDORES CON INTERFAZ LISTA (provider "manual")
+  Siguiendo docs/CONEXIONES-PROVEEDORES.md, dejar config + hook listos (sin
+  credenciales todavía) para: facturación electrónica SENIAT (The Factory HKA),
+  channel manager push (OTAs), pasarela C2P bancaria, email marketing (Resend).
+  Cada uno con provider "manual" hasta que el dueño traiga las credenciales.
+  Aceptación: cada pantalla explica qué credencial falta y enlaza la guía.
+
+Al terminar TODO: vitest + QA 54/54 y 25/25 + capturas Edge/CDP + deploy +
+verificación en vivo + actualizar GUIA-HOTELERO.md, esta tabla y las memorias.
+```
 
 ## PROMPT v7 (copiar/pegar) — CERRAR LAS BRECHAS CONTRA ODOO (plantilla base)
 
