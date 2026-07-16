@@ -207,6 +207,7 @@ export type BusinessConfig = {
   guestNotificationsModuleEnabled: boolean
   nightAuditModuleEnabled: boolean
   fiscalInvoicingModuleEnabled: boolean
+  guestMembershipsModuleEnabled: boolean
   channelManagerModuleEnabled: boolean
   waiterConfirmationModuleEnabled: boolean
   kitchenItemsModuleEnabled: boolean
@@ -381,6 +382,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   guestNotificationsModuleEnabled: true,
   nightAuditModuleEnabled: true,
   fiscalInvoicingModuleEnabled: true,
+  guestMembershipsModuleEnabled: true,
   channelManagerModuleEnabled: true,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
@@ -981,6 +983,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.fiscalInvoicingModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.fiscalInvoicingModuleEnabled
     ),
+    guestMembershipsModuleEnabled: normalizeBooleanConfig(
+      source.guestMembershipsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.guestMembershipsModuleEnabled
+    ),
     channelManagerModuleEnabled: normalizeBooleanConfig(
       source.channelManagerModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.channelManagerModuleEnabled
@@ -1113,6 +1119,7 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
   const guestNotificationsAccess = getModulePlanAccess(config, "guestNotifications")
   const nightAuditAccess = getModulePlanAccess(config, "nightAudit")
   const fiscalInvoicingAccess = getModulePlanAccess(config, "fiscalInvoicing")
+  const guestMembershipsAccess = getModulePlanAccess(config, "guestMemberships")
   const channelManagerAccess = getModulePlanAccess(config, "channelManager")
   const waiterConfirmationAccess = getModulePlanAccess(config, "waiterConfirmation")
   const kitchenItemsAccess = getModulePlanAccess(config, "kitchenItems")
@@ -1268,6 +1275,9 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
     nightAuditModuleEnabled: nightAuditAccess.includedInPlan ? config.nightAuditModuleEnabled : false,
     fiscalInvoicingModuleEnabled: fiscalInvoicingAccess.includedInPlan
       ? config.fiscalInvoicingModuleEnabled
+      : false,
+    guestMembershipsModuleEnabled: guestMembershipsAccess.includedInPlan
+      ? config.guestMembershipsModuleEnabled
       : false,
     channelManagerModuleEnabled: channelManagerAccess.includedInPlan
       ? config.channelManagerModuleEnabled

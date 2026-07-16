@@ -58,6 +58,7 @@ export type LocalModuleKey =
   | "tapeChart"
   | "nightAudit"
   | "fiscalInvoicing"
+  | "guestMemberships"
   | "channelManager"
   | "advancedRates"
   | "guestCrm"
@@ -164,6 +165,7 @@ export type LocalPlanConfigLike = {
   guestNotificationsModuleEnabled?: unknown
   nightAuditModuleEnabled?: unknown
   fiscalInvoicingModuleEnabled?: unknown
+  guestMembershipsModuleEnabled?: unknown
   channelManagerModuleEnabled?: unknown
   waiterConfirmationModuleEnabled?: unknown
   kitchenItemsModuleEnabled?: unknown
@@ -262,6 +264,7 @@ export const LOCAL_MODULE_KEYS: LocalModuleKey[] = [
   "tapeChart",
   "nightAudit",
   "fiscalInvoicing",
+  "guestMemberships",
   "channelManager",
   "advancedRates",
   "guestCrm",
@@ -448,6 +451,7 @@ export const LOCAL_PLAN_DEFINITIONS: LocalPlanDefinition[] = [
       "tapeChart",
       "nightAudit",
       "fiscalInvoicing",
+      "guestMemberships",
       "channelManager",
       "advancedRates",
       "guestCrm",
@@ -1029,6 +1033,18 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     comingSoon: false,
   },
   {
+    key: "guestMemberships",
+    label: "Membresías",
+    description: "Programa de fidelización: niveles con % de descuento, asignación a huéspedes del CRM y pase de invitado transferible (código/QR) que aplica el beneficio al reservar.",
+    category: "growth",
+    minimumPlan: "complete",
+    ownerConfigKey: "guestMembershipsModuleEnabled",
+    visibleForOwnerSettings: true,
+    visibleForSupport: true,
+    routePath: "/local-santo/membresias",
+    comingSoon: false,
+  },
+  {
     key: "channelManager",
     label: "Canales / OTAs",
     description: "Feed iCal de las fechas ocupadas para que Booking, Airbnb y otras OTAs se suscriban y no haya overbooking.",
@@ -1602,6 +1618,10 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "fiscalInvoicing") {
     return normalizeBoolean(config.fiscalInvoicingModuleEnabled, false)
+  }
+
+  if (moduleKey === "guestMemberships") {
+    return normalizeBoolean(config.guestMembershipsModuleEnabled, false)
   }
 
   if (moduleKey === "channelManager") {

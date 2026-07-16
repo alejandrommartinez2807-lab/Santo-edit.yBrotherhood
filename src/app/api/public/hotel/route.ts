@@ -11,8 +11,12 @@ import {
   getRoomBlocks,
   getRoomTypes,
   getRooms,
+  findGuestMembershipByCode,
+  getMemberships,
+  recordGuestPassUse,
   saveHotelReservation,
 } from "@/lib/orders"
+import { isGuestMembershipActive, normalizeDiscountPct } from "@/lib/hotelMemberships"
 import { evaluateStayRestrictions } from "@/lib/rateRestrictions"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
@@ -60,8 +64,10 @@ async function getBookingContext() {
   const access = getModulePlanAccess(raw, "bookingEngine")
   const servicesAccess = getModulePlanAccess(raw, "resortServices")
   const packagesAccess = getModulePlanAccess(raw, "hotelPackages")
+  const membershipsAccess = getModulePlanAccess(raw, "guestMemberships")
   return {
     enabled: access.includedInPlan && access.effectiveEnabled,
+    membershipsEnabled: membershipsAccess.includedInPlan && membershipsAccess.effectiveEnabled,
     bookingFields: config.hotelBookingFields as HotelBookingFieldsConfig,
     termsText: config.hotelTermsText || DEFAULT_HOTEL_TERMS,
     roomTypeDetails: config.hotelRoomTypeDetails,
@@ -113,6 +119,26 @@ async function getUpsellCatalog(
   } catch (error) {
     captureError(error, { route: "/api/public/hotel", action: "upsell-catalog" })
     return { style: upsell.style, services: [], packages: [] }
+  }
+}
+
+// Resuelve el beneficio de membresía desde el código propio o el pase de
+// invitado (si el módulo está activo, la membresía vale y no venció). El
+// descuento es SUGERIDO: se anota en la reserva y recepción lo confirma.
+async function resolveMembershipBenefit(code: string, branchId: string | null) {
+  const clean = cleanText(code)
+  if (!clean) return null
+  const match = await findGuestMembershipByCode(clean, branchId)
+  if (!match) return null
+  if (!isGuestMembershipActive(match.guestMembership, getReservationNow().date)) return null
+  const memberships = await getMemberships(branchId)
+  const membership = memberships.find((m) => m.id === match.guestMembership.membershipId)
+  if (!membership || !membership.active) return null
+  return {
+    guestMembership: match.guestMembership,
+    viaPass: match.viaPass,
+    membership,
+    discountPct: normalizeDiscountPct(membership.discountPct),
   }
 }
 
@@ -292,10 +318,13 @@ export async function POST(request: NextRequest) {
     }
 
     const branchId = await resolveBranchId(request)
-    // El catálogo de extras se trae AQUÍ (en paralelo) y no después del chequeo
-    // de disponibilidad: cualquier await entre pickFreeRoomOfType y el insert
-    // ensancha la ventana de doble reserva (lo vigila el QA E2/E3).
-    const [rooms, roomTypes, reservations, seasons, blocks, restrictions, upsellCatalog] =
+    // Código de membresía / pase de invitado (solo si el módulo está activo).
+    const membershipCode = context.membershipsEnabled ? cleanText(body.membershipCode).slice(0, 40) : ""
+    // El catálogo de extras y la membresía se traen AQUÍ (en paralelo) y no
+    // después del chequeo de disponibilidad: cualquier await entre
+    // pickFreeRoomOfType y el insert ensancha la ventana de doble reserva
+    // (lo vigila el QA E2/E3).
+    const [rooms, roomTypes, reservations, seasons, blocks, restrictions, upsellCatalog, membershipBenefit] =
       await Promise.all([
         getRooms(branchId),
         getRoomTypes(branchId),
@@ -304,6 +333,7 @@ export async function POST(request: NextRequest) {
         getRoomBlocks({ from: checkIn, to: checkOut }, branchId),
         getRateRestrictions(branchId),
         getUpsellCatalog(context, branchId),
+        resolveMembershipBenefit(membershipCode, branchId).catch(() => null),
       ])
 
     const roomType = roomTypes.find((t) => t.id === roomTypeId)
@@ -380,6 +410,9 @@ export async function POST(request: NextRequest) {
       extraValues.arrivalTime ? `Llegada: ${extraValues.arrivalTime}` : "",
       selectedPackage ? `Paquete: ${selectedPackage.name} ($${selectedPackage.price})` : "",
       servicesNote ? `Servicios: ${servicesNote}` : "",
+      membershipBenefit
+        ? `Membresía ${membershipBenefit.membership.name}${membershipBenefit.membership.level ? ` ${membershipBenefit.membership.level}` : ""} (-${membershipBenefit.discountPct}% sugerido)${membershipBenefit.viaPass ? ` · Pase de ${membershipBenefit.guestMembership.guestName}` : ""}`
+        : "",
       extraValues.requests,
     ].filter(Boolean)
     const reservation = await saveHotelReservation(
@@ -426,6 +459,15 @@ export async function POST(request: NextRequest) {
         { ok: false, error: "Esa habitación se acaba de ocupar. Prueba con otras fechas." },
         { status: 409 },
       )
+    }
+
+    // El pase de invitado usado suma un referido a la membresía (best-effort).
+    if (membershipBenefit?.viaPass) {
+      await recordGuestPassUse(
+        membershipBenefit.guestMembership.id,
+        `${guestName} · ${checkIn}`,
+        branchId,
+      ).catch((error) => captureError(error, { route: "/api/public/hotel", action: "membership-pass-use" }))
     }
 
     // Cada servicio queda como reserva de servicio VINCULADA a la estadía: al
@@ -476,6 +518,14 @@ export async function POST(request: NextRequest) {
           packageName: selectedPackage?.name || "",
           packagePrice: selectedPackage?.price || 0,
           extrasTotal,
+          membership: membershipBenefit
+            ? {
+                name: membershipBenefit.membership.name,
+                discountPct: membershipBenefit.discountPct,
+                viaPass: membershipBenefit.viaPass,
+                referredBy: membershipBenefit.viaPass ? membershipBenefit.guestMembership.guestName : "",
+              }
+            : null,
         },
       },
       { status: 201 },

@@ -47,6 +47,7 @@ const NAV_ENTRIES: NavEntry[] = [
   { key: "resortCharges", label: "Cargo resort", href: "/local-santo/cargos-resort" },
   { key: "hotelPackages", label: "Paquetes", href: "/local-santo/paquetes" },
   { key: "guestReviews", label: "Reseñas", href: "/local-santo/resenas" },
+  { key: "guestMemberships", label: "Membresías", href: "/local-santo/membresias" },
   { key: "guestCrm", label: "CRM", href: "/local-santo/crm" },
   { key: "channelManager", label: "Canales/OTAs", href: "/local-santo/canales" },
   { key: "guestNotifications", label: "Notificaciones", href: "/local-santo/notificaciones" },

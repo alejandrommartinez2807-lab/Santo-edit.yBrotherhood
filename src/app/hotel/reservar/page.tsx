@@ -81,6 +81,7 @@ type Created = {
   packageName?: string
   packagePrice?: number
   extrasTotal?: number
+  membership?: { name: string; discountPct: number; viaPass: boolean; referredBy: string } | null
 }
 
 /** "desayuno, wifi, spa" → lista limpia para chips. */
@@ -139,6 +140,7 @@ export default function HotelReservarPage() {
   const [document, setDocument] = useState("")
   const [address, setAddress] = useState("")
   const [arrivalTime, setArrivalTime] = useState("")
+  const [membershipCode, setMembershipCode] = useState("")
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [created, setCreated] = useState<Created | null>(null)
@@ -256,6 +258,7 @@ export default function HotelReservarPage() {
           document: document.trim(),
           address: address.trim(),
           arrivalTime: arrivalTime.trim(),
+          membershipCode: membershipCode.trim(),
           termsAccepted,
           checkIn,
           checkOut,
@@ -294,6 +297,17 @@ export default function HotelReservarPage() {
         <div className="mt-2 w-full max-w-sm">
           <ReservationQr code={created.code} />
         </div>
+        {created.membership && (
+          <div className="mt-2 w-full max-w-sm rounded-2xl border-2 border-[var(--brand-primary)]/30 bg-[var(--brand-primary)]/5 p-4 text-left">
+            <p className="inline-flex items-center gap-2 text-sm font-black text-[var(--brand-primary-dark)]">
+              <Sparkles size={15} /> Beneficio de membresía
+            </p>
+            <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]">
+              {created.membership.name} · -{created.membership.discountPct}% sugerido sobre la tarifa (recepción lo confirma al llegar).
+              {created.membership.viaPass && created.membership.referredBy ? ` Pase de ${created.membership.referredBy}.` : ""}
+            </p>
+          </div>
+        )}
         <div className="mt-2 w-full max-w-sm rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-5 text-left font-bold">
           <p className="flex items-center gap-2"><BedDouble size={16} /> {created.roomTypeName}</p>
           <p className="mt-1 flex items-center gap-2">
@@ -789,6 +803,12 @@ export default function HotelReservarPage() {
                     </>
                   )}
                 </div>
+                <input
+                  value={membershipCode}
+                  onChange={(e) => setMembershipCode(e.target.value.toUpperCase())}
+                  placeholder="Código de membresía o pase de invitado (opcional)"
+                  className={`${inputClass} sm:col-span-2`}
+                />
                 {/* Aceptación de términos: sin marcarla no se envía (y el servidor lo exige) */}
                 <label className="flex items-start gap-2.5 rounded-xl bg-[var(--brand-cream)]/70 px-4 py-3 sm:col-span-2">
                   <input

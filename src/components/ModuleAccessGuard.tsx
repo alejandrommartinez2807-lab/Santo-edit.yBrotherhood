@@ -92,6 +92,7 @@ type ModuleKey =
   | "guestNotifications"
   | "nightAudit"
   | "fiscalInvoicing"
+  | "guestMemberships"
   | "channelManager"
   | "waiterConfirmation"
   | "kitchenItems"

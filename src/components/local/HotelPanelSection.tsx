@@ -161,6 +161,7 @@ export default function HotelPanelSection({
   const showPackages = can("hotelPackages")
   const showReviews = can("guestReviews")
   const showCrm = can("guestCrm")
+  const showMemberships = can("guestMemberships")
   const showGroups = can("groupBookings")
   const showChannels = can("channelManager")
   const showNotifications = can("guestNotifications")
@@ -174,7 +175,7 @@ export default function HotelPanelSection({
     showNightAudit || showHotelReports
   const resortVisible =
     showResortServices || showResortCharges || showPackages || showReviews ||
-    showCrm || showGroups || showChannels || showNotifications || showHotelLanding
+    showCrm || showMemberships || showGroups || showChannels || showNotifications || showHotelLanding
 
   const [reservations, setReservations] = useState<HotelReservation[]>([])
   const [rooms, setRooms] = useState<HotelRoom[]>([])
@@ -432,6 +433,9 @@ export default function HotelPanelSection({
             )}
             {showCrm && (
               <ModuleTile href="/local-santo/crm" icon={Users} title="CRM de huéspedes" metric="Fichas y VIP" />
+            )}
+            {showMemberships && (
+              <ModuleTile href="/local-santo/membresias" icon={Star} title="Membresías" metric="Fidelización · pases" />
             )}
             {showChannels && (
               <ModuleTile href="/local-santo/canales" icon={Globe} title="Canales y OTAs" metric="Feed iCal" />

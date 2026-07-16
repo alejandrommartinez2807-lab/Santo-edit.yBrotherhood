@@ -292,6 +292,23 @@ export {
   updateReservationPaymentStatus,
 } from "./ordersReservationPayments"
 
+export type {
+  Membership,
+  GuestMembership,
+  SaveMembershipInput,
+  AssignGuestMembershipInput,
+} from "./ordersStoreMemberships"
+export {
+  getMemberships,
+  saveMembership,
+  deleteMembership,
+  getGuestMemberships,
+  assignGuestMembership,
+  deleteGuestMembership,
+  findGuestMembershipByCode,
+  recordGuestPassUse,
+} from "./ordersStoreMemberships"
+
 export type { NotificationEntry } from "./ordersNotifications"
 export { getNotificationLog, logNotification } from "./ordersNotifications"
 

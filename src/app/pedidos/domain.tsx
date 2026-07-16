@@ -448,6 +448,7 @@ export type BusinessConfig = {
   guestNotificationsModuleEnabled: boolean
   nightAuditModuleEnabled: boolean
   fiscalInvoicingModuleEnabled: boolean
+  guestMembershipsModuleEnabled: boolean
   channelManagerModuleEnabled: boolean
   deliveryEnabled: boolean
   // Botones de aviso al cliente por WhatsApp (Confirmar/Preparación/Salida…)
@@ -548,6 +549,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   guestNotificationsModuleEnabled: true,
   nightAuditModuleEnabled: true,
   fiscalInvoicingModuleEnabled: true,
+  guestMembershipsModuleEnabled: true,
   channelManagerModuleEnabled: true,
   deliveryEnabled: true,
   orderWhatsappStageButtonsEnabled: true,
@@ -2524,6 +2526,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     fiscalInvoicingModuleEnabled: normalizeBooleanConfig(
       source.fiscalInvoicingModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.fiscalInvoicingModuleEnabled
+    ),
+    guestMembershipsModuleEnabled: normalizeBooleanConfig(
+      source.guestMembershipsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.guestMembershipsModuleEnabled
     ),
     channelManagerModuleEnabled: normalizeBooleanConfig(
       source.channelManagerModuleEnabled,
