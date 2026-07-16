@@ -193,9 +193,10 @@ export async function dispatchRestockAlerts(): Promise<RestockDispatchResult> {
   return { ok: true, notifiedBranches }
 }
 
-// Disparo oportunista con throttle: lo llama el GET de pedidos del panel.
-// Nunca lanza y nunca bloquea la respuesta.
-export function maybeDispatchRestockAlerts(): void {
+// Disparo oportunista con throttle: lo llama el GET de pedidos del panel y
+// se AWAITEA antes de responder (en serverless el trabajo suelto tras
+// responder se congela). Solo una petición cada 10 min paga esta latencia.
+export async function maybeDispatchRestockAlerts(): Promise<void> {
   const now = Date.now()
 
   if (isRunning || now - lastRunAt < RUN_INTERVAL_MS) return
@@ -203,11 +204,11 @@ export function maybeDispatchRestockAlerts(): void {
   lastRunAt = now
   isRunning = true
 
-  void dispatchRestockAlerts()
-    .catch((error) => {
-      captureError(error, { route: "lib/inventoryRestockAlerts", action: "maybeDispatch" })
-    })
-    .finally(() => {
-      isRunning = false
-    })
+  try {
+    await dispatchRestockAlerts()
+  } catch (error) {
+    captureError(error, { route: "lib/inventoryRestockAlerts", action: "maybeDispatch" })
+  } finally {
+    isRunning = false
+  }
 }

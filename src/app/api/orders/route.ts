@@ -216,11 +216,14 @@ export async function GET(request: NextRequest) {
     ).effectiveEnabled
 
     // Aprovecha el polling del panel para despachar las encuestas post-venta
-    // automáticas pendientes, las alertas de reposición de inventario y los
-    // recordatorios de cuentas por pagar (throttled; nunca bloquean).
-    maybeDispatchPostSaleSurveys()
-    maybeDispatchRestockAlerts()
-    maybeDispatchPayablesReminders()
+    // automáticas, las alertas de reposición y los recordatorios de cuentas
+    // por pagar. Se AWAITEAN (en serverless el trabajo suelto tras responder
+    // se congela); el throttle interno hace que casi siempre sean no-op.
+    await Promise.all([
+      maybeDispatchPostSaleSurveys(),
+      maybeDispatchRestockAlerts(),
+      maybeDispatchPayablesReminders(),
+    ])
 
     const allOrders = await getOrders(
       await resolveScopedBranchId(request, access.role),

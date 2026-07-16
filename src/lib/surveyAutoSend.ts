@@ -147,9 +147,10 @@ export async function dispatchPostSaleSurveys(): Promise<SurveyDispatchResult> {
   return { ok: true, sent, pending: pendingOrders.length - sent }
 }
 
-// Disparo oportunista con throttle: lo llama el GET de pedidos del panel.
-// Nunca lanza y nunca bloquea la respuesta del panel.
-export function maybeDispatchPostSaleSurveys(): void {
+// Disparo oportunista con throttle: lo llama el GET de pedidos del panel y
+// se AWAITEA antes de responder (en serverless el trabajo suelto tras
+// responder se congela). Solo una petición cada 2 min paga esta latencia.
+export async function maybeDispatchPostSaleSurveys(): Promise<void> {
   const now = Date.now()
 
   if (isRunning || now - lastRunAt < RUN_INTERVAL_MS) return
@@ -157,11 +158,11 @@ export function maybeDispatchPostSaleSurveys(): void {
   lastRunAt = now
   isRunning = true
 
-  void dispatchPostSaleSurveys()
-    .catch((error) => {
-      captureError(error, { route: "lib/surveyAutoSend", action: "maybeDispatch" })
-    })
-    .finally(() => {
-      isRunning = false
-    })
+  try {
+    await dispatchPostSaleSurveys()
+  } catch (error) {
+    captureError(error, { route: "lib/surveyAutoSend", action: "maybeDispatch" })
+  } finally {
+    isRunning = false
+  }
 }

@@ -245,8 +245,11 @@ export async function dispatchPayablesReminders(): Promise<PayablesDispatchResul
   return { ok: true, notifiedBranches }
 }
 
-// Disparo oportunista con throttle: lo llama el GET de pedidos del panel.
-export function maybeDispatchPayablesReminders(): void {
+// Disparo oportunista con throttle: lo llama el GET de pedidos del panel y
+// se AWAITEA antes de responder. En serverless (Vercel) el trabajo suelto
+// tras responder se congela, así que el despacho debe terminar dentro de la
+// petición; solo una petición cada 10 min paga esta latencia.
+export async function maybeDispatchPayablesReminders(): Promise<void> {
   const now = Date.now()
 
   if (isRunning || now - lastRunAt < RUN_INTERVAL_MS) return
@@ -254,11 +257,11 @@ export function maybeDispatchPayablesReminders(): void {
   lastRunAt = now
   isRunning = true
 
-  void dispatchPayablesReminders()
-    .catch((error) => {
-      captureError(error, { route: "lib/payablesReminderAlerts", action: "maybeDispatch" })
-    })
-    .finally(() => {
-      isRunning = false
-    })
+  try {
+    await dispatchPayablesReminders()
+  } catch (error) {
+    captureError(error, { route: "lib/payablesReminderAlerts", action: "maybeDispatch" })
+  } finally {
+    isRunning = false
+  }
 }
