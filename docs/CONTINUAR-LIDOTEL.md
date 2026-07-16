@@ -16,8 +16,8 @@ QA post-migraciones: **54/54 y 25/25 en verde**. **DEPLOY HECHO**
 (`hotel-valencia-ejmbknnu1`, Ready): /admin 200, /hotel/reservar 200, feed
 iCal 200, disponibilidad pública OK en https://hotel-valencia.vercel.app.
 
-Pendiente menor: capturas Edge/CDP de los módulos nuevos y la auditoría
-módulo-por-módulo v6 (sigue 7/31 ✔, tabla más abajo).
+Capturas Edge/CDP hechas y AUDITORÍA v6 COMPLETA (31/31) el 2026-07-16 —
+ver la tabla de auditoría más abajo. Sin hallazgos bloqueantes.
 
 Las NUEVE brechas del PROMPT v7 están construidas, verificadas y commiteadas
 en `demo-lidotel` (tsc + eslint 0/0 + 442 tests + QA 54/54 y 25/25 en verde):
@@ -254,7 +254,35 @@ y las memorias.
 | 12 | Cocina (Restaurante/Habitaciones/Por producto) | ✔ 15 jul | fusionada, sin módulo duplicado |
 | 10 | QR de habitaciones | ✔ 15 jul | auto-generados desde Habitaciones |
 | 15 | Menú | ✔ 15 jul | 17 productos demo + promo + destacados |
-| — | resto | pendiente | usar el MÉTODO de arriba |
+| 5 | Folio | ✔ 16 jul | captura + flujo cubierto por QA (open/charge/close) |
+| 6 | Reservas hotel | ✔ 16 jul | disponibilidad viva en cabecera; avisos WhatsApp integrados |
+| 7 | Reservas online | ✔ 16 jul | enlace público + 2 pendientes con botonera de avisos |
+| 8 | Calendario | ✔ 16 jul | tape chart renderiza reservas reales + ocupación por día |
+| 9 | Habitaciones | ✔ 16 jul | tipos, fotos por tipo, alta en serie |
+| 11 | Housekeeping | ✔ 16 jul | 25 limpias, estados y tareas por habitación |
+| 13 | Room service (delivery) | ✔ 16 jul | título hotel-ificado; jerga "delivery" solo interna |
+| 14 | Tickets | ✔ 16 jul | impresión operativa, textos con room service |
+| 15b | Menú avanzado | ✔ 16 jul | constructor carga bien; hamburguesas = productos demo válidos |
+| 16 | Servicios | ✔ 16 jul | 5 servicios demo con cupo; QA cubre reservas de servicio |
+| 17 | Paquetes | ✔ 16 jul | Paquete Romántico demo + cargar al folio |
+| 18 | Cargo resort | ✔ 16 jul | cargar a la habitación (huésped en casa) |
+| 19 | Reseñas | ✔ 16 jul | 4.8 con 5 reseñas demo, moderación visible |
+| 20 | CRM + campañas | ✔ 16 jul | probado con 11 filas reales (P2-D) |
+| 21 | Portal huésped | ✔ 16 jul | enlace + explicación clara |
+| 22 | Notificaciones | ✔ 16 jul | plantillas WhatsApp por estado |
+| 23 | Página hotel | ✔ 16 jul | editor completo con datos reales del demo |
+| 24 | Tarifas/Planes/Grupos/Canales | ✔ 16 jul | canales ahora con import iCal por habitación (P3-G) |
+| 25 | Facturación | ✔ 16 jul | + exportes contables (P1-B) |
+| 26 | Cierres/Historial | ✔ 16 jul | historial con CSV |
+| 27 | Inventario/Alertas | ✔ 16 jul | subrecetas/proveedores/compras/CxP OFF por preset (mensaje claro; se activan en Configuración) |
+| 28 | Control de gastos | ✔ 16 jul | carga bien por sede |
+| 29 | Clientes | ✔ 16 jul | "huéspedes y clientes"; vacío correcto (consumos del POS) |
+| 30 | Usuarios/Auditoría/Sucursales/Config/Soporte/Dueño | ✔ 16 jul | Dueño = métricas POS (el dinero hotelero vive en Caja recepción/Reportes; consolidado P2-F) |
+| 31 | Público (/hotel, /reservar, /mi-reserva, /carta) | ✔ 16 jul | landing 5★, motor con "Quedan X" + incluidos, carta habla de room service |
+
+**AUDITORÍA v6 COMPLETA (31/31) el 2026-07-16.** Capturas en el scratchpad de
+la sesión (shots/). Hallazgos: ninguno bloqueante; los módulos de proveedores
+están apagados por el preset Hotel/Resort a propósito.
 
 
 ## Estado 2026-07-15 (tarde) — upsell, POS por áreas, reportes con gráficas
