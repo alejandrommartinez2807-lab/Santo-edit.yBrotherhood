@@ -36,6 +36,7 @@ import { getModulePlanAccess, type LocalModuleKey } from "@/lib/localPlans"
 import { resolveBranchId, resolveScopedBranchId } from "@/lib/branch"
 import { maybeDispatchPostSaleSurveys } from "@/lib/surveyAutoSend"
 import { maybeDispatchRestockAlerts } from "@/lib/inventoryRestockAlerts"
+import { maybeDispatchPayablesReminders } from "@/lib/payablesReminderAlerts"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
 import { DataUrlImageError, assertDataUrlImage, sanitizeUploadedImageFileName } from "@/lib/dataUrlImages"
@@ -215,10 +216,11 @@ export async function GET(request: NextRequest) {
     ).effectiveEnabled
 
     // Aprovecha el polling del panel para despachar las encuestas post-venta
-    // automáticas pendientes y las alertas de reposición de inventario
-    // (throttled; nunca bloquean esta respuesta).
+    // automáticas pendientes, las alertas de reposición de inventario y los
+    // recordatorios de cuentas por pagar (throttled; nunca bloquean).
     maybeDispatchPostSaleSurveys()
     maybeDispatchRestockAlerts()
+    maybeDispatchPayablesReminders()
 
     const allOrders = await getOrders(
       await resolveScopedBranchId(request, access.role),

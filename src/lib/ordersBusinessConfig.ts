@@ -152,6 +152,9 @@ export type BusinessConfig = {
   cancellationAlertsEnabled: boolean
   // Push de reposición de inventario (agotados/bajos) a dueños, apagable.
   inventoryRestockPushEnabled: boolean
+  // Recordatorio push de facturas por pagar (X días antes del vencimiento).
+  payablesReminderPushEnabled: boolean
+  payablesReminderDaysBefore: number
   // Guía paso a paso y advertencias del checkout público (configurables).
   publicOrderStepsEnabled: boolean
   publicPrepayNoticeEnabled: boolean
@@ -308,6 +311,8 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   postSaleSurveyAspects: "Sabor de la comida, Tiempo de entrega, Atención",
   cancellationAlertsEnabled: true,
   inventoryRestockPushEnabled: true,
+  payablesReminderPushEnabled: true,
+  payablesReminderDaysBefore: 3,
   publicOrderStepsEnabled: true,
   publicPrepayNoticeEnabled: true,
   publicPrepayNoticeText: "",
@@ -750,6 +755,17 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.inventoryRestockPushEnabled,
       DEFAULT_BUSINESS_CONFIG.inventoryRestockPushEnabled
     ),
+    payablesReminderPushEnabled: normalizeBooleanConfig(
+      source.payablesReminderPushEnabled,
+      DEFAULT_BUSINESS_CONFIG.payablesReminderPushEnabled
+    ),
+    payablesReminderDaysBefore: (() => {
+      const days = Number(source.payablesReminderDaysBefore)
+      if (!Number.isFinite(days) || days < 0) {
+        return DEFAULT_BUSINESS_CONFIG.payablesReminderDaysBefore
+      }
+      return Math.min(60, Math.max(0, Math.round(days)))
+    })(),
     publicOrderStepsEnabled: normalizeBooleanConfig(
       source.publicOrderStepsEnabled,
       DEFAULT_BUSINESS_CONFIG.publicOrderStepsEnabled

@@ -177,6 +177,9 @@ type BusinessConfig = {
   cancellationAlertsEnabled: boolean;
   // Push de reposición de inventario (agotados/bajos) a dueños, apagable.
   inventoryRestockPushEnabled: boolean;
+  // Recordatorio push de facturas por pagar (X días antes del vencimiento).
+  payablesReminderPushEnabled: boolean;
+  payablesReminderDaysBefore: number;
   // Guía paso a paso y advertencias del checkout público.
   publicOrderStepsEnabled: boolean;
   publicPrepayNoticeEnabled: boolean;
@@ -351,6 +354,8 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   postSaleSurveyAspects: "Sabor de la comida, Tiempo de entrega, Atención",
   cancellationAlertsEnabled: true,
   inventoryRestockPushEnabled: true,
+  payablesReminderPushEnabled: true,
+  payablesReminderDaysBefore: 3,
   publicOrderStepsEnabled: true,
   publicPrepayNoticeEnabled: true,
   publicPrepayNoticeText: "",
@@ -1076,6 +1081,17 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.inventoryRestockPushEnabled,
       DEFAULT_BUSINESS_CONFIG.inventoryRestockPushEnabled,
     ),
+    payablesReminderPushEnabled: normalizeBoolean(
+      source.payablesReminderPushEnabled,
+      DEFAULT_BUSINESS_CONFIG.payablesReminderPushEnabled,
+    ),
+    payablesReminderDaysBefore: (() => {
+      const days = Number(source.payablesReminderDaysBefore);
+      if (!Number.isFinite(days) || days < 0) {
+        return DEFAULT_BUSINESS_CONFIG.payablesReminderDaysBefore;
+      }
+      return Math.min(60, Math.max(0, Math.round(days)));
+    })(),
     publicOrderStepsEnabled: normalizeBoolean(
       source.publicOrderStepsEnabled,
       DEFAULT_BUSINESS_CONFIG.publicOrderStepsEnabled,
@@ -2904,6 +2920,56 @@ export default function BusinessConfigPage() {
                 </span>
               </span>
             </label>
+
+            <label className="mt-3 flex items-start gap-3">
+              <input
+                type="checkbox"
+                checked={businessConfig.payablesReminderPushEnabled}
+                onChange={(e) =>
+                  setBusinessConfig((c) => ({
+                    ...c,
+                    payablesReminderPushEnabled: e.target.checked,
+                  }))
+                }
+                className="mt-0.5 h-5 w-5 accent-[var(--brand-primary)]"
+              />
+              <span>
+                <span className="block text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
+                  Recordatorio de cuentas por pagar
+                </span>
+                <span className="mt-0.5 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                  Las facturas a crédito de proveedores (Compras con fecha de
+                  vencimiento) generan una notificación al dueño antes de
+                  vencerse, y otra si ya están vencidas. Una por día por sede
+                  mientras haya pendientes.
+                </span>
+              </span>
+            </label>
+
+            {businessConfig.payablesReminderPushEnabled && (
+              <div className="mt-3">
+                <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                  Avisar con cuántos días de anticipación
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={60}
+                  value={businessConfig.payablesReminderDaysBefore}
+                  onChange={(e) =>
+                    setBusinessConfig((c) => ({
+                      ...c,
+                      payablesReminderDaysBefore: Number(e.target.value) || 0,
+                    }))
+                  }
+                  className="mt-2 w-40 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                />
+                <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/55">
+                  Ejemplo: 3 = te aviso cuando falten 3 días o menos para el
+                  vencimiento de cada factura.
+                </p>
+              </div>
+            )}
 
             <div className="mt-5 border-t-2 border-dashed border-[var(--brand-primary)]/15 pt-4">
               <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
