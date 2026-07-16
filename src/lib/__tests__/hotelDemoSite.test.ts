@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
+  DEMO_PACKAGES,
   DEMO_ROOM_TYPES,
   DEMO_SERVICES,
   demoAvailabilityPayload,
@@ -58,7 +59,7 @@ describe("demoReservationPayload", () => {
     const result = demoReservationPayload({
       ...base,
       services: [{ id: service.id, people: 2 }],
-      packageId: "demo-romance",
+      packageId: DEMO_PACKAGES[0].id,
     })
     if (result.payload.ok !== true) throw new Error("esperaba ok")
     const r = result.payload.reservation as { extrasTotal: number; packageName: string }
