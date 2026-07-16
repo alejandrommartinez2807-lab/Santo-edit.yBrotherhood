@@ -19,6 +19,7 @@ import {
 } from "@/lib/businessConfigFields"
 import {
   getModulePlanAccess,
+  LOCAL_MODULE_DEFINITIONS,
   normalizeLocalModuleList,
   normalizeLocalPlanKey,
   normalizeLocalPlanMode,
@@ -44,46 +45,19 @@ import { writeAuditLog } from "@/lib/audit"
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
+// Mapa interruptor→módulo construido desde el REGISTRO CANÓNICO de módulos:
+// un módulo nuevo con ownerConfigKey queda cubierto automáticamente (antes era
+// una lista a mano y los módulos hoteleros quedaron fuera: sus interruptores
+// se descartaban en silencio al guardar).
 const MODULE_KEY_BY_CONFIG_KEY: Record<string, LocalModuleKey> = {
-  ownerDashboardModuleEnabled: "ownerDashboard",
-  cashierModuleEnabled: "cashier",
-  kitchenModuleEnabled: "kitchen",
+  // Alias históricos que no salen del registro:
   deliveryEnabled: "delivery",
-  deliveryModuleEnabled: "delivery",
-  historyModuleEnabled: "history",
-  expensesModuleEnabled: "expenses",
-  promotionModuleEnabled: "promotions",
-  menuProductsModuleEnabled: "menuProducts",
-  featuredProductsModuleEnabled: "featuredProducts",
-  customersModuleEnabled: "customers",
-  inventoryModuleEnabled: "inventory",
-  inventoryAlertsModuleEnabled: "inventoryAlerts",
-  advancedMenuModuleEnabled: "advancedMenu",
-  productVariationsModuleEnabled: "productVariations",
-  productAddonsModuleEnabled: "productAddons",
-  productBuilderModuleEnabled: "productBuilder",
-  productCombosModuleEnabled: "productCombos",
-  productAvailabilityModuleEnabled: "productAvailability",
-  salesChannelsModuleEnabled: "salesChannels",
-  paymentProofsModuleEnabled: "paymentProofs",
-  openAccountsModuleEnabled: "openAccounts",
-  tablesModuleEnabled: "tables",
-  qrTablesModuleEnabled: "qrTables",
-  reservationsModuleEnabled: "reservations",
-  waiterConfirmationModuleEnabled: "waiterConfirmation",
-  kitchenItemsModuleEnabled: "kitchenItems",
-  ticketsModuleEnabled: "tickets",
-  splitBillModuleEnabled: "splitBill",
-  serviceChargeTipsModuleEnabled: "serviceChargeTips",
-  suppliersModuleEnabled: "suppliers",
-  supplierPurchasesModuleEnabled: "supplierPurchases",
-  accountsPayableModuleEnabled: "accountsPayable",
-  subrecipesModuleEnabled: "subrecipes",
-  auditLogModuleEnabled: "auditLog",
-  visualEditorModuleEnabled: "visualEditor",
-  trainingModeModuleEnabled: "trainingMode",
-  branchesModuleEnabled: "branches",
   soundEnabled: "sounds",
+}
+for (const definition of LOCAL_MODULE_DEFINITIONS) {
+  if (definition.ownerConfigKey) {
+    MODULE_KEY_BY_CONFIG_KEY[definition.ownerConfigKey] = definition.key
+  }
 }
 
 function getRequestPassword(request: NextRequest) {
@@ -481,45 +455,10 @@ function normalizeBusinessConfigPayload(
     config.manualExchangeRate = readNumber(source, "manualExchangeRate")
   }
 
-  setBooleanConfig(config, source, "deliveryEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "ownerDashboardModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "cashierModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "kitchenModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "deliveryModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "historyModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "expensesModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "promotionModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "menuProductsModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "featuredProductsModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "customersModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "inventoryModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "inventoryAlertsModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "advancedMenuModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "productVariationsModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "productAddonsModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "productBuilderModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "productCombosModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "productAvailabilityModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "salesChannelsModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "paymentProofsModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "openAccountsModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "tablesModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "qrTablesModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "reservationsModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "waiterConfirmationModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "kitchenItemsModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "ticketsModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "splitBillModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "serviceChargeTipsModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "suppliersModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "supplierPurchasesModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "accountsPayableModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "subrecipesModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "auditLogModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "visualEditorModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "trainingModeModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "branchesModuleEnabled", currentBusinessConfig, role)
-  setBooleanConfig(config, source, "soundEnabled", currentBusinessConfig, role)
+  // Interruptores de módulo: TODOS los del registro canónico (más los alias).
+  for (const configKey of Object.keys(MODULE_KEY_BY_CONFIG_KEY)) {
+    setBooleanConfig(config, source, configKey, currentBusinessConfig, role)
+  }
   setBooleanConfig(config, source, "filtersOpenByDefault", currentBusinessConfig, role)
   setBooleanConfig(config, source, "allowCloseWithPendingOrders", currentBusinessConfig, role)
   setBooleanConfig(config, source, "allowCloseWithPendingPayments", currentBusinessConfig, role)
