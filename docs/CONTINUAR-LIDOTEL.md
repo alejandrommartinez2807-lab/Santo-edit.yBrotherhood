@@ -1,4 +1,150 @@
-# Continuar el demo Lidotel — prompt + backlog (v6 · 2026-07-15)
+# Continuar el demo Lidotel — prompt + backlog (v7 · 2026-07-15)
+
+## PROMPT v7 (copiar/pegar) — CERRAR LAS BRECHAS CONTRA ODOO (plantilla base)
+
+> Lidotel es la PLANTILLA BASE del producto hotelero: todo lo que se construya
+> aquí se replica luego en cada cliente (el próximo es Koral Suits / Koral OHS
+> Hoteles Morrocoy, Tucacas — su personalización va en OTRA instancia, NO
+> mezclar su marca aquí). Objetivo de esta tanda: cerrar las brechas reales
+> frente a Odoo/ERPs para vender sin objeciones.
+
+```
+Continúo el demo Lidotel (PMS hotelero, plantilla base del producto). Lee las
+memorias santo-edit-hotel-deploy y santo-edit-hotel-pms-build y el archivo
+docs/CONTINUAR-LIDOTEL.md del worktree ANTES de tocar código.
+
+Reglas fijas (no negociables):
+- Worktree: D:/Santo edit/.claude/worktrees/nice-visvesvaraya-5726a1 (rama
+  demo-lidotel). NUNCA desde D:\Santo edit. Deploy autorizado al final:
+  npx vercel --prod --scope carlos-projects8 DESDE el worktree.
+- Dev: el usuario corre npm run dev en 3000 (verificar con curl). NUNCA npm
+  run build con el dev vivo. Verificación: tsc + eslint + vitest --dir ./src
+  + curl con x-admin-password (la clave del .env.local lleva comillas:
+  quitarlas) + Origin http://localhost:3000. Capturas: Edge headless + CDP
+  (scripts shots*.mjs del scratchpad; Claude in Chrome NO alcanza localhost).
+- QA: node scripts/qa-hotel-completo.mjs (54) + qa-hotel-ronda2.mjs (20). NO
+  editar archivos mientras corren. JAMÁS meter un await entre
+  pickFreeRoomOfType y saveHotelReservation en /api/public/hotel (carrera
+  E2/E3; existe doble chequeo optimista post-insert como red).
+- Migraciones: Claude escribe el .sql (numeración siguiente a las existentes
+  en Supabase, la 0039 fue la última conocida) y SE DETIENE para que el
+  usuario la aplique en Supabase antes de seguir esa fase.
+- Módulos nuevos = interruptor + plan: registrar en localPlans
+  (LOCAL_MODULE_DEFINITIONS con ownerConfigKey), y cablear el default en las
+  TRES copias de BusinessConfig (ordersBusinessConfig.ts, configuracion/
+  page.tsx, pedidos/domain.tsx) — el test businessConfigModuleKeys lo vigila.
+  Claves de contenido (no-módulo) solo necesitan el normalizador canónico
+  (saveBusinessConfig hace merge parcial).
+- Método: UNA brecha por fase → migración (si aplica) → lib pura con tests →
+  API con guard por rol+módulo → UI champán fina (AA, español neutro) →
+  commit → siguiente. Al final: QA completo + capturas + deploy + actualizar
+  GUIA-HOTELERO.md, esta tabla y las memorias.
+
+BRECHAS A CERRAR (en este orden):
+
+P1-A · COBRO ONLINE REAL (la objeción #1)
+  Hoy los depósitos se reportan y confirman a mano (reservation-payments +
+  payment-proofs). Construir el "botón de pago" venezolano:
+  1. En la confirmación de reserva pública y en Mi reserva: sección "Abona tu
+     reserva" con los métodos que el dueño active (pago móvil C2P, Zelle,
+     transferencia, Binance/USDT) — datos de cobro por método editables en
+     business_config (patrón publicPaymentMethodDetails ya existe en /carta).
+  2. El huésped reporta el pago con referencia + monto + captura (bucket
+     payment-proofs ya existe) SIN estar logueado, atado a su código de
+     reserva; cae como "reportado" en Pagos y depósitos y en Caja recepción
+     (depósitos por confirmar) — ese circuito ya existe, solo falta la
+     entrada pública.
+  3. Conciliación semiautomática: al confirmar, el staff ve monto reportado
+     vs restante de la reserva y el sistema marca diferencias. (API bancaria
+     C2P real queda para cuando un banco dé acceso; dejar la interfaz lista
+     con provider "manual".)
+  Aceptación: reservar → abonar desde el teléfono → verlo caer en Caja
+  recepción y Cierre del día sin tocar el panel. QA nuevo: reporte público de
+  pago + confirmación + aparece en /api/folios/summary.
+
+P1-B · SALIDA CONTABLE (coexistir con el contador, no competir)
+  No construir contabilidad. Construir EXPORTES que el contador importe:
+  1. Libro de ventas estilo SENIAT (por rango): fecha, factura/correlativo,
+     cliente, RIF, base por tasa de IVA, IVA, IGTF, total — desde las
+     facturas ya existentes (facturación + invoiceTotals + fiscal.ts).
+  2. Resumen mensual de cierres (business_days + ventas POS + folio) en CSV.
+  3. Export TOTAL de datos del hotel (reservas, folios, facturas, clientes)
+     en CSV por sección — "sus datos son suyos" como argumento de venta.
+  Ubicación: módulo Facturación (pestaña "Exportes contables") + Cierres.
+  Aceptación: descargar los 3 CSV con datos reales del demo y abrirlos sin
+  mojibake en Excel (BOM UTF-8 ya resuelto en lib/csv.ts).
+
+P2-C · MEMBRESÍAS / FIDELIZACIÓN (el "Koral Circle" genérico)
+  Migración: tablas memberships (id, nombre, nivel, beneficios texto,
+  descuento %, activo) y guest_memberships (huésped CRM ↔ membresía, código,
+  pase_invitado_codigo, vence). Módulo panel "Membresías" (alta, asignar a
+  huésped del CRM, ver estado) + en el folio/reserva: si el huésped tiene
+  membresía activa, mostrar chip y aplicar el descuento % a la tarifa como
+  sugerencia (el staff confirma). Pase de invitado: código QR transferible
+  que en la reserva pública aplica el beneficio y registra quién refirió.
+  Gate: módulo nuevo guestMemberships (cablear en 3 copias + localPlans).
+  Aceptación: crear membresía → asignarla → reservar con pase → ver el
+  descuento sugerido y el referido en el CRM.
+
+P2-D · CAMPAÑAS / LISTAS DESDE EL CRM
+  Sin email masivo todavía: listas segmentadas exportables + plantillas.
+  En CRM huéspedes: filtros (estuvo entre fechas, gastó más de X, cumple
+  años este mes, miembro/no miembro) → exportar CSV y "copiar teléfonos"
+  para WhatsApp + plantillas de mensaje editables (business_config) con
+  variables {nombre}, {hotel}. Aceptación: segmentar el demo y copiar la
+  lista con un clic.
+
+P2-E · API PÚBLICA DOCUMENTADA + WEBHOOKS
+  1. docs/API-HOTEL.md: los endpoints públicos y privados que ya existen
+     (auth por header, ejemplos curl).
+  2. Webhooks salientes: tabla webhooks (url, evento, secreto, activo) +
+     disparos en reserva creada/confirmada, pago confirmado, check-in/out
+     (POST JSON firmado HMAC, best-effort con captureError). Módulo simple
+     en Configuración → Integraciones. Gate: módulo webhooks.
+  Aceptación: registrar un webhook de prueba (webhook.site) y ver llegar
+  los eventos del QA.
+
+P2-F · DASHBOARD MULTI-PROPIEDAD (dueño consolidado)
+  Ya existen sucursales/branches. Falta la vista consolidada del dueño:
+  en Dueño (o Reportes hotel con selector "Todas"): ocupación, ingresos,
+  llegadas de HOY por propiedad, en una sola pantalla (agregación server en
+  una API nueva /api/hotel-reports/consolidado que itere branches accesibles
+  al rol owner). Aceptación: crear una 2ª sede demo con 2 habitaciones y ver
+  el consolidado sumar bien.
+
+P3-G · CHANNEL MANAGER FASE 1 (iCal bidireccional)
+  Ya existe icalFeed (export). Falta: importar iCal externo por habitación
+  (URL de Airbnb/Booking por room, cron o botón "Sincronizar ahora") creando
+  bloqueos room_blocks con fuente "ical" (no reservas), y publicar la URL
+  iCal por habitación en el módulo Habitaciones para pegarla en Airbnb.
+  Regla: NUNCA borrar bloqueos manuales; solo gestionar los de fuente ical.
+  Aceptación: importar un .ics de prueba y ver el cupo público bajar.
+
+P3-H · TURNOS / ASISTENCIA DEL PERSONAL (sin nómina)
+  Migración: staff_shifts (usuario staff, fecha, turno, entrada real, salida
+  real, nota). Módulo "Turnos": calendario semanal simple por usuario (los
+  usuarios ya existen en staff/), marcar entrada/salida desde el panel del
+  empleado, y el gerente ve la semana. NADA de sueldos. Gate: módulo
+  staffShifts. Aceptación: planificar una semana y marcar una asistencia.
+
+P3-I · CONFIANZA OPERATIVA
+  1. Página "Respaldo y datos" en Configuración: cuándo fue el último backup
+     de Supabase (texto informativo), botón del export total (reusa P1-B.3).
+  2. docs/RESPALDO.md: qué se respalda y cómo se restaura.
+  3. Revisar que TODO módulo nuevo de esta tanda quede en GUIA-HOTELERO.md.
+
+Al terminar TODO: vitest + QA 54/54 y 20/20 (ampliados con los checks
+nuevos) + capturas Edge/CDP de cada módulo nuevo + deploy + verificación en
+vivo con curl + actualizar memorias y la tabla de auditoría v6.
+```
+
+### Nota para la instancia Koral (NO hacer en la plantilla)
+Cuando el usuario lo pida, la personalización Koral Suits / Koral OHS
+Hoteles Morrocoy va aparte: fork/instancia con su Supabase propio, nombre,
+fotos de Morrocoy, paquetes "Escape Náutico Full Day" y "Koral Weekend
+Retreat", servicios de catamarán/embarcaciones, y membresía "Koral Circle"
+(usa P2-C). La plantilla Lidotel queda intacta como base.
+
 
 ## PROMPT v6 (copiar/pegar) — AUDITORÍA MÓDULO POR MÓDULO
 
