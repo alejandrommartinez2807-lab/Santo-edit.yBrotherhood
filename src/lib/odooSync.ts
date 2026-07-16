@@ -168,17 +168,167 @@ export function mapProductToOdoo(product: LocalProduct): Record<string, unknown>
   return values
 }
 
+// ---------- V8-C · El dinero a Odoo (facturas, pagos, reservas) ----------
+
+/** Fecha ISO/timestamp → "YYYY-MM-DD" (formato date de Odoo). Vacío si no parsea. */
+export function odooDate(iso: unknown): string {
+  const s = String(iso || "").trim()
+  const match = s.match(/^(\d{4}-\d{2}-\d{2})/)
+  return match ? match[1] : ""
+}
+
+export type LocalInvoiceForOdoo = {
+  number: number
+  serie: string
+  customerName?: string
+  subtotal: number
+  taxRate: number
+  tax: number
+  createdAt?: string
+}
+
+/**
+ * Factura del hotel → account.move (factura de cliente, queda en BORRADOR).
+ * Si Odoo tiene un impuesto de venta con la misma tasa (taxId), la línea base lo
+ * lleva y Odoo calcula el IVA solo (asiento cuadrado). Si no, el IVA va como
+ * línea aparte para que el total coincida igual — el contador lo ajusta.
+ */
+export function mapInvoiceToAccountMove(
+  invoice: LocalInvoiceForOdoo,
+  opts: { partnerId: number; taxId?: number | null },
+): Record<string, unknown> {
+  const serie = String(invoice.serie || "A").trim() || "A"
+  const lines: unknown[] = [
+    [
+      0,
+      0,
+      {
+        name: "Estadía y servicios del hotel",
+        quantity: 1,
+        price_unit: Math.max(0, Number(invoice.subtotal) || 0),
+        tax_ids: opts.taxId ? [[6, 0, [opts.taxId]]] : [],
+      },
+    ],
+  ]
+  const tax = Math.max(0, Number(invoice.tax) || 0)
+  if (!opts.taxId && tax > 0) {
+    lines.push([
+      0,
+      0,
+      { name: `IVA ${Math.max(0, Number(invoice.taxRate) || 0)}%`, quantity: 1, price_unit: tax, tax_ids: [] },
+    ])
+  }
+  const values: Record<string, unknown> = {
+    move_type: "out_invoice",
+    partner_id: opts.partnerId,
+    ref: `Hotel ${serie}-${Number(invoice.number) || 0}`,
+    invoice_line_ids: lines,
+  }
+  const date = odooDate(invoice.createdAt)
+  if (date) values.invoice_date = date
+  return values
+}
+
+export type LocalPaymentForOdoo = {
+  amount: number
+  method?: string
+  reference?: string
+  reservationCode?: string
+  createdAt?: string
+}
+
+/** Pago confirmado de reserva → account.payment (entrada de cliente, borrador). */
+export function mapPaymentToOdoo(
+  payment: LocalPaymentForOdoo,
+  opts: { partnerId: number },
+): Record<string, unknown> {
+  const refParts = [
+    String(payment.reservationCode || "").trim() && `Reserva ${String(payment.reservationCode).trim()}`,
+    String(payment.method || "").trim(),
+    String(payment.reference || "").trim(),
+  ].filter(Boolean)
+  const values: Record<string, unknown> = {
+    payment_type: "inbound",
+    partner_type: "customer",
+    partner_id: opts.partnerId,
+    amount: Math.max(0, Number(payment.amount) || 0),
+  }
+  if (refParts.length > 0) values.ref = refParts.join(" · ")
+  const date = odooDate(payment.createdAt)
+  if (date) values.date = date
+  return values
+}
+
+export type LocalReservationForOdoo = {
+  code: string
+  checkInDate: string
+  checkOutDate: string
+  nights: number
+  ratePerNight: number
+  status?: string
+}
+
+/**
+ * Reserva → sale.order (presupuesto en borrador). La línea usa un producto
+ * genérico "Estadía de hotel" (sale.order.line exige product_id).
+ */
+export function mapReservationToSaleOrder(
+  reservation: LocalReservationForOdoo,
+  opts: { partnerId: number; stayProductId: number },
+): Record<string, unknown> {
+  const nights = Math.max(1, Number(reservation.nights) || 1)
+  const code = String(reservation.code || "").trim()
+  return {
+    partner_id: opts.partnerId,
+    client_order_ref: code,
+    note: `Reserva ${code} · ${reservation.checkInDate} → ${reservation.checkOutDate} · estado: ${String(reservation.status || "").trim() || "pendiente"}`,
+    order_line: [
+      [
+        0,
+        0,
+        {
+          product_id: opts.stayProductId,
+          name: `Estadía ${nights} noche(s) (${reservation.checkInDate} → ${reservation.checkOutDate})`,
+          product_uom_qty: nights,
+          price_unit: Math.max(0, Number(reservation.ratePerNight) || 0),
+        },
+      ],
+    ],
+  }
+}
+
+/**
+ * Valores seguros para ACTUALIZAR en Odoo: sin los campos *_line_ids (un write
+ * con [0,0,...] AGREGA líneas y duplicaría el detalle en cada re-sync).
+ */
+export function stripLineFields(values: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(values)) {
+    if (key === "invoice_line_ids" || key === "order_line") continue
+    out[key] = value
+  }
+  return out
+}
+
 // ---------- Plan de sincronización idempotente ----------
 
 export type SyncMapEntry = { localId: string; odooId: number; recordHash: string }
 export type PlannedRecord = { localId: string; hash: string }
 
-/** Un registro local listo para Odoo: su id local y los valores del modelo. */
-export type SyncableRecord = { localId: string; values: Record<string, unknown> }
+/**
+ * Un registro local listo para Odoo: su id local y los valores del modelo.
+ * fingerprint (opcional) es lo que se hashea en su lugar: se usa cuando los
+ * values dependen de datos que solo existen al escribir (p. ej. el partner_id
+ * de Odoo) — así el plan y el dry-run no dependen de resolverlos.
+ */
+export type SyncableRecord = { localId: string; values: Record<string, unknown>; fingerprint?: unknown }
 
-/** Deriva los PlannedRecord (localId + hash de los valores) para planificar. */
+/** Deriva los PlannedRecord (localId + hash del contenido) para planificar. */
 export function toPlannedRecords(records: SyncableRecord[]): PlannedRecord[] {
-  return records.map((r) => ({ localId: r.localId, hash: recordHash(r.values) }))
+  return records.map((r) => ({
+    localId: r.localId,
+    hash: recordHash(r.fingerprint === undefined ? r.values : r.fingerprint),
+  }))
 }
 
 export type SyncPlan = {

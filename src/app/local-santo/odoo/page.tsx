@@ -233,7 +233,7 @@ function OdooContent() {
               <section className="mt-4 rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-4">
                 <p className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]"><RefreshCw size={15} /> Sincronizar con Odoo</p>
                 <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/55">
-                  Empuja tus huéspedes (→ contactos) y productos (→ productos) a Odoo. Es idempotente: correrlo dos veces no duplica nada.
+                  Empuja tus huéspedes (→ contactos), productos (→ productos), reservas (→ presupuestos de venta), facturas (→ borradores contables) y pagos confirmados (→ cobros) a Odoo. Es idempotente: correrlo dos veces no duplica nada.
                 </p>
                 <label className="mt-3 flex items-center gap-2 text-sm font-bold text-[var(--brand-ink-2)]/80">
                   <input type="checkbox" checked={dryRun} onChange={(e) => setDryRun(e.target.checked)} className="h-4 w-4 accent-[var(--brand-primary)]" />

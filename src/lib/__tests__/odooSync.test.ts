@@ -3,12 +3,17 @@ import {
   buildAuthCall,
   buildExecuteCall,
   mapGuestToPartner,
+  mapInvoiceToAccountMove,
+  mapPaymentToOdoo,
   mapProductToOdoo,
+  mapReservationToSaleOrder,
   normalizeOdooBaseUrl,
+  odooDate,
   parseJsonRpcResult,
   planSync,
   readAuthUid,
   recordHash,
+  stripLineFields,
   summarizeSyncPlan,
   toPlannedRecords,
   type SyncMapEntry,
@@ -163,5 +168,95 @@ describe("toPlannedRecords", () => {
     expect(planned[0].hash).toMatch(/^[0-9a-f]{8}$/)
     // mismo valor ⇒ mismo hash (idempotencia estable entre corridas)
     expect(toPlannedRecords([{ localId: "g1", values: { name: "Ana" } }])[0].hash).toBe(planned[0].hash)
+  })
+})
+
+describe("V8-C · dinero a Odoo (mapeos puros)", () => {
+  it("odooDate recorta a YYYY-MM-DD y tolera basura", () => {
+    expect(odooDate("2026-07-16T14:30:00.000Z")).toBe("2026-07-16")
+    expect(odooDate("2026-07-16")).toBe("2026-07-16")
+    expect(odooDate("")).toBe("")
+    expect(odooDate("no-fecha")).toBe("")
+  })
+
+  it("mapInvoiceToAccountMove con impuesto de Odoo: una línea base con tax_ids", () => {
+    const values = mapInvoiceToAccountMove(
+      { number: 7, serie: "A", subtotal: 100, taxRate: 16, tax: 16, createdAt: "2026-07-16T10:00:00Z" },
+      { partnerId: 42, taxId: 9 },
+    )
+    expect(values.move_type).toBe("out_invoice")
+    expect(values.partner_id).toBe(42)
+    expect(values.ref).toBe("Hotel A-7")
+    expect(values.invoice_date).toBe("2026-07-16")
+    const lines = values.invoice_line_ids as unknown[][]
+    expect(lines).toHaveLength(1)
+    const line = lines[0][2] as Record<string, unknown>
+    expect(line.price_unit).toBe(100)
+    expect(line.tax_ids).toEqual([[6, 0, [9]]])
+  })
+
+  it("mapInvoiceToAccountMove sin impuesto en Odoo: el IVA va como línea aparte", () => {
+    const values = mapInvoiceToAccountMove(
+      { number: 8, serie: "A", subtotal: 100, taxRate: 16, tax: 16 },
+      { partnerId: 42, taxId: null },
+    )
+    const lines = values.invoice_line_ids as unknown[][]
+    expect(lines).toHaveLength(2)
+    const base = lines[0][2] as Record<string, unknown>
+    const iva = lines[1][2] as Record<string, unknown>
+    expect(base.price_unit).toBe(100)
+    expect(base.tax_ids).toEqual([])
+    expect(iva.name).toBe("IVA 16%")
+    expect(iva.price_unit).toBe(16)
+    // total de líneas = total de la factura (asiento cuadrado)
+    expect(Number(base.price_unit) + Number(iva.price_unit)).toBe(116)
+  })
+
+  it("mapPaymentToOdoo arma un cobro de cliente con referencia legible", () => {
+    const values = mapPaymentToOdoo(
+      { amount: 50, method: "zelle", reference: "REF123", reservationCode: "WBZNT", createdAt: "2026-07-16T10:00:00Z" },
+      { partnerId: 42 },
+    )
+    expect(values.payment_type).toBe("inbound")
+    expect(values.partner_type).toBe("customer")
+    expect(values.partner_id).toBe(42)
+    expect(values.amount).toBe(50)
+    expect(values.ref).toBe("Reserva WBZNT · zelle · REF123")
+    expect(values.date).toBe("2026-07-16")
+  })
+
+  it("mapReservationToSaleOrder usa el producto de estadía y las noches", () => {
+    const values = mapReservationToSaleOrder(
+      { code: "ABC12", checkInDate: "2026-08-01", checkOutDate: "2026-08-04", nights: 3, ratePerNight: 110, status: "confirmada" },
+      { partnerId: 42, stayProductId: 77 },
+    )
+    expect(values.partner_id).toBe(42)
+    expect(values.client_order_ref).toBe("ABC12")
+    expect(String(values.note)).toContain("confirmada")
+    const lines = values.order_line as unknown[][]
+    const line = lines[0][2] as Record<string, unknown>
+    expect(line.product_id).toBe(77)
+    expect(line.product_uom_qty).toBe(3)
+    expect(line.price_unit).toBe(110)
+  })
+
+  it("stripLineFields quita las líneas para que un write no las duplique", () => {
+    const values = mapReservationToSaleOrder(
+      { code: "ABC12", checkInDate: "2026-08-01", checkOutDate: "2026-08-04", nights: 3, ratePerNight: 110 },
+      { partnerId: 42, stayProductId: 77 },
+    )
+    const safe = stripLineFields(values)
+    expect(safe.order_line).toBeUndefined()
+    expect(safe.partner_id).toBe(42)
+    const invoice = mapInvoiceToAccountMove({ number: 1, serie: "A", subtotal: 10, taxRate: 0, tax: 0 }, { partnerId: 1 })
+    expect(stripLineFields(invoice).invoice_line_ids).toBeUndefined()
+  })
+
+  it("toPlannedRecords hashea el fingerprint cuando existe (values pueden ir vacíos)", () => {
+    const withFp = toPlannedRecords([{ localId: "r1", values: {}, fingerprint: { code: "ABC", total: 330 } }])
+    const again = toPlannedRecords([{ localId: "r1", values: { otra: "cosa" }, fingerprint: { code: "ABC", total: 330 } }])
+    expect(withFp[0].hash).toBe(again[0].hash)
+    const changed = toPlannedRecords([{ localId: "r1", values: {}, fingerprint: { code: "ABC", total: 400 } }])
+    expect(changed[0].hash).not.toBe(withFp[0].hash)
   })
 })
