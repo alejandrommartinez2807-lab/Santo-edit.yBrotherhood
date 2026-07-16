@@ -86,6 +86,7 @@ const ROLE_ACCESS: Record<LocalRole, LocalModuleKey[]> = {
     "fiscalInvoicing",
     "guestMemberships",
     "webhooks",
+    "staffShifts",
     "nightAudit",
     "resortServices",
     "resortCharges",
@@ -106,7 +107,7 @@ const ROLE_ACCESS: Record<LocalRole, LocalModuleKey[]> = {
     "accountsPayable",
     "sounds",
   ],
-  cashier: ["mainPanel", "cashier", "paymentProofs", "openAccounts", "tickets"],
+  cashier: ["mainPanel", "cashier", "paymentProofs", "openAccounts", "tickets", "staffShifts"],
   waiter: [
     "mainPanel",
     "openAccounts",
@@ -116,10 +117,11 @@ const ROLE_ACCESS: Record<LocalRole, LocalModuleKey[]> = {
     "waiterConfirmation",
     "kitchenItems",
     "tickets",
+    "staffShifts",
   ],
-  kitchen: ["kitchen", "kitchenItems", "tickets"],
-  delivery: ["delivery"],
-  promoter: ["mainPanel", "cashier", "paymentProofs", "tickets"],
+  kitchen: ["kitchen", "kitchenItems", "tickets", "staffShifts"],
+  delivery: ["delivery", "staffShifts"],
+  promoter: ["mainPanel", "cashier", "paymentProofs", "tickets", "staffShifts"],
   support: OWNER_ALLOWED_MODULES,
 }
 

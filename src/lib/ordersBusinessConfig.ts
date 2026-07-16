@@ -214,6 +214,7 @@ export type BusinessConfig = {
   fiscalInvoicingModuleEnabled: boolean
   guestMembershipsModuleEnabled: boolean
   webhooksModuleEnabled: boolean
+  staffShiftsModuleEnabled: boolean
   channelManagerModuleEnabled: boolean
   waiterConfirmationModuleEnabled: boolean
   kitchenItemsModuleEnabled: boolean
@@ -392,6 +393,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   fiscalInvoicingModuleEnabled: true,
   guestMembershipsModuleEnabled: true,
   webhooksModuleEnabled: true,
+  staffShiftsModuleEnabled: true,
   channelManagerModuleEnabled: true,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
@@ -1001,6 +1003,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.webhooksModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.webhooksModuleEnabled
     ),
+    staffShiftsModuleEnabled: normalizeBooleanConfig(
+      source.staffShiftsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.staffShiftsModuleEnabled
+    ),
     channelManagerModuleEnabled: normalizeBooleanConfig(
       source.channelManagerModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.channelManagerModuleEnabled
@@ -1136,6 +1142,7 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
   const fiscalInvoicingAccess = getModulePlanAccess(config, "fiscalInvoicing")
   const guestMembershipsAccess = getModulePlanAccess(config, "guestMemberships")
   const webhooksAccess = getModulePlanAccess(config, "webhooks")
+  const staffShiftsAccess = getModulePlanAccess(config, "staffShifts")
   const channelManagerAccess = getModulePlanAccess(config, "channelManager")
   const waiterConfirmationAccess = getModulePlanAccess(config, "waiterConfirmation")
   const kitchenItemsAccess = getModulePlanAccess(config, "kitchenItems")
@@ -1297,6 +1304,9 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
       : false,
     webhooksModuleEnabled: webhooksAccess.includedInPlan
       ? config.webhooksModuleEnabled
+      : false,
+    staffShiftsModuleEnabled: staffShiftsAccess.includedInPlan
+      ? config.staffShiftsModuleEnabled
       : false,
     channelManagerModuleEnabled: channelManagerAccess.includedInPlan
       ? config.channelManagerModuleEnabled

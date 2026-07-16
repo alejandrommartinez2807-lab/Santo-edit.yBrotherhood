@@ -51,6 +51,7 @@ const NAV_ENTRIES: NavEntry[] = [
   { key: "guestCrm", label: "CRM", href: "/local-santo/crm" },
   { key: "channelManager", label: "Canales/OTAs", href: "/local-santo/canales" },
   { key: "webhooks", label: "Integraciones", href: "/local-santo/integraciones" },
+  { key: "staffShifts", label: "Turnos", href: "/local-santo/turnos" },
   { key: "guestNotifications", label: "Notificaciones", href: "/local-santo/notificaciones" },
   { key: "hotelLanding", label: "Página hotel", href: "/local-santo/pagina-hotel" },
   // — Restaurante / room service —

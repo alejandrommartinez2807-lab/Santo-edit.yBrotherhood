@@ -60,6 +60,7 @@ export type LocalModuleKey =
   | "fiscalInvoicing"
   | "guestMemberships"
   | "webhooks"
+  | "staffShifts"
   | "channelManager"
   | "advancedRates"
   | "guestCrm"
@@ -168,6 +169,7 @@ export type LocalPlanConfigLike = {
   fiscalInvoicingModuleEnabled?: unknown
   guestMembershipsModuleEnabled?: unknown
   webhooksModuleEnabled?: unknown
+  staffShiftsModuleEnabled?: unknown
   channelManagerModuleEnabled?: unknown
   waiterConfirmationModuleEnabled?: unknown
   kitchenItemsModuleEnabled?: unknown
@@ -268,6 +270,7 @@ export const LOCAL_MODULE_KEYS: LocalModuleKey[] = [
   "fiscalInvoicing",
   "guestMemberships",
   "webhooks",
+  "staffShifts",
   "channelManager",
   "advancedRates",
   "guestCrm",
@@ -456,6 +459,7 @@ export const LOCAL_PLAN_DEFINITIONS: LocalPlanDefinition[] = [
       "fiscalInvoicing",
       "guestMemberships",
       "webhooks",
+      "staffShifts",
       "channelManager",
       "advancedRates",
       "guestCrm",
@@ -1061,6 +1065,18 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     comingSoon: false,
   },
   {
+    key: "staffShifts",
+    label: "Turnos",
+    description: "Planificación semanal de turnos del personal con marca real de entrada y salida. Sin nómina: solo asistencia.",
+    category: "management",
+    minimumPlan: "complete",
+    ownerConfigKey: "staffShiftsModuleEnabled",
+    visibleForOwnerSettings: true,
+    visibleForSupport: true,
+    routePath: "/local-santo/turnos",
+    comingSoon: false,
+  },
+  {
     key: "channelManager",
     label: "Canales / OTAs",
     description: "Feed iCal de las fechas ocupadas para que Booking, Airbnb y otras OTAs se suscriban y no haya overbooking.",
@@ -1642,6 +1658,10 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "webhooks") {
     return normalizeBoolean(config.webhooksModuleEnabled, false)
+  }
+
+  if (moduleKey === "staffShifts") {
+    return normalizeBoolean(config.staffShiftsModuleEnabled, false)
   }
 
   if (moduleKey === "channelManager") {

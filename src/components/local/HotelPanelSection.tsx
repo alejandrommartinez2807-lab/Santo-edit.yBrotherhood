@@ -166,6 +166,7 @@ export default function HotelPanelSection({
   const showGroups = can("groupBookings")
   const showChannels = can("channelManager")
   const showWebhooks = can("webhooks")
+  const showStaffShifts = can("staffShifts")
   const showNotifications = can("guestNotifications")
   const showHotelLanding = can("hotelLanding", true)
 
@@ -177,7 +178,7 @@ export default function HotelPanelSection({
     showNightAudit || showHotelReports
   const resortVisible =
     showResortServices || showResortCharges || showPackages || showReviews ||
-    showCrm || showMemberships || showGroups || showChannels || showWebhooks || showNotifications || showHotelLanding
+    showCrm || showMemberships || showGroups || showChannels || showWebhooks || showStaffShifts || showNotifications || showHotelLanding
 
   const [reservations, setReservations] = useState<HotelReservation[]>([])
   const [rooms, setRooms] = useState<HotelRoom[]>([])
@@ -444,6 +445,9 @@ export default function HotelPanelSection({
             )}
             {showWebhooks && (
               <ModuleTile href="/local-santo/integraciones" icon={Plug} title="Integraciones" metric="Webhooks salientes" />
+            )}
+            {showStaffShifts && (
+              <ModuleTile href="/local-santo/turnos" icon={ClipboardList} title="Turnos" metric="Semana y asistencia" />
             )}
             {showNotifications && (
               <ModuleTile href="/local-santo/notificaciones" icon={MessagesSquare} title="Notificaciones" metric="Avisos WhatsApp" />

@@ -225,6 +225,7 @@ type BusinessConfig = {
   fiscalInvoicingModuleEnabled: boolean;
   guestMembershipsModuleEnabled: boolean;
   webhooksModuleEnabled: boolean;
+  staffShiftsModuleEnabled: boolean;
   channelManagerModuleEnabled: boolean;
   waiterConfirmationModuleEnabled: boolean;
   kitchenItemsModuleEnabled: boolean;
@@ -410,6 +411,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   fiscalInvoicingModuleEnabled: true,
   guestMembershipsModuleEnabled: true,
   webhooksModuleEnabled: true,
+  staffShiftsModuleEnabled: true,
   channelManagerModuleEnabled: true,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
@@ -1294,6 +1296,10 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     webhooksModuleEnabled: normalizeBoolean(
       source.webhooksModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.webhooksModuleEnabled,
+    ),
+    staffShiftsModuleEnabled: normalizeBoolean(
+      source.staffShiftsModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.staffShiftsModuleEnabled,
     ),
     channelManagerModuleEnabled: normalizeBoolean(
       source.channelManagerModuleEnabled,
