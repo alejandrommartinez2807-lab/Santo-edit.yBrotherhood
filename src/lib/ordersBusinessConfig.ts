@@ -213,6 +213,7 @@ export type BusinessConfig = {
   nightAuditModuleEnabled: boolean
   fiscalInvoicingModuleEnabled: boolean
   guestMembershipsModuleEnabled: boolean
+  webhooksModuleEnabled: boolean
   channelManagerModuleEnabled: boolean
   waiterConfirmationModuleEnabled: boolean
   kitchenItemsModuleEnabled: boolean
@@ -390,6 +391,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   nightAuditModuleEnabled: true,
   fiscalInvoicingModuleEnabled: true,
   guestMembershipsModuleEnabled: true,
+  webhooksModuleEnabled: true,
   channelManagerModuleEnabled: true,
   waiterConfirmationModuleEnabled: true,
   kitchenItemsModuleEnabled: true,
@@ -995,6 +997,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.guestMembershipsModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.guestMembershipsModuleEnabled
     ),
+    webhooksModuleEnabled: normalizeBooleanConfig(
+      source.webhooksModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.webhooksModuleEnabled
+    ),
     channelManagerModuleEnabled: normalizeBooleanConfig(
       source.channelManagerModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.channelManagerModuleEnabled
@@ -1129,6 +1135,7 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
   const nightAuditAccess = getModulePlanAccess(config, "nightAudit")
   const fiscalInvoicingAccess = getModulePlanAccess(config, "fiscalInvoicing")
   const guestMembershipsAccess = getModulePlanAccess(config, "guestMemberships")
+  const webhooksAccess = getModulePlanAccess(config, "webhooks")
   const channelManagerAccess = getModulePlanAccess(config, "channelManager")
   const waiterConfirmationAccess = getModulePlanAccess(config, "waiterConfirmation")
   const kitchenItemsAccess = getModulePlanAccess(config, "kitchenItems")
@@ -1287,6 +1294,9 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
       : false,
     guestMembershipsModuleEnabled: guestMembershipsAccess.includedInPlan
       ? config.guestMembershipsModuleEnabled
+      : false,
+    webhooksModuleEnabled: webhooksAccess.includedInPlan
+      ? config.webhooksModuleEnabled
       : false,
     channelManagerModuleEnabled: channelManagerAccess.includedInPlan
       ? config.channelManagerModuleEnabled

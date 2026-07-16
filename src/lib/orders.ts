@@ -313,6 +313,14 @@ export {
 export type { NotificationEntry } from "./ordersNotifications"
 export { getNotificationLog, logNotification } from "./ordersNotifications"
 
+export type { SaveWebhookInput, Webhook } from "./ordersStoreWebhooks"
+export {
+  deleteWebhook,
+  getWebhooks,
+  recordWebhookResult,
+  saveWebhook,
+} from "./ordersStoreWebhooks"
+
 export {
   deleteSupplier,
   getSuppliers,

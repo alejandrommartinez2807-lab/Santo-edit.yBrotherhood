@@ -22,6 +22,7 @@ import {
 import type { LocalOrder } from "@/lib/orders"
 import { resolveBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
+import { dispatchHotelWebhooks } from "@/lib/hotelWebhookDispatch"
 import { getLocalAccessAuditActor } from "@/lib/localAccess"
 import { getRequestAccess } from "@/lib/localAccess"
 
@@ -211,6 +212,17 @@ export async function POST(request: NextRequest) {
       // Marca check-in si aún estaba pendiente/confirmada.
       if (reservation.status === "pendiente" || reservation.status === "confirmada") {
         await updateHotelReservationStatus(reservationId, "checkin", branchId)
+        // Webhook saliente (awaiteado: serverless congela el trabajo suelto).
+        await dispatchHotelWebhooks(
+          "checkin",
+          {
+            code: reservation.code,
+            guestName: reservation.guestName,
+            checkIn: reservation.checkInDate,
+            checkOut: reservation.checkOutDate,
+          },
+          branchId,
+        )
       }
 
       const view = await buildFolioView(reservationId, branchId)
@@ -378,6 +390,18 @@ export async function POST(request: NextRequest) {
             `Salida ${reservation.guestName || ""}`.trim(),
           )
         }
+        // Webhook saliente (awaiteado: serverless congela el trabajo suelto).
+        await dispatchHotelWebhooks(
+          "checkout",
+          {
+            code: reservation?.code || "",
+            guestName: reservation?.guestName || "",
+            checkIn: reservation?.checkInDate || "",
+            checkOut: reservation?.checkOutDate || "",
+            folioTotal: items.reduce((sum, i) => sum + (i.kind === "pago" ? 0 : i.amount), 0),
+          },
+          branchId,
+        )
       }
 
       const view = await buildFolioView(reservationId, branchId)

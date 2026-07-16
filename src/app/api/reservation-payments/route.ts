@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import {
   createReservationPayment,
+  getHotelReservationById,
   getHotelReservations,
   getReservationPayments,
   updateReservationPaymentStatus,
 } from "@/lib/orders"
+import { dispatchHotelWebhooks } from "@/lib/hotelWebhookDispatch"
 import { resolveBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 
@@ -87,6 +89,23 @@ export async function POST(request: NextRequest) {
       const id = cleanText(body.id)
       if (!id) return NextResponse.json({ error: "Pago no indicado" }, { status: 400 })
       const payment = await updateReservationPaymentStatus(id, cleanText(body.status), branchId)
+
+      // Webhook saliente al CONFIRMAR (awaiteado: serverless congela lo suelto).
+      if (payment.status === "confirmado") {
+        const reservation = await getHotelReservationById(payment.reservationId, branchId).catch(() => null)
+        await dispatchHotelWebhooks(
+          "pago_confirmado",
+          {
+            reservationCode: reservation?.code || "",
+            guestName: reservation?.guestName || "",
+            amount: payment.amount,
+            method: payment.method,
+            reference: payment.reference,
+          },
+          branchId,
+        )
+      }
+
       return NextResponse.json({ ok: true, payment })
     }
 

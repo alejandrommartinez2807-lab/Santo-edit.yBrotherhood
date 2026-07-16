@@ -93,6 +93,7 @@ type ModuleKey =
   | "nightAudit"
   | "fiscalInvoicing"
   | "guestMemberships"
+  | "webhooks"
   | "channelManager"
   | "waiterConfirmation"
   | "kitchenItems"

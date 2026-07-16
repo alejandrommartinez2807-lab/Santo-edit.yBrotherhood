@@ -59,6 +59,7 @@ export type LocalModuleKey =
   | "nightAudit"
   | "fiscalInvoicing"
   | "guestMemberships"
+  | "webhooks"
   | "channelManager"
   | "advancedRates"
   | "guestCrm"
@@ -166,6 +167,7 @@ export type LocalPlanConfigLike = {
   nightAuditModuleEnabled?: unknown
   fiscalInvoicingModuleEnabled?: unknown
   guestMembershipsModuleEnabled?: unknown
+  webhooksModuleEnabled?: unknown
   channelManagerModuleEnabled?: unknown
   waiterConfirmationModuleEnabled?: unknown
   kitchenItemsModuleEnabled?: unknown
@@ -265,6 +267,7 @@ export const LOCAL_MODULE_KEYS: LocalModuleKey[] = [
   "nightAudit",
   "fiscalInvoicing",
   "guestMemberships",
+  "webhooks",
   "channelManager",
   "advancedRates",
   "guestCrm",
@@ -452,6 +455,7 @@ export const LOCAL_PLAN_DEFINITIONS: LocalPlanDefinition[] = [
       "nightAudit",
       "fiscalInvoicing",
       "guestMemberships",
+      "webhooks",
       "channelManager",
       "advancedRates",
       "guestCrm",
@@ -1045,6 +1049,18 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     comingSoon: false,
   },
   {
+    key: "webhooks",
+    label: "Integraciones",
+    description: "Webhooks salientes: avisa a otros sistemas (contabilidad, CRM externo, automatizaciones) cuando hay reserva creada/confirmada, pago confirmado, check-in o check-out. POST JSON firmado con HMAC.",
+    category: "management",
+    minimumPlan: "complete",
+    ownerConfigKey: "webhooksModuleEnabled",
+    visibleForOwnerSettings: true,
+    visibleForSupport: true,
+    routePath: "/local-santo/integraciones",
+    comingSoon: false,
+  },
+  {
     key: "channelManager",
     label: "Canales / OTAs",
     description: "Feed iCal de las fechas ocupadas para que Booking, Airbnb y otras OTAs se suscriban y no haya overbooking.",
@@ -1622,6 +1638,10 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "guestMemberships") {
     return normalizeBoolean(config.guestMembershipsModuleEnabled, false)
+  }
+
+  if (moduleKey === "webhooks") {
+    return normalizeBoolean(config.webhooksModuleEnabled, false)
   }
 
   if (moduleKey === "channelManager") {

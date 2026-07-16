@@ -17,6 +17,7 @@ import {
   saveHotelReservation,
 } from "@/lib/orders"
 import { isGuestMembershipActive, normalizeDiscountPct } from "@/lib/hotelMemberships"
+import { dispatchHotelWebhooks } from "@/lib/hotelWebhookDispatch"
 import { evaluateStayRestrictions } from "@/lib/rateRestrictions"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
@@ -501,6 +502,23 @@ export async function POST(request: NextRequest) {
     const extrasTotal =
       bookedServices.reduce((sum, s) => sum + s.price * s.people, 0) +
       (selectedPackage ? selectedPackage.price : 0)
+
+    // Webhooks salientes (P2-E): la reserva ya está insertada; se awaitea
+    // porque en serverless el trabajo suelto se congela al responder.
+    await dispatchHotelWebhooks(
+      "reserva_creada",
+      {
+        code: reservation.code,
+        guestName: reservation.guestName,
+        checkIn: reservation.checkInDate,
+        checkOut: reservation.checkOutDate,
+        nights: reservation.nights,
+        roomType: roomType.name,
+        totalAmount: reservation.totalAmount,
+        source: "web",
+      },
+      branchId,
+    )
 
     return noStoreResponse(
       {

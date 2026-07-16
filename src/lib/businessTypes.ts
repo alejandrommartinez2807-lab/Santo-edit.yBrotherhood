@@ -104,6 +104,7 @@ export const BUSINESS_TYPE_PRESETS: BusinessTypePreset[] = [
       nightAuditModuleEnabled: true,
       fiscalInvoicingModuleEnabled: true,
       guestMembershipsModuleEnabled: true,
+      webhooksModuleEnabled: true,
       channelManagerModuleEnabled: true,
       // Room service: caja + cocina sí; sin mesas de restaurante
       cashierModuleEnabled: true,

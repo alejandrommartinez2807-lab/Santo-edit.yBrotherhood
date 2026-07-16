@@ -15,6 +15,8 @@ import {
   normalizeStayDate,
 } from "@/lib/hotelReservationConflicts"
 
+import { dispatchHotelWebhooks } from "@/lib/hotelWebhookDispatch"
+
 import { checkHotelReservationsAccess } from "./guard"
 
 export const runtime = "nodejs"
@@ -142,6 +144,24 @@ export async function POST(request: NextRequest) {
     }
 
     const reservation = await saveHotelReservation(input, branchId)
+
+    // Webhooks salientes (solo al CREAR; la edición no re-avisa).
+    if (!input.id) {
+      await dispatchHotelWebhooks(
+        "reserva_creada",
+        {
+          code: reservation.code,
+          guestName: reservation.guestName,
+          checkIn: reservation.checkInDate,
+          checkOut: reservation.checkOutDate,
+          nights: reservation.nights,
+          totalAmount: reservation.totalAmount,
+          source: reservation.source || "recepcion",
+        },
+        branchId,
+      )
+    }
+
     return NextResponse.json({ ok: true, reservation }, { status: input.id ? 200 : 201 })
   } catch (error) {
     return NextResponse.json(

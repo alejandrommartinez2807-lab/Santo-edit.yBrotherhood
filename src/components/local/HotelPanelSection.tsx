@@ -22,6 +22,7 @@ import {
   LogOut,
   MessagesSquare,
   Moon,
+  Plug,
   ReceiptText,
   Sparkles,
   Star,
@@ -164,6 +165,7 @@ export default function HotelPanelSection({
   const showMemberships = can("guestMemberships")
   const showGroups = can("groupBookings")
   const showChannels = can("channelManager")
+  const showWebhooks = can("webhooks")
   const showNotifications = can("guestNotifications")
   const showHotelLanding = can("hotelLanding", true)
 
@@ -175,7 +177,7 @@ export default function HotelPanelSection({
     showNightAudit || showHotelReports
   const resortVisible =
     showResortServices || showResortCharges || showPackages || showReviews ||
-    showCrm || showMemberships || showGroups || showChannels || showNotifications || showHotelLanding
+    showCrm || showMemberships || showGroups || showChannels || showWebhooks || showNotifications || showHotelLanding
 
   const [reservations, setReservations] = useState<HotelReservation[]>([])
   const [rooms, setRooms] = useState<HotelRoom[]>([])
@@ -439,6 +441,9 @@ export default function HotelPanelSection({
             )}
             {showChannels && (
               <ModuleTile href="/local-santo/canales" icon={Globe} title="Canales y OTAs" metric="Feed iCal" />
+            )}
+            {showWebhooks && (
+              <ModuleTile href="/local-santo/integraciones" icon={Plug} title="Integraciones" metric="Webhooks salientes" />
             )}
             {showNotifications && (
               <ModuleTile href="/local-santo/notificaciones" icon={MessagesSquare} title="Notificaciones" metric="Avisos WhatsApp" />

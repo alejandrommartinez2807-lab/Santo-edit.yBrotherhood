@@ -85,6 +85,7 @@ const ROLE_ACCESS: Record<LocalRole, LocalModuleKey[]> = {
     "onlinePayments",
     "fiscalInvoicing",
     "guestMemberships",
+    "webhooks",
     "nightAudit",
     "resortServices",
     "resortCharges",
