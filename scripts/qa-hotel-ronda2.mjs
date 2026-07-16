@@ -173,6 +173,37 @@ try {
     r = await pub("/api/public/hotel/lookup", { method: "POST", body: JSON.stringify({ code: noteCode, phone: "04141230002" }) })
     check("20 lookup de la reserva con nota truncada funciona", r.status === 200)
   }
+
+  // ---------- 13. P1-A · Cobro online: el huésped reporta su abono ----------
+  const PAY_PHONE = "04149000123"
+  // Fechas dentro de la ventana de la Caja de recepción (±60 / +30 días) para
+  // que el depósito aparezca con su reserva; loop para dar con una habitación libre.
+  const P = plus(20), P2 = plus(22)
+  let payResv = null
+  for (const room of indRooms) {
+    const cr = await staff("/api/hotel-reservations", { method: "POST", body: JSON.stringify({ roomId: room.id, roomTypeId: IND.id, guestName: "QA Abono BORRAR", guestPhone: PAY_PHONE, checkInDate: P, checkOutDate: P2, ratePerNight: 80 }) })
+    if (cr.data?.reservation?.id) { payResv = cr.data.reservation; break }
+  }
+  if (payResv) cleanup.reservationIds.push(payResv.id)
+  check("21 reserva para el cobro online creada", Boolean(payResv?.id))
+  if (payResv) {
+    // Reporte público SIN login (código + últimos 4 del teléfono).
+    const pay = await pub("/api/public/hotel/pay", { method: "POST", body: JSON.stringify({ action: "report", code: payResv.code, phone: PAY_PHONE, amount: 60, method: "pago_movil", reference: "QA-ABONO" }) })
+    check("22 abono reportado desde el teléfono → 201", pay.status === 201 && pay.data?.ok === true, `status=${pay.status} ${pay.data?.error || ""}`)
+    const wrong = await pub("/api/public/hotel/pay", { method: "POST", body: JSON.stringify({ action: "report", code: payResv.code, phone: "04140000000", amount: 10 }) })
+    check("23 abono con teléfono equivocado → 404", wrong.status === 404)
+    // Cae como depósito por confirmar en Caja recepción (/api/folios/summary).
+    const sum = await staff("/api/folios/summary")
+    const pending = (sum.data?.depositsPending || []).find((d) => d.code === payResv.code)
+    check("24 el abono aparece en Caja recepción (por confirmar)", Boolean(pending) && pending.amount === 60, pending ? `amount=${pending.amount}` : "no aparece")
+    // Al confirmar entra en 'cobrado hoy' (mismo cálculo del Cierre del día).
+    const pays = (await staff("/api/reservation-payments")).data?.payments || []
+    const mine = pays.find((p) => p.reservationId === payResv.id)
+    if (mine) await staff("/api/reservation-payments", { method: "POST", body: JSON.stringify({ action: "status", id: mine.id, status: "confirmado" }) })
+    const sum2 = await staff("/api/folios/summary")
+    const collected = (sum2.data?.collectedRows || []).find((row) => row.code === payResv.code && row.kind === "deposito")
+    check("25 al confirmar entra en 'cobrado hoy' (Cierre)", Boolean(collected) && collected.amount === 60, collected ? `amount=${collected.amount}` : `cobradoHoy=${sum2.data?.totals?.collectedToday}`)
+  }
 } finally {
   results.push("— limpieza —")
   const all = (await staff(`/api/hotel-reservations?from=${plus(20)}&to=${plus(100)}`)).data.reservations || []

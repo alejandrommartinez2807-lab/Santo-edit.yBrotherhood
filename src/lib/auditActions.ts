@@ -14,6 +14,7 @@ export type AuditAction =
   | "open_account.closed"
   | "payment_proof.created"
   | "payment_proof.reviewed"
+  | "reservation_payment.reported"
   | "day_close.saved"
   | "supplier_purchase.created"
   | "supplier_purchase.updated"
@@ -37,6 +38,7 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   "open_account.closed": "Cuenta abierta cerrada",
   "payment_proof.created": "Comprobante de pago enviado",
   "payment_proof.reviewed": "Comprobante de pago revisado",
+  "reservation_payment.reported": "Abono de reserva reportado",
   "day_close.saved": "Cierre de día guardado",
   "supplier_purchase.created": "Compra a proveedor registrada",
   "supplier_purchase.updated": "Compra a proveedor editada",

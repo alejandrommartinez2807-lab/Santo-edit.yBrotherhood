@@ -25,6 +25,7 @@ import {
 } from "@/lib/hotelBooking"
 import PhotoLightbox, { type LightboxPhoto } from "../PhotoLightbox"
 import ReservationQr from "../ReservationQr"
+import ReservationPaymentSection from "../ReservationPaymentSection"
 
 type Quote = {
   nights: number
@@ -332,6 +333,13 @@ export default function HotelReservarPage() {
               </p>
             </div>
           )}
+        </div>
+        <div className="mt-2 w-full max-w-sm">
+          <ReservationPaymentSection
+            code={created.code}
+            phone={guestPhone}
+            totalAmount={created.totalAmount}
+          />
         </div>
         <p className="mt-4 max-w-sm text-sm font-bold text-[var(--brand-ink-2)]">
           Guardamos tu reserva como <b>pendiente</b>. Te contactaremos por teléfono para confirmarla.

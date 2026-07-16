@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import { BRAND } from "@/lib/brand"
 import ReservationQr from "../ReservationQr"
+import ReservationPaymentSection from "../ReservationPaymentSection"
 
 type Reservation = {
   code: string
@@ -254,6 +255,13 @@ export default function MiReservaPage() {
                 <ReservationQr code={reservation.code} />
               </div>
             )}
+
+            {/* Abona tu reserva: paga con los datos del hotel y reporta el abono */}
+            <ReservationPaymentSection
+              code={reservation.code}
+              phone={phone}
+              totalAmount={reservation.totalAmount}
+            />
 
             {/* Servicios asociados a la estadía: todo en una sola cuenta */}
             {(stayServices.length > 0 || catalog.length > 0) && (

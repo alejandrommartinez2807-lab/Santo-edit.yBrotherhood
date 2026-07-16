@@ -43,6 +43,7 @@ type Payment = {
   reference: string
   status: string
   note: string
+  proofImageUrl?: string
   createdAt: string
 }
 type ReservationSummary = {
@@ -413,6 +414,16 @@ function PagosContent() {
                             {formatDate(p.createdAt)}
                             {r && r.totalAmount > 0 ? ` · Abonado ${money(confirmed)} de ${money(r.totalAmount)}` : ""}
                           </p>
+                          {p.proofImageUrl ? (
+                            <a
+                              href={p.proofImageUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-1 inline-flex items-center gap-1 text-xs font-black uppercase tracking-[0.08em] text-[var(--brand-primary-dark)] underline"
+                            >
+                              <CreditCard size={13} /> Ver captura
+                            </a>
+                          ) : null}
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={`rounded-full border px-3 py-1.5 text-xs font-bold uppercase ${p.status === "confirmado" ? "border-green-600/30 bg-green-50 text-green-700" : p.status === "rechazado" ? "border-red-200 bg-red-50 text-red-600" : "border-amber-300 bg-amber-50 text-amber-700"}`}>
