@@ -166,6 +166,15 @@ export async function saveGuest(input: SaveGuestInput, branchId?: string | null)
   return mapGuest(data as Row)
 }
 
+export async function getGuests(branchId?: string | null): Promise<Guest[]> {
+  const supabase = getSupabaseAdmin()
+  let query = supabase.from("guests").select("*").order("full_name", { ascending: true })
+  if (branchId) query = query.eq("branch_id", branchId)
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+  return ((data as Row[]) || []).map(mapGuest)
+}
+
 export async function getGuest(id: string, branchId?: string | null): Promise<Guest | null> {
   if (!id) return null
   const supabase = getSupabaseAdmin()

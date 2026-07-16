@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
-import { deleteGuestProfile, getGuestProfiles, saveGuestProfile } from "@/lib/orders"
+import {
+  deleteGuestProfile,
+  getBusinessConfig,
+  getGuestMemberships,
+  getGuestProfiles,
+  getGuests,
+  getHotelReservations,
+  saveBusinessConfig,
+  saveGuestProfile,
+} from "@/lib/orders"
+import { buildCampaignRows, normalizeCampaignTemplates } from "@/lib/hotelCampaigns"
 import { resolveBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 
@@ -17,6 +27,27 @@ export async function GET(request: NextRequest) {
     const access = await checkGuestCrmAccess(request, ["owner", "manager", "support"])
     if (!access.ok) return access.response
     const branchId = await resolveBranchId(request)
+
+    // Vista de campañas: une fichas + huéspedes legales + reservas y devuelve
+    // las filas ya agregadas (estadías, gasto, cumpleaños, membresía) más las
+    // plantillas de mensaje del negocio. El filtrado fino lo hace el cliente.
+    if (request.nextUrl.searchParams.get("view") === "campaigns") {
+      const [profiles, guests, reservations, memberships, config] = await Promise.all([
+        getGuestProfiles(branchId),
+        getGuests(branchId).catch(() => []),
+        getHotelReservations({}, branchId).catch(() => []),
+        getGuestMemberships(branchId).catch(() => []),
+        getBusinessConfig(),
+      ])
+      const rows = buildCampaignRows({ profiles, guests, reservations, memberships })
+      return NextResponse.json({
+        ok: true,
+        rows,
+        templates: config.hotelCampaignTemplates,
+        hotelName: config.businessName,
+      })
+    }
+
     const profiles = await getGuestProfiles(branchId)
     return NextResponse.json({ ok: true, profiles })
   } catch (error) {
@@ -49,6 +80,13 @@ export async function POST(request: NextRequest) {
       if (!id) return NextResponse.json({ error: "Ficha no indicada" }, { status: 400 })
       await deleteGuestProfile(id, branchId)
       return NextResponse.json({ ok: true })
+    }
+
+    // Guarda las plantillas de campaña ({nombre}, {hotel}) en business_config.
+    if (cleanText(body.action) === "saveCampaignTemplates") {
+      const templates = normalizeCampaignTemplates(body.templates)
+      await saveBusinessConfig({ hotelCampaignTemplates: templates })
+      return NextResponse.json({ ok: true, templates })
     }
 
     const fullName = cleanText(body.fullName)

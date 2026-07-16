@@ -21,6 +21,11 @@ import {
   type HotelBookingFieldsConfig,
 } from "./hotelBooking"
 import {
+  DEFAULT_CAMPAIGN_TEMPLATES,
+  normalizeCampaignTemplates,
+  type CampaignTemplate,
+} from "./hotelCampaigns"
+import {
   DEFAULT_HOTEL_SITE_EXTRAS,
   DEFAULT_HOTEL_UPSELL,
   normalizeHotelRoomTypeDetails,
@@ -241,6 +246,8 @@ export type BusinessConfig = {
   hotelRoomTypeDetails: HotelRoomTypeDetailsMap
   // Hotel: servicios/paquetes ofrecidos al reservar y sus fotos (o solo texto).
   hotelUpsell: HotelUpsellConfig
+  // Hotel: plantillas de mensaje para campañas del CRM ({nombre}, {hotel}).
+  hotelCampaignTemplates: CampaignTemplate[]
   updatedAt?: string
 }
 
@@ -408,6 +415,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   hotelSiteExtras: { ...DEFAULT_HOTEL_SITE_EXTRAS },
   hotelRoomTypeDetails: {},
   hotelUpsell: { ...DEFAULT_HOTEL_UPSELL },
+  hotelCampaignTemplates: DEFAULT_CAMPAIGN_TEMPLATES.map((t) => ({ ...t })),
 }
 
 function normalizeBooleanConfig(value: unknown, fallback: boolean) {
@@ -1069,6 +1077,7 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     hotelSiteExtras: normalizeHotelSiteExtras(source.hotelSiteExtras),
     hotelRoomTypeDetails: normalizeHotelRoomTypeDetails(source.hotelRoomTypeDetails),
     hotelUpsell: normalizeHotelUpsell(source.hotelUpsell),
+    hotelCampaignTemplates: normalizeCampaignTemplates(source.hotelCampaignTemplates),
     updatedAt: source.updatedAt ? String(source.updatedAt) : undefined,
   }
 }

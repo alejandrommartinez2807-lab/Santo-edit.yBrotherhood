@@ -18,6 +18,10 @@ export async function getGuest(id: string, branchId?: string | null): Promise<Gu
   return store.getGuest(id, branchId)
 }
 
+export async function getGuests(branchId?: string | null): Promise<Guest[]> {
+  return store.getGuests(branchId)
+}
+
 export async function getFolioByReservation(reservationId: string, branchId?: string | null): Promise<Folio | null> {
   return store.getFolioByReservation(reservationId, branchId)
 }

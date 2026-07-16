@@ -193,6 +193,7 @@ export {
   getFolioItemsInRange,
   getFoliosByIds,
   getGuest,
+  getGuests,
   hasRoomCharge,
   openFolio,
   saveGuest,
