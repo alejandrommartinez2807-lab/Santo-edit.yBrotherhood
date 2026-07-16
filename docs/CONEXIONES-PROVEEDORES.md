@@ -10,6 +10,12 @@ Regla de oro: mientras no tengas las credenciales reales, el módulo funciona en
 modo **manual/prueba** (no rompe nada). El día que las consigas, las pegas y con
 un botón queda vivo.
 
+> **En el panel:** cada módulo dueño del trámite (Facturación, Canales, Pagos
+> online, CRM) muestra una tarjeta **"Conexión con proveedor"** con esta misma
+> guía resumida, qué credencial falta y un registro del avance (modo manual /
+> trámite en curso / credenciales listas + nota). Ahí llevas el estado sin
+> salir del sistema.
+
 ---
 
 ## 1. Odoo (LA principal — sincronización de un botón)
@@ -133,9 +139,9 @@ que el banco confirme el pago automáticamente (C2P).
 3. Traer las **credenciales de comercio** (código de afiliación, clave/API key,
    y el ambiente de pruebas si lo dan).
 
-**Dónde se pegan:** Panel → **Configuración** → *Métodos de pago* → proveedor C2P.
-Hoy los datos de cobro (pago móvil, Zelle, etc.) ya son editables ahí para el
-modo manual.
+**Dónde se pegan:** Panel → **Pagos online** → tarjeta *Pasarela de pago C2P*
+(ahí llevas el estado del trámite). Los datos de cobro del modo manual (pago
+móvil, Zelle, etc.) siguen editables en **Configuración** → *Métodos de pago*.
 
 **Costo:** comisión por transacción (la fija el banco/agregador).
 

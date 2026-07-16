@@ -74,6 +74,8 @@ curl -s -X POST "$BASE/api/public/hotel" \
 | GET/POST | `/api/webhooks` (acciones `save`, `delete`, `test`) | Webhooks salientes (este documento, abajo) |
 | GET/POST | `/api/resort-services` · `/api/packages` · `/api/reviews` · `/api/invoices` · `/api/night-audit` | Resort, paquetes, reseñas, facturación, cierre de día |
 | GET | `/api/accounting-exports?type=sales|closures|full&from=&to=` | CSV contables (libro de ventas, cierres, export total) |
+| GET/POST | `/api/odoo` (acciones `saveConfig`, `testConnection`, `sync` con `dryRun`) | Conector Odoo: conexión + sincronización de un botón (huéspedes, productos, reservas, facturas, pagos) |
+| GET/POST | `/api/provider-integrations` (`providerId`, `status`, `notes`) | Estado de las conexiones con proveedores externos (fiscal/OTA/C2P/email; sin secretos) |
 
 ## Webhooks salientes
 
@@ -125,3 +127,12 @@ queda visible en el panel (`last_status`).
 
 **Prueba rápida:** crea un endpoint en <https://webhook.site>, regístralo en
 Integraciones y pulsa "Probar".
+
+**Campos extra por evento:** `pago_confirmado` incluye además `paymentId`,
+`reservationId`, `reservationCode`, `amount`, `method` y `reference` (los ids
+permiten deduplicar y conciliar contra `/api/reservation-payments`).
+
+**Odoo como destino (V8-D):** además de los webhooks HTTP, si el módulo Odoo
+tiene encendido "Sincronizar en vivo", estos mismos eventos se empujan
+directamente a Odoo (reservas → `sale.order`, pagos → `account.payment`),
+best-effort con tope de 8 s. No requiere registrar ningún webhook.

@@ -203,6 +203,40 @@ try {
     const collected = (sum2.data?.collectedRows || []).find((row) => row.code === payResv.code && row.kind === "deposito")
     check("25 al confirmar entra en 'cobrado hoy' (Cierre)", Boolean(collected) && collected.amount === 60, collected ? `amount=${collected.amount}` : `cobradoHoy=${sum2.data?.totals?.collectedToday}`)
   }
+  // ---------- 10. Conector Odoo + proveedores (V8) ----------
+  {
+    const noAuth = await fetch(`${BASE}/api/odoo`, { headers: PUB })
+    check("26 /api/odoo sin clave → 401", noAuth.status === 401)
+    const view = await staff("/api/odoo")
+    check(
+      "27 /api/odoo con clave → estado de la conexión",
+      view.status === 200 && view.data?.ok === true && typeof view.data?.integration?.configured === "boolean",
+    )
+    // Dry-run: NO escribe en Odoo; con conexión configurada debe planificar las
+    // 5 entidades (huéspedes, productos, reservas, facturas, pagos). Sin
+    // conexión (instancia recién instalada) el mensaje debe ser claro, no un 500.
+    const dry = await staff("/api/odoo", { method: "POST", body: JSON.stringify({ action: "sync", dryRun: true }) })
+    const report = dry.data?.report
+    const planned = report?.ok === true && Array.isArray(report.entities) && report.entities.length === 5
+    const unconfigured = report?.ok === false && /configura/i.test(report?.message || "")
+    check(
+      "28 simulación de sync Odoo → 5 entidades (o aviso de configurar)",
+      dry.status === 200 && (planned || unconfigured),
+      report ? report.message : `status=${dry.status}`,
+    )
+    const providers = await staff("/api/provider-integrations")
+    const p = providers.data?.providers || {}
+    check(
+      "29 conexiones de proveedores → fiscal/channel/gateway/email en estado válido",
+      providers.status === 200 &&
+        ["fiscal", "channel", "gateway", "email"].every((id) =>
+          ["manual", "tramite", "credenciales"].includes(p[id]?.status),
+        ),
+    )
+    const badStatus = await staff("/api/provider-integrations", { method: "POST", body: JSON.stringify({ providerId: "fiscal", status: "hackeado" }) })
+    const badProvider = await staff("/api/provider-integrations", { method: "POST", body: JSON.stringify({ providerId: "no-existe", status: "manual" }) })
+    check("30 proveedor/estado inventados → 400", badStatus.status === 400 && badProvider.status === 400)
+  }
 } finally {
   results.push("— limpieza —")
   const all = (await staff(`/api/hotel-reservations?from=${plus(20)}&to=${plus(100)}`)).data.reservations || []

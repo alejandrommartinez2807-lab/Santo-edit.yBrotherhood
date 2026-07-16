@@ -146,7 +146,7 @@ export default function ProviderConnectionCard({ providerId }: { providerId: Pro
           <input
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Nota del trámite (ej: en espera del ejecutivo del banco)"
+            placeholder="Nota del trámite (ej: en espera del proveedor)"
             className="rounded-xl border border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-xs font-bold outline-none focus:border-[var(--brand-primary)]"
             maxLength={600}
           />

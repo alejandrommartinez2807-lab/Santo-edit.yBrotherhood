@@ -144,7 +144,8 @@ Reglas fijas (idénticas al v7, no negociables):
   con x-admin-password (quitar las comillas del .env.local) + Origin
   http://localhost:3000. Capturas: Edge headless + CDP (Claude in Chrome NO
   alcanza localhost).
-- QA: node scripts/qa-hotel-completo.mjs (54) + qa-hotel-ronda2.mjs (25). NO
+- QA: node scripts/qa-hotel-completo.mjs (54) + qa-hotel-ronda2.mjs (30; la
+  sección 10 cubre el conector Odoo y las conexiones de proveedores). NO
   editar archivos mientras corren. JAMÁS meter un await entre pickFreeRoomOfType
   y saveHotelReservation en /api/public/hotel (carrera E2/E3).
 - Migraciones: Claude escribe el .sql (numeración siguiente; la 0044 fue la
