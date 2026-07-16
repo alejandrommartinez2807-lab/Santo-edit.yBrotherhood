@@ -2,6 +2,7 @@ import { createHmac } from "crypto"
 import { captureError } from "@/lib/monitoring"
 import { buildWebhookPayload, webhookMatchesEvent } from "@/lib/hotelWebhooks"
 import { getWebhooks, recordWebhookResult, type Webhook } from "@/lib/ordersStoreWebhooks"
+import { pushOdooLiveEvent } from "@/lib/odooLiveSync"
 
 // ============================================================
 // Hotel · P2-E · Disparo de webhooks — SOLO SERVIDOR (usa node:crypto y red).
@@ -43,8 +44,9 @@ async function fireOne(webhook: Webhook, event: string, body: string, branchId?:
 }
 
 /**
- * Dispara el evento a todos los webhooks activos que lo escuchan.
- * Nunca lanza: cualquier fallo queda en monitoreo y en last_status.
+ * Dispara el evento a todos los webhooks activos que lo escuchan, y además a
+ * Odoo si la sincronización en vivo está encendida (V8-D: Odoo es un destino
+ * más). Nunca lanza: cualquier fallo queda en monitoreo y en last_status.
  */
 export async function dispatchHotelWebhooks(
   event: string,
@@ -52,10 +54,15 @@ export async function dispatchHotelWebhooks(
   branchId?: string | null,
 ): Promise<void> {
   try {
-    const hooks = (await getWebhooks(branchId)).filter((h) => webhookMatchesEvent(h, event))
-    if (hooks.length === 0) return
-    const body = JSON.stringify(buildWebhookPayload(event, data))
-    await Promise.allSettled(hooks.map((h) => fireOne(h, event, body, branchId)))
+    const jobs: Promise<unknown>[] = [pushOdooLiveEvent(event, data, branchId)]
+    const hooks = (await getWebhooks(branchId).catch(() => [] as Webhook[])).filter((h) =>
+      webhookMatchesEvent(h, event),
+    )
+    if (hooks.length > 0) {
+      const body = JSON.stringify(buildWebhookPayload(event, data))
+      jobs.push(...hooks.map((h) => fireOne(h, event, body, branchId)))
+    }
+    await Promise.allSettled(jobs)
   } catch (error) {
     captureError(error, { route: "lib/hotelWebhookDispatch", action: `dispatch:${event}` })
   }

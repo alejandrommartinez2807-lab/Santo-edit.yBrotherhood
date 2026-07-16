@@ -96,6 +96,8 @@ export async function POST(request: NextRequest) {
         await dispatchHotelWebhooks(
           "pago_confirmado",
           {
+            paymentId: payment.id,
+            reservationId: payment.reservationId,
             reservationCode: reservation?.code || "",
             guestName: reservation?.guestName || "",
             amount: payment.amount,

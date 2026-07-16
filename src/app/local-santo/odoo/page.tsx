@@ -52,6 +52,8 @@ function OdooContent() {
   const [dbName, setDbName] = useState("")
   const [login, setLogin] = useState("")
   const [apiKey, setApiKey] = useState("")
+  const [liveSync, setLiveSync] = useState(false)
+  const [liveBusy, setLiveBusy] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -71,6 +73,7 @@ function OdooContent() {
       setDbName(v.dbName)
       setLogin(v.login)
       setApiKey("")
+      setLiveSync(v.liveSync)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error")
     } finally {
@@ -115,7 +118,7 @@ function OdooContent() {
       const res = await fetch("/api/odoo", {
         method: "POST",
         headers: authHeaders(),
-        body: JSON.stringify({ action: "saveConfig", ...currentFields(), active: true }),
+        body: JSON.stringify({ action: "saveConfig", ...currentFields(), active: true, liveSync }),
       })
       const data = await res.json()
       if (!res.ok || data.ok === false) throw new Error(data.error || "No se pudo guardar")
@@ -124,6 +127,27 @@ function OdooContent() {
       setError(e instanceof Error ? e.message : "Error")
     } finally {
       setBusy(false)
+    }
+  }
+
+  async function toggleLiveSync(next: boolean) {
+    setLiveSync(next)
+    setLiveBusy(true)
+    setError("")
+    try {
+      const res = await fetch("/api/odoo", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ action: "saveConfig", ...currentFields(), active: true, liveSync: next }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.ok === false) throw new Error(data.error || "No se pudo guardar")
+      await load()
+    } catch (e) {
+      setLiveSync(!next)
+      setError(e instanceof Error ? e.message : "Error")
+    } finally {
+      setLiveBusy(false)
     }
   }
 
@@ -268,6 +292,27 @@ function OdooContent() {
                 {!view.hasApiKey && (
                   <p className="mt-2 text-xs font-bold text-amber-700">Falta la API Key para escribir en Odoo. La simulación funciona igual.</p>
                 )}
+
+                <div className="mt-4 border-t border-[var(--brand-primary)]/15 pt-3">
+                  <label className="flex items-start gap-2 text-sm font-bold text-[var(--brand-ink-2)]/80">
+                    <input
+                      type="checkbox"
+                      checked={liveSync}
+                      disabled={liveBusy || !view.hasApiKey}
+                      onChange={(e) => toggleLiveSync(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 accent-[var(--brand-primary)]"
+                    />
+                    <span>
+                      Sincronizar en vivo
+                      <span className="block text-xs font-bold text-[var(--brand-ink-2)]/55">
+                        Cada reserva creada o confirmada, check-in/out y pago confirmado se empuja solo a Odoo al momento (sin esperar al botón). Si Odoo no responde, la operación del hotel sigue normal y el dato se pone al día en la próxima sincronización.
+                      </span>
+                    </span>
+                  </label>
+                  {!view.hasApiKey && (
+                    <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/45">Guarda la API Key para poder encenderlo.</p>
+                  )}
+                </div>
               </section>
             )}
           </>
