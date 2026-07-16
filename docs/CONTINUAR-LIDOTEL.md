@@ -25,16 +25,28 @@ El v7 (competir cerrando brechas) queda como historia cumplida.
 | Fase | Qué | Estado | Migración |
 |---|---|---|---|
 | V8-A | Conector Odoo: lib pura + conexión + API + pantalla "Probar conexión" | ✅ `df5f820`+`f3aada1` | 0045 ✅ aplicada |
-| V8-B | El botón "Sincronizar ahora": huéspedes→res.partner, productos→product.product (idempotente, con dry-run) | ✅ `b0b896e` | — |
+| V8-B | El botón "Sincronizar ahora": huéspedes→res.partner, productos→product.product (idempotente, con dry-run) | ✅ `b0b896e` + **probado contra Odoo real** | — |
 | V8-C | Dinero a Odoo: facturas→account.move, pagos→account.payment | ⬜ siguiente | — |
 | V8-D | Tiempo real: eventos a Odoo reusando webhooks (P2-E) | ⬜ | — |
 | V8-E | Proveedores con interfaz lista (fiscal/OTA/C2P/email, provider manual) | ⬜ | — |
 
-> **Pendiente de verificación en vivo:** el usuario eligió construir V8-B con
-> dry-run (sin instancia Odoo). El dry-run se verifica offline; la **escritura
-> real** (`dryRun:false`) queda lista pero sin probar contra un Odoo real. Al
-> conseguir un trial (odoo.com), probar: Probar conexión → uid, luego Sincronizar
-> ahora dos veces y confirmar que la 2a no duplica.
+> **✅ VERIFICADO CONTRA UN ODOO REAL (2026-07-16, trial jhfbffbbffb.odoo.com):**
+> Probar conexión → uid 2 · dry-run correcto (17 productos por crear) ·
+> 1ª escritura real: 17 productos creados · 2ª pasada: 0 creados / 17 sin
+> cambios (idempotencia) · huésped del CRM → res.partner con teléfono y email
+> correctos · todo confirmado consultando Odoo DIRECTO por JSON-RPC
+> (search_count/search_read). Datos de prueba limpiados en ambos lados.
+>
+> **FIX descubierto durante la prueba (`f900a9b`, deployado):** el POST de
+> business-config solo aceptaba los interruptores de la era restaurante — los
+> 26 módulos hoteleros (incl. odooSync) se descartaban EN SILENCIO al guardar
+> desde Configuración (apagar un módulo hotelero era imposible y encender Odoo
+> también). Ahora el mapa se construye desde LOCAL_MODULE_DEFINITIONS: un
+> módulo nuevo con ownerConfigKey queda cubierto automáticamente.
+>
+> OJO: tras la prueba, el módulo Odoo quedó ENCENDIDO y la conexión al trial
+> guardada en el demo (base compartida local/vivo). Para volverlo a dormir:
+> Configuración → Módulos → apagar "Odoo" (ya funciona gracias al fix).
 >
 > **PUBLICADO DORMIDO (2026-07-16):** el módulo `odooSync` nace con el interruptor
 > APAGADO (`odooSyncModuleEnabled: false` en las 4 copias de default/preset). El
