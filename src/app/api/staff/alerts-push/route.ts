@@ -101,9 +101,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // El DUEÑO recibe alertas de TODAS las sedes (branch null = global);
+    // el encargado queda amarrado a su sede activa.
     const saved = await saveStaffAlertPushSubscription(
       subscription,
-      await resolveBranchId(request),
+      roleCheck.access.role === "owner" ? null : await resolveBranchId(request),
     )
 
     if (!saved) {
