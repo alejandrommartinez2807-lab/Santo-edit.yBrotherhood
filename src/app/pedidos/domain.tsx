@@ -1861,7 +1861,7 @@ export function buildPostSaleSurveyWhatsAppUrl(
               "3. ¿Qué podemos mejorar?",
             ]),
         "",
-        "También puedes respondernos por aquí, leemos todo. 🙌",
+        "También puedes respondernos por aquí, leemos todo.",
         ...(options.reviewUrl
           ? ["", `Y si quieres apoyarnos, déjanos tu reseña: ${options.reviewUrl}`]
           : []),

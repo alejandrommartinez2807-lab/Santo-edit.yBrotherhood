@@ -3488,8 +3488,7 @@ export default function PedidosPage() {
                     {isPanelSoundActive ? "Sonido activo" : isPanelSoundAvailable ? "Activar sonido" : "Sonido no activo"}
                   </button>
 
-                  {businessConfig.cancellationAlertsEnabled &&
-                    staffAlertsPush.state !== "unavailable" && (
+                  {businessConfig.cancellationAlertsEnabled && (
                     <button
                       type="button"
                       onClick={() => void staffAlertsPush.toggle()}
@@ -3498,7 +3497,9 @@ export default function PedidosPage() {
                       className={`inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition disabled:opacity-60 ${
                         staffAlertsPush.state === "on"
                           ? "border-red-600 bg-red-50 text-red-700 hover:bg-red-100"
-                          : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)] hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
+                          : staffAlertsPush.state === "unavailable"
+                            ? "border-[var(--brand-primary)]/40 bg-[var(--brand-surface-2)] text-[var(--brand-primary)]/60"
+                            : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)] hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
                       }`}
                     >
                       {staffAlertsPush.state === "working" ? (
@@ -3508,7 +3509,9 @@ export default function PedidosPage() {
                       )}
                       {staffAlertsPush.state === "on"
                         ? "Alerta de anulación activa"
-                        : "Alertas de anulación"}
+                        : staffAlertsPush.state === "unavailable"
+                          ? "Alertas no disponibles aquí"
+                          : "Alertas de anulación"}
                     </button>
                   )}
 

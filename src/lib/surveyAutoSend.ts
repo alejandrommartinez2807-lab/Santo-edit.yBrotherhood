@@ -126,7 +126,7 @@ export async function dispatchPostSaleSurveys(): Promise<SurveyDispatchResult> {
           "¿Nos regalas 1 minuto? Califica tu pedido con estrellas aquí:",
           surveyUrl,
           "",
-          "Tu opinión nos ayuda muchísimo a mejorar. 🙌",
+          "Tu opinión nos ayuda muchísimo a mejorar.",
         ].join("\n")
 
     const result = useTemplate

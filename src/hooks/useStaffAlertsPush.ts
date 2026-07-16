@@ -59,7 +59,16 @@ export function useStaffAlertsPush(adminPassword: string, enabled: boolean) {
   }, [enabled])
 
   async function toggle() {
-    if (state === "working" || state === "unavailable" || !adminPassword) return
+    if (state === "working" || !adminPassword) return
+
+    // Navegador sin soporte de push: en vez de esconder la opción, se
+    // explica qué usar (pasaba con navegadores "genéricos" y WebViews).
+    if (state === "unavailable") {
+      setMessage(
+        "Este navegador no soporta notificaciones push. Abre la página en Chrome (Android) o instálala como app (menú del navegador → “Agregar a pantalla principal” / “Instalar app”) y actívalas desde ahí. En iPhone es obligatorio agregarla a inicio y abrirla desde el ícono.",
+      )
+      return
+    }
 
     setMessage("")
     setState("working")
@@ -92,7 +101,9 @@ export function useStaffAlertsPush(adminPassword: string, enabled: boolean) {
 
       if (permission !== "granted") {
         setState("off")
-        setMessage("El navegador bloqueó las notificaciones para esta página.")
+        setMessage(
+          "El navegador no dio el permiso de notificaciones. Revisa: 1) el candado junto a la dirección → Permisos → Notificaciones → Permitir; 2) en Android, Ajustes del teléfono → Aplicaciones → Chrome → Notificaciones activadas; 3) que el teléfono no esté en “No molestar”. Luego toca el botón de nuevo.",
+        )
         return
       }
 
