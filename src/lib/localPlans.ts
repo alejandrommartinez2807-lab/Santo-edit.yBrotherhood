@@ -60,6 +60,7 @@ export type LocalModuleKey =
   | "fiscalInvoicing"
   | "guestMemberships"
   | "webhooks"
+  | "odooSync"
   | "staffShifts"
   | "channelManager"
   | "advancedRates"
@@ -169,6 +170,7 @@ export type LocalPlanConfigLike = {
   fiscalInvoicingModuleEnabled?: unknown
   guestMembershipsModuleEnabled?: unknown
   webhooksModuleEnabled?: unknown
+  odooSyncModuleEnabled?: unknown
   staffShiftsModuleEnabled?: unknown
   channelManagerModuleEnabled?: unknown
   waiterConfirmationModuleEnabled?: unknown
@@ -270,6 +272,7 @@ export const LOCAL_MODULE_KEYS: LocalModuleKey[] = [
   "fiscalInvoicing",
   "guestMemberships",
   "webhooks",
+  "odooSync",
   "staffShifts",
   "channelManager",
   "advancedRates",
@@ -459,6 +462,7 @@ export const LOCAL_PLAN_DEFINITIONS: LocalPlanDefinition[] = [
       "fiscalInvoicing",
       "guestMemberships",
       "webhooks",
+      "odooSync",
       "staffShifts",
       "channelManager",
       "advancedRates",
@@ -1062,6 +1066,18 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     visibleForOwnerSettings: true,
     visibleForSupport: true,
     routePath: "/local-santo/integraciones",
+    comingSoon: false,
+  },
+  {
+    key: "odooSync",
+    label: "Odoo / ERP",
+    description: "Sincroniza con Odoo con un botón: empuja huéspedes, productos, facturas y pagos a la contabilidad/ERP del cliente vía su API externa (JSON-RPC). Complementa Odoo con la operación hotelera; un solo sistema, no dos.",
+    category: "management",
+    minimumPlan: "complete",
+    ownerConfigKey: "odooSyncModuleEnabled",
+    visibleForOwnerSettings: true,
+    visibleForSupport: true,
+    routePath: "/local-santo/odoo",
     comingSoon: false,
   },
   {

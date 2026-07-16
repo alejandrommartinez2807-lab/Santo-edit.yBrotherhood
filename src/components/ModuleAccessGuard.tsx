@@ -94,6 +94,7 @@ type ModuleKey =
   | "fiscalInvoicing"
   | "guestMemberships"
   | "webhooks"
+  | "odooSync"
   | "staffShifts"
   | "channelManager"
   | "waiterConfirmation"

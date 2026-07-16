@@ -214,6 +214,7 @@ export type BusinessConfig = {
   fiscalInvoicingModuleEnabled: boolean
   guestMembershipsModuleEnabled: boolean
   webhooksModuleEnabled: boolean
+  odooSyncModuleEnabled: boolean
   staffShiftsModuleEnabled: boolean
   channelManagerModuleEnabled: boolean
   waiterConfirmationModuleEnabled: boolean
@@ -393,6 +394,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   fiscalInvoicingModuleEnabled: true,
   guestMembershipsModuleEnabled: true,
   webhooksModuleEnabled: true,
+  odooSyncModuleEnabled: true,
   staffShiftsModuleEnabled: true,
   channelManagerModuleEnabled: true,
   waiterConfirmationModuleEnabled: true,
@@ -1003,6 +1005,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.webhooksModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.webhooksModuleEnabled
     ),
+    odooSyncModuleEnabled: normalizeBooleanConfig(
+      source.odooSyncModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.odooSyncModuleEnabled
+    ),
     staffShiftsModuleEnabled: normalizeBooleanConfig(
       source.staffShiftsModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.staffShiftsModuleEnabled
@@ -1142,6 +1148,7 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
   const fiscalInvoicingAccess = getModulePlanAccess(config, "fiscalInvoicing")
   const guestMembershipsAccess = getModulePlanAccess(config, "guestMemberships")
   const webhooksAccess = getModulePlanAccess(config, "webhooks")
+  const odooSyncAccess = getModulePlanAccess(config, "odooSync")
   const staffShiftsAccess = getModulePlanAccess(config, "staffShifts")
   const channelManagerAccess = getModulePlanAccess(config, "channelManager")
   const waiterConfirmationAccess = getModulePlanAccess(config, "waiterConfirmation")
@@ -1304,6 +1311,9 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
       : false,
     webhooksModuleEnabled: webhooksAccess.includedInPlan
       ? config.webhooksModuleEnabled
+      : false,
+    odooSyncModuleEnabled: odooSyncAccess.includedInPlan
+      ? config.odooSyncModuleEnabled
       : false,
     staffShiftsModuleEnabled: staffShiftsAccess.includedInPlan
       ? config.staffShiftsModuleEnabled

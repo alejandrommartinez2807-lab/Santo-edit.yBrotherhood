@@ -450,6 +450,7 @@ export type BusinessConfig = {
   fiscalInvoicingModuleEnabled: boolean
   guestMembershipsModuleEnabled: boolean
   webhooksModuleEnabled: boolean
+  odooSyncModuleEnabled: boolean
   staffShiftsModuleEnabled: boolean
   channelManagerModuleEnabled: boolean
   deliveryEnabled: boolean
@@ -553,6 +554,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   fiscalInvoicingModuleEnabled: true,
   guestMembershipsModuleEnabled: true,
   webhooksModuleEnabled: true,
+  odooSyncModuleEnabled: true,
   staffShiftsModuleEnabled: true,
   channelManagerModuleEnabled: true,
   deliveryEnabled: true,
@@ -2538,6 +2540,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     webhooksModuleEnabled: normalizeBooleanConfig(
       source.webhooksModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.webhooksModuleEnabled
+    ),
+    odooSyncModuleEnabled: normalizeBooleanConfig(
+      source.odooSyncModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.odooSyncModuleEnabled
     ),
     staffShiftsModuleEnabled: normalizeBooleanConfig(
       source.staffShiftsModuleEnabled,

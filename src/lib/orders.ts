@@ -311,6 +311,13 @@ export {
   recordGuestPassUse,
 } from "./ordersStoreMemberships"
 
+export type { OdooIntegration, SaveOdooIntegrationInput } from "./ordersStoreOdoo"
+export {
+  getOdooIntegration,
+  saveOdooIntegration,
+  updateOdooConnectionState,
+} from "./ordersStoreOdoo"
+
 export type { NotificationEntry } from "./ordersNotifications"
 export { getNotificationLog, logNotification } from "./ordersNotifications"
 
