@@ -8,6 +8,7 @@ import {
   ArrowUpRight,
   BarChart3,
   BedDouble,
+  Building2,
   CalendarRange,
   Download,
   Loader2,
@@ -365,6 +366,8 @@ function ReportesHotelContent() {
               </div>
             </div>
 
+            <ConsolidadoSection from={from} to={to} cardClass={cardClass} kickerClass={kickerClass} />
+
             {error && <p className="mt-3 font-bold text-red-600">{error}</p>}
 
             {loading && !data ? (
@@ -612,5 +615,130 @@ function ReportesHotelContent() {
         )}
       </div>
     </main>
+  )
+}
+
+// ==== P2-F · Dueño consolidado: todas las propiedades en una tabla ====
+// Se carga aparte del reporte de la sede activa y solo se muestra si el rol
+// puede verlo (dueño/soporte) y hay más de una propiedad activa.
+
+type ConsolidadoRow = {
+  branchId: string
+  branchName: string
+  report: Report
+  arrivalsToday: number
+  departuresToday: number
+  inHouse: number
+}
+type ConsolidadoTotals = {
+  properties: number
+  roomCount: number
+  roomNightsAvailable: number
+  roomNightsSold: number
+  roomRevenue: number
+  occupancy: number
+  adr: number
+  revPar: number
+  arrivalsToday: number
+  departuresToday: number
+  inHouse: number
+}
+
+function ConsolidadoSection({
+  from,
+  to,
+  cardClass,
+  kickerClass,
+}: {
+  from: string
+  to: string
+  cardClass: string
+  kickerClass: string
+}) {
+  const [rows, setRows] = useState<ConsolidadoRow[]>([])
+  const [totals, setTotals] = useState<ConsolidadoTotals | null>(null)
+  const [allowed, setAllowed] = useState(true)
+  const [loading, setLoading] = useState(false)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/hotel-reports/consolidado?from=${from}&to=${to}`, {
+        headers: authHeaders(),
+        cache: "no-store",
+      })
+      if (res.status === 401 || res.status === 403) {
+        setAllowed(false)
+        return
+      }
+      const payload = await res.json()
+      if (!res.ok) return
+      setAllowed(true)
+      setRows(payload.rows || [])
+      setTotals(payload.totals || null)
+    } catch {
+      // El consolidado nunca bloquea el reporte de la sede activa.
+    } finally {
+      setLoading(false)
+    }
+  }, [from, to])
+
+  useEffect(() => {
+    const timer = setTimeout(load, 0)
+    return () => clearTimeout(timer)
+  }, [load])
+
+  // Con una sola propiedad, el consolidado repetiría el reporte de arriba.
+  if (!allowed || rows.length < 2 || !totals) return null
+
+  const pct = (v: number) => `${Math.round(v * 100)}%`
+
+  return (
+    <section className={`${cardClass} mt-4 ${loading ? "opacity-60" : ""}`}>
+      <p className={kickerClass}><Building2 size={13} /> Todas las propiedades</p>
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full min-w-[560px] text-sm">
+          <thead>
+            <tr className="text-left text-xs font-bold uppercase tracking-wide text-[var(--brand-ink-2)]/55">
+              <th className="pb-2 pr-3">Propiedad</th>
+              <th className="pb-2 pr-3">Hab.</th>
+              <th className="pb-2 pr-3">Ocupación</th>
+              <th className="pb-2 pr-3">Ingreso</th>
+              <th className="pb-2 pr-3">ADR</th>
+              <th className="pb-2 pr-3">Llegadas hoy</th>
+              <th className="pb-2 pr-3">En casa</th>
+              <th className="pb-2">Salidas hoy</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.branchId} className="border-t border-[var(--brand-primary)]/10 font-bold text-[var(--brand-ink-2)]">
+                <td className="py-2 pr-3 text-[var(--brand-ink-3)]">{r.branchName}</td>
+                <td className="py-2 pr-3">{r.report.roomCount}</td>
+                <td className="py-2 pr-3">{pct(r.report.occupancy)}</td>
+                <td className="py-2 pr-3">{fmtMoney(r.report.roomRevenue)}</td>
+                <td className="py-2 pr-3">{fmtMoney(r.report.adr)}</td>
+                <td className="py-2 pr-3">{r.arrivalsToday}</td>
+                <td className="py-2 pr-3">{r.inHouse}</td>
+                <td className="py-2">{r.departuresToday}</td>
+              </tr>
+            ))}
+            <tr className="border-t-2 border-[var(--brand-primary)]/25 font-bold text-[var(--brand-ink-3)]">
+              <td className="py-2 pr-3">Grupo ({totals.properties})</td>
+              <td className="py-2 pr-3">{totals.roomCount}</td>
+              <td className="py-2 pr-3">{pct(totals.occupancy)}</td>
+              <td className="py-2 pr-3">{fmtMoney(totals.roomRevenue)}</td>
+              <td className="py-2 pr-3">{fmtMoney(totals.adr)}</td>
+              <td className="py-2 pr-3">{totals.arrivalsToday}</td>
+              <td className="py-2 pr-3">{totals.inHouse}</td>
+              <td className="py-2">{totals.departuresToday}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-2 text-xs font-bold text-[var(--brand-ink-2)]/50">
+        Ocupación y ADR del grupo se calculan desde las sumas del periodo, no promediando porcentajes.
+      </p>
+    </section>
   )
 }

@@ -303,3 +303,66 @@ export function computeStayStats(params: {
     cancellationRate: touching > 0 ? round2((cancelled + noShow) / touching) : 0,
   }
 }
+
+// ---------------------------------------------------------------------------
+// Consolidado multi-propiedad (P2-F): una fila por sede + totales del grupo.
+// Ocupación/ADR/RevPAR del grupo se recalculan desde las SUMAS (promediar
+// porcentajes daría un consolidado falso cuando las sedes difieren de tamaño).
+// ---------------------------------------------------------------------------
+
+export type PropertyReportRow = {
+  branchId: string
+  branchName: string
+  report: HotelReport
+  arrivalsToday: number
+  departuresToday: number
+  inHouse: number
+}
+
+export type ConsolidatedHotelReport = {
+  properties: number
+  roomCount: number
+  roomNightsAvailable: number
+  roomNightsSold: number
+  roomRevenue: number
+  occupancy: number
+  adr: number
+  revPar: number
+  arrivalsToday: number
+  departuresToday: number
+  inHouse: number
+}
+
+export function consolidateHotelReports(rows: PropertyReportRow[]): ConsolidatedHotelReport {
+  let roomCount = 0
+  let available = 0
+  let sold = 0
+  let revenue = 0
+  let arrivalsToday = 0
+  let departuresToday = 0
+  let inHouse = 0
+
+  for (const row of rows) {
+    roomCount += Math.max(0, num(row.report?.roomCount, 0))
+    available += Math.max(0, num(row.report?.roomNightsAvailable, 0))
+    sold += Math.max(0, num(row.report?.roomNightsSold, 0))
+    revenue += Math.max(0, num(row.report?.roomRevenue, 0))
+    arrivalsToday += Math.max(0, num(row.arrivalsToday, 0))
+    departuresToday += Math.max(0, num(row.departuresToday, 0))
+    inHouse += Math.max(0, num(row.inHouse, 0))
+  }
+
+  return {
+    properties: rows.length,
+    roomCount,
+    roomNightsAvailable: available,
+    roomNightsSold: sold,
+    roomRevenue: round2(revenue),
+    occupancy: available > 0 ? round2(sold / available) : 0,
+    adr: sold > 0 ? round2(revenue / sold) : 0,
+    revPar: available > 0 ? round2(revenue / available) : 0,
+    arrivalsToday,
+    departuresToday,
+    inHouse,
+  }
+}

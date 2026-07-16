@@ -5,6 +5,7 @@ import {
   computeRoomTypeBreakdown,
   computeSourceBreakdown,
   computeStayStats,
+  consolidateHotelReports,
   nightsInPeriod,
 } from "../hotelReports"
 
@@ -109,3 +110,49 @@ describe("hotelReports", () => {
     expect(stats.cancellationRate).toBe(0.5) // 2 de 4
   })
 })
+
+describe("consolidateHotelReports", () => {
+  const reportOf = (roomCount: number, sold: number, revenue: number, days = 10) => ({
+    from: "2026-06-01",
+    to: "2026-06-11",
+    daysInPeriod: days,
+    roomCount,
+    roomNightsAvailable: roomCount * days,
+    roomNightsSold: sold,
+    roomRevenue: revenue,
+    occupancy: 0,
+    adr: 0,
+    revPar: 0,
+    reservationsCounted: 0,
+    countsByStatus: {},
+  })
+
+  it("suma sedes y recalcula los KPIs desde las sumas (no promedia %)", () => {
+    const grande = { branchId: "a", branchName: "Valencia", report: reportOf(20, 100, 8000), arrivalsToday: 3, departuresToday: 2, inHouse: 12 }
+    const chica = { branchId: "b", branchName: "Morrocoy", report: reportOf(2, 20, 1000), arrivalsToday: 1, departuresToday: 0, inHouse: 2 }
+    const c = consolidateHotelReports([grande, chica])
+    expect(c.properties).toBe(2)
+    expect(c.roomCount).toBe(22)
+    expect(c.roomNightsAvailable).toBe(220)
+    expect(c.roomNightsSold).toBe(120)
+    expect(c.roomRevenue).toBe(9000)
+    expect(c.occupancy).toBe(round2Test(120 / 220))
+    expect(c.adr).toBe(75)
+    expect(c.revPar).toBe(round2Test(9000 / 220))
+    expect(c.arrivalsToday).toBe(4)
+    expect(c.departuresToday).toBe(2)
+    expect(c.inHouse).toBe(14)
+  })
+
+  it("grupo vacío o sin disponibilidad no divide por cero", () => {
+    expect(consolidateHotelReports([]).occupancy).toBe(0)
+    const sinHab = { branchId: "x", branchName: "Nueva", report: reportOf(0, 0, 0), arrivalsToday: 0, departuresToday: 0, inHouse: 0 }
+    const c = consolidateHotelReports([sinHab])
+    expect(c.adr).toBe(0)
+    expect(c.revPar).toBe(0)
+  })
+})
+
+function round2Test(v: number) {
+  return Math.round(v * 100) / 100
+}
