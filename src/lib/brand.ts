@@ -23,6 +23,14 @@ export const BRAND = {
   /** Logo en /public (déjalo vacío para usar solo texto). */
   logoUrl: "/demo/lidotel/lidotel-logo.png",
 
+  /**
+   * Demo estática sin backend (patrón demo-express): las APIs públicas del
+   * hotel responden con el contenido de src/lib/hotelDemoSite.ts y la reserva
+   * termina en una confirmación simulada. SOLO true en instancias demo por
+   * prospecto publicadas con env dummy; en la plantilla base SIEMPRE false.
+   */
+  demoMode: false,
+
   /** Contacto / redes (defaults; la config en BD puede sobreescribir). */
   whatsapp: "582417000399",
   instagram: "lidotel",

@@ -37,6 +37,11 @@ import {
 import { quoteStay } from "@/lib/rateSeasons"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
+import {
+  HOTEL_DEMO_MODE,
+  demoAvailabilityPayload,
+  demoReservationPayload,
+} from "@/lib/hotelDemoSite"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -165,6 +170,16 @@ export async function GET(request: NextRequest) {
   })
   if (rateLimitResponse) return rateLimitResponse
 
+  // Demo estática sin backend: disponibilidad de muestra (ver hotelDemoSite).
+  if (HOTEL_DEMO_MODE) {
+    return noStoreResponse(
+      demoAvailabilityPayload(
+        request.nextUrl.searchParams.get("checkIn"),
+        request.nextUrl.searchParams.get("checkOut"),
+      ),
+    )
+  }
+
   try {
     const context = await getBookingContext()
     const { enabled, bookingFields, termsText, roomTypeDetails } = context
@@ -231,6 +246,13 @@ export async function POST(request: NextRequest) {
     message: "Demasiadas reservas seguidas. Espera un minuto e intenta nuevamente.",
   })
   if (rateLimitResponse) return rateLimitResponse
+
+  // Demo estática sin backend: confirma en memoria, no persiste nada.
+  if (HOTEL_DEMO_MODE) {
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
+    const result = demoReservationPayload(body)
+    return noStoreResponse(result.payload, { status: result.status })
+  }
 
   try {
     const context = await getBookingContext()

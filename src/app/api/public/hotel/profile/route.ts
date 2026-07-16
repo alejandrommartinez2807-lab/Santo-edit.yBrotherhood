@@ -4,6 +4,7 @@ import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
+import { HOTEL_DEMO_MODE, demoProfilePayload } from "@/lib/hotelDemoSite"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -23,6 +24,9 @@ export async function GET(request: NextRequest) {
     message: "Demasiadas consultas. Espera unos segundos e intenta nuevamente.",
   })
   if (rateLimitResponse) return rateLimitResponse
+
+  // Demo estática sin backend: contenido de muestra (ver hotelDemoSite).
+  if (HOTEL_DEMO_MODE) return noStore(demoProfilePayload())
 
   try {
     const config = (await getBusinessConfig()) as unknown as Record<string, unknown>

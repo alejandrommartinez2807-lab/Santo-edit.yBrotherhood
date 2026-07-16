@@ -5,6 +5,7 @@ import { resolveBranchId } from "@/lib/branch"
 import { clampRating, summarizeReviews } from "@/lib/reviewsSummary"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
+import { HOTEL_DEMO_MODE, demoReviewsPayload } from "@/lib/hotelDemoSite"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -27,6 +28,9 @@ async function reviewsEnabled() {
 
 // GET público: reseñas publicadas + resumen (para testimonios en la landing).
 export async function GET(request: NextRequest) {
+  // Demo estática sin backend: testimonios de muestra (ver hotelDemoSite).
+  if (HOTEL_DEMO_MODE) return noStore(demoReviewsPayload())
+
   try {
     if (!(await reviewsEnabled())) {
       return noStore({ ok: true, enabled: false, summary: { count: 0, average: 0 }, reviews: [] })
@@ -54,6 +58,15 @@ export async function POST(request: NextRequest) {
     message: "Demasiadas reseñas seguidas. Espera un minuto e intenta nuevamente.",
   })
   if (rateLimitResponse) return rateLimitResponse
+
+  // Demo estática: la reseña se "recibe" pero no se persiste.
+  if (HOTEL_DEMO_MODE) {
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
+    if (cleanText(body.guestName).length < 2) {
+      return noStore({ ok: false, error: "Escribe tu nombre" }, { status: 400 })
+    }
+    return noStore({ ok: true }, { status: 201 })
+  }
 
   try {
     if (!(await reviewsEnabled())) {

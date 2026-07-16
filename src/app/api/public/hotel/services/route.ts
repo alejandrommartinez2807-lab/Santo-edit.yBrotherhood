@@ -13,6 +13,11 @@ import { normalizeStayDate } from "@/lib/hotelReservationConflicts"
 import { getReservationNow } from "@/lib/reservationConflicts"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
+import {
+  HOTEL_DEMO_MODE,
+  demoServiceBookingPayload,
+  demoServicesPayload,
+} from "@/lib/hotelDemoSite"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -46,6 +51,9 @@ async function getServicesContext() {
 // GET público: catálogo de servicios/actividades activos (spa, tours, eventos…)
 // para mostrarlos en la landing del hotel. Solo campos vitrina, sin cupos.
 export async function GET(request: NextRequest) {
+  // Demo estática sin backend: catálogo de muestra (ver hotelDemoSite).
+  if (HOTEL_DEMO_MODE) return noStore(demoServicesPayload())
+
   try {
     const context = await getServicesContext()
     if (!context.enabled) {
@@ -84,6 +92,13 @@ export async function POST(request: NextRequest) {
     message: "Demasiadas reservas seguidas. Espera un minuto e intenta nuevamente.",
   })
   if (rateLimitResponse) return rateLimitResponse
+
+  // Demo estática: confirma en memoria, no persiste nada.
+  if (HOTEL_DEMO_MODE) {
+    const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
+    const result = demoServiceBookingPayload(body)
+    return noStore(result.payload, { status: result.status })
+  }
 
   try {
     const context = await getServicesContext()
