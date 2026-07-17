@@ -430,12 +430,12 @@ function normalizeMenuProducts(value: unknown): MenuProduct[] {
     })
 }
 
-function buildFormFromProduct(product: MenuProduct): MenuForm {
+function buildFormFromProduct(product: MenuProduct, categoryOptions: string[]): MenuForm {
   return {
     id: String(product.id),
     name: product.name,
-    category: CATEGORY_OPTIONS.includes(product.category) ? product.category : "Otros",
-    customCategory: CATEGORY_OPTIONS.includes(product.category) ? "" : product.category,
+    category: categoryOptions.includes(product.category) ? product.category : "Otros",
+    customCategory: categoryOptions.includes(product.category) ? "" : product.category,
     description: product.description,
     price: String(product.price || ""),
     image: product.image,
@@ -600,6 +600,44 @@ export default function LocalMenuPage() {
       ).sort((a, b) => a.localeCompare(b)),
     ]
   }, [menuProducts])
+
+  // Opciones del selector de categoría del formulario: las categorías del menú
+  // REAL primero (para que crear un producto en una categoría existente no
+  // obligue a pasar por "Otros"), y las base solo como semilla de menú vacío.
+  const categoryOptions = useMemo(() => {
+    const fromMenu = Array.from(
+      new Set(
+        menuProducts
+          .map((product) => String(product.category || "").trim())
+          .filter(Boolean)
+      )
+    )
+    const seeds = fromMenu.length
+      ? fromMenu
+      : CATEGORY_OPTIONS.filter((category) => category !== "Otros")
+
+    return [...seeds, "Otros"]
+  }, [menuProducts])
+
+  const emptyForm = useMemo(
+    () => ({ ...EMPTY_FORM, category: categoryOptions[0] || "Otros" }),
+    [categoryOptions]
+  )
+
+  // Si el formulario está intacto y su categoría por defecto ya no existe en
+  // el menú cargado, se realinea a la primera categoría real (evita guardar el
+  // primer producto nuevo en una categoría muerta de la plantilla).
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setForm((current) => {
+        if (current.id || current.name.trim()) return current
+        if (categoryOptions.includes(current.category)) return current
+        return { ...current, category: categoryOptions[0] || "Otros" }
+      })
+    }, 0)
+
+    return () => clearTimeout(timer)
+  }, [categoryOptions])
 
   const filteredProducts = useMemo(() => {
     const query = searchText.trim().toLowerCase()
@@ -795,7 +833,7 @@ export default function LocalMenuPage() {
   }
 
   function resetForm() {
-    setForm(EMPTY_FORM)
+    setForm(emptyForm)
     setSuccessMessage(null)
     setErrorMessage(null)
   }
@@ -941,7 +979,7 @@ export default function LocalMenuPage() {
       })
 
       if (!customInput) {
-        setForm(EMPTY_FORM)
+        setForm(emptyForm)
         setIsFormVisible(false)
         setSuccessMessage("Producto del menú guardado correctamente.")
       }
@@ -1094,7 +1132,7 @@ export default function LocalMenuPage() {
   }
 
   function editProduct(product: MenuProduct) {
-    setForm(buildFormFromProduct(product))
+    setForm(buildFormFromProduct(product, categoryOptions))
     setIsFormVisible(true)
     setSuccessMessage("Producto cargado para editar.")
     setErrorMessage(null)
@@ -1313,7 +1351,7 @@ export default function LocalMenuPage() {
                   onChange={(event) => updateForm("category", event.target.value)}
                   className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                 >
-                  {CATEGORY_OPTIONS.map((category) => (
+                  {categoryOptions.map((category) => (
                     <option key={category} value={category}>
                       {category}
                     </option>

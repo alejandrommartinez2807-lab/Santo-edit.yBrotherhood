@@ -59,14 +59,14 @@ describe("publicProductsResponse", () => {
     expect(menuProductToPublicProduct(makeMenuProduct({ image: "" })).image).toBe("/logo.png")
   })
 
-  it("mezcla categorías base con categorías de productos sin duplicar", () => {
+  it("deriva las categorías del menú real sin colar categorías base vacías", () => {
     const categories = buildCategories([
       menuProductToPublicProduct(makeMenuProduct({ category: "Burgers" })),
       menuProductToPublicProduct(makeMenuProduct({ category: "Promos" })),
       menuProductToPublicProduct(makeMenuProduct({ category: "Promos" })),
     ])
 
-    expect(categories).toEqual([...fallbackCategories, "Promos"])
+    expect(categories).toEqual(["Todos", "Burgers", "Promos"])
   })
 
   it("usa el menú base cuando no hay productos activos", () => {
