@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke": "node scripts/smoke.mjs",
+    "seed:caracas": "node scripts/seed-caracas-burger.mjs",
     "backup": "node scripts/backup.mjs",
     "restore": "node scripts/restore.mjs",
     "e2e:purchase-inventory": "node scripts/purchase-inventory-e2e.mjs",
