@@ -5,11 +5,14 @@ import { captureError } from "@/lib/monitoring"
 import { isMissingColumnError } from "@/lib/ordersStoreMappers"
 import { markOrderSurveySent } from "@/lib/surveys"
 import {
+  getSurveyButtonTemplateName,
   getSurveyTemplateName,
   isWhatsAppBusinessConfigured,
+  sendWhatsAppBusinessSurveyButtons,
   sendWhatsAppBusinessSurveyTemplate,
   sendWhatsAppBusinessText,
 } from "@/lib/whatsappBusiness"
+import { buildSurveyButtonPayloads } from "@/lib/surveyButtons"
 
 // Envío AUTOMÁTICO de la encuesta post-venta: X minutos después de marcar
 // el pedido como Entregado (delivery/pick up con teléfono), se manda el link
@@ -100,7 +103,10 @@ export async function dispatchPostSaleSurveys(): Promise<SurveyDispatchResult> {
   const customMessage = String(config.postSaleSurveyMessage || "").trim()
   const businessName = String(config.businessName || "el negocio").trim()
   const siteUrl = getSiteUrl()
-  const useTemplate = Boolean(getSurveyTemplateName())
+  // Prioridad: BOTONES en el chat (un toque, sin link) > plantilla con link >
+  // texto libre con link. La de botones es la experiencia que pidió el dueño.
+  const useButtons = Boolean(getSurveyButtonTemplateName())
+  const useTemplate = !useButtons && Boolean(getSurveyTemplateName())
 
   for (const raw of pendingOrders) {
     const order = raw as Record<string, unknown>
@@ -129,12 +135,21 @@ export async function dispatchPostSaleSurveys(): Promise<SurveyDispatchResult> {
           "Tu opinión nos ayuda muchísimo a mejorar.",
         ].join("\n")
 
-    const result = useTemplate
-      ? await sendWhatsAppBusinessSurveyTemplate(phone, customerName, surveyUrl)
-      : await sendWhatsAppBusinessText(phone, body)
+    const result = useButtons
+      ? await sendWhatsAppBusinessSurveyButtons(
+          phone,
+          customerName,
+          buildSurveyButtonPayloads(orderId),
+        )
+      : useTemplate
+        ? await sendWhatsAppBusinessSurveyTemplate(phone, customerName, surveyUrl)
+        : await sendWhatsAppBusinessText(phone, body)
 
     if (result.ok) {
-      await markOrderSurveySent(orderId, useTemplate ? "auto-template" : "auto-whatsapp")
+      await markOrderSurveySent(
+        orderId,
+        useButtons ? "auto-buttons" : useTemplate ? "auto-template" : "auto-whatsapp",
+      )
       sent += 1
     } else {
       captureError(new Error(result.error || "Fallo al enviar encuesta"), {

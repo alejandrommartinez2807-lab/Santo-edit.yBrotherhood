@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { getBusinessConfig } from "@/lib/orders"
 import { isMissingColumnError } from "@/lib/ordersStoreMappers"
+import { WHATSAPP_SURVEY_ASPECT } from "@/lib/surveyButtons"
 
 // Encuesta post-venta con estrellas: helpers de servidor compartidos por la
 // página pública (/encuesta/<pedido>), el panel de resultados del dueño y el
@@ -161,6 +162,54 @@ export async function savePublicSurveyResponse(
         error: "La encuesta no está disponible en este momento",
         status: 503,
       }
+    }
+    throw new Error(insertError.message)
+  }
+
+  return { ok: true }
+}
+
+// Guarda la respuesta de UN TOQUE recibida por el webhook de WhatsApp: el
+// cliente tocó un botón (Excelente/Bien/Malo ⇒ 5/3/1). Se guarda bajo el
+// aspecto "Experiencia general" para que entre en los promedios del dueño.
+// UNA respuesta por pedido (índice único): tocar dos veces no duplica.
+export async function saveWhatsAppButtonSurveyResponse(input: {
+  orderId: string
+  score: number
+}): Promise<
+  | { ok: true; alreadyAnswered?: boolean }
+  | { ok: false; error: string; status: number }
+> {
+  const score = Math.round(Number(input.score))
+  if (!(score >= 1 && score <= 5)) {
+    return { ok: false, error: "Puntaje no válido", status: 400 }
+  }
+
+  const supabase = getSupabaseAdmin()
+
+  // branch-exempt: lookup puntual por id único e imprevisible (ord-...).
+  const { data: orderRow, error: orderError } = await supabase
+    .from("orders")
+    .select("id, customer_name, branch_id")
+    .eq("id", input.orderId)
+    .maybeSingle()
+
+  if (orderError) throw new Error(orderError.message)
+  if (!orderRow) return { ok: false, error: "No encontramos ese pedido", status: 404 }
+
+  const { error: insertError } = await supabase.from("survey_responses").insert({
+    order_id: input.orderId,
+    branch_id: orderRow.branch_id ?? null,
+    ratings: { [WHATSAPP_SURVEY_ASPECT]: score },
+    comment: "",
+    customer_name: String(orderRow.customer_name || "").trim(),
+  })
+
+  if (insertError) {
+    // 23505 = unique_violation: ya había respondido (no es un error real).
+    if (insertError.code === "23505") return { ok: true, alreadyAnswered: true }
+    if (isMissingTableError(insertError)) {
+      return { ok: false, error: "La encuesta no está disponible", status: 503 }
     }
     throw new Error(insertError.message)
   }

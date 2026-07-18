@@ -34,6 +34,12 @@ export function getSurveyTemplateName(): string {
   return String(process.env.WHATSAPP_SURVEY_TEMPLATE || "").trim()
 }
 
+// Plantilla de BOTONES: la encuesta se contesta con un toque dentro del chat
+// (sin link). Si está configurada, tiene prioridad sobre el link.
+export function getSurveyButtonTemplateName(): string {
+  return String(process.env.WHATSAPP_SURVEY_BUTTON_TEMPLATE || "").trim()
+}
+
 // Normaliza a formato internacional sin "+" (igual que los botones wa.me
 // del panel: números venezolanos 0412... → 58412...).
 export function normalizePhoneForWhatsAppApi(value: string): string {
@@ -126,6 +132,55 @@ export async function sendWhatsAppBusinessSurveyTemplate(
             { type: "text", text: surveyUrl },
           ],
         },
+      ],
+    },
+  })
+}
+
+// Plantilla de BOTONES de respuesta rápida: la encuesta se contesta con un
+// toque, dentro del chat, sin link y sin escribir. El texto de cada botón lo
+// fija la plantilla aprobada en Meta; aquí sólo mandamos el "payload" de cada
+// botón (pedido + puntaje), que vuelve por el webhook cuando el cliente toca.
+// {{1}} del cuerpo = nombre del cliente. `payloads` va en orden de botón.
+export async function sendWhatsAppBusinessSurveyButtons(
+  phone: string,
+  customerName: string,
+  payloads: string[],
+): Promise<SendResult> {
+  if (!isWhatsAppBusinessConfigured()) {
+    return { ok: false, error: "WhatsApp Business no está configurado" }
+  }
+
+  const to = normalizePhoneForWhatsAppApi(phone)
+  if (!to) return { ok: false, error: "Teléfono no válido" }
+
+  const templateName = getSurveyButtonTemplateName()
+  if (!templateName) return { ok: false, error: "Sin plantilla de botones configurada" }
+  if (!payloads.length) return { ok: false, error: "Sin opciones de botón" }
+
+  const buttonComponents = payloads.map((payload, index) => ({
+    type: "button",
+    sub_type: "quick_reply",
+    index: String(index),
+    parameters: [{ type: "payload", payload }],
+  }))
+
+  return postToGraph({
+    to,
+    type: "template",
+    template: {
+      name: templateName,
+      language: {
+        code: String(process.env.WHATSAPP_TEMPLATE_LANG || "es").trim() || "es",
+      },
+      components: [
+        {
+          type: "body",
+          parameters: [
+            { type: "text", text: String(customerName || "cliente").slice(0, 60) },
+          ],
+        },
+        ...buttonComponents,
       ],
     },
   })
