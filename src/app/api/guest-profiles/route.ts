@@ -9,7 +9,16 @@ import {
   saveBusinessConfig,
   saveGuestProfile,
 } from "@/lib/orders"
-import { buildCampaignRows, normalizeCampaignTemplates } from "@/lib/hotelCampaigns"
+import {
+  buildCampaignRows,
+  filterCampaignRows,
+  normalizeCampaignTemplates,
+  type CampaignFilters,
+} from "@/lib/hotelCampaigns"
+import { buildCampaignSendJobs, manualCampaignPeriodKey } from "@/lib/hotelPromoSend"
+import { normalizeHotelAutoPromos } from "@/lib/hotelAutoPromos"
+import { campaignSendMode, dispatchPromoJobs, runAutoPromos, type PromoJob } from "@/lib/promoDispatch"
+import { isWhatsAppBusinessConfigured } from "@/lib/whatsappBusiness"
 import { resolveBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 
@@ -20,6 +29,21 @@ export const dynamic = "force-dynamic"
 
 function cleanText(value: unknown) {
   return String(value || "").trim()
+}
+
+// Normaliza los filtros de campaña que llegan del cliente a CampaignFilters.
+function readCampaignFilters(value: unknown): CampaignFilters {
+  const raw = (value && typeof value === "object" ? value : {}) as Record<string, unknown>
+  const monthNum = Number(raw.birthdayMonth)
+  const membership = cleanText(raw.membership)
+  return {
+    stayedFrom: cleanText(raw.stayedFrom).slice(0, 10),
+    stayedTo: cleanText(raw.stayedTo).slice(0, 10),
+    minSpent: Math.max(0, Number(raw.minSpent) || 0),
+    birthdayMonth: monthNum >= 1 && monthNum <= 12 ? monthNum : null,
+    membership: membership === "member" || membership === "nonmember" ? membership : "",
+    vipOnly: raw.vipOnly === true,
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -45,6 +69,9 @@ export async function GET(request: NextRequest) {
         rows,
         templates: config.hotelCampaignTemplates,
         hotelName: config.businessName,
+        whatsappReady: isWhatsAppBusinessConfigured(),
+        sendMode: campaignSendMode(),
+        autoPromos: config.hotelAutoPromos,
       })
     }
 
@@ -87,6 +114,77 @@ export async function POST(request: NextRequest) {
       const templates = normalizeCampaignTemplates(body.templates)
       await saveBusinessConfig({ hotelCampaignTemplates: templates })
       return NextResponse.json({ ok: true, templates })
+    }
+
+    // Envía la campaña por WhatsApp al segmento (un clic). Rearma las filas en
+    // el servidor (no confía en las del cliente) y despacha por la API de Meta.
+    if (cleanText(body.action) === "sendCampaign") {
+      if (!isWhatsAppBusinessConfigured()) {
+        return NextResponse.json(
+          { error: "Conecta WhatsApp Business para enviar (variables WHATSAPP_BUSINESS_*)." },
+          { status: 400 },
+        )
+      }
+      const templateText = cleanText(body.templateText)
+      if (!templateText) {
+        return NextResponse.json({ error: "Escribe el mensaje de la campaña." }, { status: 400 })
+      }
+      const filters = readCampaignFilters(body.filters)
+      const [profiles, guests, reservations, memberships, config] = await Promise.all([
+        getGuestProfiles(branchId),
+        getGuests(branchId).catch(() => []),
+        getHotelReservations({}, branchId).catch(() => []),
+        getGuestMemberships(branchId).catch(() => []),
+        getBusinessConfig(),
+      ])
+      const rows = filterCampaignRows(
+        buildCampaignRows({ profiles, guests, reservations, memberships }),
+        filters,
+      )
+      const { jobs, truncated, skippedNoPhone } = buildCampaignSendJobs({
+        rows,
+        templateText,
+        hotelName: config.businessName,
+      })
+      const today = new Date().toISOString().slice(0, 10)
+      const periodKey = manualCampaignPeriodKey(today, templateText)
+      const promoJobs: PromoJob[] = jobs.map((j) => ({
+        phoneKey: j.phoneKey,
+        phone: j.phone,
+        guestName: j.name,
+        text: j.text,
+        templateParams: j.templateParams,
+        promoKind: "manual",
+        periodKey,
+      }))
+      const dispatch = await dispatchPromoJobs(promoJobs, branchId)
+      return NextResponse.json({
+        ok: true,
+        recipients: jobs.length,
+        truncated,
+        skippedNoPhone,
+        ...dispatch,
+      })
+    }
+
+    // Guarda la configuración de promociones automáticas.
+    if (cleanText(body.action) === "saveAutoPromos") {
+      const autoPromos = normalizeHotelAutoPromos(body.autoPromos)
+      await saveBusinessConfig({ hotelAutoPromos: autoPromos })
+      return NextResponse.json({ ok: true, autoPromos })
+    }
+
+    // Ejecuta AHORA las promos automáticas de hoy (para probar sin esperar al
+    // cron). Respeta la config y la bitácora anti-duplicado.
+    if (cleanText(body.action) === "runAutoPromosNow") {
+      if (!isWhatsAppBusinessConfigured()) {
+        return NextResponse.json(
+          { error: "Conecta WhatsApp Business para enviar (variables WHATSAPP_BUSINESS_*)." },
+          { status: 400 },
+        )
+      }
+      const run = await runAutoPromos(branchId)
+      return NextResponse.json({ ok: true, ...run })
     }
 
     const fullName = cleanText(body.fullName)

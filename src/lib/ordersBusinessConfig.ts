@@ -26,6 +26,10 @@ import {
   type CampaignTemplate,
 } from "./hotelCampaigns"
 import {
+  normalizeHotelAutoPromos,
+  type HotelAutoPromosConfig,
+} from "./hotelAutoPromos"
+import {
   normalizeProviderIntegrations,
   type ProviderIntegrationsConfig,
 } from "./providerIntegrations"
@@ -255,6 +259,9 @@ export type BusinessConfig = {
   hotelUpsell: HotelUpsellConfig
   // Hotel: plantillas de mensaje para campañas del CRM ({nombre}, {hotel}).
   hotelCampaignTemplates: CampaignTemplate[]
+  // Hotel: promociones automáticas por WhatsApp (cumpleaños, post-estadía,
+  // reactivar inactivos). Cada disparador se prende/apaga por separado.
+  hotelAutoPromos: HotelAutoPromosConfig
   // Proveedores externos (fiscal/OTA/C2P/email): estado del trámite y notas.
   // SIN secretos: las credenciales reales irán en tabla dedicada al enchufarse.
   providerIntegrations: ProviderIntegrationsConfig
@@ -429,6 +436,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   hotelRoomTypeDetails: {},
   hotelUpsell: { ...DEFAULT_HOTEL_UPSELL },
   hotelCampaignTemplates: DEFAULT_CAMPAIGN_TEMPLATES.map((t) => ({ ...t })),
+  hotelAutoPromos: normalizeHotelAutoPromos(undefined),
   providerIntegrations: normalizeProviderIntegrations(undefined),
 }
 
@@ -1104,6 +1112,7 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     hotelRoomTypeDetails: normalizeHotelRoomTypeDetails(source.hotelRoomTypeDetails),
     hotelUpsell: normalizeHotelUpsell(source.hotelUpsell),
     hotelCampaignTemplates: normalizeCampaignTemplates(source.hotelCampaignTemplates),
+    hotelAutoPromos: normalizeHotelAutoPromos(source.hotelAutoPromos),
     providerIntegrations: normalizeProviderIntegrations(source.providerIntegrations),
     updatedAt: source.updatedAt ? String(source.updatedAt) : undefined,
   }

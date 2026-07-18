@@ -321,6 +321,14 @@ export {
 export type { NotificationEntry } from "./ordersNotifications"
 export { getNotificationLog, logNotification } from "./ordersNotifications"
 
+export type { PromoLogEntry, LogPromoInput } from "./ordersPromoLog"
+export {
+  logPromoSend,
+  getSentPromoKeys,
+  getRecentPromoLog,
+  promoKeyOf,
+} from "./ordersPromoLog"
+
 export type { SaveWebhookInput, Webhook } from "./ordersStoreWebhooks"
 export {
   deleteWebhook,

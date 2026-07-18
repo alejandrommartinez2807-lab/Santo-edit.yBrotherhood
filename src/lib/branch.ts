@@ -153,6 +153,19 @@ export async function getDefaultBranchId(): Promise<string | null> {
   return cachedDefaultId
 }
 
+// Todas las sedes activas (para tareas sin request, como el cron de promos).
+export async function getActiveBranchIds(): Promise<string[]> {
+  const supabase = getSupabaseAdmin()
+  const { data } = await supabase
+    .from("branches")
+    .select("id")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
+  return ((data as { id?: string }[] | null) ?? [])
+    .map((b) => String(b?.id || ""))
+    .filter(Boolean)
+}
+
 export async function resolveBranchId(request: HeaderBag): Promise<string | null> {
   // Acceso por sede del staff (null en modo contraseña/.env = sin restricción).
   const staffAccess = getStaffBranchAccessFromRequest(request)

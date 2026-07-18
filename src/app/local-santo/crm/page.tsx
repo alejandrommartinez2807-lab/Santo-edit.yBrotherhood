@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Copy, Download, Loader2, Megaphone, Plus, Save, Star, Trash2, UserRound } from "lucide-react"
+import { ArrowLeft, Copy, Download, Loader2, Megaphone, Plus, Save, Send, Star, Trash2, UserRound } from "lucide-react"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
 import ProviderConnectionCard from "@/components/local/ProviderConnectionCard"
 import {
@@ -13,6 +13,10 @@ import {
   type CampaignGuestRow,
   type CampaignTemplate,
 } from "@/lib/hotelCampaigns"
+import {
+  DEFAULT_HOTEL_AUTO_PROMOS,
+  type HotelAutoPromosConfig,
+} from "@/lib/hotelAutoPromos"
 import { downloadCsv, toCsv } from "@/lib/csv"
 
 const OWNER_STORAGE_KEY = "santo_perrito_owner_session"
@@ -64,6 +68,14 @@ function CampaignsSection({ inputClass }: { inputClass: string }) {
   const [templateText, setTemplateText] = useState("")
   const [savingTpl, setSavingTpl] = useState(false)
 
+  const [whatsappReady, setWhatsappReady] = useState(false)
+  const [sendMode, setSendMode] = useState<"template" | "freetext" | "off">("off")
+  const [sending, setSending] = useState(false)
+
+  const [autoPromos, setAutoPromos] = useState<HotelAutoPromosConfig>(DEFAULT_HOTEL_AUTO_PROMOS)
+  const [savingAuto, setSavingAuto] = useState(false)
+  const [runningAuto, setRunningAuto] = useState(false)
+
   const load = useCallback(async () => {
     setLoading(true)
     setError("")
@@ -74,6 +86,9 @@ function CampaignsSection({ inputClass }: { inputClass: string }) {
       setRows(data.rows || [])
       setTemplates(data.templates || [])
       setHotelName(data.hotelName || "")
+      setWhatsappReady(data.whatsappReady === true)
+      setSendMode(data.sendMode === "template" || data.sendMode === "freetext" ? data.sendMode : "off")
+      if (data.autoPromos) setAutoPromos(data.autoPromos as HotelAutoPromosConfig)
       if ((data.templates || []).length > 0) {
         setTemplateId(data.templates[0].id)
         setTemplateText(data.templates[0].text)
@@ -164,6 +179,96 @@ function CampaignsSection({ inputClass }: { inputClass: string }) {
     }
   }
 
+  async function sendCampaign() {
+    if (!whatsappReady) {
+      flash("Conecta WhatsApp Business para enviar automáticamente.")
+      return
+    }
+    const count = filtered.length
+    if (count === 0) {
+      flash("La selección no tiene huéspedes.")
+      return
+    }
+    if (!templateText.trim()) {
+      flash("Escribe el mensaje de la campaña.")
+      return
+    }
+    const modeNote =
+      sendMode === "freetext"
+        ? "\n\nSin plantilla de marketing: solo llegará a quienes te escribieron en las últimas 24 h."
+        : ""
+    const ok = window.confirm(
+      `Se enviará por WhatsApp a ${count} huésped${count === 1 ? "" : "es"} del segmento.${modeNote}\n\n¿Continuar?`,
+    )
+    if (!ok) return
+    setSending(true)
+    setError("")
+    try {
+      const res = await fetch("/api/guest-profiles", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ action: "sendCampaign", templateText: templateText.trim(), filters }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "No se pudo enviar la campaña")
+      const parts = [`Enviados: ${data.sent}`]
+      if (data.alreadySent) parts.push(`ya recibidos: ${data.alreadySent}`)
+      if (data.failed) parts.push(`fallidos: ${data.failed}`)
+      if (data.invalidPhone) parts.push(`sin WhatsApp válido: ${data.invalidPhone}`)
+      if (data.truncated) parts.push(`tope ${data.recipients} (quedaron más)`)
+      flash(parts.join(" · "))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error")
+    } finally {
+      setSending(false)
+    }
+  }
+
+  async function saveAutoPromos() {
+    setSavingAuto(true)
+    setError("")
+    try {
+      const res = await fetch("/api/guest-profiles", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ action: "saveAutoPromos", autoPromos }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "No se pudo guardar")
+      if (data.autoPromos) setAutoPromos(data.autoPromos as HotelAutoPromosConfig)
+      flash("Promociones automáticas guardadas.")
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error")
+    } finally {
+      setSavingAuto(false)
+    }
+  }
+
+  async function runAutoPromosNow() {
+    if (!whatsappReady) {
+      flash("Conecta WhatsApp Business para enviar automáticamente.")
+      return
+    }
+    if (!window.confirm("Se enviarán ahora las promos automáticas que correspondan a hoy. ¿Continuar?")) return
+    setRunningAuto(true)
+    setError("")
+    try {
+      const res = await fetch("/api/guest-profiles", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ action: "runAutoPromosNow" }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "No se pudieron enviar")
+      const d = data.dispatch || {}
+      flash(`Promos de hoy · enviadas: ${d.sent || 0} · ya recibidas: ${d.alreadySent || 0} · fallidas: ${d.failed || 0}`)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error")
+    } finally {
+      setRunningAuto(false)
+    }
+  }
+
   const preview = filtered[0]
     ? renderCampaignTemplate(templateText, { nombre: filtered[0].name.split(" ")[0], hotel: hotelName })
     : renderCampaignTemplate(templateText, { nombre: "María", hotel: hotelName })
@@ -247,12 +352,26 @@ function CampaignsSection({ inputClass }: { inputClass: string }) {
               )}
 
               <div className="mt-4 flex flex-wrap gap-2">
+                <button onClick={sendCampaign} disabled={!whatsappReady || sending || filtered.length === 0} className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold uppercase text-white disabled:opacity-50">
+                  {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+                  {sending ? "Enviando…" : "Enviar por WhatsApp"}
+                </button>
                 <button onClick={copyPhones} disabled={filtered.length === 0} className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--brand-primary)] px-4 py-2.5 text-sm font-bold uppercase text-white disabled:opacity-50">
                   <Copy size={15} /> Copiar teléfonos
                 </button>
                 <button onClick={exportCsv} disabled={filtered.length === 0} className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--brand-primary)]/40 px-4 py-2.5 text-sm font-bold uppercase text-[var(--brand-primary)] disabled:opacity-50">
                   <Download size={15} /> Exportar CSV
                 </button>
+              </div>
+
+              <div className="mt-2 rounded-xl border border-emerald-600/20 bg-emerald-50/60 px-3 py-2 text-xs font-bold text-emerald-900/80">
+                {!whatsappReady ? (
+                  <>WhatsApp Business no está conectado. El envío automático se activa cuando el hotel configura sus credenciales (variables <code>WHATSAPP_BUSINESS_*</code>). Mientras tanto usa Copiar/Exportar.</>
+                ) : sendMode === "template" ? (
+                  <>WhatsApp Business conectado · se enviará tu plantilla de marketing aprobada (nombre y hotel personalizados) a todo el segmento.</>
+                ) : (
+                  <>WhatsApp Business conectado, sin plantilla de marketing: el envío llega solo a huéspedes que te escribieron en las últimas 24 h. Para llegar a todos, aprueba una plantilla en Meta y ponla en <code>WHATSAPP_CAMPAIGN_TEMPLATE</code>.</>
+                )}
               </div>
 
               <div className="mt-5 rounded-xl border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/60 p-3">
@@ -277,8 +396,82 @@ function CampaignsSection({ inputClass }: { inputClass: string }) {
               </div>
 
               <p className="mt-3 text-xs font-bold text-[var(--brand-ink-2)]/50">
-                El CSV incluye una columna Mensaje ya personalizada por huésped. Sin envío masivo: copia y pega en WhatsApp.
+                El CSV incluye una columna Mensaje ya personalizada por huésped. Con WhatsApp Business conectado, &quot;Enviar por WhatsApp&quot; manda la promo a todo el segmento con un clic.
               </p>
+
+              <div className="mt-6 rounded-xl border border-[var(--brand-primary)]/20 bg-white p-3">
+                <p className="font-serif text-base font-semibold text-[var(--brand-ink-3)]">Promociones automáticas</p>
+                <p className="mt-1 text-xs font-medium text-[var(--brand-ink-2)]/60">
+                  El sistema las envía solo (una vez al día). Cada una se prende por separado y solo funciona con WhatsApp Business conectado. Usa {"{nombre}"} y {"{hotel}"}.
+                </p>
+
+                {/* Cumpleaños */}
+                <div className="mt-3 rounded-lg border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/50 p-3">
+                  <label className="flex items-center gap-2 font-bold text-[var(--brand-ink-3)]">
+                    <input type="checkbox" className="h-4 w-4" checked={autoPromos.birthday.enabled}
+                      onChange={(e) => setAutoPromos((c) => ({ ...c, birthday: { ...c.birthday, enabled: e.target.checked } }))} />
+                    🎂 Cumpleaños del mes
+                  </label>
+                  <textarea rows={2} value={autoPromos.birthday.message}
+                    onChange={(e) => setAutoPromos((c) => ({ ...c, birthday: { ...c.birthday, message: e.target.value } }))}
+                    className={`${inputClass} mt-2 w-full font-medium`} />
+                </div>
+
+                {/* Post-estadía */}
+                <div className="mt-2 rounded-lg border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/50 p-3">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <label className="flex items-center gap-2 font-bold text-[var(--brand-ink-3)]">
+                      <input type="checkbox" className="h-4 w-4" checked={autoPromos.postStay.enabled}
+                        onChange={(e) => setAutoPromos((c) => ({ ...c, postStay: { ...c.postStay, enabled: e.target.checked } }))} />
+                      👋 Post-estadía
+                    </label>
+                    <label className="text-xs font-bold text-[var(--brand-ink-2)]/70">
+                      a los
+                      <input type="number" min={1} max={90} value={autoPromos.postStay.days}
+                        onChange={(e) => setAutoPromos((c) => ({ ...c, postStay: { ...c.postStay, days: Number(e.target.value) || 1 } }))}
+                        className={`${inputClass} mx-1 w-16 px-2 py-1`} />
+                      días del check-out
+                    </label>
+                  </div>
+                  <textarea rows={2} value={autoPromos.postStay.message}
+                    onChange={(e) => setAutoPromos((c) => ({ ...c, postStay: { ...c.postStay, message: e.target.value } }))}
+                    className={`${inputClass} mt-2 w-full font-medium`} />
+                </div>
+
+                {/* Reactivar inactivos */}
+                <div className="mt-2 rounded-lg border border-[var(--brand-primary)]/15 bg-[var(--brand-cream)]/50 p-3">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <label className="flex items-center gap-2 font-bold text-[var(--brand-ink-3)]">
+                      <input type="checkbox" className="h-4 w-4" checked={autoPromos.winback.enabled}
+                        onChange={(e) => setAutoPromos((c) => ({ ...c, winback: { ...c.winback, enabled: e.target.checked } }))} />
+                      💤 Reactivar inactivos
+                    </label>
+                    <label className="text-xs font-bold text-[var(--brand-ink-2)]/70">
+                      sin volver hace
+                      <input type="number" min={1} max={36} value={autoPromos.winback.months}
+                        onChange={(e) => setAutoPromos((c) => ({ ...c, winback: { ...c.winback, months: Number(e.target.value) || 1 } }))}
+                        className={`${inputClass} mx-1 w-16 px-2 py-1`} />
+                      meses
+                    </label>
+                  </div>
+                  <textarea rows={2} value={autoPromos.winback.message}
+                    onChange={(e) => setAutoPromos((c) => ({ ...c, winback: { ...c.winback, message: e.target.value } }))}
+                    className={`${inputClass} mt-2 w-full font-medium`} />
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button onClick={saveAutoPromos} disabled={savingAuto} className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--brand-primary)]/40 px-3 py-2 text-xs font-bold uppercase text-[var(--brand-primary)] disabled:opacity-50">
+                    <Save size={14} /> {savingAuto ? "Guardando…" : "Guardar automáticas"}
+                  </button>
+                  <button onClick={runAutoPromosNow} disabled={!whatsappReady || runningAuto} className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold uppercase text-white disabled:opacity-50">
+                    {runningAuto ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                    {runningAuto ? "Enviando…" : "Enviar las de hoy"}
+                  </button>
+                </div>
+                <p className="mt-2 text-xs font-medium text-[var(--brand-ink-2)]/55">
+                  La oferta de temporada se envía cuando quieras con el botón &quot;Enviar por WhatsApp&quot; de arriba. Para que corran solas cada día, el hosting debe tener configurado el secreto del cron (<code>CRON_SECRET</code>).
+                </p>
+              </div>
             </>
           )}
           {notice && <p className="mt-3 font-bold text-emerald-700">{notice}</p>}
