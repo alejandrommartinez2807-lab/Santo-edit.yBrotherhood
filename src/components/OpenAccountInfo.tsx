@@ -12,7 +12,8 @@ import {
   ListChecks,
   Wallet,
 } from "lucide-react";
-import { formatUSD } from "@/utils/formatCurrency";
+import { formatPublicUSD as formatUSD } from "@/utils/formatCurrency";
+import { usePublicCurrencySymbol } from "@/hooks/usePublicCurrencySymbol";
 import type {
   PublicLocalTable,
   PublicOpenAccountOrderSummary,
@@ -289,6 +290,7 @@ function normalizeLookupResponse(value: unknown): AccountLookupState {
 }
 
 export default function OpenAccountInfo() {
+  usePublicCurrencySymbol();
   const [isEnabled, setIsEnabled] = useState(false);
   const [tables, setTables] = useState<PublicLocalTable[]>([]);
   const [selectedTable, setSelectedTable] = useState("");

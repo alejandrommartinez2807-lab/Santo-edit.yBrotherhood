@@ -1,11 +1,19 @@
 import { createHmac, timingSafeEqual } from "crypto"
 import { NextRequest, NextResponse } from "next/server"
 import { captureError } from "@/lib/monitoring"
-import { saveWhatsAppButtonSurveyResponse } from "@/lib/surveys"
+import {
+  getConfiguredSurveyAspects,
+  savePublicSurveyResponse,
+  saveWhatsAppButtonSurveyResponse,
+} from "@/lib/surveys"
 import {
   extractWhatsAppSurveyReplies,
   parseSurveyButtonPayload,
 } from "@/lib/surveyButtons"
+import {
+  extractWhatsAppFlowReplies,
+  parseFlowSurveyResponse,
+} from "@/lib/surveyFlow"
 import { sendWhatsAppBusinessText } from "@/lib/whatsappBusiness"
 
 export const runtime = "nodejs"
@@ -61,9 +69,18 @@ function isValidSignature(rawBody: string, header: string | null): boolean {
   return timingSafeEqual(expectedBuf, receivedBuf)
 }
 
-// POST: llega un evento de Meta. Extraemos los toques de botón, guardamos la
-// calificación y (best-effort) agradecemos. SIEMPRE respondemos 200 rápido
-// para que Meta no reintente en bucle.
+// Agradecimiento best-effort (dentro de la ventana de 24 h, texto libre
+// permitido porque el cliente acaba de escribirnos con su respuesta).
+async function thankCustomer(to: string): Promise<void> {
+  await sendWhatsAppBusinessText(
+    to,
+    "¡Gracias por tu opinión! Nos ayuda muchísimo a mejorar.",
+  ).catch(() => undefined)
+}
+
+// POST: llega un evento de Meta. Extraemos la respuesta (toque o formulario),
+// guardamos la calificación y (best-effort) agradecemos. SIEMPRE respondemos
+// 200 rápido para que Meta no reintente en bucle.
 export async function POST(request: NextRequest) {
   const rawBody = await request.text()
 
@@ -79,9 +96,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const replies = extractWhatsAppSurveyReplies(body)
-
-    for (const reply of replies) {
+    // 1) Encuesta de UN TOQUE (plantilla de botones).
+    for (const reply of extractWhatsAppSurveyReplies(body)) {
       const parsed = parseSurveyButtonPayload(reply.payload)
       if (!parsed) continue
 
@@ -90,13 +106,31 @@ export async function POST(request: NextRequest) {
         score: parsed.score,
       })
 
-      // Agradecemos sólo la primera vez (dentro de la ventana de 24 h, texto
-      // libre permitido porque el cliente acaba de escribirnos con su toque).
       if (result.ok && !result.alreadyAnswered && reply.from) {
-        await sendWhatsAppBusinessText(
-          reply.from,
-          "¡Gracias por tu opinión! Nos ayuda muchísimo a mejorar.",
-        ).catch(() => undefined)
+        await thankCustomer(reply.from)
+      }
+    }
+
+    // 2) Encuesta COMPLETA (formulario Flow): varias preguntas 1–5 +
+    //    comentario. Se guarda igual que la encuesta web (mismos aspectos).
+    const flowReplies = extractWhatsAppFlowReplies(body)
+    if (flowReplies.length) {
+      const aspects = await getConfiguredSurveyAspects()
+
+      for (const reply of flowReplies) {
+        const parsed = parseFlowSurveyResponse(reply.responseJson, aspects)
+        if (!parsed) continue
+
+        const result = await savePublicSurveyResponse({
+          orderId: parsed.orderId,
+          ratings: parsed.ratings,
+          comment: parsed.comment,
+        })
+
+        // ok o "ya respondió" (409) ⇒ agradecemos igual; otros errores no.
+        if (reply.from && (result.ok || result.status === 409)) {
+          await thankCustomer(reply.from)
+        }
       }
     }
   } catch (error) {

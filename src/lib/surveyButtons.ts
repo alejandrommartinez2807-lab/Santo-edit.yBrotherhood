@@ -39,8 +39,12 @@ function isValidScore(value: number): boolean {
   return Number.isInteger(value) && value >= 1 && value <= 5
 }
 
+export function isValidSurveyOrderId(value: string): boolean {
+  return /^ord-[a-z0-9-]{1,80}$/.test(String(value || "").trim().toLowerCase())
+}
+
 function isValidOrderId(value: string): boolean {
-  return /^ord-[a-z0-9-]{1,80}$/.test(value)
+  return isValidSurveyOrderId(value)
 }
 
 export function encodeSurveyButtonPayload(orderId: string, score: number): string {

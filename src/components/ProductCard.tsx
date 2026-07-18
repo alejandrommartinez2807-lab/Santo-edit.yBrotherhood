@@ -14,7 +14,8 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
-import { formatUSD, formatVES } from "@/utils/formatCurrency";
+import { formatPublicUSD as formatUSD, formatVES } from "@/utils/formatCurrency";
+import { usePublicCurrencySymbol } from "@/hooks/usePublicCurrencySymbol";
 import type { ProductToAdd } from "@/hooks/useCart";
 import type { Product } from "@/data/products";
 import {
@@ -275,6 +276,7 @@ export default function ProductCard({
   onToggleFavorite,
   cardSize,
 }: ProductCardProps) {
+  usePublicCurrencySymbol();
   const sizeStyles = getCardSizeStyles(cardSize);
   const [added, setAdded] = useState(false);
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);

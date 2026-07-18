@@ -36,10 +36,11 @@ import {
   stripPricesFromSelectionSummary,
 } from "@/lib/localOrderHelpers";
 import { getOrderPayment, getOrderTotals, roundMoney } from "@/lib/localOrderMoney";
+import { fetchActiveBranches, getSelectedBranchId } from "@/lib/branchClient";
 
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session";
 
-type TicketKind = "cashier" | "kitchen" | "delivery" | "account";
+type TicketKind = "cashier" | "kitchen" | "delivery" | "account" | "receipt";
 
 type TicketTarget =
   | {
@@ -68,6 +69,7 @@ const TICKET_KIND_LABELS: Record<TicketKind, string> = {
   kitchen: "Ticket de cocina",
   delivery: "Ticket de delivery",
   account: "Ticket de cuenta abierta",
+  receipt: "Recibo",
 };
 
 async function readApiResponse(response: Response) {
@@ -172,7 +174,15 @@ function OpenAccountTicketNotice({ order }: { order: LocalOrder }) {
   );
 }
 
-function TicketItemLine({ item, showPrices }: { item: OrderItem; showPrices: boolean }) {
+function TicketItemLine({
+  item,
+  showPrices,
+  formatPrice,
+}: {
+  item: OrderItem;
+  showPrices: boolean;
+  formatPrice?: (value: number) => string;
+}) {
   const subtotalUSD = getItemSubtotalUSD(item);
   // Ticket sin precios (cocina): las variaciones tampoco muestran "(+$1.00)".
   const rawSelectionSummary = String(item.selectionSummary || "").trim();
@@ -190,7 +200,7 @@ function TicketItemLine({ item, showPrices }: { item: OrderItem; showPrices: boo
         <span>
           {item.quantity} x {item.name}
         </span>
-        {showPrices ? <span>{formatUSD(subtotalUSD)}</span> : null}
+        {showPrices ? <span>{(formatPrice || formatUSD)(subtotalUSD)}</span> : null}
       </div>
 
       {selectionSummary ? (
@@ -314,6 +324,48 @@ function CashierTicket({ order }: { order: LocalOrder }) {
       {payment.paymentMethodUSD ? <TicketLine label="Divisas" value={payment.paymentMethodUSD} /> : null}
       {payment.paymentMethodVES ? <TicketLine label="Bolívares" value={payment.paymentMethodVES} /> : null}
       {payment.paymentNote ? <TicketLine label="Nota caja" value={payment.paymentNote} /> : null}
+    </TicketShell>
+  );
+}
+
+// Recibo simple para el cliente (NO es una factura legal): solo los productos
+// y el total. Se imprime al marcar el pedido como Listo (modo "auto"). El
+// número de pedido ya trae el código de la sede (#40-SD), así que es por sede.
+function ReceiptTicket({
+  order,
+  branchName,
+  currencySymbol,
+}: {
+  order: LocalOrder;
+  branchName?: string;
+  currencySymbol?: "$" | "€";
+}) {
+  const totals = getOrderTotals(order);
+  const symbol = currencySymbol || "$";
+  // El recibo va del negocio al cliente: sigue el símbolo público ($/€).
+  const fmt = (value: number) => formatUSD(value).replace("$", symbol);
+
+  return (
+    <TicketShell
+      title="Recibo"
+      subtitle={branchName ? `Sede: ${branchName}` : "Gracias por tu compra"}
+      orderNumber={getDisplayOrderNumber(order)}
+    >
+      <TicketLine label="Hora" value={getOrderCreatedLabel(order)} />
+      {order.customerName ? <TicketLine label="Cliente" value={order.customerName} /> : null}
+
+      <TicketSectionTitle>Productos</TicketSectionTitle>
+      {(order.items || []).map((item, index) => (
+        <TicketItemLine
+          key={`${item.id}-${item.name}-${index}`}
+          item={item}
+          showPrices
+          formatPrice={fmt}
+        />
+      ))}
+
+      <TicketSectionTitle>Total</TicketSectionTitle>
+      <TicketLine label="Total" value={fmt(totals.totalUSD)} />
     </TicketShell>
   );
 }
@@ -486,9 +538,27 @@ function TicketShell({
   );
 }
 
-function TicketPreview({ target, ordersById }: { target: TicketTarget; ordersById: Map<string, LocalOrder> }) {
+function TicketPreview({
+  target,
+  ordersById,
+  branchName,
+  currencySymbol,
+}: {
+  target: TicketTarget;
+  ordersById: Map<string, LocalOrder>;
+  branchName?: string;
+  currencySymbol?: "$" | "€";
+}) {
   if (target.kind === "kitchen") return <KitchenTicket order={target.order} />;
   if (target.kind === "delivery") return <DeliveryTicket order={target.order} />;
+  if (target.kind === "receipt")
+    return (
+      <ReceiptTicket
+        order={target.order}
+        branchName={branchName}
+        currencySymbol={currencySymbol}
+      />
+    );
   if (target.kind === "account") return <AccountTicket account={target.account} ordersById={ordersById} />;
 
   return <CashierTicket order={target.order} />;
@@ -639,6 +709,7 @@ function readPendingAutoTicket(): PendingAutoTicket | null {
     caja: "cashier",
     cocina: "kitchen",
     delivery: "delivery",
+    recibo: "receipt",
   };
 
   return {
@@ -657,6 +728,10 @@ function TicketsPageContent() {
   const [searchText, setSearchText] = useState("");
   const [selectedTarget, setSelectedTarget] = useState<TicketTarget | null>(null);
   const [pendingAutoTicket, setPendingAutoTicket] = useState<PendingAutoTicket | null>(null);
+  // Para el recibo del cliente: nombre de la sede actual y símbolo de moneda
+  // público ($/€) elegido por el dueño.
+  const [branchName, setBranchName] = useState("");
+  const [receiptSymbol, setReceiptSymbol] = useState<"$" | "€">("$");
 
   useEffect(() => {
     // Difiere la restauración de sesión un tick para no hacer setState
@@ -666,6 +741,38 @@ function TicketsPageContent() {
       setPendingAutoTicket(readPendingAutoTicket());
     }, 0);
     return () => clearTimeout(timer);
+  }, []);
+
+  // Nombre de la sede actual (el panel es por sede) + símbolo de moneda público
+  // para el recibo del cliente.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await fetchActiveBranches();
+        if (cancelled) return;
+        const current = getSelectedBranchId();
+        const branch = list.find((b) => b.id === current) || list[0];
+        if (branch?.name) setBranchName(branch.name);
+      } catch {
+        // Sin sedes: el recibo usa el nombre del negocio.
+      }
+      try {
+        const response = await fetch("/api/public/business-config", { cache: "no-store" });
+        const data = await response.json().catch(() => null);
+        if (cancelled || !data) return;
+        const config =
+          data.businessConfig && typeof data.businessConfig === "object"
+            ? data.businessConfig
+            : data;
+        if (config?.publicCurrencySymbol === "€") setReceiptSymbol("€");
+      } catch {
+        // Sin config: el recibo usa "$".
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -693,8 +800,13 @@ function TicketsPageContent() {
       setSelectedTarget({ kind, order });
 
       if (pendingAutoTicket.autoPrint) {
-        // Deja respirar al modal antes de abrir el diálogo de impresión.
-        window.setTimeout(() => window.print(), 650);
+        // Deja respirar al modal antes de abrir el diálogo de impresión. Como
+        // la pestaña la abre caja por script (envío automático), se intenta
+        // cerrar sola después de imprimir para no acumular pestañas.
+        window.setTimeout(() => {
+          window.print();
+          window.setTimeout(() => window.close(), 400);
+        }, 650);
       }
     }, 0);
 
@@ -998,7 +1110,12 @@ function TicketsPageContent() {
               </div>
             </div>
 
-            <TicketPreview target={selectedTarget} ordersById={ordersById} />
+            <TicketPreview
+              target={selectedTarget}
+              ordersById={ordersById}
+              branchName={branchName}
+              currencySymbol={receiptSymbol}
+            />
           </div>
         </div>
       ) : null}

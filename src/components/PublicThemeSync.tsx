@@ -2,11 +2,13 @@
 
 import { useEffect } from "react";
 import { buildBrandThemeCss } from "@/lib/theme";
+import { setPublicCurrencySymbol } from "@/utils/formatCurrency";
 
 type PublicThemeConfig = {
   themePrimaryColor?: unknown;
   themeAccentColor?: unknown;
   themeCreamColor?: unknown;
+  publicCurrencySymbol?: unknown;
 };
 
 function getBusinessConfigPayload(value: unknown): PublicThemeConfig {
@@ -57,6 +59,9 @@ async function syncPublicTheme() {
   });
 
   applyThemeCss(css);
+
+  // Símbolo de moneda del sitio público ($/€) elegido por el dueño.
+  setPublicCurrencySymbol(config.publicCurrencySymbol);
 }
 
 export default function PublicThemeSync() {

@@ -1,7 +1,8 @@
 "use client";
 
 import { ArrowUpRight, ShoppingCart } from "lucide-react";
-import { formatUSD, formatVES } from "@/utils/formatCurrency";
+import { formatPublicUSD as formatUSD, formatVES } from "@/utils/formatCurrency";
+import { usePublicCurrencySymbol } from "@/hooks/usePublicCurrencySymbol";
 
 type PublicFloatingCartSummaryProps = {
   totalItems: number;
@@ -25,6 +26,8 @@ export default function PublicFloatingCartSummary({
   exchangeRate,
   onOpenCart,
 }: PublicFloatingCartSummaryProps) {
+  usePublicCurrencySymbol();
+
   if (totalItems <= 0) return null;
 
   const totalVES = totalPrice * exchangeRate;

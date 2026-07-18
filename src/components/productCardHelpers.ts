@@ -1,5 +1,5 @@
 // Helpers puros extraídos de ProductCard (sin estado/JSX). Comportamiento idéntico.
-import { formatUSD } from "@/utils/formatCurrency";
+import { formatPublicUSD as formatUSD } from "@/utils/formatCurrency";
 import type { CartSelectionOption } from "@/hooks/useCart";
 import type { Product, ProductSalesChannel, ProductType } from "@/data/products";
 

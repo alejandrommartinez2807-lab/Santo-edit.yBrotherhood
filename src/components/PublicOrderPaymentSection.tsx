@@ -11,7 +11,8 @@ import {
   Send,
   XCircle,
 } from "lucide-react";
-import { formatUSD, formatVES } from "@/utils/formatCurrency";
+import { formatPublicUSD as formatUSD, formatVES } from "@/utils/formatCurrency";
+import { usePublicCurrencySymbol } from "@/hooks/usePublicCurrencySymbol";
 import { DEFAULT_PUBLIC_PAYMENT_METHODS } from "@/lib/publicPageConfig";
 
 // Sección "Pagos" de la página pública de seguimiento (/pedido/[orderId]):
@@ -129,6 +130,7 @@ export default function PublicOrderPaymentSection({
 }: {
   orderId: string;
 }) {
+  usePublicCurrencySymbol();
   const [info, setInfo] = useState<OrderPaymentInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProofsEnabled, setIsProofsEnabled] = useState(false);

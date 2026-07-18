@@ -1,5 +1,5 @@
 // Helpers de selección de ítems del carrito, extraídos de CartDrawer (puros).
-import { formatUSD } from "@/utils/formatCurrency";
+import { formatPublicUSD as formatUSD } from "@/utils/formatCurrency";
 import type { CartItem, CartSelectionOption } from "@/components/cartTypes";
 
 export function cleanSelectionOption(

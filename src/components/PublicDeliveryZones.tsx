@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Bike, MapPin, PackageCheck, Route } from "lucide-react";
-import { formatUSD } from "@/utils/formatCurrency";
+import { formatPublicUSD as formatUSD } from "@/utils/formatCurrency";
+import { usePublicCurrencySymbol } from "@/hooks/usePublicCurrencySymbol";
 
 // Sección pública "Delivery por distancia": muestra los rangos de km y su
 // costo ("hasta 10 km → $6") que el negocio configuró. Reemplaza a la vieja
@@ -117,6 +118,7 @@ function normalizeTiers(value: unknown): DeliveryTier[] {
 }
 
 export default function PublicDeliveryZones() {
+  usePublicCurrencySymbol();
   const [config, setConfig] = useState(() =>
     normalizeConfig({ businessConfig: DEFAULT_STYLE_CONFIG }),
   );

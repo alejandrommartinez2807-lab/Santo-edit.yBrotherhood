@@ -8,9 +8,9 @@ import { WHATSAPP_SURVEY_ASPECT } from "@/lib/surveyButtons"
 // despachador automático por WhatsApp Business.
 
 export const DEFAULT_SURVEY_ASPECTS = [
-  "Sabor de la comida",
-  "Tiempo de entrega",
-  "Atención",
+  "Calidad del producto",
+  "Servicio",
+  "Ambiente",
 ]
 
 export function parseSurveyAspects(value: unknown): string[] {

@@ -40,6 +40,12 @@ export function getSurveyButtonTemplateName(): string {
   return String(process.env.WHATSAPP_SURVEY_BUTTON_TEMPLATE || "").trim()
 }
 
+// Plantilla de FLOW: encuesta COMPLETA dentro del chat (varias preguntas 1–5
+// + comentario), formulario nativo. Máxima prioridad si está configurada.
+export function getSurveyFlowTemplateName(): string {
+  return String(process.env.WHATSAPP_SURVEY_FLOW_TEMPLATE || "").trim()
+}
+
 // Normaliza a formato internacional sin "+" (igual que los botones wa.me
 // del panel: números venezolanos 0412... → 58412...).
 export function normalizePhoneForWhatsAppApi(value: string): string {
@@ -181,6 +187,61 @@ export async function sendWhatsAppBusinessSurveyButtons(
           ],
         },
         ...buttonComponents,
+      ],
+    },
+  })
+}
+
+// Plantilla con botón tipo FLOW: abre el formulario completo (varias preguntas
+// 1–5 + comentario) dentro de WhatsApp. El botón y el Flow se definen en la
+// plantilla aprobada en Meta; aquí mandamos {{1}} = nombre, el `flowToken`
+// (para saber el pedido al recibir) y `order_id` como dato inicial del Flow
+// para que vuelva en el response_json.
+export async function sendWhatsAppBusinessSurveyFlow(
+  phone: string,
+  customerName: string,
+  flowToken: string,
+  orderId: string,
+): Promise<SendResult> {
+  if (!isWhatsAppBusinessConfigured()) {
+    return { ok: false, error: "WhatsApp Business no está configurado" }
+  }
+
+  const to = normalizePhoneForWhatsAppApi(phone)
+  if (!to) return { ok: false, error: "Teléfono no válido" }
+
+  const templateName = getSurveyFlowTemplateName()
+  if (!templateName) return { ok: false, error: "Sin plantilla de flow configurada" }
+
+  return postToGraph({
+    to,
+    type: "template",
+    template: {
+      name: templateName,
+      language: {
+        code: String(process.env.WHATSAPP_TEMPLATE_LANG || "es").trim() || "es",
+      },
+      components: [
+        {
+          type: "body",
+          parameters: [
+            { type: "text", text: String(customerName || "cliente").slice(0, 60) },
+          ],
+        },
+        {
+          type: "button",
+          sub_type: "flow",
+          index: "0",
+          parameters: [
+            {
+              type: "action",
+              action: {
+                flow_token: flowToken,
+                flow_action_data: { order_id: orderId },
+              },
+            },
+          ],
+        },
       ],
     },
   })

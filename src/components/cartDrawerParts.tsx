@@ -13,7 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { BRAND } from "@/lib/brand";
-import { formatUSD, formatVES } from "@/utils/formatCurrency";
+import { formatPublicUSD as formatUSD, formatVES } from "@/utils/formatCurrency";
 import type { CartItem, OrderType, PublicBusinessConfig } from "@/components/cartTypes";
 import FiscalBreakdown from "@/components/FiscalBreakdown";
 import { getSelectionSummary } from "@/components/cartSelection";

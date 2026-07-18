@@ -302,6 +302,8 @@ export function buildPublicBusinessConfigResponse(
       cleanText(config.productCardBorderColor) || "#a00000",
     productCardButtonColor:
       cleanText(config.productCardButtonColor) || "#ffd23c",
+    // Símbolo de moneda del sitio público: solo "$" o "€".
+    publicCurrencySymbol: cleanText(config.publicCurrencySymbol) === "€" ? "€" : "$",
     publicTagline: cleanText(config.publicTagline),
     publicInfoTitle: cleanText(config.publicInfoTitle),
     publicInfoText: cleanText(config.publicInfoText),

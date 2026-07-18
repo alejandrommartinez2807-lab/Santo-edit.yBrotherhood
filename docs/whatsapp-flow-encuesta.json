@@ -1,0 +1,91 @@
+{
+  "version": "5.1",
+  "screens": [
+    {
+      "id": "ENCUESTA",
+      "title": "Tu opinión",
+      "terminal": true,
+      "success": true,
+      "data": {
+        "order_id": {
+          "type": "string",
+          "__example__": "ord-ejemplo"
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "form",
+            "children": [
+              {
+                "type": "TextSubheading",
+                "text": "Gracias por visitarnos. Tu opinión es muy importante."
+              },
+              {
+                "type": "RadioButtonsGroup",
+                "name": "rating_1",
+                "label": "¿Qué te pareció la calidad del producto?",
+                "required": true,
+                "data-source": [
+                  { "id": "5", "title": "5 · Increíble" },
+                  { "id": "4", "title": "4" },
+                  { "id": "3", "title": "3" },
+                  { "id": "2", "title": "2" },
+                  { "id": "1", "title": "1 · Todo mal" }
+                ]
+              },
+              {
+                "type": "RadioButtonsGroup",
+                "name": "rating_2",
+                "label": "¿Qué te pareció el servicio?",
+                "required": true,
+                "data-source": [
+                  { "id": "5", "title": "5 · Todo excelente" },
+                  { "id": "4", "title": "4" },
+                  { "id": "3", "title": "3" },
+                  { "id": "2", "title": "2" },
+                  { "id": "1", "title": "1 · No funciona" }
+                ]
+              },
+              {
+                "type": "RadioButtonsGroup",
+                "name": "rating_3",
+                "label": "¿Qué te pareció el ambiente?",
+                "required": true,
+                "data-source": [
+                  { "id": "5", "title": "5 · Aesthetic" },
+                  { "id": "4", "title": "4" },
+                  { "id": "3", "title": "3" },
+                  { "id": "2", "title": "2" },
+                  { "id": "1", "title": "1 · Feo" }
+                ]
+              },
+              {
+                "type": "TextArea",
+                "name": "comment",
+                "label": "Sugerencias (opcional)",
+                "required": false
+              },
+              {
+                "type": "Footer",
+                "label": "Enviar",
+                "on-click-action": {
+                  "name": "complete",
+                  "payload": {
+                    "rating_1": "${form.rating_1}",
+                    "rating_2": "${form.rating_2}",
+                    "rating_3": "${form.rating_3}",
+                    "comment": "${form.comment}",
+                    "order_id": "${data.order_id}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

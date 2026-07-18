@@ -50,7 +50,7 @@ export const SIMPLE_BUSINESS_CONFIG_FIELDS: readonly SimpleConfigField[] = [
   {
     key: "postSaleSurveyAspects",
     type: "string",
-    default: "Sabor de la comida, Tiempo de entrega, Atención",
+    default: "Calidad del producto, Servicio, Ambiente",
   },
   // Alarma de anulación (toast rojo + push a dueño/encargado), apagable.
   { key: "cancellationAlertsEnabled", type: "boolean", default: true },
@@ -76,6 +76,12 @@ export const SIMPLE_BUSINESS_CONFIG_FIELDS: readonly SimpleConfigField[] = [
   { key: "productCardTextColor", type: "string", default: "#4a0000" },
   { key: "productCardBorderColor", type: "string", default: "#a00000" },
   { key: "productCardButtonColor", type: "string", default: "#ffd23c" },
+  // Símbolo de moneda del sitio PÚBLICO: "$" o "€" (solo estético; los cálculos
+  // siguen en USD y los bolívares no cambian).
+  { key: "publicCurrencySymbol", type: "string", default: "$" },
+  // Modo de impresión de tickets: "none" = no se imprime nada; "auto" = comanda
+  // al enviar a cocina + recibo simple al marcar el pedido como Listo.
+  { key: "printFlowMode", type: "string", default: "none" },
   // Fiscal (Venezuela)
   { key: "fiscalEnabled", type: "boolean", default: false },
   { key: "rifNumber", type: "string", default: "" },

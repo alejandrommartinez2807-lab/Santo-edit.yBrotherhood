@@ -87,6 +87,8 @@ export type BusinessConfig = {
   productCardTextColor: string
   productCardBorderColor: string
   productCardButtonColor: string
+  publicCurrencySymbol: string
+  printFlowMode: string
   publicTagline: string
   publicInfoTitle: string
   publicInfoText: string
@@ -260,6 +262,8 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   productCardTextColor: "#ffffff",
   productCardBorderColor: "#f5a623",
   productCardButtonColor: "#f5a623",
+  publicCurrencySymbol: "$",
+  printFlowMode: "none",
   publicTagline: BRAND.tagline,
   publicInfoTitle: `Visita ${BRAND.name}`,
   publicInfoText: "Somos simples: porque nos gustan las buenas burgers. Ingredientes de calidad y mucho sabor. Abre nuestra ubicación en Google Maps o escribe por WhatsApp para coordinar tu pedido. Delivery & Pick Up en Valencia y San Diego.",
@@ -603,6 +607,8 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     productCardButtonColor:
       String(source.productCardButtonColor || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.productCardButtonColor,
+    publicCurrencySymbol: source.publicCurrencySymbol === "€" ? "€" : "$",
+    printFlowMode: source.printFlowMode === "auto" ? "auto" : "none",
     publicTagline:
       String(source.publicTagline || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.publicTagline,

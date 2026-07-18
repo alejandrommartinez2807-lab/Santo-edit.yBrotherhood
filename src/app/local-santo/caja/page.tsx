@@ -121,6 +121,7 @@ function CajaPageContent() {
   const [canSplitBill, setCanSplitBill] = useState(false)
   // Flujo de caja→cocina elegido por el dueño en Configuración.
   const [kitchenFlowMode, setKitchenFlowMode] = useState<KitchenFlowMode>("kitchen")
+  const [printFlowMode, setPrintFlowMode] = useState<"none" | "auto">("none")
   // Encuesta post-venta por WhatsApp (configurable por el dueño).
   const [postSaleSurvey, setPostSaleSurvey] = useState({
     enabled: false,
@@ -158,6 +159,7 @@ function CajaPageContent() {
       setLocalTables(normalizeLocalTablesForMap(businessConfig.localTables))
       setCanSplitBill(Boolean(businessConfig.splitBillEnabled))
       setKitchenFlowMode(normalizeKitchenFlowMode(businessConfig.kitchenFlowMode))
+      setPrintFlowMode(businessConfig.printFlowMode === "auto" ? "auto" : "none")
       setPostSaleSurvey({
         enabled: businessConfig.postSaleSurveyEnabled !== false,
         message: String(businessConfig.postSaleSurveyMessage || ""),
@@ -324,8 +326,24 @@ function CajaPageContent() {
     }
   }
 
+  // Impresión automática (modo "auto"): al enviar a cocina imprime la comanda,
+  // al marcar Listo imprime el recibo. Abre la pestaña de tickets DENTRO del
+  // gesto del clic (antes de cualquier await) para que el navegador no la
+  // bloquee; esa pestaña auto-imprime y se cierra sola.
+  function maybeAutoPrintOnStatus(orderId: string, status: OrderStatus) {
+    if (printFlowMode !== "auto" || typeof window === "undefined") return
+    const tipo = status === "Preparando" ? "cocina" : status === "Listo" ? "recibo" : ""
+    if (!tipo) return
+    window.open(
+      `/local-santo/tickets?pedido=${encodeURIComponent(orderId)}&tipo=${tipo}&auto=1`,
+      "_blank",
+      "noopener",
+    )
+  }
+
   async function updateStatus(orderId: string, status: OrderStatus) {
     if (!adminPassword) return
+    maybeAutoPrintOnStatus(orderId, status)
     const previousOrder = orders.find((order) => order.id === orderId)
     pendingStatusRef.current.set(orderId, status)
     setErrorMessage(null)

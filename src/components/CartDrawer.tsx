@@ -26,7 +26,8 @@ import {
   Pencil,
   Table2,
 } from "lucide-react";
-import { formatUSD, formatVES } from "@/utils/formatCurrency";
+import { formatPublicUSD as formatUSD, formatVES } from "@/utils/formatCurrency";
+import { usePublicCurrencySymbol } from "@/hooks/usePublicCurrencySymbol";
 
 import {
   type CartItem,
@@ -338,6 +339,7 @@ export default function CartDrawer({
   exchangeManual,
   exchangeWarning,
 }: CartDrawerProps) {
+  usePublicCurrencySymbol();
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");

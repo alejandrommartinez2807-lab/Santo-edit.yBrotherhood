@@ -9,7 +9,8 @@ import {
   UtensilsCrossed,
 } from "lucide-react";
 import { BRAND } from "@/lib/brand";
-import { formatUSD } from "@/utils/formatCurrency";
+import { formatPublicUSD as formatUSD } from "@/utils/formatCurrency";
+import { usePublicCurrencySymbol } from "@/hooks/usePublicCurrencySymbol";
 import {
   fetchRecentOrdersLiveInfo,
   readRecentPublicOrders,
@@ -29,6 +30,7 @@ function getStatusLabel(status: string) {
 }
 
 export default function MisPedidosPage() {
+  usePublicCurrencySymbol();
   const [orders, setOrders] = useState<RecentPublicOrder[]>([]);
   const [liveInfo, setLiveInfo] = useState<Record<string, RecentOrderLiveInfo>>(
     {},

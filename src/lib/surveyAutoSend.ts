@@ -6,13 +6,16 @@ import { isMissingColumnError } from "@/lib/ordersStoreMappers"
 import { markOrderSurveySent } from "@/lib/surveys"
 import {
   getSurveyButtonTemplateName,
+  getSurveyFlowTemplateName,
   getSurveyTemplateName,
   isWhatsAppBusinessConfigured,
   sendWhatsAppBusinessSurveyButtons,
+  sendWhatsAppBusinessSurveyFlow,
   sendWhatsAppBusinessSurveyTemplate,
   sendWhatsAppBusinessText,
 } from "@/lib/whatsappBusiness"
 import { buildSurveyButtonPayloads } from "@/lib/surveyButtons"
+import { encodeSurveyFlowToken } from "@/lib/surveyFlow"
 
 // Envío AUTOMÁTICO de la encuesta post-venta: X minutos después de marcar
 // el pedido como Entregado (delivery/pick up con teléfono), se manda el link
@@ -103,10 +106,11 @@ export async function dispatchPostSaleSurveys(): Promise<SurveyDispatchResult> {
   const customMessage = String(config.postSaleSurveyMessage || "").trim()
   const businessName = String(config.businessName || "el negocio").trim()
   const siteUrl = getSiteUrl()
-  // Prioridad: BOTONES en el chat (un toque, sin link) > plantilla con link >
-  // texto libre con link. La de botones es la experiencia que pidió el dueño.
-  const useButtons = Boolean(getSurveyButtonTemplateName())
-  const useTemplate = !useButtons && Boolean(getSurveyTemplateName())
+  // Prioridad: FLOW (formulario completo en el chat) > BOTONES (un toque) >
+  // plantilla con link > texto libre con link. Se elige según qué env haya.
+  const useFlow = Boolean(getSurveyFlowTemplateName())
+  const useButtons = !useFlow && Boolean(getSurveyButtonTemplateName())
+  const useTemplate = !useFlow && !useButtons && Boolean(getSurveyTemplateName())
 
   for (const raw of pendingOrders) {
     const order = raw as Record<string, unknown>
@@ -135,20 +139,33 @@ export async function dispatchPostSaleSurveys(): Promise<SurveyDispatchResult> {
           "Tu opinión nos ayuda muchísimo a mejorar.",
         ].join("\n")
 
-    const result = useButtons
-      ? await sendWhatsAppBusinessSurveyButtons(
+    const result = useFlow
+      ? await sendWhatsAppBusinessSurveyFlow(
           phone,
           customerName,
-          buildSurveyButtonPayloads(orderId),
+          encodeSurveyFlowToken(orderId),
+          orderId,
         )
-      : useTemplate
-        ? await sendWhatsAppBusinessSurveyTemplate(phone, customerName, surveyUrl)
-        : await sendWhatsAppBusinessText(phone, body)
+      : useButtons
+        ? await sendWhatsAppBusinessSurveyButtons(
+            phone,
+            customerName,
+            buildSurveyButtonPayloads(orderId),
+          )
+        : useTemplate
+          ? await sendWhatsAppBusinessSurveyTemplate(phone, customerName, surveyUrl)
+          : await sendWhatsAppBusinessText(phone, body)
 
     if (result.ok) {
       await markOrderSurveySent(
         orderId,
-        useButtons ? "auto-buttons" : useTemplate ? "auto-template" : "auto-whatsapp",
+        useFlow
+          ? "auto-flow"
+          : useButtons
+            ? "auto-buttons"
+            : useTemplate
+              ? "auto-template"
+              : "auto-whatsapp",
       )
       sent += 1
     } else {

@@ -114,6 +114,8 @@ type BusinessConfig = {
   productCardTextColor: string;
   productCardBorderColor: string;
   productCardButtonColor: string;
+  publicCurrencySymbol: string;
+  printFlowMode: string;
   publicTagline: string;
   publicInfoTitle: string;
   publicInfoText: string;
@@ -298,6 +300,8 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   productCardTextColor: "#ffffff",
   productCardBorderColor: "#f5a623",
   productCardButtonColor: "#f5a623",
+  publicCurrencySymbol: "$",
+  printFlowMode: "none",
   publicTagline: "Smash Burgers, Combos y Sides",
   publicInfoTitle: `Visita ${BRAND.name}`,
   publicInfoText:
@@ -933,6 +937,8 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     productCardButtonColor:
       normalizeHexColor(source.productCardButtonColor) ||
       DEFAULT_BUSINESS_CONFIG.productCardButtonColor,
+    publicCurrencySymbol: source.publicCurrencySymbol === "€" ? "€" : "$",
+    printFlowMode: source.printFlowMode === "auto" ? "auto" : "none",
     publicTagline:
       String(source.publicTagline || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.publicTagline,
@@ -3396,6 +3402,43 @@ export default function BusinessConfigPage() {
                       />
                     ))}
                   </div>
+                </div>
+
+                <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/15 bg-white p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    Moneda del sitio público
+                  </p>
+                  <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
+                    Elige el signo que ven los clientes en la página pública. Solo
+                    estético: los cálculos y los bolívares no cambian.
+                  </p>
+                  <select
+                    value={businessConfig.publicCurrencySymbol}
+                    onChange={(e) => updateConfig("publicCurrencySymbol", e.target.value)}
+                    className="mt-3 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  >
+                    <option value="$">Dólar ($)</option>
+                    <option value="€">Euro (€)</option>
+                  </select>
+                </div>
+
+                <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/15 bg-white p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                    Impresión de tickets
+                  </p>
+                  <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
+                    Elige cómo se imprimen los tickets al operar en caja.
+                  </p>
+                  <select
+                    value={businessConfig.printFlowMode}
+                    onChange={(e) => updateConfig("printFlowMode", e.target.value)}
+                    className="mt-3 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  >
+                    <option value="none">Sin impresión (no se imprime nada)</option>
+                    <option value="auto">
+                      Automático: comanda al enviar a cocina + recibo al marcar Listo
+                    </option>
+                  </select>
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-2">

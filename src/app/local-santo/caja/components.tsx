@@ -16,7 +16,6 @@ import {
   LogIn,
   MessageCircle,
   PackageCheck,
-  Printer,
   RefreshCw,
   Send,
   Truck,
@@ -483,15 +482,6 @@ export function CashOrderCard({
               Pedido cancelado
             </div>
           )}
-
-          <a
-            href={`/local-santo/tickets?pedido=${encodeURIComponent(String(order.id || ""))}&tipo=caja&auto=1`}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
-          >
-            <Printer size={17} /> Imprimir ticket
-          </a>
 
           {order.status !== "Cancelado" && order.status !== "Entregado" && (
             <button
