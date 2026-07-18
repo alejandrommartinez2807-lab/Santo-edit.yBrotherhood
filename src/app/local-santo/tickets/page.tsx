@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { BRAND } from "@/lib/brand"
 import {
   ArrowLeft,
@@ -350,6 +350,7 @@ function ReceiptTicket({
       title="Recibo"
       subtitle={branchName ? `Sede: ${branchName}` : "Gracias por tu compra"}
       orderNumber={getDisplayOrderNumber(order)}
+      footer="¡Gracias por tu compra!"
     >
       <TicketLine label="Hora" value={getOrderCreatedLabel(order)} />
       {order.customerName ? <TicketLine label="Cliente" value={order.customerName} /> : null}
@@ -503,11 +504,13 @@ function TicketShell({
   subtitle,
   orderNumber,
   children,
+  footer = "Revisa el pedido antes de entregar o cobrar.",
 }: {
   title: string;
   subtitle: string;
   orderNumber?: string;
   children: ReactNode;
+  footer?: string;
 }) {
   return (
     <article className="ticket-paper mx-auto w-full max-w-[380px] bg-white p-5 font-mono text-[var(--brand-ink-3)] shadow-xl print:shadow-none">
@@ -532,7 +535,7 @@ function TicketShell({
       <div className="py-3">{children}</div>
 
       <div className="border-t-2 border-[var(--brand-ink-3)] pt-3 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--brand-ink-3)]/65">
-        Revisa el pedido antes de entregar o cobrar.
+        {footer}
       </div>
     </article>
   );
@@ -732,6 +735,15 @@ function TicketsPageContent() {
   // público ($/€) elegido por el dueño.
   const [branchName, setBranchName] = useState("");
   const [receiptSymbol, setReceiptSymbol] = useState<"$" | "€">("$");
+  // El recibo necesita sede + símbolo cargados antes de auto-imprimir (si no,
+  // saldría con el nombre del negocio y en "$"). receiptInfoLoaded marca que ya
+  // terminó de cargar; autoPrintTarget es el ticket a imprimir solo.
+  const [receiptInfoLoaded, setReceiptInfoLoaded] = useState(false);
+  const [autoPrintTarget, setAutoPrintTarget] = useState<{
+    kind: Exclude<TicketKind, "account">;
+    order: LocalOrder;
+  } | null>(null);
+  const autoPrintDoneRef = useRef(false);
 
   useEffect(() => {
     // Difiere la restauración de sesión un tick para no hacer setState
@@ -744,31 +756,33 @@ function TicketsPageContent() {
   }, []);
 
   // Nombre de la sede actual (el panel es por sede) + símbolo de moneda público
-  // para el recibo del cliente.
+  // para el recibo del cliente. Al terminar (con o sin datos) marca
+  // receiptInfoLoaded, que habilita la auto-impresión del recibo.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const list = await fetchActiveBranches();
-        if (cancelled) return;
-        const current = getSelectedBranchId();
-        const branch = list.find((b) => b.id === current) || list[0];
-        if (branch?.name) setBranchName(branch.name);
+        if (!cancelled) {
+          const current = getSelectedBranchId();
+          const branch = list.find((b) => b.id === current) || list[0];
+          if (branch?.name) setBranchName(branch.name);
+        }
       } catch {
         // Sin sedes: el recibo usa el nombre del negocio.
       }
       try {
         const response = await fetch("/api/public/business-config", { cache: "no-store" });
         const data = await response.json().catch(() => null);
-        if (cancelled || !data) return;
         const config =
-          data.businessConfig && typeof data.businessConfig === "object"
+          data && data.businessConfig && typeof data.businessConfig === "object"
             ? data.businessConfig
             : data;
-        if (config?.publicCurrencySymbol === "€") setReceiptSymbol("€");
+        if (!cancelled && config?.publicCurrencySymbol === "€") setReceiptSymbol("€");
       } catch {
         // Sin config: el recibo usa "$".
       }
+      if (!cancelled) setReceiptInfoLoaded(true);
     })();
     return () => {
       cancelled = true;
@@ -800,18 +814,31 @@ function TicketsPageContent() {
       setSelectedTarget({ kind, order });
 
       if (pendingAutoTicket.autoPrint) {
-        // Deja respirar al modal antes de abrir el diálogo de impresión. Como
-        // la pestaña la abre caja por script (envío automático), se intenta
-        // cerrar sola después de imprimir para no acumular pestañas.
-        window.setTimeout(() => {
-          window.print();
-          window.setTimeout(() => window.close(), 400);
-        }, 650);
+        // La impresión real la dispara el efecto de abajo, que para el recibo
+        // espera a tener cargados la sede y el símbolo de moneda.
+        setAutoPrintTarget({ kind, order });
       }
     }, 0);
 
     return () => clearTimeout(timer);
   }, [pendingAutoTicket, orders]);
+
+  // Auto-impresión: el recibo espera a que carguen sede + símbolo (los demás
+  // tickets no dependen de eso). La pestaña la abrió caja por script, así que
+  // tras imprimir se intenta cerrar sola para no acumular pestañas. El ref
+  // garantiza que solo se imprime una vez.
+  useEffect(() => {
+    if (!autoPrintTarget || autoPrintDoneRef.current) return;
+    if (autoPrintTarget.kind === "receipt" && !receiptInfoLoaded) return;
+
+    autoPrintDoneRef.current = true;
+    const timer = setTimeout(() => {
+      window.print();
+      window.setTimeout(() => window.close(), 400);
+    }, 650);
+
+    return () => clearTimeout(timer);
+  }, [autoPrintTarget, receiptInfoLoaded]);
 
   const ordersById = useMemo(() => {
     const map = new Map<string, LocalOrder>();
