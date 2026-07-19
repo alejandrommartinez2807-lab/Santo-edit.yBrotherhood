@@ -47,7 +47,7 @@ type Link = {
 }
 type Summary = { unitsCount: number; residentsCount: number; alicuotaSum: number; balanceDue: number }
 
-type Tab = "resumen" | "unidades" | "residentes" | "cuotas" | "estado"
+type Tab = "resumen" | "unidades" | "residentes" | "cuotas" | "estado" | "galeria"
 
 const UNIT_STATUS = ["activa", "desocupada", "en_mora", "inactiva"]
 const RES_ROLES = ["propietario", "inquilino", "autorizado", "familiar"]
@@ -58,6 +58,7 @@ const MODULES: { key: Tab | string; label: string; icon: string; ready: boolean 
   { key: "residentes", label: "Residentes", icon: "👥", ready: true },
   { key: "cuotas", label: "Cuotas", icon: "🧾", ready: true },
   { key: "estado", label: "Estado de cuenta", icon: "💳", ready: true },
+  { key: "galeria", label: "Galería", icon: "🖼️", ready: true },
   { key: "amenidades", label: "Áreas comunes", icon: "🏊", ready: false },
   { key: "incidencias", label: "Incidencias", icon: "🛠️", ready: false },
   { key: "comunicados", label: "Comunicados", icon: "📣", ready: false },
@@ -118,6 +119,7 @@ export default function PanelApp() {
           {tab === "residentes" && <ResidentesView api={api} />}
           {tab === "cuotas" && <CuotasView api={api} />}
           {tab === "estado" && <EstadoView api={api} />}
+          {tab === "galeria" && <GaleriaView api={api} />}
         </main>
       </div>
     </div>
@@ -797,6 +799,85 @@ function EstadoView({ api }: { api: (p: string, i?: RequestInit) => Promise<Reco
           </form>
         </div>
       )}
+    </div>
+  )
+}
+
+// ---------- Galería ----------
+type GalleryItem = { id: string; url: string; caption: string }
+
+function GaleriaView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
+  const [items, setItems] = useState<GalleryItem[]>([])
+  const [url, setUrl] = useState("")
+  const [caption, setCaption] = useState("")
+  const [err, setErr] = useState("")
+  const [busy, setBusy] = useState(false)
+
+  const load = useCallback(async () => {
+    try { const d = await api("/api/panel/gallery"); setItems((d.gallery as GalleryItem[]) || []) } catch (e) { setErr(String((e as Error).message)) }
+  }, [api])
+  useEffect(() => { load() }, [load])
+
+  async function addUrl() {
+    if (!url.trim()) return
+    setBusy(true); setErr("")
+    try { const d = await api("/api/panel/gallery", { method: "POST", body: JSON.stringify({ url: url.trim(), caption }) }); setItems((d.gallery as GalleryItem[]) || []); setUrl(""); setCaption("") } catch (e) { setErr(String((e as Error).message)) } finally { setBusy(false) }
+  }
+  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 6_000_000) { setErr("La imagen supera 6 MB"); return }
+    const reader = new FileReader()
+    reader.onload = async () => {
+      setBusy(true); setErr("")
+      try { const d = await api("/api/panel/gallery", { method: "POST", body: JSON.stringify({ dataUrl: reader.result, caption }) }); setItems((d.gallery as GalleryItem[]) || []); setCaption("") } catch (e) { setErr(String((e as Error).message)) } finally { setBusy(false) }
+    }
+    reader.readAsDataURL(file)
+    e.target.value = ""
+  }
+  async function remove(id: string) {
+    if (!confirm("¿Quitar esta imagen de la galería?")) return
+    try { const d = await api(`/api/panel/gallery/${id}`, { method: "DELETE" }); setItems((d.gallery as GalleryItem[]) || []) } catch (e) { setErr(String((e as Error).message)) }
+  }
+
+  return (
+    <div>
+      <h1 style={{ fontSize: 22, fontWeight: 800, margin: "4px 0 14px" }}>Galería</h1>
+      {err && <div style={errBox}>{err}</div>}
+      <Card>
+        <div style={{ fontWeight: 700, marginBottom: 6 }}>Fotos del edificio (se muestran en la página pública)</div>
+        <p style={{ margin: "0 0 12px", color: "#5b6b82", fontSize: 13 }}>Sube fotos reales de los apartamentos, áreas comunes y fachada. Mientras no cargues ninguna, la web muestra imágenes de ejemplo.</p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 10, alignItems: "end" }}>
+          <Field label="URL de imagen"><input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…/foto.jpg" style={input} /></Field>
+          <Field label="Descripción (opcional)"><input value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Salón social" style={input} /></Field>
+          <button onClick={addUrl} disabled={busy} style={btnPrimary}>Agregar URL</button>
+        </div>
+        <div style={{ marginTop: 12 }}>
+          <label style={{ ...btnGhost, display: "inline-block", cursor: "pointer" }}>
+            {busy ? "Subiendo…" : "⬆️ Subir imagen desde tu equipo"}
+            <input type="file" accept="image/png,image/jpeg,image/webp" onChange={onFile} style={{ display: "none" }} disabled={busy} />
+          </label>
+        </div>
+      </Card>
+
+      <div style={{ marginTop: 14 }}>
+        <Card>
+          {items.length === 0 ? <p style={{ color: "#5b6b82", margin: 0 }}>Aún no hay fotos. La web pública muestra imágenes de ejemplo hasta que subas las tuyas.</p> : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 12 }}>
+              {items.map((it) => (
+                <div key={it.id} style={{ borderRadius: 12, overflow: "hidden", border: "1px solid #eef1f6", background: "#f7f9fc" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={it.url} alt={it.caption} style={{ width: "100%", height: 110, objectFit: "cover", display: "block" }} />
+                  <div style={{ padding: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 12, color: "#5b6b82", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.caption || "—"}</span>
+                    <button onClick={() => remove(it.id)} style={btnMiniDanger}>Quitar</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
     </div>
   )
 }

@@ -1,6 +1,22 @@
 import type { Metadata } from "next"
 import { BRAND } from "@/lib/brand"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
+import PortalGallery from "./PortalGallery"
+
+type GalleryItem = { id: string; url: string; caption: string }
+
+// Galería de ejemplo (fotos reales de Unsplash) mientras el cliente no sube las
+// suyas desde el panel → Galería. Se reemplaza en cuanto agrega la primera foto.
+const DEFAULT_GALLERY: GalleryItem[] = [
+  { id: "g1", url: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=70", caption: "Fachada del edificio" },
+  { id: "g2", url: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=70", caption: "Sala de un apartamento" },
+  { id: "g3", url: "https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=800&q=70", caption: "Cocina equipada" },
+  { id: "g4", url: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=70", caption: "Habitación principal" },
+  { id: "g5", url: "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?auto=format&fit=crop&w=800&q=70", caption: "Piscina" },
+  { id: "g6", url: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=70", caption: "Gimnasio" },
+  { id: "g7", url: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=70", caption: "Áreas comunes" },
+  { id: "g8", url: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=70", caption: "Vista del conjunto" },
+]
 
 export const metadata: Metadata = {
   title: "Apartamentos Palulu · Vive aquí",
@@ -13,7 +29,7 @@ export const dynamic = "force-dynamic"
 type Amenity = { id: string; name: string; description: string; photo_url: string }
 type AvailUnit = { id: string; code: string; tower: string; floor: string; area_m2: number; parking_slots: number; unit_types?: { name?: string } | null }
 
-async function loadData(): Promise<{ amenities: Amenity[]; available: AvailUnit[]; buildingName: string }> {
+async function loadData(): Promise<{ amenities: Amenity[]; available: AvailUnit[]; buildingName: string; gallery: GalleryItem[] }> {
   try {
     const supabase = getSupabaseAdmin()
     const [amen, units, cfg] = await Promise.all([
@@ -21,14 +37,17 @@ async function loadData(): Promise<{ amenities: Amenity[]; available: AvailUnit[
       supabase.from("units").select("id, code, tower, floor, area_m2, parking_slots, unit_types(name)").eq("status", "desocupada").order("code").limit(9),
       supabase.from("business_config").select("config").eq("id", 1).maybeSingle(),
     ])
-    const brandName = ((cfg.data?.config as Record<string, unknown> | undefined)?.brand as Record<string, unknown> | undefined)?.name
+    const config = (cfg.data?.config as Record<string, unknown> | undefined) || {}
+    const brandName = (config.brand as Record<string, unknown> | undefined)?.name
+    const gallery = Array.isArray(config.gallery) ? (config.gallery as GalleryItem[]) : []
     return {
       amenities: (amen.data as Amenity[]) ?? [],
       available: (units.data as unknown as AvailUnit[]) ?? [],
       buildingName: (typeof brandName === "string" && brandName) || BRAND.name,
+      gallery,
     }
   } catch {
-    return { amenities: [], available: [], buildingName: BRAND.name }
+    return { amenities: [], available: [], buildingName: BRAND.name, gallery: [] }
   }
 }
 
@@ -40,7 +59,8 @@ function iconFor(name: string) {
 }
 
 export default async function PortalPage() {
-  const { amenities, available, buildingName } = await loadData()
+  const { amenities, available, buildingName, gallery } = await loadData()
+  const galleryItems = gallery.length ? gallery : DEFAULT_GALLERY
   const wa = `https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(`Hola, quiero información sobre apartamentos en ${buildingName}.`)}`
 
   return (
@@ -54,6 +74,7 @@ export default async function PortalPage() {
           <nav style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center" }}>
             <a href="#disponibilidad" style={navLink}>Disponibilidad</a>
             <a href="#amenidades" style={navLink}>Amenidades</a>
+            <a href="#galeria" style={navLink}>Galería</a>
             <a href="/mi-cuenta" style={{ ...navLink, fontWeight: 700, color: "#1554b8" }}>Soy residente</a>
             <a href={wa} target="_blank" rel="noopener" style={{ ...ctaBtn, padding: "8px 16px" }}>Contactar</a>
           </nav>
@@ -130,6 +151,9 @@ export default async function PortalPage() {
           </div>
         </div>
       </section>
+
+      {/* GALERÍA */}
+      <PortalGallery items={galleryItems} />
 
       {/* RESIDENTES */}
       <section style={{ background: "linear-gradient(120deg,#0a1a30,#1554b8)", color: "#fff", padding: "40px 0" }}>
