@@ -78,7 +78,7 @@ export function OptionPicker({
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.45rem)] z-[180] overflow-hidden rounded-[1.25rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] shadow-[0_16px_34px_rgba(74,0,0,0.22)]">
+        <div className="absolute left-0 right-0 top-[calc(100%+0.45rem)] z-[180] overflow-hidden rounded-[1.25rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] shadow-[0_16px_34px_rgba(22,50,79,0.22)]">
           <div className="max-h-72 overflow-y-auto p-2">
             <button
               type="button"

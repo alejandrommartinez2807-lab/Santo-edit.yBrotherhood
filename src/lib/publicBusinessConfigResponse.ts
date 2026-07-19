@@ -291,14 +291,14 @@ export function buildPublicBusinessConfigResponse(
     igtfRate: Number.isFinite(Number(config.igtfRate)) ? Number(config.igtfRate) : 3,
     businessShortDescription:
       cleanText(config.businessShortDescription) || "Menú y pedidos",
-    themePrimaryColor: cleanText(config.themePrimaryColor) || "#a00000",
+    themePrimaryColor: cleanText(config.themePrimaryColor) || "#1f6feb",
     themeAccentColor: cleanText(config.themeAccentColor) || "#ffd23c",
-    themeCreamColor: cleanText(config.themeCreamColor) || "#fff7e8",
+    themeCreamColor: cleanText(config.themeCreamColor) || "#f4f7fb",
     productCardBackgroundColor:
       cleanText(config.productCardBackgroundColor) || "#ffffff",
-    productCardTextColor: cleanText(config.productCardTextColor) || "#4a0000",
+    productCardTextColor: cleanText(config.productCardTextColor) || "#16324f",
     productCardBorderColor:
-      cleanText(config.productCardBorderColor) || "#a00000",
+      cleanText(config.productCardBorderColor) || "#1f6feb",
     productCardButtonColor:
       cleanText(config.productCardButtonColor) || "#ffd23c",
     publicTagline: cleanText(config.publicTagline),

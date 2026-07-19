@@ -12,16 +12,16 @@
 
 export const BRAND = {
   /** Nombre del negocio (default si la config en BD viene vacía). */
-  name: "Lidotel Valencia",
+  name: "Apartamentos Palulu",
   /** Nombre corto para títulos/QR. */
-  shortName: "Lidotel",
+  shortName: "Palulu",
   /** Frase corta de marca. */
-  tagline: "Hotel 5 estrellas · Valencia",
+  tagline: "Administración de condominio",
   /** Descripción para el menú/landing. */
   description:
-    "Confort, gastronomía y atención de primera en el corazón de Valencia. Habitaciones, suites y salones para negocios y placer.",
+    "Portal de residentes y panel administrativo de Apartamentos Palulu: estado de cuenta, cuotas, reservas de áreas comunes, incidencias, comunicados y control de acceso en un solo lugar.",
   /** Logo en /public (déjalo vacío para usar solo texto). */
-  logoUrl: "/demo/lidotel/lidotel-logo.png",
+  logoUrl: "",
 
   /**
    * Demo estática sin backend (patrón demo-express): las APIs públicas del
@@ -32,9 +32,9 @@ export const BRAND = {
   demoMode: false,
 
   /** Contacto / redes (defaults; la config en BD puede sobreescribir). */
-  whatsapp: "582417000399",
-  instagram: "lidotel",
-  location: "Valencia, Carabobo, Venezuela",
+  whatsapp: "584120000000",
+  instagram: "",
+  location: "Venezuela",
 
   /** Moneda e idioma. */
   currency: {

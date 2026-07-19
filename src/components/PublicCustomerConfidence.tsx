@@ -65,8 +65,8 @@ const DEFAULT_CONFIG: PublicConfidenceConfig = {
   openAccountsEnabled: false,
   localTables: [],
   productCardBackgroundColor: "#ffffff",
-  productCardTextColor: "#4a0000",
-  productCardBorderColor: "#a00000",
+  productCardTextColor: "#16324f",
+  productCardBorderColor: "#1f6feb",
   productCardButtonColor: "#ffd23c",
 }
 

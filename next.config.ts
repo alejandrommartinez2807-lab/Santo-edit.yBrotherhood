@@ -7,26 +7,15 @@ const nextConfig: NextConfig = {
     "192.168.0.240:3000",
     "192.168.0.120:3000",
   ],
-  // Producto Hotel (Lidotel): la portada pública es el hotel, no el menú de
-  // restaurante del template. La raíz redirige a /hotel y el panel privado
-  // vive en /admin (los enlaces viejos a /pedidos siguen funcionando).
-  // OJO: los QR de room service/mesa apuntan a "/?mesa=..." — con cualquiera
-  // de esos parámetros NO se redirige, para que el huésped sí pueda pedir.
+  // Apartamentos Palulu (administración de condominio): mientras se construyen
+  // los módulos, la raíz lleva al panel administrativo (/admin). El portal
+  // público del residente reemplazará la raíz en una fase posterior.
   async redirects() {
-    const orderParams = ["mesa", "table", "ubicacion", "mesa_qr", "qr", "branch"]
     return [
-      {
-        source: "/",
-        destination: "/hotel",
-        permanent: false,
-        missing: orderParams.map((key) => ({ type: "query" as const, key })),
-      },
+      { source: "/", destination: "/admin", permanent: false },
       { source: "/pedidos", destination: "/admin", permanent: false },
+      { source: "/hotel", destination: "/admin", permanent: false },
     ]
-  },
-  // La carta de room service / restaurante con URL propia (sirve el menú de /).
-  async rewrites() {
-    return [{ source: "/carta", destination: "/" }]
   },
 }
 

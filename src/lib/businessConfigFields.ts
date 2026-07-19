@@ -38,12 +38,12 @@ export const SIMPLE_BUSINESS_CONFIG_FIELDS: readonly SimpleConfigField[] = [
   // en las tarjetas de delivery del panel privado.
   { key: "orderWhatsappStageButtonsEnabled", type: "boolean", default: true },
   // Apariencia (tema)
-  { key: "themePrimaryColor", type: "string", default: "#a00000" },
+  { key: "themePrimaryColor", type: "string", default: "#1f6feb" },
   { key: "themeAccentColor", type: "string", default: "#ffd23c" },
-  { key: "themeCreamColor", type: "string", default: "#fff7e8" },
+  { key: "themeCreamColor", type: "string", default: "#f4f7fb" },
   { key: "productCardBackgroundColor", type: "string", default: "#ffffff" },
-  { key: "productCardTextColor", type: "string", default: "#4a0000" },
-  { key: "productCardBorderColor", type: "string", default: "#a00000" },
+  { key: "productCardTextColor", type: "string", default: "#16324f" },
+  { key: "productCardBorderColor", type: "string", default: "#1f6feb" },
   { key: "productCardButtonColor", type: "string", default: "#ffd23c" },
   // Fiscal (Venezuela)
   { key: "fiscalEnabled", type: "boolean", default: false },
