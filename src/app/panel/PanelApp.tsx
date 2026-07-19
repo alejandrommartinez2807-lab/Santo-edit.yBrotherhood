@@ -47,7 +47,7 @@ type Link = {
 }
 type Summary = { unitsCount: number; residentsCount: number; alicuotaSum: number; balanceDue: number }
 
-type Tab = "resumen" | "unidades" | "residentes"
+type Tab = "resumen" | "unidades" | "residentes" | "cuotas" | "estado"
 
 const UNIT_STATUS = ["activa", "desocupada", "en_mora", "inactiva"]
 const RES_ROLES = ["propietario", "inquilino", "autorizado", "familiar"]
@@ -56,8 +56,8 @@ const MODULES: { key: Tab | string; label: string; icon: string; ready: boolean 
   { key: "resumen", label: "Resumen", icon: "▦", ready: true },
   { key: "unidades", label: "Unidades", icon: "🏢", ready: true },
   { key: "residentes", label: "Residentes", icon: "👥", ready: true },
-  { key: "cuotas", label: "Cuotas", icon: "🧾", ready: false },
-  { key: "estado", label: "Estado de cuenta", icon: "💳", ready: false },
+  { key: "cuotas", label: "Cuotas", icon: "🧾", ready: true },
+  { key: "estado", label: "Estado de cuenta", icon: "💳", ready: true },
   { key: "amenidades", label: "Áreas comunes", icon: "🏊", ready: false },
   { key: "incidencias", label: "Incidencias", icon: "🛠️", ready: false },
   { key: "comunicados", label: "Comunicados", icon: "📣", ready: false },
@@ -116,6 +116,8 @@ export default function PanelApp() {
           {tab === "resumen" && <ResumenView api={api} goTo={setTab} />}
           {tab === "unidades" && <UnidadesView api={api} />}
           {tab === "residentes" && <ResidentesView api={api} />}
+          {tab === "cuotas" && <CuotasView api={api} />}
+          {tab === "estado" && <EstadoView api={api} />}
         </main>
       </div>
     </div>
@@ -609,6 +611,190 @@ function ResidentesView({ api }: { api: (p: string, i?: RequestInit) => Promise<
               <button onClick={() => setCodeInfo(null)} style={btnPrimary}>Listo</button>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ---------- Cuotas ----------
+type Period = { id: string; label: string; period_month: string; status: string; due_date: string | null; common_expense_total: number; issued_at: string | null }
+
+function CuotasView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
+  const [periods, setPeriods] = useState<Period[]>([])
+  const [err, setErr] = useState("")
+  const [msg, setMsg] = useState("")
+  const [busy, setBusy] = useState(false)
+  const now = new Date()
+  const firstOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`
+  const [form, setForm] = useState({ periodMonth: firstOfMonth, commonExpenseTotal: "", dueDate: "" })
+
+  const load = useCallback(async () => {
+    try { const d = await api("/api/panel/periods"); setPeriods((d.periods as Period[]) || []) } catch (e) { setErr(String((e as Error).message)) }
+  }, [api])
+  useEffect(() => { load() }, [load])
+
+  async function emit(e: React.FormEvent) {
+    e.preventDefault(); setBusy(true); setErr(""); setMsg("")
+    try {
+      const d = await api("/api/panel/periods", { method: "POST", body: JSON.stringify({ action: "emit", periodMonth: form.periodMonth, label: form.periodMonth.slice(0, 7), commonExpenseTotal: Number(form.commonExpenseTotal || 0), dueDate: form.dueDate || undefined }) })
+      setMsg(`✓ Emitidas ${d.unitsEmitted} cuotas · total ${money(Number(d.totalEmitted || 0))}`)
+      setForm({ ...form, commonExpenseTotal: "" }); await load()
+    } catch (e) { setErr(String((e as Error).message)) } finally { setBusy(false) }
+  }
+
+  return (
+    <div>
+      <h1 style={{ fontSize: 22, fontWeight: 800, margin: "4px 0 14px" }}>Cuotas</h1>
+      {err && <div style={errBox}>{err}</div>}
+      <Card>
+        <div style={{ fontWeight: 700, marginBottom: 8 }}>Emitir cuotas del mes</div>
+        <p style={{ margin: "0 0 12px", color: "#5b6b82", fontSize: 13 }}>El gasto común se prorratea entre las unidades según su <b>alícuota</b>. Cada unidad recibe su cargo y su recibo.</p>
+        <form onSubmit={emit} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 12, alignItems: "end" }}>
+          <Field label="Mes"><input type="date" value={form.periodMonth} onChange={(e) => setForm({ ...form, periodMonth: e.target.value })} style={input} /></Field>
+          <Field label="Gasto común total ($)"><input type="number" step="0.01" required value={form.commonExpenseTotal} onChange={(e) => setForm({ ...form, commonExpenseTotal: e.target.value })} placeholder="2500" style={input} /></Field>
+          <Field label="Vence"><input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} style={input} /></Field>
+          <button type="submit" disabled={busy} style={btnPrimary}>{busy ? "Emitiendo…" : "Emitir cuotas"}</button>
+        </form>
+        {msg && <div style={{ marginTop: 10, color: "#1e874b", fontSize: 14 }}>{msg}</div>}
+      </Card>
+
+      <div style={{ marginTop: 14 }}>
+        <Card>
+          {periods.length === 0 ? <p style={{ color: "#5b6b82", margin: 0 }}>Aún no has emitido ningún período.</p> : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={table}>
+                <thead><tr>{["Período", "Mes", "Gasto común", "Vence", "Estado"].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {periods.map((p) => (
+                    <tr key={p.id}>
+                      <td style={{ ...td, fontWeight: 700 }}>{p.label}</td>
+                      <td style={td}>{p.period_month}</td>
+                      <td style={td}>{money(p.common_expense_total)}</td>
+                      <td style={td}>{p.due_date || "—"}</td>
+                      <td style={td}><span style={badge(p.status === "emitido" ? "activa" : "desocupada")}>{p.status}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+// ---------- Estado de cuenta / Pagos ----------
+type UnitBalance = { id: string; code: string; tower: string; balance: number; status: string }
+type PaymentRow = { id: string; unit_id: string; amount: number; method: string; reference: string; status: string; paid_on: string }
+
+function EstadoView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
+  const [units, setUnits] = useState<UnitBalance[]>([])
+  const [payments, setPayments] = useState<PaymentRow[]>([])
+  const [err, setErr] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [payFor, setPayFor] = useState<UnitBalance | null>(null)
+  const [payForm, setPayForm] = useState({ amount: "", method: "transferencia", reference: "", paidOn: "" })
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try { const d = await api("/api/panel/payments"); setUnits((d.units as UnitBalance[]) || []); setPayments((d.payments as PaymentRow[]) || []) } catch (e) { setErr(String((e as Error).message)) } finally { setLoading(false) }
+  }, [api])
+  useEffect(() => { load() }, [load])
+
+  const codeOf = useMemo(() => Object.fromEntries(units.map((u) => [u.id, u.code])), [units])
+  const reported = payments.filter((p) => p.status === "reportado")
+  const totalDue = units.reduce((s, u) => s + Math.max(0, Number(u.balance || 0)), 0)
+
+  async function register(e: React.FormEvent) {
+    e.preventDefault()
+    if (!payFor) return
+    try {
+      await api("/api/panel/payments", { method: "POST", body: JSON.stringify({ action: "register", unitId: payFor.id, amount: Number(payForm.amount || 0), method: payForm.method, reference: payForm.reference, paidOn: payForm.paidOn || undefined }) })
+      setPayFor(null); setPayForm({ amount: "", method: "transferencia", reference: "", paidOn: "" }); await load()
+    } catch (e) { setErr(String((e as Error).message)) }
+  }
+  async function decide(p: PaymentRow, action: "confirm" | "reject") {
+    try { await api("/api/panel/payments", { method: "POST", body: JSON.stringify({ action, paymentId: p.id }) }); await load() } catch (e) { setErr(String((e as Error).message)) }
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, flex: 1 }}>Estado de cuenta</h1>
+        <span style={{ fontSize: 13, color: totalDue > 0 ? "#c0392b" : "#1e874b" }}>Por cobrar: {money(totalDue)}</span>
+      </div>
+      {err && <div style={errBox}>{err}</div>}
+
+      {reported.length > 0 && (
+        <div style={{ marginBottom: 14 }}>
+          <Card>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>Pagos reportados por residentes ({reported.length})</div>
+            {reported.map((p) => (
+              <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #f0f3f8" }}>
+                <div><b>{codeOf[p.unit_id] || "—"}</b> · {money(p.amount)} · {p.method} · {p.reference}</div>
+                <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+                  <button onClick={() => decide(p, "confirm")} style={btnMini}>Confirmar</button>
+                  <button onClick={() => decide(p, "reject")} style={btnMiniDanger}>Rechazar</button>
+                </div>
+              </div>
+            ))}
+          </Card>
+        </div>
+      )}
+
+      <Card>
+        {loading ? <p style={{ color: "#5b6b82" }}>Cargando…</p> : units.length === 0 ? (
+          <p style={{ color: "#5b6b82", margin: 0 }}>No hay unidades. Créalas primero en Unidades.</p>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={table}>
+              <thead><tr>{["Unidad", "Torre", "Saldo", ""].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+              <tbody>
+                {units.map((u) => (
+                  <tr key={u.id}>
+                    <td style={{ ...td, fontWeight: 700 }}>{u.code}</td>
+                    <td style={td}>{u.tower || "—"}</td>
+                    <td style={{ ...td, fontWeight: 700, color: Number(u.balance) > 0 ? "#c0392b" : "#1e874b" }}>{money(u.balance)}</td>
+                    <td style={td}><button onClick={() => { setPayFor(u); setPayForm({ amount: String(Math.max(0, Number(u.balance || 0)) || ""), method: "transferencia", reference: "", paidOn: "" }) }} style={btnMini}>Registrar pago</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
+      {payments.length > 0 && (
+        <div style={{ marginTop: 14 }}>
+          <Card>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>Pagos recientes</div>
+            {payments.slice(0, 15).map((p) => (
+              <div key={p.id} style={{ display: "flex", gap: 10, padding: "7px 0", borderBottom: "1px solid #f0f3f8", fontSize: 14 }}>
+                <span><b>{codeOf[p.unit_id] || "—"}</b> · {money(p.amount)} · {p.method}</span>
+                <span style={{ marginLeft: "auto", color: p.status === "confirmado" ? "#1e874b" : p.status === "rechazado" ? "#c0392b" : "#8a5a00" }}>{p.status}</span>
+              </div>
+            ))}
+          </Card>
+        </div>
+      )}
+
+      {payFor && (
+        <div style={modalWrap} onClick={() => setPayFor(null)}>
+          <form style={modalBox} onClick={(e) => e.stopPropagation()} onSubmit={register}>
+            <h3 style={{ margin: "0 0 4px" }}>Registrar pago · {payFor.code}</h3>
+            <p style={{ margin: "0 0 12px", color: "#5b6b82", fontSize: 13 }}>Saldo actual: {money(payFor.balance)}</p>
+            <Field label="Monto ($)"><input type="number" step="0.01" required value={payForm.amount} onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })} style={input} /></Field>
+            <div style={{ height: 10 }} />
+            <Field label="Método"><select value={payForm.method} onChange={(e) => setPayForm({ ...payForm, method: e.target.value })} style={input}>{["transferencia", "pago_movil", "efectivo", "zelle", "tarjeta", "otro"].map((m) => <option key={m} value={m}>{m}</option>)}</select></Field>
+            <div style={{ height: 10 }} />
+            <Field label="Referencia"><input value={payForm.reference} onChange={(e) => setPayForm({ ...payForm, reference: e.target.value })} style={input} /></Field>
+            <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+              <button type="submit" style={btnPrimary}>Registrar</button>
+              <button type="button" onClick={() => setPayFor(null)} style={btnGhost}>Cancelar</button>
+            </div>
+          </form>
         </div>
       )}
     </div>
