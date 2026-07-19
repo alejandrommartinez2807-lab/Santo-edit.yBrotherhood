@@ -45,7 +45,7 @@ function Login({ onToken }: { onToken: (t: string) => void }) {
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/concepto-logo.png" alt="" width={44} height={44} />
-            <div><div style={{ fontWeight: 800, fontSize: 17 }}>Mi cuenta</div><div style={{ fontSize: 12, color: "#5b6b82" }}>Apartamentos Palulu</div></div>
+            <div><div style={{ fontWeight: 800, fontSize: 17 }}>Mi cuenta</div><div style={{ fontSize: 12, color: "#5b6b82" }}>Concepto La Granja</div></div>
           </div>
           <label style={lbl}>Teléfono</label>
           <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+58 412 …" style={inp} autoFocus />
@@ -87,7 +87,7 @@ function Dashboard({ token, onLogout }: { token: string; onLogout: () => void })
         <div style={{ maxWidth: 860, margin: "0 auto", display: "flex", alignItems: "center", gap: 12 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/concepto-logo.png" alt="" width={32} height={32} />
-          <strong>Mi cuenta · Apartamentos Palulu</strong>
+          <strong>Mi cuenta · Concepto La Granja</strong>
           <button onClick={onLogout} style={{ marginLeft: "auto", background: "rgba(255,255,255,.12)", color: "#fff", border: 0, borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 13 }}>Salir</button>
         </div>
       </header>

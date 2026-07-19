@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
         status: 200,
         headers: {
           "Content-Type": "application/json",
-          "Content-Disposition": `attachment; filename="palulu-respaldo-${stamp}.json"`,
+          "Content-Disposition": `attachment; filename="concepto-respaldo-${stamp}.json"`,
         },
       })
     }

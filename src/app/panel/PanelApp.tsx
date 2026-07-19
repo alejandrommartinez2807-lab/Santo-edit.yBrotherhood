@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 // ============================================================
-// Panel administrativo de condominio — Apartamentos Palulu
+// Panel administrativo de condominio — Concepto La Granja
 // Diseño propio (no hereda el panel del hotel). Fase 1: Unidades + Residentes.
 // Auth: clave por rol del template; se guarda en localStorage y se envía como
 // header x-local-password a /api/panel/*.
@@ -186,7 +186,7 @@ function LoginGate({ onOk }: { onOk: (pw: string) => void }) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/concepto-logo.png" alt="" width={48} height={48} />
           <div>
-            <div style={{ fontWeight: 800, fontSize: 18, color: "#0a1a30" }}>Apartamentos Palulu</div>
+            <div style={{ fontWeight: 800, fontSize: 18, color: "#0a1a30" }}>Concepto La Granja</div>
             <div style={{ fontSize: 12, color: "#5b6b82" }}>Panel administrativo</div>
           </div>
         </div>
@@ -215,7 +215,7 @@ function TopBar({ onLogout }: { onLogout: () => void }) {
       <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", gap: 12 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/concepto-logo.png" alt="" width={34} height={34} />
-        <div style={{ fontWeight: 800 }}>Apartamentos Palulu</div>
+        <div style={{ fontWeight: 800 }}>Concepto La Granja</div>
         <span style={{ fontSize: 12, opacity: 0.7 }}>· Administración</span>
         <button onClick={onLogout} style={{ marginLeft: "auto", background: "rgba(255,255,255,.12)", color: "#fff", border: 0, borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 13 }}>
           Salir
