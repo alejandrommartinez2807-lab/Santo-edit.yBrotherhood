@@ -86,11 +86,12 @@ export default async function PortalPage() {
       <header style={{ position: "sticky", top: 0, zIndex: 20, background: "rgba(246,251,254,.9)", backdropFilter: "blur(8px)", borderBottom: "1px solid #dcecf5" }}>
         <div style={{ maxWidth: 1120, margin: "0 auto", padding: "12px 20px", display: "flex", alignItems: "center", gap: 12 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/concepto-mark.svg" alt="" width={38} height={38} style={{ borderRadius: 10 }} />
+          <img src="/concepto-logo.png" alt="" width={38} height={38} style={{ borderRadius: 10 }} />
           <strong style={{ fontSize: 17 }}>{mallName}</strong>
           <nav style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center" }}>
             <a href="#directorio" style={navLink}>Tiendas</a>
             <a href="#servicios" style={navLink}>Servicios</a>
+            <a href="/estacionamiento" style={navLink}>Estacionamiento</a>
             <a href="#alquiler" style={navLink}>Alquila tu local</a>
             <a href="/mi-cuenta" style={{ ...navLink, fontWeight: 700, color: "#0a6f9c" }}>Soy comerciante</a>
             <a href={wa(`Hola, quiero información del ${mallName}.`)} target="_blank" rel="noopener" style={{ ...ctaBtn, padding: "8px 16px" }}>Contactar</a>
@@ -207,7 +208,7 @@ export default async function PortalPage() {
 
       <footer style={{ maxWidth: 1120, margin: "0 auto", padding: "26px 20px", color: "#7c93a6", fontSize: 13, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", borderTop: "1px solid #e6eef5" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/concepto-mark.svg" alt="" width={22} height={22} style={{ borderRadius: 6 }} />
+        <img src="/concepto-logo.png" alt="" width={22} height={22} style={{ borderRadius: 6 }} />
         <span>© {new Date().getFullYear()} {mallName}</span>
         <span style={{ marginLeft: "auto" }}>{BRAND.location}</span>
         <a href="/panel" style={{ color: "#7c93a6" }}>Administración</a>

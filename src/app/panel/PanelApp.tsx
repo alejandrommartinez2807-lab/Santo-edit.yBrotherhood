@@ -50,7 +50,7 @@ type Link = {
 }
 type Summary = { unitsCount: number; residentsCount: number; alicuotaSum: number; balanceDue: number }
 
-type Tab = "resumen" | "unidades" | "residentes" | "contratos" | "ventas" | "cuotas" | "estado" | "galeria" | "amenidades" | "incidencias" | "comunicados" | "asambleas" | "accesos" | "documentos"
+type Tab = "resumen" | "unidades" | "residentes" | "contratos" | "ventas" | "cuotas" | "estado" | "galeria" | "amenidades" | "incidencias" | "estacionamiento" | "comunicados" | "asambleas" | "accesos" | "documentos"
 
 const UNIT_STATUS = ["disponible", "ocupado", "reservado", "mantenimiento", "inactivo"]
 const RES_ROLES = ["propietario", "inquilino", "encargado", "autorizado"]
@@ -68,6 +68,7 @@ const MODULES: { key: Tab | string; label: string; icon: string; ready: boolean 
   { key: "galeria", label: "Galería", icon: "🖼️", ready: true },
   { key: "amenidades", label: "Áreas comunes", icon: "🏊", ready: true },
   { key: "incidencias", label: "Incidencias", icon: "🛠️", ready: true },
+  { key: "estacionamiento", label: "Estacionamiento", icon: "🅿️", ready: true },
   { key: "comunicados", label: "Comunicados", icon: "📣", ready: true },
   { key: "asambleas", label: "Asambleas", icon: "🗳️", ready: true },
   { key: "accesos", label: "Accesos", icon: "🚪", ready: true },
@@ -132,6 +133,7 @@ export default function PanelApp() {
           {tab === "galeria" && <GaleriaView api={api} />}
           {tab === "amenidades" && <AmenidadesView api={api} />}
           {tab === "incidencias" && <IncidenciasView api={api} />}
+          {tab === "estacionamiento" && <EstacionamientoView api={api} />}
           {tab === "comunicados" && <ComunicadosView api={api} />}
           {tab === "asambleas" && <AsambleasView api={api} />}
           {tab === "accesos" && <AccesosView api={api} />}
@@ -169,7 +171,7 @@ function LoginGate({ onOk }: { onOk: (pw: string) => void }) {
       <form onSubmit={submit} style={{ background: "#fff", borderRadius: 20, padding: 32, width: "100%", maxWidth: 380, boxShadow: "0 24px 60px rgba(10,26,48,.35)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/palulu-mark.svg" alt="" width={48} height={48} />
+          <img src="/concepto-logo.png" alt="" width={48} height={48} />
           <div>
             <div style={{ fontWeight: 800, fontSize: 18, color: "#0a1a30" }}>Apartamentos Palulu</div>
             <div style={{ fontSize: 12, color: "#5b6b82" }}>Panel administrativo</div>
@@ -199,7 +201,7 @@ function TopBar({ onLogout }: { onLogout: () => void }) {
     <header style={{ background: "#0a1a30", color: "#fff", padding: "12px 16px" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", gap: 12 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/palulu-mark.svg" alt="" width={34} height={34} />
+        <img src="/concepto-logo.png" alt="" width={34} height={34} />
         <div style={{ fontWeight: 800 }}>Apartamentos Palulu</div>
         <span style={{ fontSize: 12, opacity: 0.7 }}>· Administración</span>
         <button onClick={onLogout} style={{ marginLeft: "auto", background: "rgba(255,255,255,.12)", color: "#fff", border: 0, borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 13 }}>
@@ -1277,6 +1279,179 @@ function IncidenciasView({ api }: { api: (p: string, i?: RequestInit) => Promise
   )
 }
 
+// ---------- Estacionamiento ----------
+type PkTicket = { id: string; code: string; plate: string; vehicle_type: string; entered_at: string; exited_at: string | null; minutes: number; amount: number; currency: string; status: string; live_minutes?: number; live_amount?: number; validated_by?: string }
+type PkPass = { id: string; plate: string; holder_name: string; valid_from: string | null; valid_to: string | null; monthly_fee: number; active: boolean }
+type PkConfig = { free_minutes: number; rate_per_hour: number; rate_currency: string; daily_cap: number; grace_exit_minutes: number }
+
+function EstacionamientoView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
+  const [config, setConfig] = useState<PkConfig | null>(null)
+  const [tickets, setTickets] = useState<PkTicket[]>([])
+  const [passes, setPasses] = useState<PkPass[]>([])
+  const [cfgForm, setCfgForm] = useState<PkConfig>({ free_minutes: 15, rate_per_hour: 1, rate_currency: "USD", daily_cap: 0, grace_exit_minutes: 15 })
+  const [plate, setPlate] = useState("")
+  const [vtype, setVtype] = useState("carro")
+  const [passForm, setPassForm] = useState({ plate: "", holderName: "", monthlyFee: "", validTo: "" })
+  const [showCfg, setShowCfg] = useState(false)
+  const [showPass, setShowPass] = useState(false)
+  const [err, setErr] = useState("")
+  const [msg, setMsg] = useState("")
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true); setErr("")
+    try {
+      const d = await api("/api/panel/parking")
+      const c = d.config as PkConfig | null
+      setConfig(c); if (c) setCfgForm(c)
+      setTickets((d.tickets as PkTicket[]) || [])
+      setPasses((d.passes as PkPass[]) || [])
+    } catch (e) { setErr(String((e as Error).message)) } finally { setLoading(false) }
+  }, [api])
+  useEffect(() => { load() }, [load])
+
+  const sym = (config?.rate_currency || "USD") === "VES" ? "Bs" : "$"
+
+  async function act(body: Record<string, unknown>, okMsg?: string) {
+    setErr(""); setMsg("")
+    try { await api("/api/panel/parking", { method: "POST", body: JSON.stringify(body) }); if (okMsg) setMsg(okMsg); await load() }
+    catch (e) { setErr(String((e as Error).message)) }
+  }
+
+  const open = tickets.filter((t) => t.status === "abierto")
+  const closed = tickets.filter((t) => t.status !== "abierto").slice(0, 30)
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, flex: 1 }}>Estacionamiento</h1>
+        <span style={{ fontSize: 13, color: "#0a6f9c", fontWeight: 700 }}>🅿️ {open.length} adentro</span>
+        <button onClick={() => setShowCfg((v) => !v)} style={btnGhost}>Tarifas</button>
+      </div>
+      {err && <div style={errBox}>{err}</div>}
+      {msg && <div style={{ ...errBox, background: "#e6f4ea", color: "#1e874b" }}>{msg}</div>}
+
+      {showCfg && (
+        <Card>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>Tarifas</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 12, alignItems: "end" }}>
+            <Field label="Gracia (min)"><input type="number" value={cfgForm.free_minutes} onChange={(e) => setCfgForm({ ...cfgForm, free_minutes: Number(e.target.value) })} style={input} /></Field>
+            <Field label="Tarifa / hora"><input type="number" step="0.01" value={cfgForm.rate_per_hour} onChange={(e) => setCfgForm({ ...cfgForm, rate_per_hour: Number(e.target.value) })} style={input} /></Field>
+            <Field label="Moneda">
+              <select value={cfgForm.rate_currency} onChange={(e) => setCfgForm({ ...cfgForm, rate_currency: e.target.value })} style={input}><option value="USD">USD</option><option value="VES">Bs</option></select>
+            </Field>
+            <Field label="Tope diario (0=sin)"><input type="number" step="0.01" value={cfgForm.daily_cap} onChange={(e) => setCfgForm({ ...cfgForm, daily_cap: Number(e.target.value) })} style={input} /></Field>
+            <button onClick={() => act({ action: "saveConfig", freeMinutes: cfgForm.free_minutes, ratePerHour: cfgForm.rate_per_hour, rateCurrency: cfgForm.rate_currency, dailyCap: cfgForm.daily_cap, graceExitMinutes: cfgForm.grace_exit_minutes }, "✓ Tarifas guardadas")} style={btnPrimary}>Guardar</button>
+          </div>
+        </Card>
+      )}
+
+      <div style={{ marginTop: 14 }}>
+        <Card>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>Registrar entrada</div>
+          <form onSubmit={(e) => { e.preventDefault(); if (!plate.trim()) { setErr("Escribe la placa"); return } act({ action: "entry", plate, vehicleType: vtype }, "✓ Entrada registrada").then(() => setPlate("")) }} style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "end" }}>
+            <Field label="Placa"><input value={plate} onChange={(e) => setPlate(e.target.value.toUpperCase())} placeholder="AB123CD" style={{ ...input, width: 150 }} /></Field>
+            <Field label="Tipo"><select value={vtype} onChange={(e) => setVtype(e.target.value)} style={{ ...input, width: 120 }}><option value="carro">Carro</option><option value="moto">Moto</option><option value="otro">Otro</option></select></Field>
+            <button type="submit" style={btnPrimary}>+ Entrada (genera QR)</button>
+          </form>
+        </Card>
+      </div>
+
+      <div style={{ marginTop: 14 }}>
+        <Card>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>Adentro ahora ({open.length})</div>
+          {loading ? <p style={{ color: "#5b6b82" }}>Cargando…</p> : open.length === 0 ? (
+            <p style={{ color: "#5b6b82", margin: 0 }}>No hay vehículos adentro.</p>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={table}>
+                <thead><tr>{["Código", "Placa", "Entró", "Tiempo", "A cobrar", ""].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {open.map((t) => (
+                    <tr key={t.id}>
+                      <td style={{ ...td, fontWeight: 700 }}>{t.code}</td>
+                      <td style={td}>{t.plate || "—"}</td>
+                      <td style={td}>{new Date(t.entered_at).toLocaleString("es-VE", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}</td>
+                      <td style={td}>{fmtMin(t.live_minutes ?? 0)}</td>
+                      <td style={{ ...td, fontWeight: 700 }}>{sym}{t.live_amount ?? 0}</td>
+                      <td style={{ ...td, whiteSpace: "nowrap" }}>
+                        <button onClick={() => act({ action: "close", ticketId: t.id, method: "efectivo" }, "✓ Cobrado y salida")} style={btnMini}>Cobrar salida</button>
+                        <button onClick={() => { const by = prompt("Local que da la cortesía:") || ""; if (by) act({ action: "close", ticketId: t.id, courtesyBy: by }, "✓ Cortesía aplicada") }} style={btnMini}>Cortesía</button>
+                        <button onClick={() => { if (confirm("¿Anular ticket?")) act({ action: "void", ticketId: t.id }) }} style={btnMiniDanger}>Anular</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <div style={{ marginTop: 14 }}>
+        <Card>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+            <div style={{ fontWeight: 700, flex: 1 }}>Abonos / vehículos autorizados</div>
+            <button onClick={() => setShowPass((v) => !v)} style={btnGhost}>+ Abono</button>
+          </div>
+          {showPass && (
+            <form onSubmit={(e) => { e.preventDefault(); act({ action: "pass", plate: passForm.plate, holderName: passForm.holderName, monthlyFee: Number(passForm.monthlyFee || 0), validTo: passForm.validTo || undefined }, "✓ Abono guardado").then(() => { setPassForm({ plate: "", holderName: "", monthlyFee: "", validTo: "" }); setShowPass(false) }) }} style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "end", marginBottom: 12 }}>
+              <Field label="Placa"><input value={passForm.plate} onChange={(e) => setPassForm({ ...passForm, plate: e.target.value.toUpperCase() })} style={{ ...input, width: 130 }} /></Field>
+              <Field label="Titular"><input value={passForm.holderName} onChange={(e) => setPassForm({ ...passForm, holderName: e.target.value })} style={{ ...input, width: 170 }} /></Field>
+              <Field label="Cuota mensual"><input type="number" step="0.01" value={passForm.monthlyFee} onChange={(e) => setPassForm({ ...passForm, monthlyFee: e.target.value })} style={{ ...input, width: 120 }} /></Field>
+              <Field label="Vence"><input type="date" value={passForm.validTo} onChange={(e) => setPassForm({ ...passForm, validTo: e.target.value })} style={input} /></Field>
+              <button type="submit" style={btnPrimary}>Guardar</button>
+            </form>
+          )}
+          {passes.length === 0 ? <p style={{ color: "#5b6b82", margin: 0 }}>Sin abonos registrados.</p> : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={table}>
+                <thead><tr>{["Placa", "Titular", "Cuota", "Vence", "Estado"].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {passes.map((p) => (
+                    <tr key={p.id}>
+                      <td style={{ ...td, fontWeight: 700 }}>{p.plate}</td>
+                      <td style={td}>{p.holder_name || "—"}</td>
+                      <td style={td}>{p.monthly_fee ? `${sym}${p.monthly_fee}` : "—"}</td>
+                      <td style={td}>{p.valid_to || "—"}</td>
+                      <td style={td}><span style={badge(p.active ? "activo" : "inactivo")}>{p.active ? "activo" : "inactivo"}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
+
+      {closed.length > 0 && (
+        <div style={{ marginTop: 14 }}>
+          <Card>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>Movimientos recientes</div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={table}>
+                <thead><tr>{["Código", "Placa", "Tiempo", "Monto", "Estado"].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {closed.map((t) => (
+                    <tr key={t.id}>
+                      <td style={{ ...td, fontWeight: 700 }}>{t.code}</td>
+                      <td style={td}>{t.plate || "—"}</td>
+                      <td style={td}>{fmtMin(t.minutes)}</td>
+                      <td style={td}>{t.status === "cortesia" ? `Cortesía${t.validated_by ? ` (${t.validated_by})` : ""}` : `${sym}${t.amount}`}</td>
+                      <td style={td}><span style={badge(t.status)}>{t.status}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+      )}
+    </div>
+  )
+}
+function fmtMin(m: number) { const h = Math.floor(m / 60); const mm = m % 60; return h > 0 ? `${h}h ${mm}m` : `${mm}m` }
+
 // ---------- Comunicados ----------
 type Announcement = { id: string; title: string; body: string; category: string; is_pinned: boolean; published_at: string | null }
 
@@ -1499,6 +1674,8 @@ function badge(status: string): React.CSSProperties {
     disponible: "#e6f4ea|#1e874b", ocupado: "#eef3fb|#1554b8", reservado: "#fff5e6|#8a5a00", mantenimiento: "#f3e8fd|#7a3fb0", inactivo: "#f0f0f0|#6b7280",
     // contratos
     activo: "#e6f4ea|#1e874b", borrador: "#f0f0f0|#6b7280", por_vencer: "#fff5e6|#8a5a00", vencido: "#fdecea|#c0392b", renovado: "#e6f4ea|#1e874b", terminado: "#f0f0f0|#6b7280",
+    // estacionamiento
+    abierto: "#e5f4fb|#0a6f9c", pagado: "#e6f4ea|#1e874b", cortesia: "#fff5e6|#8a5a00", anulado: "#f0f0f0|#6b7280", por_pagar: "#fff5e6|#8a5a00",
     // legado condominio
     activa: "#e6f4ea|#1e874b", desocupada: "#eef3fb|#1554b8", en_mora: "#fdecea|#c0392b", inactiva: "#f0f0f0|#6b7280",
   }

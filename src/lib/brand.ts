@@ -21,7 +21,7 @@ export const BRAND = {
   description:
     "Portal de comerciantes y panel administrativo del C.C. Concepto La Granja: locales y contratos, canon y condominio, estado de cuenta, mantenimiento, áreas comunes, comunicados y control de acceso en una sola plataforma.",
   /** Logo en /public (déjalo vacío para usar solo texto). */
-  logoUrl: "/concepto-mark.svg",
+  logoUrl: "/concepto-logo.png",
 
   /**
    * Demo estática sin backend (patrón demo-express): las APIs públicas del

@@ -44,7 +44,7 @@ function Login({ onToken }: { onToken: (t: string) => void }) {
         <form onSubmit={submit} style={{ background: "#fff", borderRadius: 20, padding: 30, width: "100%", maxWidth: 380, boxShadow: "0 24px 60px rgba(10,26,48,.35)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/palulu-mark.svg" alt="" width={44} height={44} />
+            <img src="/concepto-logo.png" alt="" width={44} height={44} />
             <div><div style={{ fontWeight: 800, fontSize: 17 }}>Mi cuenta</div><div style={{ fontSize: 12, color: "#5b6b82" }}>Apartamentos Palulu</div></div>
           </div>
           <label style={lbl}>Teléfono</label>
@@ -86,7 +86,7 @@ function Dashboard({ token, onLogout }: { token: string; onLogout: () => void })
       <header style={{ background: "#0a1a30", color: "#fff", padding: "12px 16px" }}>
         <div style={{ maxWidth: 860, margin: "0 auto", display: "flex", alignItems: "center", gap: 12 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/palulu-mark.svg" alt="" width={32} height={32} />
+          <img src="/concepto-logo.png" alt="" width={32} height={32} />
           <strong>Mi cuenta · Apartamentos Palulu</strong>
           <button onClick={onLogout} style={{ marginLeft: "auto", background: "rgba(255,255,255,.12)", color: "#fff", border: 0, borderRadius: 8, padding: "6px 12px", cursor: "pointer", fontSize: 13 }}>Salir</button>
         </div>
