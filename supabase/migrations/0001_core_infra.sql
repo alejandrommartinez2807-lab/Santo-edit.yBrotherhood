@@ -57,9 +57,9 @@ create trigger trg_branches_updated before update on branches
 
 comment on table branches is 'Cada fila = un condominio/edificio administrado (multi-propiedad).';
 
--- Condominio por defecto (idempotente).
+-- Centro comercial por defecto (idempotente).
 insert into branches (name, sort_order)
-select 'Apartamentos Palulu', 1
+select 'Concepto La Granja', 1
 where not exists (select 1 from branches);
 
 -- ============================================================

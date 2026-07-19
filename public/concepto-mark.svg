@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Concepto La Granja">
+  <defs>
+    <!-- Media luna = círculo exterior menos círculo "mordida" desplazado a la derecha -->
+    <clipPath id="crescent">
+      <path fill-rule="evenodd" d="M128 36 a82 82 0 1 0 0 164 a82 82 0 1 0 0 -164 Z
+                                   M168 89 a66 66 0 1 0 0 132 a66 66 0 1 0 0 -132 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Fondo celeste redondeado -->
+  <rect width="256" height="256" rx="60" fill="#159fd4"/>
+
+  <!-- Halo blanco (media luna un poco más ancha por detrás) -->
+  <path fill="#ffffff" fill-rule="evenodd"
+        d="M128 31 a87 87 0 1 0 0 174 a87 87 0 1 0 0 -174 Z
+           M168 94 a61 61 0 1 0 0 122 a61 61 0 1 0 0 -122 Z"/>
+
+  <!-- Media luna tricolor -->
+  <g clip-path="url(#crescent)">
+    <rect x="0" y="0" width="256" height="256" fill="#f9a800"/>            <!-- amarillo (base/abajo) -->
+    <polygon points="0,0 256,0 256,128 0,128" fill="#0f9bd7"/>            <!-- celeste (mitad superior) -->
+    <polygon points="0,0 124,0 0,158" fill="#e5007e"/>                    <!-- magenta (esquina sup-izq) -->
+  </g>
+</svg>

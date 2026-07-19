@@ -1,18 +1,13 @@
 -- ============================================================
--- APARTAMENTOS PALULU (Venezuela) · Supabase completo
--- Sistema de administracion de condominios — esquema consolidado
---
--- Reune EN ORDEN las 10 migraciones. Pegar completo en el SQL
--- Editor de un proyecto Supabase NUEVO y vacio. Todo idempotente.
--- Moneda: USD (cuenta) / VES (cobro local).
+-- Concepto La Granja · Esquema Supabase COMPLETO (self-contained)
+-- Generado desde supabase/migrations/0001..0011
+-- NOTA: si el editor de Supabase se atraganta al pegar todo (error
+--       42601 end of input), aplica cada archivo de migrations/ POR
+--       SEPARADO en orden 0001 -> 0011.
 -- ============================================================
 
 
-
-
--- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
--- ARCHIVO: 0001_core_infra.sql
--- <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+-- >>>>>>>>>> 0001_core_infra.sql <<<<<<<<<<
 
 -- ============================================================
 -- Condominios · Núcleo / Infraestructura compartida
@@ -73,9 +68,9 @@ create trigger trg_branches_updated before update on branches
 
 comment on table branches is 'Cada fila = un condominio/edificio administrado (multi-propiedad).';
 
--- Condominio por defecto (idempotente).
+-- Centro comercial por defecto (idempotente).
 insert into branches (name, sort_order)
-select 'Apartamentos Palulu', 1
+select 'Concepto La Granja', 1
 where not exists (select 1 from branches);
 
 -- ============================================================
@@ -176,10 +171,7 @@ create unique index if not exists uq_push_endpoint on push_subscriptions (endpoi
 create index if not exists idx_push_subscriber on push_subscriptions (subscriber_type, subscriber_id);
 alter table push_subscriptions enable row level security;
 
-
--- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
--- ARCHIVO: 0002_units_residents.sql
--- <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+-- >>>>>>>>>> 0002_units_residents.sql <<<<<<<<<<
 
 -- ============================================================
 -- Condominios · Estructura física y personas
@@ -355,10 +347,7 @@ alter table portal_access   enable row level security;
 alter table vehicles        enable row level security;
 alter table pets            enable row level security;
 
-
--- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
--- ARCHIVO: 0003_finance.sql
--- <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+-- >>>>>>>>>> 0003_finance.sql <<<<<<<<<<
 
 -- ============================================================
 -- Condominios · Finanzas y cobranza  (EL NÚCLEO)
@@ -617,10 +606,7 @@ alter table receipts            enable row level security;
 alter table payments            enable row level security;
 alter table payment_allocations enable row level security;
 
-
--- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
--- ARCHIVO: 0004_amenities.sql
--- <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+-- >>>>>>>>>> 0004_amenities.sql <<<<<<<<<<
 
 -- ============================================================
 -- Condominios · Amenidades / áreas comunes
@@ -727,10 +713,7 @@ alter table amenities            enable row level security;
 alter table amenity_blackouts    enable row level security;
 alter table amenity_reservations enable row level security;
 
-
--- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
--- ARCHIVO: 0005_tickets.sql
--- <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+-- >>>>>>>>>> 0005_tickets.sql <<<<<<<<<<
 
 -- ============================================================
 -- Condominios · Incidencias (PQR) y mantenimiento
@@ -852,10 +835,7 @@ alter table ticket_updates     enable row level security;
 alter table maintenance_assets enable row level security;
 alter table maintenance_tasks  enable row level security;
 
-
--- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
--- ARCHIVO: 0006_communication.sql
--- <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+-- >>>>>>>>>> 0006_communication.sql <<<<<<<<<<
 
 -- ============================================================
 -- Condominios · Comunicación
@@ -977,10 +957,7 @@ alter table notifications_log   enable row level security;
 alter table message_threads     enable row level security;
 alter table messages            enable row level security;
 
-
--- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
--- ARCHIVO: 0007_governance.sql
--- <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+-- >>>>>>>>>> 0007_governance.sql <<<<<<<<<<
 
 -- ============================================================
 -- Condominios · Gobernanza (asambleas y votaciones)
@@ -1106,10 +1083,7 @@ alter table polls               enable row level security;
 alter table poll_options        enable row level security;
 alter table votes               enable row level security;
 
-
--- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
--- ARCHIVO: 0008_access_security.sql
--- <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+-- >>>>>>>>>> 0008_access_security.sql <<<<<<<<<<
 
 -- ============================================================
 -- Condominios · Control de acceso y seguridad
@@ -1209,10 +1183,7 @@ alter table visitors       enable row level security;
 alter table access_events  enable row level security;
 alter table deliveries     enable row level security;
 
-
--- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
--- ARCHIVO: 0009_documents.sql
--- <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+-- >>>>>>>>>> 0009_documents.sql <<<<<<<<<<
 
 -- ============================================================
 -- Condominios · Documentos
@@ -1259,102 +1230,156 @@ create unique index if not exists uq_document_read on document_reads (document_i
 alter table documents      enable row level security;
 alter table document_reads enable row level security;
 
-
--- >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
--- ARCHIVO: 0010_seed_demo.sql
--- <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+-- >>>>>>>>>> 0011_leases_commercial.sql <<<<<<<<<<
 
 -- ============================================================
--- Condominios · Seed demo
--- Migración: 0010_seed_demo
+-- Concepto La Granja · Arrendamiento comercial (lo propio de un mall)
+-- Migración: 0011_leases_commercial
 --
--- Datos mínimos para arrancar/demostrar: parámetros de cobro en business_config,
--- tipos de unidad, unidades con alícuotas que suman 1 (100 %), un par de
--- residentes, categorías de gasto y amenidades. Todo idempotente.
--- Seguro de correr en producción vacía; NO duplica si ya hay datos.
+-- La base de condominio ya resuelve: locales (units, con alícuota/m²/piso),
+-- comerciantes (residents), condominio y cobranza (fee_periods/charges/
+-- receipts/payments) e incidencias. Lo que un CENTRO COMERCIAL agrega y un
+-- condominio NO tiene es el CONTRATO DE ARRENDAMIENTO por local:
+--   · canon mensual (además de la cuota de condominio),
+--   · depósito de garantía, vigencia y vencimiento,
+--   · aumentos programados,
+--   · RENTA PORCENTUAL (percentage rent): % sobre las ventas del local, con
+--     canon mínimo garantizado — el gran diferenciador si el local usa el POS.
+--
+-- Además se enriquecen `units` con datos de vitrina para el directorio público
+-- (nombre comercial, rubro, logo).
 -- ============================================================
 
-do $$
-declare
-  b uuid;
-  ut_apto uuid;
-  ut_ph   uuid;
-begin
-  select id into b from branches order by sort_order, created_at limit 1;
-  if b is null then
-    insert into branches (name, sort_order) values ('Apartamentos Palulu', 1)
-    returning id into b;
-  end if;
+-- ------------------------------------------------------------
+-- Enriquecer LOCALES para el directorio y la clasificación por rubro.
+-- (idempotente: add column if not exists)
+-- ------------------------------------------------------------
+alter table units add column if not exists commercial_name text not null default '';   -- "Beco", "Capitán Grill"
+alter table units add column if not exists activity        text not null default '';   -- moda | comida | salud | electronica | servicios | consultorio | oficina | kiosco | banco | ...
+alter table units add column if not exists logo_url        text not null default '';   -- logo del local (directorio)
+create index if not exists idx_units_activity on units (branch_id, activity);
 
-  -- Parámetros globales de cobro y marca (fila única business_config) ----------
-  update business_config
-  set config = coalesce(config, '{}'::jsonb) || jsonb_build_object(
-    'brand', jsonb_build_object(
-      'name', 'Apartamentos Palulu',
-      'primaryColor', '#1f6feb',
-      'currencyPrimary', 'USD',
-      'currencySecondary', 'VES'
-    ),
-    'billing', jsonb_build_object(
-      'issueDay', 1,          -- día del mes en que se emite la cuota
-      'dueDay', 15,           -- día de vencimiento
-      'graceDays', 5,         -- gracia antes de aplicar mora
-      'lateFeePercent', 5,    -- % de recargo por mora sobre saldo vencido
-      'reminderBeforeDays', 3,
-      'reminderAfterDays', 3
-    ),
-    'modules', jsonb_build_object(
-      'finance', true, 'amenities', true, 'tickets', true,
-      'communication', true, 'governance', true, 'access', true, 'documents', true
-    )
-  )
-  where id = 1;
+-- ------------------------------------------------------------
+-- CONTRATOS DE ARRENDAMIENTO
+--   Un local puede tener a lo largo del tiempo varios contratos; el vigente es
+--   status='activo'. `resident_id` = comerciante/inquilino titular del contrato.
+--   status: borrador | activo | por_vencer | vencido | renovado | terminado
+--   Montos en moneda de cuenta (USD por defecto); el cobro local sale del
+--   motor de cobranza existente (charges/payments con su tasa).
+-- ------------------------------------------------------------
+create table if not exists leases (
+  id                    uuid primary key default gen_random_uuid(),
+  branch_id             uuid references branches(id) on delete cascade,
+  unit_id               uuid references units(id) on delete cascade,
+  resident_id           uuid references residents(id) on delete set null,
+  code                  text not null default '',            -- nº de contrato visible
+  status                text not null default 'borrador',
+  starts_on             date,
+  ends_on               date,
 
-  -- Tipos de unidad ------------------------------------------------------------
-  if not exists (select 1 from unit_types where branch_id = b) then
-    insert into unit_types (branch_id, name, sort_order) values
-      (b, 'Apartamento', 1) returning id into ut_apto;
-    insert into unit_types (branch_id, name, sort_order) values
-      (b, 'Penthouse', 2) returning id into ut_ph;
-  else
-    select id into ut_apto from unit_types where branch_id = b and name = 'Apartamento' limit 1;
-    select id into ut_ph   from unit_types where branch_id = b and name = 'Penthouse'   limit 1;
-  end if;
+  -- Canon (alquiler) ------------------------------------------------
+  canon_amount          numeric(12,2) not null default 0,    -- canon mensual
+  canon_currency        text not null default 'USD',
+  condo_included        boolean not null default false,      -- si el canon ya incluye condominio
+  billing_day           integer not null default 1,          -- día del mes en que se emite
+  due_day               integer not null default 5,          -- día de vencimiento
+  grace_days            integer not null default 0,          -- días de gracia antes de mora
+  late_fee_percent      numeric(6,3) not null default 0,     -- recargo por mora (%)
 
-  -- Unidades demo (4 aptos 20% + 1 PH 20% = 100%) ------------------------------
-  if not exists (select 1 from units where branch_id = b) then
-    insert into units (branch_id, unit_type_id, code, tower, floor, area_m2, alicuota, parking_slots) values
-      (b, ut_apto, 'A-1', 'A', '1', 80,  0.200000, 1),
-      (b, ut_apto, 'A-2', 'A', '1', 80,  0.200000, 1),
-      (b, ut_apto, 'A-3', 'A', '2', 80,  0.200000, 1),
-      (b, ut_apto, 'A-4', 'A', '2', 80,  0.200000, 1),
-      (b, ut_ph,   'PH-1','A', '3', 160, 0.200000, 2);
-  end if;
+  -- Depósito de garantía -------------------------------------------
+  deposit_amount        numeric(12,2) not null default 0,
+  deposit_currency      text not null default 'USD',
+  deposit_held          boolean not null default false,      -- si ya se recibió
 
-  -- Residentes demo ------------------------------------------------------------
-  if not exists (select 1 from residents where branch_id = b) then
-    insert into residents (branch_id, full_name, phone, email) values
-      (b, 'Ana Pérez',   '+58412000001', 'ana@example.com'),
-      (b, 'Luis Gómez',  '+58412000002', 'luis@example.com');
-  end if;
+  -- Renta porcentual (percentage rent) — el diferenciador -----------
+  percentage_rent       boolean not null default false,
+  percentage_rent_rate  numeric(6,3) not null default 0,     -- % sobre ventas del local
+  percentage_rent_min   numeric(12,2) not null default 0,    -- canon mínimo garantizado
 
-  -- Categorías de gasto común --------------------------------------------------
-  if not exists (select 1 from expense_categories where branch_id = b) then
-    insert into expense_categories (branch_id, name, proration, sort_order) values
-      (b, 'Electricidad áreas comunes', 'alicuota', 1),
-      (b, 'Agua',                       'alicuota', 2),
-      (b, 'Vigilancia',                 'alicuota', 3),
-      (b, 'Limpieza',                   'alicuota', 4),
-      (b, 'Mantenimiento ascensores',   'alicuota', 5),
-      (b, 'Administración',             'alicuota', 6),
-      (b, 'Fondo de reserva',           'partes_iguales', 7);
-  end if;
+  -- Renovación / responsables --------------------------------------
+  auto_renew            boolean not null default false,
+  renewal_notice_days   integer not null default 60,         -- preaviso de renovación/no-renovación
+  guarantor_name        text not null default '',            -- fiador / responsable solidario
+  guarantor_phone       text not null default '',
 
-  -- Amenidades demo ------------------------------------------------------------
-  if not exists (select 1 from amenities where branch_id = b) then
-    insert into amenities (branch_id, name, booking_mode, fee, deposit, requires_approval, sort_order) values
-      (b, 'Salón de fiestas', 'por_dia',     30, 50, true, 1),
-      (b, 'Parrillera / BBQ',  'por_franja',  5,  0, false, 2),
-      (b, 'Cancha múltiple',   'por_franja',  0,  0, false, 3);
-  end if;
-end $$;
+  documents             jsonb not null default '[]'::jsonb,  -- [{name,url}] contrato, pólizas, permisos
+  notes                 text not null default '',
+  created_at            timestamptz not null default now(),
+  updated_at            timestamptz not null default now()
+);
+create index if not exists idx_leases_branch on leases (branch_id, status);
+create index if not exists idx_leases_unit on leases (unit_id, status);
+create index if not exists idx_leases_resident on leases (resident_id);
+create index if not exists idx_leases_ends on leases (branch_id, ends_on);
+-- un solo contrato ACTIVO por local (los históricos quedan con otro status)
+create unique index if not exists uq_lease_active_unit
+  on leases (unit_id) where status = 'activo';
+create trigger trg_leases_updated before update on leases
+  for each row execute function set_updated_at();
+
+-- ------------------------------------------------------------
+-- AUMENTOS PROGRAMADOS del canon
+--   kind: fijo (new_canon absoluto) | porcentaje (sube el canon vigente value%)
+--   applied: ya se reflejó en leases.canon_amount.
+-- ------------------------------------------------------------
+create table if not exists lease_increases (
+  id             uuid primary key default gen_random_uuid(),
+  branch_id      uuid references branches(id) on delete cascade,
+  lease_id       uuid references leases(id) on delete cascade,
+  effective_on   date not null,
+  kind           text not null default 'porcentaje',  -- fijo | porcentaje
+  value          numeric(12,3) not null default 0,     -- monto (fijo) o % (porcentaje)
+  new_canon      numeric(12,2) not null default 0,     -- canon resultante (calculado al programar)
+  applied        boolean not null default false,
+  note           text not null default '',
+  created_at     timestamptz not null default now()
+);
+create index if not exists idx_lease_increases_lease on lease_increases (lease_id, effective_on);
+create index if not exists idx_lease_increases_pending on lease_increases (branch_id, applied, effective_on);
+
+-- ------------------------------------------------------------
+-- HISTORIAL del contrato (firma, renovación, modificación, terminación…)
+--   Rastro legible del ciclo de vida del contrato (además del audit_logs global).
+-- ------------------------------------------------------------
+create table if not exists lease_events (
+  id             uuid primary key default gen_random_uuid(),
+  branch_id      uuid references branches(id) on delete cascade,
+  lease_id       uuid references leases(id) on delete cascade,
+  kind           text not null default 'nota',   -- creado | firmado | renovado | aumento | multa | terminado | nota
+  description    text not null default '',
+  effective_on   date not null default current_date,
+  actor_label    text not null default '',
+  created_at     timestamptz not null default now()
+);
+create index if not exists idx_lease_events_lease on lease_events (lease_id, created_at desc);
+
+-- ------------------------------------------------------------
+-- VENTAS REPORTADAS del local (para la renta porcentual)
+--   Fuente: el comerciante las reporta, o se toman del POS si usa el motor Santo.
+--   Sobre esto se calcula el cargo de percentage rent del período.
+-- ------------------------------------------------------------
+create table if not exists lease_sales (
+  id             uuid primary key default gen_random_uuid(),
+  branch_id      uuid references branches(id) on delete cascade,
+  lease_id       uuid references leases(id) on delete cascade,
+  unit_id        uuid references units(id) on delete cascade,
+  period_month   date not null,                  -- primer día del mes
+  gross_sales    numeric(14,2) not null default 0,
+  currency       text not null default 'USD',
+  source         text not null default 'reportado', -- reportado | pos | auditado
+  reported_by    text not null default '',
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
+);
+create unique index if not exists uq_lease_sales_period on lease_sales (lease_id, period_month);
+create index if not exists idx_lease_sales_branch on lease_sales (branch_id, period_month desc);
+create trigger trg_lease_sales_updated before update on lease_sales
+  for each row execute function set_updated_at();
+
+-- ------------------------------------------------------------
+-- RLS: cerrado por defecto (solo service role del servidor), igual que el resto.
+-- ------------------------------------------------------------
+alter table leases          enable row level security;
+alter table lease_increases enable row level security;
+alter table lease_events    enable row level security;
+alter table lease_sales     enable row level security;

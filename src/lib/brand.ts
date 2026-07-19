@@ -12,16 +12,16 @@
 
 export const BRAND = {
   /** Nombre del negocio (default si la config en BD viene vacía). */
-  name: "Apartamentos Palulu",
+  name: "Concepto La Granja",
   /** Nombre corto para títulos/QR. */
-  shortName: "Palulu",
+  shortName: "Concepto",
   /** Frase corta de marca. */
-  tagline: "Administración de condominio",
+  tagline: "Centro comercial",
   /** Descripción para el menú/landing. */
   description:
-    "Portal de residentes y panel administrativo de Apartamentos Palulu: estado de cuenta, cuotas, reservas de áreas comunes, incidencias, comunicados y control de acceso en un solo lugar.",
+    "Portal de comerciantes y panel administrativo del C.C. Concepto La Granja: locales y contratos, canon y condominio, estado de cuenta, mantenimiento, áreas comunes, comunicados y control de acceso en una sola plataforma.",
   /** Logo en /public (déjalo vacío para usar solo texto). */
-  logoUrl: "/palulu-mark.svg",
+  logoUrl: "/concepto-mark.svg",
 
   /**
    * Demo estática sin backend (patrón demo-express): las APIs públicas del
@@ -33,8 +33,8 @@ export const BRAND = {
 
   /** Contacto / redes (defaults; la config en BD puede sobreescribir). */
   whatsapp: "584120000000",
-  instagram: "",
-  location: "Venezuela",
+  instagram: "conceptolg",
+  location: "Av. Salvador Feo La Cruz, Naguanagua, Carabobo",
 
   /** Moneda e idioma. */
   currency: {

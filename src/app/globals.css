@@ -21,23 +21,25 @@
      mantiene contraste pero invertido a oscuro sin tocar cada componente. */
   /* Tema CLARO de lujo (Lidotel): marfil cálido + oro champán profundo.
      El hero y las bandas con foto siguen oscuros por contraste editorial. */
-  --brand-primary: #b08d4c;
-  --brand-primary-dark: #7d6230;
-  --brand-primary-rgb: 176, 141, 76;
-  --brand-cream: #faf8f3;
-  --brand-ink: #2a2620;
-  --brand-ink-2: #4d4433;
-  --brand-ink-3: #171410;
-  --brand-amber: #c8a35f;
-  --brand-accent: #b08d4c;
-  --brand-accent-200: #c8a35f;
-  --brand-accent-100: #eadfc3;
-  --brand-accent-rgb: 176, 141, 76;
+  /* Concepto La Granja — paleta del logo: celeste + magenta + amarillo,
+     sobre superficies claras y limpias (directorio/portal de centro comercial). */
+  --brand-primary: #0f9bd7;        /* celeste del logo */
+  --brand-primary-dark: #0a6f9c;
+  --brand-primary-rgb: 15, 155, 215;
+  --brand-cream: #f6fbfe;          /* superficie clara con leve tinte celeste */
+  --brand-ink: #163243;            /* texto azul petróleo */
+  --brand-ink-2: #3f5a6b;
+  --brand-ink-3: #0c2432;          /* títulos */
+  --brand-amber: #f9a800;          /* amarillo del logo (highlights) */
+  --brand-accent: #e5007e;         /* magenta del logo (acentos/CTA) */
+  --brand-accent-200: #f04ea3;
+  --brand-accent-100: #fbd6e9;
+  --brand-accent-rgb: 229, 0, 126;
 
   /* Superficies claras auxiliares para tarjetas/paneles del sitio público. */
   --brand-surface: #ffffff;
-  --brand-surface-2: #f1e9d7;
-  --brand-border: #ddd0b6;
+  --brand-surface-2: #eaf5fb;
+  --brand-border: #cfe6f2;
 }
 
 * {
