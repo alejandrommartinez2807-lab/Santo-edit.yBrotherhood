@@ -25,6 +25,9 @@ type Unit = {
   notes: string
   unit_type_id: string | null
   sort_order: number
+  commercial_name?: string
+  activity?: string
+  logo_url?: string
 }
 type Resident = {
   id: string
@@ -47,16 +50,19 @@ type Link = {
 }
 type Summary = { unitsCount: number; residentsCount: number; alicuotaSum: number; balanceDue: number }
 
-type Tab = "resumen" | "unidades" | "residentes" | "cuotas" | "estado" | "galeria" | "amenidades" | "incidencias" | "comunicados" | "asambleas" | "accesos" | "documentos"
+type Tab = "resumen" | "unidades" | "residentes" | "contratos" | "cuotas" | "estado" | "galeria" | "amenidades" | "incidencias" | "comunicados" | "asambleas" | "accesos" | "documentos"
 
-const UNIT_STATUS = ["activa", "desocupada", "en_mora", "inactiva"]
-const RES_ROLES = ["propietario", "inquilino", "autorizado", "familiar"]
+const UNIT_STATUS = ["disponible", "ocupado", "reservado", "mantenimiento", "inactivo"]
+const RES_ROLES = ["propietario", "inquilino", "encargado", "autorizado"]
+// Rubros comerciales (para clasificar el local y el directorio público)
+const ACTIVITIES = ["comida", "moda", "salud", "belleza", "electronica", "hogar", "servicios", "banco", "consultorio", "oficina", "kiosco", "entretenimiento", "supermercado", "otro"]
 
 const MODULES: { key: Tab | string; label: string; icon: string; ready: boolean }[] = [
   { key: "resumen", label: "Resumen", icon: "▦", ready: true },
-  { key: "unidades", label: "Unidades", icon: "🏢", ready: true },
-  { key: "residentes", label: "Residentes", icon: "👥", ready: true },
-  { key: "cuotas", label: "Cuotas", icon: "🧾", ready: true },
+  { key: "unidades", label: "Locales", icon: "🏬", ready: true },
+  { key: "residentes", label: "Comerciantes", icon: "🧑‍💼", ready: true },
+  { key: "contratos", label: "Contratos", icon: "📑", ready: true },
+  { key: "cuotas", label: "Canon y condominio", icon: "🧾", ready: true },
   { key: "estado", label: "Estado de cuenta", icon: "💳", ready: true },
   { key: "galeria", label: "Galería", icon: "🖼️", ready: true },
   { key: "amenidades", label: "Áreas comunes", icon: "🏊", ready: true },
@@ -118,6 +124,7 @@ export default function PanelApp() {
           {tab === "resumen" && <ResumenView api={api} goTo={setTab} />}
           {tab === "unidades" && <UnidadesView api={api} />}
           {tab === "residentes" && <ResidentesView api={api} />}
+          {tab === "contratos" && <ContratosView api={api} />}
           {tab === "cuotas" && <CuotasView api={api} />}
           {tab === "estado" && <EstadoView api={api} />}
           {tab === "galeria" && <GaleriaView api={api} />}
@@ -272,8 +279,8 @@ function ResumenView({ api, goTo }: { api: (p: string, i?: RequestInit) => Promi
       <h1 style={{ fontSize: 22, fontWeight: 800, margin: "4px 0 16px" }}>Resumen del condominio</h1>
       {err && <div style={{ color: "#c0392b", marginBottom: 12 }}>{err}</div>}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 14 }}>
-        <Stat label="Unidades" value={s ? String(s.unitsCount) : "…"} onClick={() => goTo("unidades")} />
-        <Stat label="Residentes" value={s ? String(s.residentsCount) : "…"} onClick={() => goTo("residentes")} />
+        <Stat label="Locales" value={s ? String(s.unitsCount) : "…"} onClick={() => goTo("unidades")} />
+        <Stat label="Comerciantes" value={s ? String(s.residentsCount) : "…"} onClick={() => goTo("residentes")} />
         <Stat
           label="Suma de alícuotas"
           value={s ? pct(s.alicuotaSum) : "…"}
@@ -320,7 +327,7 @@ function Stat({ label, value, hint, hintColor, onClick }: { label: string; value
 
 // ---------- Unidades ----------
 const emptyUnitForm = {
-  id: "", code: "", tower: "", floor: "", unitTypeId: "", areaM2: "", alicuotaPct: "", parkingSlots: "0", storageSlots: "0", status: "activa", notes: "",
+  id: "", code: "", commercialName: "", activity: "", logoUrl: "", tower: "", floor: "", unitTypeId: "", areaM2: "", alicuotaPct: "", parkingSlots: "0", storageSlots: "0", status: "disponible", notes: "",
 }
 
 function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
@@ -346,9 +353,10 @@ function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
 
   function edit(u: Unit) {
     setForm({
-      id: u.id, code: u.code, tower: u.tower || "", floor: u.floor || "", unitTypeId: u.unit_type_id || "",
+      id: u.id, code: u.code, commercialName: u.commercial_name || "", activity: u.activity || "", logoUrl: u.logo_url || "",
+      tower: u.tower || "", floor: u.floor || "", unitTypeId: u.unit_type_id || "",
       areaM2: String(u.area_m2 || ""), alicuotaPct: String(((u.alicuota || 0) * 100) || ""),
-      parkingSlots: String(u.parking_slots || 0), storageSlots: String(u.storage_slots || 0), status: u.status || "activa", notes: u.notes || "",
+      parkingSlots: String(u.parking_slots || 0), storageSlots: String(u.storage_slots || 0), status: u.status || "disponible", notes: u.notes || "",
     })
     setShowForm(true)
   }
@@ -360,7 +368,8 @@ function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
       await api("/api/panel/units", {
         method: "POST",
         body: JSON.stringify({
-          id: form.id || undefined, code: form.code, tower: form.tower, floor: form.floor, unitTypeId: form.unitTypeId,
+          id: form.id || undefined, code: form.code, commercialName: form.commercialName, activity: form.activity, logoUrl: form.logoUrl,
+          tower: form.tower, floor: form.floor, unitTypeId: form.unitTypeId,
           areaM2: Number(form.areaM2 || 0), alicuota: Number(form.alicuotaPct || 0) / 100,
           parkingSlots: Number(form.parkingSlots || 0), storageSlots: Number(form.storageSlots || 0), status: form.status, notes: form.notes,
         }),
@@ -370,7 +379,7 @@ function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
   }
 
   async function remove(u: Unit) {
-    if (!confirm(`¿Eliminar la unidad ${u.code}?`)) return
+    if (!confirm(`¿Eliminar el local ${u.code}?`)) return
     try { await api(`/api/panel/units/${u.id}`, { method: "DELETE" }); await load() } catch (e) { setErr(String((e as Error).message)) }
   }
 
@@ -384,16 +393,24 @@ function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, flex: 1 }}>Unidades</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, flex: 1 }}>Locales</h1>
         <span style={{ fontSize: 13, color: Math.abs(alicuotaSum - 1) < 0.005 ? "#1e874b" : "#c0392b" }}>Alícuota total: {pct(alicuotaSum)}</span>
-        <button onClick={() => { setForm({ ...emptyUnitForm }); setShowForm((v) => !v) }} style={btnPrimary}>+ Nueva unidad</button>
+        <button onClick={() => { setForm({ ...emptyUnitForm }); setShowForm((v) => !v) }} style={btnPrimary}>+ Nuevo local</button>
       </div>
       {err && <div style={errBox}>{err}</div>}
 
       {showForm && (
         <Card>
           <form onSubmit={save} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12 }}>
-            <Field label="Código *"><input required value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="A-12B" style={input} /></Field>
+            <Field label="Código *"><input required value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="Local 3" style={input} /></Field>
+            <Field label="Nombre comercial"><input value={form.commercialName} onChange={(e) => setForm({ ...form, commercialName: e.target.value })} placeholder="Beco, Capitán Grill…" style={input} /></Field>
+            <Field label="Rubro">
+              <select value={form.activity} onChange={(e) => setForm({ ...form, activity: e.target.value })} style={input}>
+                <option value="">—</option>
+                {ACTIVITIES.map((a) => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </Field>
+            <Field label="Logo (URL)"><input value={form.logoUrl} onChange={(e) => setForm({ ...form, logoUrl: e.target.value })} placeholder="https://…" style={input} /></Field>
             <Field label="Torre / Bloque"><input value={form.tower} onChange={(e) => setForm({ ...form, tower: e.target.value })} style={input} /></Field>
             <Field label="Piso"><input value={form.floor} onChange={(e) => setForm({ ...form, floor: e.target.value })} style={input} /></Field>
             <Field label="Tipo">
@@ -413,7 +430,7 @@ function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
               </select>
             </Field>
             <div style={{ gridColumn: "1/-1", display: "flex", gap: 10, alignItems: "center", marginTop: 4 }}>
-              <button type="submit" style={btnPrimary}>{form.id ? "Guardar cambios" : "Crear unidad"}</button>
+              <button type="submit" style={btnPrimary}>{form.id ? "Guardar cambios" : "Crear local"}</button>
               <button type="button" onClick={() => setShowForm(false)} style={btnGhost}>Cancelar</button>
               <span style={{ flex: 1 }} />
               <input value={newType} onChange={(e) => setNewType(e.target.value)} placeholder="Nuevo tipo…" style={{ ...input, width: 130 }} />
@@ -426,21 +443,20 @@ function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
       <div style={{ marginTop: 14 }}>
         <Card>
           {loading ? <p style={{ color: "#5b6b82" }}>Cargando…</p> : units.length === 0 ? (
-            <p style={{ color: "#5b6b82", margin: 0 }}>Aún no hay unidades. Crea la primera con “+ Nueva unidad”.</p>
+            <p style={{ color: "#5b6b82", margin: 0 }}>Aún no hay locales. Crea el primero con “+ Nuevo local”.</p>
           ) : (
             <div style={{ overflowX: "auto" }}>
               <table style={table}>
-                <thead><tr>{["Código", "Torre", "Piso", "Tipo", "m²", "Alícuota", "Estac.", "Estado", ""].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                <thead><tr>{["Código", "Nombre comercial", "Rubro", "Piso", "m²", "Alícuota", "Estado", ""].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
                 <tbody>
                   {units.map((u) => (
                     <tr key={u.id}>
                       <td style={{ ...td, fontWeight: 700 }}>{u.code}</td>
-                      <td style={td}>{u.tower || "—"}</td>
+                      <td style={td}>{u.commercial_name || <span style={{ color: "#98a6ba" }}>—</span>}</td>
+                      <td style={td}>{u.activity || "—"}</td>
                       <td style={td}>{u.floor || "—"}</td>
-                      <td style={td}>{u.unit_type_id ? typeName[u.unit_type_id] || "—" : "—"}</td>
                       <td style={td}>{u.area_m2 || "—"}</td>
                       <td style={td}>{pct(u.alicuota)}</td>
-                      <td style={td}>{u.parking_slots || 0}</td>
                       <td style={td}><span style={badge(u.status)}>{u.status}</span></td>
                       <td style={{ ...td, whiteSpace: "nowrap" }}>
                         <button onClick={() => edit(u)} style={btnMini}>Editar</button>
@@ -526,8 +542,8 @@ function ResidentesView({ api }: { api: (p: string, i?: RequestInit) => Promise<
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, flex: 1 }}>Residentes</h1>
-        <button onClick={() => { setForm({ ...emptyResForm }); setShowForm((v) => !v) }} style={btnPrimary}>+ Nuevo residente</button>
+        <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, flex: 1 }}>Comerciantes</h1>
+        <button onClick={() => { setForm({ ...emptyResForm }); setShowForm((v) => !v) }} style={btnPrimary}>+ Nuevo comerciante</button>
       </div>
       {err && <div style={errBox}>{err}</div>}
 
@@ -546,7 +562,7 @@ function ResidentesView({ api }: { api: (p: string, i?: RequestInit) => Promise<
             <Field label="Teléfono / WhatsApp"><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+58…" style={input} /></Field>
             <Field label="Email"><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} style={input} /></Field>
             <div style={{ gridColumn: "1/-1", display: "flex", gap: 10, marginTop: 4 }}>
-              <button type="submit" style={btnPrimary}>{form.id ? "Guardar cambios" : "Crear residente"}</button>
+              <button type="submit" style={btnPrimary}>{form.id ? "Guardar cambios" : "Crear comerciante"}</button>
               <button type="button" onClick={() => setShowForm(false)} style={btnGhost}>Cancelar</button>
             </div>
           </form>
@@ -556,11 +572,11 @@ function ResidentesView({ api }: { api: (p: string, i?: RequestInit) => Promise<
       <div style={{ marginTop: 14 }}>
         <Card>
           {loading ? <p style={{ color: "#5b6b82" }}>Cargando…</p> : residents.length === 0 ? (
-            <p style={{ color: "#5b6b82", margin: 0 }}>Aún no hay residentes. Crea el primero con “+ Nuevo residente”.</p>
+            <p style={{ color: "#5b6b82", margin: 0 }}>Aún no hay comerciantes. Crea el primero con “+ Nuevo comerciante”.</p>
           ) : (
             <div style={{ overflowX: "auto" }}>
               <table style={table}>
-                <thead><tr>{["Nombre", "Documento", "Contacto", "Unidades", ""].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                <thead><tr>{["Nombre", "Documento", "Contacto", "Locales", ""].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
                 <tbody>
                   {residents.map((r) => (
                     <tr key={r.id}>
@@ -622,6 +638,201 @@ function ResidentesView({ api }: { api: (p: string, i?: RequestInit) => Promise<
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ---------- Contratos de arrendamiento ----------
+type Lease = {
+  id: string; code: string; status: string; unit_id: string; resident_id: string | null
+  starts_on: string | null; ends_on: string | null
+  canon_amount: number; canon_currency: string; condo_included: boolean
+  due_day: number; late_fee_percent: number
+  deposit_amount: number; deposit_currency: string
+  percentage_rent: boolean; percentage_rent_rate: number; percentage_rent_min: number
+  guarantor_name: string; guarantor_phone: string; notes: string
+  units?: { code?: string; commercial_name?: string } | null
+  residents?: { full_name?: string } | null
+}
+const LEASE_STATUS = ["borrador", "activo", "por_vencer", "vencido", "renovado", "terminado"]
+const emptyLeaseForm = {
+  id: "", unitId: "", residentId: "", code: "", status: "activo", startsOn: "", endsOn: "",
+  canonAmount: "", canonCurrency: "USD", condoIncluded: false, dueDay: "5", lateFeePercent: "0",
+  depositAmount: "", depositCurrency: "USD", percentageRent: false, percentageRentRate: "", percentageRentMin: "",
+  guarantorName: "", guarantorPhone: "", notes: "",
+}
+
+function daysUntil(iso: string | null): number | null {
+  if (!iso) return null
+  const d = new Date(iso + "T00:00:00")
+  if (isNaN(d.getTime())) return null
+  return Math.ceil((d.getTime() - Date.now()) / 86400000)
+}
+
+function ContratosView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
+  const [leases, setLeases] = useState<Lease[]>([])
+  const [units, setUnits] = useState<{ id: string; code: string; commercial_name?: string }[]>([])
+  const [residents, setResidents] = useState<{ id: string; full_name: string }[]>([])
+  const [form, setForm] = useState({ ...emptyLeaseForm })
+  const [showForm, setShowForm] = useState(false)
+  const [err, setErr] = useState("")
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const d = await api("/api/panel/leases")
+      setLeases((d.leases as Lease[]) || [])
+      setUnits((d.units as { id: string; code: string; commercial_name?: string }[]) || [])
+      setResidents((d.residents as { id: string; full_name: string }[]) || [])
+    } catch (e) { setErr(String((e as Error).message)) } finally { setLoading(false) }
+  }, [api])
+  useEffect(() => { load() }, [load])
+
+  function edit(l: Lease) {
+    setForm({
+      id: l.id, unitId: l.unit_id, residentId: l.resident_id || "", code: l.code || "", status: l.status || "activo",
+      startsOn: l.starts_on || "", endsOn: l.ends_on || "",
+      canonAmount: String(l.canon_amount || ""), canonCurrency: l.canon_currency || "USD", condoIncluded: !!l.condo_included,
+      dueDay: String(l.due_day || 5), lateFeePercent: String(l.late_fee_percent || 0),
+      depositAmount: String(l.deposit_amount || ""), depositCurrency: l.deposit_currency || "USD",
+      percentageRent: !!l.percentage_rent, percentageRentRate: String(l.percentage_rent_rate || ""), percentageRentMin: String(l.percentage_rent_min || ""),
+      guarantorName: l.guarantor_name || "", guarantorPhone: l.guarantor_phone || "", notes: l.notes || "",
+    })
+    setShowForm(true)
+  }
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault()
+    setErr("")
+    if (!form.unitId) { setErr("Elige el local"); return }
+    try {
+      await api("/api/panel/leases", {
+        method: "POST",
+        body: JSON.stringify({
+          id: form.id || undefined, unitId: form.unitId, residentId: form.residentId || undefined, code: form.code, status: form.status,
+          startsOn: form.startsOn, endsOn: form.endsOn,
+          canonAmount: Number(form.canonAmount || 0), canonCurrency: form.canonCurrency, condoIncluded: form.condoIncluded,
+          dueDay: Number(form.dueDay || 5), lateFeePercent: Number(form.lateFeePercent || 0),
+          depositAmount: Number(form.depositAmount || 0), depositCurrency: form.depositCurrency,
+          percentageRent: form.percentageRent, percentageRentRate: Number(form.percentageRentRate || 0), percentageRentMin: Number(form.percentageRentMin || 0),
+          guarantorName: form.guarantorName, guarantorPhone: form.guarantorPhone, notes: form.notes,
+        }),
+      })
+      setForm({ ...emptyLeaseForm }); setShowForm(false); await load()
+    } catch (e) { setErr(String((e as Error).message)) }
+  }
+
+  const unitLabel = (l: Lease) => l.units?.commercial_name || l.units?.code || "—"
+  const expiring = leases.filter((l) => l.status === "activo" && (daysUntil(l.ends_on) ?? 999) <= 60 && (daysUntil(l.ends_on) ?? -1) >= 0)
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, flex: 1 }}>Contratos</h1>
+        <button onClick={() => { setForm({ ...emptyLeaseForm }); setShowForm((v) => !v) }} style={btnPrimary}>+ Nuevo contrato</button>
+      </div>
+      {err && <div style={errBox}>{err}</div>}
+      {expiring.length > 0 && (
+        <div style={{ background: "#fff5e6", border: "1px solid #f4c77d", color: "#8a5a00", borderRadius: 12, padding: "10px 14px", marginBottom: 12, fontSize: 14 }}>
+          ⏰ {expiring.length} contrato(s) por vencer en los próximos 60 días: {expiring.map((l) => unitLabel(l)).join(", ")}
+        </div>
+      )}
+
+      {showForm && (
+        <Card>
+          <form onSubmit={save} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12 }}>
+            <Field label="Local *">
+              <select required value={form.unitId} onChange={(e) => setForm({ ...form, unitId: e.target.value })} style={input}>
+                <option value="">—</option>
+                {units.map((u) => <option key={u.id} value={u.id}>{u.commercial_name ? `${u.commercial_name} (${u.code})` : u.code}</option>)}
+              </select>
+            </Field>
+            <Field label="Comerciante">
+              <select value={form.residentId} onChange={(e) => setForm({ ...form, residentId: e.target.value })} style={input}>
+                <option value="">—</option>
+                {residents.map((r) => <option key={r.id} value={r.id}>{r.full_name}</option>)}
+              </select>
+            </Field>
+            <Field label="N° contrato"><input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="C-2026-001" style={input} /></Field>
+            <Field label="Estado">
+              <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} style={input}>
+                {LEASE_STATUS.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </Field>
+            <Field label="Inicio"><input type="date" value={form.startsOn} onChange={(e) => setForm({ ...form, startsOn: e.target.value })} style={input} /></Field>
+            <Field label="Vencimiento"><input type="date" value={form.endsOn} onChange={(e) => setForm({ ...form, endsOn: e.target.value })} style={input} /></Field>
+            <Field label="Canon mensual">
+              <div style={{ display: "flex", gap: 6 }}>
+                <input type="number" step="0.01" value={form.canonAmount} onChange={(e) => setForm({ ...form, canonAmount: e.target.value })} style={{ ...input, flex: 1 }} />
+                <select value={form.canonCurrency} onChange={(e) => setForm({ ...form, canonCurrency: e.target.value })} style={{ ...input, width: 76 }}>
+                  <option value="USD">USD</option><option value="VES">Bs</option><option value="EUR">EUR</option>
+                </select>
+              </div>
+            </Field>
+            <Field label="Depósito garantía"><input type="number" step="0.01" value={form.depositAmount} onChange={(e) => setForm({ ...form, depositAmount: e.target.value })} style={input} /></Field>
+            <Field label="Día de vencimiento"><input type="number" min="1" max="28" value={form.dueDay} onChange={(e) => setForm({ ...form, dueDay: e.target.value })} style={input} /></Field>
+            <Field label="Recargo mora (%)"><input type="number" step="0.01" value={form.lateFeePercent} onChange={(e) => setForm({ ...form, lateFeePercent: e.target.value })} style={input} /></Field>
+            <Field label="Fiador"><input value={form.guarantorName} onChange={(e) => setForm({ ...form, guarantorName: e.target.value })} style={input} /></Field>
+            <Field label="Tel. fiador"><input value={form.guarantorPhone} onChange={(e) => setForm({ ...form, guarantorPhone: e.target.value })} style={input} /></Field>
+            <div style={{ gridColumn: "1/-1", display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap", background: "#f6fbfe", borderRadius: 10, padding: "8px 12px" }}>
+              <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 14, fontWeight: 600 }}>
+                <input type="checkbox" checked={form.percentageRent} onChange={(e) => setForm({ ...form, percentageRent: e.target.checked })} /> Renta porcentual (sobre ventas)
+              </label>
+              {form.percentageRent && (
+                <>
+                  <label style={{ fontSize: 13, color: "#3f5a6b" }}>Tasa %: <input type="number" step="0.01" value={form.percentageRentRate} onChange={(e) => setForm({ ...form, percentageRentRate: e.target.value })} style={{ ...input, width: 90, display: "inline-block" }} /></label>
+                  <label style={{ fontSize: 13, color: "#3f5a6b" }}>Canon mínimo: <input type="number" step="0.01" value={form.percentageRentMin} onChange={(e) => setForm({ ...form, percentageRentMin: e.target.value })} style={{ ...input, width: 100, display: "inline-block" }} /></label>
+                </>
+              )}
+              <label style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 14 }}>
+                <input type="checkbox" checked={form.condoIncluded} onChange={(e) => setForm({ ...form, condoIncluded: e.target.checked })} /> El canon incluye condominio
+              </label>
+            </div>
+            <Field label="Notas"><input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} style={input} /></Field>
+            <div style={{ gridColumn: "1/-1", display: "flex", gap: 10, marginTop: 4 }}>
+              <button type="submit" style={btnPrimary}>{form.id ? "Guardar cambios" : "Crear contrato"}</button>
+              <button type="button" onClick={() => setShowForm(false)} style={btnGhost}>Cancelar</button>
+            </div>
+          </form>
+        </Card>
+      )}
+
+      <div style={{ marginTop: 14 }}>
+        <Card>
+          {loading ? <p style={{ color: "#5b6b82" }}>Cargando…</p> : leases.length === 0 ? (
+            <p style={{ color: "#5b6b82", margin: 0 }}>Aún no hay contratos. Crea el primero con “+ Nuevo contrato”.</p>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={table}>
+                <thead><tr>{["Local", "Comerciante", "Canon", "Vigencia", "Renta %", "Estado", ""].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {leases.map((l) => {
+                    const du = daysUntil(l.ends_on)
+                    const soon = l.status === "activo" && du !== null && du >= 0 && du <= 60
+                    return (
+                      <tr key={l.id}>
+                        <td style={{ ...td, fontWeight: 700 }}>{unitLabel(l)}</td>
+                        <td style={td}>{l.residents?.full_name || "—"}</td>
+                        <td style={td}>{l.canon_amount ? `${l.canon_currency === "VES" ? "Bs" : "$"}${l.canon_amount}` : "—"}</td>
+                        <td style={td}>
+                          {l.starts_on || "—"} → {l.ends_on || "—"}
+                          {soon && <span style={{ color: "#b26a00", fontSize: 12, fontWeight: 700 }}> · vence en {du}d</span>}
+                        </td>
+                        <td style={td}>{l.percentage_rent ? `${l.percentage_rent_rate}%` : "—"}</td>
+                        <td style={td}><span style={badge(l.status)}>{l.status}</span></td>
+                        <td style={{ ...td, whiteSpace: "nowrap" }}>
+                          <button onClick={() => edit(l)} style={btnMini}>Editar</button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
     </div>
   )
 }
@@ -1205,7 +1416,14 @@ const modalWrap: React.CSSProperties = { position: "fixed", inset: 0, background
 const modalBox: React.CSSProperties = { background: "#fff", borderRadius: 16, padding: 22, width: "100%", maxWidth: 400 }
 
 function badge(status: string): React.CSSProperties {
-  const map: Record<string, string> = { activa: "#e6f4ea|#1e874b", desocupada: "#eef3fb|#1554b8", en_mora: "#fdecea|#c0392b", inactiva: "#f0f0f0|#6b7280" }
+  const map: Record<string, string> = {
+    // locales
+    disponible: "#e6f4ea|#1e874b", ocupado: "#eef3fb|#1554b8", reservado: "#fff5e6|#8a5a00", mantenimiento: "#f3e8fd|#7a3fb0", inactivo: "#f0f0f0|#6b7280",
+    // contratos
+    activo: "#e6f4ea|#1e874b", borrador: "#f0f0f0|#6b7280", por_vencer: "#fff5e6|#8a5a00", vencido: "#fdecea|#c0392b", renovado: "#e6f4ea|#1e874b", terminado: "#f0f0f0|#6b7280",
+    // legado condominio
+    activa: "#e6f4ea|#1e874b", desocupada: "#eef3fb|#1554b8", en_mora: "#fdecea|#c0392b", inactiva: "#f0f0f0|#6b7280",
+  }
   const [bg, fg] = (map[status] || "#eef3fb|#1554b8").split("|")
   return { background: bg, color: fg, borderRadius: 999, padding: "3px 10px", fontSize: 12, fontWeight: 600 }
 }
