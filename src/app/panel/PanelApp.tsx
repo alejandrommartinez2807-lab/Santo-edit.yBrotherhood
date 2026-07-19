@@ -48,7 +48,12 @@ type Link = {
   receives_billing: boolean
   units?: { code?: string; tower?: string } | null
 }
-type Summary = { unitsCount: number; residentsCount: number; alicuotaSum: number; balanceDue: number }
+type Summary = {
+  unitsCount: number; residentsCount: number; alicuotaSum: number; balanceDue: number
+  occupied?: number; available?: number; delinquent?: number
+  leasesActive?: number; leasesExpiring?: number
+  income?: { canon: number; condominio: number; renta_pct: number; estacionamiento: number; publicidad: number; total: number }
+}
 
 type Tab = "resumen" | "unidades" | "residentes" | "contratos" | "ventas" | "cuotas" | "estado" | "galeria" | "amenidades" | "incidencias" | "estacionamiento" | "publicidad" | "comunicados" | "asambleas" | "accesos" | "documentos"
 
@@ -267,7 +272,7 @@ function ResumenView({ api, goTo }: { api: (p: string, i?: RequestInit) => Promi
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
-      a.href = url; a.download = `palulu-respaldo-${new Date().toISOString().slice(0, 10)}.json`
+      a.href = url; a.download = `concepto-respaldo-${new Date().toISOString().slice(0, 10)}.json`
       document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url)
       setBackupMsg("Respaldo descargado ✓")
     } catch (e) { setBackupMsg(String((e as Error).message)) } finally { setBusy("") }
@@ -282,28 +287,32 @@ function ResumenView({ api, goTo }: { api: (p: string, i?: RequestInit) => Promi
 
   return (
     <div>
-      <h1 style={{ fontSize: 22, fontWeight: 800, margin: "4px 0 16px" }}>Resumen del condominio</h1>
+      <h1 style={{ fontSize: 22, fontWeight: 800, margin: "4px 0 16px" }}>Resumen del centro comercial</h1>
       {err && <div style={{ color: "#c0392b", marginBottom: 12 }}>{err}</div>}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 14 }}>
-        <Stat label="Locales" value={s ? String(s.unitsCount) : "…"} onClick={() => goTo("unidades")} />
-        <Stat label="Comerciantes" value={s ? String(s.residentsCount) : "…"} onClick={() => goTo("residentes")} />
-        <Stat
-          label="Suma de alícuotas"
-          value={s ? pct(s.alicuotaSum) : "…"}
-          hint={s ? (alicuotaOk ? "✓ suma 100 %" : "⚠ debería sumar 100 %") : ""}
-          hintColor={alicuotaOk ? "#1e874b" : "#c0392b"}
-        />
-        <Stat label="Saldo por cobrar" value={s ? money(s.balanceDue) : "…"} hint="morosidad total" />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 14 }}>
+        <Stat label="Locales" value={s ? String(s.unitsCount) : "…"} hint={s ? `${s.occupied ?? 0} ocupados · ${s.available ?? 0} disponibles` : ""} onClick={() => goTo("unidades")} />
+        <Stat label="Contratos activos" value={s ? String(s.leasesActive ?? 0) : "…"} hint={s && (s.leasesExpiring ?? 0) > 0 ? `⏰ ${s.leasesExpiring} por vencer` : "al día"} hintColor={s && (s.leasesExpiring ?? 0) > 0 ? "#b26a00" : "#1e874b"} onClick={() => goTo("contratos")} />
+        <Stat label="Morosidad" value={s ? money(s.balanceDue) : "…"} hint={s ? `${s.delinquent ?? 0} local(es) con saldo` : ""} hintColor="#c0392b" onClick={() => goTo("estado")} />
+        <Stat label="Ingresos del mes" value={s?.income ? money(s.income.total) : "…"} hint="canon + servicios" hintColor="#1e874b" />
       </div>
-      <div style={{ marginTop: 18 }}>
-        <Card>
-          <p style={{ margin: 0, color: "#5b6b82", fontSize: 14, lineHeight: 1.6 }}>
-            Bienvenido al panel de <b>Apartamentos Palulu</b>. Empieza cargando las <b>unidades</b> (con su alícuota) y los
-            <b> residentes</b>. Con eso listo, en las próximas fases se activan la emisión de cuotas, el estado de cuenta,
-            las reservas de áreas comunes, las incidencias y los comunicados.
-          </p>
-        </Card>
-      </div>
+
+      {s?.income && (
+        <div style={{ marginTop: 14 }}>
+          <Card>
+            <div style={{ fontWeight: 700, marginBottom: 10 }}>Ingresos del mes por fuente</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 12 }}>
+              <IncomeCell label="Canon" value={money(s.income.canon)} icon="🏬" />
+              <IncomeCell label="Condominio" value={money(s.income.condominio)} icon="🧾" />
+              <IncomeCell label="Renta %" value={money(s.income.renta_pct)} icon="📈" />
+              <IncomeCell label="Estacionamiento" value={money(s.income.estacionamiento)} icon="🅿️" />
+              <IncomeCell label="Publicidad" value={money(s.income.publicidad)} icon="📢" />
+            </div>
+            <div style={{ marginTop: 10, fontSize: 12, color: "#8494a8" }}>
+              Suma de lo emitido/cobrado este mes. La alícuota total {alicuotaOk ? "cuadra en 100 %" : <b style={{ color: "#c0392b" }}>no suma 100 % ({pct(s.alicuotaSum)})</b>}.
+            </div>
+          </Card>
+        </div>
+      )}
       <div style={{ marginTop: 14 }}>
         <Card>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
@@ -317,6 +326,15 @@ function ResumenView({ api, goTo }: { api: (p: string, i?: RequestInit) => Promi
           {backupMsg && <div style={{ marginTop: 10, fontSize: 13, color: "#1554b8" }}>{backupMsg}</div>}
         </Card>
       </div>
+    </div>
+  )
+}
+
+function IncomeCell({ label, value, icon }: { label: string; value: string; icon: string }) {
+  return (
+    <div style={{ background: "#f6fbfe", borderRadius: 12, padding: 12, border: "1px solid #eaf3f8" }}>
+      <div style={{ fontSize: 12, color: "#5b6b82", fontWeight: 600 }}>{icon} {label}</div>
+      <div style={{ fontSize: 19, fontWeight: 800, color: "#0c2432", marginTop: 2 }}>{value}</div>
     </div>
   )
 }
