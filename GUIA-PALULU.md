@@ -29,8 +29,14 @@ Es una web de bienvenida del edificio. Incluye:
 ### 1.2 `/mi-cuenta` — el residente entra a su cuenta
 - El residente entra con **su teléfono + un código de 6 dígitos** (sin contraseñas ni apps que instalar).
 - El **código se lo genera la administración** desde el panel (Residentes → 🔑 acceso).
-- Una vez dentro ve: **su(s) unidad(es), su saldo, sus cuotas/cargos, sus recibos y sus pagos**.
-- Si debe, ve el **saldo pendiente** destacado (el botón “Reportar mi pago” se activa en una fase próxima).
+- Adentro tiene **pestañas**:
+  - **Cuenta**: su(s) unidad(es), saldo, cargos, recibos y pagos. Botón **“Reportar mi pago”** (monto, método, referencia) → queda pendiente para que la administración lo confirme.
+  - **Reservas**: reserva un área común (elige área, fecha y hora); ve sus reservas y su estado.
+  - **Incidencias**: reporta una avería/queja y sigue su estado.
+  - **Avisos**: los comunicados publicados por la administración.
+  - **Votar**: participa en las votaciones abiertas (un voto por unidad, ponderado por alícuota).
+  - **Visitas**: pre-autoriza una visita y obtiene un **código para la garita**.
+  - **Documentos**: reglamento, actas y estados financieros publicados.
 
 ---
 
@@ -69,8 +75,25 @@ Cada unidad (apartamento/PH/local) tiene:
 - Sube **fotos reales** del edificio/apartamentos: por **URL** o **subiendo el archivo** desde el equipo (JPG/PNG/WEBP, hasta 6 MB).
 - Esas fotos se muestran en la **página pública**. Mientras no subas ninguna, la web usa **imágenes de ejemplo**.
 
-### 2.7 Módulos “pronto”
-En el menú aparecen listos para las próximas fases: **Áreas comunes (reservas), Incidencias, Comunicados, Asambleas, Accesos (visitas/encomiendas), Documentos**. Las bases de datos ya están creadas.
+### 2.7 Áreas comunes
+- Crea las áreas (salón, parrillera, cancha…) con su **costo** y si **requieren aprobación**.
+- Las reservas que hacen los residentes llegan aquí; si el área requiere aprobación, las **apruebas o rechazas**. Si tienen costo, el cargo cae solo al estado de cuenta de la unidad.
+
+### 2.8 Incidencias
+- Ves todas las incidencias reportadas por los residentes. Cambias su **estado** (abierto → en proceso → resuelto → cerrado). El residente ve el avance desde su cuenta.
+
+### 2.9 Comunicados
+- Publica avisos (con categoría, y opción de **fijar arriba**). Aparecen al instante en la pestaña **Avisos** de cada residente.
+
+### 2.10 Asambleas y votaciones
+- Crea una **votación** con su pregunta y opciones. Los residentes votan desde su cuenta (**un voto por unidad, ponderado por alícuota**). Ves los **resultados en vivo** con barras. Puedes **cerrar/reabrir** la votación.
+
+### 2.11 Accesos y encomiendas
+- **Visitas**: las visitas pre-autorizadas por los residentes aparecen con su código; la garita marca **“Entró/Salió”** (queda bitácora).
+- **Encomiendas**: registras un paquete recibido y luego marcas **“Entregada”** (con quién lo retiró).
+
+### 2.12 Documentos
+- Sube el **reglamento, actas y estados financieros** (por URL o archivo). Eliges si son visibles para **residentes** o **solo junta**. Los residentes los ven en su pestaña **Documentos**.
 
 ---
 
