@@ -50,7 +50,7 @@ type Link = {
 }
 type Summary = { unitsCount: number; residentsCount: number; alicuotaSum: number; balanceDue: number }
 
-type Tab = "resumen" | "unidades" | "residentes" | "contratos" | "ventas" | "cuotas" | "estado" | "galeria" | "amenidades" | "incidencias" | "estacionamiento" | "comunicados" | "asambleas" | "accesos" | "documentos"
+type Tab = "resumen" | "unidades" | "residentes" | "contratos" | "ventas" | "cuotas" | "estado" | "galeria" | "amenidades" | "incidencias" | "estacionamiento" | "publicidad" | "comunicados" | "asambleas" | "accesos" | "documentos"
 
 const UNIT_STATUS = ["disponible", "ocupado", "reservado", "mantenimiento", "inactivo"]
 const RES_ROLES = ["propietario", "inquilino", "encargado", "autorizado"]
@@ -69,6 +69,7 @@ const MODULES: { key: Tab | string; label: string; icon: string; ready: boolean 
   { key: "amenidades", label: "Áreas comunes", icon: "🏊", ready: true },
   { key: "incidencias", label: "Incidencias", icon: "🛠️", ready: true },
   { key: "estacionamiento", label: "Estacionamiento", icon: "🅿️", ready: true },
+  { key: "publicidad", label: "Publicidad", icon: "📢", ready: true },
   { key: "comunicados", label: "Comunicados", icon: "📣", ready: true },
   { key: "asambleas", label: "Asambleas", icon: "🗳️", ready: true },
   { key: "accesos", label: "Accesos", icon: "🚪", ready: true },
@@ -134,6 +135,7 @@ export default function PanelApp() {
           {tab === "amenidades" && <AmenidadesView api={api} />}
           {tab === "incidencias" && <IncidenciasView api={api} />}
           {tab === "estacionamiento" && <EstacionamientoView api={api} />}
+          {tab === "publicidad" && <PublicidadView api={api} />}
           {tab === "comunicados" && <ComunicadosView api={api} />}
           {tab === "asambleas" && <AsambleasView api={api} />}
           {tab === "accesos" && <AccesosView api={api} />}
@@ -1452,6 +1454,158 @@ function EstacionamientoView({ api }: { api: (p: string, i?: RequestInit) => Pro
 }
 function fmtMin(m: number) { const h = Math.floor(m / 60); const mm = m % 60; return h > 0 ? `${h}h ${mm}m` : `${mm}m` }
 
+// ---------- Publicidad ----------
+type AdSpace = { id: string; name: string; kind: string; location: string; base_price: number; currency: string; active: boolean }
+type AdBooking = { id: string; space_id: string; client_name: string; client_phone: string; starts_on: string | null; ends_on: string | null; price: number; currency: string; status: string; ad_spaces?: { name?: string; kind?: string } | null }
+const AD_KINDS = ["pantalla", "valla", "banner", "pendon", "pasillo", "estacionamiento", "redes", "web", "otro"]
+const AD_STATUS = ["reservado", "activo", "finalizado", "cancelado"]
+const emptySpaceForm = { id: "", name: "", kind: "pantalla", location: "", basePrice: "", currency: "USD", active: true }
+const emptyBookingForm = { id: "", spaceId: "", clientName: "", clientPhone: "", startsOn: "", endsOn: "", price: "", currency: "USD", status: "reservado", designUrl: "", proofUrl: "" }
+
+function PublicidadView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
+  const [spaces, setSpaces] = useState<AdSpace[]>([])
+  const [bookings, setBookings] = useState<AdBooking[]>([])
+  const [sForm, setSForm] = useState({ ...emptySpaceForm })
+  const [bForm, setBForm] = useState({ ...emptyBookingForm })
+  const [showSpace, setShowSpace] = useState(false)
+  const [showBooking, setShowBooking] = useState(false)
+  const [err, setErr] = useState("")
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true); setErr("")
+    try {
+      const d = await api("/api/panel/advertising")
+      setSpaces((d.spaces as AdSpace[]) || [])
+      setBookings((d.bookings as AdBooking[]) || [])
+    } catch (e) { setErr(String((e as Error).message)) } finally { setLoading(false) }
+  }, [api])
+  useEffect(() => { load() }, [load])
+
+  async function saveSpace(e: React.FormEvent) {
+    e.preventDefault(); setErr("")
+    try {
+      await api("/api/panel/advertising", { method: "POST", body: JSON.stringify({ action: "space", id: sForm.id || undefined, name: sForm.name, kind: sForm.kind, location: sForm.location, basePrice: Number(sForm.basePrice || 0), currency: sForm.currency, active: sForm.active }) })
+      setSForm({ ...emptySpaceForm }); setShowSpace(false); await load()
+    } catch (e) { setErr(String((e as Error).message)) }
+  }
+  async function saveBooking(e: React.FormEvent) {
+    e.preventDefault(); setErr("")
+    if (!bForm.spaceId) { setErr("Elige el espacio"); return }
+    try {
+      await api("/api/panel/advertising", { method: "POST", body: JSON.stringify({ action: "booking", id: bForm.id || undefined, spaceId: bForm.spaceId, clientName: bForm.clientName, clientPhone: bForm.clientPhone, startsOn: bForm.startsOn, endsOn: bForm.endsOn, price: Number(bForm.price || 0), currency: bForm.currency, status: bForm.status, designUrl: bForm.designUrl, proofUrl: bForm.proofUrl }) })
+      setBForm({ ...emptyBookingForm }); setShowBooking(false); await load()
+    } catch (e) { setErr(String((e as Error).message)) }
+  }
+  const sym = (c: string) => (c === "VES" ? "Bs" : "$")
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, flex: 1 }}>Publicidad y espacios</h1>
+        <button onClick={() => { setSForm({ ...emptySpaceForm }); setShowSpace((v) => !v) }} style={btnGhost}>+ Espacio</button>
+        <button onClick={() => { setBForm({ ...emptyBookingForm }); setShowBooking((v) => !v) }} style={btnPrimary}>+ Contratación</button>
+      </div>
+      {err && <div style={errBox}>{err}</div>}
+
+      {showSpace && (
+        <Card>
+          <form onSubmit={saveSpace} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12 }}>
+            <Field label="Nombre *"><input required value={sForm.name} onChange={(e) => setSForm({ ...sForm, name: e.target.value })} placeholder="Pantalla LED entrada" style={input} /></Field>
+            <Field label="Tipo"><select value={sForm.kind} onChange={(e) => setSForm({ ...sForm, kind: e.target.value })} style={input}>{AD_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}</select></Field>
+            <Field label="Ubicación"><input value={sForm.location} onChange={(e) => setSForm({ ...sForm, location: e.target.value })} style={input} /></Field>
+            <Field label="Precio ref."><input type="number" step="0.01" value={sForm.basePrice} onChange={(e) => setSForm({ ...sForm, basePrice: e.target.value })} style={input} /></Field>
+            <Field label="Moneda"><select value={sForm.currency} onChange={(e) => setSForm({ ...sForm, currency: e.target.value })} style={input}><option value="USD">USD</option><option value="VES">Bs</option></select></Field>
+            <div style={{ gridColumn: "1/-1", display: "flex", gap: 10 }}>
+              <button type="submit" style={btnPrimary}>{sForm.id ? "Guardar" : "Crear espacio"}</button>
+              <button type="button" onClick={() => setShowSpace(false)} style={btnGhost}>Cancelar</button>
+            </div>
+          </form>
+        </Card>
+      )}
+
+      {showBooking && (
+        <Card>
+          <form onSubmit={saveBooking} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12 }}>
+            <Field label="Espacio *"><select required value={bForm.spaceId} onChange={(e) => setBForm({ ...bForm, spaceId: e.target.value })} style={input}><option value="">—</option>{spaces.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></Field>
+            <Field label="Cliente"><input value={bForm.clientName} onChange={(e) => setBForm({ ...bForm, clientName: e.target.value })} style={input} /></Field>
+            <Field label="Teléfono"><input value={bForm.clientPhone} onChange={(e) => setBForm({ ...bForm, clientPhone: e.target.value })} style={input} /></Field>
+            <Field label="Desde"><input type="date" value={bForm.startsOn} onChange={(e) => setBForm({ ...bForm, startsOn: e.target.value })} style={input} /></Field>
+            <Field label="Hasta"><input type="date" value={bForm.endsOn} onChange={(e) => setBForm({ ...bForm, endsOn: e.target.value })} style={input} /></Field>
+            <Field label="Precio"><input type="number" step="0.01" value={bForm.price} onChange={(e) => setBForm({ ...bForm, price: e.target.value })} style={input} /></Field>
+            <Field label="Estado"><select value={bForm.status} onChange={(e) => setBForm({ ...bForm, status: e.target.value })} style={input}>{AD_STATUS.map((s) => <option key={s} value={s}>{s}</option>)}</select></Field>
+            <Field label="Arte (URL)"><input value={bForm.designUrl} onChange={(e) => setBForm({ ...bForm, designUrl: e.target.value })} style={input} /></Field>
+            <Field label="Evidencia (URL)"><input value={bForm.proofUrl} onChange={(e) => setBForm({ ...bForm, proofUrl: e.target.value })} style={input} /></Field>
+            <div style={{ gridColumn: "1/-1", display: "flex", gap: 10 }}>
+              <button type="submit" style={btnPrimary}>{bForm.id ? "Guardar" : "Crear contratación"}</button>
+              <button type="button" onClick={() => setShowBooking(false)} style={btnGhost}>Cancelar</button>
+            </div>
+          </form>
+        </Card>
+      )}
+
+      <div style={{ marginTop: 14 }}>
+        <Card>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>Espacios ({spaces.length})</div>
+          {loading ? <p style={{ color: "#5b6b82" }}>Cargando…</p> : spaces.length === 0 ? (
+            <p style={{ color: "#5b6b82", margin: 0 }}>Aún no hay espacios. Crea el primero con “+ Espacio”.</p>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={table}>
+                <thead><tr>{["Nombre", "Tipo", "Ubicación", "Precio ref.", "Estado", ""].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {spaces.map((s) => (
+                    <tr key={s.id}>
+                      <td style={{ ...td, fontWeight: 700 }}>{s.name}</td>
+                      <td style={td}>{s.kind}</td>
+                      <td style={td}>{s.location || "—"}</td>
+                      <td style={td}>{s.base_price ? `${sym(s.currency)}${s.base_price}` : "—"}</td>
+                      <td style={td}><span style={badge(s.active ? "activo" : "inactivo")}>{s.active ? "activo" : "inactivo"}</span></td>
+                      <td style={{ ...td, whiteSpace: "nowrap" }}>
+                        <button onClick={() => { setSForm({ id: s.id, name: s.name, kind: s.kind, location: s.location || "", basePrice: String(s.base_price || ""), currency: s.currency || "USD", active: s.active }); setShowSpace(true) }} style={btnMini}>Editar</button>
+                        <button onClick={() => { if (confirm(`¿Eliminar el espacio ${s.name}?`)) api("/api/panel/advertising", { method: "POST", body: JSON.stringify({ action: "deleteSpace", id: s.id }) }).then(load) }} style={btnMiniDanger}>Borrar</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <div style={{ marginTop: 14 }}>
+        <Card>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>Contrataciones ({bookings.length})</div>
+          {bookings.length === 0 ? (
+            <p style={{ color: "#5b6b82", margin: 0 }}>Sin contrataciones. Crea una con “+ Contratación”.</p>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={table}>
+                <thead><tr>{["Espacio", "Cliente", "Vigencia", "Precio", "Estado", ""].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {bookings.map((b) => (
+                    <tr key={b.id}>
+                      <td style={{ ...td, fontWeight: 700 }}>{b.ad_spaces?.name || "—"}</td>
+                      <td style={td}>{b.client_name || "—"}</td>
+                      <td style={td}>{b.starts_on || "—"} → {b.ends_on || "—"}</td>
+                      <td style={td}>{b.price ? `${sym(b.currency)}${b.price}` : "—"}</td>
+                      <td style={td}><span style={badge(b.status)}>{b.status}</span></td>
+                      <td style={{ ...td, whiteSpace: "nowrap" }}>
+                        <button onClick={() => { setBForm({ id: b.id, spaceId: b.space_id, clientName: b.client_name || "", clientPhone: b.client_phone || "", startsOn: b.starts_on || "", endsOn: b.ends_on || "", price: String(b.price || ""), currency: b.currency || "USD", status: b.status, designUrl: "", proofUrl: "" }); setShowBooking(true) }} style={btnMini}>Editar</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
+    </div>
+  )
+}
+
 // ---------- Comunicados ----------
 type Announcement = { id: string; title: string; body: string; category: string; is_pinned: boolean; published_at: string | null }
 
@@ -1676,6 +1830,8 @@ function badge(status: string): React.CSSProperties {
     activo: "#e6f4ea|#1e874b", borrador: "#f0f0f0|#6b7280", por_vencer: "#fff5e6|#8a5a00", vencido: "#fdecea|#c0392b", renovado: "#e6f4ea|#1e874b", terminado: "#f0f0f0|#6b7280",
     // estacionamiento
     abierto: "#e5f4fb|#0a6f9c", pagado: "#e6f4ea|#1e874b", cortesia: "#fff5e6|#8a5a00", anulado: "#f0f0f0|#6b7280", por_pagar: "#fff5e6|#8a5a00",
+    // publicidad
+    finalizado: "#eef3fb|#1554b8", cancelado: "#f0f0f0|#6b7280",
     // legado condominio
     activa: "#e6f4ea|#1e874b", desocupada: "#eef3fb|#1554b8", en_mora: "#fdecea|#c0392b", inactiva: "#f0f0f0|#6b7280",
   }
