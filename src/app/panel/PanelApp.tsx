@@ -227,11 +227,34 @@ function Card({ children }: { children: React.ReactNode }) {
 function ResumenView({ api, goTo }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>>; goTo: (t: Tab) => void }) {
   const [s, setS] = useState<Summary | null>(null)
   const [err, setErr] = useState("")
+  const [backupMsg, setBackupMsg] = useState("")
+  const [busy, setBusy] = useState("")
   useEffect(() => {
     api("/api/panel/summary").then((d) => setS(d as unknown as Summary)).catch((e) => setErr(String(e.message || e)))
   }, [api])
 
   const alicuotaOk = s ? Math.abs(s.alicuotaSum - 1) < 0.005 : true
+
+  async function downloadBackup() {
+    setBusy("download"); setBackupMsg("")
+    try {
+      const res = await fetch("/api/panel/backup?download=1", { headers: { "x-local-password": localStorage.getItem(PW_KEY) || "" } })
+      if (!res.ok) throw new Error("No se pudo generar")
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url; a.download = `palulu-respaldo-${new Date().toISOString().slice(0, 10)}.json`
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url)
+      setBackupMsg("Respaldo descargado ✓")
+    } catch (e) { setBackupMsg(String((e as Error).message)) } finally { setBusy("") }
+  }
+  async function storeBackup() {
+    setBusy("store"); setBackupMsg("")
+    try {
+      const d = await api("/api/panel/backup")
+      setBackupMsg(`Respaldo guardado en la nube ✓ (${d.totalRows ?? 0} registros)`)
+    } catch (e) { setBackupMsg(String((e as Error).message)) } finally { setBusy("") }
+  }
 
   return (
     <div>
@@ -255,6 +278,19 @@ function ResumenView({ api, goTo }: { api: (p: string, i?: RequestInit) => Promi
             <b> residentes</b>. Con eso listo, en las próximas fases se activan la emisión de cuotas, el estado de cuenta,
             las reservas de áreas comunes, las incidencias y los comunicados.
           </p>
+        </Card>
+      </div>
+      <div style={{ marginTop: 14 }}>
+        <Card>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 220 }}>
+              <div style={{ fontWeight: 700 }}>🛡️ Respaldo de la información</div>
+              <div style={{ fontSize: 13, color: "#5b6b82" }}>Se respalda automáticamente cada día en la nube. También puedes hacerlo ahora.</div>
+            </div>
+            <button onClick={storeBackup} disabled={!!busy} style={btnGhost}>{busy === "store" ? "Respaldando…" : "Respaldar ahora"}</button>
+            <button onClick={downloadBackup} disabled={!!busy} style={btnPrimary}>{busy === "download" ? "Generando…" : "Descargar respaldo"}</button>
+          </div>
+          {backupMsg && <div style={{ marginTop: 10, fontSize: 13, color: "#1554b8" }}>{backupMsg}</div>}
         </Card>
       </div>
     </div>
@@ -425,6 +461,7 @@ function ResidentesView({ api }: { api: (p: string, i?: RequestInit) => Promise<
   const [linkFor, setLinkFor] = useState<Resident | null>(null)
   const [linkUnit, setLinkUnit] = useState("")
   const [linkRole, setLinkRole] = useState("propietario")
+  const [codeInfo, setCodeInfo] = useState<{ name: string; code: string; phone: string } | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -467,6 +504,12 @@ function ResidentesView({ api }: { api: (p: string, i?: RequestInit) => Promise<
   }
   async function removeLink(l: Link) {
     try { await api(`/api/panel/residents/${l.resident_id}?link=${l.id}`, { method: "DELETE" }); await load() } catch (e) { setErr(String((e as Error).message)) }
+  }
+  async function genAccess(r: Resident) {
+    try {
+      const d = await api("/api/panel/residents/access", { method: "POST", body: JSON.stringify({ residentId: r.id }) })
+      setCodeInfo({ name: r.full_name, code: String(d.code), phone: r.phone })
+    } catch (e) { setErr(String((e as Error).message)) }
   }
 
   return (
@@ -522,6 +565,7 @@ function ResidentesView({ api }: { api: (p: string, i?: RequestInit) => Promise<
                         <button onClick={() => { setLinkFor(r); setLinkUnit(""); setLinkRole("propietario") }} style={btnMini}>+ vincular</button>
                       </td>
                       <td style={{ ...td, whiteSpace: "nowrap" }}>
+                        <button onClick={() => genAccess(r)} style={btnMini} title="Genera el código para que entre a su cuenta">🔑 acceso</button>
                         <button onClick={() => edit(r)} style={btnMini}>Editar</button>
                         <button onClick={() => remove(r)} style={btnMiniDanger}>Borrar</button>
                       </td>
@@ -548,6 +592,21 @@ function ResidentesView({ api }: { api: (p: string, i?: RequestInit) => Promise<
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={addLink} disabled={!linkUnit} style={btnPrimary}>Vincular</button>
               <button onClick={() => setLinkFor(null)} style={btnGhost}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {codeInfo && (
+        <div style={modalWrap} onClick={() => setCodeInfo(null)}>
+          <div style={modalBox} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: "0 0 6px" }}>Código de acceso</h3>
+            <p style={{ margin: "0 0 12px", color: "#5b6b82", fontSize: 14 }}>Entrégaselo a <b>{codeInfo.name}</b>. Entrará en <b>/mi-cuenta</b> con su teléfono y este código.</p>
+            <div style={{ textAlign: "center", background: "#eef3fb", borderRadius: 12, padding: "16px", fontSize: 34, fontWeight: 800, letterSpacing: 6, color: "#1554b8" }}>{codeInfo.code}</div>
+            {codeInfo.phone && <p style={{ textAlign: "center", color: "#8494a8", fontSize: 13, marginTop: 8 }}>Teléfono registrado: {codeInfo.phone}</p>}
+            <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+              <button onClick={() => { navigator.clipboard?.writeText(codeInfo.code); }} style={btnGhost}>Copiar código</button>
+              <button onClick={() => setCodeInfo(null)} style={btnPrimary}>Listo</button>
             </div>
           </div>
         </div>
