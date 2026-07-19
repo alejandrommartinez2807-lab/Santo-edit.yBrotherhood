@@ -64,12 +64,25 @@ export async function POST(request: NextRequest) {
       periodId = p?.id
     }
 
-    // Unidades a cobrar: ocupadas (excluye inactivas y las desocupadas que se
-    // muestran como disponibles en la promo).
-    const { data: units, error: ue } = await supabase.from("units").select("id, alicuota, balance").eq("branch_id", branchId).neq("status", "inactiva").neq("status", "desocupada")
+    // Contratos activos: canon mensual por local (para cobrarlo junto al condominio).
+    const { data: leaseRows } = await supabase
+      .from("leases")
+      .select("unit_id, canon_amount, condo_included")
+      .eq("branch_id", branchId)
+      .eq("status", "activo")
+    const leaseByUnit = new Map<string, { canon: number; condoIncluded: boolean }>()
+    for (const l of (leaseRows ?? []) as { unit_id: string; canon_amount: number | null; condo_included: boolean | null }[]) {
+      if (l.unit_id) leaseByUnit.set(l.unit_id, { canon: num(l.canon_amount), condoIncluded: !!l.condo_included })
+    }
+
+    // Locales a cobrar: ocupados o con contrato activo. Se excluyen los
+    // disponibles, en mantenimiento e inactivos (y el legado desocupada/inactiva).
+    const { data: units, error: ue } = await supabase.from("units").select("id, alicuota, balance, status").eq("branch_id", branchId)
     if (ue) throw new Error(ue.message)
-    const list = (units ?? []) as { id: string; alicuota: number | null; balance: number | null }[]
-    if (!list.length) return NextResponse.json({ error: "No hay unidades para emitir" }, { status: 400 })
+    const OCCUPIED = new Set(["ocupado", "reservado", "activa"])
+    const list = ((units ?? []) as { id: string; alicuota: number | null; balance: number | null; status: string }[])
+      .filter((u) => leaseByUnit.has(u.id) || OCCUPIED.has(u.status))
+    if (!list.length) return NextResponse.json({ error: "No hay locales ocupados ni contratos activos para emitir" }, { status: 400 })
 
     // Correlativo de recibo
     const { data: lastReceipt } = await supabase.from("receipts").select("number").eq("branch_id", branchId).order("number", { ascending: false }).limit(1).maybeSingle()
@@ -81,14 +94,24 @@ export async function POST(request: NextRequest) {
     let totalEmitted = 0
 
     for (const u of list) {
-      const amount = round2(commonExpenseTotal * Number(u.alicuota || 0))
-      if (amount <= 0) continue
+      const lease = leaseByUnit.get(u.id)
+      // Condominio por alícuota (salvo que el canon ya lo incluya).
+      const condoAmount = lease?.condoIncluded ? 0 : round2(commonExpenseTotal * Number(u.alicuota || 0))
+      // Canon de arrendamiento (si tiene contrato activo).
+      const canonAmount = lease ? round2(lease.canon) : 0
+      const total = round2(condoAmount + canonAmount)
+      if (total <= 0) continue
       const prev = round2(Number(u.balance || 0))
-      const newBal = round2(prev + amount)
-      charges.push({ branch_id: branchId, unit_id: u.id, period_id: periodId, concept: "cuota_ordinaria", description: `Cuota ${label}`, amount, amount_paid: 0, alicuota_used: u.alicuota, due_date: dueDate, status: "pendiente" })
-      receipts.push({ branch_id: branchId, unit_id: u.id, period_id: periodId, number: nextNumber++, previous_balance: prev, charges_total: amount, payments_total: 0, new_balance: newBal, status: "emitido" })
+      const newBal = round2(prev + total)
+      if (condoAmount > 0) {
+        charges.push({ branch_id: branchId, unit_id: u.id, period_id: periodId, concept: "cuota_ordinaria", description: `Condominio ${label}`, amount: condoAmount, amount_paid: 0, alicuota_used: u.alicuota, due_date: dueDate, status: "pendiente" })
+      }
+      if (canonAmount > 0) {
+        charges.push({ branch_id: branchId, unit_id: u.id, period_id: periodId, concept: "canon_arrendamiento", description: `Canon ${label}`, amount: canonAmount, amount_paid: 0, alicuota_used: null, due_date: dueDate, status: "pendiente" })
+      }
+      receipts.push({ branch_id: branchId, unit_id: u.id, period_id: periodId, number: nextNumber++, previous_balance: prev, charges_total: total, payments_total: 0, new_balance: newBal, status: "emitido" })
       balanceUpdates.push({ id: u.id, balance: newBal })
-      totalEmitted = round2(totalEmitted + amount)
+      totalEmitted = round2(totalEmitted + total)
     }
 
     if (charges.length) {
@@ -101,7 +124,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ ok: true, periodId, unitsEmitted: charges.length, totalEmitted })
+    return NextResponse.json({ ok: true, periodId, unitsEmitted: receipts.length, totalEmitted })
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "No se pudo emitir" }, { status: 500 })
   }

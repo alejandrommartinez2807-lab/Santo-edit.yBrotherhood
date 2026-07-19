@@ -858,23 +858,23 @@ function CuotasView({ api }: { api: (p: string, i?: RequestInit) => Promise<Reco
     e.preventDefault(); setBusy(true); setErr(""); setMsg("")
     try {
       const d = await api("/api/panel/periods", { method: "POST", body: JSON.stringify({ action: "emit", periodMonth: form.periodMonth, label: form.periodMonth.slice(0, 7), commonExpenseTotal: Number(form.commonExpenseTotal || 0), dueDate: form.dueDate || undefined }) })
-      setMsg(`✓ Emitidas ${d.unitsEmitted} cuotas · total ${money(Number(d.totalEmitted || 0))}`)
+      setMsg(`✓ Emitido a ${d.unitsEmitted} local(es) · canon + condominio · total ${money(Number(d.totalEmitted || 0))}`)
       setForm({ ...form, commonExpenseTotal: "" }); await load()
     } catch (e) { setErr(String((e as Error).message)) } finally { setBusy(false) }
   }
 
   return (
     <div>
-      <h1 style={{ fontSize: 22, fontWeight: 800, margin: "4px 0 14px" }}>Cuotas</h1>
+      <h1 style={{ fontSize: 22, fontWeight: 800, margin: "4px 0 14px" }}>Canon y condominio</h1>
       {err && <div style={errBox}>{err}</div>}
       <Card>
-        <div style={{ fontWeight: 700, marginBottom: 8 }}>Emitir cuotas del mes</div>
-        <p style={{ margin: "0 0 12px", color: "#5b6b82", fontSize: 13 }}>El gasto común se prorratea entre las unidades según su <b>alícuota</b>. Cada unidad recibe su cargo y su recibo.</p>
+        <div style={{ fontWeight: 700, marginBottom: 8 }}>Emitir cobro del mes</div>
+        <p style={{ margin: "0 0 12px", color: "#5b6b82", fontSize: 13 }}>Se cobra a los locales <b>ocupados o con contrato activo</b>: el gasto común se prorratea por <b>alícuota</b> (condominio) y se agrega el <b>canon</b> de cada contrato activo. Cada local recibe su cargo y su recibo.</p>
         <form onSubmit={emit} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 12, alignItems: "end" }}>
           <Field label="Mes"><input type="date" value={form.periodMonth} onChange={(e) => setForm({ ...form, periodMonth: e.target.value })} style={input} /></Field>
           <Field label="Gasto común total ($)"><input type="number" step="0.01" required value={form.commonExpenseTotal} onChange={(e) => setForm({ ...form, commonExpenseTotal: e.target.value })} placeholder="2500" style={input} /></Field>
           <Field label="Vence"><input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} style={input} /></Field>
-          <button type="submit" disabled={busy} style={btnPrimary}>{busy ? "Emitiendo…" : "Emitir cuotas"}</button>
+          <button type="submit" disabled={busy} style={btnPrimary}>{busy ? "Emitiendo…" : "Emitir cobro"}</button>
         </form>
         {msg && <div style={{ marginTop: 10, color: "#1e874b", fontSize: 14 }}>{msg}</div>}
       </Card>
