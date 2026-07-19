@@ -7,14 +7,15 @@ const nextConfig: NextConfig = {
     "192.168.0.240:3000",
     "192.168.0.120:3000",
   ],
-  // Apartamentos Palulu (administración de condominio): mientras se construyen
-  // los módulos, la raíz lleva al panel administrativo (/admin). El portal
-  // público del residente reemplazará la raíz en una fase posterior.
+  // Apartamentos Palulu (administración de condominio):
+  //  · raíz y /hotel → portal público del residente (/portal)
+  //  · /admin y /pedidos (enlaces heredados) → panel administrativo nuevo (/panel)
   async redirects() {
     return [
-      { source: "/", destination: "/admin", permanent: false },
-      { source: "/pedidos", destination: "/admin", permanent: false },
-      { source: "/hotel", destination: "/admin", permanent: false },
+      { source: "/", destination: "/portal", permanent: false },
+      { source: "/hotel", destination: "/portal", permanent: false },
+      { source: "/admin", destination: "/panel", permanent: false },
+      { source: "/pedidos", destination: "/panel", permanent: false },
     ]
   },
 }

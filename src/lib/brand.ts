@@ -21,7 +21,7 @@ export const BRAND = {
   description:
     "Portal de residentes y panel administrativo de Apartamentos Palulu: estado de cuenta, cuotas, reservas de áreas comunes, incidencias, comunicados y control de acceso en un solo lugar.",
   /** Logo en /public (déjalo vacío para usar solo texto). */
-  logoUrl: "",
+  logoUrl: "/palulu-mark.svg",
 
   /**
    * Demo estática sin backend (patrón demo-express): las APIs públicas del
