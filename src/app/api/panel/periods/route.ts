@@ -64,15 +64,31 @@ export async function POST(request: NextRequest) {
       periodId = p?.id
     }
 
-    // Contratos activos: canon mensual por local (para cobrarlo junto al condominio).
+    // Contratos activos: canon mensual + renta porcentual por local.
     const { data: leaseRows } = await supabase
       .from("leases")
-      .select("unit_id, canon_amount, condo_included")
+      .select("unit_id, canon_amount, condo_included, percentage_rent, percentage_rent_rate, percentage_rent_min")
       .eq("branch_id", branchId)
       .eq("status", "activo")
-    const leaseByUnit = new Map<string, { canon: number; condoIncluded: boolean }>()
-    for (const l of (leaseRows ?? []) as { unit_id: string; canon_amount: number | null; condo_included: boolean | null }[]) {
-      if (l.unit_id) leaseByUnit.set(l.unit_id, { canon: num(l.canon_amount), condoIncluded: !!l.condo_included })
+    type LeaseInfo = { canon: number; condoIncluded: boolean; pctRent: boolean; pctRate: number; pctMin: number }
+    const leaseByUnit = new Map<string, LeaseInfo>()
+    for (const l of (leaseRows ?? []) as Record<string, unknown>[]) {
+      const uid = text(l.unit_id)
+      if (uid) leaseByUnit.set(uid, {
+        canon: num(l.canon_amount), condoIncluded: !!l.condo_included,
+        pctRent: !!l.percentage_rent, pctRate: num(l.percentage_rent_rate), pctMin: num(l.percentage_rent_min),
+      })
+    }
+
+    // Ventas reportadas del mes (para la renta porcentual): unit_id -> ventas brutas.
+    const { data: salesRows } = await supabase
+      .from("lease_sales")
+      .select("unit_id, gross_sales")
+      .eq("branch_id", branchId)
+      .eq("period_month", periodMonth)
+    const salesByUnit = new Map<string, number>()
+    for (const s of (salesRows ?? []) as { unit_id: string; gross_sales: number | null }[]) {
+      if (s.unit_id) salesByUnit.set(s.unit_id, num(s.gross_sales))
     }
 
     // Locales a cobrar: ocupados o con contrato activo. Se excluyen los
@@ -99,7 +115,13 @@ export async function POST(request: NextRequest) {
       const condoAmount = lease?.condoIncluded ? 0 : round2(commonExpenseTotal * Number(u.alicuota || 0))
       // Canon de arrendamiento (si tiene contrato activo).
       const canonAmount = lease ? round2(lease.canon) : 0
-      const total = round2(condoAmount + canonAmount)
+      // Renta porcentual: excedente de (ventas * tasa%) sobre el mínimo garantizado.
+      let pctAmount = 0
+      if (lease?.pctRent && lease.pctRate > 0) {
+        const sales = salesByUnit.get(u.id) || 0
+        pctAmount = round2(Math.max(0, sales * (lease.pctRate / 100) - lease.pctMin))
+      }
+      const total = round2(condoAmount + canonAmount + pctAmount)
       if (total <= 0) continue
       const prev = round2(Number(u.balance || 0))
       const newBal = round2(prev + total)
@@ -108,6 +130,9 @@ export async function POST(request: NextRequest) {
       }
       if (canonAmount > 0) {
         charges.push({ branch_id: branchId, unit_id: u.id, period_id: periodId, concept: "canon_arrendamiento", description: `Canon ${label}`, amount: canonAmount, amount_paid: 0, alicuota_used: null, due_date: dueDate, status: "pendiente" })
+      }
+      if (pctAmount > 0) {
+        charges.push({ branch_id: branchId, unit_id: u.id, period_id: periodId, concept: "renta_porcentual", description: `Renta porcentual ${label}`, amount: pctAmount, amount_paid: 0, alicuota_used: null, due_date: dueDate, status: "pendiente" })
       }
       receipts.push({ branch_id: branchId, unit_id: u.id, period_id: periodId, number: nextNumber++, previous_balance: prev, charges_total: total, payments_total: 0, new_balance: newBal, status: "emitido" })
       balanceUpdates.push({ id: u.id, balance: newBal })

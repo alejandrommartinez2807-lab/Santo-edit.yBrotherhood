@@ -50,7 +50,7 @@ type Link = {
 }
 type Summary = { unitsCount: number; residentsCount: number; alicuotaSum: number; balanceDue: number }
 
-type Tab = "resumen" | "unidades" | "residentes" | "contratos" | "cuotas" | "estado" | "galeria" | "amenidades" | "incidencias" | "comunicados" | "asambleas" | "accesos" | "documentos"
+type Tab = "resumen" | "unidades" | "residentes" | "contratos" | "ventas" | "cuotas" | "estado" | "galeria" | "amenidades" | "incidencias" | "comunicados" | "asambleas" | "accesos" | "documentos"
 
 const UNIT_STATUS = ["disponible", "ocupado", "reservado", "mantenimiento", "inactivo"]
 const RES_ROLES = ["propietario", "inquilino", "encargado", "autorizado"]
@@ -62,6 +62,7 @@ const MODULES: { key: Tab | string; label: string; icon: string; ready: boolean 
   { key: "unidades", label: "Locales", icon: "🏬", ready: true },
   { key: "residentes", label: "Comerciantes", icon: "🧑‍💼", ready: true },
   { key: "contratos", label: "Contratos", icon: "📑", ready: true },
+  { key: "ventas", label: "Ventas (renta %)", icon: "📈", ready: true },
   { key: "cuotas", label: "Canon y condominio", icon: "🧾", ready: true },
   { key: "estado", label: "Estado de cuenta", icon: "💳", ready: true },
   { key: "galeria", label: "Galería", icon: "🖼️", ready: true },
@@ -125,6 +126,7 @@ export default function PanelApp() {
           {tab === "unidades" && <UnidadesView api={api} />}
           {tab === "residentes" && <ResidentesView api={api} />}
           {tab === "contratos" && <ContratosView api={api} />}
+          {tab === "ventas" && <VentasView api={api} />}
           {tab === "cuotas" && <CuotasView api={api} />}
           {tab === "estado" && <EstadoView api={api} />}
           {tab === "galeria" && <GaleriaView api={api} />}
@@ -836,6 +838,82 @@ function ContratosView({ api }: { api: (p: string, i?: RequestInit) => Promise<R
     </div>
   )
 }
+
+// ---------- Ventas (renta porcentual) ----------
+type PctLease = { id: string; unit_id: string; percentage_rent_rate: number; percentage_rent_min: number; units?: { code?: string; commercial_name?: string } | null }
+type SaleRow = { lease_id: string; gross_sales: number }
+
+function VentasView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
+  const now = new Date()
+  const [month, setMonth] = useState(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`)
+  const [leases, setLeases] = useState<PctLease[]>([])
+  const [inputs, setInputs] = useState<Record<string, string>>({})
+  const [err, setErr] = useState("")
+  const [msg, setMsg] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [savingId, setSavingId] = useState("")
+
+  const load = useCallback(async () => {
+    setLoading(true); setErr("")
+    try {
+      const d = await api(`/api/panel/sales?month=${encodeURIComponent(month)}`)
+      const ls = (d.leases as PctLease[]) || []
+      const sales = (d.sales as SaleRow[]) || []
+      setLeases(ls)
+      const map: Record<string, string> = {}
+      for (const s of sales) map[s.lease_id] = String(s.gross_sales ?? "")
+      setInputs(map)
+    } catch (e) { setErr(String((e as Error).message)) } finally { setLoading(false) }
+  }, [api, month])
+  useEffect(() => { load() }, [load])
+
+  async function save(l: PctLease) {
+    setSavingId(l.id); setErr(""); setMsg("")
+    try {
+      await api("/api/panel/sales", { method: "POST", body: JSON.stringify({ leaseId: l.id, unitId: l.unit_id, periodMonth: month, grossSales: Number(inputs[l.id] || 0) }) })
+      setMsg("✓ Ventas guardadas")
+    } catch (e) { setErr(String((e as Error).message)) } finally { setSavingId("") }
+  }
+
+  const label = (l: PctLease) => l.units?.commercial_name || l.units?.code || "—"
+  const estPct = (l: PctLease) => Math.max(0, Number(inputs[l.id] || 0) * (Number(l.percentage_rent_rate) / 100) - Number(l.percentage_rent_min))
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6, flexWrap: "wrap" }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, flex: 1 }}>Ventas · renta porcentual</h1>
+        <label style={{ fontSize: 13, color: "#3f5a6b" }}>Mes: <input type="date" value={month} onChange={(e) => setMonth(e.target.value)} style={{ ...input, width: 160, display: "inline-block" }} /></label>
+      </div>
+      <p style={{ margin: "0 0 12px", color: "#5b6b82", fontSize: 13 }}>Registra las ventas brutas del mes de cada local con <b>renta porcentual</b>. Al emitir el cobro del mes, se cobra el excedente de (ventas × tasa) sobre el mínimo garantizado.</p>
+      {err && <div style={errBox}>{err}</div>}
+      {msg && <div style={{ ...errBox, background: "#e6f4ea", color: "#1e874b" }}>{msg}</div>}
+      <Card>
+        {loading ? <p style={{ color: "#5b6b82" }}>Cargando…</p> : leases.length === 0 ? (
+          <p style={{ color: "#5b6b82", margin: 0 }}>Ningún contrato activo tiene renta porcentual. Actívala en <b>Contratos</b> (casilla “Renta porcentual”).</p>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={table}>
+              <thead><tr>{["Local", "Tasa %", "Mínimo", "Ventas del mes", "Renta % estimada", ""].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+              <tbody>
+                {leases.map((l) => (
+                  <tr key={l.id}>
+                    <td style={{ ...td, fontWeight: 700 }}>{label(l)}</td>
+                    <td style={td}>{l.percentage_rent_rate}%</td>
+                    <td style={td}>${l.percentage_rent_min}</td>
+                    <td style={td}><input type="number" step="0.01" value={inputs[l.id] || ""} onChange={(e) => setInputs({ ...inputs, [l.id]: e.target.value })} placeholder="0.00" style={{ ...input, width: 130 }} /></td>
+                    <td style={{ ...td, fontWeight: 700, color: estPct(l) > 0 ? "#1e874b" : "#98a6ba" }}>${round2ui(estPct(l))}</td>
+                    <td style={td}><button onClick={() => save(l)} disabled={savingId === l.id} style={btnMini}>{savingId === l.id ? "…" : "Guardar"}</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+    </div>
+  )
+}
+function round2ui(n: number) { return Math.round(n * 100) / 100 }
 
 // ---------- Cuotas ----------
 type Period = { id: string; label: string; period_month: string; status: string; due_date: string | null; common_expense_total: number; issued_at: string | null }
