@@ -47,7 +47,7 @@ type Link = {
 }
 type Summary = { unitsCount: number; residentsCount: number; alicuotaSum: number; balanceDue: number }
 
-type Tab = "resumen" | "unidades" | "residentes" | "cuotas" | "estado" | "galeria"
+type Tab = "resumen" | "unidades" | "residentes" | "cuotas" | "estado" | "galeria" | "amenidades" | "incidencias" | "comunicados" | "asambleas" | "accesos" | "documentos"
 
 const UNIT_STATUS = ["activa", "desocupada", "en_mora", "inactiva"]
 const RES_ROLES = ["propietario", "inquilino", "autorizado", "familiar"]
@@ -59,11 +59,12 @@ const MODULES: { key: Tab | string; label: string; icon: string; ready: boolean 
   { key: "cuotas", label: "Cuotas", icon: "🧾", ready: true },
   { key: "estado", label: "Estado de cuenta", icon: "💳", ready: true },
   { key: "galeria", label: "Galería", icon: "🖼️", ready: true },
-  { key: "amenidades", label: "Áreas comunes", icon: "🏊", ready: false },
-  { key: "incidencias", label: "Incidencias", icon: "🛠️", ready: false },
-  { key: "comunicados", label: "Comunicados", icon: "📣", ready: false },
-  { key: "asambleas", label: "Asambleas", icon: "🗳️", ready: false },
-  { key: "accesos", label: "Accesos", icon: "🚪", ready: false },
+  { key: "amenidades", label: "Áreas comunes", icon: "🏊", ready: true },
+  { key: "incidencias", label: "Incidencias", icon: "🛠️", ready: true },
+  { key: "comunicados", label: "Comunicados", icon: "📣", ready: true },
+  { key: "asambleas", label: "Asambleas", icon: "🗳️", ready: true },
+  { key: "accesos", label: "Accesos", icon: "🚪", ready: true },
+  { key: "documentos", label: "Documentos", icon: "📄", ready: true },
 ]
 
 function money(n: number) {
@@ -120,6 +121,12 @@ export default function PanelApp() {
           {tab === "cuotas" && <CuotasView api={api} />}
           {tab === "estado" && <EstadoView api={api} />}
           {tab === "galeria" && <GaleriaView api={api} />}
+          {tab === "amenidades" && <AmenidadesView api={api} />}
+          {tab === "incidencias" && <IncidenciasView api={api} />}
+          {tab === "comunicados" && <ComunicadosView api={api} />}
+          {tab === "asambleas" && <AsambleasView api={api} />}
+          {tab === "accesos" && <AccesosView api={api} />}
+          {tab === "documentos" && <DocumentosView api={api} />}
         </main>
       </div>
     </div>
@@ -878,6 +885,303 @@ function GaleriaView({ api }: { api: (p: string, i?: RequestInit) => Promise<Rec
           )}
         </Card>
       </div>
+    </div>
+  )
+}
+
+// ---------- Áreas comunes ----------
+type Amenity = { id: string; name: string; description: string; booking_mode: string; fee: number; requires_approval: boolean; active: boolean }
+type AmenityRes = { id: string; reservation_date: string; start_time: string; end_time: string; status: string; fee_amount: number; resident_name: string; units?: { code?: string } | null }
+
+function AmenidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
+  const [amenities, setAmenities] = useState<Amenity[]>([])
+  const [reservations, setReservations] = useState<AmenityRes[]>([])
+  const [err, setErr] = useState("")
+  const [form, setForm] = useState({ name: "", description: "", fee: "", bookingMode: "por_franja", requiresApproval: false })
+  const [show, setShow] = useState(false)
+  const load = useCallback(async () => {
+    try { const d = await api("/api/panel/amenities"); setAmenities((d.amenities as Amenity[]) || []); setReservations((d.reservations as AmenityRes[]) || []) } catch (e) { setErr(String((e as Error).message)) }
+  }, [api])
+  useEffect(() => { load() }, [load])
+  async function save(e: React.FormEvent) {
+    e.preventDefault(); setErr("")
+    try { await api("/api/panel/amenities", { method: "POST", body: JSON.stringify({ name: form.name, description: form.description, fee: Number(form.fee || 0), bookingMode: form.bookingMode, requiresApproval: form.requiresApproval }) }); setForm({ name: "", description: "", fee: "", bookingMode: "por_franja", requiresApproval: false }); setShow(false); await load() } catch (e) { setErr(String((e as Error).message)) }
+  }
+  async function decide(id: string, decision: "confirmar" | "rechazar") {
+    try { await api("/api/panel/amenities", { method: "POST", body: JSON.stringify({ kind: "decision", reservationId: id, decision }) }); await load() } catch (e) { setErr(String((e as Error).message)) }
+  }
+  const pending = reservations.filter((r) => r.status === "pendiente")
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 14 }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, flex: 1 }}>Áreas comunes</h1>
+        <button onClick={() => setShow((v) => !v)} style={btnPrimary}>+ Nueva área</button>
+      </div>
+      {err && <div style={errBox}>{err}</div>}
+      {show && (
+        <Card>
+          <form onSubmit={save} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, alignItems: "end" }}>
+            <Field label="Nombre *"><input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={input} placeholder="Salón social" /></Field>
+            <Field label="Descripción"><input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} style={input} /></Field>
+            <Field label="Costo de uso ($)"><input type="number" step="0.01" value={form.fee} onChange={(e) => setForm({ ...form, fee: e.target.value })} style={input} /></Field>
+            <Field label="Modo"><select value={form.bookingMode} onChange={(e) => setForm({ ...form, bookingMode: e.target.value })} style={input}><option value="por_franja">Por franja</option><option value="por_dia">Por día</option></select></Field>
+            <label style={{ fontSize: 13, display: "flex", gap: 6, alignItems: "center" }}><input type="checkbox" checked={form.requiresApproval} onChange={(e) => setForm({ ...form, requiresApproval: e.target.checked })} /> Requiere aprobación</label>
+            <button type="submit" style={btnPrimary}>Crear</button>
+          </form>
+        </Card>
+      )}
+      {pending.length > 0 && (
+        <div style={{ marginTop: 14 }}><Card>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>Reservas por aprobar ({pending.length})</div>
+          {pending.map((r) => (
+            <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #f0f3f8" }}>
+              <div><b>{r.units?.code || ""}</b> {r.resident_name} · {r.reservation_date} {r.start_time}-{r.end_time}</div>
+              <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}><button onClick={() => decide(r.id, "confirmar")} style={btnMini}>Aprobar</button><button onClick={() => decide(r.id, "rechazar")} style={btnMiniDanger}>Rechazar</button></div>
+            </div>
+          ))}
+        </Card></div>
+      )}
+      <div style={{ marginTop: 14 }}><Card>
+        {amenities.length === 0 ? <p style={{ color: "#5b6b82", margin: 0 }}>Sin áreas comunes. Crea la primera.</p> : (
+          <div style={{ overflowX: "auto" }}><table style={table}><thead><tr>{["Área", "Modo", "Costo", "Aprobación", "Reservas"].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead><tbody>
+            {amenities.map((a) => (
+              <tr key={a.id}><td style={{ ...td, fontWeight: 700 }}>{a.name}</td><td style={td}>{a.booking_mode}</td><td style={td}>{a.fee > 0 ? money(a.fee) : "gratis"}</td><td style={td}>{a.requires_approval ? "sí" : "no"}</td><td style={td}>{reservations.filter((r) => r.status !== "rechazada").length ? reservations.filter((r) => r.status !== "rechazada").length : "—"}</td></tr>
+            ))}
+          </tbody></table></div>
+        )}
+      </Card></div>
+    </div>
+  )
+}
+
+// ---------- Incidencias ----------
+type Ticket = { id: string; code: string; category: string; priority: string; status: string; title: string; description: string; reporter_name: string; created_at: string; units?: { code?: string } | null }
+
+function IncidenciasView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [err, setErr] = useState("")
+  const load = useCallback(async () => {
+    try { const d = await api("/api/panel/tickets"); setTickets((d.tickets as Ticket[]) || []) } catch (e) { setErr(String((e as Error).message)) }
+  }, [api])
+  useEffect(() => { load() }, [load])
+  async function setStatus(t: Ticket, status: string) {
+    try { await api("/api/panel/tickets", { method: "POST", body: JSON.stringify({ kind: "update", ticketId: t.id, status }) }); await load() } catch (e) { setErr(String((e as Error).message)) }
+  }
+  return (
+    <div>
+      <h1 style={{ fontSize: 22, fontWeight: 800, margin: "4px 0 14px" }}>Incidencias</h1>
+      {err && <div style={errBox}>{err}</div>}
+      <Card>
+        {tickets.length === 0 ? <p style={{ color: "#5b6b82", margin: 0 }}>No hay incidencias reportadas.</p> : tickets.map((t) => (
+          <div key={t.id} style={{ padding: "10px 0", borderBottom: "1px solid #f0f3f8" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={badge(t.status === "resuelto" || t.status === "cerrado" ? "activa" : t.status === "abierto" ? "en_mora" : "desocupada")}>{t.status}</span>
+              <b>{t.title}</b>
+              <span style={{ fontSize: 12, color: "#8494a8" }}>{t.units?.code ? `· ${t.units.code}` : ""} · {t.reporter_name} · {t.category} · {t.priority}</span>
+              <select value={t.status} onChange={(e) => setStatus(t, e.target.value)} style={{ ...input, marginLeft: "auto", width: 150 }}>{["abierto", "en_proceso", "en_espera", "resuelto", "cerrado"].map((s) => <option key={s} value={s}>{s}</option>)}</select>
+            </div>
+            {t.description && <div style={{ fontSize: 13, color: "#5b6b82", marginTop: 4 }}>{t.description}</div>}
+          </div>
+        ))}
+      </Card>
+    </div>
+  )
+}
+
+// ---------- Comunicados ----------
+type Announcement = { id: string; title: string; body: string; category: string; is_pinned: boolean; published_at: string | null }
+
+function ComunicadosView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
+  const [items, setItems] = useState<Announcement[]>([])
+  const [err, setErr] = useState("")
+  const [form, setForm] = useState({ title: "", body: "", category: "general", isPinned: false })
+  const load = useCallback(async () => {
+    try { const d = await api("/api/panel/announcements"); setItems((d.announcements as Announcement[]) || []) } catch (e) { setErr(String((e as Error).message)) }
+  }, [api])
+  useEffect(() => { load() }, [load])
+  async function publish(e: React.FormEvent) {
+    e.preventDefault(); setErr("")
+    try { await api("/api/panel/announcements", { method: "POST", body: JSON.stringify(form) }); setForm({ title: "", body: "", category: "general", isPinned: false }); await load() } catch (e) { setErr(String((e as Error).message)) }
+  }
+  async function remove(id: string) { if (!confirm("¿Eliminar comunicado?")) return; try { await api("/api/panel/announcements", { method: "POST", body: JSON.stringify({ kind: "delete", id }) }); await load() } catch (e) { setErr(String((e as Error).message)) } }
+  return (
+    <div>
+      <h1 style={{ fontSize: 22, fontWeight: 800, margin: "4px 0 14px" }}>Comunicados</h1>
+      {err && <div style={errBox}>{err}</div>}
+      <Card>
+        <form onSubmit={publish} style={{ display: "grid", gap: 10 }}>
+          <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Título del comunicado" style={input} />
+          <textarea value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} placeholder="Mensaje…" rows={3} style={{ ...input, resize: "vertical" }} />
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} style={{ ...input, width: 170 }}>{["general", "mantenimiento", "asamblea", "cobranza", "seguridad", "evento"].map((c) => <option key={c} value={c}>{c}</option>)}</select>
+            <label style={{ fontSize: 13, display: "flex", gap: 6, alignItems: "center" }}><input type="checkbox" checked={form.isPinned} onChange={(e) => setForm({ ...form, isPinned: e.target.checked })} /> Fijar arriba</label>
+            <button type="submit" style={{ ...btnPrimary, marginLeft: "auto" }}>Publicar</button>
+          </div>
+        </form>
+      </Card>
+      <div style={{ marginTop: 14 }}><Card>
+        {items.length === 0 ? <p style={{ color: "#5b6b82", margin: 0 }}>Sin comunicados.</p> : items.map((a) => (
+          <div key={a.id} style={{ padding: "10px 0", borderBottom: "1px solid #f0f3f8", display: "flex", gap: 10 }}>
+            <div><div style={{ fontWeight: 700 }}>{a.is_pinned ? "📌 " : ""}{a.title}</div><div style={{ fontSize: 13, color: "#5b6b82" }}>{a.body}</div><div style={{ fontSize: 11, color: "#8494a8", marginTop: 2 }}>{a.category} · {a.published_at ? new Date(a.published_at).toLocaleDateString("es-VE") : ""}</div></div>
+            <button onClick={() => remove(a.id)} style={{ ...btnMiniDanger, marginLeft: "auto", alignSelf: "start" }}>Eliminar</button>
+          </div>
+        ))}
+      </Card></div>
+    </div>
+  )
+}
+
+// ---------- Asambleas ----------
+type PollOpt = { id: string; label: string; votes: number; weight: number }
+type Poll = { id: string; question: string; status: string; weighting: string; options: PollOpt[] }
+
+function AsambleasView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
+  const [polls, setPolls] = useState<Poll[]>([])
+  const [err, setErr] = useState("")
+  const [q, setQ] = useState("")
+  const [opts, setOpts] = useState("Sí\nNo")
+  const load = useCallback(async () => {
+    try { const d = await api("/api/panel/assemblies"); setPolls((d.polls as Poll[]) || []) } catch (e) { setErr(String((e as Error).message)) }
+  }, [api])
+  useEffect(() => { load() }, [load])
+  async function createPoll(e: React.FormEvent) {
+    e.preventDefault(); setErr("")
+    try { await api("/api/panel/assemblies", { method: "POST", body: JSON.stringify({ kind: "poll", question: q, options: opts.split("\n").map((s) => s.trim()).filter(Boolean) }) }); setQ(""); setOpts("Sí\nNo"); await load() } catch (e) { setErr(String((e as Error).message)) }
+  }
+  async function toggle(p: Poll) { try { await api("/api/panel/assemblies", { method: "POST", body: JSON.stringify({ kind: "pollStatus", pollId: p.id, status: p.status === "abierta" ? "cerrada" : "abierta" }) }); await load() } catch (e) { setErr(String((e as Error).message)) } }
+  return (
+    <div>
+      <h1 style={{ fontSize: 22, fontWeight: 800, margin: "4px 0 14px" }}>Asambleas y votaciones</h1>
+      {err && <div style={errBox}>{err}</div>}
+      <Card>
+        <div style={{ fontWeight: 700, marginBottom: 8 }}>Nueva votación (voto ponderado por alícuota)</div>
+        <form onSubmit={createPoll} style={{ display: "grid", gap: 10 }}>
+          <input required value={q} onChange={(e) => setQ(e.target.value)} placeholder="Pregunta (ej. ¿Aprueba la cuota extraordinaria?)" style={input} />
+          <textarea value={opts} onChange={(e) => setOpts(e.target.value)} rows={3} style={{ ...input, resize: "vertical" }} placeholder="Una opción por línea" />
+          <button type="submit" style={{ ...btnPrimary, justifySelf: "start" }}>Abrir votación</button>
+        </form>
+      </Card>
+      <div style={{ marginTop: 14, display: "grid", gap: 12 }}>
+        {polls.map((p) => {
+          const totalW = p.options.reduce((s, o) => s + Number(o.weight || 0), 0) || 1
+          return (
+            <Card key={p.id}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <b>{p.question}</b>
+                <span style={badge(p.status === "abierta" ? "activa" : "desocupada")}>{p.status}</span>
+                <button onClick={() => toggle(p)} style={{ ...btnMini, marginLeft: "auto" }}>{p.status === "abierta" ? "Cerrar" : "Reabrir"}</button>
+              </div>
+              <div style={{ marginTop: 10, display: "grid", gap: 6 }}>
+                {p.options.map((o) => (
+                  <div key={o.id}>
+                    <div style={{ display: "flex", fontSize: 13 }}><span>{o.label}</span><span style={{ marginLeft: "auto", color: "#5b6b82" }}>{o.votes} voto(s) · {((Number(o.weight) / totalW) * 100).toFixed(1)}%</span></div>
+                    <div style={{ height: 8, background: "#eef3fb", borderRadius: 999, marginTop: 3 }}><div style={{ height: 8, width: `${(Number(o.weight) / totalW) * 100}%`, background: "#1f6feb", borderRadius: 999 }} /></div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ---------- Accesos ----------
+type Visitor = { id: string; kind: string; full_name: string; access_code: string; status: string; valid_until: string | null; units?: { code?: string } | null }
+type Delivery = { id: string; courier: string; description: string; status: string; received_at: string; delivered_to: string; units?: { code?: string } | null }
+
+function AccesosView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
+  const [visitors, setVisitors] = useState<Visitor[]>([])
+  const [deliveries, setDeliveries] = useState<Delivery[]>([])
+  const [err, setErr] = useState("")
+  const [del, setDel] = useState({ courier: "", description: "" })
+  const load = useCallback(async () => {
+    try { const d = await api("/api/panel/visitors"); setVisitors((d.visitors as Visitor[]) || []); setDeliveries((d.deliveries as Delivery[]) || []) } catch (e) { setErr(String((e as Error).message)) }
+  }, [api])
+  useEffect(() => { load() }, [load])
+  async function vStatus(v: Visitor, status: string) { try { await api("/api/panel/visitors", { method: "POST", body: JSON.stringify({ kind: "visitorStatus", visitorId: v.id, status }) }); await load() } catch (e) { setErr(String((e as Error).message)) } }
+  async function addDelivery(e: React.FormEvent) { e.preventDefault(); try { await api("/api/panel/visitors", { method: "POST", body: JSON.stringify({ kind: "delivery", courier: del.courier, description: del.description }) }); setDel({ courier: "", description: "" }); await load() } catch (e) { setErr(String((e as Error).message)) } }
+  async function delDone(d: Delivery) { const who = prompt("¿Quién retira?") || ""; try { await api("/api/panel/visitors", { method: "POST", body: JSON.stringify({ kind: "deliveryDone", deliveryId: d.id, deliveredTo: who }) }); await load() } catch (e) { setErr(String((e as Error).message)) } }
+  return (
+    <div>
+      <h1 style={{ fontSize: 22, fontWeight: 800, margin: "4px 0 14px" }}>Accesos y encomiendas</h1>
+      {err && <div style={errBox}>{err}</div>}
+      <Card>
+        <div style={{ fontWeight: 700, marginBottom: 8 }}>Visitas</div>
+        {visitors.length === 0 ? <p style={{ color: "#5b6b82", margin: 0 }}>Sin visitas registradas.</p> : visitors.map((v) => (
+          <div key={v.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #f0f3f8" }}>
+            <span style={badge(v.status === "dentro" ? "activa" : v.status === "salio" ? "desocupada" : "en_mora")}>{v.status}</span>
+            <b>{v.full_name}</b><span style={{ fontSize: 12, color: "#8494a8" }}>{v.units?.code ? `· ${v.units.code}` : ""} · {v.kind} · cód {v.access_code}</span>
+            <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}><button onClick={() => vStatus(v, "dentro")} style={btnMini}>Entró</button><button onClick={() => vStatus(v, "salio")} style={btnMini}>Salió</button></div>
+          </div>
+        ))}
+      </Card>
+      <div style={{ marginTop: 14 }}><Card>
+        <div style={{ fontWeight: 700, marginBottom: 8 }}>Encomiendas</div>
+        <form onSubmit={addDelivery} style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+          <input value={del.courier} onChange={(e) => setDel({ ...del, courier: e.target.value })} placeholder="Empresa (MRW, Zoom…)" style={{ ...input, width: 160 }} />
+          <input value={del.description} onChange={(e) => setDel({ ...del, description: e.target.value })} placeholder="Descripción / unidad" style={{ ...input, flex: 1, minWidth: 160 }} />
+          <button type="submit" style={btnPrimary}>Registrar</button>
+        </form>
+        {deliveries.map((d) => (
+          <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", borderBottom: "1px solid #f0f3f8", fontSize: 14 }}>
+            <span style={badge(d.status === "entregada" ? "activa" : "en_mora")}>{d.status}</span>
+            <span>{d.courier} · {d.description} {d.units?.code ? `· ${d.units.code}` : ""}</span>
+            {d.status !== "entregada" && <button onClick={() => delDone(d)} style={{ ...btnMini, marginLeft: "auto" }}>Entregar</button>}
+          </div>
+        ))}
+      </Card></div>
+    </div>
+  )
+}
+
+// ---------- Documentos ----------
+type Doc = { id: string; title: string; category: string; file_url: string; file_name: string; visibility: string; created_at: string }
+
+function DocumentosView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
+  const [items, setItems] = useState<Doc[]>([])
+  const [err, setErr] = useState("")
+  const [form, setForm] = useState({ title: "", category: "reglamento", url: "", visibility: "residentes" })
+  const [busy, setBusy] = useState(false)
+  const load = useCallback(async () => {
+    try { const d = await api("/api/panel/documents"); setItems((d.documents as Doc[]) || []) } catch (e) { setErr(String((e as Error).message)) }
+  }, [api])
+  useEffect(() => { load() }, [load])
+  async function addUrl() { if (!form.title.trim()) { setErr("Escribe el título"); return } setBusy(true); setErr(""); try { await api("/api/panel/documents", { method: "POST", body: JSON.stringify(form) }); setForm({ title: "", category: "reglamento", url: "", visibility: "residentes" }); await load() } catch (e) { setErr(String((e as Error).message)) } finally { setBusy(false) } }
+  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]; if (!file) return
+    if (!form.title.trim()) { setErr("Escribe el título antes de subir"); e.target.value = ""; return }
+    const reader = new FileReader()
+    reader.onload = async () => { setBusy(true); setErr(""); try { await api("/api/panel/documents", { method: "POST", body: JSON.stringify({ title: form.title, category: form.category, visibility: form.visibility, dataUrl: reader.result, fileName: file.name }) }); setForm({ title: "", category: "reglamento", url: "", visibility: "residentes" }); await load() } catch (e) { setErr(String((e as Error).message)) } finally { setBusy(false) } }
+    reader.readAsDataURL(file); e.target.value = ""
+  }
+  async function remove(id: string) { if (!confirm("¿Eliminar documento?")) return; try { await api("/api/panel/documents", { method: "POST", body: JSON.stringify({ kind: "delete", id }) }); await load() } catch (e) { setErr(String((e as Error).message)) } }
+  return (
+    <div>
+      <h1 style={{ fontSize: 22, fontWeight: 800, margin: "4px 0 14px" }}>Documentos</h1>
+      {err && <div style={errBox}>{err}</div>}
+      <Card>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, alignItems: "end" }}>
+          <Field label="Título *"><input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Reglamento interno" style={input} /></Field>
+          <Field label="Categoría"><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} style={input}>{["reglamento", "acta", "estado_financiero", "poliza", "contrato", "general"].map((c) => <option key={c} value={c}>{c}</option>)}</select></Field>
+          <Field label="Visible para"><select value={form.visibility} onChange={(e) => setForm({ ...form, visibility: e.target.value })} style={input}><option value="residentes">Residentes</option><option value="junta">Solo junta</option></select></Field>
+          <Field label="URL (opcional)"><input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://…" style={input} /></Field>
+        </div>
+        <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+          <button onClick={addUrl} disabled={busy} style={btnPrimary}>Agregar por URL</button>
+          <label style={{ ...btnGhost, cursor: "pointer" }}>{busy ? "Subiendo…" : "⬆️ Subir archivo"}<input type="file" onChange={onFile} style={{ display: "none" }} disabled={busy} /></label>
+        </div>
+      </Card>
+      <div style={{ marginTop: 14 }}><Card>
+        {items.length === 0 ? <p style={{ color: "#5b6b82", margin: 0 }}>Sin documentos.</p> : items.map((d) => (
+          <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid #f0f3f8" }}>
+            <span>📄</span><a href={d.file_url} target="_blank" rel="noopener" style={{ fontWeight: 600, color: "#1554b8", textDecoration: "none" }}>{d.title}</a>
+            <span style={{ fontSize: 12, color: "#8494a8" }}>{d.category} · {d.visibility}</span>
+            <button onClick={() => remove(d.id)} style={{ ...btnMiniDanger, marginLeft: "auto" }}>Eliminar</button>
+          </div>
+        ))}
+      </Card></div>
     </div>
   )
 }
