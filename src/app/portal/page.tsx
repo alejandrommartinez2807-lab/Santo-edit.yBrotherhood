@@ -90,7 +90,9 @@ export default async function PortalPage() {
           <strong style={{ fontSize: 17 }}>{mallName}</strong>
           <nav style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center" }}>
             <a href="#directorio" style={navLink}>Tiendas</a>
+            <a href="/mapa" style={navLink}>Mapa</a>
             <a href="#servicios" style={navLink}>Servicios</a>
+            <a href="/consultorios" style={navLink}>Consultorios</a>
             <a href="/estacionamiento" style={navLink}>Estacionamiento</a>
             <a href="#alquiler" style={navLink}>Alquila tu local</a>
             <a href="/mi-cuenta" style={{ ...navLink, fontWeight: 700, color: "#0a6f9c" }}>Soy comerciante</a>
@@ -211,6 +213,7 @@ export default async function PortalPage() {
         <img src="/concepto-logo.png" alt="" width={22} height={22} style={{ borderRadius: 6 }} />
         <span>© {new Date().getFullYear()} {mallName}</span>
         <span style={{ marginLeft: "auto" }}>{BRAND.location}</span>
+        <a href="/contacto" style={{ color: "#7c93a6" }}>Atención al cliente</a>
         <a href="/panel" style={{ color: "#7c93a6" }}>Administración</a>
       </footer>
     </div>

@@ -55,7 +55,7 @@ type Summary = {
   income?: { canon: number; condominio: number; renta_pct: number; estacionamiento: number; publicidad: number; total: number }
 }
 
-type Tab = "resumen" | "unidades" | "residentes" | "contratos" | "ventas" | "cuotas" | "estado" | "galeria" | "amenidades" | "incidencias" | "estacionamiento" | "publicidad" | "comunicados" | "asambleas" | "accesos" | "documentos"
+type Tab = "resumen" | "unidades" | "residentes" | "contratos" | "ventas" | "cuotas" | "estado" | "galeria" | "amenidades" | "incidencias" | "estacionamiento" | "publicidad" | "consultorios" | "atencion" | "fidelidad" | "comunicados" | "asambleas" | "accesos" | "documentos"
 
 const UNIT_STATUS = ["disponible", "ocupado", "reservado", "mantenimiento", "inactivo"]
 const RES_ROLES = ["propietario", "inquilino", "encargado", "autorizado"]
@@ -75,6 +75,9 @@ const MODULES: { key: Tab | string; label: string; icon: string; ready: boolean 
   { key: "incidencias", label: "Incidencias", icon: "🛠️", ready: true },
   { key: "estacionamiento", label: "Estacionamiento", icon: "🅿️", ready: true },
   { key: "publicidad", label: "Publicidad", icon: "📢", ready: true },
+  { key: "consultorios", label: "Consultorios", icon: "🩺", ready: true },
+  { key: "atencion", label: "Atención al cliente", icon: "💬", ready: true },
+  { key: "fidelidad", label: "Fidelidad", icon: "⭐", ready: true },
   { key: "comunicados", label: "Comunicados", icon: "📣", ready: true },
   { key: "asambleas", label: "Asambleas", icon: "🗳️", ready: true },
   { key: "accesos", label: "Accesos", icon: "🚪", ready: true },
@@ -141,6 +144,9 @@ export default function PanelApp() {
           {tab === "incidencias" && <IncidenciasView api={api} />}
           {tab === "estacionamiento" && <EstacionamientoView api={api} />}
           {tab === "publicidad" && <PublicidadView api={api} />}
+          {tab === "consultorios" && <ConsultoriosView api={api} />}
+          {tab === "atencion" && <AtencionView api={api} />}
+          {tab === "fidelidad" && <FidelidadView api={api} />}
           {tab === "comunicados" && <ComunicadosView api={api} />}
           {tab === "asambleas" && <AsambleasView api={api} />}
           {tab === "accesos" && <AccesosView api={api} />}
@@ -1624,6 +1630,352 @@ function PublicidadView({ api }: { api: (p: string, i?: RequestInit) => Promise<
   )
 }
 
+// ---------- Consultorios ----------
+type Doctor = { id: string; full_name: string; specialty: string; phone: string; consult_fee: number; currency: string; active: boolean }
+type Sched = { id: string; doctor_id: string; weekday: number; start_time: string; end_time: string; slot_minutes: number }
+type Appt = { id: string; doctor_id: string; patient_name: string; patient_phone: string; starts_at: string; status: string; reason: string; doctors?: { full_name?: string; specialty?: string } | null }
+const WEEKDAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"]
+const APPT_STATUS = ["solicitada", "confirmada", "atendida", "cancelada", "no_asistio"]
+const emptyDocForm = { id: "", fullName: "", specialty: "", phone: "", consultFee: "", currency: "USD", active: true }
+
+function ConsultoriosView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
+  const [doctors, setDoctors] = useState<Doctor[]>([])
+  const [schedule, setSchedule] = useState<Sched[]>([])
+  const [appts, setAppts] = useState<Appt[]>([])
+  const [docForm, setDocForm] = useState({ ...emptyDocForm })
+  const [showDoc, setShowDoc] = useState(false)
+  const [schedFor, setSchedFor] = useState<Doctor | null>(null)
+  const [schedRows, setSchedRows] = useState<{ weekday: number; enabled: boolean; startTime: string; endTime: string; slotMinutes: string }[]>([])
+  const [err, setErr] = useState("")
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true); setErr("")
+    try {
+      const d = await api("/api/panel/medical")
+      setDoctors((d.doctors as Doctor[]) || [])
+      setSchedule((d.schedule as Sched[]) || [])
+      setAppts((d.appointments as Appt[]) || [])
+    } catch (e) { setErr(String((e as Error).message)) } finally { setLoading(false) }
+  }, [api])
+  useEffect(() => { load() }, [load])
+
+  async function saveDoc(e: React.FormEvent) {
+    e.preventDefault(); setErr("")
+    try {
+      await api("/api/panel/medical", { method: "POST", body: JSON.stringify({ action: "doctor", id: docForm.id || undefined, fullName: docForm.fullName, specialty: docForm.specialty, phone: docForm.phone, consultFee: Number(docForm.consultFee || 0), currency: docForm.currency, active: docForm.active }) })
+      setDocForm({ ...emptyDocForm }); setShowDoc(false); await load()
+    } catch (e) { setErr(String((e as Error).message)) }
+  }
+
+  function openSchedule(doc: Doctor) {
+    const rows = WEEKDAYS.map((_, wd) => {
+      const b = schedule.find((s) => s.doctor_id === doc.id && s.weekday === wd)
+      return { weekday: wd, enabled: !!b, startTime: b?.start_time || "09:00", endTime: b?.end_time || "13:00", slotMinutes: String(b?.slot_minutes || 30) }
+    })
+    setSchedRows(rows); setSchedFor(doc)
+  }
+  async function saveSchedule() {
+    if (!schedFor) return
+    setErr("")
+    try {
+      const blocks = schedRows.filter((r) => r.enabled).map((r) => ({ weekday: r.weekday, startTime: r.startTime, endTime: r.endTime, slotMinutes: Number(r.slotMinutes || 30) }))
+      await api("/api/panel/medical", { method: "POST", body: JSON.stringify({ action: "schedule", doctorId: schedFor.id, blocks }) })
+      setSchedFor(null); await load()
+    } catch (e) { setErr(String((e as Error).message)) }
+  }
+  async function setApptStatus(id: string, status: string) {
+    try { await api("/api/panel/medical", { method: "POST", body: JSON.stringify({ action: "apptStatus", id, status }) }); await load() } catch (e) { setErr(String((e as Error).message)) }
+  }
+
+  const upcoming = appts.filter((a) => new Date(a.starts_at).getTime() >= Date.now() - 3600000 && a.status !== "cancelada")
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, flex: 1 }}>Consultorios médicos</h1>
+        <button onClick={() => { setDocForm({ ...emptyDocForm }); setShowDoc((v) => !v) }} style={btnPrimary}>+ Doctor</button>
+      </div>
+      {err && <div style={errBox}>{err}</div>}
+
+      {showDoc && (
+        <Card>
+          <form onSubmit={saveDoc} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12 }}>
+            <Field label="Nombre *"><input required value={docForm.fullName} onChange={(e) => setDocForm({ ...docForm, fullName: e.target.value })} placeholder="Dra. Ana Pérez" style={input} /></Field>
+            <Field label="Especialidad"><input value={docForm.specialty} onChange={(e) => setDocForm({ ...docForm, specialty: e.target.value })} placeholder="Pediatría" style={input} /></Field>
+            <Field label="Teléfono"><input value={docForm.phone} onChange={(e) => setDocForm({ ...docForm, phone: e.target.value })} style={input} /></Field>
+            <Field label="Consulta ($)"><input type="number" step="0.01" value={docForm.consultFee} onChange={(e) => setDocForm({ ...docForm, consultFee: e.target.value })} style={input} /></Field>
+            <div style={{ gridColumn: "1/-1", display: "flex", gap: 10 }}>
+              <button type="submit" style={btnPrimary}>{docForm.id ? "Guardar" : "Crear doctor"}</button>
+              <button type="button" onClick={() => setShowDoc(false)} style={btnGhost}>Cancelar</button>
+            </div>
+          </form>
+        </Card>
+      )}
+
+      {schedFor && (
+        <Card>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>Horario de {schedFor.full_name}</div>
+          <div style={{ display: "grid", gap: 8 }}>
+            {schedRows.map((r, i) => (
+              <div key={r.weekday} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                <label style={{ width: 90, display: "flex", gap: 6, alignItems: "center", fontWeight: 600 }}>
+                  <input type="checkbox" checked={r.enabled} onChange={(e) => setSchedRows(schedRows.map((x, j) => j === i ? { ...x, enabled: e.target.checked } : x))} /> {WEEKDAYS[r.weekday]}
+                </label>
+                <input type="time" value={r.startTime} disabled={!r.enabled} onChange={(e) => setSchedRows(schedRows.map((x, j) => j === i ? { ...x, startTime: e.target.value } : x))} style={{ ...input, width: 120 }} />
+                <span>a</span>
+                <input type="time" value={r.endTime} disabled={!r.enabled} onChange={(e) => setSchedRows(schedRows.map((x, j) => j === i ? { ...x, endTime: e.target.value } : x))} style={{ ...input, width: 120 }} />
+                <label style={{ fontSize: 13, color: "#5b6b82" }}>cada <input type="number" value={r.slotMinutes} disabled={!r.enabled} onChange={(e) => setSchedRows(schedRows.map((x, j) => j === i ? { ...x, slotMinutes: e.target.value } : x))} style={{ ...input, width: 70, display: "inline-block" }} /> min</label>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+            <button onClick={saveSchedule} style={btnPrimary}>Guardar horario</button>
+            <button onClick={() => setSchedFor(null)} style={btnGhost}>Cerrar</button>
+          </div>
+        </Card>
+      )}
+
+      <div style={{ marginTop: 14 }}>
+        <Card>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>Doctores ({doctors.length})</div>
+          {loading ? <p style={{ color: "#5b6b82" }}>Cargando…</p> : doctors.length === 0 ? (
+            <p style={{ color: "#5b6b82", margin: 0 }}>Aún no hay doctores. Crea el primero con “+ Doctor”.</p>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={table}>
+                <thead><tr>{["Nombre", "Especialidad", "Teléfono", "Consulta", "Estado", ""].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {doctors.map((d) => (
+                    <tr key={d.id}>
+                      <td style={{ ...td, fontWeight: 700 }}>{d.full_name}</td>
+                      <td style={td}>{d.specialty || "—"}</td>
+                      <td style={td}>{d.phone || "—"}</td>
+                      <td style={td}>{d.consult_fee ? `$${d.consult_fee}` : "—"}</td>
+                      <td style={td}><span style={badge(d.active ? "activo" : "inactivo")}>{d.active ? "activo" : "inactivo"}</span></td>
+                      <td style={{ ...td, whiteSpace: "nowrap" }}>
+                        <button onClick={() => openSchedule(d)} style={btnMini}>Horario</button>
+                        <button onClick={() => { setDocForm({ id: d.id, fullName: d.full_name, specialty: d.specialty || "", phone: d.phone || "", consultFee: String(d.consult_fee || ""), currency: d.currency || "USD", active: d.active }); setShowDoc(true) }} style={btnMini}>Editar</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <div style={{ marginTop: 14 }}>
+        <Card>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>Próximas citas ({upcoming.length})</div>
+          {upcoming.length === 0 ? <p style={{ color: "#5b6b82", margin: 0 }}>No hay citas próximas.</p> : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={table}>
+                <thead><tr>{["Fecha/hora", "Doctor", "Paciente", "Motivo", "Estado", ""].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {upcoming.map((a) => (
+                    <tr key={a.id}>
+                      <td style={{ ...td, fontWeight: 700 }}>{new Date(a.starts_at).toLocaleString("es-VE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</td>
+                      <td style={td}>{a.doctors?.full_name || "—"}</td>
+                      <td style={td}>{a.patient_name}<div style={{ fontSize: 12, color: "#8494a8" }}>{a.patient_phone}</div></td>
+                      <td style={td}>{a.reason || "—"}</td>
+                      <td style={td}><span style={badge(a.status)}>{a.status}</span></td>
+                      <td style={{ ...td, whiteSpace: "nowrap" }}>
+                        {a.status === "solicitada" && <button onClick={() => setApptStatus(a.id, "confirmada")} style={btnMini}>Confirmar</button>}
+                        {(a.status === "solicitada" || a.status === "confirmada") && <button onClick={() => setApptStatus(a.id, "atendida")} style={btnMini}>Atendida</button>}
+                        <button onClick={() => { if (confirm("¿Cancelar cita?")) setApptStatus(a.id, "cancelada") }} style={btnMiniDanger}>Cancelar</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+// ---------- Atención al cliente (CRM) ----------
+type CrmCase = { id: string; kind: string; subject: string; message: string; customer_name: string; customer_phone: string; customer_email: string; channel: string; status: string; priority: string; resolution: string; created_at: string }
+const CRM_STATUS = ["nuevo", "en_proceso", "resuelto", "cerrado"]
+const CRM_KIND_LABEL: Record<string, string> = { reclamo: "Reclamo", sugerencia: "Sugerencia", consulta: "Consulta", objeto_perdido: "Objeto perdido", solicitud_local: "Solicitud de local", propuesta_proveedor: "Propuesta proveedor", otro: "Otro" }
+
+function AtencionView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
+  const [cases, setCases] = useState<CrmCase[]>([])
+  const [filter, setFilter] = useState("")
+  const [err, setErr] = useState("")
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true); setErr("")
+    try { const d = await api("/api/panel/crm"); setCases((d.cases as CrmCase[]) || []) } catch (e) { setErr(String((e as Error).message)) } finally { setLoading(false) }
+  }, [api])
+  useEffect(() => { load() }, [load])
+
+  async function update(id: string, patch: Record<string, unknown>) {
+    try { await api("/api/panel/crm", { method: "POST", body: JSON.stringify({ action: "update", id, ...patch }) }); await load() } catch (e) { setErr(String((e as Error).message)) }
+  }
+  const shown = filter ? cases.filter((c) => c.status === filter) : cases
+  const openCount = cases.filter((c) => c.status === "nuevo" || c.status === "en_proceso").length
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, flex: 1 }}>Atención al cliente</h1>
+        <span style={{ fontSize: 13, color: "#0a6f9c", fontWeight: 700 }}>{openCount} abierto(s)</span>
+        <select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ ...input, width: 150 }}>
+          <option value="">Todos</option>{CRM_STATUS.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
+      {err && <div style={errBox}>{err}</div>}
+      <Card>
+        {loading ? <p style={{ color: "#5b6b82" }}>Cargando…</p> : shown.length === 0 ? (
+          <p style={{ color: "#5b6b82", margin: 0 }}>Sin casos. Los que lleguen por la web aparecerán aquí.</p>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={table}>
+              <thead><tr>{["Fecha", "Tipo", "Cliente", "Mensaje", "Prioridad", "Estado", ""].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+              <tbody>
+                {shown.map((c) => (
+                  <tr key={c.id}>
+                    <td style={td}>{new Date(c.created_at).toLocaleDateString("es-VE", { day: "2-digit", month: "2-digit" })}</td>
+                    <td style={td}>{CRM_KIND_LABEL[c.kind] || c.kind}</td>
+                    <td style={td}>{c.customer_name || "—"}<div style={{ fontSize: 12, color: "#8494a8" }}>{c.customer_phone}</div></td>
+                    <td style={{ ...td, maxWidth: 320 }}>{c.subject ? <b>{c.subject}: </b> : null}{c.message}</td>
+                    <td style={td}>
+                      <select value={c.priority} onChange={(e) => update(c.id, { priority: e.target.value })} style={{ ...input, width: 90, padding: "4px 6px" }}>{["baja", "media", "alta"].map((p) => <option key={p} value={p}>{p}</option>)}</select>
+                    </td>
+                    <td style={td}><span style={badge(c.status)}>{c.status}</span></td>
+                    <td style={{ ...td, whiteSpace: "nowrap" }}>
+                      <select value={c.status} onChange={(e) => update(c.id, { status: e.target.value })} style={{ ...input, width: 120, padding: "4px 6px" }}>{CRM_STATUS.map((s) => <option key={s} value={s}>{s}</option>)}</select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+    </div>
+  )
+}
+
+// ---------- Fidelidad ----------
+type LoyalCustomer = { id: string; full_name: string; phone: string; email: string; points: number; tier: string; active: boolean }
+type LoyalTx = { id: string; points: number; kind: string; amount: number; note: string; created_at: string; loyalty_customers?: { full_name?: string } | null }
+const emptyLoyalForm = { id: "", fullName: "", phone: "", email: "", tier: "general" }
+
+function FidelidadView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
+  const [customers, setCustomers] = useState<LoyalCustomer[]>([])
+  const [txs, setTxs] = useState<LoyalTx[]>([])
+  const [form, setForm] = useState({ ...emptyLoyalForm })
+  const [showForm, setShowForm] = useState(false)
+  const [err, setErr] = useState("")
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true); setErr("")
+    try {
+      const d = await api("/api/panel/loyalty")
+      setCustomers((d.customers as LoyalCustomer[]) || [])
+      setTxs((d.transactions as LoyalTx[]) || [])
+    } catch (e) { setErr(String((e as Error).message)) } finally { setLoading(false) }
+  }, [api])
+  useEffect(() => { load() }, [load])
+
+  async function saveCustomer(e: React.FormEvent) {
+    e.preventDefault(); setErr("")
+    try {
+      await api("/api/panel/loyalty", { method: "POST", body: JSON.stringify({ action: "customer", id: form.id || undefined, fullName: form.fullName, phone: form.phone, email: form.email, tier: form.tier }) })
+      setForm({ ...emptyLoyalForm }); setShowForm(false); await load()
+    } catch (e) { setErr(String((e as Error).message)) }
+  }
+  async function addPoints(c: LoyalCustomer, sign: number) {
+    const raw = prompt(sign > 0 ? `Puntos a acumular para ${c.full_name}:` : `Puntos a canjear de ${c.full_name} (saldo ${c.points}):`)
+    if (!raw) return
+    const pts = Math.abs(parseInt(raw, 10) || 0) * sign
+    if (!pts) return
+    try { await api("/api/panel/loyalty", { method: "POST", body: JSON.stringify({ action: "points", customerId: c.id, points: pts, kind: sign > 0 ? "compra" : "canje" }) }); await load() } catch (e) { setErr(String((e as Error).message)) }
+  }
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, flex: 1 }}>Fidelidad</h1>
+        <button onClick={() => { setForm({ ...emptyLoyalForm }); setShowForm((v) => !v) }} style={btnPrimary}>+ Cliente</button>
+      </div>
+      {err && <div style={errBox}>{err}</div>}
+      {showForm && (
+        <Card>
+          <form onSubmit={saveCustomer} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12 }}>
+            <Field label="Nombre *"><input required value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} style={input} /></Field>
+            <Field label="Teléfono *"><input required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} style={input} /></Field>
+            <Field label="Correo"><input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} style={input} /></Field>
+            <Field label="Nivel"><select value={form.tier} onChange={(e) => setForm({ ...form, tier: e.target.value })} style={input}>{["general", "plata", "oro"].map((t) => <option key={t} value={t}>{t}</option>)}</select></Field>
+            <div style={{ gridColumn: "1/-1", display: "flex", gap: 10 }}>
+              <button type="submit" style={btnPrimary}>{form.id ? "Guardar" : "Crear cliente"}</button>
+              <button type="button" onClick={() => setShowForm(false)} style={btnGhost}>Cancelar</button>
+            </div>
+          </form>
+        </Card>
+      )}
+      <div style={{ marginTop: 14 }}>
+        <Card>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>Clientes ({customers.length})</div>
+          {loading ? <p style={{ color: "#5b6b82" }}>Cargando…</p> : customers.length === 0 ? (
+            <p style={{ color: "#5b6b82", margin: 0 }}>Aún no hay clientes en el programa.</p>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={table}>
+                <thead><tr>{["Cliente", "Teléfono", "Nivel", "Puntos", ""].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {customers.map((c) => (
+                    <tr key={c.id}>
+                      <td style={{ ...td, fontWeight: 700 }}>{c.full_name}</td>
+                      <td style={td}>{c.phone}</td>
+                      <td style={td}><span style={badge(c.tier === "oro" ? "por_vencer" : c.tier === "plata" ? "reservado" : "ocupado")}>{c.tier}</span></td>
+                      <td style={{ ...td, fontWeight: 800, color: "#0a6f9c" }}>{c.points}</td>
+                      <td style={{ ...td, whiteSpace: "nowrap" }}>
+                        <button onClick={() => addPoints(c, 1)} style={btnMini}>+ pts</button>
+                        <button onClick={() => addPoints(c, -1)} style={btnMini}>canjear</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
+      {txs.length > 0 && (
+        <div style={{ marginTop: 14 }}>
+          <Card>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>Movimientos recientes</div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={table}>
+                <thead><tr>{["Fecha", "Cliente", "Tipo", "Puntos"].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {txs.map((t) => (
+                    <tr key={t.id}>
+                      <td style={td}>{new Date(t.created_at).toLocaleDateString("es-VE", { day: "2-digit", month: "2-digit" })}</td>
+                      <td style={td}>{t.loyalty_customers?.full_name || "—"}</td>
+                      <td style={td}>{t.kind}</td>
+                      <td style={{ ...td, fontWeight: 700, color: t.points >= 0 ? "#1e874b" : "#c0392b" }}>{t.points >= 0 ? "+" : ""}{t.points}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ---------- Comunicados ----------
 type Announcement = { id: string; title: string; body: string; category: string; is_pinned: boolean; published_at: string | null }
 
@@ -1850,6 +2202,10 @@ function badge(status: string): React.CSSProperties {
     abierto: "#e5f4fb|#0a6f9c", pagado: "#e6f4ea|#1e874b", cortesia: "#fff5e6|#8a5a00", anulado: "#f0f0f0|#6b7280", por_pagar: "#fff5e6|#8a5a00",
     // publicidad
     finalizado: "#eef3fb|#1554b8", cancelado: "#f0f0f0|#6b7280",
+    // consultorios
+    solicitada: "#fff5e6|#8a5a00", confirmada: "#e5f4fb|#0a6f9c", atendida: "#e6f4ea|#1e874b", cancelada: "#f0f0f0|#6b7280", no_asistio: "#fdecea|#c0392b",
+    // atención al cliente
+    nuevo: "#fff5e6|#8a5a00", en_proceso: "#e5f4fb|#0a6f9c", resuelto: "#e6f4ea|#1e874b", cerrado: "#f0f0f0|#6b7280",
     // legado condominio
     activa: "#e6f4ea|#1e874b", desocupada: "#eef3fb|#1554b8", en_mora: "#fdecea|#c0392b", inactiva: "#f0f0f0|#6b7280",
   }
