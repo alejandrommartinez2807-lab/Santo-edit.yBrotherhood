@@ -34,6 +34,38 @@ function canUsePush() {
   )
 }
 
+// iPhone/iPad: el push web solo existe si la página está agregada a la
+// pantalla de inicio y se abre desde el ícono (iOS 16.4+). Además ese
+// "Agregar a pantalla de inicio" que habilita el push vive en Safari, no en
+// Chrome. Detectamos el caso para dar los pasos exactos en vez del genérico.
+function isIOS() {
+  if (typeof navigator === "undefined") return false
+  const ua = navigator.userAgent || ""
+  return (
+    /iphone|ipad|ipod/i.test(ua) ||
+    // iPadOS se hace pasar por Mac; se distingue por la pantalla táctil.
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  )
+}
+
+function isInstalledStandalone() {
+  if (typeof window === "undefined") return false
+  return (
+    window.matchMedia?.("(display-mode: standalone)").matches === true ||
+    (navigator as unknown as { standalone?: boolean }).standalone === true
+  )
+}
+
+// Mensaje a medida para el caso más común de fallo en iPhone: el dueño abrió
+// la página en el navegador (o en Chrome) sin agregarla a inicio desde Safari.
+const IOS_HELP_MESSAGE =
+  "En iPhone las notificaciones SOLO funcionan desde Safari (no desde Chrome). " +
+  "1) Abre esta página en Safari. " +
+  "2) Toca el botón Compartir (el cuadro con la flecha ↑ abajo). " +
+  "3) Desliza y toca “Agregar a pantalla de inicio”. " +
+  "4) Abre la app desde el ícono nuevo y toca este botón otra vez. " +
+  "Necesitas iPhone con iOS 16.4 o superior."
+
 export function useStaffAlertsPush(adminPassword: string, enabled: boolean) {
   const [state, setState] = useState<StaffAlertsPushState>("unknown")
   const [message, setMessage] = useState("")
@@ -42,6 +74,11 @@ export function useStaffAlertsPush(adminPassword: string, enabled: boolean) {
     if (!enabled) return
     if (!canUsePush()) {
       setState("unavailable")
+      // En iPhone fuera de la app instalada el push no existe: adelantamos los
+      // pasos de Safari para que el dueño no crea que está roto.
+      if (isIOS() && !isInstalledStandalone()) {
+        setMessage(IOS_HELP_MESSAGE)
+      }
       return
     }
 
@@ -65,7 +102,9 @@ export function useStaffAlertsPush(adminPassword: string, enabled: boolean) {
     // explica qué usar (pasaba con navegadores "genéricos" y WebViews).
     if (state === "unavailable") {
       setMessage(
-        "Este navegador no soporta notificaciones push. Abre la página en Chrome (Android) o instálala como app (menú del navegador → “Agregar a pantalla principal” / “Instalar app”) y actívalas desde ahí. En iPhone es obligatorio agregarla a inicio y abrirla desde el ícono.",
+        isIOS()
+          ? IOS_HELP_MESSAGE
+          : "Este navegador no soporta notificaciones push. Abre la página en Chrome (Android) o instálala como app (menú del navegador → “Agregar a pantalla principal” / “Instalar app”) y actívalas desde ahí. En iPhone abre en Safari y agrégala a la pantalla de inicio.",
       )
       return
     }
