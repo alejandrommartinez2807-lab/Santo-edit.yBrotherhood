@@ -64,11 +64,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description,
     manifest: "/manifest.webmanifest",
-    icons: {
-      icon: "/favicon.ico",
-      shortcut: "/favicon.ico",
-      apple: "/demo/lidotel/lidotel-logo.png",
-    },
+    // Íconos por convención de archivos (src/app/icon.png, apple-icon.png,
+    // public/favicon.ico) — todos son el logo de Concepto La Granja.
     openGraph: {
       type: "website",
       siteName: businessName,
@@ -76,13 +73,13 @@ export async function generateMetadata(): Promise<Metadata> {
       description,
       url: "/",
       locale: "es_VE",
-      images: [{ url: "/demo/lidotel/lidotel-hero.png", alt: businessName }],
+      images: [{ url: "/concepto-logo.png", alt: businessName }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: ["/demo/lidotel/lidotel-hero.png"],
+      images: ["/concepto-logo.png"],
     },
   };
 }
