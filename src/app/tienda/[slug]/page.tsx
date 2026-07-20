@@ -46,9 +46,26 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const store = await loadStore(slug)
   if (!store) return { title: `Tienda · ${BRAND.name}` }
+  const title = `${store.commercial_name} · ${BRAND.name}`
+  const description = store.tagline || store.description?.slice(0, 150) || `${store.commercial_name} en ${BRAND.name}.`
+  const image = store.cover_url || store.logo_url || ""
+  // OpenGraph/Twitter: al compartir el link (WhatsApp, redes) sale nombre + foto.
   return {
-    title: `${store.commercial_name} · ${BRAND.name}`,
-    description: store.tagline || store.description?.slice(0, 150) || `${store.commercial_name} en ${BRAND.name}.`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      siteName: BRAND.name,
+      ...(image ? { images: [{ url: image }] } : {}),
+    },
+    twitter: {
+      card: image ? "summary_large_image" : "summary",
+      title,
+      description,
+      ...(image ? { images: [image] } : {}),
+    },
   }
 }
 
@@ -61,8 +78,22 @@ export default async function StorePage({ params }: { params: Promise<{ slug: st
   const waHref = `https://wa.me/${wa}?text=${encodeURIComponent(`Hola ${s.commercial_name}, los vi en el directorio de ${BRAND.name}.`)}`
   const location = [s.tower, s.floor].filter(Boolean).join(" · ")
 
+  // Datos estructurados para buscadores (ficha de negocio local).
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: s.commercial_name,
+    ...(s.tagline || s.description ? { description: s.tagline || s.description } : {}),
+    ...(s.cover_url || s.logo_url ? { image: s.cover_url || s.logo_url } : {}),
+    ...(s.phone ? { telephone: s.phone } : {}),
+    address: { "@type": "PostalAddress", name: `${BRAND.name}${location ? `, ${location}` : ""}` },
+    sameAs: [s.instagram ? instagramUrl(s.instagram) : "", s.website_url ? externalUrl(s.website_url) : ""].filter(Boolean),
+  }
+
   return (
     <div style={{ background: "#f6fbfe", color: "#163243", fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,sans-serif", minHeight: "100vh" }}>
+      {/* eslint-disable-next-line react/no-danger */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {/* NAV mínima de retorno */}
       <header style={{ position: "sticky", top: 0, zIndex: 20, background: "rgba(246,251,254,.9)", backdropFilter: "blur(8px)", borderBottom: "1px solid #dcecf5" }}>
         <div style={{ maxWidth: 900, margin: "0 auto", padding: "12px 20px", display: "flex", alignItems: "center", gap: 12 }}>

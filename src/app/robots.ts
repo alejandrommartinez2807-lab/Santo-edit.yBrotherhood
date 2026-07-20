@@ -18,6 +18,8 @@ export default function robots(): MetadataRoute.Robots {
           "/pedidos",
           "/pedido/",
           "/admin",
+          "/panel",
+          "/mi-cuenta",
         ],
       },
     ],

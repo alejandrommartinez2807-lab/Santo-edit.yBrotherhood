@@ -21,10 +21,23 @@ const DEFAULT_STORES: Store[] = [
   { id: "s8", code: "Salud", commercial_name: "Consultorios médicos", activity: "consultorio", floor: "Torre médica", logo_url: "", microsite_slug: "", microsite_enabled: false },
 ]
 
+const PORTAL_DESC =
+  "Directorio de tiendas, restaurantes, servicios y consultorios del C.C. Concepto La Granja. Estacionamiento, feria de comida y todo en un solo lugar."
+
 export const metadata: Metadata = {
   title: `${BRAND.name} · Centro comercial en Naguanagua`,
-  description:
-    "Directorio de tiendas, restaurantes, servicios y consultorios del C.C. Concepto La Granja. Estacionamiento, feria de comida y todo en un solo lugar.",
+  description: PORTAL_DESC,
+  openGraph: {
+    title: `${BRAND.name} · Centro comercial en Naguanagua`,
+    description: PORTAL_DESC,
+    type: "website",
+    siteName: BRAND.name,
+  },
+  twitter: {
+    card: "summary",
+    title: `${BRAND.name} · Centro comercial en Naguanagua`,
+    description: PORTAL_DESC,
+  },
 }
 
 export const dynamic = "force-dynamic"
