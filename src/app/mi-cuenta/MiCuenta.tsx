@@ -1,6 +1,13 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import ImageField, { uploadImageFile } from "@/components/ImageField"
+
+// Todas las pestañas cargan sus datos al montar con el patrón useEffect(() =>
+// load(), [load]) (load es un useCallback que hace setState tras el fetch). Es
+// intencional y uniforme en todo el portal; desactivamos aquí la regla nueva
+// del plugin que lo desaconseja para no fragmentar el patrón.
+/* eslint-disable react-hooks/set-state-in-effect */
 
 // Portal del residente: login por teléfono + código y cuenta completa con
 // pestañas (cuenta, reservas, incidencias, avisos, votaciones, visitas, docs).
@@ -62,6 +69,7 @@ function Login({ onToken }: { onToken: (t: string) => void }) {
 
 const TABS = [
   { key: "cuenta", label: "Cuenta", icon: "💳" },
+  { key: "web", label: "Mi web", icon: "🌐" },
   { key: "reservas", label: "Reservas", icon: "🏊" },
   { key: "incidencias", label: "Incidencias", icon: "🛠️" },
   { key: "avisos", label: "Avisos", icon: "📣" },
@@ -100,6 +108,7 @@ function Dashboard({ token, onLogout }: { token: string; onLogout: () => void })
       </nav>
       <main style={{ maxWidth: 860, margin: "0 auto", padding: "18px 16px" }}>
         {tab === "cuenta" && <CuentaTab api={api} />}
+        {tab === "web" && <MicrositioTab api={api} />}
         {tab === "reservas" && <ReservasTab api={api} />}
         {tab === "incidencias" && <IncidenciasTab api={api} />}
         {tab === "avisos" && <AvisosTab api={api} />}
@@ -345,6 +354,154 @@ function DocsTab({ api }: { api: Api }) {
       ))}
     </div>
   )
+}
+
+// ---------- Mi web (micrositio del local) ----------
+type GItem = { url: string; caption?: string }
+type MUnit = {
+  id: string; code: string; commercial_name?: string; activity?: string; floor?: string; logo_url?: string
+  microsite_enabled?: boolean; microsite_slug?: string; tagline?: string; description?: string
+  phone?: string; microsite_whatsapp?: string; instagram?: string; website_url?: string
+  hours?: string; promo?: string; cover_url?: string; gallery?: GItem[]
+}
+
+function microsSlug(v: string) {
+  return v.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60)
+}
+
+const emptyMicro = {
+  micrositeEnabled: false, micrositeSlug: "", commercialName: "", logoUrl: "", coverUrl: "", tagline: "",
+  phone: "", micrositeWhatsapp: "", instagram: "", websiteUrl: "", promo: "", hours: "", description: "", galleryText: "",
+}
+
+function MicrositioTab({ api }: { api: Api }) {
+  const [units, setUnits] = useState<MUnit[]>([])
+  const [unitId, setUnitId] = useState("")
+  const [form, setForm] = useState({ ...emptyMicro })
+  const [err, setErr] = useState(""); const [msg, setMsg] = useState(""); const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [galBusy, setGalBusy] = useState(false)
+  const galRef = useRef<HTMLInputElement>(null)
+
+  async function addGalleryPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setGalBusy(true); setErr("")
+    try {
+      const url = await uploadImageFile(api, "/api/portal/upload-image", "galeria", file)
+      setForm((f) => ({ ...f, galleryText: f.galleryText ? `${f.galleryText}\n${url}` : url }))
+    } catch (e) { setErr(String((e as Error).message)) } finally { setGalBusy(false); if (galRef.current) galRef.current.value = "" }
+  }
+
+  const fill = useCallback((u: MUnit) => {
+    setForm({
+      micrositeEnabled: !!u.microsite_enabled, micrositeSlug: u.microsite_slug || "", commercialName: u.commercial_name || "",
+      logoUrl: u.logo_url || "", coverUrl: u.cover_url || "", tagline: u.tagline || "", phone: u.phone || "",
+      micrositeWhatsapp: u.microsite_whatsapp || "", instagram: u.instagram || "", websiteUrl: u.website_url || "",
+      promo: u.promo || "", hours: u.hours || "", description: u.description || "",
+      galleryText: (u.gallery || []).map((g) => g.url).join("\n"),
+    })
+  }, [])
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const d = await api("/api/portal/microsite")
+      const list = (d.units as MUnit[]) || []
+      setUnits(list)
+      if (list[0]) { setUnitId(list[0].id); fill(list[0]) }
+    } catch (e) { setErr(String((e as Error).message)) } finally { setLoading(false) }
+  }, [api, fill])
+  useEffect(() => { load() }, [load])
+
+  function pick(id: string) {
+    setUnitId(id); setMsg(""); setErr("")
+    const u = units.find((x) => x.id === id)
+    if (u) fill(u)
+  }
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault(); setErr(""); setMsg(""); setSaving(true)
+    try {
+      const gallery = form.galleryText.split("\n").map((s) => s.trim()).filter(Boolean).map((url) => ({ url }))
+      const d = await api("/api/portal/microsite", {
+        method: "POST",
+        body: JSON.stringify({ unitId, ...form, gallery }),
+      })
+      const u = d.unit as MUnit | undefined
+      if (u) {
+        setUnits((prev) => prev.map((x) => (x.id === u.id ? u : x)))
+        fill(u)
+      }
+      setMsg("✓ Tu web quedó guardada.")
+    } catch (e) { setErr(String((e as Error).message)) } finally { setSaving(false) }
+  }
+
+  if (loading) return <div style={card}><Empty text="Cargando…" /></div>
+  if (units.length === 0) return <div style={card}><Empty text="No tienes locales asociados. Pídele a la administración que te vincule a tu local." /></div>
+
+  const slug = form.micrositeSlug || microsSlug(form.commercialName)
+
+  return (
+    <div>
+      {err && <div style={errBox}>{err}</div>}
+      {msg && <div style={okBox}>{msg}</div>}
+
+      {units.length > 1 && (
+        <select value={unitId} onChange={(e) => pick(e.target.value)} style={{ ...inp, marginBottom: 12 }}>
+          {units.map((u) => <option key={u.id} value={u.id}>{u.commercial_name ? `${u.commercial_name} (${u.code})` : u.code}</option>)}
+        </select>
+      )}
+
+      <form onSubmit={save} style={{ ...card }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, cursor: "pointer" }}>
+          <input type="checkbox" checked={form.micrositeEnabled} onChange={(e) => setForm({ ...form, micrositeEnabled: e.target.checked })} />
+          🌐 Publicar mi web en el directorio
+        </label>
+        <p style={{ fontSize: 12, color: "#8494a8", margin: "4px 0 14px" }}>
+          {form.micrositeEnabled
+            ? <>Tu web: <b>/tienda/{slug || "…"}</b> {slug && <a href={`/tienda/${slug}`} target="_blank" rel="noopener" style={{ color: "#1554b8" }}>Ver ↗</a>}</>
+            : "Mientras esté apagada, tu local aparece en el directorio pero sin página propia."}
+        </p>
+
+        <div style={{ display: "grid", gap: 10 }}>
+          <L label="Nombre comercial"><input value={form.commercialName} onChange={(e) => setForm({ ...form, commercialName: e.target.value })} placeholder="Capitán Grill" style={inp} /></L>
+          {form.micrositeEnabled && (
+            <>
+              <L label="URL amigable (opcional)"><input value={form.micrositeSlug} onChange={(e) => setForm({ ...form, micrositeSlug: e.target.value })} placeholder={microsSlug(form.commercialName) || "capitan-grill"} style={inp} /></L>
+              <L label="Frase corta"><input value={form.tagline} onChange={(e) => setForm({ ...form, tagline: e.target.value })} placeholder="Las mejores hamburguesas" style={inp} /></L>
+              <L label="Portada"><ImageField value={form.coverUrl} onChange={(url) => setForm({ ...form, coverUrl: url })} api={api} endpoint="/api/portal/upload-image" folder="portadas" /></L>
+              <L label="Logo"><ImageField value={form.logoUrl} onChange={(url) => setForm({ ...form, logoUrl: url })} api={api} endpoint="/api/portal/upload-image" folder="logos" round /></L>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <L label="Teléfono" grow><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="0241-…" style={inp} /></L>
+                <L label="WhatsApp" grow><input value={form.micrositeWhatsapp} onChange={(e) => setForm({ ...form, micrositeWhatsapp: e.target.value })} placeholder="58412…" style={inp} /></L>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <L label="Instagram" grow><input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} placeholder="@usuario" style={inp} /></L>
+                <L label="Sitio web propio" grow><input value={form.websiteUrl} onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })} placeholder="https://…" style={inp} /></L>
+              </div>
+              <L label="Promoción vigente"><input value={form.promo} onChange={(e) => setForm({ ...form, promo: e.target.value })} placeholder="2x1 los martes" style={inp} /></L>
+              <L label="Horario"><textarea value={form.hours} onChange={(e) => setForm({ ...form, hours: e.target.value })} rows={2} placeholder={"Lun–Sáb 10:00–20:00"} style={{ ...inp, resize: "vertical" }} /></L>
+              <L label="Sobre nosotros"><textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={4} placeholder="Cuéntale a los visitantes qué ofreces…" style={{ ...inp, resize: "vertical" }} /></L>
+              <L label="Galería">
+                <textarea value={form.galleryText} onChange={(e) => setForm({ ...form, galleryText: e.target.value })} rows={3} placeholder={"Sube fotos o pega una URL por línea\nhttps://…"} style={{ ...inp, resize: "vertical" }} />
+                <div style={{ marginTop: 6 }}>
+                  <button type="button" onClick={() => galRef.current?.click()} disabled={galBusy} style={{ ...btnGhost, padding: "6px 12px", fontSize: 13 }}>{galBusy ? "Subiendo…" : "⬆︎ Subir foto a la galería"}</button>
+                </div>
+                <input ref={galRef} type="file" accept="image/*" onChange={addGalleryPhoto} style={{ display: "none" }} />
+              </L>
+            </>
+          )}
+        </div>
+
+        <button type="submit" disabled={saving} style={{ ...btn, marginTop: 14 }}>{saving ? "Guardando…" : "Guardar mi web"}</button>
+      </form>
+    </div>
+  )
+}
+
+function L({ label, children, grow }: { label: string; children: React.ReactNode; grow?: boolean }) {
+  return <div style={{ flex: grow ? 1 : undefined, minWidth: grow ? 130 : undefined }}><label style={{ ...lbl, display: "block", marginBottom: 4 }}>{label}</label>{children}</div>
 }
 
 // ---------- helpers ----------

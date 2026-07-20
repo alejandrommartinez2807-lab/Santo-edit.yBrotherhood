@@ -1,6 +1,13 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
+import ImageField from "@/components/ImageField"
+
+// Cada vista carga sus datos al montar con el patrón useEffect(() => load(),
+// [load]) (load es un useCallback que hace setState tras el fetch). Es
+// intencional y uniforme en todo el panel; desactivamos la regla nueva del
+// plugin que lo desaconseja para no fragmentar el patrón.
+/* eslint-disable react-hooks/set-state-in-effect */
 
 // ============================================================
 // Panel administrativo de condominio — Concepto La Granja
@@ -28,6 +35,17 @@ type Unit = {
   commercial_name?: string
   activity?: string
   logo_url?: string
+  microsite_enabled?: boolean
+  microsite_slug?: string
+  tagline?: string
+  description?: string
+  phone?: string
+  microsite_whatsapp?: string
+  instagram?: string
+  website_url?: string
+  hours?: string
+  promo?: string
+  cover_url?: string
 }
 type Resident = {
   id: string
@@ -356,8 +374,21 @@ function Stat({ label, value, hint, hintColor, onClick }: { label: string; value
 }
 
 // ---------- Unidades ----------
+// Vista previa del slug del micrositio (debe coincidir con slugify del backend).
+function slugPreview(v: string) {
+  return v
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60)
+}
+
 const emptyUnitForm = {
   id: "", code: "", commercialName: "", activity: "", logoUrl: "", tower: "", floor: "", unitTypeId: "", areaM2: "", alicuotaPct: "", parkingSlots: "0", storageSlots: "0", status: "disponible", notes: "",
+  // Micrositio ("la web" del local)
+  micrositeEnabled: false, micrositeSlug: "", tagline: "", description: "", phone: "", micrositeWhatsapp: "", instagram: "", websiteUrl: "", hours: "", promo: "", coverUrl: "",
 }
 
 function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
@@ -387,6 +418,9 @@ function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
       tower: u.tower || "", floor: u.floor || "", unitTypeId: u.unit_type_id || "",
       areaM2: String(u.area_m2 || ""), alicuotaPct: String(((u.alicuota || 0) * 100) || ""),
       parkingSlots: String(u.parking_slots || 0), storageSlots: String(u.storage_slots || 0), status: u.status || "disponible", notes: u.notes || "",
+      micrositeEnabled: !!u.microsite_enabled, micrositeSlug: u.microsite_slug || "", tagline: u.tagline || "", description: u.description || "",
+      phone: u.phone || "", micrositeWhatsapp: u.microsite_whatsapp || "", instagram: u.instagram || "", websiteUrl: u.website_url || "",
+      hours: u.hours || "", promo: u.promo || "", coverUrl: u.cover_url || "",
     })
     setShowForm(true)
   }
@@ -402,6 +436,9 @@ function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
           tower: form.tower, floor: form.floor, unitTypeId: form.unitTypeId,
           areaM2: Number(form.areaM2 || 0), alicuota: Number(form.alicuotaPct || 0) / 100,
           parkingSlots: Number(form.parkingSlots || 0), storageSlots: Number(form.storageSlots || 0), status: form.status, notes: form.notes,
+          micrositeEnabled: form.micrositeEnabled, micrositeSlug: form.micrositeSlug, tagline: form.tagline, description: form.description,
+          phone: form.phone, micrositeWhatsapp: form.micrositeWhatsapp, instagram: form.instagram, websiteUrl: form.websiteUrl,
+          hours: form.hours, promo: form.promo, coverUrl: form.coverUrl,
         }),
       })
       setForm({ ...emptyUnitForm }); setShowForm(false); await load()
@@ -440,7 +477,7 @@ function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
                 {ACTIVITIES.map((a) => <option key={a} value={a}>{a}</option>)}
               </select>
             </Field>
-            <Field label="Logo (URL)"><input value={form.logoUrl} onChange={(e) => setForm({ ...form, logoUrl: e.target.value })} placeholder="https://…" style={input} /></Field>
+            <Field label="Logo"><ImageField value={form.logoUrl} onChange={(url) => setForm({ ...form, logoUrl: url })} api={api} endpoint="/api/panel/upload-image" folder="logos" round /></Field>
             <Field label="Torre / Bloque"><input value={form.tower} onChange={(e) => setForm({ ...form, tower: e.target.value })} style={input} /></Field>
             <Field label="Piso"><input value={form.floor} onChange={(e) => setForm({ ...form, floor: e.target.value })} style={input} /></Field>
             <Field label="Tipo">
@@ -459,9 +496,42 @@ function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
                 {UNIT_STATUS.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </Field>
+            {/* MICROSITIO — la "web" del local dentro del portal del centro comercial */}
+            <div style={{ gridColumn: "1/-1", borderTop: "1px solid #e6eef5", marginTop: 6, paddingTop: 12 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: 14, cursor: "pointer" }}>
+                <input type="checkbox" checked={form.micrositeEnabled} onChange={(e) => setForm({ ...form, micrositeEnabled: e.target.checked })} />
+                🌐 Publicar micrositio (la web del local)
+              </label>
+              <p style={{ fontSize: 12, color: "#7c93a6", margin: "4px 0 0" }}>
+                Al publicarlo, la tarjeta del directorio enlaza a <code>/tienda/{form.micrositeSlug || slugPreview(form.commercialName)}</code>.
+              </p>
+            </div>
+            {form.micrositeEnabled && (
+              <>
+                <Field label="URL amigable (slug)"><input value={form.micrositeSlug} onChange={(e) => setForm({ ...form, micrositeSlug: e.target.value })} placeholder={slugPreview(form.commercialName) || "capitan-grill"} style={input} /></Field>
+                <Field label="Frase corta (tagline)"><input value={form.tagline} onChange={(e) => setForm({ ...form, tagline: e.target.value })} placeholder="Las mejores hamburguesas" style={input} /></Field>
+                <div style={{ gridColumn: "1/-1" }}>
+                  <Field label="Portada"><ImageField value={form.coverUrl} onChange={(url) => setForm({ ...form, coverUrl: url })} api={api} endpoint="/api/panel/upload-image" folder="portadas" /></Field>
+                </div>
+                <Field label="Teléfono"><input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="0241-…" style={input} /></Field>
+                <Field label="WhatsApp del local"><input value={form.micrositeWhatsapp} onChange={(e) => setForm({ ...form, micrositeWhatsapp: e.target.value })} placeholder="58412…" style={input} /></Field>
+                <Field label="Instagram"><input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} placeholder="@usuario" style={input} /></Field>
+                <Field label="Sitio web propio"><input value={form.websiteUrl} onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })} placeholder="https://…" style={input} /></Field>
+                <Field label="Promoción vigente"><input value={form.promo} onChange={(e) => setForm({ ...form, promo: e.target.value })} placeholder="2x1 los martes" style={input} /></Field>
+                <div style={{ gridColumn: "1/-1" }}>
+                  <Field label="Horario"><textarea value={form.hours} onChange={(e) => setForm({ ...form, hours: e.target.value })} placeholder={"Lun–Sáb 10:00–20:00\nDom 11:00–18:00"} style={{ ...input, minHeight: 54, resize: "vertical" }} /></Field>
+                </div>
+                <div style={{ gridColumn: "1/-1" }}>
+                  <Field label="Descripción / Sobre nosotros"><textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Cuéntale a los visitantes qué ofreces…" style={{ ...input, minHeight: 80, resize: "vertical" }} /></Field>
+                </div>
+              </>
+            )}
             <div style={{ gridColumn: "1/-1", display: "flex", gap: 10, alignItems: "center", marginTop: 4 }}>
               <button type="submit" style={btnPrimary}>{form.id ? "Guardar cambios" : "Crear local"}</button>
               <button type="button" onClick={() => setShowForm(false)} style={btnGhost}>Cancelar</button>
+              {form.micrositeEnabled && form.id && (form.micrositeSlug || form.commercialName) && (
+                <a href={`/tienda/${form.micrositeSlug || slugPreview(form.commercialName)}`} target="_blank" rel="noopener" style={{ ...btnGhost, textDecoration: "none" }}>Ver micrositio ↗</a>
+              )}
               <span style={{ flex: 1 }} />
               <input value={newType} onChange={(e) => setNewType(e.target.value)} placeholder="Nuevo tipo…" style={{ ...input, width: 130 }} />
               <button type="button" onClick={addType} style={btnGhost}>+ tipo</button>
@@ -1306,7 +1376,7 @@ function IncidenciasView({ api }: { api: (p: string, i?: RequestInit) => Promise
 }
 
 // ---------- Estacionamiento ----------
-type PkTicket = { id: string; code: string; plate: string; vehicle_type: string; entered_at: string; exited_at: string | null; minutes: number; amount: number; currency: string; status: string; live_minutes?: number; live_amount?: number; validated_by?: string }
+type PkTicket = { id: string; code: string; plate: string; vehicle_type: string; entered_at: string; exited_at: string | null; minutes: number; amount: number; currency: string; status: string; live_minutes?: number; live_amount?: number; validated_by?: string; paid_method?: string; notes?: string }
 type PkPass = { id: string; plate: string; holder_name: string; valid_from: string | null; valid_to: string | null; monthly_fee: number; active: boolean }
 type PkConfig = { free_minutes: number; rate_per_hour: number; rate_currency: string; daily_cap: number; grace_exit_minutes: number }
 
@@ -1345,7 +1415,9 @@ function EstacionamientoView({ api }: { api: (p: string, i?: RequestInit) => Pro
   }
 
   const open = tickets.filter((t) => t.status === "abierto")
-  const closed = tickets.filter((t) => t.status !== "abierto").slice(0, 30)
+  const reported = tickets.filter((t) => t.status === "por_pagar")
+  const closed = tickets.filter((t) => t.status !== "abierto" && t.status !== "por_pagar").slice(0, 30)
+  const methodLabel = (m?: string) => ({ pago_movil: "Pago móvil", tarjeta: "Tarjeta", efectivo: "Efectivo", transferencia: "Transferencia" }[m || ""] || m || "—")
 
   return (
     <div>
@@ -1382,6 +1454,36 @@ function EstacionamientoView({ api }: { api: (p: string, i?: RequestInit) => Pro
           </form>
         </Card>
       </div>
+
+      {reported.length > 0 && (
+        <div style={{ marginTop: 14 }}>
+          <Card>
+            <div style={{ fontWeight: 700, marginBottom: 8, color: "#8a5a00" }}>🕓 Pagos reportados por clientes — por confirmar ({reported.length})</div>
+            <p style={{ fontSize: 12, color: "#7c93a6", margin: "0 0 8px" }}>El cliente registró su pago desde el teléfono. Verifica el pago y confirma para abrir la barrera.</p>
+            <div style={{ overflowX: "auto" }}>
+              <table style={table}>
+                <thead><tr>{["Código", "Placa", "Método", "Monto", "Reporte", ""].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {reported.map((t) => (
+                    <tr key={t.id}>
+                      <td style={{ ...td, fontWeight: 700 }}>{t.code}</td>
+                      <td style={td}>{t.plate || "—"}</td>
+                      <td style={td}>{methodLabel(t.paid_method)}</td>
+                      <td style={{ ...td, fontWeight: 700 }}>{sym}{t.amount}</td>
+                      <td style={{ ...td, fontSize: 12, color: "#5b6b82", maxWidth: 240 }}>{t.notes || "—"}</td>
+                      <td style={{ ...td, whiteSpace: "nowrap" }}>
+                        <button onClick={() => act({ action: "close", ticketId: t.id, method: t.paid_method || "reportado" }, "✓ Pago confirmado · barrera abierta")} style={btnMini}>Confirmar (abre barrera)</button>
+                        <button onClick={() => { const by = prompt("Local que da la cortesía:") || ""; if (by) act({ action: "close", ticketId: t.id, courtesyBy: by }, "✓ Cortesía aplicada") }} style={btnMini}>Cortesía</button>
+                        <button onClick={() => { if (confirm("¿Anular ticket?")) act({ action: "void", ticketId: t.id }) }} style={btnMiniDanger}>Anular</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+      )}
 
       <div style={{ marginTop: 14 }}>
         <Card>
@@ -1688,6 +1790,8 @@ function ConsultoriosView({ api }: { api: (p: string, i?: RequestInit) => Promis
     try { await api("/api/panel/medical", { method: "POST", body: JSON.stringify({ action: "apptStatus", id, status }) }); await load() } catch (e) { setErr(String((e as Error).message)) }
   }
 
+  // "Próximas": desde hace 1h en adelante. Date.now() al render es intencional (lista viva).
+  // eslint-disable-next-line react-hooks/purity
   const upcoming = appts.filter((a) => new Date(a.starts_at).getTime() >= Date.now() - 3600000 && a.status !== "cancelada")
 
   return (

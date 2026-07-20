@@ -16,6 +16,19 @@ function num(v: unknown, fallback = 0) {
 function int(v: unknown, fallback = 0) {
   return Math.trunc(num(v, fallback))
 }
+function bool(v: unknown) {
+  return v === true || v === "true" || v === 1 || v === "1"
+}
+// URL amigable para el micrositio: "Capitán Grill" -> "capitan-grill"
+function slugify(v: string) {
+  return v
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60)
+}
 
 // GET: unidades + tipos de unidad del condominio actual.
 export async function GET(request: NextRequest) {
@@ -76,11 +89,14 @@ export async function POST(request: NextRequest) {
 
     const code = text(body.code)
     if (!code) return NextResponse.json({ error: "Escribe el código de la unidad (ej. A-12B)" }, { status: 400 })
-    const row = {
+    const commercialName = text(body.commercialName)
+    const micrositeEnabled = bool(body.micrositeEnabled)
+    const micrositeSlug = slugify(text(body.micrositeSlug) || commercialName)
+    const row: Record<string, unknown> = {
       branch_id: branchId,
       unit_type_id: text(body.unitTypeId) || null,
       code,
-      commercial_name: text(body.commercialName),
+      commercial_name: commercialName,
       activity: text(body.activity),
       logo_url: text(body.logoUrl),
       tower: text(body.tower),
@@ -92,6 +108,27 @@ export async function POST(request: NextRequest) {
       status: text(body.status) || "disponible",
       notes: text(body.notes),
       sort_order: int(body.sortOrder),
+      // Micrositio ("la web" del local) — la crea/edita la administración.
+      microsite_enabled: micrositeEnabled,
+      microsite_slug: micrositeEnabled ? micrositeSlug : "",
+      tagline: text(body.tagline),
+      description: text(body.description),
+      phone: text(body.phone),
+      microsite_whatsapp: text(body.micrositeWhatsapp),
+      instagram: text(body.instagram),
+      website_url: text(body.websiteUrl),
+      hours: text(body.hours),
+      promo: text(body.promo),
+      cover_url: text(body.coverUrl),
+    }
+    // La galería solo se toca si el formulario la envía (evita borrarla en guardados parciales).
+    if (Array.isArray(body.gallery)) {
+      row.gallery = (body.gallery as unknown[])
+        .map((g) => {
+          const o = (g || {}) as Record<string, unknown>
+          return { url: text(o.url), caption: text(o.caption) }
+        })
+        .filter((g) => g.url)
     }
     if (body.id) {
       const { data, error } = await supabase.from("units").update(row).eq("id", body.id).eq("branch_id", branchId).select().maybeSingle()

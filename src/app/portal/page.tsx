@@ -2,43 +2,24 @@ import type { Metadata } from "next"
 import { BRAND } from "@/lib/brand"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import PortalGallery from "./PortalGallery"
+import PortalDirectory from "./PortalDirectory"
 
 type GalleryItem = { id: string; url: string; caption: string }
-type Store = { id: string; code: string; commercial_name: string; activity: string; floor: string; logo_url: string }
+type Store = { id: string; code: string; commercial_name: string; activity: string; floor: string; logo_url: string; microsite_slug: string; microsite_enabled: boolean }
 
 // Directorio de ejemplo (locales reales conocidos del C.C. Concepto La Granja)
 // mientras el cliente no cargue los suyos desde el panel → Locales. Se reemplaza
 // en cuanto agrega el primer local con "nombre comercial".
 const DEFAULT_STORES: Store[] = [
-  { id: "s1", code: "Supermercado", commercial_name: "Supermercados Kalea", activity: "supermercado", floor: "PB", logo_url: "" },
-  { id: "s2", code: "Ancla", commercial_name: "Beco", activity: "moda", floor: "PB", logo_url: "" },
-  { id: "s3", code: "Cine", commercial_name: "SuperCines", activity: "entretenimiento", floor: "Mezz.", logo_url: "" },
-  { id: "s4", code: "Feria", commercial_name: "Capitán Grill Burger", activity: "comida", floor: "Feria", logo_url: "" },
-  { id: "s5", code: "Feria", commercial_name: "María Paleta", activity: "comida", floor: "Feria", logo_url: "" },
-  { id: "s6", code: "Belleza", commercial_name: "Fígaro Barbiere", activity: "belleza", floor: "PB", logo_url: "" },
-  { id: "s7", code: "Salud", commercial_name: "Farmacia", activity: "salud", floor: "PB", logo_url: "" },
-  { id: "s8", code: "Salud", commercial_name: "Consultorios médicos", activity: "consultorio", floor: "Torre médica", logo_url: "" },
+  { id: "s1", code: "Supermercado", commercial_name: "Supermercados Kalea", activity: "supermercado", floor: "PB", logo_url: "", microsite_slug: "", microsite_enabled: false },
+  { id: "s2", code: "Ancla", commercial_name: "Beco", activity: "moda", floor: "PB", logo_url: "", microsite_slug: "", microsite_enabled: false },
+  { id: "s3", code: "Cine", commercial_name: "SuperCines", activity: "entretenimiento", floor: "Mezz.", logo_url: "", microsite_slug: "", microsite_enabled: false },
+  { id: "s4", code: "Feria", commercial_name: "Capitán Grill Burger", activity: "comida", floor: "Feria", logo_url: "", microsite_slug: "", microsite_enabled: false },
+  { id: "s5", code: "Feria", commercial_name: "María Paleta", activity: "comida", floor: "Feria", logo_url: "", microsite_slug: "", microsite_enabled: false },
+  { id: "s6", code: "Belleza", commercial_name: "Fígaro Barbiere", activity: "belleza", floor: "PB", logo_url: "", microsite_slug: "", microsite_enabled: false },
+  { id: "s7", code: "Salud", commercial_name: "Farmacia", activity: "salud", floor: "PB", logo_url: "", microsite_slug: "", microsite_enabled: false },
+  { id: "s8", code: "Salud", commercial_name: "Consultorios médicos", activity: "consultorio", floor: "Torre médica", logo_url: "", microsite_slug: "", microsite_enabled: false },
 ]
-
-const RUBRO: Record<string, { label: string; icon: string; color: string }> = {
-  comida: { label: "Gastronomía", icon: "🍔", color: "#e5007e" },
-  moda: { label: "Moda", icon: "👗", color: "#0f9bd7" },
-  salud: { label: "Salud", icon: "➕", color: "#1e874b" },
-  belleza: { label: "Belleza", icon: "💈", color: "#b26fd0" },
-  electronica: { label: "Electrónica", icon: "📱", color: "#3f5a6b" },
-  hogar: { label: "Hogar", icon: "🛋️", color: "#f9a800" },
-  servicios: { label: "Servicios", icon: "🔧", color: "#3f5a6b" },
-  banco: { label: "Banca", icon: "🏦", color: "#0a6f9c" },
-  consultorio: { label: "Consultorios", icon: "🩺", color: "#1e874b" },
-  oficina: { label: "Oficinas", icon: "🏢", color: "#3f5a6b" },
-  kiosco: { label: "Kioscos", icon: "🛍️", color: "#f9a800" },
-  entretenimiento: { label: "Entretenimiento", icon: "🎬", color: "#e5007e" },
-  supermercado: { label: "Supermercado", icon: "🛒", color: "#f9a800" },
-  otro: { label: "Otros", icon: "🏬", color: "#0f9bd7" },
-}
-function rubroOf(a: string) {
-  return RUBRO[a] || RUBRO.otro
-}
 
 export const metadata: Metadata = {
   title: `${BRAND.name} · Centro comercial en Naguanagua`,
@@ -52,7 +33,7 @@ async function loadData(): Promise<{ stores: Store[]; availableCount: number; ma
   try {
     const supabase = getSupabaseAdmin()
     const [storesRes, availRes, cfg] = await Promise.all([
-      supabase.from("units").select("id, code, commercial_name, activity, floor, logo_url").neq("commercial_name", "").order("commercial_name").limit(120),
+      supabase.from("units").select("id, code, commercial_name, activity, floor, logo_url, microsite_slug, microsite_enabled").neq("commercial_name", "").order("commercial_name").limit(120),
       supabase.from("units").select("id", { count: "exact", head: true }).eq("status", "disponible"),
       supabase.from("business_config").select("config").eq("id", 1).maybeSingle(),
     ])
@@ -76,8 +57,6 @@ export default async function PortalPage() {
   const mallName = data.mallName
   const galleryItems = data.gallery
   const wa = (msg: string) => `https://wa.me/${BRAND.whatsapp}?text=${encodeURIComponent(msg)}`
-  // Conteos por rubro para los chips
-  const rubros = Array.from(new Set(stores.map((s) => s.activity || "otro")))
   const foodCount = stores.filter((s) => s.activity === "comida").length
 
   return (
@@ -130,32 +109,7 @@ export default async function PortalPage() {
         <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 20px" }}>
           <h2 style={h2}>Directorio de tiendas</h2>
           <p style={sub}>Encuentra la tienda, el restaurante o el servicio que buscas.</p>
-          {/* chips de rubro */}
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginBottom: 26 }}>
-            {rubros.map((r) => {
-              const info = rubroOf(r)
-              return <span key={r} style={{ display: "inline-flex", gap: 6, alignItems: "center", background: "#f2f9fd", border: "1px solid #dcecf5", borderRadius: 999, padding: "6px 12px", fontSize: 13, fontWeight: 600 }}>
-                <span>{info.icon}</span>{info.label}
-              </span>
-            })}
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 16 }}>
-            {stores.map((s) => {
-              const info = rubroOf(s.activity)
-              return (
-                <div key={s.id} style={{ ...card, display: "flex", gap: 12, alignItems: "center" }}>
-                  {s.logo_url
-                    // eslint-disable-next-line @next/next/no-img-element
-                    ? <img src={s.logo_url} alt="" width={48} height={48} style={{ borderRadius: 12, objectFit: "cover", flexShrink: 0 }} />
-                    : <div style={{ width: 48, height: 48, borderRadius: 12, background: info.color, color: "#fff", display: "grid", placeItems: "center", fontSize: 22, flexShrink: 0 }}>{info.icon}</div>}
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 16, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.commercial_name}</div>
-                    <div style={{ fontSize: 13, color: "#5b6b82" }}>{info.label}{s.floor ? ` · ${s.floor}` : ""}</div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+          <PortalDirectory stores={stores} />
         </div>
       </section>
 
