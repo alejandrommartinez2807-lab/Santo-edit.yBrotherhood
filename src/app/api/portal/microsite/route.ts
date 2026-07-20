@@ -1,22 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { verifyToken, bearerToken } from "../_session"
+import { slugify } from "@/lib/mallText"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 function text(v: unknown) { return String(v ?? "").trim() }
 function bool(v: unknown) { return v === true || v === "true" || v === 1 || v === "1" }
-// URL amigable del micrositio (debe coincidir con el slugify del panel).
-function slugify(v: string) {
-  return v
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60)
-}
 
 const MICROSITE_FIELDS =
   "id, code, commercial_name, activity, floor, tower, logo_url, microsite_enabled, microsite_slug, tagline, description, phone, microsite_whatsapp, instagram, website_url, hours, promo, cover_url, gallery"

@@ -3,6 +3,7 @@ import { checkPanelAccess } from "../_auth"
 import { uploadMallImage } from "@/lib/mallImages"
 import { DataUrlImageError } from "@/lib/dataUrlImages"
 import { enforceRateLimit } from "@/lib/rateLimit"
+import { enforceRequestSizeLimit, getEnvByteLimit } from "@/lib/requestGuards"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -19,6 +20,13 @@ export async function POST(request: NextRequest) {
     message: "Demasiadas imágenes seguidas. Espera un momento e intenta de nuevo.",
   })
   if (limited) return limited
+
+  const sizeLimit = enforceRequestSizeLimit(request, {
+    maxBytes: getEnvByteLimit("MALL_IMAGE_UPLOAD_MAX_BYTES", 8_500_000, { minBytes: 512_000, maxBytes: 10_000_000 }),
+    message: "La imagen es demasiado pesada. Reduce la foto e intenta de nuevo.",
+    route: "api-panel-upload-image",
+  })
+  if (sizeLimit) return sizeLimit
 
   try {
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>

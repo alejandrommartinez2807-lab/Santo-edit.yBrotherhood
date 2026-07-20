@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import ImageField, { uploadImageFile } from "@/components/ImageField"
+import { slugify as microsSlug } from "@/lib/mallText"
 
 // Todas las pestañas cargan sus datos al montar con el patrón useEffect(() =>
 // load(), [load]) (load es un useCallback que hace setState tras el fetch). Es
@@ -363,10 +364,6 @@ type MUnit = {
   microsite_enabled?: boolean; microsite_slug?: string; tagline?: string; description?: string
   phone?: string; microsite_whatsapp?: string; instagram?: string; website_url?: string
   hours?: string; promo?: string; cover_url?: string; gallery?: GItem[]
-}
-
-function microsSlug(v: string) {
-  return v.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60)
 }
 
 const emptyMicro = {

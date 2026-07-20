@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
           branch_id: branchId,
           code,
           plate: text(body.plate).toUpperCase().slice(0, 12),
-          vehicle_type: text(body.vehicleType) || "carro",
+          vehicle_type: ["carro", "moto", "otro"].includes(text(body.vehicleType)) ? text(body.vehicleType) : "carro",
           currency,
           status: "abierto",
           notes: "Autoservicio (cliente)",
@@ -112,7 +112,8 @@ export async function POST(request: NextRequest) {
       if (limited) return limited
 
       const code = text(body.code).toUpperCase()
-      const method = text(body.method) || "pago_movil"
+      const ALLOWED_METHODS = ["pago_movil", "tarjeta", "efectivo", "transferencia"]
+      const method = ALLOWED_METHODS.includes(text(body.method)) ? text(body.method) : "pago_movil"
       const reference = text(body.reference).slice(0, 60)
       if (!code) return NextResponse.json({ ok: false, error: "Falta el código" }, { status: 400 })
 
@@ -125,6 +126,10 @@ export async function POST(request: NextRequest) {
       if (!t) return NextResponse.json({ ok: false, error: "Ticket no encontrado" }, { status: 404 })
       if (t.status === "pagado" || t.status === "cortesia") {
         return NextResponse.json({ ok: true, alreadySettled: true, status: t.status })
+      }
+      // Un ticket anulado no admite pago; el cliente debe hablar con el personal.
+      if (t.status === "anulado") {
+        return NextResponse.json({ ok: false, error: "Este ticket fue anulado. Acércate a la caseta de estacionamiento." }, { status: 409 })
       }
 
       const { data: cfg } = await supabase.from("parking_config").select("free_minutes, rate_per_hour, daily_cap, rate_currency").eq("branch_id", branchId).maybeSingle()

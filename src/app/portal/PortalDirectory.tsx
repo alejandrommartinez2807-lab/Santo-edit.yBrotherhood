@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { normalizeSearch } from "@/lib/mallText"
 
 export type Store = {
   id: string
@@ -33,15 +34,6 @@ function rubroOf(a: string) {
   return RUBRO[a] || RUBRO.otro
 }
 
-// Normaliza para buscar sin importar acentos ni mayúsculas.
-function norm(s: string) {
-  return s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .trim()
-}
-
 export default function PortalDirectory({ stores }: { stores: Store[] }) {
   const [query, setQuery] = useState("")
   const [rubro, setRubro] = useState<string>("todos")
@@ -59,11 +51,11 @@ export default function PortalDirectory({ stores }: { stores: Store[] }) {
   }, [stores])
 
   const filtered = useMemo(() => {
-    const q = norm(query)
+    const q = normalizeSearch(query)
     return stores.filter((s) => {
       if (rubro !== "todos" && (s.activity || "otro") !== rubro) return false
       if (!q) return true
-      const hay = norm(`${s.commercial_name} ${rubroOf(s.activity).label} ${s.floor}`)
+      const hay = normalizeSearch(`${s.commercial_name} ${rubroOf(s.activity).label} ${s.floor}`)
       return hay.includes(q)
     })
   }, [stores, query, rubro])

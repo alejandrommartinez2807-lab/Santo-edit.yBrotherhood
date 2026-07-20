@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { resolveBranchId } from "@/lib/branch"
+import { slugify } from "@/lib/mallText"
 import { checkPanelAccess } from "../_auth"
 
 export const runtime = "nodejs"
@@ -18,16 +19,6 @@ function int(v: unknown, fallback = 0) {
 }
 function bool(v: unknown) {
   return v === true || v === "true" || v === 1 || v === "1"
-}
-// URL amigable para el micrositio: "Capitán Grill" -> "capitan-grill"
-function slugify(v: string) {
-  return v
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60)
 }
 
 // GET: unidades + tipos de unidad del condominio actual.
@@ -129,14 +120,22 @@ export async function POST(request: NextRequest) {
           return { url: text(o.url), caption: text(o.caption) }
         })
         .filter((g) => g.url)
+        .slice(0, 12)
     }
+    const dupSlug = (msg: string) => /duplicate|unique/i.test(msg) && /microsite_slug/i.test(msg)
     if (body.id) {
       const { data, error } = await supabase.from("units").update(row).eq("id", body.id).eq("branch_id", branchId).select().maybeSingle()
-      if (error) throw new Error(error.message)
+      if (error) {
+        if (dupSlug(error.message)) return NextResponse.json({ error: "Esa URL amigable del micrositio ya está en uso por otro local. Cambia el slug." }, { status: 409 })
+        throw new Error(error.message)
+      }
       return NextResponse.json({ ok: true, unit: data })
     }
     const { data, error } = await supabase.from("units").insert(row).select().maybeSingle()
-    if (error) throw new Error(error.message)
+    if (error) {
+      if (dupSlug(error.message)) return NextResponse.json({ error: "Esa URL amigable del micrositio ya está en uso por otro local. Cambia el slug." }, { status: 409 })
+      throw new Error(error.message)
+    }
     return NextResponse.json({ ok: true, unit: data }, { status: 201 })
   } catch (error) {
     return NextResponse.json(

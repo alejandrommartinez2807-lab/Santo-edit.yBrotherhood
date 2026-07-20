@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import ImageField from "@/components/ImageField"
+import { slugify as slugPreview } from "@/lib/mallText"
 
 // Cada vista carga sus datos al montar con el patrón useEffect(() => load(),
 // [load]) (load es un useCallback que hace setState tras el fetch). Es
@@ -374,17 +375,6 @@ function Stat({ label, value, hint, hintColor, onClick }: { label: string; value
 }
 
 // ---------- Unidades ----------
-// Vista previa del slug del micrositio (debe coincidir con slugify del backend).
-function slugPreview(v: string) {
-  return v
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60)
-}
-
 const emptyUnitForm = {
   id: "", code: "", commercialName: "", activity: "", logoUrl: "", tower: "", floor: "", unitTypeId: "", areaM2: "", alicuotaPct: "", parkingSlots: "0", storageSlots: "0", status: "disponible", notes: "",
   // Micrositio ("la web" del local)
