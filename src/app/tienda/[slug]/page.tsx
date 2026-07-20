@@ -3,6 +3,7 @@ import { notFound } from "next/navigation"
 import { BRAND } from "@/lib/brand"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { rubroOf } from "@/lib/mallRubros"
+import { instagramUrl, externalUrl, digitsOnly } from "@/lib/mallText"
 
 export const dynamic = "force-dynamic"
 
@@ -51,25 +52,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 }
 
-function igUrl(ig: string) {
-  const v = ig.trim()
-  if (!v) return ""
-  if (v.startsWith("http")) return v
-  return `https://instagram.com/${v.replace(/^@/, "")}`
-}
-function normUrl(u: string) {
-  const v = u.trim()
-  if (!v) return ""
-  return v.startsWith("http") ? v : `https://${v}`
-}
-
 export default async function StorePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const s = await loadStore(slug)
   if (!s) notFound()
   const info = rubroOf(s.activity)
-  const wa = s.microsite_whatsapp || BRAND.whatsapp
-  const waHref = `https://wa.me/${wa.replace(/[^\d]/g, "")}?text=${encodeURIComponent(`Hola ${s.commercial_name}, los vi en el directorio de ${BRAND.name}.`)}`
+  const wa = digitsOnly(s.microsite_whatsapp || BRAND.whatsapp)
+  const waHref = `https://wa.me/${wa}?text=${encodeURIComponent(`Hola ${s.commercial_name}, los vi en el directorio de ${BRAND.name}.`)}`
   const location = [s.tower, s.floor].filter(Boolean).join(" · ")
 
   return (
@@ -124,8 +113,8 @@ export default async function StorePage({ params }: { params: Promise<{ slug: st
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 20 }}>
           <a href={waHref} target="_blank" rel="noopener" style={btn("#25D366")}>💬 WhatsApp</a>
           {s.phone && <a href={`tel:${s.phone.replace(/[^\d+]/g, "")}`} style={btn("#0f9bd7")}>📞 Llamar</a>}
-          {s.instagram && <a href={igUrl(s.instagram)} target="_blank" rel="noopener" style={btn("#b26fd0")}>📷 Instagram</a>}
-          {s.website_url && <a href={normUrl(s.website_url)} target="_blank" rel="noopener" style={btn("#3f5a6b")}>🌐 Sitio web</a>}
+          {s.instagram && <a href={instagramUrl(s.instagram)} target="_blank" rel="noopener" style={btn("#b26fd0")}>📷 Instagram</a>}
+          {s.website_url && <a href={externalUrl(s.website_url)} target="_blank" rel="noopener" style={btn("#3f5a6b")}>🌐 Sitio web</a>}
         </div>
 
         {/* Sobre / descripción */}

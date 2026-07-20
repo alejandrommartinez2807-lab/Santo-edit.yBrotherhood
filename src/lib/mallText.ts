@@ -21,3 +21,25 @@ export function normalizeSearch(v: string): string {
     .replace(/\p{Diacritic}/gu, "")
     .trim()
 }
+
+// URL externa segura para un href: sólo http(s). Acepta con o sin protocolo;
+// cualquier otro esquema (javascript:, data:, etc.) se neutraliza como https.
+export function externalUrl(v: string): string {
+  const s = String(v ?? "").trim()
+  if (!s) return ""
+  if (/^https?:\/\//i.test(s)) return s
+  return `https://${s.replace(/^\/+/, "")}`
+}
+
+// URL de Instagram a partir de "@usuario", "usuario" o una URL completa.
+export function instagramUrl(v: string): string {
+  const s = String(v ?? "").trim()
+  if (!s) return ""
+  if (/^https?:\/\//i.test(s)) return s
+  return `https://instagram.com/${s.replace(/^@+/, "")}`
+}
+
+// Deja sólo dígitos (para wa.me / tel:).
+export function digitsOnly(v: string): string {
+  return String(v ?? "").replace(/[^\d]/g, "")
+}

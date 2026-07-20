@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { slugify, normalizeSearch } from "@/lib/mallText"
+import { slugify, normalizeSearch, externalUrl, instagramUrl, digitsOnly } from "@/lib/mallText"
 
 describe("slugify", () => {
   it("pasa nombres con acentos a slug limpio", () => {
@@ -57,5 +57,50 @@ describe("normalizeSearch", () => {
     expect(normalizeSearch("")).toBe("")
     // @ts-expect-error runtime
     expect(normalizeSearch(null)).toBe("")
+  })
+})
+
+describe("externalUrl", () => {
+  it("respeta http(s) existentes", () => {
+    expect(externalUrl("https://tienda.com")).toBe("https://tienda.com")
+    expect(externalUrl("http://tienda.com")).toBe("http://tienda.com")
+  })
+  it("antepone https si falta protocolo", () => {
+    expect(externalUrl("tienda.com")).toBe("https://tienda.com")
+    expect(externalUrl("www.tienda.com/x")).toBe("https://www.tienda.com/x")
+  })
+  it("neutraliza esquemas peligrosos (no deja javascript: en el href)", () => {
+    expect(externalUrl("javascript:alert(1)").startsWith("https://")).toBe(true)
+    expect(externalUrl("javascript:alert(1)")).not.toMatch(/^javascript:/i)
+    expect(externalUrl("data:text/html,x").startsWith("https://")).toBe(true)
+  })
+  it("vacío → vacío", () => {
+    expect(externalUrl("")).toBe("")
+    expect(externalUrl("   ")).toBe("")
+  })
+})
+
+describe("instagramUrl", () => {
+  it("arma la URL desde @usuario o usuario", () => {
+    expect(instagramUrl("@capitangrill")).toBe("https://instagram.com/capitangrill")
+    expect(instagramUrl("capitangrill")).toBe("https://instagram.com/capitangrill")
+  })
+  it("respeta una URL completa", () => {
+    expect(instagramUrl("https://instagram.com/x")).toBe("https://instagram.com/x")
+  })
+  it("neutraliza javascript:", () => {
+    expect(instagramUrl("javascript:alert(1)")).not.toMatch(/^javascript:/i)
+  })
+  it("vacío → vacío", () => {
+    expect(instagramUrl("")).toBe("")
+  })
+})
+
+describe("digitsOnly", () => {
+  it("deja sólo dígitos", () => {
+    expect(digitsOnly("+58 412-111.22.33")).toBe("584121112233")
+    expect(digitsOnly("abc")).toBe("")
+    // @ts-expect-error runtime
+    expect(digitsOnly(null)).toBe("")
   })
 })
