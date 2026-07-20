@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { normalizeSearch } from "@/lib/mallText"
+import { rubroOf, filterStores, rubroCounts } from "@/lib/mallRubros"
 
 export type Store = {
   id: string
@@ -14,51 +14,12 @@ export type Store = {
   microsite_enabled: boolean
 }
 
-const RUBRO: Record<string, { label: string; icon: string; color: string }> = {
-  comida: { label: "Gastronomía", icon: "🍔", color: "#e5007e" },
-  moda: { label: "Moda", icon: "👗", color: "#0f9bd7" },
-  salud: { label: "Salud", icon: "➕", color: "#1e874b" },
-  belleza: { label: "Belleza", icon: "💈", color: "#b26fd0" },
-  electronica: { label: "Electrónica", icon: "📱", color: "#3f5a6b" },
-  hogar: { label: "Hogar", icon: "🛋️", color: "#f9a800" },
-  servicios: { label: "Servicios", icon: "🔧", color: "#3f5a6b" },
-  banco: { label: "Banca", icon: "🏦", color: "#0a6f9c" },
-  consultorio: { label: "Consultorios", icon: "🩺", color: "#1e874b" },
-  oficina: { label: "Oficinas", icon: "🏢", color: "#3f5a6b" },
-  kiosco: { label: "Kioscos", icon: "🛍️", color: "#f9a800" },
-  entretenimiento: { label: "Entretenimiento", icon: "🎬", color: "#e5007e" },
-  supermercado: { label: "Supermercado", icon: "🛒", color: "#f9a800" },
-  otro: { label: "Otros", icon: "🏬", color: "#0f9bd7" },
-}
-function rubroOf(a: string) {
-  return RUBRO[a] || RUBRO.otro
-}
-
 export default function PortalDirectory({ stores }: { stores: Store[] }) {
   const [query, setQuery] = useState("")
   const [rubro, setRubro] = useState<string>("todos")
 
-  // Rubros presentes, con su conteo, ordenados por cantidad (desc).
-  const rubros = useMemo(() => {
-    const counts = new Map<string, number>()
-    for (const s of stores) {
-      const key = s.activity || "otro"
-      counts.set(key, (counts.get(key) || 0) + 1)
-    }
-    return Array.from(counts.entries())
-      .sort((a, b) => b[1] - a[1])
-      .map(([key, count]) => ({ key, count }))
-  }, [stores])
-
-  const filtered = useMemo(() => {
-    const q = normalizeSearch(query)
-    return stores.filter((s) => {
-      if (rubro !== "todos" && (s.activity || "otro") !== rubro) return false
-      if (!q) return true
-      const hay = normalizeSearch(`${s.commercial_name} ${rubroOf(s.activity).label} ${s.floor}`)
-      return hay.includes(q)
-    })
-  }, [stores, query, rubro])
+  const rubros = useMemo(() => rubroCounts(stores), [stores])
+  const filtered = useMemo(() => filterStores(stores, query, rubro), [stores, query, rubro])
 
   return (
     <div>

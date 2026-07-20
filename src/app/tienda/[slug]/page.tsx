@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { BRAND } from "@/lib/brand"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
+import { rubroOf } from "@/lib/mallRubros"
 
 export const dynamic = "force-dynamic"
 
@@ -22,26 +23,6 @@ type Store = {
   hours: string
   promo: string
   gallery: GalleryItem[]
-}
-
-const RUBRO: Record<string, { label: string; icon: string; color: string }> = {
-  comida: { label: "Gastronomía", icon: "🍔", color: "#e5007e" },
-  moda: { label: "Moda", icon: "👗", color: "#0f9bd7" },
-  salud: { label: "Salud", icon: "➕", color: "#1e874b" },
-  belleza: { label: "Belleza", icon: "💈", color: "#b26fd0" },
-  electronica: { label: "Electrónica", icon: "📱", color: "#3f5a6b" },
-  hogar: { label: "Hogar", icon: "🛋️", color: "#f9a800" },
-  servicios: { label: "Servicios", icon: "🔧", color: "#3f5a6b" },
-  banco: { label: "Banca", icon: "🏦", color: "#0a6f9c" },
-  consultorio: { label: "Consultorios", icon: "🩺", color: "#1e874b" },
-  oficina: { label: "Oficinas", icon: "🏢", color: "#3f5a6b" },
-  kiosco: { label: "Kioscos", icon: "🛍️", color: "#f9a800" },
-  entretenimiento: { label: "Entretenimiento", icon: "🎬", color: "#e5007e" },
-  supermercado: { label: "Supermercado", icon: "🛒", color: "#f9a800" },
-  otro: { label: "Otros", icon: "🏬", color: "#0f9bd7" },
-}
-function rubroOf(a: string) {
-  return RUBRO[a] || RUBRO.otro
 }
 
 async function loadStore(slug: string): Promise<Store | null> {
