@@ -120,7 +120,10 @@ function formatChosenTotal(
   const totalVES = info.totalUSD * info.exchangeRate;
   const canShowVES = vesChosen && info.exchangeRate > 0 && totalVES > 0;
 
-  if (canShowVES && !usdChosen) return `Bs ${formatVES(totalVES)}`;
+  // Siempre con la referencia en dólares al lado (pedido del dueño: que el
+  // pago móvil también se entienda en $).
+  if (canShowVES && !usdChosen)
+    return `Bs ${formatVES(totalVES)} (≈ ${formatUSD(info.totalUSD)})`;
   if (canShowVES && usdChosen) return `${formatUSD(info.totalUSD)} · Bs ${formatVES(totalVES)}`;
   return formatUSD(info.totalUSD);
 }
@@ -394,7 +397,17 @@ export default function PublicOrderPaymentSection({
     // La captura es lo ideal, pero la referencia de la operación alcanza para
     // que caja verifique el pago.
     if (!dataUrl && !reference.trim()) {
-      setFormError("Adjunta la captura del pago o escribe la referencia de la operación.");
+      setFormError("Adjunta la captura del pago o escribe la referencia completa de la operación.");
+      return;
+    }
+
+    // Referencia completa: con 3-4 dígitos caja no puede ubicar la operación
+    // en el banco (pedido del dueño 2026-07-21).
+    const referenceDigits = reference.replace(/[^0-9]/g, "");
+    if (reference.trim() && referenceDigits.length < 6) {
+      setFormError(
+        "Escribe la referencia completa de la operación (todos los dígitos, no solo los últimos).",
+      );
       return;
     }
 
@@ -499,6 +512,18 @@ export default function PublicOrderPaymentSection({
         <p className="mt-4 inline-flex w-full items-center gap-2 rounded-2xl border-2 border-green-600 bg-green-600/15 px-4 py-3 text-sm font-black leading-5 text-green-400">
           <CheckCircle2 size={17} className="shrink-0" />
           Pago confirmado por el negocio. ¡Gracias!
+        </p>
+      ) : null}
+
+      {/* Recordatorio: sin pago reportado el pedido no entra a cocina. */}
+      {!hasConfirmedPayment && !hasPendingProof && !isFormOpen ? (
+        <p
+          role="alert"
+          className="mt-4 flex w-full items-start gap-2 rounded-2xl border-[3px] border-amber-500 bg-amber-500/10 px-4 py-3 text-sm font-black leading-5 text-amber-500"
+        >
+          <Clock3 size={17} className="mt-0.5 shrink-0 animate-pulse" />
+          Aún no has reportado tu pago. Cancela (paga) con los datos de abajo y
+          toca «Reportar mi pago» para que tu pedido entre a preparación.
         </p>
       ) : null}
 
@@ -719,6 +744,18 @@ export default function PublicOrderPaymentSection({
                           placeholder="0,00"
                           className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
                         />
+                        {(() => {
+                          // El monto en Bs también en dólares, con la tasa
+                          // del pedido (pago móvil "en dólares" a la vista).
+                          const rate = Number(info?.exchangeRate || 0);
+                          const ves = normalizeMoneyInput(entry.amountVES);
+                          if (rate <= 0 || ves <= 0) return null;
+                          return (
+                            <p className="mt-1 text-[0.68rem] font-bold text-[var(--brand-ink-2)]/60">
+                              ≈ {formatUSD(ves / rate)} en dólares (tasa del pedido)
+                            </p>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>
@@ -752,12 +789,12 @@ export default function PublicOrderPaymentSection({
 
           <div>
             <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-              Referencia (opcional si adjuntas la captura)
+              Referencia completa (opcional si adjuntas la captura)
             </label>
             <input
               value={reference}
               onChange={(event) => setReference(event.target.value)}
-              placeholder="Últimos dígitos de la operación"
+              placeholder="Todos los dígitos de la operación"
               className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
             />
           </div>

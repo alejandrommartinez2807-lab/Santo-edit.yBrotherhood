@@ -150,11 +150,12 @@ export function normalizePublicHiddenCategoryList(value: unknown): string[] {
 // Métodos de pago que el carrito público ofrece al cliente. El dueño los edita
 // en Configuración; una lista vacía cae a estos valores para que el select
 // nunca quede sin opciones.
+// "Punto de venta" se eliminó como opción pública (pedido del dueño
+// 2026-07-21): el POS solo aplica pagando en persona y confundía en el checkout.
 export const DEFAULT_PUBLIC_PAYMENT_METHODS = [
   "Pago móvil",
   "Efectivo en divisas",
   "Efectivo en Bs",
-  "Punto de venta",
   "Transferencia",
   "Por confirmar",
 ]

@@ -365,6 +365,9 @@ export default function CartDrawer({
   // necesita (la ubicación ya es exacta) y así el formulario respira más.
   const [wantsDeliveryReference, setWantsDeliveryReference] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("");
+  // Efectivo: con cuánto va a pagar el cliente, para calcular su vuelto y
+  // que caja lo tenga listo (pedido del dueño 2026-07-21).
+  const [cashGivenAmount, setCashGivenAmount] = useState("");
   const [customerNote, setCustomerNote] = useState("");
   // El cupón vive plegado: solo un enlace discreto, para no estorbar a la
   // mayoría que no tiene código.
@@ -1054,6 +1057,17 @@ export default function CartDrawer({
     (exchangeSource === "BCV" && !exchangeFallback) || isManualRate;
   const totalVES = totalUSD * exchangeRate;
 
+  // Vuelto para efectivo: si el método elegido es efectivo, el cliente puede
+  // indicar con cuánto paga y el sistema calcula el cambio en su moneda.
+  const cashMethodName =
+    paymentMethod !== "Mixto" && paymentMethod.toLowerCase().includes("efectivo")
+      ? paymentMethod
+      : "";
+  const cashIsVes =
+    cashMethodName.toLowerCase().includes("bs") ||
+    cashMethodName.toLowerCase().includes("bol");
+  const cashGivenValue = normalizeFormMoney(cashGivenAmount);
+
   // Pago mixto: parte en Bs + parte en divisas. El método que viaja al
   // pedido es la composición legible de ambas partes.
   const isMixedPayment = paymentMethod === "Mixto";
@@ -1363,6 +1377,58 @@ export default function CartDrawer({
     setMixedUsdAmount(remainingUSD.toFixed(2));
   }
 
+  // Vuelto: pagando en efectivo, el cliente indica con cuánto paga y ve su
+  // cambio al momento; caja recibe la nota con el vuelto listo. Se usa tanto
+  // en Pick up (sección compartida) como en el formulario de Delivery.
+  function renderCashChangeSection() {
+    if (!cashMethodName) return null;
+
+    return (
+      <div className="rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] px-4 py-4">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+          ¿Con cuánto vas a pagar?
+        </p>
+        <p className="mt-1 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
+          Para tener tu vuelto listo. Total:{" "}
+          {cashIsVes ? `Bs ${formatVES(totalVES)}` : formatUSD(totalUSD)}
+          {cashIsVes ? ` (≈ ${formatUSD(totalUSD)})` : ""}
+        </p>
+        <input
+          inputMode="decimal"
+          value={cashGivenAmount}
+          onChange={(event) => setCashGivenAmount(event.target.value)}
+          placeholder={cashIsVes ? "Monto en Bs (ej: 5000)" : "Monto en $ (ej: 20)"}
+          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+        />
+        {(() => {
+          if (cashGivenValue <= 0) return null;
+          const cashDue = cashIsVes ? totalVES : totalUSD;
+          const change = Math.round((cashGivenValue - cashDue) * 100) / 100;
+
+          if (change < 0) {
+            return (
+              <p className="mt-2 rounded-xl bg-white/70 px-3 py-2 text-[0.7rem] font-bold leading-4 text-red-500">
+                Ese monto no cubre el total: faltan{" "}
+                {cashIsVes
+                  ? `Bs ${formatVES(Math.abs(change))}`
+                  : formatUSD(Math.abs(change))}
+                .
+              </p>
+            );
+          }
+
+          return (
+            <p className="mt-2 rounded-xl bg-white/70 px-3 py-2 text-[0.7rem] font-bold leading-4 text-[var(--brand-ink-2)]/75">
+              {change > 0
+                ? `Tu vuelto será ${cashIsVes ? `Bs ${formatVES(change)}` : formatUSD(change)}.`
+                : "Pago exacto: sin vuelto."}
+            </p>
+          );
+        })()}
+      </div>
+    );
+  }
+
   // Sección de pago del checkout, compartida por Delivery y Pick up: método de
   // pago (obligatorio), pago mixto con botones "Completar" y los datos para
   // pagar (pago móvil, Zelle…) de los métodos elegidos. Así Pick up pide el
@@ -1374,7 +1440,7 @@ export default function CartDrawer({
           label={
             <>
               Método de pago{" "}
-              <span className="text-[var(--brand-ink-2)]/45">(obligatorio)</span>
+              <span className="font-black text-red-400">* obligatorio</span>
             </>
           }
           value={paymentMethod}
@@ -1389,6 +1455,8 @@ export default function CartDrawer({
             setIsPaymentPickerOpen(false);
           }}
         />
+
+        {renderCashChangeSection()}
 
         {/* Pago mixto: el cliente reparte el total entre una parte en bolívares
             y otra en divisas; "Completar" rellena lo que falta con la tasa. */}
@@ -1749,11 +1817,28 @@ export default function CartDrawer({
       const couponNote = appliedCoupon
         ? `Cupón ${appliedCoupon.code} aplicado (-${appliedCoupon.percent}%)`
         : "";
-      const noteWithCoupon = couponNote
-        ? customerNote.trim()
-          ? `${customerNote.trim()} | ${couponNote}`
-          : couponNote
-        : customerNote;
+      // Efectivo con vuelto: caja ve con cuánto paga el cliente y el cambio
+      // que debe tener listo.
+      const cashDueForNote = cashIsVes ? totalVES : totalUSD;
+      const cashChangeForNote =
+        Math.round((cashGivenValue - cashDueForNote) * 100) / 100;
+      const cashNote =
+        cashMethodName && cashGivenValue > 0
+          ? `Paga con ${
+              cashIsVes ? `Bs ${formatVES(cashGivenValue)}` : formatUSD(cashGivenValue)
+            }${
+              cashChangeForNote > 0
+                ? ` (vuelto: ${
+                    cashIsVes
+                      ? `Bs ${formatVES(cashChangeForNote)}`
+                      : formatUSD(cashChangeForNote)
+                  })`
+                : " (pago exacto)"
+            }`
+          : "";
+      const noteWithCoupon = [customerNote.trim(), cashNote, couponNote]
+        .filter(Boolean)
+        .join(" | ");
       const finalCustomerNote = cleanCustomerNoteWithStaffConfirmation(
         noteWithCoupon,
         staffConfirmationProductNames,
@@ -1880,6 +1965,7 @@ export default function CartDrawer({
       setLastCreatedOrder(createdOrder);
       setCustomerName("");
       setCustomerPhone("");
+      setCashGivenAmount("");
       setTableNumber(nextTableNumberAfterSubmit);
       setDeliveryReference("");
       setWantsDeliveryReference(false);
@@ -2681,9 +2767,11 @@ export default function CartDrawer({
                 <div>
                   <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Nombre del cliente{" "}
-                    <span className="text-[var(--brand-ink-2)]/45">
-                      {requiresCustomerName ? "(obligatorio)" : "(opcional)"}
-                    </span>
+                    {requiresCustomerName ? (
+                      <span className="font-black text-red-400">* obligatorio</span>
+                    ) : (
+                      <span className="text-[var(--brand-ink-2)]/45">(opcional)</span>
+                    )}
                   </label>
 
                   <input
@@ -2702,9 +2790,11 @@ export default function CartDrawer({
                   <div>
                     <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Teléfono{" "}
-                      <span className="text-[var(--brand-ink-2)]/45">
-                        {requiresCustomerPhone ? "(obligatorio)" : "(opcional)"}
-                      </span>
+                      {requiresCustomerPhone ? (
+                        <span className="font-black text-red-400">* obligatorio</span>
+                      ) : (
+                        <span className="text-[var(--brand-ink-2)]/45">(opcional)</span>
+                      )}
                     </label>
 
                     <input
@@ -3137,8 +3227,8 @@ export default function CartDrawer({
                       <div>
                         <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                           Teléfono{" "}
-                          <span className="text-[var(--brand-ink-2)]/45">
-                            (obligatorio)
+                          <span className="font-black text-red-400">
+                            * obligatorio
                           </span>
                         </label>
                         <input
@@ -3158,8 +3248,8 @@ export default function CartDrawer({
                         label={
                           <>
                             Método de pago{" "}
-                            <span className="text-[var(--brand-ink-2)]/45">
-                              (obligatorio)
+                            <span className="font-black text-red-400">
+                              * obligatorio
                             </span>
                           </>
                         }
@@ -3176,6 +3266,8 @@ export default function CartDrawer({
                         }}
                       />
                     </div>
+
+                    {renderCashChangeSection()}
 
                     {/* Pago mixto: el cliente reparte el total entre una
                         parte en bolívares y otra en divisas; "Completar"
