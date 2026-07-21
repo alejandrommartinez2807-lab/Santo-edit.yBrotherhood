@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
-import { MapPin, MessageCircle, Search, ShoppingCart } from "lucide-react"
+import { MapPin, MessageCircle, Search, ShoppingCart, Store } from "lucide-react"
 import { BRAND } from "@/lib/brand"
+import { usePublicBranchSelection } from "@/components/PublicBranchPicker"
 import {
   DEFAULT_PUBLIC_NAV_BUTTONS,
   normalizePublicNavButtons,
@@ -166,6 +167,68 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
   const [businessConfig, setBusinessConfig] = useState<PublicBusinessConfig>(
     DEFAULT_PUBLIC_CONFIG
   )
+  // Al bajar, la barra completa (logo + redes) se recoge y queda una barra
+  // compacta con las categorías del menú + sede + carrito; al subir vuelve
+  // la completa (pedido del dueño 2026-07-21).
+  const [compact, setCompact] = useState(false)
+  const [menuCategories, setMenuCategories] = useState<string[]>([])
+  const branchSelection = usePublicBranchSelection()
+
+  useEffect(() => {
+    let lastY = window.scrollY
+    let ticking = false
+
+    function handleScroll() {
+      if (ticking) return
+      ticking = true
+
+      window.requestAnimationFrame(() => {
+        const y = window.scrollY
+        const delta = y - lastY
+
+        if (y < 120) {
+          setCompact(false)
+        } else if (delta > 6) {
+          setCompact(true)
+        } else if (delta < -6) {
+          setCompact(false)
+        }
+
+        lastY = y
+        ticking = false
+      })
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
+  useEffect(() => {
+    // Products publica sus categorías visibles (cambian por sede y por config
+    // del dueño); la barra compacta las usa como accesos directos.
+    function handleCategories(event: Event) {
+      const detail = (event as CustomEvent<{ categories?: unknown }>).detail
+      const categories = Array.isArray(detail?.categories)
+        ? detail.categories.filter(
+            (category): category is string =>
+              typeof category === "string" && category.trim() !== ""
+          )
+        : []
+
+      setMenuCategories(categories)
+    }
+
+    window.addEventListener("santo:menu-categories", handleCategories)
+    return () =>
+      window.removeEventListener("santo:menu-categories", handleCategories)
+  }, [])
+
+  function goToCategory(category: string) {
+    window.dispatchEvent(
+      new CustomEvent("santo:menu-filter", { detail: { category } })
+    )
+    document.getElementById("menu")?.scrollIntoView({ behavior: "smooth" })
+  }
 
   useEffect(() => {
     let isMounted = true
@@ -282,8 +345,17 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
         }))
   }, [businessConfig.publicNavButtons, instagramUrl, whatsappUrl])
 
+  const branchOptions = branchSelection.branches
+  const showBranchSelect = branchOptions.length > 1
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[var(--brand-border)] bg-[rgba(9,9,9,0.88)] backdrop-blur-xl">
+      {/* Barra completa (logo + redes): se recoge al bajar y vuelve al subir. */}
+      <div
+        className={`overflow-hidden transition-all duration-300 ${
+          compact ? "max-h-0 opacity-0" : "max-h-52 opacity-100"
+        }`}
+      >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
         {/* Logotipo vectorizado: el guion ya dice el nombre, sin texto duplicado. */}
         <a href="#inicio" className="group flex min-w-0 items-center">
@@ -385,6 +457,29 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
             <Search size={20} strokeWidth={2.4} />
           </button>
 
+          {/* Sede junto al carrito: cambiarla recarga el menú de esa sede
+              (Products escucha el evento de sede y vuelve a pedir /api). */}
+          {showBranchSelect ? (
+            <div className="relative hidden sm:block">
+              <Store
+                size={15}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--brand-primary)]"
+              />
+              <select
+                value={branchSelection.selectedBranchId}
+                onChange={(event) => branchSelection.selectBranch(event.target.value)}
+                aria-label="Elegir sede"
+                className="h-12 appearance-none rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] pl-9 pr-4 text-xs font-black uppercase tracking-[0.08em] text-[var(--brand-ink)] outline-none transition hover:border-[var(--brand-primary)] focus:border-[var(--brand-primary)]"
+              >
+                {branchOptions.map((branch) => (
+                  <option key={branch.id} value={branch.id}>
+                    {branch.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+
           <button
             type="button"
             onClick={onOpenCart}
@@ -408,7 +503,28 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
       {/* Nav (móvil / tablet): los botones nunca se encogen por debajo de su
           texto (antes las palabras largas quedaban apretadas y las cortas
           estiradas). Si no caben todos, la fila se desliza a los lados. */}
-      <div className="mx-auto max-w-7xl px-3 pb-3 sm:px-6 lg:hidden">
+      <div className="mx-auto max-w-7xl space-y-2 px-3 pb-3 sm:px-6 lg:hidden">
+        {showBranchSelect ? (
+          <div className="relative sm:hidden">
+            <Store
+              size={14}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--brand-primary)]"
+            />
+            <select
+              value={branchSelection.selectedBranchId}
+              onChange={(event) => branchSelection.selectBranch(event.target.value)}
+              aria-label="Elegir sede"
+              className="h-10 w-full appearance-none rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] pl-9 pr-4 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink)] outline-none"
+            >
+              {branchOptions.map((branch) => (
+                <option key={branch.id} value={branch.id}>
+                  Sede: {branch.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
+
         <nav className="overflow-x-auto rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] p-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className="mx-auto flex w-max min-w-full items-center justify-center gap-1">
           {navItems.map((item) => {
@@ -437,6 +553,69 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
           })}
           </div>
         </nav>
+      </div>
+      </div>
+
+      {/* Barra compacta al bajar: categorías del menú + sede + carrito. */}
+      <div
+        className={`overflow-hidden transition-all duration-300 ${
+          compact ? "max-h-24 opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2 sm:px-6 lg:px-8">
+          {showBranchSelect ? (
+            <div className="relative shrink-0">
+              <Store
+                size={13}
+                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--brand-primary)]"
+              />
+              <select
+                value={branchSelection.selectedBranchId}
+                onChange={(event) => branchSelection.selectBranch(event.target.value)}
+                aria-label="Elegir sede"
+                className="h-10 max-w-[7.5rem] appearance-none truncate rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] pl-7 pr-2.5 text-[0.6rem] font-black uppercase tracking-[0.06em] text-[var(--brand-ink)] outline-none sm:max-w-none sm:text-xs"
+              >
+                {branchOptions.map((branch) => (
+                  <option key={branch.id} value={branch.id}>
+                    {branch.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+
+          <nav
+            aria-label="Categorías del menú"
+            className="flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            <div className="flex w-max items-center gap-1.5">
+              {menuCategories.map((category) => (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => goToCategory(category)}
+                  className="shrink-0 whitespace-nowrap rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] px-3 py-2 text-[0.6rem] font-black uppercase tracking-[0.06em] text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] sm:text-xs"
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+          </nav>
+
+          <button
+            type="button"
+            onClick={onOpenCart}
+            aria-label="Abrir carrito"
+            className="relative flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full bg-[var(--brand-primary)] px-3.5 text-black transition hover:bg-[var(--brand-accent)] active:scale-95"
+          >
+            <ShoppingCart size={18} strokeWidth={2.4} />
+            {totalItems > 0 && (
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-black px-1 text-[0.65rem] font-black text-[var(--brand-primary)]">
+                {totalItems}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
     </header>
   )

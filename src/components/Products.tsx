@@ -435,6 +435,16 @@ export default function Products({ exchangeRate, onAddToCart, onProductsLoaded }
   }, [menuCategories, publicMenuConfig.publicCategoryOrder, publicMenuConfig.publicHiddenCategories])
 
   useEffect(() => {
+    // La barra compacta del Navbar muestra estas categorías como accesos
+    // directos; se publican cada vez que cambian (sede, config del dueño).
+    window.dispatchEvent(
+      new CustomEvent("santo:menu-categories", {
+        detail: { categories: visibleMenuCategories },
+      })
+    )
+  }, [visibleMenuCategories])
+
+  useEffect(() => {
     if (!visibleMenuCategories.includes(selectedCategory)) {
       const timer = setTimeout(() => setSelectedCategory("Todos"), 0)
       return () => clearTimeout(timer)
