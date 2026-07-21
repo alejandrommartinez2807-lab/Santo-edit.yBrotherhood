@@ -12,6 +12,7 @@ export type Store = {
   logo_url: string
   microsite_slug: string
   microsite_enabled: boolean
+  promo?: string
 }
 
 export default function PortalDirectory({ stores }: { stores: Store[] }) {
@@ -89,6 +90,9 @@ export default function PortalDirectory({ stores }: { stores: Store[] }) {
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: 16, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.commercial_name}</div>
                   <div style={{ fontSize: 13, color: "#5b6b82" }}>{info.label}{s.floor ? ` · ${s.floor}` : ""}</div>
+                  {s.promo && (
+                    <div style={{ fontSize: 12, color: "#e5007e", fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 2 }} title={s.promo}>🎉 {s.promo}</div>
+                  )}
                 </div>
                 {hasSite && <span style={{ color: "#0a6f9c", fontSize: 18, flexShrink: 0 }}>›</span>}
               </>

@@ -1436,6 +1436,7 @@ function EstacionamientoView({ api }: { api: (p: string, i?: RequestInit) => Pro
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
         <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, flex: 1 }}>Estacionamiento</h1>
         <span style={{ fontSize: 13, color: "#0a6f9c", fontWeight: 700 }}>🅿️ {open.length} adentro</span>
+        <a href="/estacionamiento/qr" target="_blank" rel="noopener" style={{ ...btnGhost, textDecoration: "none" }}>🖨️ Póster QR de entrada</a>
         <button onClick={() => setShowCfg((v) => !v)} style={btnGhost}>Tarifas</button>
       </div>
       {err && <div style={errBox}>{err}</div>}

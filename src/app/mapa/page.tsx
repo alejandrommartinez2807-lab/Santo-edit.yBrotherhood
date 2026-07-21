@@ -5,7 +5,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseServer"
 export const metadata: Metadata = { title: `Mapa y directorio · ${BRAND.name}` }
 export const dynamic = "force-dynamic"
 
-type Store = { commercial_name: string; activity: string; floor: string }
+type Store = { commercial_name: string; activity: string; floor: string; microsite_slug?: string; microsite_enabled?: boolean }
 
 const ICON: Record<string, string> = {
   comida: "🍔", moda: "👗", salud: "➕", belleza: "💈", electronica: "📱", hogar: "🛋️", servicios: "🔧",
@@ -25,7 +25,7 @@ const DEMO: Store[] = [
 async function load(): Promise<Store[]> {
   try {
     const supabase = getSupabaseAdmin()
-    const { data } = await supabase.from("units").select("commercial_name, activity, floor").neq("commercial_name", "").order("floor").limit(300)
+    const { data } = await supabase.from("units").select("commercial_name, activity, floor, microsite_slug, microsite_enabled").neq("commercial_name", "").order("floor").limit(300)
     return (data as Store[]) ?? []
   } catch { return [] }
 }
@@ -62,12 +62,22 @@ export default async function MapaPage() {
                 <span style={{ color: "#8494a8", fontSize: 13 }}>{byFloor.get(f)!.length} local(es)</span>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(180px,1fr))", gap: 10 }}>
-                {byFloor.get(f)!.map((s, i) => (
-                  <div key={i} style={{ display: "flex", gap: 8, alignItems: "center", padding: "8px 10px", background: "#f6fbfe", borderRadius: 10, border: "1px solid #eaf3f8" }}>
-                    <span style={{ fontSize: 20 }}>{ICON[s.activity] || "🏬"}</span>
-                    <span style={{ fontWeight: 600, fontSize: 14 }}>{s.commercial_name}</span>
-                  </div>
-                ))}
+                {byFloor.get(f)!.map((s, i) => {
+                  const inner = (
+                    <>
+                      <span style={{ fontSize: 20 }}>{ICON[s.activity] || "🏬"}</span>
+                      <span style={{ fontWeight: 600, fontSize: 14, flex: 1 }}>{s.commercial_name}</span>
+                      {s.microsite_enabled && s.microsite_slug && <span style={{ color: "#0a6f9c", fontSize: 15 }}>›</span>}
+                    </>
+                  )
+                  const boxStyle: React.CSSProperties = { display: "flex", gap: 8, alignItems: "center", padding: "8px 10px", background: "#f6fbfe", borderRadius: 10, border: "1px solid #eaf3f8" }
+                  // Si el local tiene su mini-web, la tarjeta del mapa la abre.
+                  return s.microsite_enabled && s.microsite_slug ? (
+                    <a key={i} href={`/tienda/${s.microsite_slug}`} style={{ ...boxStyle, textDecoration: "none", color: "inherit" }}>{inner}</a>
+                  ) : (
+                    <div key={i} style={boxStyle}>{inner}</div>
+                  )
+                })}
               </div>
             </div>
           ))}

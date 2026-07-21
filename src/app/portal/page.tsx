@@ -5,7 +5,7 @@ import PortalGallery from "./PortalGallery"
 import PortalDirectory from "./PortalDirectory"
 
 type GalleryItem = { id: string; url: string; caption: string }
-type Store = { id: string; code: string; commercial_name: string; activity: string; floor: string; logo_url: string; microsite_slug: string; microsite_enabled: boolean }
+type Store = { id: string; code: string; commercial_name: string; activity: string; floor: string; logo_url: string; microsite_slug: string; microsite_enabled: boolean; promo?: string }
 
 // Directorio de ejemplo (locales reales conocidos del C.C. Concepto La Granja)
 // mientras el cliente no cargue los suyos desde el panel → Locales. Se reemplaza
@@ -46,7 +46,7 @@ async function loadData(): Promise<{ stores: Store[]; availableCount: number; ma
   try {
     const supabase = getSupabaseAdmin()
     const [storesRes, availRes, cfg] = await Promise.all([
-      supabase.from("units").select("id, code, commercial_name, activity, floor, logo_url, microsite_slug, microsite_enabled").neq("commercial_name", "").order("commercial_name").limit(120),
+      supabase.from("units").select("id, code, commercial_name, activity, floor, logo_url, microsite_slug, microsite_enabled, promo").neq("commercial_name", "").order("commercial_name").limit(120),
       supabase.from("units").select("id", { count: "exact", head: true }).eq("status", "disponible"),
       supabase.from("business_config").select("config").eq("id", 1).maybeSingle(),
     ])

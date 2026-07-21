@@ -71,6 +71,7 @@ function Login({ onToken }: { onToken: (t: string) => void }) {
 const TABS = [
   { key: "cuenta", label: "Cuenta", icon: "💳" },
   { key: "web", label: "Mi web", icon: "🌐" },
+  { key: "ventas", label: "Mis ventas", icon: "📈" },
   { key: "reservas", label: "Reservas", icon: "🏊" },
   { key: "incidencias", label: "Incidencias", icon: "🛠️" },
   { key: "avisos", label: "Avisos", icon: "📣" },
@@ -110,6 +111,7 @@ function Dashboard({ token, onLogout }: { token: string; onLogout: () => void })
       <main style={{ maxWidth: 860, margin: "0 auto", padding: "18px 16px" }}>
         {tab === "cuenta" && <CuentaTab api={api} />}
         {tab === "web" && <MicrositioTab api={api} />}
+        {tab === "ventas" && <VentasTab api={api} />}
         {tab === "reservas" && <ReservasTab api={api} />}
         {tab === "incidencias" && <IncidenciasTab api={api} />}
         {tab === "avisos" && <AvisosTab api={api} />}
@@ -511,6 +513,120 @@ function MicrositioTab({ api }: { api: Api }) {
 
         <button type="submit" disabled={saving} style={{ ...btn, marginTop: 14 }}>{saving ? "Guardando…" : "Guardar mi web"}</button>
       </form>
+    </div>
+  )
+}
+
+// ---------- Mis ventas (renta porcentual) ----------
+// El comerciante reporta las ventas brutas de su local cada mes; la emisión de
+// canon+condominio calcula la renta porcentual con estos números.
+type SalesLeaseUnit = { code?: string; commercial_name?: string }
+type SalesLease = {
+  id: string; unit_id: string; percentage_rent_rate: number; percentage_rent_min: number
+  units?: SalesLeaseUnit | SalesLeaseUnit[]
+}
+type SaleRow = { id: string; lease_id: string; period_month: string; gross_sales: number; source: string }
+
+function leaseUnitName(l: SalesLease) {
+  const u = Array.isArray(l.units) ? l.units[0] : l.units
+  return u?.commercial_name || u?.code || "Mi local"
+}
+
+function VentasTab({ api }: { api: Api }) {
+  const [leases, setLeases] = useState<SalesLease[]>([])
+  const [sales, setSales] = useState<SaleRow[]>([])
+  const [err, setErr] = useState("")
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    try {
+      const d = await api("/api/portal/sales")
+      setLeases((d.leases as SalesLease[]) || [])
+      setSales((d.sales as SaleRow[]) || [])
+    } catch (e) { setErr(String((e as Error).message)) } finally { setLoading(false) }
+  }, [api])
+  useEffect(() => { load() }, [load])
+
+  if (loading) return <div style={card}><Empty text="Cargando…" /></div>
+  return (
+    <div>
+      {err && <div style={errBox}>{err}</div>}
+      {leases.length === 0 ? (
+        <div style={card}>
+          <Empty text="Tu contrato no tiene renta porcentual: no hace falta reportar ventas. Si crees que es un error, contacta a la administración." />
+        </div>
+      ) : (
+        <>
+          <p style={{ fontSize: 13, color: "#5b6b82", margin: "0 0 12px" }}>
+            Reporta las ventas brutas de tu local cada mes. Con eso se calcula la renta porcentual de tu contrato — sin planillas ni correos.
+          </p>
+          {leases.map((l) => (
+            <LeaseSalesCard key={l.id} lease={l} sales={sales.filter((s) => s.lease_id === l.id)} api={api} onSaved={load} />
+          ))}
+        </>
+      )}
+    </div>
+  )
+}
+
+function LeaseSalesCard({ lease, sales, api, onSaved }: { lease: SalesLease; sales: SaleRow[]; api: Api; onSaved: () => void }) {
+  const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7))
+  const [gross, setGross] = useState("")
+  const [msg, setMsg] = useState(""); const [err, setErr] = useState(""); const [saving, setSaving] = useState(false)
+
+  const rate = Number(lease.percentage_rent_rate) || 0
+  const min = Number(lease.percentage_rent_min) || 0
+  const grossNum = Number(gross) || 0
+  const estimate = Math.max(0, Math.round((grossNum * (rate / 100) - min) * 100) / 100)
+  const existing = sales.find((s) => String(s.period_month).slice(0, 7) === month)
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault(); setErr(""); setMsg(""); setSaving(true)
+    try {
+      await api("/api/portal/sales", { method: "POST", body: JSON.stringify({ leaseId: lease.id, periodMonth: month, grossSales: Number(gross) }) })
+      setMsg("✓ Ventas reportadas. ¡Gracias!")
+      setGross("")
+      onSaved()
+    } catch (e) { setErr(String((e as Error).message)) } finally { setSaving(false) }
+  }
+
+  return (
+    <div style={{ ...card, marginBottom: 12 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+        <strong style={{ fontSize: 15 }}>{leaseUnitName(lease)}</strong>
+        <span style={{ fontSize: 12, color: "#5b6b82" }}>Renta porcentual: {rate}% de las ventas{min > 0 ? ` (mínimo ${money(min)})` : ""}</span>
+      </div>
+      {err && <div style={{ ...errBox, marginTop: 8 }}>{err}</div>}
+      {msg && <div style={{ ...okBox, marginTop: 8 }}>{msg}</div>}
+      <form onSubmit={save} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", marginTop: 10 }}>
+        <L label="Mes"><input type="month" value={month} onChange={(e) => setMonth(e.target.value)} style={inp} /></L>
+        <L label="Ventas brutas del mes ($)" grow>
+          <input type="number" step="0.01" min="0" value={gross} onChange={(e) => setGross(e.target.value)} placeholder={existing ? String(existing.gross_sales) : "0.00"} style={inp} />
+        </L>
+        <button type="submit" disabled={saving || !gross} style={btn}>{saving ? "Guardando…" : existing ? "Actualizar" : "Reportar"}</button>
+      </form>
+      {grossNum > 0 && (
+        <p style={{ fontSize: 12, color: "#5b6b82", margin: "8px 0 0" }}>
+          Renta porcentual estimada de ese mes: <b>{money(estimate)}</b>{min > 0 && estimate === 0 ? " (queda cubierta por el mínimo del contrato)" : ""}
+        </p>
+      )}
+      {existing && (
+        <p style={{ fontSize: 12, color: "#8494a8", margin: "6px 0 0" }}>
+          Ya reportaste {money(existing.gross_sales)} para ese mes{existing.source === "pos" ? " (registrado por el POS)" : ""}. Guardar lo reemplaza.
+        </p>
+      )}
+      {sales.length > 0 && (
+        <div style={{ marginTop: 12, borderTop: "1px solid #eef2f8", paddingTop: 8 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#5b6b82", marginBottom: 4 }}>Historial</div>
+          {sales.slice(0, 6).map((s) => (
+            <div key={s.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, padding: "3px 0" }}>
+              <span>{String(s.period_month).slice(0, 7)}{s.source === "pos" ? " · POS" : ""}</span>
+              <span style={{ fontWeight: 600 }}>{money(s.gross_sales)}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
