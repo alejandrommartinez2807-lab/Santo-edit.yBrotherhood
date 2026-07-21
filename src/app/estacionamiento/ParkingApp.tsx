@@ -27,6 +27,9 @@ function qrUrl(data: string, size = 200) {
 function sym(cur?: string) {
   return (cur || "USD") === "VES" ? "Bs" : "$"
 }
+function fmtBs(n: number) {
+  return n.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
 function fmtMin(m: number) {
   const h = Math.floor(m / 60)
   const mm = m % 60
@@ -66,10 +69,21 @@ export default function ParkingApp({
   const [reference, setReference] = useState("")
   const [paid, setPaid] = useState(false)
   const [igtf, setIgtf] = useState<{ enabled: boolean; rate: number }>({ enabled: false, rate: 0 })
+  const [bcv, setBcv] = useState<number | null>(null)
 
   useEffect(() => {
     if (initialCode) void lookup(initialCode)
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Tasa BCV para mostrar el equivalente en bolívares (pago móvil). Si falla, no se muestra.
+  useEffect(() => {
+    let alive = true
+    fetch("/api/exchange-rate", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => { if (alive && Number(d?.rate) > 0) setBcv(Number(d.rate)) })
+      .catch(() => {})
+    return () => { alive = false }
   }, [])
 
   const origin = typeof window !== "undefined" ? window.location.origin : ""
@@ -154,6 +168,8 @@ export default function ParkingApp({
   const showIgtf = !!ticket && igtf.enabled && method === "efectivo" && (ticket.currency || "USD") !== "VES" && ticket.amount > 0
   const igtfAmt = showIgtf && ticket ? Math.round(ticket.amount * igtf.rate) / 100 : 0
   const totalWithIgtf = ticket ? Math.round((ticket.amount + igtfAmt) * 100) / 100 : 0
+  // Equivalente en bolívares (tasa BCV) para montos en divisas; "" si no aplica.
+  const bsOf = (usd: number) => (bcv && ticket && (ticket.currency || "USD") !== "VES" ? `≈ Bs ${fmtBs(usd * bcv)}` : "")
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: "#fff", fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,sans-serif", display: "grid", placeItems: "center", padding: 20 }}>
@@ -221,6 +237,7 @@ export default function ParkingApp({
             {/* Monto */}
             <div style={{ textAlign: "center", marginTop: 14 }}>
               <div style={{ fontSize: 44, fontWeight: 800, color: C.accent, lineHeight: 1 }}>{sym(ticket.currency)}{ticket.amount}</div>
+              {bsOf(ticket.amount) && <div style={{ fontSize: 13, color: C.soft, marginTop: 2 }}>{bsOf(ticket.amount)}</div>}
               <div style={{ fontSize: 13, color: C.soft, marginTop: 4 }}>
                 {ticket.status === "abierto" && `${fmtMin(ticket.minutes)} en el estacionamiento`}
                 {ticket.status === "por_pagar" && "🕓 Pago reportado — se confirma en la salida"}
@@ -246,6 +263,7 @@ export default function ParkingApp({
                     <div style={{ display: "flex", justifyContent: "space-between", color: C.soft }}><span>Tarifa</span><span>{sym(ticket.currency)}{ticket.amount}</span></div>
                     <div style={{ display: "flex", justifyContent: "space-between", color: C.soft }}><span>IGTF {igtf.rate}% (pago en divisas)</span><span>{sym(ticket.currency)}{igtfAmt}</span></div>
                     <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, marginTop: 4, borderTop: `1px solid ${C.line}`, paddingTop: 4 }}><span>Total</span><span>{sym(ticket.currency)}{totalWithIgtf}</span></div>
+                    {bsOf(totalWithIgtf) && <div style={{ textAlign: "right", color: C.soft, fontSize: 12, marginTop: 2 }}>{bsOf(totalWithIgtf)}</div>}
                   </div>
                 )}
                 <button onClick={reportPay} disabled={loading} style={primary}>{loading ? "Registrando…" : "Registrar mi pago"}</button>
