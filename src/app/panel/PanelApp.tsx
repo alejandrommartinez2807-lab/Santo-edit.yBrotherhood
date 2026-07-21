@@ -74,7 +74,7 @@ type Summary = {
   income?: { canon: number; condominio: number; renta_pct: number; estacionamiento: number; publicidad: number; total: number }
 }
 
-type Tab = "resumen" | "unidades" | "residentes" | "contratos" | "ventas" | "cuotas" | "estado" | "galeria" | "amenidades" | "incidencias" | "estacionamiento" | "publicidad" | "consultorios" | "atencion" | "fidelidad" | "comunicados" | "asambleas" | "accesos" | "documentos"
+type Tab = "resumen" | "unidades" | "residentes" | "contratos" | "ventas" | "cuotas" | "estado" | "galeria" | "amenidades" | "incidencias" | "estacionamiento" | "publicidad" | "consultorios" | "atencion" | "fidelidad" | "comunicados" | "asambleas" | "accesos" | "documentos" | "fiscal"
 
 const UNIT_STATUS = ["disponible", "ocupado", "reservado", "mantenimiento", "inactivo"]
 const RES_ROLES = ["propietario", "inquilino", "encargado", "autorizado"]
@@ -101,6 +101,7 @@ const MODULES: { key: Tab | string; label: string; icon: string; ready: boolean 
   { key: "asambleas", label: "Asambleas", icon: "🗳️", ready: true },
   { key: "accesos", label: "Accesos", icon: "🚪", ready: true },
   { key: "documentos", label: "Documentos", icon: "📄", ready: true },
+  { key: "fiscal", label: "Fiscal", icon: "🏛️", ready: true },
 ]
 
 function money(n: number) {
@@ -170,6 +171,7 @@ export default function PanelApp() {
           {tab === "asambleas" && <AsambleasView api={api} />}
           {tab === "accesos" && <AccesosView api={api} />}
           {tab === "documentos" && <DocumentosView api={api} />}
+          {tab === "fiscal" && <FiscalView api={api} />}
         </main>
       </div>
     </div>
@@ -2264,6 +2266,86 @@ function DocumentosView({ api }: { api: (p: string, i?: RequestInit) => Promise<
           </div>
         ))}
       </Card></div>
+    </div>
+  )
+}
+
+// ---------- Fiscal ----------
+type FiscalState = { fiscalEnabled: boolean; rifNumber: string; fiscalAddress: string; igtfEnabled: boolean; igtfRate: number }
+
+function FiscalView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
+  const [f, setF] = useState<FiscalState>({ fiscalEnabled: false, rifNumber: "", fiscalAddress: "", igtfEnabled: true, igtfRate: 3 })
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState("")
+  const [msg, setMsg] = useState("")
+
+  const load = useCallback(async () => {
+    setLoading(true); setErr("")
+    try { const d = await api("/api/panel/fiscal"); if (d.fiscal) setF(d.fiscal as FiscalState) } catch (e) { setErr(String((e as Error).message)) } finally { setLoading(false) }
+  }, [api])
+  useEffect(() => { load() }, [load])
+
+  async function save() {
+    setSaving(true); setErr(""); setMsg("")
+    try {
+      const d = await api("/api/panel/fiscal", { method: "POST", body: JSON.stringify(f) })
+      if (d.fiscal) setF(d.fiscal as FiscalState)
+      setMsg("✓ Configuración fiscal guardada")
+    } catch (e) { setErr(String((e as Error).message)) } finally { setSaving(false) }
+  }
+
+  const modeBanner = f.fiscalEnabled
+    ? { bg: "linear-gradient(120deg,#1e874b,#2fa968)", icon: "🏛️", title: "Facturación fiscal activa", desc: "El sistema está en modo fiscal. El documento fiscal oficial lo emite la máquina fiscal SENIAT." }
+    : { bg: "linear-gradient(120deg,#0a6f9c,#0f9bd7)", icon: "📄", title: "Solo recibos (no fiscal)", desc: "Los documentos que ve el cliente son recibos, no facturas. Sin riesgos con el SENIAT. Toda la base ya está lista para fiscalizar cuando lo decidas." }
+
+  return (
+    <div>
+      <h1 style={{ fontSize: 22, fontWeight: 800, margin: "4px 0 14px" }}>Configuración fiscal</h1>
+      {err && <div style={errBox}>{err}</div>}
+      {msg && <div style={{ ...errBox, background: "#e6f4ea", color: "#1e874b" }}>{msg}</div>}
+
+      <div style={{ background: modeBanner.bg, color: "#fff", marginBottom: 14, borderRadius: 14, padding: 18 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ fontSize: 34 }}>{modeBanner.icon}</span>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 17 }}>{modeBanner.title}</div>
+            <div style={{ fontSize: 13, opacity: 0.92, maxWidth: 620 }}>{modeBanner.desc}</div>
+          </div>
+        </div>
+      </div>
+
+      {loading ? <Card><p style={{ color: "#5b6b82", margin: 0 }}>Cargando…</p></Card> : (
+        <Card>
+          <label style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 700, cursor: "pointer", marginBottom: 6 }}>
+            <input type="checkbox" checked={f.fiscalEnabled} onChange={(e) => setF({ ...f, fiscalEnabled: e.target.checked })} />
+            Activar facturación fiscal (emitir facturas en vez de solo recibos)
+          </label>
+          <p style={{ fontSize: 12, color: "#8494a8", margin: "0 0 14px" }}>
+            Actívalo solo cuando tengas RIF y máquina fiscal homologada. Mientras esté apagado, el centro comercial emite <b>recibos no fiscales</b>.
+          </p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 12 }}>
+            <Field label="RIF del centro comercial"><input value={f.rifNumber} onChange={(e) => setF({ ...f, rifNumber: e.target.value })} placeholder="J-12345678-9" style={input} /></Field>
+            <Field label="Dirección fiscal"><input value={f.fiscalAddress} onChange={(e) => setF({ ...f, fiscalAddress: e.target.value })} placeholder="Av. …, Naguanagua" style={input} /></Field>
+          </div>
+
+          <div style={{ borderTop: "1px solid #e6eef5", marginTop: 14, paddingTop: 12 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 700, cursor: "pointer", marginBottom: 8 }}>
+              <input type="checkbox" checked={f.igtfEnabled} onChange={(e) => setF({ ...f, igtfEnabled: e.target.checked })} />
+              Cobrar IGTF en pagos en divisas
+            </label>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 12 }}>
+              <Field label="Tasa de IGTF (%)"><input type="number" step="0.1" min={0} max={100} value={f.igtfRate} onChange={(e) => setF({ ...f, igtfRate: Number(e.target.value) })} style={input} /></Field>
+            </div>
+            <p style={{ fontSize: 12, color: "#8494a8", margin: "8px 0 0" }}>Aplica al pagar en divisas en efectivo (ej. estacionamiento). Los pagos en bolívares no llevan IGTF.</p>
+          </div>
+
+          <div style={{ marginTop: 16 }}>
+            <button onClick={save} disabled={saving} style={btnPrimary}>{saving ? "Guardando…" : "Guardar configuración"}</button>
+          </div>
+        </Card>
+      )}
     </div>
   )
 }
