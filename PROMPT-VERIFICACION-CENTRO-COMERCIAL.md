@@ -110,6 +110,31 @@ Sin la migración, el portal degrada al directorio de ejemplo (DEFAULT_STORES) y
 
 ---
 
+## 4b. Postura fiscal (importante)
+
+Por decisión del negocio, **por ahora el sistema NO se fiscaliza**: emite solo
+**recibos (no facturas)** para evitar problemas con el SENIAT. La base ya está
+sentada para fiscalizar cuando se decida:
+
+- `business_config.fiscalEnabled` (default **false**), `rifNumber`, `fiscalAddress`.
+- Cálculo de IVA/IGTF ya existe (`src/lib/fiscal.ts`: `computeFiscalTotals`,
+  `computeIgtfOnDivisa`). El IGTF (3%) se muestra en el estacionamiento sobre
+  pagos en divisas efectivo.
+- `src/lib/mallReceipts.ts`: **único interruptor** de la leyenda no fiscal
+  (`receiptLegend(fiscalEnabled)`). Mientras `fiscalEnabled=false`, los
+  documentos muestran "Recibo — documento no fiscal. No es una factura."
+
+Checklist:
+- [ ] Ninguna superficie del mall dice "Factura" (usan "Recibo"). Verificar con
+      `grep -rniE "factura|invoice" src/app` acotado al mall.
+- [ ] Con `fiscalEnabled=false`, estacionamiento y "Mis recibos" muestran la leyenda no fiscal.
+- [ ] Al poner `fiscalEnabled=true`, la leyenda desaparece (probar el switch).
+- [ ] El documento fiscal oficial lo emite la **máquina fiscal SENIAT**, no la app.
+
+**Para fiscalizar en el futuro**: activar `fiscalEnabled`, cargar RIF/dirección
+fiscal, e integrar la emisión con la máquina fiscal homologada. El cálculo de
+impuestos ya está listo.
+
 ## 5. Self-prompt para reauditar en una sesión futura (copiar y pegar)
 
 > Trabaja en el worktree `D:\Santo edit\.claude\worktrees\concepto-la-granja`.
