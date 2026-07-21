@@ -43,3 +43,55 @@ export function instagramUrl(v: string): string {
 export function digitsOnly(v: string): string {
   return String(v ?? "").replace(/[^\d]/g, "")
 }
+
+// Productos destacados del micrositio --------------------------------------
+// Se guardan en units.featured_products como [{name, price, image, description}].
+// price = 0 significa "sin precio publicado" (se muestra sólo el nombre).
+
+export type MicrositeProduct = {
+  name: string
+  price: number
+  image: string
+  description: string
+}
+
+const MAX_PRODUCTS = 24
+
+// Valida lo que venga de un formulario/API y lo deja en la forma canónica.
+export function sanitizeProducts(v: unknown): MicrositeProduct[] {
+  if (!Array.isArray(v)) return []
+  return v
+    .map((p) => {
+      const o = (p || {}) as Record<string, unknown>
+      const price = Number(o.price)
+      return {
+        name: String(o.name ?? "").trim().slice(0, 80),
+        price: Number.isFinite(price) && price > 0 ? Math.round(price * 100) / 100 : 0,
+        image: String(o.image ?? "").trim().slice(0, 500),
+        description: String(o.description ?? "").trim().slice(0, 200),
+      }
+    })
+    .filter((p) => p.name)
+    .slice(0, MAX_PRODUCTS)
+}
+
+// Editor de texto plano (panel / mi-cuenta): una línea por producto con el
+// formato "Nombre | precio | url de imagen | descripción". Sólo el nombre es
+// obligatorio; el precio acepta coma o punto decimal.
+export function parseProductsInput(v: string): MicrositeProduct[] {
+  return sanitizeProducts(
+    String(v ?? "")
+      .split("\n")
+      .map((line) => {
+        const [name = "", price = "", image = "", description = ""] = line.split("|").map((s) => s.trim())
+        return { name, price: Number(price.replace(",", ".").replace(/[^\d.]/g, "")), image, description }
+      })
+  )
+}
+
+// Inverso de parseProductsInput, para precargar el editor.
+export function productsToInput(products: MicrositeProduct[]): string {
+  return sanitizeProducts(products)
+    .map((p) => [p.name, p.price > 0 ? String(p.price) : "", p.image, p.description].join(" | ").replace(/( \| )+$/, ""))
+    .join("\n")
+}

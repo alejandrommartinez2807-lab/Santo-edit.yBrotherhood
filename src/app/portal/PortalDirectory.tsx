@@ -80,8 +80,9 @@ export default function PortalDirectory({ stores }: { stores: Store[] }) {
             const inner = (
               <>
                 {s.logo_url ? (
+                  // contain + fondo blanco: el logo completo, sin recortes.
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={s.logo_url} alt="" width={48} height={48} style={{ borderRadius: 12, objectFit: "cover", flexShrink: 0 }} />
+                  <img src={s.logo_url} alt="" width={48} height={48} style={{ borderRadius: 12, objectFit: "contain", flexShrink: 0, background: "#fff", border: "1px solid #eaf3f8", padding: 3, boxSizing: "border-box" }} />
                 ) : (
                   <div style={{ width: 48, height: 48, borderRadius: 12, background: info.color, color: "#fff", display: "grid", placeItems: "center", fontSize: 22, flexShrink: 0 }}>{info.icon}</div>
                 )}

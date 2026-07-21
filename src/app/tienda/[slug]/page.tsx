@@ -3,7 +3,7 @@ import { notFound } from "next/navigation"
 import { BRAND } from "@/lib/brand"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { rubroOf } from "@/lib/mallRubros"
-import { instagramUrl, externalUrl, digitsOnly } from "@/lib/mallText"
+import { instagramUrl, externalUrl, digitsOnly, sanitizeProducts, type MicrositeProduct } from "@/lib/mallText"
 
 export const dynamic = "force-dynamic"
 
@@ -24,6 +24,8 @@ type Store = {
   hours: string
   promo: string
   gallery: GalleryItem[]
+  featured_products: MicrositeProduct[]
+  accent_color: string
 }
 
 async function loadStore(slug: string): Promise<Store | null> {
@@ -31,12 +33,18 @@ async function loadStore(slug: string): Promise<Store | null> {
     const supabase = getSupabaseAdmin()
     const { data } = await supabase
       .from("units")
-      .select("commercial_name, activity, floor, tower, logo_url, cover_url, tagline, description, phone, microsite_whatsapp, instagram, website_url, hours, promo, gallery, microsite_enabled")
+      // "*" a propósito: si la migración de una columna nueva aún no corrió,
+      // el micrositio sigue funcionando (la columna llega undefined).
+      .select("*")
       .eq("microsite_slug", slug)
       .eq("microsite_enabled", true)
       .maybeSingle()
     if (!data) return null
-    return { ...(data as Store), gallery: Array.isArray(data.gallery) ? (data.gallery as GalleryItem[]) : [] }
+    return {
+      ...(data as Store),
+      gallery: Array.isArray(data.gallery) ? (data.gallery as GalleryItem[]) : [],
+      featured_products: sanitizeProducts(data.featured_products),
+    }
   } catch {
     return null
   }
@@ -74,6 +82,8 @@ export default async function StorePage({ params }: { params: Promise<{ slug: st
   const s = await loadStore(slug)
   if (!s) notFound()
   const info = rubroOf(s.activity)
+  // Color de acento propio del local (si no definió uno, el del rubro).
+  const accent = /^#[0-9a-fA-F]{3,8}$/.test(s.accent_color || "") ? s.accent_color : info.color
   const wa = digitsOnly(s.microsite_whatsapp || BRAND.whatsapp)
   const waHref = `https://wa.me/${wa}?text=${encodeURIComponent(`Hola ${s.commercial_name}, los vi en el directorio de ${BRAND.name}.`)}`
   const location = [s.tower, s.floor].filter(Boolean).join(" · ")
@@ -102,11 +112,17 @@ export default async function StorePage({ params }: { params: Promise<{ slug: st
         </div>
       </header>
 
-      {/* HERO / PORTADA */}
-      <div style={{ position: "relative", height: 220, background: s.cover_url ? "#0c2432" : `linear-gradient(120deg, ${info.color}, #0f9bd7)`, overflow: "hidden" }}>
+      {/* HERO / PORTADA — la imagen se muestra completa (contain) sobre su
+          propia versión difuminada de fondo, así un logo o símbolo nunca sale
+          recortado sin importar sus proporciones. */}
+      <div style={{ position: "relative", height: 240, background: `linear-gradient(120deg, ${accent}, #0f9bd7)`, overflow: "hidden" }}>
         {s.cover_url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={s.cover_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.85 }} />
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={s.cover_url} alt="" aria-hidden style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(22px)", transform: "scale(1.15)", opacity: 0.7 }} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={s.cover_url} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />
+          </>
         )}
       </div>
 
@@ -115,10 +131,11 @@ export default async function StorePage({ params }: { params: Promise<{ slug: st
         <div style={{ display: "flex", gap: 16, alignItems: "flex-end", marginTop: -44 }}>
           <div style={{ width: 96, height: 96, borderRadius: 20, background: "#fff", boxShadow: "0 10px 30px rgba(12,36,50,.18)", display: "grid", placeItems: "center", flexShrink: 0, overflow: "hidden", border: "3px solid #fff" }}>
             {s.logo_url ? (
+              // contain + padding: el logo se ve completo, sin recortes.
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={s.logo_url} alt="" width={96} height={96} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <img src={s.logo_url} alt="" width={96} height={96} style={{ width: "100%", height: "100%", objectFit: "contain", padding: 8, boxSizing: "border-box" }} />
             ) : (
-              <div style={{ fontSize: 42, color: info.color }}>{info.icon}</div>
+              <div style={{ fontSize: 42, color: accent }}>{info.icon}</div>
             )}
           </div>
           <div style={{ paddingBottom: 6 }}>
@@ -132,9 +149,9 @@ export default async function StorePage({ params }: { params: Promise<{ slug: st
         {s.tagline && <p style={{ fontSize: 17, color: "#3f5a6b", margin: "0 0 4px" }}>{s.tagline}</p>}
         {location && <p style={{ fontSize: 14, color: "#7c93a6", margin: 0 }}>📍 {location} · {BRAND.name}</p>}
 
-        {/* Promo activa */}
+        {/* Promo activa (con el color propio del local) */}
         {s.promo && (
-          <div style={{ marginTop: 18, background: "linear-gradient(120deg,#f9a800,#e5007e)", color: "#fff", borderRadius: 14, padding: "14px 18px", fontWeight: 700, display: "flex", gap: 10, alignItems: "center" }}>
+          <div style={{ marginTop: 18, background: `linear-gradient(120deg, ${accent}, #163243)`, color: "#fff", borderRadius: 14, padding: "14px 18px", fontWeight: 700, display: "flex", gap: 10, alignItems: "center" }}>
             <span style={{ fontSize: 22 }}>🎉</span>
             <span>{s.promo}</span>
           </div>
@@ -143,10 +160,38 @@ export default async function StorePage({ params }: { params: Promise<{ slug: st
         {/* Acciones de contacto */}
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 20 }}>
           <a href={waHref} target="_blank" rel="noopener" style={btn("#25D366")}>💬 WhatsApp</a>
-          {s.phone && <a href={`tel:${s.phone.replace(/[^\d+]/g, "")}`} style={btn("#0f9bd7")}>📞 Llamar</a>}
+          {s.phone && <a href={`tel:${s.phone.replace(/[^\d+]/g, "")}`} style={btn(accent)}>📞 Llamar</a>}
           {s.instagram && <a href={instagramUrl(s.instagram)} target="_blank" rel="noopener" style={btn("#b26fd0")}>📷 Instagram</a>}
           {s.website_url && <a href={externalUrl(s.website_url)} target="_blank" rel="noopener" style={btn("#3f5a6b")}>🌐 Sitio web</a>}
         </div>
+
+        {/* Productos / servicios con precio */}
+        {s.featured_products.length > 0 && (
+          <section style={{ marginTop: 26 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 800, margin: "0 0 12px" }}>
+              <span style={{ borderBottom: `3px solid ${accent}`, paddingBottom: 2 }}>Productos y precios</span>
+            </h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 14 }}>
+              {s.featured_products.map((p, i) => (
+                <div key={i} style={{ background: "#fff", borderRadius: 16, border: "1px solid #eaf3f8", overflow: "hidden", boxShadow: "0 6px 20px rgba(12,36,50,.06)" }}>
+                  {p.image && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.image} alt={p.name} loading="lazy" style={{ width: "100%", aspectRatio: "4 / 3", objectFit: "cover", display: "block", background: "#eef1f6" }} />
+                  )}
+                  <div style={{ padding: "12px 14px 14px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
+                      <div style={{ fontWeight: 800, fontSize: 15 }}>{p.name}</div>
+                      {p.price > 0 && (
+                        <div style={{ color: accent, fontWeight: 800, fontSize: 15, whiteSpace: "nowrap" }}>${p.price % 1 === 0 ? p.price : p.price.toFixed(2)}</div>
+                      )}
+                    </div>
+                    {p.description && <div style={{ fontSize: 13, color: "#5b6b82", marginTop: 4, lineHeight: 1.45 }}>{p.description}</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Sobre / descripción */}
         {s.description && (

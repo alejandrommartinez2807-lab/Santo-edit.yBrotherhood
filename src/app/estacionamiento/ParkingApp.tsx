@@ -1,6 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { extractTicketCode } from "@/lib/parkingCode"
+
+// Detector nativo de códigos QR (Chrome/Android). En iOS no existe: ahí el
+// cliente escanea el QR con la cámara del teléfono, que abre este mismo link.
+type BarcodeDetectorLike = { detect(source: HTMLVideoElement): Promise<Array<{ rawValue: string }>> }
+type BarcodeDetectorCtor = new (opts?: { formats?: string[] }) => BarcodeDetectorLike
+
+// Recordamos el último ticket generado/consultado en este teléfono para que
+// "Ya tengo un ticket" lo ofrezca con un toque (sin escribir el código).
+const LAST_TICKET_KEY = "clg_parking_last"
 
 type Ticket = {
   code: string
@@ -72,10 +82,86 @@ export default function ParkingApp({
   const [nonFiscal, setNonFiscal] = useState(false)
   const [bcv, setBcv] = useState<number | null>(null)
 
+  // Último ticket recordado + escáner QR (se resuelven en cliente para no
+  // desincronizar la hidratación).
+  const [lastCode, setLastCode] = useState("")
+  const [canScan, setCanScan] = useState(false)
+  const [scanning, setScanning] = useState(false)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+
   useEffect(() => {
-    if (initialCode) void lookup(initialCode)
+    // Difiere la inicialización un tick para no hacer setState síncrono
+    // dentro del efecto (react-hooks/set-state-in-effect).
+    const timer = setTimeout(() => {
+      if (initialCode) void lookup(initialCode)
+      try { setLastCode(localStorage.getItem(LAST_TICKET_KEY) || "") } catch {}
+      const w = window as Window & { BarcodeDetector?: BarcodeDetectorCtor }
+      setCanScan(!!w.BarcodeDetector && !!navigator.mediaDevices?.getUserMedia)
+    }, 0)
+    return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  function rememberTicket(code: string) {
+    setLastCode(code)
+    try { localStorage.setItem(LAST_TICKET_KEY, code) } catch {}
+  }
+
+  // Cámara + BarcodeDetector mientras el panel de escaneo está abierto.
+  useEffect(() => {
+    if (!scanning) return
+    const w = window as Window & { BarcodeDetector?: BarcodeDetectorCtor }
+    if (!w.BarcodeDetector) {
+      // Sin soporte: se apaga el modo escáner (diferido, ver nota de arriba).
+      const t = setTimeout(() => setScanning(false), 0)
+      return () => clearTimeout(t)
+    }
+    const detector = new w.BarcodeDetector({ formats: ["qr_code"] })
+    let stream: MediaStream | null = null
+    let timer: ReturnType<typeof setTimeout> | null = null
+    let stopped = false
+
+    async function tick() {
+      if (stopped) return
+      const video = videoRef.current
+      if (video && video.readyState >= 2) {
+        try {
+          const codes = await detector.detect(video)
+          if (codes.length > 0) {
+            const code = extractTicketCode(codes[0].rawValue)
+            setScanning(false)
+            setCodeInput(code)
+            void lookup(code)
+            return
+          }
+        } catch {}
+      }
+      timer = setTimeout(tick, 250)
+    }
+
+    navigator.mediaDevices
+      .getUserMedia({ video: { facingMode: "environment" } })
+      .then((s) => {
+        if (stopped) { s.getTracks().forEach((t) => t.stop()); return }
+        stream = s
+        if (videoRef.current) {
+          videoRef.current.srcObject = s
+          void videoRef.current.play().catch(() => {})
+        }
+        void tick()
+      })
+      .catch(() => {
+        setScanning(false)
+        setError("No pudimos abrir la cámara. Escribe el código o escanea el QR con la cámara de tu teléfono.")
+      })
+
+    return () => {
+      stopped = true
+      if (timer) clearTimeout(timer)
+      stream?.getTracks().forEach((t) => t.stop())
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scanning])
 
   // Tasa BCV para mostrar el equivalente en bolívares (pago móvil). Si falla, no se muestra.
   useEffect(() => {
@@ -91,7 +177,8 @@ export default function ParkingApp({
   const ticketLink = (code: string) => `${origin}/estacionamiento?code=${code}`
 
   async function lookup(code: string) {
-    const c = code.trim().toUpperCase()
+    // Acepta el código pelado, el link completo del QR o texto que lo contenga.
+    const c = extractTicketCode(code)
     if (!c) return
     setLoading(true)
     setError("")
@@ -106,6 +193,7 @@ export default function ParkingApp({
         setTicket(data as Ticket)
         setIgtf(data.igtf || { enabled: false, rate: 0 })
         setNonFiscal(data.nonFiscal !== false)
+        rememberTicket(String(data.code || c))
         setScreen("ticket")
       }
     } catch {
@@ -132,6 +220,7 @@ export default function ParkingApp({
         setIgtf(data.igtf || { enabled: false, rate: 0 })
         setNonFiscal(data.nonFiscal !== false)
         setCodeInput(data.code)
+        rememberTicket(String(data.code || ""))
         setScreen("ticket")
       }
     } catch {
@@ -220,12 +309,39 @@ export default function ParkingApp({
         )}
 
         {/* TICKET: consulta / recién generado / pago */}
-        {screen === "ticket" && !ticket && (
+        {screen === "ticket" && !ticket && !scanning && (
           <form onSubmit={(e) => { e.preventDefault(); void lookup(codeInput) }} style={{ display: "grid", gap: 12 }}>
-            <p style={{ margin: 0, color: C.soft, fontSize: 14 }}>Escanea el QR de tu ticket o escribe el código.</p>
+            {/* Tu último ticket en este teléfono: un toque y listo. */}
+            {lastCode && (
+              <button type="button" onClick={() => { setCodeInput(lastCode); void lookup(lastCode) }} disabled={loading} style={{ ...bigBtn(C.accent), justifyContent: "flex-start" }}>
+                <span style={{ fontSize: 24 }}>🎟️</span>
+                <span><b>Mi último ticket</b><br /><span style={{ fontWeight: 400, fontSize: 13, opacity: 0.9 }}>{lastCode} · tocar para consultar</span></span>
+              </button>
+            )}
+            {canScan && (
+              <button type="button" onClick={() => { setError(""); setScanning(true) }} style={{ ...bigBtn("#163243"), justifyContent: "flex-start" }}>
+                <span style={{ fontSize: 24 }}>📷</span>
+                <span><b>Escanear el QR</b><br /><span style={{ fontWeight: 400, fontSize: 13, opacity: 0.9 }}>Apunta la cámara al ticket</span></span>
+              </button>
+            )}
+            <p style={{ margin: 0, color: C.soft, fontSize: 14 }}>
+              {canScan ? "O escribe el código (también puedes pegar el link del QR):" : "Escribe el código de tu ticket (o pega el link del QR). Si el QR está impreso, escanéalo con la cámara de tu teléfono: abre esta página con tu ticket."}
+            </p>
             <input value={codeInput} onChange={(e) => setCodeInput(e.target.value.toUpperCase())} name="code" placeholder="P-XXXXX" style={{ ...inp, textTransform: "uppercase" }} />
             <button type="submit" disabled={loading} style={primary}>{loading ? "Consultando…" : "Consultar"}</button>
           </form>
+        )}
+
+        {/* Escáner QR con la cámara (Chrome/Android; en iOS se usa la cámara del teléfono) */}
+        {screen === "ticket" && !ticket && scanning && (
+          <div style={{ display: "grid", gap: 12 }}>
+            <p style={{ margin: 0, color: C.soft, fontSize: 14 }}>Apunta la cámara al QR del ticket.</p>
+            <div style={{ position: "relative", borderRadius: 16, overflow: "hidden", background: "#0c2432", aspectRatio: "1 / 1" }}>
+              <video ref={videoRef} playsInline muted style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+              <div style={{ position: "absolute", inset: "12%", border: "3px solid rgba(255,255,255,.85)", borderRadius: 18, pointerEvents: "none" }} />
+            </div>
+            <button onClick={() => setScanning(false)} style={{ ...primary, background: "#5b6b82" }}>Cancelar</button>
+          </div>
         )}
 
         {screen === "ticket" && ticket && (

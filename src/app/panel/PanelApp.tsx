@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import ImageField from "@/components/ImageField"
-import { slugify as slugPreview } from "@/lib/mallText"
+import { slugify as slugPreview, parseProductsInput, productsToInput, sanitizeProducts } from "@/lib/mallText"
 
 // Cada vista carga sus datos al montar con el patrón useEffect(() => load(),
 // [load]) (load es un useCallback que hace setState tras el fetch). Es
@@ -47,6 +47,8 @@ type Unit = {
   hours?: string
   promo?: string
   cover_url?: string
+  featured_products?: unknown
+  accent_color?: string
 }
 type Resident = {
   id: string
@@ -381,6 +383,7 @@ const emptyUnitForm = {
   id: "", code: "", commercialName: "", activity: "", logoUrl: "", tower: "", floor: "", unitTypeId: "", areaM2: "", alicuotaPct: "", parkingSlots: "0", storageSlots: "0", status: "disponible", notes: "",
   // Micrositio ("la web" del local)
   micrositeEnabled: false, micrositeSlug: "", tagline: "", description: "", phone: "", micrositeWhatsapp: "", instagram: "", websiteUrl: "", hours: "", promo: "", coverUrl: "",
+  accentColor: "", productsText: "",
 }
 
 function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
@@ -413,6 +416,7 @@ function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
       micrositeEnabled: !!u.microsite_enabled, micrositeSlug: u.microsite_slug || "", tagline: u.tagline || "", description: u.description || "",
       phone: u.phone || "", micrositeWhatsapp: u.microsite_whatsapp || "", instagram: u.instagram || "", websiteUrl: u.website_url || "",
       hours: u.hours || "", promo: u.promo || "", coverUrl: u.cover_url || "",
+      accentColor: u.accent_color || "", productsText: productsToInput(sanitizeProducts(u.featured_products)),
     })
     setShowForm(true)
   }
@@ -431,6 +435,7 @@ function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
           micrositeEnabled: form.micrositeEnabled, micrositeSlug: form.micrositeSlug, tagline: form.tagline, description: form.description,
           phone: form.phone, micrositeWhatsapp: form.micrositeWhatsapp, instagram: form.instagram, websiteUrl: form.websiteUrl,
           hours: form.hours, promo: form.promo, coverUrl: form.coverUrl,
+          accentColor: form.accentColor, featuredProducts: parseProductsInput(form.productsText),
         }),
       })
       setForm({ ...emptyUnitForm }); setShowForm(false); await load()
@@ -510,11 +515,26 @@ function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
                 <Field label="Instagram"><input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} placeholder="@usuario" style={input} /></Field>
                 <Field label="Sitio web propio"><input value={form.websiteUrl} onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })} placeholder="https://…" style={input} /></Field>
                 <Field label="Promoción vigente"><input value={form.promo} onChange={(e) => setForm({ ...form, promo: e.target.value })} placeholder="2x1 los martes" style={input} /></Field>
+                <Field label="Color del sitio">
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <input type="color" value={/^#[0-9a-fA-F]{6}$/.test(form.accentColor) ? form.accentColor : "#0f9bd7"} onChange={(e) => setForm({ ...form, accentColor: e.target.value })} style={{ width: 44, height: 38, padding: 2, border: "1px solid #cfe0ec", borderRadius: 10, background: "#fff", cursor: "pointer" }} />
+                    {form.accentColor ? (
+                      <button type="button" onClick={() => setForm({ ...form, accentColor: "" })} style={{ ...btnGhost, padding: "8px 10px", fontSize: 12 }}>Usar el del rubro</button>
+                    ) : (
+                      <span style={{ fontSize: 12, color: "#7c93a6" }}>Ahora: color del rubro</span>
+                    )}
+                  </div>
+                </Field>
                 <div style={{ gridColumn: "1/-1" }}>
                   <Field label="Horario"><textarea value={form.hours} onChange={(e) => setForm({ ...form, hours: e.target.value })} placeholder={"Lun–Sáb 10:00–20:00\nDom 11:00–18:00"} style={{ ...input, minHeight: 54, resize: "vertical" }} /></Field>
                 </div>
                 <div style={{ gridColumn: "1/-1" }}>
                   <Field label="Descripción / Sobre nosotros"><textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Cuéntale a los visitantes qué ofreces…" style={{ ...input, minHeight: 80, resize: "vertical" }} /></Field>
+                </div>
+                <div style={{ gridColumn: "1/-1" }}>
+                  <Field label="Productos y precios (uno por línea: Nombre | precio | url de imagen | descripción)">
+                    <textarea value={form.productsText} onChange={(e) => setForm({ ...form, productsText: e.target.value })} placeholder={"Hamburguesa Clásica | 6 | https://… | Carne 100% res\nPapas | 2.5"} style={{ ...input, minHeight: 90, resize: "vertical", fontFamily: "ui-monospace, monospace", fontSize: 13 }} />
+                  </Field>
                 </div>
               </>
             )}

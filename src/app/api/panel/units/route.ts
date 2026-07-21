@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { resolveBranchId } from "@/lib/branch"
-import { slugify } from "@/lib/mallText"
+import { slugify, sanitizeProducts } from "@/lib/mallText"
 import { checkPanelAccess } from "../_auth"
 
 export const runtime = "nodejs"
@@ -111,6 +111,15 @@ export async function POST(request: NextRequest) {
       hours: text(body.hours),
       promo: text(body.promo),
       cover_url: text(body.coverUrl),
+    }
+    // Color de acento del micrositio: sólo hex válido (o vacío = color del rubro).
+    if (body.accentColor !== undefined) {
+      const accent = text(body.accentColor)
+      row.accent_color = /^#[0-9a-fA-F]{3,8}$/.test(accent) ? accent : ""
+    }
+    // Productos destacados: sólo se tocan si el formulario los envía.
+    if (Array.isArray(body.featuredProducts)) {
+      row.featured_products = sanitizeProducts(body.featuredProducts)
     }
     // La galería solo se toca si el formulario la envía (evita borrarla en guardados parciales).
     if (Array.isArray(body.gallery)) {

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import ImageField, { uploadImageFile } from "@/components/ImageField"
-import { slugify as microsSlug } from "@/lib/mallText"
+import { slugify as microsSlug, parseProductsInput, productsToInput, sanitizeProducts } from "@/lib/mallText"
 
 // Todas las pestañas cargan sus datos al montar con el patrón useEffect(() =>
 // load(), [load]) (load es un useCallback que hace setState tras el fetch). Es
@@ -366,11 +366,13 @@ type MUnit = {
   microsite_enabled?: boolean; microsite_slug?: string; tagline?: string; description?: string
   phone?: string; microsite_whatsapp?: string; instagram?: string; website_url?: string
   hours?: string; promo?: string; cover_url?: string; gallery?: GItem[]
+  featured_products?: unknown; accent_color?: string
 }
 
 const emptyMicro = {
   micrositeEnabled: false, micrositeSlug: "", commercialName: "", logoUrl: "", coverUrl: "", tagline: "",
   phone: "", micrositeWhatsapp: "", instagram: "", websiteUrl: "", promo: "", hours: "", description: "", galleryText: "",
+  accentColor: "", productsText: "",
 }
 
 function MicrositioTab({ api }: { api: Api }) {
@@ -399,6 +401,7 @@ function MicrositioTab({ api }: { api: Api }) {
       micrositeWhatsapp: u.microsite_whatsapp || "", instagram: u.instagram || "", websiteUrl: u.website_url || "",
       promo: u.promo || "", hours: u.hours || "", description: u.description || "",
       galleryText: (u.gallery || []).map((g) => g.url).join("\n"),
+      accentColor: u.accent_color || "", productsText: productsToInput(sanitizeProducts(u.featured_products)),
     })
   }, [])
 
@@ -425,7 +428,7 @@ function MicrositioTab({ api }: { api: Api }) {
       const gallery = form.galleryText.split("\n").map((s) => s.trim()).filter(Boolean).map((url) => ({ url }))
       const d = await api("/api/portal/microsite", {
         method: "POST",
-        body: JSON.stringify({ unitId, ...form, gallery }),
+        body: JSON.stringify({ unitId, ...form, gallery, featuredProducts: parseProductsInput(form.productsText) }),
       })
       const u = d.unit as MUnit | undefined
       if (u) {
@@ -480,6 +483,19 @@ function MicrositioTab({ api }: { api: Api }) {
                 <L label="Sitio web propio" grow><input value={form.websiteUrl} onChange={(e) => setForm({ ...form, websiteUrl: e.target.value })} placeholder="https://…" style={inp} /></L>
               </div>
               <L label="Promoción vigente"><input value={form.promo} onChange={(e) => setForm({ ...form, promo: e.target.value })} placeholder="2x1 los martes" style={inp} /></L>
+              <L label="Color de tu web">
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input type="color" value={/^#[0-9a-fA-F]{6}$/.test(form.accentColor) ? form.accentColor : "#0f9bd7"} onChange={(e) => setForm({ ...form, accentColor: e.target.value })} style={{ width: 44, height: 36, padding: 2, border: "1px solid #d7e3f0", borderRadius: 10, background: "#fff", cursor: "pointer" }} />
+                  {form.accentColor ? (
+                    <button type="button" onClick={() => setForm({ ...form, accentColor: "" })} style={{ ...btnGhost, padding: "6px 12px", fontSize: 13 }}>Usar el color del rubro</button>
+                  ) : (
+                    <span style={{ fontSize: 12, color: "#8494a8" }}>Ahora se usa el color de tu rubro</span>
+                  )}
+                </div>
+              </L>
+              <L label="Productos y precios (uno por línea: Nombre | precio | url de imagen | descripción)">
+                <textarea value={form.productsText} onChange={(e) => setForm({ ...form, productsText: e.target.value })} rows={4} placeholder={"Hamburguesa Clásica | 6 | https://… | Carne 100% res\nPapas | 2.5"} style={{ ...inp, resize: "vertical", fontFamily: "ui-monospace, monospace", fontSize: 13 }} />
+              </L>
               <L label="Horario"><textarea value={form.hours} onChange={(e) => setForm({ ...form, hours: e.target.value })} rows={2} placeholder={"Lun–Sáb 10:00–20:00"} style={{ ...inp, resize: "vertical" }} /></L>
               <L label="Sobre nosotros"><textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={4} placeholder="Cuéntale a los visitantes qué ofreces…" style={{ ...inp, resize: "vertical" }} /></L>
               <L label="Galería">
