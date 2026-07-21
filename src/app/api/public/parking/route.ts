@@ -2,12 +2,33 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { resolveBranchId } from "@/lib/branch"
 import { computeParkingFee } from "@/lib/parkingFee"
+import { computeIgtfOnDivisa } from "@/lib/fiscal"
+import { getBusinessConfig } from "@/lib/ordersBusinessConfig"
 import { enforceRateLimit } from "@/lib/rateLimit"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 function text(v: unknown) { return String(v ?? "").trim() }
+
+// IGTF del centro comercial (config global del negocio). Si falla, queda inactivo.
+async function loadIgtf(): Promise<{ enabled: boolean; rate: number }> {
+  try {
+    const cfg = await getBusinessConfig()
+    return {
+      enabled: cfg.igtfEnabled !== false,
+      rate: Number.isFinite(Number(cfg.igtfRate)) ? Number(cfg.igtfRate) : 3,
+    }
+  } catch {
+    return { enabled: false, rate: 0 }
+  }
+}
+
+// El IGTF (3%) aplica sólo a pagos en divisas en efectivo (tarifa en USD +
+// método "efectivo"). Pago móvil / tarjeta / transferencia (bolívares) no lo llevan.
+function isDivisaCash(currency: string, method: string): boolean {
+  return (currency || "USD") === "USD" && method === "efectivo"
+}
 
 function genCode() {
   const s = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -43,11 +64,14 @@ export async function GET(request: NextRequest) {
       minutes = live.minutes
       amount = live.amount
     }
+    const igtf = await loadIgtf()
     return NextResponse.json({
       ok: true,
       code: t.code, plate: t.plate, status: t.status,
       enteredAt: t.entered_at, exitedAt: t.exited_at,
       minutes, amount, currency: t.currency || config.rate_currency || "USD",
+      // Para que el cliente muestre el desglose si paga en divisas efectivo.
+      igtf: { enabled: igtf.enabled, rate: igtf.rate },
     })
   } catch (error) {
     return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Error" }, { status: 500 })
@@ -99,7 +123,8 @@ export async function POST(request: NextRequest) {
         .select("code, plate, entered_at, currency, status")
         .maybeSingle()
       if (error) throw new Error(error.message)
-      return NextResponse.json({ ok: true, ...data }, { status: 201 })
+      const igtf = await loadIgtf()
+      return NextResponse.json({ ok: true, ...data, igtf: { enabled: igtf.enabled, rate: igtf.rate } }, { status: 201 })
     }
 
     if (action === "pay") {
@@ -135,8 +160,18 @@ export async function POST(request: NextRequest) {
       const { data: cfg } = await supabase.from("parking_config").select("free_minutes, rate_per_hour, daily_cap, rate_currency").eq("branch_id", branchId).maybeSingle()
       const config = cfg || { free_minutes: 15, rate_per_hour: 1, daily_cap: 0, rate_currency: "USD" }
       const { minutes, amount } = computeParkingFee(t.entered_at, Date.now(), config)
+      const currency = t.currency || config.rate_currency || "USD"
 
-      const note = `Pago reportado por el cliente · ${method}${reference ? ` · ref ${reference}` : ""}`
+      // IGTF (3%) sólo si paga en divisas efectivo. Se muestra y se anota; el
+      // documento fiscal oficial lo emite la máquina fiscal en la caseta.
+      const igtfCfg = await loadIgtf()
+      const igtf = isDivisaCash(currency, method)
+        ? computeIgtfOnDivisa(amount, { igtfEnabled: igtfCfg.enabled, igtfRate: igtfCfg.rate })
+        : 0
+      const total = Math.round((amount + igtf) * 100) / 100
+
+      const igtfNote = igtf > 0 ? ` · IGTF ${igtfCfg.rate}% ${igtf} · total ${total}` : ""
+      const note = `Pago reportado por el cliente · ${method}${reference ? ` · ref ${reference}` : ""}${igtfNote}`
       const { error } = await supabase
         .from("parking_tickets")
         .update({
@@ -149,7 +184,7 @@ export async function POST(request: NextRequest) {
         .eq("branch_id", branchId)
         .eq("code", code)
       if (error) throw new Error(error.message)
-      return NextResponse.json({ ok: true, minutes, amount, currency: t.currency || config.rate_currency || "USD" })
+      return NextResponse.json({ ok: true, minutes, amount, igtf, total, currency, igtfRate: igtfCfg.rate })
     }
 
     return NextResponse.json({ ok: false, error: "Acción no soportada" }, { status: 400 })

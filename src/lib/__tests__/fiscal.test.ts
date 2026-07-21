@@ -1,7 +1,30 @@
 import { describe, it, expect } from "vitest"
-import { computeFiscalTotals, DEFAULT_FISCAL_CONFIG, type FiscalConfig } from "@/lib/fiscal"
+import { computeFiscalTotals, computeIgtfOnDivisa, DEFAULT_FISCAL_CONFIG, type FiscalConfig } from "@/lib/fiscal"
 
 const cfg = (over: Partial<FiscalConfig> = {}): FiscalConfig => ({ ...DEFAULT_FISCAL_CONFIG, ...over })
+
+describe("computeIgtfOnDivisa", () => {
+  it("cobra 3% por defecto sobre el monto en divisas", () => {
+    expect(computeIgtfOnDivisa(100)).toBe(3)
+    expect(computeIgtfOnDivisa(1)).toBe(0.03)
+  })
+  it("respeta una tasa configurada distinta", () => {
+    expect(computeIgtfOnDivisa(100, { igtfEnabled: true, igtfRate: 3.5 })).toBe(3.5)
+  })
+  it("no cobra si el IGTF está desactivado o la tasa es 0", () => {
+    expect(computeIgtfOnDivisa(100, { igtfEnabled: false, igtfRate: 3 })).toBe(0)
+    expect(computeIgtfOnDivisa(100, { igtfEnabled: true, igtfRate: 0 })).toBe(0)
+  })
+  it("monto <= 0 o inválido → 0", () => {
+    expect(computeIgtfOnDivisa(0)).toBe(0)
+    expect(computeIgtfOnDivisa(-5)).toBe(0)
+    // @ts-expect-error runtime
+    expect(computeIgtfOnDivisa("x")).toBe(0)
+  })
+  it("redondea a 2 decimales", () => {
+    expect(computeIgtfOnDivisa(0.33)).toBe(0.01)
+  })
+})
 
 describe("computeFiscalTotals · IVA incluido", () => {
   it("extrae el IVA 16% de un precio que ya lo incluye", () => {

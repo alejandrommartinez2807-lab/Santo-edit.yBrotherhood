@@ -73,6 +73,21 @@ function clampRate(rate: number): number {
 }
 
 /**
+ * IGTF (3% configurable) sobre un monto pagado en divisas (ej. efectivo USD).
+ * Servicios de monto plano como el estacionamiento: no llevan desglose de IVA
+ * por ítem, solo se les suma el IGTF cuando el pago es en divisas.
+ * Devuelve 0 si el IGTF está desactivado, la tasa es 0 o el monto no es válido.
+ */
+export function computeIgtfOnDivisa(
+  amountUSD: number,
+  config: Pick<FiscalConfig, "igtfEnabled" | "igtfRate"> = DEFAULT_FISCAL_CONFIG,
+): number {
+  const amt = safeNum(amountUSD)
+  if (amt <= 0 || !config.igtfEnabled || config.igtfRate <= 0) return 0
+  return round2(amt * (clampRate(config.igtfRate) / 100))
+}
+
+/**
  * Calcula el desglose fiscal de una venta.
  * @param items   líneas con precio, cantidad y tasa de IVA.
  * @param config  configuración fiscal del negocio.

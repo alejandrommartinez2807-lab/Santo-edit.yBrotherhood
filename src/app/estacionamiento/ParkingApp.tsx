@@ -65,6 +65,7 @@ export default function ParkingApp({
   const [method, setMethod] = useState("pago_movil")
   const [reference, setReference] = useState("")
   const [paid, setPaid] = useState(false)
+  const [igtf, setIgtf] = useState<{ enabled: boolean; rate: number }>({ enabled: false, rate: 0 })
 
   useEffect(() => {
     if (initialCode) void lookup(initialCode)
@@ -88,6 +89,7 @@ export default function ParkingApp({
         setTicket(null)
       } else {
         setTicket(data as Ticket)
+        setIgtf(data.igtf || { enabled: false, rate: 0 })
         setScreen("ticket")
       }
     } catch {
@@ -111,6 +113,7 @@ export default function ParkingApp({
         setError(data.error || "No pudimos generar el ticket")
       } else {
         setTicket({ code: data.code, plate: data.plate || "", status: "abierto", minutes: 0, amount: 0, currency: data.currency, enteredAt: data.entered_at })
+        setIgtf(data.igtf || { enabled: false, rate: 0 })
         setCodeInput(data.code)
         setScreen("ticket")
       }
@@ -146,6 +149,11 @@ export default function ParkingApp({
   }
 
   const wa = (msg: string) => `https://wa.me/${whatsapp}?text=${encodeURIComponent(msg)}`
+
+  // IGTF (3%): sólo si paga en divisas efectivo (tarifa en $ + método "efectivo").
+  const showIgtf = !!ticket && igtf.enabled && method === "efectivo" && (ticket.currency || "USD") !== "VES" && ticket.amount > 0
+  const igtfAmt = showIgtf && ticket ? Math.round(ticket.amount * igtf.rate) / 100 : 0
+  const totalWithIgtf = ticket ? Math.round((ticket.amount + igtfAmt) * 100) / 100 : 0
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: "#fff", fontFamily: "system-ui,-apple-system,Segoe UI,Roboto,sans-serif", display: "grid", placeItems: "center", padding: 20 }}>
@@ -233,9 +241,16 @@ export default function ParkingApp({
                 {method !== "efectivo" && (
                   <input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Referencia / últimos 4 dígitos (opcional)" style={{ ...inp, marginBottom: 10 }} />
                 )}
+                {showIgtf && (
+                  <div style={{ background: "#f6fbfe", border: `1px solid ${C.line}`, borderRadius: 12, padding: "10px 12px", marginBottom: 10, fontSize: 13 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", color: C.soft }}><span>Tarifa</span><span>{sym(ticket.currency)}{ticket.amount}</span></div>
+                    <div style={{ display: "flex", justifyContent: "space-between", color: C.soft }}><span>IGTF {igtf.rate}% (pago en divisas)</span><span>{sym(ticket.currency)}{igtfAmt}</span></div>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, marginTop: 4, borderTop: `1px solid ${C.line}`, paddingTop: 4 }}><span>Total</span><span>{sym(ticket.currency)}{totalWithIgtf}</span></div>
+                  </div>
+                )}
                 <button onClick={reportPay} disabled={loading} style={primary}>{loading ? "Registrando…" : "Registrar mi pago"}</button>
-                <a href={wa(`Hola, pago de estacionamiento — ticket ${ticket.code}${ticket.plate ? `, placa ${ticket.plate}` : ""}, monto ${sym(ticket.currency)}${ticket.amount}.`)} target="_blank" rel="noopener" style={{ display: "block", textAlign: "center", background: C.green, color: "#fff", textDecoration: "none", borderRadius: 12, padding: "12px", fontWeight: 700, marginTop: 10 }}>Enviar comprobante por WhatsApp</a>
-                <p style={{ fontSize: 12, color: "#8494a8", textAlign: "center", marginTop: 10 }}>El monto puede aumentar mientras el vehículo permanezca dentro.</p>
+                <a href={wa(`Hola, pago de estacionamiento — ticket ${ticket.code}${ticket.plate ? `, placa ${ticket.plate}` : ""}, monto ${sym(ticket.currency)}${showIgtf ? totalWithIgtf : ticket.amount}${showIgtf ? ` (incluye IGTF ${igtf.rate}%)` : ""}.`)} target="_blank" rel="noopener" style={{ display: "block", textAlign: "center", background: C.green, color: "#fff", textDecoration: "none", borderRadius: 12, padding: "12px", fontWeight: 700, marginTop: 10 }}>Enviar comprobante por WhatsApp</a>
+                <p style={{ fontSize: 12, color: "#8494a8", textAlign: "center", marginTop: 10 }}>El monto puede aumentar mientras el vehículo permanezca dentro.{igtf.enabled ? " El IGTF (3%) aplica al pagar en divisas en efectivo." : ""}</p>
               </div>
             )}
 
