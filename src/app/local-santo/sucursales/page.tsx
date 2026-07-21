@@ -511,7 +511,7 @@ function EventsPanel({
 </head>
 <body>
   <div class="card">
-    <img class="logo" src="${origin}/brotherhood-logo.png" alt="" />
+    <img class="logo" src="${origin}/brotherhood-logotipo-negro.png" alt="" />
     <h1>${name}</h1>
     <p class="sub">Pide desde tu teléfono</p>
     <div class="qr">

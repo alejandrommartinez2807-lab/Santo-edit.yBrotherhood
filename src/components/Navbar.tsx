@@ -217,11 +217,6 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
     businessConfig.businessName,
     DEFAULT_PUBLIC_CONFIG.businessName
   )
-  const businessShortDescription = safeText(
-    businessConfig.businessShortDescription,
-    DEFAULT_PUBLIC_CONFIG.businessShortDescription
-  )
-
   const whatsappUrl = useMemo(
     () =>
       buildWhatsAppUrl(
@@ -290,28 +285,17 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[var(--brand-border)] bg-[rgba(9,9,9,0.88)] backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
-        <a href="#inicio" className="group flex min-w-0 items-center gap-3">
-          <div className="relative shrink-0">
-            <div className="absolute inset-0 rounded-full bg-[rgba(var(--brand-primary-rgb),0.35)] opacity-0 blur-md transition group-hover:opacity-100" />
-            <Image
-              src={BRAND.logoUrl || "/logoremovebg.png"}
-              alt={businessName}
-              width={58}
-              height={58}
-              unoptimized
-              className="relative h-11 w-11 rounded-full border border-[var(--brand-border)] object-cover sm:h-[52px] sm:w-[52px]"
-            />
-          </div>
-
-          <div className="min-w-0">
-            <p className="font-display truncate text-[1.35rem] uppercase leading-none tracking-wide text-[var(--brand-ink-3)] sm:text-2xl">
-              {businessName}
-            </p>
-
-            <p className="mt-1 line-clamp-1 text-[0.6rem] font-bold uppercase leading-tight tracking-[0.22em] text-[var(--brand-primary)] sm:text-[0.68rem]">
-              {businessShortDescription}
-            </p>
-          </div>
+        {/* Logotipo vectorizado: el guion ya dice el nombre, sin texto duplicado. */}
+        <a href="#inicio" className="group flex min-w-0 items-center">
+          <Image
+            src={BRAND.wordmarkDarkBgUrl}
+            alt={businessName}
+            width={320}
+            height={103}
+            unoptimized
+            priority
+            className="h-9 w-auto max-w-[44vw] object-contain transition group-hover:opacity-90 sm:h-11"
+          />
         </a>
 
         {/* Nav central (escritorio) */}

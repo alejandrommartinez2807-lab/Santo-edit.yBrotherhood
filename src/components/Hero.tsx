@@ -38,7 +38,7 @@ const DEFAULT_PUBLIC_CONFIG: PublicBusinessConfig = {
   googleMapsUrl: "",
   instagramUrl: `https://www.instagram.com/${BRAND.instagram}/`,
   heroBadgeText: "Smash burgers · Delivery y Pick Up",
-  heroSubtitle: BRAND.tagline,
+  heroSubtitle: "Porque nos gustan las buenas burgers",
   heroDescription: BRAND.description,
   locationButtonText: "Ubicación",
   publicMenuTitle: "Ver menú",
@@ -221,7 +221,7 @@ export default function Hero() {
 
   const guarantees = [
     { icon: Beef, top: "Carne", bottom: "100% res" },
-    { icon: Flame, top: "Queso", bottom: "fundido" },
+    { icon: Flame, top: "Queso", bottom: "americano" },
     { icon: Sandwich, top: "Pan", bottom: "brioche" },
   ]
 
@@ -262,10 +262,10 @@ export default function Hero() {
         />
         <div className="absolute -left-24 top-1/3 h-72 w-72 rounded-full bg-[rgba(var(--brand-primary-rgb),0.07)] blur-3xl" />
         <Image
-          src="/brotherhood-logo-transparente.png"
+          src={BRAND.symbolDarkBgUrl}
           alt=""
-          width={720}
-          height={720}
+          width={900}
+          height={675}
           unoptimized
           className="absolute -right-24 top-16 w-[22rem] rotate-12 opacity-[0.05] sm:-right-16 sm:w-[34rem]"
         />
@@ -273,30 +273,27 @@ export default function Hero() {
       </div>
 
       <div className="relative mx-auto flex max-w-4xl flex-col items-center px-5 pb-12 pt-10 text-center sm:px-6 sm:pt-16">
-        {/* Logo */}
-        <div className="relative mb-6">
-          <div className="absolute inset-2 -z-10 rounded-full bg-[rgba(var(--brand-primary-rgb),0.25)] blur-2xl" />
-          <Image
-            src={BRAND.logoUrl || "/logoremovebg.png"}
-            alt={businessConfig.businessName}
-            width={320}
-            height={320}
-            unoptimized
-            priority
-            className="h-32 w-32 rounded-full border border-[var(--brand-border)] object-cover shadow-[0_0_60px_-10px_rgba(var(--brand-primary-rgb),0.55)] sm:h-44 sm:w-44"
-          />
-        </div>
-
         {/* Badge */}
         <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand-primary-rgb),0.45)] bg-black/50 px-4 py-2 text-[0.62rem] font-bold uppercase tracking-[0.22em] text-[var(--brand-primary)] backdrop-blur sm:text-xs">
           <Flame size={14} />
           {businessConfig.heroBadgeText}
         </div>
 
-        {/* Título */}
-        <h1 className="max-w-full font-display text-[clamp(2.6rem,14.5vw,4.5rem)] uppercase leading-[0.85] tracking-tight text-[var(--brand-ink-3)] [text-shadow:0_10px_50px_rgba(var(--brand-primary-rgb),0.35)] sm:text-8xl md:text-[7.5rem]">
-          {businessConfig.businessName}
-        </h1>
+        {/* Título: el logotipo vectorizado ES el nombre; el h1 queda para
+            lectores de pantalla y buscadores sin repetir el texto en la vista. */}
+        <h1 className="sr-only">{businessConfig.businessName}</h1>
+        <div className="relative w-full max-w-[34rem]">
+          <div className="absolute inset-x-8 inset-y-4 -z-10 rounded-full bg-[rgba(var(--brand-primary-rgb),0.22)] blur-3xl" />
+          <Image
+            src={BRAND.wordmarkDarkBgUrl}
+            alt={businessConfig.businessName}
+            width={1600}
+            height={513}
+            unoptimized
+            priority
+            className="h-auto w-full object-contain drop-shadow-[0_18px_60px_rgba(var(--brand-primary-rgb),0.35)]"
+          />
+        </div>
 
         {/* Subtítulo */}
         <p className="mt-4 font-display text-xl uppercase tracking-[0.06em] text-[var(--brand-primary)] sm:text-3xl">

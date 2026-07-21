@@ -142,23 +142,21 @@ export default function PublicFooter() {
 
         <div className="grid gap-6 p-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:p-8">
           <div className="flex items-start gap-4">
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary)] ring-4 ring-[var(--brand-accent)]">
-              <Image
-                src={BRAND.logoUrl || "/logoremovebg.png"}
-                alt={config.businessName || BRAND.name}
-                width={64}
-                height={64}
-                unoptimized
-                className="h-16 w-16 object-contain"
-              />
-            </div>
             <div>
               <p className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-[var(--brand-primary)]">
                 Gracias por visitar
               </p>
-              <h2 className="mt-2 text-3xl font-black uppercase leading-none text-[var(--brand-primary)] sm:text-4xl">
-                {config.businessName || BRAND.name}
-              </h2>
+              {/* Logotipo vectorizado (versión para fondo claro): sustituye
+                  al nombre en texto para no repetir la marca. */}
+              <h2 className="sr-only">{config.businessName || BRAND.name}</h2>
+              <Image
+                src={BRAND.wordmarkLightBgUrl}
+                alt={config.businessName || BRAND.name}
+                width={1600}
+                height={602}
+                unoptimized
+                className="mt-3 h-16 w-auto max-w-full object-contain sm:h-20"
+              />
               <p className="mt-2 max-w-2xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/72">
                 {config.businessShortDescription || BRAND.tagline}
               </p>

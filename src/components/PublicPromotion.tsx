@@ -204,10 +204,10 @@ export default function PublicPromotion() {
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_85%_0%,rgba(var(--brand-primary-rgb),0.18),transparent_55%)]"
         />
         <Image
-          src="/brotherhood-logo-transparente.png"
+          src={BRAND.symbolDarkBgUrl}
           alt=""
           width={480}
-          height={480}
+          height={360}
           unoptimized
           className="pointer-events-none absolute -bottom-16 -left-16 w-64 -rotate-12 opacity-[0.05]"
         />

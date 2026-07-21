@@ -22,6 +22,13 @@ export const BRAND = {
     "Smash burgers jugosas, combos, papas, chicken y bebidas frías. Delivery y pick up en Valencia y San Diego.",
   /** Logo en /public (déjalo vacío para usar solo texto). */
   logoUrl: "/brotherhood-logo.png",
+  /** Logotipo vectorizado (script "Brotherhood") para fondos oscuros. */
+  wordmarkDarkBgUrl: "/brotherhood-logotipo-blanco.png",
+  /** Logotipo vectorizado para fondos claros e impresión. */
+  wordmarkLightBgUrl: "/brotherhood-logotipo-negro.png",
+  /** Símbolo de la marca (hamburguesa) para fondos oscuros / claros. */
+  symbolDarkBgUrl: "/brotherhood-simbolo-blanco.png",
+  symbolLightBgUrl: "/brotherhood-simbolo-negro.png",
 
   /** Contacto / redes (defaults; la config en BD puede sobreescribir). */
   whatsapp: "584124467558",
