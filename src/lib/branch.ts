@@ -348,6 +348,7 @@ export type BranchScopedConfig = {
   publicName?: string
   address?: string
   zone?: string
+  googleMapsUrl?: string
   estimatedTimeText?: string
   mainWhatsapp?: string
   deliveryWhatsapp?: string
@@ -371,6 +372,7 @@ const BRANCH_SCOPED_TEXT_FIELDS = [
   "publicName",
   "address",
   "zone",
+  "googleMapsUrl",
   "estimatedTimeText",
   "mainWhatsapp",
   "deliveryWhatsapp",
@@ -552,6 +554,7 @@ export function buildSafePublicBranch(
     publicName: branchConfig.publicName,
     address: branchConfig.address,
     zone: branchConfig.zone,
+    googleMapsUrl: branchConfig.googleMapsUrl,
     estimatedTimeText: branchConfig.estimatedTimeText,
     mainWhatsapp: branchConfig.mainWhatsapp,
     config: branchConfig,

@@ -7,8 +7,10 @@ import { AlertTriangle, ListChecks } from "lucide-react";
 // publicPrepayNoticeEnabled/Text). Pedido del dueño de Brotherhood: que el
 // cliente sepa exactamente qué botón tocar y que NO se prepara sin pagar.
 
+// "Cancelar" = pagar en el habla local; se usan ambos términos como sinónimos
+// para que nadie entienda "cancelar el pedido" (pedido del dueño 2026-07-21).
 export const DEFAULT_PREPAY_NOTICE_TEXT =
-  "Tu pedido NO empieza a prepararse hasta que pagues y tu pago sea confirmado. Después de registrar el pedido, realiza el pago y toca «Reportar mi pago».";
+  "Tu pedido NO empieza a prepararse hasta que canceles (pagues) y tu pago sea confirmado. Después de registrar el pedido, cancela con tu método preferido y toca «Reportar mi pago».";
 
 type CheckoutOrderType = "Comer aquí" | "Para llevar" | "Delivery";
 
@@ -63,18 +65,18 @@ export function PublicCheckoutSteps({
 
   return (
     <div className="rounded-2xl border-2 border-[var(--brand-primary)]/35 bg-[var(--brand-surface-2)] px-4 py-3.5">
-      <p className="inline-flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-        <ListChecks size={15} />
+      <p className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+        <ListChecks size={18} />
         Así se pide, paso a paso
       </p>
 
-      <ol className="mt-2.5 space-y-1.5">
+      <ol className="mt-3 space-y-2">
         {steps.map((step, index) => (
           <li key={step} className="flex items-start gap-2.5">
-            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary)] text-[0.62rem] font-black text-black">
+            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary)] text-[0.75rem] font-black text-black">
               {index + 1}
             </span>
-            <span className="text-[0.78rem] font-bold leading-5 text-[var(--brand-ink-2)]/85">
+            <span className="text-[0.95rem] font-bold leading-6 text-[var(--brand-ink-2)]/90">
               {step}
             </span>
           </li>

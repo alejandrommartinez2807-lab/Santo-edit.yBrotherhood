@@ -226,13 +226,6 @@ export default function BottomInfoSections() {
     )
   }, [businessConfig.deliveryWhatsapp, businessConfig.mainWhatsapp])
 
-  const googleMapsUrl = useMemo(() => {
-    return normalizeExternalUrl(
-      businessConfig.googleMapsUrl,
-      DEFAULT_PUBLIC_CONFIG.googleMapsUrl,
-    )
-  }, [businessConfig.googleMapsUrl])
-
   const instagramUrl = useMemo(() => {
     return normalizeExternalUrl(businessConfig.instagramUrl, "")
   }, [businessConfig.instagramUrl])
@@ -278,10 +271,9 @@ export default function BottomInfoSections() {
                 {businessConfig.whatsappButtonText}
               </a>
 
+              {/* Sube a "Nuestros locales" (mapas interactivos por sede). */}
               <a
-                href={googleMapsUrl}
-                target="_blank"
-                rel="noreferrer"
+                href="#ubicaciones"
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] px-6 py-3.5 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95"
               >
                 <MapPin size={17} />
@@ -361,23 +353,19 @@ export default function BottomInfoSections() {
         {/* Pie de página de marca */}
         <footer className="mt-14 border-t border-[var(--brand-border)] py-8">
           <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:justify-between sm:text-left">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col items-center gap-2 sm:items-start">
+              {/* Logotipo vectorizado: ya dice el nombre, sin texto duplicado. */}
               <Image
-                src={BRAND.logoUrl || "/logoremovebg.png"}
+                src={BRAND.wordmarkDarkBgUrl}
                 alt={businessConfig.businessName}
-                width={44}
-                height={44}
+                width={320}
+                height={103}
                 unoptimized
-                className="h-11 w-11 rounded-full border border-[var(--brand-border)] object-cover"
+                className="h-9 w-auto object-contain"
               />
-              <div>
-                <p className="font-display text-xl uppercase leading-none text-[var(--brand-ink-3)]">
-                  {businessConfig.businessName}
-                </p>
-                <p className="mt-1 text-[0.62rem] font-bold uppercase tracking-[0.22em] text-[var(--brand-primary)]">
-                  {BRAND.tagline}
-                </p>
-              </div>
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.22em] text-[var(--brand-primary)]">
+                {BRAND.tagline}
+              </p>
             </div>
 
             <p className="text-xs font-medium text-[var(--brand-ink-2)]">

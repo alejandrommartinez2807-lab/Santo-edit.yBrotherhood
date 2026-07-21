@@ -9,6 +9,9 @@ type BranchTable = { name: string; area: string }
 type BranchScopedConfig = {
   mainWhatsapp?: string
   deliveryWhatsapp?: string
+  address?: string
+  zone?: string
+  googleMapsUrl?: string
   localTables?: { name?: string; area?: string }[]
   exchangeRateMode?: "automatic" | "automaticEur" | "manual"
   manualExchangeRate?: number
@@ -34,6 +37,9 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
 
   const [mainWhatsapp, setMainWhatsapp] = useState("")
   const [deliveryWhatsapp, setDeliveryWhatsapp] = useState("")
+  const [address, setAddress] = useState("")
+  const [zone, setZone] = useState("")
+  const [googleMapsUrl, setGoogleMapsUrl] = useState("")
   const [useOwnTables, setUseOwnTables] = useState(false)
   const [tables, setTables] = useState<BranchTable[]>([])
   const [copyFrom, setCopyFrom] = useState("")
@@ -49,6 +55,9 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
   const applyConfig = useCallback((config: BranchScopedConfig) => {
     setMainWhatsapp(config.mainWhatsapp || "")
     setDeliveryWhatsapp(config.deliveryWhatsapp || "")
+    setAddress(config.address || "")
+    setZone(config.zone || "")
+    setGoogleMapsUrl(config.googleMapsUrl || "")
     setRateMode(
       config.exchangeRateMode === "automatic" ||
         config.exchangeRateMode === "automaticEur" ||
@@ -148,6 +157,9 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
         branchConfig: {
           mainWhatsapp: mainWhatsapp.trim() || null,
           deliveryWhatsapp: deliveryWhatsapp.trim() || null,
+          address: address.trim() || null,
+          zone: zone.trim() || null,
+          googleMapsUrl: googleMapsUrl.trim() || null,
           localTables: useOwnTables ? cleanedTables.map((t) => (t.area ? t : { name: t.name })) : null,
           exchangeRateMode: rateMode || null,
           manualExchangeRate: rateMode === "manual" ? manualRateValue : null,
@@ -238,6 +250,47 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
                 value={deliveryWhatsapp}
                 onChange={(e) => setDeliveryWhatsapp(e.target.value)}
                 placeholder="Vacío = usa el global"
+                className={`mt-1 ${inputClass}`}
+              />
+            </div>
+          </div>
+
+          {/* Ubicación pública de la sede: alimenta la sección "Nuestros
+              locales" del menú público (mapa interactivo + botón Cómo llegar). */}
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className={labelClass} htmlFor="branch-config-address">
+                Dirección de la sede (visible al público)
+              </label>
+              <input
+                id="branch-config-address"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Ej: Av. 104 con Calle 140, Urb. El Viñedo, Valencia"
+                className={`mt-1 ${inputClass}`}
+              />
+            </div>
+            <div>
+              <label className={labelClass} htmlFor="branch-config-zone">
+                Zona (corta, ej: El Viñedo)
+              </label>
+              <input
+                id="branch-config-zone"
+                value={zone}
+                onChange={(e) => setZone(e.target.value)}
+                placeholder="Ej: San Diego"
+                className={`mt-1 ${inputClass}`}
+              />
+            </div>
+            <div>
+              <label className={labelClass} htmlFor="branch-config-maps">
+                Link de Google Maps de la sede
+              </label>
+              <input
+                id="branch-config-maps"
+                value={googleMapsUrl}
+                onChange={(e) => setGoogleMapsUrl(e.target.value)}
+                placeholder="https://maps.app.goo.gl/…"
                 className={`mt-1 ${inputClass}`}
               />
             </div>

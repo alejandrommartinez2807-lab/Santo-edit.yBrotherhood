@@ -3048,7 +3048,7 @@ export default function BusinessConfigPage() {
                       }))
                     }
                     rows={3}
-                    placeholder="Déjalo vacío para usar el texto estándar: «Tu pedido NO empieza a prepararse hasta que pagues y tu pago sea confirmado…»"
+                    placeholder="Déjalo vacío para usar el texto estándar: «Tu pedido NO empieza a prepararse hasta que canceles (pagues) y tu pago sea confirmado…»"
                     className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
                   />
                 </div>

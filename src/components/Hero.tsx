@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import {
   ArrowRight,
@@ -159,17 +159,6 @@ function normalizePublicBusinessConfig(value: unknown): PublicBusinessConfig {
   }
 }
 
-function normalizeExternalUrl(value: string, fallback = "#") {
-  const cleanValue = String(value || "").trim()
-
-  if (!cleanValue) return fallback
-  if (cleanValue.startsWith("http://") || cleanValue.startsWith("https://")) {
-    return cleanValue
-  }
-
-  return fallback
-}
-
 async function getPublicBusinessConfig() {
   const response = await fetch("/api/public/business-config", {
     method: "GET",
@@ -211,13 +200,6 @@ export default function Hero() {
       isMounted = false
     }
   }, [])
-
-  const googleMapsUrl = useMemo(() => {
-    return normalizeExternalUrl(
-      businessConfig.googleMapsUrl,
-      DEFAULT_PUBLIC_CONFIG.googleMapsUrl
-    )
-  }, [businessConfig.googleMapsUrl])
 
   const guarantees = [
     { icon: Beef, top: "Carne", bottom: "100% res" },
@@ -324,10 +306,10 @@ export default function Hero() {
 
         {/* CTAs secundarias */}
         <div className="mt-3 grid w-full max-w-md grid-cols-2 gap-3">
+          {/* Baja a "Nuestros locales" (mapas interactivos por sede) en vez
+              de abrir un solo link externo que además podía venir vacío. */}
           <a
-            href={googleMapsUrl}
-            target="_blank"
-            rel="noreferrer"
+            href="#ubicaciones"
             className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--brand-border)] bg-black/30 px-4 py-3 text-xs font-bold uppercase tracking-wide text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95"
           >
             <MapPin size={16} />

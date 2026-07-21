@@ -12,6 +12,7 @@ import CartDrawer from "@/components/CartDrawer"
 import PublicPromotion from "@/components/PublicPromotion"
 import FeaturedProducts from "@/components/FeaturedProducts"
 import OpenAccountInfo from "@/components/OpenAccountInfo"
+import PublicLocations from "@/components/PublicLocations"
 import BottomInfoSections from "@/components/BottomInfoSections"
 import PublicThemeSync from "@/components/PublicThemeSync"
 
@@ -51,6 +52,8 @@ export default function Home() {
       <PublicPromotion />
 
       <OpenAccountInfo />
+
+      <PublicLocations />
 
       <BottomInfoSections />
 
