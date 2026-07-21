@@ -11,16 +11,17 @@ export const dynamic = "force-dynamic"
 
 function text(v: unknown) { return String(v ?? "").trim() }
 
-// IGTF del centro comercial (config global del negocio). Si falla, queda inactivo.
-async function loadIgtf(): Promise<{ enabled: boolean; rate: number }> {
+// IGTF + estado fiscal del centro comercial (config global). Si falla, inactivo.
+async function loadIgtf(): Promise<{ enabled: boolean; rate: number; fiscalEnabled: boolean }> {
   try {
     const cfg = await getBusinessConfig()
     return {
       enabled: cfg.igtfEnabled !== false,
       rate: Number.isFinite(Number(cfg.igtfRate)) ? Number(cfg.igtfRate) : 3,
+      fiscalEnabled: cfg.fiscalEnabled === true,
     }
   } catch {
-    return { enabled: false, rate: 0 }
+    return { enabled: false, rate: 0, fiscalEnabled: false }
   }
 }
 
@@ -72,6 +73,7 @@ export async function GET(request: NextRequest) {
       minutes, amount, currency: t.currency || config.rate_currency || "USD",
       // Para que el cliente muestre el desglose si paga en divisas efectivo.
       igtf: { enabled: igtf.enabled, rate: igtf.rate },
+      nonFiscal: !igtf.fiscalEnabled,
     })
   } catch (error) {
     return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Error" }, { status: 500 })
@@ -124,7 +126,7 @@ export async function POST(request: NextRequest) {
         .maybeSingle()
       if (error) throw new Error(error.message)
       const igtf = await loadIgtf()
-      return NextResponse.json({ ok: true, ...data, igtf: { enabled: igtf.enabled, rate: igtf.rate } }, { status: 201 })
+      return NextResponse.json({ ok: true, ...data, igtf: { enabled: igtf.enabled, rate: igtf.rate }, nonFiscal: !igtf.fiscalEnabled }, { status: 201 })
     }
 
     if (action === "pay") {
@@ -184,7 +186,7 @@ export async function POST(request: NextRequest) {
         .eq("branch_id", branchId)
         .eq("code", code)
       if (error) throw new Error(error.message)
-      return NextResponse.json({ ok: true, minutes, amount, igtf, total, currency, igtfRate: igtfCfg.rate })
+      return NextResponse.json({ ok: true, minutes, amount, igtf, total, currency, igtfRate: igtfCfg.rate, nonFiscal: !igtfCfg.fiscalEnabled })
     }
 
     return NextResponse.json({ ok: false, error: "Acción no soportada" }, { status: 400 })

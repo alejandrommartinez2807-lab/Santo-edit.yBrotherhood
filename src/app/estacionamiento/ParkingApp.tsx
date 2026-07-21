@@ -69,6 +69,7 @@ export default function ParkingApp({
   const [reference, setReference] = useState("")
   const [paid, setPaid] = useState(false)
   const [igtf, setIgtf] = useState<{ enabled: boolean; rate: number }>({ enabled: false, rate: 0 })
+  const [nonFiscal, setNonFiscal] = useState(false)
   const [bcv, setBcv] = useState<number | null>(null)
 
   useEffect(() => {
@@ -104,6 +105,7 @@ export default function ParkingApp({
       } else {
         setTicket(data as Ticket)
         setIgtf(data.igtf || { enabled: false, rate: 0 })
+        setNonFiscal(data.nonFiscal !== false)
         setScreen("ticket")
       }
     } catch {
@@ -128,6 +130,7 @@ export default function ParkingApp({
       } else {
         setTicket({ code: data.code, plate: data.plate || "", status: "abierto", minutes: 0, amount: 0, currency: data.currency, enteredAt: data.entered_at })
         setIgtf(data.igtf || { enabled: false, rate: 0 })
+        setNonFiscal(data.nonFiscal !== false)
         setCodeInput(data.code)
         setScreen("ticket")
       }
@@ -279,6 +282,12 @@ export default function ParkingApp({
                 <p style={{ margin: "6px 0 0", fontWeight: 700 }}>¡Pago registrado!</p>
                 <p style={{ margin: "4px 0 0", fontSize: 13 }}>Muestra este código en la salida. Un asesor lo confirma.</p>
               </div>
+            )}
+
+            {nonFiscal && (
+              <p style={{ fontSize: 11, color: "#8494a8", textAlign: "center", marginTop: 12, lineHeight: 1.4 }}>
+                Recibo — documento no fiscal. No es una factura.
+              </p>
             )}
 
             <div style={{ textAlign: "center", marginTop: 14 }}>

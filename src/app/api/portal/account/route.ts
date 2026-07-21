@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { verifyToken, bearerToken } from "../_session"
+import { getBusinessConfig } from "@/lib/ordersBusinessConfig"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -42,7 +43,14 @@ export async function GET(request: NextRequest) {
       receipts = r.data ?? []
     }
 
-    return NextResponse.json({ ok: true, resident, units: links ?? [], charges, payments, receipts })
+    // Mientras el negocio no esté fiscalizado, sus recibos son no fiscales.
+    let nonFiscal = true
+    try {
+      const bc = await getBusinessConfig()
+      nonFiscal = bc.fiscalEnabled !== true
+    } catch { /* por defecto, no fiscal */ }
+
+    return NextResponse.json({ ok: true, resident, units: links ?? [], charges, payments, receipts, nonFiscal })
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "No se pudo cargar la cuenta" },

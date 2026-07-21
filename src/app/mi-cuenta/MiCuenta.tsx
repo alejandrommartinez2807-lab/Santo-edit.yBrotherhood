@@ -138,8 +138,9 @@ function CuentaTab({ api }: { api: Api }) {
   const [pay, setPay] = useState(false)
   const [form, setForm] = useState({ unitId: "", amount: "", method: "transferencia", reference: "" })
   const [msg, setMsg] = useState("")
+  const [nonFiscal, setNonFiscal] = useState(true)
   const load = useCallback(async () => {
-    try { const d = await api("/api/portal/account"); setUnits((d.units as UnitLink[]) || []); setCharges((d.charges as Charge[]) || []); setPayments((d.payments as Payment[]) || []); setReceipts((d.receipts as Receipt[]) || []) } catch (e) { setErr(String((e as Error).message)) }
+    try { const d = await api("/api/portal/account"); setUnits((d.units as UnitLink[]) || []); setCharges((d.charges as Charge[]) || []); setPayments((d.payments as Payment[]) || []); setReceipts((d.receipts as Receipt[]) || []); setNonFiscal(d.nonFiscal !== false) } catch (e) { setErr(String((e as Error).message)) }
   }, [api])
   useEffect(() => { load() }, [load])
   const totalDue = units.reduce((s, l) => s + Math.max(0, Number(l.units?.balance || 0)), 0)
@@ -173,6 +174,7 @@ function CuentaTab({ api }: { api: Api }) {
       </Section>
       <Section title="Mis recibos">
         {receipts.length === 0 ? <Empty text="Sin recibos." /> : receipts.map((r) => <Row key={r.id} left={<><b>Recibo #{r.number}</b><div style={sub}>{new Date(r.issued_at).toLocaleDateString("es-VE")}</div></>} right={<b>{money(r.new_balance)}</b>} />)}
+        {nonFiscal && receipts.length > 0 && <p style={{ fontSize: 11, color: "#8494a8", margin: "10px 0 0", lineHeight: 1.4 }}>Recibo — documento no fiscal. No es una factura.</p>}
       </Section>
       <Section title="Mis pagos">
         {payments.length === 0 ? <Empty text="Sin pagos." /> : payments.map((p) => <Row key={p.id} left={<><b>{money(p.amount)} · {p.method}</b><div style={sub}>{p.reference} · {p.paid_on}</div></>} right={<span style={{ fontSize: 12, fontWeight: 700, color: p.status === "confirmado" ? "#1e874b" : p.status === "rechazado" ? "#c0392b" : "#8a5a00" }}>{p.status}</span>} />)}
