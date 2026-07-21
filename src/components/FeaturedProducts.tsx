@@ -198,6 +198,7 @@ export default function FeaturedProducts({
               exchangeRate={exchangeRate}
               index={index}
               onAddToCart={onAddToCart}
+              deepLinkEnabled={false}
               publicLabels={{
                 customizeAction: config.publicCustomizeButtonText || "Elige tus ingredientes",
                 customizerTitle:

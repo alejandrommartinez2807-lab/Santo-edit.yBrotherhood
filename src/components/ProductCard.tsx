@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { motion } from "motion/react";
 import { BRAND } from "@/lib/brand";
 import {
   Check,
   Heart,
+  Link2,
   Minus,
   Plus,
   ShoppingCart,
@@ -43,6 +44,9 @@ type ProductCardProps = Product & {
   publicLabels?: ProductCardPublicLabels;
   isFavorite?: boolean;
   onToggleFavorite?: (productId: number) => void;
+  // El enlace directo #producto-<id> abre la ficha SOLO en la tarjeta del
+  // menú (los destacados repiten producto y abrirían la ficha dos veces).
+  deepLinkEnabled?: boolean;
   // Tamaño elegido en Configuración: "grande" (original), "media" (2 por
   // fila en móvil) o "compacta" (3 por fila, estilo catálogo).
   cardSize?: string;
@@ -274,12 +278,17 @@ export default function ProductCard({
   publicLabels,
   isFavorite = false,
   onToggleFavorite,
+  deepLinkEnabled = true,
   cardSize,
 }: ProductCardProps) {
   usePublicCurrencySymbol();
   const sizeStyles = getCardSizeStyles(cardSize);
   const [added, setAdded] = useState(false);
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
+  // Ficha del producto: se abre al tocar la foto o el título (imagen grande +
+  // descripción completa + botón de elegir ingredientes). Pedido del cliente.
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [formMessage, setFormMessage] = useState("");
   // Selección por grupo de variaciones (estilo BOMBASTYC: burger, tipo de
   // molla, refresco…). key del grupo → keys de opciones elegidas.
@@ -646,9 +655,47 @@ export default function ProductCard({
     setIsCustomizerOpen(false);
   }
 
+  function openDetail() {
+    setLinkCopied(false);
+    setIsDetailOpen(true);
+  }
+
+  function closeDetail() {
+    setIsDetailOpen(false);
+  }
+
+  // Enlace directo al producto: #producto-<id> abre esta ficha (sirve para
+  // compartir un producto por WhatsApp o redes).
+  useEffect(() => {
+    if (!deepLinkEnabled) return;
+
+    function checkHash() {
+      if (window.location.hash === `#producto-${id}`) {
+        setIsDetailOpen(true);
+      }
+    }
+
+    checkHash();
+    window.addEventListener("hashchange", checkHash);
+    return () => window.removeEventListener("hashchange", checkHash);
+  }, [id, deepLinkEnabled]);
+
+  async function copyProductLink() {
+    try {
+      const url = new URL(window.location.href);
+      url.hash = `producto-${id}`;
+      await navigator.clipboard.writeText(url.toString());
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 1500);
+    } catch {
+      /* sin permiso de portapapeles */
+    }
+  }
+
   return (
     <>
       <motion.article
+        id={deepLinkEnabled ? `producto-${id}` : undefined}
         layout
         initial={{ opacity: 0, y: 26, scale: 0.96 }}
         whileInView={{ opacity: 1, y: 0, scale: 1 }}
@@ -661,12 +708,14 @@ export default function ProductCard({
         <div
           className={`relative overflow-hidden bg-black ${sizeStyles.image}`}
         >
+          {/* Tocar la foto abre la ficha completa del producto. */}
           <motion.img
             src={image || BRAND.logoUrl || "/logoremovebg.png"}
             alt={name}
-            className="h-full w-full object-cover"
+            className="h-full w-full cursor-pointer object-cover"
             whileHover={{ scale: 1.06 }}
             transition={{ duration: 0.45 }}
+            onClick={openDetail}
             onError={(event) => {
               event.currentTarget.src = "/logoremovebg.png";
             }}
@@ -739,18 +788,36 @@ export default function ProductCard({
         </div>
 
         <div className={`flex flex-1 flex-col ${sizeStyles.body}`}>
+          {/* Tocar el título también abre la ficha completa. */}
           <h3
             className={`font-display uppercase text-[var(--product-card-text)] ${sizeStyles.title}`}
           >
-            {name}
+            <button
+              type="button"
+              onClick={openDetail}
+              className="text-left uppercase transition hover:text-[var(--product-card-button)]"
+            >
+              {name}
+            </button>
           </h3>
 
           {sizeStyles.showDescription && (
-            <p
-              className={`flex-1 font-medium leading-relaxed text-[var(--product-card-text)] opacity-65 ${sizeStyles.description}`}
-            >
-              {description}
-            </p>
+            <div className="flex-1">
+              <p
+                className={`font-medium leading-relaxed text-[var(--product-card-text)] opacity-65 ${sizeStyles.description}`}
+              >
+                {description}
+              </p>
+              {String(description || "").trim().length > 80 ? (
+                <button
+                  type="button"
+                  onClick={openDetail}
+                  className="mt-1 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--product-card-button)] transition hover:brightness-110"
+                >
+                  Leer más
+                </button>
+              ) : null}
+            </div>
           )}
 
           <div
@@ -809,6 +876,101 @@ export default function ProductCard({
           </button>
         </div>
       </motion.article>
+
+      {isDetailOpen ? (
+        // Ficha del producto: imagen grande + descripción completa + acción.
+        <div
+          className="fixed inset-0 z-[85] flex items-end justify-center bg-black/80 px-3 py-4 backdrop-blur-sm sm:items-center"
+          onClick={closeDetail}
+        >
+          <div
+            className="relative flex max-h-[94vh] w-full max-w-2xl flex-col overflow-hidden rounded-[1.8rem] border border-[var(--brand-border)] bg-[var(--brand-surface)] shadow-2xl shadow-black/60"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={closeDetail}
+              className="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-black/60 text-white transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+              aria-label="Cerrar ficha del producto"
+            >
+              <X size={22} />
+            </button>
+
+            <div className="overflow-y-auto">
+              <div className="relative bg-black">
+                <Image
+                  src={image || BRAND.logoUrl || "/logoremovebg.png"}
+                  alt={name}
+                  width={960}
+                  height={640}
+                  unoptimized
+                  className="h-64 w-full object-cover sm:h-96"
+                  onError={(event) => {
+                    event.currentTarget.src = "/logoremovebg.png";
+                  }}
+                />
+                <span className="absolute left-4 top-4 rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)] backdrop-blur-sm">
+                  {category}
+                </span>
+              </div>
+
+              <div className="p-5 sm:p-6">
+                <h3 className="font-display text-3xl uppercase leading-[0.95] text-[var(--brand-ink-3)] sm:text-4xl">
+                  {name}
+                </h3>
+
+                {String(description || "").trim() ? (
+                  <p className="mt-3 text-sm font-medium leading-7 text-[var(--brand-ink-2)] sm:text-base">
+                    {description}
+                  </p>
+                ) : null}
+
+                <div className="mt-5 flex items-end justify-between gap-3 border-t border-[var(--brand-border)] pt-4">
+                  <p className="text-3xl font-black leading-none text-[var(--brand-primary)]">
+                    {formatUSD(finalUnitPrice)}
+                  </p>
+                  <p className="pb-0.5 text-right text-sm font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)]/60">
+                    {isCombo ? "Pago en divisas" : `Bs ${formatVES(finalVES)}`}
+                  </p>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeDetail();
+                      handleMainAction();
+                    }}
+                    className="flex flex-1 items-center justify-center gap-2.5 rounded-xl bg-[var(--brand-primary)] px-4 py-3.5 text-sm font-black uppercase tracking-[0.06em] text-black shadow-[0_12px_30px_-12px_rgba(var(--brand-primary-rgb),0.7)] transition hover:brightness-110 active:scale-[0.98]"
+                  >
+                    {hasSelectableOptions ? (
+                      <>
+                        <SlidersHorizontal size={18} />
+                        {customizeActionLabel}
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart size={18} />
+                        Agregar · {formatUSD(finalUnitPrice)}
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={copyProductLink}
+                    className="flex items-center justify-center gap-2 rounded-xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3.5 text-xs font-black uppercase tracking-[0.06em] text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-[0.98]"
+                    aria-label={`Copiar enlace de ${name}`}
+                  >
+                    <Link2 size={16} />
+                    {linkCopied ? "¡Copiado!" : "Copiar enlace"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {hasSelectableOptions && isCustomizerOpen ? (
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/80 px-3 py-4 backdrop-blur-sm sm:items-center">
