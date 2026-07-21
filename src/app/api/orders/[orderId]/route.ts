@@ -26,6 +26,7 @@ import {
   sendOrderReadyPush,
 } from "@/lib/orderPushNotifications"
 import { getDisplayOrderNumber } from "@/lib/localOrderHelpers"
+import { getSupabaseAdmin } from "@/lib/supabaseServer"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -437,6 +438,20 @@ export async function PATCH(
       )
     }
 
+    // Anular exige justificar el motivo (pedido del dueño 2026-07-21): queda
+    // en la nota del pedido, en Auditoría y en la alarma al dueño.
+    const cancelReason = String(body.cancelReason || "").trim().slice(0, 300)
+
+    if (status === "Cancelado" && cancelReason.length < 5) {
+      return NextResponse.json(
+        {
+          error:
+            "Indica el motivo de la anulación (mínimo 5 caracteres). Es obligatorio para anular un pedido.",
+        },
+        { status: 400 }
+      )
+    }
+
     if (!canRoleUpdateStatus(access.role, status)) {
       return forbiddenResponse("Esta clave no puede cambiar el pedido a ese estado")
     }
@@ -461,6 +476,31 @@ export async function PATCH(
 
     const order = await updateOrderStatus(orderId, status, branchId)
 
+    if (status === "Cancelado" && cancelReason) {
+      // El motivo viaja en la nota del pedido (sin migración): el staff lo ve
+      // en la tarjeta y el cliente en su página de seguimiento (ANULADO: …).
+      const actor = getLocalAccessAuditActor(access)
+      const cancelledByLabel =
+        [actor.label, getRoleLabel(access.role)].filter(Boolean).join(" · ") ||
+        getRoleLabel(access.role)
+      const reasonNote = `ANULADO: ${cancelReason} (${cancelledByLabel})`
+      const nextNote = order.customerNote
+        ? `${order.customerNote} | ${reasonNote}`
+        : reasonNote
+
+      const supabase = getSupabaseAdmin()
+      let noteQuery = supabase
+        .from("orders")
+        .update({ customer_note: nextNote })
+        .eq("id", orderId)
+      if (branchId) noteQuery = noteQuery.eq("branch_id", branchId)
+      const { error: noteError } = await noteQuery
+
+      if (!noteError) {
+        order.customerNote = nextNote
+      }
+    }
+
     if (status === "Listo") {
       // Aviso web push al cliente suscrito. Nunca lanza: un fallo de push no
       // puede tumbar el cambio de estado de caja/cocina.
@@ -472,9 +512,14 @@ export async function PATCH(
       // anuló y qué productos llevaba el pedido. Nunca lanza. El dueño puede
       // apagarla completa desde Configuración (cancellationAlertsEnabled).
       const actor = getLocalAccessAuditActor(access)
-      const itemsSummary = (order.items || [])
-        .map((item) => `${Math.max(1, Number(item.quantity || 1))}x ${item.name}`)
-        .join(", ")
+      const itemsSummary = [
+        (order.items || [])
+          .map((item) => `${Math.max(1, Number(item.quantity || 1))}x ${item.name}`)
+          .join(", "),
+        cancelReason ? `Motivo: ${cancelReason}` : "",
+      ]
+        .filter(Boolean)
+        .join(" · ")
 
       await sendOrderCancelledStaffPush({
         displayNumber: getDisplayOrderNumber(order),
@@ -495,7 +540,7 @@ export async function PATCH(
       entityId: orderId,
       actor: getLocalAccessAuditActor(access),
       request,
-      metadata: { status },
+      metadata: cancelReason ? { status, cancelReason } : { status },
     })
 
     return NextResponse.json({

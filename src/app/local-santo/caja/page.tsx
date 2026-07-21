@@ -343,6 +343,23 @@ function CajaPageContent() {
 
   async function updateStatus(orderId: string, status: OrderStatus) {
     if (!adminPassword) return
+
+    // Anular exige justificar el motivo (queda en la nota del pedido,
+    // Auditoría y la alarma al dueño). Sin motivo, no se anula.
+    let cancelReason = ""
+    if (status === "Cancelado") {
+      const reasonInput = window.prompt(
+        "Motivo de la anulación (obligatorio):\nEj: cliente no retiró, error al cargar el pedido…",
+        ""
+      )
+      if (reasonInput === null) return
+      cancelReason = reasonInput.trim()
+      if (cancelReason.length < 5) {
+        setErrorMessage("Para anular escribe el motivo (mínimo 5 caracteres).")
+        return
+      }
+    }
+
     maybeAutoPrintOnStatus(orderId, status)
     const previousOrder = orders.find((order) => order.id === orderId)
     pendingStatusRef.current.set(orderId, status)
@@ -356,7 +373,10 @@ function CajaPageContent() {
           "Content-Type": "application/json",
           "x-admin-password": adminPassword,
         },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({
+          status,
+          ...(cancelReason ? { cancelReason } : {}),
+        }),
       })
       const data = await readApiResponse(response)
       if (!response.ok) throw new Error(data.error || "No se pudo actualizar el pedido")

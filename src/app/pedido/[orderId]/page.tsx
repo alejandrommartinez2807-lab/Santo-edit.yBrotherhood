@@ -41,9 +41,13 @@ export default function PedidoSeguimientoPage({
 }) {
   const { orderId: rawOrderId } = use(params);
   const orderId = decodeURIComponent(String(rawOrderId || "")).trim().toLowerCase();
-  const { status, displayNumber, items, notFound } = usePublicOrderStatus(orderId);
+  const { status, displayNumber, items, cancelReason, notFound } =
+    usePublicOrderStatus(orderId);
   const [notifyEnabled, setNotifyEnabled] = useState(false);
   const [googleReviewUrl, setGoogleReviewUrl] = useState("");
+  // Pop-up de reseña tras la venta: se abre UNA vez cuando el pedido pasa a
+  // Entregado (recordado por dispositivo para no insistir al reabrir el link).
+  const [isReviewPopupOpen, setIsReviewPopupOpen] = useState(false);
   // WhatsApp del negocio para el botón "¿Dudas con tu pedido? Escríbenos"
   // (el dueño lo activa/apaga desde Configuración).
   const [orderHelpWhatsapp, setOrderHelpWhatsapp] = useState("");
@@ -100,6 +104,29 @@ export default function PedidoSeguimientoPage({
   const isCancelled = status === "Cancelado";
   const activeStep = stepIndexForStatus(status);
 
+  useEffect(() => {
+    if (!isDelivered || !googleReviewUrl) return;
+
+    const dismissKey = `bh_review_prompt_${orderId}`;
+    try {
+      if (window.localStorage.getItem(dismissKey)) return;
+    } catch {
+      // Sin localStorage el pop-up igual se muestra una vez por visita.
+    }
+
+    const timer = window.setTimeout(() => setIsReviewPopupOpen(true), 800);
+    return () => window.clearTimeout(timer);
+  }, [isDelivered, googleReviewUrl, orderId]);
+
+  function dismissReviewPopup() {
+    setIsReviewPopupOpen(false);
+    try {
+      window.localStorage.setItem(`bh_review_prompt_${orderId}`, "1");
+    } catch {
+      // Sin localStorage no pasa nada: solo podría volver a aparecer.
+    }
+  }
+
   return (
     <main className="flex min-h-screen items-start justify-center bg-[var(--brand-cream)] px-4 py-10 text-[var(--brand-ink-2)]">
       <section className="w-full max-w-md">
@@ -137,9 +164,14 @@ export default function PedidoSeguimientoPage({
               </p>
 
               {isCancelled ? (
-                <p className="mt-6 rounded-2xl border-2 border-red-500/50 bg-red-500/10 px-4 py-3 text-sm font-bold leading-6 text-red-300">
-                  Este pedido fue cancelado. Si crees que es un error, contáctanos.
-                </p>
+                <div className="mt-6 rounded-2xl border-2 border-red-500/50 bg-red-500/10 px-4 py-3 text-sm font-bold leading-6 text-red-300">
+                  <p>Este pedido fue cancelado. Si crees que es un error, contáctanos.</p>
+                  {cancelReason ? (
+                    <p className="mt-2 rounded-xl bg-red-500/10 px-3 py-2 text-[0.8rem] leading-5 text-red-200">
+                      Motivo del negocio: {cancelReason}
+                    </p>
+                  ) : null}
+                </div>
               ) : (
                 <>
                   {/* Línea de progreso Recibido → Preparando → Listo */}
@@ -305,6 +337,47 @@ export default function PedidoSeguimientoPage({
             <MessageCircle size={17} />
             ¿Dudas con tu pedido? Escríbenos
           </a>
+        ) : null}
+
+        {/* Pop-up de reseña tras la venta (pedido del dueño 2026-07-21). */}
+        {isReviewPopupOpen ? (
+          <div
+            className="fixed inset-0 z-[95] flex items-end justify-center bg-black/70 px-4 py-6 backdrop-blur-sm sm:items-center"
+            onClick={dismissReviewPopup}
+          >
+            <div
+              className="w-full max-w-sm rounded-[1.8rem] border-4 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] p-6 text-center shadow-2xl shadow-black/60"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--brand-primary)] text-black">
+                <Star size={26} fill="currentColor" />
+              </span>
+              <p className="mt-4 text-xl font-black uppercase leading-tight text-[var(--brand-ink-3)]">
+                ¿Cómo estuvo todo?
+              </p>
+              <p className="mt-2 text-sm font-bold leading-5 text-[var(--brand-ink-2)]/70">
+                Tu opinión nos ayuda un montón. Déjanos una reseña, toma un
+                minuto.
+              </p>
+              <a
+                href={googleReviewUrl}
+                target="_blank"
+                rel="noreferrer"
+                onClick={dismissReviewPopup}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3.5 text-xs font-black uppercase tracking-[0.12em] text-black transition hover:opacity-90"
+              >
+                <Star size={15} />
+                Dejar mi reseña
+              </a>
+              <button
+                type="button"
+                onClick={dismissReviewPopup}
+                className="mt-2 w-full rounded-full px-5 py-2.5 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/50 transition hover:text-[var(--brand-ink-2)]"
+              >
+                Ahora no
+              </button>
+            </div>
+          </div>
         ) : null}
       </section>
     </main>

@@ -2471,6 +2471,24 @@ export default function PedidosPage() {
     const previousOrder = orders.find((order) => order.id === orderId)
     const requestedStatus = status
 
+    // Anular exige justificar el motivo (queda en la nota, Auditoría y la
+    // alarma al dueño). Sin motivo, no se anula.
+    let cancelReason = ""
+    if (requestedStatus === "Cancelado") {
+      const reasonInput = window.prompt(
+        "Motivo de la anulación (obligatorio):\nEj: cliente no retiró, error al cargar el pedido…",
+        ""
+      )
+      if (reasonInput === null) return
+      cancelReason = reasonInput.trim()
+      if (cancelReason.length < 5) {
+        setErrorMessage(
+          "Para anular escribe el motivo (mínimo 5 caracteres)."
+        )
+        return
+      }
+    }
+
     setErrorMessage(null)
     pendingStatusRef.current.set(orderId, requestedStatus)
 
@@ -2494,6 +2512,7 @@ export default function PedidosPage() {
         },
         body: JSON.stringify({
           status: requestedStatus,
+          ...(cancelReason ? { cancelReason } : {}),
         }),
       })
 

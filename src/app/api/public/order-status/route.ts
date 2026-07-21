@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     // el pedido pertenece a una sola sede y no expone datos de otras.
     const { data, error } = await supabase
       .from("orders")
-      .select("id,status,seq,branch_seq,branch_code")
+      .select("id,status,seq,branch_seq,branch_code,customer_note")
       .eq("id", orderId)
       .maybeSingle()
 
@@ -98,12 +98,22 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // Pedido anulado: el motivo se guarda en la nota como "ANULADO: …"; se
+    // extrae SOLO ese tramo (sin el resto de la nota) para mostrárselo al
+    // cliente en su seguimiento.
+    const cancelMatch =
+      status === "Cancelado"
+        ? String(data.customer_note || "").match(/ANULADO:\s*([^|]+)/)
+        : null
+    const cancelReason = cancelMatch ? cancelMatch[1].trim() : ""
+
     return noStoreResponse({
       ok: true,
       orderId: String(data.id || orderId),
       displayNumber,
       status,
       items,
+      ...(cancelReason ? { cancelReason } : {}),
     })
   } catch (error) {
     captureError(error, { route: "/api/public/order-status", action: "GET" })

@@ -111,6 +111,9 @@ function getAudioContext() {
   return new AudioContextClass()
 }
 
+// Timbre tipo "campanita de notificación" (pedido del dueño 2026-07-21): cada
+// nota suena con su octava suave encima y una cola de decaimiento larga, como
+// el "ding" de un teléfono, en vez del pitido seco de oscilador puro.
 function scheduleTone(
   audioContext: AudioContext,
   frequency: number,
@@ -118,23 +121,34 @@ function scheduleTone(
   duration: number,
   gainValue = 0.08
 ) {
-  const oscillator = audioContext.createOscillator()
-  const gain = audioContext.createGain()
   const absoluteStart = audioContext.currentTime + startTime
-  const absoluteEnd = absoluteStart + duration
+  // La cola larga es lo que hace que suene a notificación y no a alarma.
+  const tailDuration = Math.max(duration * 2.4, 0.35)
+  const absoluteEnd = absoluteStart + tailDuration
 
-  oscillator.type = "sine"
-  oscillator.frequency.setValueAtTime(frequency, absoluteStart)
+  const partials = [
+    { ratio: 1, gain: gainValue },
+    { ratio: 2, gain: gainValue * 0.35 },
+    { ratio: 3, gain: gainValue * 0.12 },
+  ]
 
-  gain.gain.setValueAtTime(0.0001, absoluteStart)
-  gain.gain.exponentialRampToValueAtTime(gainValue, absoluteStart + 0.015)
-  gain.gain.exponentialRampToValueAtTime(0.0001, absoluteEnd)
+  partials.forEach((partial) => {
+    const oscillator = audioContext.createOscillator()
+    const gain = audioContext.createGain()
 
-  oscillator.connect(gain)
-  gain.connect(audioContext.destination)
+    oscillator.type = "sine"
+    oscillator.frequency.setValueAtTime(frequency * partial.ratio, absoluteStart)
 
-  oscillator.start(absoluteStart)
-  oscillator.stop(absoluteEnd + 0.02)
+    gain.gain.setValueAtTime(0.0001, absoluteStart)
+    gain.gain.exponentialRampToValueAtTime(partial.gain, absoluteStart + 0.012)
+    gain.gain.exponentialRampToValueAtTime(0.0001, absoluteEnd)
+
+    oscillator.connect(gain)
+    gain.connect(audioContext.destination)
+
+    oscillator.start(absoluteStart)
+    oscillator.stop(absoluteEnd + 0.02)
+  })
 }
 
 async function playSoundPattern(kind: SoundKind) {

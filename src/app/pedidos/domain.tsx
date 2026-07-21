@@ -1578,24 +1578,37 @@ export function playPanelSoundWithContext(
 ) {
   const pattern = getPanelSoundPattern(kind)
 
+  // Timbre tipo "campanita de notificación" (pedido del dueño 2026-07-21):
+  // cada nota lleva su octava suave encima y una cola de decaimiento larga,
+  // como el "ding" de un teléfono, en vez del pitido seco de oscilador puro.
   pattern.forEach((note) => {
-    const oscillator = audioContext.createOscillator()
-    const gain = audioContext.createGain()
     const startTime = audioContext.currentTime + note.delay
-    const endTime = startTime + note.duration
+    const tailDuration = Math.max(note.duration * 2.4, 0.35)
+    const endTime = startTime + tailDuration
 
-    oscillator.type = "sine"
-    oscillator.frequency.setValueAtTime(note.frequency, startTime)
+    const partials = [
+      { ratio: 1, gain: note.volume },
+      { ratio: 2, gain: note.volume * 0.35 },
+      { ratio: 3, gain: note.volume * 0.12 },
+    ]
 
-    gain.gain.setValueAtTime(0.0001, startTime)
-    gain.gain.linearRampToValueAtTime(note.volume, startTime + 0.02)
-    gain.gain.linearRampToValueAtTime(0.0001, endTime)
+    partials.forEach((partial) => {
+      const oscillator = audioContext.createOscillator()
+      const gain = audioContext.createGain()
 
-    oscillator.connect(gain)
-    gain.connect(audioContext.destination)
+      oscillator.type = "sine"
+      oscillator.frequency.setValueAtTime(note.frequency * partial.ratio, startTime)
 
-    oscillator.start(startTime)
-    oscillator.stop(endTime + 0.03)
+      gain.gain.setValueAtTime(0.0001, startTime)
+      gain.gain.exponentialRampToValueAtTime(partial.gain, startTime + 0.012)
+      gain.gain.exponentialRampToValueAtTime(0.0001, endTime)
+
+      oscillator.connect(gain)
+      gain.connect(audioContext.destination)
+
+      oscillator.start(startTime)
+      oscillator.stop(endTime + 0.03)
+    })
   })
 }
 

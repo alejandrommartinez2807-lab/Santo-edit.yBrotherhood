@@ -14,6 +14,7 @@ type PublicOrderStatus = {
   status: string;
   displayNumber: string;
   items: PublicOrderItem[];
+  cancelReason?: string;
 };
 
 const POLL_INTERVAL_MS = 10_000;
@@ -34,6 +35,7 @@ export function usePublicOrderStatus(orderId: string) {
   const [status, setStatus] = useState("");
   const [displayNumber, setDisplayNumber] = useState("");
   const [items, setItems] = useState<PublicOrderItem[]>([]);
+  const [cancelReason, setCancelReason] = useState("");
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
@@ -54,6 +56,7 @@ export function usePublicOrderStatus(orderId: string) {
           setStatus(String(data.status || ""));
           setDisplayNumber(String(data.displayNumber || ""));
           setItems(Array.isArray(data.items) ? data.items : []);
+          setCancelReason(String(data.cancelReason || ""));
           setNotFound(false);
         }
 
@@ -81,7 +84,7 @@ export function usePublicOrderStatus(orderId: string) {
 
   // Sin id de pedido no hay nada que sondear: cuenta como "no encontrado"
   // derivado, sin setState síncrono dentro del efecto.
-  return { status, displayNumber, items, notFound: notFound || !orderId };
+  return { status, displayNumber, items, cancelReason, notFound: notFound || !orderId };
 }
 
 // Vibración + notificación del navegador la primera vez que el pedido pasa a
@@ -102,6 +105,39 @@ export function useOrderReadyAlert({
   const alreadyAnnounced = useRef(false);
 
   useEffect(() => {
+    // Cancelación: vibración + notificación (si el cliente activó avisos)
+    // la primera vez que el pedido pasa a "Cancelado".
+    if (status === "Cancelado" && previousStatus.current !== "Cancelado") {
+      previousStatus.current = status;
+
+      try {
+        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+          navigator.vibrate([300, 120, 300]);
+        }
+      } catch {
+        // vibrate puede no estar disponible; el banner visual ya avisa.
+      }
+
+      if (notifyEnabled && canUseNotifications() && Notification.permission === "granted") {
+        const cancelTitle = "Tu pedido fue cancelado";
+        const cancelOptions = {
+          body: `El pedido ${displayNumber || orderId} fue cancelado por el negocio. Abre el seguimiento para ver el motivo.`,
+          icon: "/icon-192.png",
+        };
+
+        navigator.serviceWorker?.ready
+          .then((registration) => registration.showNotification(cancelTitle, cancelOptions))
+          .catch(() => {
+            try {
+              new Notification(cancelTitle, cancelOptions);
+            } catch {
+              // El banner visual del seguimiento cubre el aviso.
+            }
+          });
+      }
+      return;
+    }
+
     if (status !== "Listo" || previousStatus.current === "Listo") {
       previousStatus.current = status;
       return;
@@ -209,7 +245,7 @@ export async function subscribeToPushForOrder(orderId: string): Promise<boolean>
 // lo pide, dispara notificación del navegador + vibración al pasar a "Listo".
 // El aviso con la página cerrada lo cubre el staff con el botón de WhatsApp.
 export default function PublicOrderStatusNotifier({ orderId }: { orderId: string }) {
-  const { status, displayNumber } = usePublicOrderStatus(orderId);
+  const { status, displayNumber, cancelReason } = usePublicOrderStatus(orderId);
   const [notifyEnabled, setNotifyEnabled] = useState(false);
   const [notifyBlocked, setNotifyBlocked] = useState(false);
 
@@ -236,7 +272,22 @@ export default function PublicOrderStatusNotifier({ orderId }: { orderId: string
       );
     }
 
-    return null;
+    // Cancelado: el cliente se entera aquí mismo, con el motivo si existe.
+    return (
+      <div className="rounded-2xl border-2 border-red-500/60 bg-red-500/10 px-4 py-3 text-center">
+        <p className="text-sm font-black leading-5 text-red-400">
+          Tu pedido {displayNumber || ""} fue cancelado por el negocio.
+        </p>
+        {cancelReason ? (
+          <p className="mt-1 text-[0.75rem] font-bold leading-4 text-red-300/80">
+            Motivo: {cancelReason}
+          </p>
+        ) : null}
+        <p className="mt-1 text-[0.7rem] font-bold text-red-300/60">
+          Si crees que es un error, escríbenos por WhatsApp.
+        </p>
+      </div>
+    );
   }
 
   if (status === "Listo") {
