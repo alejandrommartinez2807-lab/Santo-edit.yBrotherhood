@@ -88,7 +88,12 @@ async function deductInventoryForOrder(
 
   if (!lines.length) return
 
-  await applyInventoryConsumption(lines, branchId, { dryRun })
+  // orderId vinculado al movimiento: permite revertir el consumo si el
+  // pedido se anula sin haberse preparado.
+  await applyInventoryConsumption(lines, branchId, {
+    dryRun,
+    orderId: String(order?.id || ""),
+  })
 }
 
 export async function confirmOrderStaffItems(

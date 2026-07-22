@@ -168,6 +168,10 @@ export type BusinessConfig = {
   publicUnpaidAutoCancelMinutes: number
   // La promoción del dueño como ventana emergente al entrar al menú público.
   promotionPopupEnabled: boolean
+  // Anular SOLO con código del dueño (un solo uso; migración 0029).
+  cancellationApprovalRequired: boolean
+  // WhatsApp personal del dueño para los códigos de anulación (Cloud API).
+  ownerCancelNotifyWhatsapp: string
   exchangeRateMode: ExchangeRateMode
   manualExchangeRate: number
   deliveryEnabled: boolean
@@ -330,6 +334,8 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicPaymentBeforeRegisterEnabled: false,
   publicUnpaidAutoCancelMinutes: 0,
   promotionPopupEnabled: false,
+  cancellationApprovalRequired: false,
+  ownerCancelNotifyWhatsapp: "",
   exchangeRateMode: "automatic",
   manualExchangeRate: 0,
   deliveryEnabled: true,
@@ -809,6 +815,11 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.promotionPopupEnabled,
       DEFAULT_BUSINESS_CONFIG.promotionPopupEnabled
     ),
+    cancellationApprovalRequired: normalizeBooleanConfig(
+      source.cancellationApprovalRequired,
+      DEFAULT_BUSINESS_CONFIG.cancellationApprovalRequired
+    ),
+    ownerCancelNotifyWhatsapp: String(source.ownerCancelNotifyWhatsapp || "").trim(),
     deliveryEnabled: normalizeBooleanConfig(
       source.deliveryEnabled,
       DEFAULT_BUSINESS_CONFIG.deliveryEnabled

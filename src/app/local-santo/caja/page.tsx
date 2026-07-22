@@ -347,6 +347,7 @@ function CajaPageContent() {
     // Anular exige justificar el motivo (queda en la nota del pedido,
     // Auditoría y la alarma al dueño). Sin motivo, no se anula.
     let cancelReason = ""
+    let inventoryWasUsed: boolean | null = null
     if (status === "Cancelado") {
       const reasonInput = window.prompt(
         "Motivo de la anulación (obligatorio):\nEj: cliente no retiró, error al cargar el pedido…",
@@ -358,6 +359,12 @@ function CajaPageContent() {
         setErrorMessage("Para anular escribe el motivo (mínimo 5 caracteres).")
         return
       }
+
+      // ¿Los ingredientes ya se usaron? Si NO, el sistema devuelve el
+      // consumo al inventario; si SÍ, queda descontado (lo revisa el dueño).
+      inventoryWasUsed = window.confirm(
+        "¿Ya se usaron o prepararon los ingredientes de este pedido?\n\nAceptar = SÍ se usaron (el inventario queda descontado)\nCancelar = NO se usaron (el consumo se devuelve al inventario)"
+      )
     }
 
     maybeAutoPrintOnStatus(orderId, status)
@@ -367,19 +374,48 @@ function CajaPageContent() {
     setOrders((currentOrders) => currentOrders.map((order) => order.id === orderId ? { ...order, status } : order))
 
     try {
-      const response = await fetch(`/api/orders/${orderId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-password": adminPassword,
-        },
-        body: JSON.stringify({
-          status,
-          ...(cancelReason ? { cancelReason } : {}),
-        }),
-      })
-      const data = await readApiResponse(response)
-      if (!response.ok) throw new Error(data.error || "No se pudo actualizar el pedido")
+      // Anulación con código del dueño: si el servidor responde que falta el
+      // código (428/403), se pide en el momento y se reintenta.
+      let cancelCode = ""
+      let response: Response | null = null
+      let data: Record<string, unknown> & { error?: string } = {}
+
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        response = await fetch(`/api/orders/${orderId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-password": adminPassword,
+          },
+          body: JSON.stringify({
+            status,
+            ...(cancelReason ? { cancelReason, inventoryWasUsed } : {}),
+            ...(cancelCode ? { cancelCode } : {}),
+          }),
+        })
+        data = await readApiResponse(response)
+
+        if (
+          (response.status === 428 || response.status === 403) &&
+          (data as { requiresCancelCode?: boolean }).requiresCancelCode
+        ) {
+          const codeInput = window.prompt(
+            `${data.error || "El dueño debe aprobar esta anulación."}\n\nCódigo del dueño (6 dígitos):`,
+            ""
+          )
+          if (codeInput === null || !codeInput.trim()) {
+            throw new Error(
+              "Anulación pendiente: pídele el código al dueño y vuelve a intentar."
+            )
+          }
+          cancelCode = codeInput.trim()
+          continue
+        }
+
+        break
+      }
+
+      if (!response || !response.ok) throw new Error(data.error || "No se pudo actualizar el pedido")
 
       window.setTimeout(() => {
         if (pendingStatusRef.current.get(orderId) === status) pendingStatusRef.current.delete(orderId)

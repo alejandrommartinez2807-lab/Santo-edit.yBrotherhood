@@ -27,6 +27,18 @@ import {
 } from "@/lib/orderPushNotifications"
 import { getDisplayOrderNumber } from "@/lib/localOrderHelpers"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
+import {
+  createCancellationRequest,
+  isCancellationApprovalAvailable,
+  markCancellationRequestUsed,
+  verifyCancellationCode,
+} from "@/lib/cancellationRequests"
+import { revertInventoryConsumptionForOrder } from "@/lib/ordersInventory"
+import { sendOwnerOnlyPush } from "@/lib/orderPushNotifications"
+import {
+  isWhatsAppBusinessConfigured,
+  sendWhatsAppBusinessText,
+} from "@/lib/whatsappBusiness"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -452,6 +464,116 @@ export async function PATCH(
       )
     }
 
+    // ¿El trabajador indicó si los ingredientes ya se usaron? (decide si el
+    // consumo del inventario se revierte o se queda descontado).
+    const inventoryWasUsed =
+      typeof body.inventoryWasUsed === "boolean" ? body.inventoryWasUsed : null
+
+    // Anulación con código del DUEÑO (config cancellationApprovalRequired +
+    // migración 0029): los roles que no son dueño necesitan el código de un
+    // solo uso que el sistema le envía SOLO al dueño (push a sus equipos,
+    // su panel y WhatsApp si está conectado).
+    let usedCancellationRequestId = ""
+
+    if (status === "Cancelado" && access.role !== "owner") {
+      const cancelConfig = await getBusinessConfig()
+
+      if (
+        cancelConfig.cancellationApprovalRequired === true &&
+        (await isCancellationApprovalAvailable())
+      ) {
+        const cancelCode = String(body.cancelCode || "").trim()
+
+        if (!cancelCode) {
+          // Sin código: se crea (o reutiliza) la solicitud y se le manda el
+          // código al dueño. El trabajador ve que debe pedírselo.
+          const supabase = getSupabaseAdmin()
+          let orderQuery = supabase
+            .from("orders")
+            .select("seq,branch_seq,branch_code")
+            .eq("id", orderId)
+          if (branchId) orderQuery = orderQuery.eq("branch_id", branchId)
+          const { data: orderRows } = await orderQuery.limit(1)
+          const orderRow = orderRows?.[0] as Record<string, unknown> | undefined
+          const branchSeq = Number(orderRow?.branch_seq || 0)
+          const branchCode = String(orderRow?.branch_code || "").trim()
+          const seq = Number(orderRow?.seq || 0)
+          const displayNumber =
+            branchSeq > 0
+              ? `#${String(branchSeq).padStart(2, "0")}${branchCode ? `-${branchCode}` : ""}`
+              : seq > 0
+                ? `#${String(seq).padStart(2, "0")}`
+                : orderId
+
+          const actor = getLocalAccessAuditActor(access)
+          const cancellationRequest = await createCancellationRequest({
+            orderId,
+            branchId,
+            displayNumber,
+            reason: cancelReason,
+            requestedBy:
+              [actor.label, getRoleLabel(access.role)].filter(Boolean).join(" · ") ||
+              getRoleLabel(access.role),
+          })
+
+          if (cancellationRequest) {
+            const codeMessage = `Código de anulación: ${cancellationRequest.code}\nPedido ${displayNumber} · Motivo: ${cancelReason}\nSolicitado por: ${cancellationRequest.requestedBy}\nSi estás de acuerdo, pásale el código al trabajador.`
+
+            await sendOwnerOnlyPush({
+              title: `Anulación pendiente · ${displayNumber}`,
+              body: codeMessage,
+              url: "/local-santo/dueno",
+            }).catch(() => undefined)
+
+            const ownerWhatsapp = String(
+              cancelConfig.ownerCancelNotifyWhatsapp || "",
+            ).trim()
+            if (ownerWhatsapp && isWhatsAppBusinessConfigured()) {
+              await sendWhatsAppBusinessText(ownerWhatsapp, codeMessage).catch(
+                () => undefined,
+              )
+            }
+
+            await writeAuditLog({
+              action: "order.status.updated",
+              branchId,
+              entityType: "order",
+              entityId: orderId,
+              actor: getLocalAccessAuditActor(access),
+              request,
+              metadata: {
+                status: "Cancelación solicitada",
+                cancelReason,
+              },
+            }).catch(() => undefined)
+
+            return NextResponse.json(
+              {
+                requiresCancelCode: true,
+                requestId: cancellationRequest.id,
+                error:
+                  "Anulación pendiente de aprobación: el dueño acaba de recibir un código de 6 dígitos. Pídeselo y escríbelo para completar la anulación.",
+              },
+              { status: 428 }
+            )
+          }
+          // Si la tabla de solicitudes no está disponible (migración 0029
+          // sin aplicar), degrada al flujo directo con motivo.
+        } else {
+          const verification = await verifyCancellationCode(orderId, cancelCode)
+
+          if (!verification.ok) {
+            return NextResponse.json(
+              { error: verification.error, requiresCancelCode: true },
+              { status: 403 }
+            )
+          }
+
+          usedCancellationRequestId = verification.request.id
+        }
+      }
+    }
+
     if (!canRoleUpdateStatus(access.role, status)) {
       return forbiddenResponse("Esta clave no puede cambiar el pedido a ese estado")
     }
@@ -477,13 +599,40 @@ export async function PATCH(
     const order = await updateOrderStatus(orderId, status, branchId)
 
     if (status === "Cancelado" && cancelReason) {
+      // Inventario del pedido anulado (pedido del dueño): si el trabajador
+      // marcó que los ingredientes NO se usaron, el consumo descontado al
+      // crear el pedido se devuelve al stock (movimientos "Ajuste" con
+      // rastro). Si se usaron, queda descontado y el dueño lo ve en la nota.
+      let inventoryRevertedCount = 0
+      if (inventoryWasUsed === false) {
+        const revertResult = await revertInventoryConsumptionForOrder(
+          orderId,
+          branchId,
+        ).catch(() => ({ reverted: 0 }))
+        inventoryRevertedCount = revertResult.reverted
+      }
+
+      const inventoryNote =
+        inventoryWasUsed === null
+          ? ""
+          : inventoryWasUsed
+            ? "Ingredientes USADOS: el inventario queda descontado"
+            : inventoryRevertedCount > 0
+              ? `Ingredientes sin usar: se devolvieron ${inventoryRevertedCount} insumos al inventario`
+              : "Ingredientes sin usar (sin movimientos vinculados que revertir)"
+
       // El motivo viaja en la nota del pedido (sin migración): el staff lo ve
       // en la tarjeta y el cliente en su página de seguimiento (ANULADO: …).
       const actor = getLocalAccessAuditActor(access)
       const cancelledByLabel =
         [actor.label, getRoleLabel(access.role)].filter(Boolean).join(" · ") ||
         getRoleLabel(access.role)
-      const reasonNote = `ANULADO: ${cancelReason} (${cancelledByLabel})`
+      const reasonNote = [
+        `ANULADO: ${cancelReason} (${cancelledByLabel})`,
+        inventoryNote,
+      ]
+        .filter(Boolean)
+        .join(" · ")
       const nextNote = order.customerNote
         ? `${order.customerNote} | ${reasonNote}`
         : reasonNote
@@ -498,6 +647,13 @@ export async function PATCH(
 
       if (!noteError) {
         order.customerNote = nextNote
+      }
+
+      if (usedCancellationRequestId) {
+        await markCancellationRequestUsed(usedCancellationRequestId, {
+          inventoryWasUsed,
+          inventoryRevertedCount,
+        })
       }
     }
 
@@ -540,7 +696,13 @@ export async function PATCH(
       entityId: orderId,
       actor: getLocalAccessAuditActor(access),
       request,
-      metadata: cancelReason ? { status, cancelReason } : { status },
+      metadata: cancelReason
+        ? {
+            status,
+            cancelReason,
+            ...(inventoryWasUsed === null ? {} : { inventoryWasUsed }),
+          }
+        : { status },
     })
 
     return NextResponse.json({

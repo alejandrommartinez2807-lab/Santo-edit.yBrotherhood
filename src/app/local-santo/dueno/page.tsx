@@ -35,6 +35,7 @@ import type {
   SavedDayClose,
   SupplierPurchase,
 } from "@/lib/orders"
+import OwnerCancellationCodes from "@/components/local/OwnerCancellationCodes"
 
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -1979,6 +1980,9 @@ export default function OwnerDashboardPage() {
             </div>
           )}
         </section>
+
+        {/* Códigos de anulación: SOLO el dueño los ve (aprobación por código). */}
+        <OwnerCancellationCodes adminPassword={adminPassword} />
 
         <section className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <BigMetricCard

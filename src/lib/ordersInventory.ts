@@ -263,7 +263,7 @@ export async function getInventoryMovements(branchId?: string | null) {
 export async function applyInventoryConsumption(
   lines: ConsumptionLine[],
   branchId?: string | null,
-  options: { dryRun?: boolean; reason?: string } = {},
+  options: { dryRun?: boolean; reason?: string; orderId?: string } = {},
 ): Promise<{ dryRun: boolean; applied: ConsumptionLine[] }> {
   const dryRun = options.dryRun !== false
   const applied: ConsumptionLine[] = []
@@ -320,7 +320,9 @@ export async function applyInventoryConsumption(
         reason,
         related_expense: false,
         expense_id: "",
-        note: "",
+        // El pedido queda vinculado en la nota: permite REVERTIR el consumo
+        // si el pedido se anula sin haberse preparado (pedido del dueño).
+        note: options.orderId ? `Pedido ${options.orderId}` : "",
       })
     }
 
@@ -328,6 +330,78 @@ export async function applyInventoryConsumption(
   }
 
   return { dryRun, applied }
+}
+
+// Reversión del consumo de UN pedido anulado que NO llegó a prepararse:
+// devuelve al stock lo que se descontó al crearlo (movimientos "Consumo" con
+// note "Pedido <id>") y deja un movimiento "Ajuste" por insumo como rastro.
+// Pedidos viejos sin nota vinculada: no hay nada que revertir (devuelve 0).
+export async function revertInventoryConsumptionForOrder(
+  orderId: string,
+  branchId?: string | null,
+): Promise<{ reverted: number }> {
+  const cleanOrderId = String(orderId || "").trim()
+  if (!cleanOrderId) return { reverted: 0 }
+
+  const supabase = getSupabaseAdmin()
+  let query = supabase
+    .from("inventory_movements")
+    .select("id,item_id,item_name,quantity_moved,unit")
+    .eq("movement_type", "Consumo")
+    .eq("note", `Pedido ${cleanOrderId}`)
+  if (branchId) query = query.eq("branch_id", branchId)
+  const { data: movements } = await query
+
+  if (!movements?.length) return { reverted: 0 }
+
+  const dateLabel = new Date().toLocaleString("es-VE", { timeZone: "America/Caracas" })
+  let reverted = 0
+
+  for (const raw of movements) {
+    const movement = raw as Record<string, unknown>
+    const itemId = String(movement.item_id || "")
+    const quantityBack = Math.abs(Number(movement.quantity_moved || 0))
+    if (!itemId || quantityBack <= 0) continue
+
+    let itemQuery = supabase
+      .from("inventory_items")
+      .select("id,quantity,unit,name")
+      .eq("id", itemId)
+    if (branchId) itemQuery = itemQuery.eq("branch_id", branchId)
+    const { data: itemRows } = await itemQuery.limit(1)
+    const item = itemRows?.[0] as Record<string, unknown> | undefined
+    if (!item) continue
+
+    const previousQuantity = Number(item.quantity ?? 0) || 0
+    const finalQuantity =
+      Math.round((previousQuantity + quantityBack + Number.EPSILON) * 10000) / 10000
+
+    await supabase
+      .from("inventory_items")
+      .update({ quantity: finalQuantity, updated_at: new Date().toISOString() })
+      .eq("id", itemId)
+
+    await supabase.from("inventory_movements").insert({
+      id: `mov-${Date.now()}-${randomSuffix()}`,
+      branch_id: branchId ?? null,
+      date_label: dateLabel,
+      item_id: itemId,
+      item_name: String(movement.item_name || item.name || ""),
+      movement_type: "Ajuste",
+      previous_quantity: previousQuantity,
+      quantity_moved: quantityBack,
+      final_quantity: finalQuantity,
+      unit: String(movement.unit || item.unit || ""),
+      reason: "Reversión por anulación de pedido (ingredientes sin usar)",
+      related_expense: false,
+      expense_id: "",
+      note: `Reversión pedido ${cleanOrderId}`,
+    })
+
+    reverted += 1
+  }
+
+  return { reverted }
 }
 
 export async function getInventoryRecipes(branchId?: string | null) {

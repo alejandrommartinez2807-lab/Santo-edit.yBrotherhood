@@ -54,6 +54,14 @@ export const SIMPLE_BUSINESS_CONFIG_FIELDS: readonly SimpleConfigField[] = [
   },
   // Alarma de anulación (toast rojo + push a dueño/encargado), apagable.
   { key: "cancellationAlertsEnabled", type: "boolean", default: true },
+  // Anular SOLO con código del dueño (2026-07-21): el trabajador solicita la
+  // anulación con motivo, el código de un solo uso llega únicamente al dueño
+  // (push a sus equipos / su panel / WhatsApp) y sin ese código no se anula.
+  // Requiere la migración 0029; sin ella degrada al flujo directo con motivo.
+  { key: "cancellationApprovalRequired", type: "boolean", default: false },
+  // WhatsApp PERSONAL del dueño para recibir los códigos de anulación
+  // (solo se usa cuando WhatsApp Business Cloud API está conectado).
+  { key: "ownerCancelNotifyWhatsapp", type: "string", default: "" },
   // Push de reposición de inventario (agotados/stock bajo) a los equipos
   // suscritos del dueño/encargado, apagable.
   { key: "inventoryRestockPushEnabled", type: "boolean", default: true },

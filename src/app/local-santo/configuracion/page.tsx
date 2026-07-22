@@ -178,6 +178,8 @@ type BusinessConfig = {
   postSaleSurveyAspects: string;
   // Alarma de anulación (toast + push), apagable.
   cancellationAlertsEnabled: boolean;
+  cancellationApprovalRequired: boolean;
+  ownerCancelNotifyWhatsapp: string;
   // Push de reposición de inventario (agotados/bajos) a dueños, apagable.
   inventoryRestockPushEnabled: boolean;
   // Recordatorio push de facturas por pagar (X días antes del vencimiento).
@@ -361,6 +363,8 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   postSaleSurveyDelayMinutes: 40,
   postSaleSurveyAspects: "Sabor de la comida, Tiempo de entrega, Atención",
   cancellationAlertsEnabled: true,
+  cancellationApprovalRequired: false,
+  ownerCancelNotifyWhatsapp: "",
   inventoryRestockPushEnabled: true,
   payablesReminderPushEnabled: true,
   payablesReminderDaysBefore: 3,
@@ -1090,6 +1094,11 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.cancellationAlertsEnabled,
       DEFAULT_BUSINESS_CONFIG.cancellationAlertsEnabled,
     ),
+    cancellationApprovalRequired: normalizeBoolean(
+      source.cancellationApprovalRequired,
+      DEFAULT_BUSINESS_CONFIG.cancellationApprovalRequired,
+    ),
+    ownerCancelNotifyWhatsapp: String(source.ownerCancelNotifyWhatsapp || "").trim(),
     inventoryRestockPushEnabled: normalizeBoolean(
       source.inventoryRestockPushEnabled,
       DEFAULT_BUSINESS_CONFIG.inventoryRestockPushEnabled,
@@ -2923,6 +2932,51 @@ export default function BusinessConfigPage() {
                 </span>
               </span>
             </label>
+
+            {/* Anulación con código del dueño (2026-07-21). */}
+            <label className="mt-3 flex items-start gap-3">
+              <input
+                type="checkbox"
+                checked={businessConfig.cancellationApprovalRequired}
+                onChange={(e) =>
+                  setBusinessConfig((c) => ({
+                    ...c,
+                    cancellationApprovalRequired: e.target.checked,
+                  }))
+                }
+                className="mt-0.5 h-5 w-5 accent-[var(--brand-primary)]"
+              />
+              <span>
+                <span className="block text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
+                  Anular SOLO con código del dueño
+                </span>
+                <span className="mt-0.5 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                  El personal escribe el motivo y el sistema te manda un código
+                  de 6 dígitos SOLO a ti (notificación, tu panel de dueño y
+                  WhatsApp si está conectado). Sin ese código nadie anula, ni
+                  el encargado. Requiere la migración 0029.
+                </span>
+              </span>
+            </label>
+
+            {businessConfig.cancellationApprovalRequired && (
+              <div className="mt-3">
+                <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                  Tu WhatsApp personal para los códigos (opcional)
+                </label>
+                <input
+                  value={businessConfig.ownerCancelNotifyWhatsapp}
+                  onChange={(e) =>
+                    setBusinessConfig((c) => ({
+                      ...c,
+                      ownerCancelNotifyWhatsapp: e.target.value,
+                    }))
+                  }
+                  placeholder="Ej: 0412-0000000 (se usa cuando WhatsApp Business esté conectado)"
+                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                />
+              </div>
+            )}
 
             <label className="mt-3 flex items-start gap-3">
               <input

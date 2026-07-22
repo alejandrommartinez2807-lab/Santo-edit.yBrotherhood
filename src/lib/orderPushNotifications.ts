@@ -254,6 +254,44 @@ export async function sendStaffAlertPush(
   }
 }
 
+// Push SOLO al dueño (suscripciones con branch_id NULL: la API de alertas
+// staff asigna null únicamente al rol owner). Lo usa el código de anulación,
+// que NO debe llegar a encargados ni cajeros. Nunca lanza.
+export async function sendOwnerOnlyPush(payload: {
+  title: string
+  body: string
+  url?: string
+}): Promise<void> {
+  if (!isPushConfigured()) return
+
+  try {
+    const supabase = getSupabaseAdmin()
+    // branch-exempt: el dueño se suscribe globalmente (branch_id null).
+    const { data, error } = await supabase
+      .from("push_subscriptions")
+      .select("endpoint, subscription")
+      .eq("order_id", STAFF_ALERTS_ORDER_ID)
+      .is("branch_id", null)
+
+    if (error) throw new Error(error.message)
+    if (!data?.length) return
+
+    await sendPushToSubscriptionRows(
+      data,
+      JSON.stringify({
+        title: payload.title,
+        body: payload.body,
+        url: payload.url || "/local-santo/dueno",
+      }),
+    )
+  } catch (error) {
+    captureError(error, {
+      route: "lib/orderPushNotifications",
+      action: "sendOwnerOnlyPush",
+    })
+  }
+}
+
 // Alarma de anulación: avisa a los equipos suscritos del dueño/encargado que
 // un pedido fue anulado, con quién lo hizo y qué productos llevaba. Nunca
 // lanza: un fallo de push no puede tumbar la anulación en caja.
