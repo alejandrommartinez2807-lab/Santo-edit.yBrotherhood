@@ -1,0 +1,158 @@
+GUIA PARA PRESENTAR EL SISTEMA POR WHATSAPP
+===========================================
+
+Cada bloque separado por una linea de guiones es un mensaje independiente.
+Copialos y pegalos en orden en el chat con el cliente. Ninguno lleva
+asteriscos ni iconos, asi WhatsApp los muestra tal cual, sin negritas raras.
+Puedes enviarlos todos seguidos o ir soltando uno por uno mientras conversan.
+
+------------------------------------------------------------
+
+MENSAJE 1 . PRESENTACION
+
+Hola, un gusto saludarle. Le comparto el resumen del sistema digital que preparamos para Concepto La Granja. Es una plataforma completa con dos frentes: la pagina publica que ven los visitantes y comerciantes, y el panel privado desde donde la administracion maneja todo el centro comercial. Ya esta funcionando con datos de demostracion y lo puede probar ahora mismo desde su telefono en este enlace:
+
+https://concepto-la-granja.vercel.app/portal
+
+En los siguientes mensajes le explico parte por parte como funciona.
+
+------------------------------------------------------------
+
+MENSAJE 2 . LA PAGINA PUBLICA DEL CENTRO COMERCIAL
+
+Es la cara del centro comercial en internet. Cualquier persona que entre ve:
+
+1. El directorio completo de tiendas, con buscador y filtros por rubro: comida, moda, salud, belleza, tecnologia y demas. Hoy tiene los 41 locales de ejemplo cargados.
+2. Las promociones vigentes de cada local, que aparecen directamente en su tarjeta del directorio.
+3. Los servicios del centro comercial: estacionamiento, planta electrica, feria de comida, torre medica, banca y seguridad.
+4. Una seccion de alquiler de locales: si hay espacios disponibles, el interesado escribe por WhatsApp con un solo toque.
+
+Todo se ve bien en telefono, tablet y computadora, y sale bien posicionado al compartir el enlace en redes o WhatsApp.
+
+------------------------------------------------------------
+
+MENSAJE 3 . CADA LOCAL TIENE SU PROPIA PAGINA WEB
+
+Esta es una de las piezas mas potentes: cada local del centro comercial tiene su propia mini pagina dentro del portal, con identidad propia.
+
+1. Foto de portada, logo, historia del negocio, horario y ubicacion dentro del centro comercial.
+2. Sus productos o servicios con foto y precio.
+3. Su promocion vigente destacada.
+4. Botones directos de WhatsApp, llamada e Instagram del local.
+5. Cada pagina tiene su propio color y estilo, para que un kiosco de dulces no se vea igual que una barberia o una optica.
+
+Ejemplos para que los abra:
+https://concepto-la-granja.vercel.app/tienda/capitan-grill
+https://concepto-la-granja.vercel.app/tienda/supermercados-kalea
+https://concepto-la-granja.vercel.app/tienda/spa-relax
+
+Esa pagina la puede administrar la administracion desde el panel, o el propio comerciante desde su cuenta, sin tocar nada tecnico. Es un beneficio real que el centro comercial le entrega a cada inquilino: su presencia en internet incluida en el alquiler.
+
+------------------------------------------------------------
+
+MENSAJE 4 . ESTACIONAMIENTO SIN CASETA DE COBRO MANUAL
+
+El visitante maneja su ticket desde el telefono, sin apps ni registro:
+
+1. Al llegar escanea un afiche con codigo QR en la entrada y genera su propio ticket. Puede guardar el codigo o tomar captura.
+2. Cuando va a salir, entra de nuevo, consulta cuanto debe segun el tiempo que estuvo, y registra su pago: pago movil, tarjeta, efectivo o transferencia.
+3. El sistema calcula solo la tarifa: minutos de gracia, precio por hora y tope diario. Si paga en divisas en efectivo, agrega el IGTF automaticamente y muestra el equivalente en bolivares a tasa del BCV.
+4. El telefono recuerda su ultimo ticket, asi que consultarlo de nuevo es un solo toque. Tambien puede escanear el QR del ticket con la camara.
+5. En la salida, el vigilante confirma el pago desde el panel.
+
+El afiche con el QR para imprimir y pegar en la entrada ya viene listo dentro del sistema.
+
+Puede probarlo aqui: https://concepto-la-granja.vercel.app/estacionamiento
+
+------------------------------------------------------------
+
+MENSAJE 5 . TORRE MEDICA, MAPA Y ATENCION AL CLIENTE
+
+1. Consultorios: los pacientes ven los doctores, sus especialidades y horarios, y reservan su cita en linea eligiendo dia y hora entre los cupos disponibles. El sistema no permite reservar dos veces el mismo cupo.
+https://concepto-la-granja.vercel.app/consultorios
+
+2. Mapa del centro comercial: directorio organizado por nivel, planta baja, mezzanina, feria y torre medica. Cada local con pagina propia se abre desde el mapa.
+https://concepto-la-granja.vercel.app/mapa
+
+3. Atencion al cliente: los visitantes pueden dejar reclamos, sugerencias, reportar objetos perdidos o pedir informacion de locales. Todo llega ordenado al panel de la administracion, con estado y prioridad.
+https://concepto-la-granja.vercel.app/contacto
+
+------------------------------------------------------------
+
+MENSAJE 6 . LA CUENTA PRIVADA DE CADA COMERCIANTE
+
+Cada inquilino entra con su telefono y un codigo de acceso a su propia cuenta:
+
+https://concepto-la-granja.vercel.app/mi-cuenta
+
+Desde ahi puede, sin llamar a la administracion:
+
+1. Ver su estado de cuenta: canon, condominio y saldo pendiente, con sus recibos.
+2. Reportar sus pagos con referencia, para que la administracion los confirme.
+3. Editar su pagina web: fotos, textos, horario, promocion, productos y color.
+4. Reportar sus ventas del mes cuando su contrato tiene renta porcentual. El sistema le muestra al momento cuanto le corresponde pagar segun su tasa y su minimo.
+5. Reportar incidencias de mantenimiento y hacer seguimiento.
+6. Ver comunicados de la administracion, votar en consultas, preautorizar visitas y descargar documentos.
+
+------------------------------------------------------------
+
+MENSAJE 7 . EL PANEL PRIVADO, PARTE 1: ADMINISTRACION Y COBROS
+
+El corazon del sistema. Se entra con clave privada (se la comparto aparte) en:
+
+https://concepto-la-granja.vercel.app/panel
+
+Modulos de administracion y dinero:
+
+1. Resumen: la foto del mes en una pantalla, ocupacion, morosidad, ingresos por canon, condominio, estacionamiento y publicidad.
+2. Locales: los 41 espacios con su codigo, rubro, piso, area, alicuota y estado, y desde ahi mismo la pagina web de cada local.
+3. Comerciantes: los datos y contactos de cada inquilino.
+4. Contratos: canon, deposito, vigencia, dia de vencimiento, mora, fiador y renta porcentual con minimo garantizado. El sistema avisa cuales contratos estan por vencer.
+5. Ventas y renta porcentual: las ventas mensuales de cada local, reportadas por el comerciante o cargadas por la administracion, con la renta calculada al momento.
+6. Canon y condominio: con un boton se emite el cobro del mes a todos los locales ocupados, sumando canon, condominio segun alicuota y renta porcentual. Genera cargos y recibos por local.
+7. Estado de cuenta: pagos reportados, confirmacion, saldos y morosos.
+8. Fiscal: modo recibos o facturas, datos del RIF e IGTF configurable.
+
+------------------------------------------------------------
+
+MENSAJE 8 . EL PANEL PRIVADO, PARTE 2: OPERACION DIARIA
+
+Modulos de operacion:
+
+1. Estacionamiento: tarifas, vehiculos adentro con tiempo y monto en vivo, confirmacion de pagos en la salida, cortesias, abonados mensuales y el afiche QR para imprimir.
+2. Publicidad: los espacios del centro comercial, pantallas, vallas, banners y redes, con sus contrataciones, fechas y precios. Ingresos extra ordenados.
+3. Consultorios: doctores, horarios semanales y la agenda de citas que entra desde la pagina publica.
+4. Atencion al cliente: los reclamos y sugerencias del publico con estado y prioridad.
+5. Seguridad: bitacora del equipo de vigilancia, rondas, incidentes, accesos, objetos perdidos y emergencias, con gravedad, quien reporta y cierre con nota.
+6. Fidelidad: clientes frecuentes con puntos por compras y canjes.
+7. Comunicados, asambleas, accesos, documentos, galeria de fotos, areas comunes e incidencias de mantenimiento.
+
+En total son 21 modulos, todos conectados entre si: por ejemplo, las ventas que reporta un comerciante alimentan directo la renta porcentual del cobro del mes.
+
+------------------------------------------------------------
+
+MENSAJE 9 . POR QUE ESTE SISTEMA ES DIFERENTE
+
+1. Todo en un solo lugar. Hoy los centros comerciales manejan el cobro en un programa, el estacionamiento en otro y la pagina web por otro lado. Aqui la pagina publica, el portal del comerciante y la administracion son un solo sistema conectado.
+2. La renta porcentual deja de ser un dolor. El comerciante reporta sus ventas desde su cuenta y el calculo sale solo. Nada de planillas ni correos.
+3. El estacionamiento se cobra sin infraestructura costosa: un afiche con QR y el telefono del visitante.
+4. Cada inquilino recibe su pagina web con productos y promociones como beneficio del centro comercial. Eso atrae y retiene locatarios.
+5. Los visitantes reservan citas medicas, consultan tiendas y dejan reclamos sin llamar a nadie.
+6. Todo esta pensado para Venezuela: divisas y bolivares, tasa BCV, IGTF y recibos con opcion de pasar a facturacion fiscal cuando lo decidan.
+
+------------------------------------------------------------
+
+MENSAJE 10 . SIGUIENTE PASO
+
+Le propongo una reunion corta, presencial o por videollamada, para recorrer el sistema juntos con sus datos reales: sus locales, sus contratos y sus tarifas. La plataforma que esta viendo es una demostracion completa funcionando; ponerla a trabajar con la informacion real de Concepto La Granja es un proceso corto y lo acompanamos en todo: carga inicial, capacitacion del equipo y soporte.
+
+Quedo atento a sus comentarios y al dia y hora que mejor le convenga.
+
+------------------------------------------------------------
+
+NOTAS PARA TI (NO ENVIAR ESTE BLOQUE)
+
+1. La clave del panel de la demo es granja2026. Compartela solo de palabra o en mensaje aparte si el cliente quiere entrar el mismo, y cambiala despues de la presentacion si hace falta.
+2. Para la cuenta de comerciante de la demo puedes crear un codigo de acceso desde Panel, Comerciantes, o mostrarla desde tu propio telefono ya logueado.
+3. Orden sugerido si presentas en vivo: portal, una tienda, estacionamiento, mi-cuenta y de ultimo el panel, cerrando con la emision del cobro del mes y la renta porcentual, que es lo que mas vende.
+4. Si el cliente pregunta por facturacion fiscal: el sistema emite recibos no fiscales y esta preparado para conectarse a facturacion homologada cuando el decida, sin cambiar de plataforma.
