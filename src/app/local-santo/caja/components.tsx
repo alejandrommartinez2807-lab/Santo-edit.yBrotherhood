@@ -245,6 +245,16 @@ export function CashOrderCard({
             {isExpanded ? "Ocultar" : "Detalles"}
           </button>
         </div>
+
+        {/* Comprobante a la vista SIN expandir: caja ve la miniatura (y la
+            amplía tocándola) apenas el cliente la manda, sin ir a la sección
+            Comprobantes (pedido del dueño 2026-07-22). Al expandir ya sale en
+            el cuerpo, así que aquí solo cuando está colapsado. */}
+        {!isExpanded && paymentProofs.length > 0 && (
+          <div className="mt-2">
+            <OrderPaymentProofsList proofs={paymentProofs} />
+          </div>
+        )}
       </div>
 
       {isExpanded && (

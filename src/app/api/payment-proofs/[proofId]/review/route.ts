@@ -6,6 +6,7 @@ import {
   type PaymentProofStatus,
 } from "@/lib/orders"
 import { buildPaymentFromProof, type OrderPaymentSnapshot } from "@/lib/paymentProofRegistration"
+import { sendOrderPaymentReviewedPush } from "@/lib/orderPushNotifications"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { getLocalAccessAuditActor, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
@@ -221,6 +222,11 @@ export async function PATCH(
             : "No se pudo registrar el cobro; hazlo desde Caja."
       }
     }
+
+    // Avisa al cliente por push si se suscribió desde su seguimiento
+    // (confirmado / rechazado / necesita corrección). Best-effort: su página
+    // ya sondea, así que un fallo de push no afecta la revisión.
+    void sendOrderPaymentReviewedPush(paymentProof.orderId, status, "", internalNote)
 
     return NextResponse.json({ ok: true, paymentProof, paymentRegistered, paymentSkippedReason })
   } catch (error) {

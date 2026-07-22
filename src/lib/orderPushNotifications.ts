@@ -161,6 +161,63 @@ export async function sendOrderReadyPush(orderId: string, displayNumber: string)
   }
 }
 
+// Notifica al CLIENTE cuando caja revisa su comprobante (confirmado /
+// rechazado / necesita corrección): su página de seguimiento ya sondea, pero
+// con push se entera aunque la tenga cerrada. Solo estados accionables; "En
+// revisión" o "Comprobante enviado" son su propia acción, no avisan. Nunca lanza.
+export async function sendOrderPaymentReviewedPush(
+  orderId: string,
+  status: string,
+  displayNumber: string,
+  internalNote = "",
+): Promise<void> {
+  if (!isPushConfigured()) return
+
+  const orderLabel = displayNumber ? `tu pedido ${displayNumber}` : "tu pedido"
+
+  const messages: Record<string, { title: string; body: string }> = {
+    "Confirmado por caja": {
+      title: "✅ Pago confirmado",
+      body: `Confirmamos el pago de ${orderLabel}. ¡Ya entra a preparación!`,
+    },
+    Rechazado: {
+      title: "Tu pago fue rechazado",
+      body: `Revisa el pago de ${orderLabel} y vuelve a reportarlo desde tu página de seguimiento.`,
+    },
+    "Necesita corrección": {
+      title: "Tu pago necesita corrección",
+      body: internalNote
+        ? `${orderLabel}: ${internalNote}`
+        : `Corrige y vuelve a reportar el pago de ${orderLabel}.`,
+    },
+  }
+
+  const message = messages[status]
+  if (!message) return
+
+  try {
+    const supabase = getSupabaseAdmin()
+    // branch-exempt: lectura puntual por order_id (id único e imprevisible).
+    const { data, error } = await supabase
+      .from("push_subscriptions")
+      .select("endpoint, subscription")
+      .eq("order_id", orderId)
+
+    if (error) throw new Error(error.message)
+    if (!data?.length) return
+
+    await sendPushToSubscriptionRows(
+      data,
+      JSON.stringify({ ...message, url: `/pedido/${orderId}` }),
+    )
+  } catch (error) {
+    captureError(error, {
+      route: "lib/orderPushNotifications",
+      action: "sendOrderPaymentReviewedPush",
+    })
+  }
+}
+
 // --- Alertas internas (dueño / encargado) --------------------------------
 // Reutiliza push_subscriptions con un order_id reservado: cada equipo del
 // dueño/encargado que active "alertas de anulación" guarda aquí su
