@@ -1572,7 +1572,9 @@ export default function CartDrawer({
     if (!cashMethodName) return null;
 
     // Botones rápidos de billete (nada que escribir): denominaciones que
-    // cubren el total + "pago exacto".
+    // cubren el total + "pago exacto". En divisas se ofrecen los billetes
+    // 5/10/20/50/100 (pedido del dueño 2026-07-22); en Bs se acotan para no
+    // llenar la pantalla de opciones.
     const cashDue = cashIsVes ? totalVES : totalUSD;
     const quickBills = (
       cashIsVes
@@ -1580,7 +1582,7 @@ export default function CartDrawer({
         : [5, 10, 20, 50, 100]
     )
       .filter((bill) => bill >= cashDue)
-      .slice(0, 3);
+      .slice(0, cashIsVes ? 4 : 5);
 
     return (
       <div className="rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] px-4 py-4">
@@ -1659,6 +1661,132 @@ export default function CartDrawer({
     );
   }
 
+  // Pago mixto paso a paso ("para tontos", pedido del dueño 2026-07-22):
+  // Paso 1 = cuánto en bolívares, Paso 2 = cuánto en divisas, con el total
+  // siempre a la vista y "Completar lo que falta" bien visible. El helper de
+  // abajo dice en cristiano qué falta. Compartido por Delivery y Pick up.
+  function renderMixedPaymentSection() {
+    if (!isMixedPayment) return null;
+
+    const rate = Number(exchangeRate || 0);
+    const coveredUSD = mixedUsdValue + (rate > 0 ? mixedBsValue / rate : 0);
+    const missingUSD = Math.round((totalUSD - coveredUSD) * 100) / 100;
+    const isOver = missingUSD < -0.01;
+    const isExact = Math.abs(missingUSD) <= 0.01;
+
+    return (
+      <div className="rounded-2xl border-2 border-[var(--brand-primary)]/50 bg-[var(--brand-cream)] px-4 py-4">
+        <p className="text-sm font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+          Pago mixto: parte en Bs y parte en $
+        </p>
+        <div className="mt-2 rounded-2xl border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-2.5 text-center">
+          <p className="text-[0.62rem] font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/55">
+            Total a repartir
+          </p>
+          <p className="text-lg font-black leading-none text-[var(--brand-ink-3)]">
+            {formatUSD(totalUSD)}{" "}
+            <span className="text-[var(--brand-ink-2)]/55">≈</span> Bs{" "}
+            {formatVES(totalVES)}
+          </p>
+        </div>
+
+        <div className="mt-4">
+          <span className="inline-flex rounded-full bg-[var(--brand-primary)] px-2.5 py-0.5 text-[0.58rem] font-black uppercase tracking-[0.12em] text-black">
+            Paso 1
+          </span>
+          <label className="mt-1.5 block text-[0.78rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-3)]">
+            ¿Cuánto pagas en bolívares?
+          </label>
+          <select
+            value={mixedBsMethod}
+            onChange={(event) => setMixedBsMethod(event.target.value)}
+            className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+          >
+            <option value="">Método para los bolívares…</option>
+            {availablePaymentMethods.map((method) => (
+              <option key={method} value={method}>
+                {method}
+              </option>
+            ))}
+          </select>
+          <div className="mt-2 flex gap-2">
+            <input
+              inputMode="decimal"
+              value={mixedBsAmount}
+              onChange={(event) => setMixedBsAmount(event.target.value)}
+              placeholder="Monto en Bs"
+              className="min-w-0 flex-1 rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+            />
+            <button
+              type="button"
+              onClick={completeMixedBsAmount}
+              className="shrink-0 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3.5 py-2 text-[0.64rem] font-black uppercase tracking-[0.08em] text-black transition active:scale-95"
+            >
+              Completar lo que falta
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <span className="inline-flex rounded-full bg-[var(--brand-primary)] px-2.5 py-0.5 text-[0.58rem] font-black uppercase tracking-[0.12em] text-black">
+            Paso 2
+          </span>
+          <label className="mt-1.5 block text-[0.78rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-3)]">
+            ¿Cuánto pagas en divisas?
+          </label>
+          <select
+            value={mixedUsdMethod}
+            onChange={(event) => setMixedUsdMethod(event.target.value)}
+            className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+          >
+            <option value="">Método para las divisas…</option>
+            {availablePaymentMethods.map((method) => (
+              <option key={method} value={method}>
+                {method}
+              </option>
+            ))}
+          </select>
+          <div className="mt-2 flex gap-2">
+            <input
+              inputMode="decimal"
+              value={mixedUsdAmount}
+              onChange={(event) => setMixedUsdAmount(event.target.value)}
+              placeholder="Monto en $"
+              className="min-w-0 flex-1 rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+            />
+            <button
+              type="button"
+              onClick={completeMixedUsdAmount}
+              className="shrink-0 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3.5 py-2 text-[0.64rem] font-black uppercase tracking-[0.08em] text-black transition active:scale-95"
+            >
+              Completar lo que falta
+            </button>
+          </div>
+        </div>
+
+        {/* Helper "en cristiano": dice si falta, sobra o está completo. */}
+        {isExact ? (
+          <p className="mt-3 rounded-xl border-2 border-green-600 bg-green-600/10 px-3 py-2 text-[0.75rem] font-black leading-4 text-green-700">
+            ¡Listo! Cubres el total: Bs {formatVES(mixedBsValue)} con{" "}
+            {mixedBsMethod || "…"} y {formatUSD(mixedUsdValue)} con{" "}
+            {mixedUsdMethod || "…"}.
+          </p>
+        ) : isOver ? (
+          <p className="mt-3 rounded-xl border-2 border-amber-500 bg-amber-500/10 px-3 py-2 text-[0.75rem] font-black leading-4 text-amber-700">
+            Te pasaste del total por {formatUSD(Math.abs(missingUSD))}. Baja uno
+            de los dos montos.
+          </p>
+        ) : (
+          <p className="mt-3 rounded-xl border-2 border-amber-500 bg-amber-500/10 px-3 py-2 text-[0.75rem] font-black leading-4 text-amber-700">
+            Todavía falta {formatUSD(missingUSD)}
+            {rate > 0 ? ` (Bs ${formatVES(missingUSD * rate)})` : ""}. Escribe el
+            otro monto o toca «Completar lo que falta».
+          </p>
+        )}
+      </div>
+    );
+  }
+
   // Sección de pago del checkout, compartida por Delivery y Pick up: método de
   // pago (obligatorio), pago mixto con botones "Completar" y los datos para
   // pagar (pago móvil, Zelle…) de los métodos elegidos. Así Pick up pide el
@@ -1690,95 +1818,7 @@ export default function CartDrawer({
 
         {renderCashChangeSection()}
 
-        {/* Pago mixto: el cliente reparte el total entre una parte en bolívares
-            y otra en divisas; "Completar" rellena lo que falta con la tasa. */}
-        {isMixedPayment && (
-          <div className="rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] px-4 py-4">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
-              Pago mixto
-            </p>
-            <p className="mt-1 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
-              Divide el total ({formatUSD(totalUSD)} ≈ Bs {formatVES(totalVES)})
-              entre dos métodos. Escribe un monto y toca “Completar” en el otro
-              para rellenar lo que falta.
-            </p>
-
-            <div className="mt-3">
-              <label className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/60">
-                Parte en bolívares
-              </label>
-              <select
-                value={mixedBsMethod}
-                onChange={(event) => setMixedBsMethod(event.target.value)}
-                className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
-              >
-                <option value="">Método para los bolívares…</option>
-                {availablePaymentMethods.map((method) => (
-                  <option key={method} value={method}>
-                    {method}
-                  </option>
-                ))}
-              </select>
-              <div className="mt-2 flex gap-2">
-                <input
-                  inputMode="decimal"
-                  value={mixedBsAmount}
-                  onChange={(event) => setMixedBsAmount(event.target.value)}
-                  placeholder="Monto en Bs"
-                  className="min-w-0 flex-1 rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
-                />
-                <button
-                  type="button"
-                  onClick={completeMixedBsAmount}
-                  className="shrink-0 rounded-2xl border-2 border-[var(--brand-primary)] bg-transparent px-3.5 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black"
-                >
-                  Completar
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <label className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/60">
-                Parte en divisas
-              </label>
-              <select
-                value={mixedUsdMethod}
-                onChange={(event) => setMixedUsdMethod(event.target.value)}
-                className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
-              >
-                <option value="">Método para las divisas…</option>
-                {availablePaymentMethods.map((method) => (
-                  <option key={method} value={method}>
-                    {method}
-                  </option>
-                ))}
-              </select>
-              <div className="mt-2 flex gap-2">
-                <input
-                  inputMode="decimal"
-                  value={mixedUsdAmount}
-                  onChange={(event) => setMixedUsdAmount(event.target.value)}
-                  placeholder="Monto en $"
-                  className="min-w-0 flex-1 rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
-                />
-                <button
-                  type="button"
-                  onClick={completeMixedUsdAmount}
-                  className="shrink-0 rounded-2xl border-2 border-[var(--brand-primary)] bg-transparent px-3.5 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black"
-                >
-                  Completar
-                </button>
-              </div>
-            </div>
-
-            {isMixedPaymentComplete && (
-              <p className="mt-3 rounded-xl bg-white/70 px-3 py-2 text-[0.7rem] font-bold leading-4 text-[var(--brand-ink-2)]/70">
-                Vas a pagar Bs {formatVES(mixedBsValue)} con {mixedBsMethod} y{" "}
-                {formatUSD(mixedUsdValue)} con {mixedUsdMethod}.
-              </p>
-            )}
-          </div>
-        )}
+        {renderMixedPaymentSection()}
 
         {Object.keys(checkoutPaymentMethodDetails).length > 0 && (
           <div>
@@ -3709,106 +3749,7 @@ export default function CartDrawer({
 
                     {renderCheckoutProofSection()}
 
-                    {/* Pago mixto: el cliente reparte el total entre una
-                        parte en bolívares y otra en divisas; "Completar"
-                        rellena lo que falta con la tasa activa. */}
-                    {isMixedPayment && (
-                      <div className="rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] px-4 py-4">
-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
-                          Pago mixto
-                        </p>
-                        <p className="mt-1 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
-                          Divide el total ({formatUSD(totalUSD)} ≈ Bs{" "}
-                          {formatVES(totalVES)}) entre dos métodos. Escribe un
-                          monto y toca “Completar” en el otro para rellenar lo
-                          que falta.
-                        </p>
-
-                        <div className="mt-3">
-                          <label className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/60">
-                            Parte en bolívares
-                          </label>
-                          <select
-                            value={mixedBsMethod}
-                            onChange={(event) =>
-                              setMixedBsMethod(event.target.value)
-                            }
-                            className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
-                          >
-                            <option value="">Método para los bolívares…</option>
-                            {availablePaymentMethods.map((method) => (
-                              <option key={method} value={method}>
-                                {method}
-                              </option>
-                            ))}
-                          </select>
-                          <div className="mt-2 flex gap-2">
-                            <input
-                              inputMode="decimal"
-                              value={mixedBsAmount}
-                              onChange={(event) =>
-                                setMixedBsAmount(event.target.value)
-                              }
-                              placeholder="Monto en Bs"
-                              className="min-w-0 flex-1 rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
-                            />
-                            <button
-                              type="button"
-                              onClick={completeMixedBsAmount}
-                              className="shrink-0 rounded-2xl border-2 border-[var(--brand-primary)] bg-transparent px-3.5 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black"
-                            >
-                              Completar
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="mt-4">
-                          <label className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/60">
-                            Parte en divisas
-                          </label>
-                          <select
-                            value={mixedUsdMethod}
-                            onChange={(event) =>
-                              setMixedUsdMethod(event.target.value)
-                            }
-                            className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
-                          >
-                            <option value="">Método para las divisas…</option>
-                            {availablePaymentMethods.map((method) => (
-                              <option key={method} value={method}>
-                                {method}
-                              </option>
-                            ))}
-                          </select>
-                          <div className="mt-2 flex gap-2">
-                            <input
-                              inputMode="decimal"
-                              value={mixedUsdAmount}
-                              onChange={(event) =>
-                                setMixedUsdAmount(event.target.value)
-                              }
-                              placeholder="Monto en $"
-                              className="min-w-0 flex-1 rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
-                            />
-                            <button
-                              type="button"
-                              onClick={completeMixedUsdAmount}
-                              className="shrink-0 rounded-2xl border-2 border-[var(--brand-primary)] bg-transparent px-3.5 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black"
-                            >
-                              Completar
-                            </button>
-                          </div>
-                        </div>
-
-                        {isMixedPaymentComplete && (
-                          <p className="mt-3 rounded-xl bg-white/70 px-3 py-2 text-[0.7rem] font-bold leading-4 text-[var(--brand-ink-2)]/70">
-                            Vas a pagar Bs {formatVES(mixedBsValue)} con{" "}
-                            {mixedBsMethod} y {formatUSD(mixedUsdValue)} con{" "}
-                            {mixedUsdMethod}.
-                          </p>
-                        )}
-                      </div>
-                    )}
+                    {renderMixedPaymentSection()}
 
                     {Object.keys(checkoutPaymentMethodDetails).length > 0 && (
                       <div>

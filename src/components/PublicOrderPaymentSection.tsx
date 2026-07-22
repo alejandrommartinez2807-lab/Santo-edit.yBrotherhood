@@ -500,7 +500,11 @@ export default function PublicOrderPaymentSection({
   }
 
   async function submitProof(confirmDuplicate = false, confirmPartial = false) {
-    const entries = payments
+    const hasProofOrReference = Boolean(dataUrl) || reference.trim().length > 0;
+    const totalUSDForAssume = Number(info?.totalUSD || 0);
+    const rateForAssume = Number(info?.exchangeRate || 0);
+
+    let entries = payments
       .map((entry) => ({
         method: entry.method.trim(),
         usd: normalizeMoneyInput(entry.amountUSD),
@@ -508,8 +512,36 @@ export default function PublicOrderPaymentSection({
       }))
       .filter((entry) => entry.method || entry.usd > 0 || entry.ves > 0);
 
-    const reportedUSD = entries.reduce((total, entry) => total + entry.usd, 0);
-    const reportedVES = entries.reduce((total, entry) => total + entry.ves, 0);
+    let reportedUSD = entries.reduce((total, entry) => total + entry.usd, 0);
+    let reportedVES = entries.reduce((total, entry) => total + entry.ves, 0);
+
+    // Captura/referencia SIN monto escrito: si el cliente solo adjuntó su
+    // comprobante (caso común, sobre todo de tercera edad), asumimos que pagó
+    // el TOTAL del pedido con el método preseleccionado, en su moneda. Así la
+    // captura sola + método siempre pasa (pedido del dueño 2026-07-22) en vez
+    // de trabar el envío pidiendo el monto.
+    if (
+      reportedUSD <= 0 &&
+      reportedVES <= 0 &&
+      hasProofOrReference &&
+      totalUSDForAssume > 0
+    ) {
+      const assumedMethod =
+        entries[0]?.method || payments[0]?.method?.trim() || chosenMethods[0] || "";
+      if (isVesPaymentMethod(assumedMethod) && rateForAssume > 0) {
+        entries = [
+          {
+            method: assumedMethod,
+            usd: 0,
+            ves: Math.round(totalUSDForAssume * rateForAssume * 100) / 100,
+          },
+        ];
+      } else {
+        entries = [{ method: assumedMethod, usd: totalUSDForAssume, ves: 0 }];
+      }
+      reportedUSD = entries[0].usd;
+      reportedVES = entries[0].ves;
+    }
 
     // Resumen por método para caja: "Zelle ($10.00) + Pago móvil (Bs 500,00)".
     const reportedMethod = entries
@@ -842,7 +874,7 @@ export default function PublicOrderPaymentSection({
                 value={entry.method}
                 onChange={(event) => changePaymentEntryMethod(index, event.target.value)}
                 disabled={!allowMethodChange && chosenMethods.length > 0}
-                className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)] disabled:opacity-60"
+                className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink-3)] outline-none placeholder:text-[var(--brand-ink-3)]/40 focus:border-[var(--brand-primary)] disabled:opacity-60"
               >
                 <option value="">Selecciona el método</option>
                 {!paymentMethods.includes(entry.method) && entry.method ? (
@@ -877,7 +909,7 @@ export default function PublicOrderPaymentSection({
                           }
                           inputMode="decimal"
                           placeholder="0.00"
-                          className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
+                          className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink-3)] outline-none placeholder:text-[var(--brand-ink-3)]/40 focus:border-[var(--brand-primary)]"
                         />
                       </div>
                     )}
@@ -893,7 +925,7 @@ export default function PublicOrderPaymentSection({
                           }
                           inputMode="decimal"
                           placeholder="0,00"
-                          className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
+                          className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink-3)] outline-none placeholder:text-[var(--brand-ink-3)]/40 focus:border-[var(--brand-primary)]"
                         />
                         {(() => {
                           // El monto en Bs también en dólares, con la tasa
@@ -946,7 +978,7 @@ export default function PublicOrderPaymentSection({
               value={reference}
               onChange={(event) => setReference(event.target.value)}
               placeholder="Todos los dígitos de la operación"
-              className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
+              className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink-3)] outline-none placeholder:text-[var(--brand-ink-3)]/40 focus:border-[var(--brand-primary)]"
             />
           </div>
 
@@ -954,7 +986,7 @@ export default function PublicOrderPaymentSection({
             <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
               Captura del pago (opcional si pones la referencia)
             </label>
-            <label className="mt-1.5 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-sm font-bold text-[var(--brand-ink-2)]/70 transition hover:border-[var(--brand-primary)]">
+            <label className="mt-1.5 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/50 bg-white px-4 py-4 text-sm font-bold text-[var(--brand-ink-3)]/70 transition hover:border-[var(--brand-primary)]">
               <ImagePlus size={17} />
               {fileName || "Toca para adjuntar la imagen"}
               <input
@@ -974,7 +1006,7 @@ export default function PublicOrderPaymentSection({
               value={customerNote}
               onChange={(event) => setCustomerNote(event.target.value)}
               placeholder="Ejemplo: pagó mi mamá desde su cuenta"
-              className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)]"
+              className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink-3)] outline-none placeholder:text-[var(--brand-ink-3)]/40 focus:border-[var(--brand-primary)]"
             />
           </div>
 
