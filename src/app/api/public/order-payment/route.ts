@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { getPaymentProofs } from "@/lib/orders"
+import { maybeAutoCancelUnpaidOrder } from "@/lib/unpaidAutoCancel"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
 
@@ -43,12 +44,16 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Anulación automática sin pago (configurable): se evalúa aquí también
+    // porque la confirmación/seguimiento consultan este endpoint.
+    await maybeAutoCancelUnpaidOrder(orderId)
+
     const supabase = getSupabaseAdmin()
     // branch-exempt: lookup puntual por id único e imprevisible (ord-...);
     // devuelve la sede del pedido para que el reporte de pago llegue a ella.
     const { data, error } = await supabase
       .from("orders")
-      .select("id,branch_id,seq,branch_seq,branch_code,status,total_usd,exchange_rate,amount_received_usd,amount_received_ves")
+      .select("id,branch_id,seq,branch_seq,branch_code,status,total_usd,exchange_rate,amount_received_usd,amount_received_ves,created_at")
       .eq("id", orderId)
       .maybeSingle()
 
@@ -82,6 +87,8 @@ export async function GET(request: NextRequest) {
       branchId,
       displayNumber,
       orderStatus: String(order.status || ""),
+      // Para los recordatorios de pago del cliente (5/10/15/20 min).
+      createdAt: String(order.created_at || ""),
       totalUSD: Number(order.total_usd || 0),
       // Tasa con la que se registró el pedido: precarga el monto en Bs cuando
       // el método elegido es en bolívares (pago móvil, punto…).

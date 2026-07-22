@@ -48,6 +48,12 @@ export default function PedidoSeguimientoPage({
   // Pop-up de reseña tras la venta: se abre UNA vez cuando el pedido pasa a
   // Entregado (recordado por dispositivo para no insistir al reabrir el link).
   const [isReviewPopupOpen, setIsReviewPopupOpen] = useState(false);
+  // El cliente puede cancelar SU pedido mientras siga en "Nuevo" (sin pago):
+  // modal de confirmación con motivo opcional.
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [cancelReasonInput, setCancelReasonInput] = useState("");
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
   // WhatsApp del negocio para el botón "¿Dudas con tu pedido? Escríbenos"
   // (el dueño lo activa/apaga desde Configuración).
   const [orderHelpWhatsapp, setOrderHelpWhatsapp] = useState("");
@@ -124,6 +130,34 @@ export default function PedidoSeguimientoPage({
       window.localStorage.setItem(`bh_review_prompt_${orderId}`, "1");
     } catch {
       // Sin localStorage no pasa nada: solo podría volver a aparecer.
+    }
+  }
+
+  async function submitClientCancellation() {
+    try {
+      setIsCancelling(true);
+      setCancelError(null);
+
+      const response = await fetch("/api/public/order-cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, reason: cancelReasonInput.trim() }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || data.ok !== true) {
+        throw new Error(data.error || "No se pudo cancelar el pedido");
+      }
+
+      // El polling del estado refleja "Cancelado" solo; cerramos el modal.
+      setIsCancelModalOpen(false);
+      setCancelReasonInput("");
+    } catch (error) {
+      setCancelError(
+        error instanceof Error ? error.message : "No se pudo cancelar el pedido",
+      );
+    } finally {
+      setIsCancelling(false);
     }
   }
 
@@ -337,6 +371,72 @@ export default function PedidoSeguimientoPage({
             <MessageCircle size={17} />
             ¿Dudas con tu pedido? Escríbenos
           </a>
+        ) : null}
+
+        {/* Cancelar mi pedido: solo mientras siga en "Nuevo" (sin pago). */}
+        {!notFound && status === "Nuevo" ? (
+          <button
+            type="button"
+            onClick={() => {
+              setCancelError(null);
+              setIsCancelModalOpen(true);
+            }}
+            className="mt-3 w-full rounded-full px-5 py-3 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/45 transition hover:text-red-400"
+          >
+            Cancelar mi pedido
+          </button>
+        ) : null}
+
+        {isCancelModalOpen ? (
+          <div
+            className="fixed inset-0 z-[96] flex items-end justify-center bg-black/70 px-4 py-6 backdrop-blur-sm sm:items-center"
+            onClick={() => setIsCancelModalOpen(false)}
+          >
+            <div
+              className="w-full max-w-sm rounded-[1.8rem] border-4 border-red-500 bg-[var(--brand-surface-2)] p-6 text-center shadow-2xl shadow-black/60"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <p className="text-xl font-black uppercase leading-tight text-[var(--brand-ink-3)]">
+                ¿Seguro que quieres cancelar?
+              </p>
+              <p className="mt-2 text-sm font-bold leading-5 text-[var(--brand-ink-2)]/70">
+                Tu pedido {displayNumber || ""} se anulará y no se preparará.
+              </p>
+
+              <textarea
+                value={cancelReasonInput}
+                onChange={(event) => setCancelReasonInput(event.target.value)}
+                rows={2}
+                placeholder="¿Nos cuentas por qué? (opcional)"
+                className="mt-4 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/40 px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)] outline-none focus:border-red-400"
+              />
+
+              {cancelError ? (
+                <p className="mt-2 rounded-xl border border-red-500/50 bg-red-500/10 px-3 py-2 text-[0.78rem] font-bold leading-4 text-red-400">
+                  {cancelError}
+                </p>
+              ) : null}
+
+              <button
+                type="button"
+                disabled={isCancelling}
+                onClick={() => void submitClientCancellation()}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-red-500 bg-red-500 px-5 py-3.5 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:opacity-90 disabled:opacity-50"
+              >
+                {isCancelling ? (
+                  <Loader2 size={15} className="animate-spin" />
+                ) : null}
+                Sí, cancelar mi pedido
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsCancelModalOpen(false)}
+                className="mt-2 w-full rounded-full px-5 py-2.5 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/60 transition hover:text-[var(--brand-ink-2)]"
+              >
+                No, mantener mi pedido
+              </button>
+            </div>
+          </div>
         ) : null}
 
         {/* Pop-up de reseña tras la venta (pedido del dueño 2026-07-21). */}

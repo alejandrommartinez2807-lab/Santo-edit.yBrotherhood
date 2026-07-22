@@ -37,6 +37,7 @@ type OrderPaymentInfo = {
   totalUSD: number;
   exchangeRate: number;
   paymentRegistered: boolean;
+  createdAt: string;
   proofs: PublicProof[];
 };
 
@@ -158,6 +159,12 @@ export default function PublicOrderPaymentSection({
   // Configurable por el dueño: si está apagado, el método del pedido queda
   // fijo al reportar el pago (cuando se conoce cuál eligió el cliente).
   const [allowMethodChange, setAllowMethodChange] = useState(true);
+  // Anulación automática sin pago (minutos, 0 = apagada): para el contador
+  // visible y los recordatorios escalonados.
+  const [autoCancelMinutes, setAutoCancelMinutes] = useState(0);
+  // Tick por minuto: refresca el recordatorio "llevas X min sin reportar".
+  const [reminderTick, setReminderTick] = useState(0);
+  const firedRemindersRef = useRef<Set<number>>(new Set());
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   // Un bloque por método: si el cliente pagó parte con un método y parte con
@@ -191,6 +198,7 @@ export default function PublicOrderPaymentSection({
           totalUSD: Number(data.totalUSD || 0),
           exchangeRate: Number(data.exchangeRate || 0),
           paymentRegistered: data.paymentRegistered === true,
+          createdAt: String(data.createdAt || ""),
           proofs: Array.isArray(data.proofs) ? data.proofs : [],
         });
       }
@@ -211,6 +219,9 @@ export default function PublicOrderPaymentSection({
         const config = data?.businessConfig || data?.config || {};
         setIsProofsEnabled(config.paymentProofsEnabled !== false);
         setAllowMethodChange(config.publicPaymentMethodChangeEnabled !== false);
+        setAutoCancelMinutes(
+          Math.max(0, Math.round(Number(config.publicUnpaidAutoCancelMinutes) || 0)),
+        );
         const methods = Array.isArray(config.publicPaymentMethods)
           ? config.publicPaymentMethods
               .map((item: unknown) => String(item || "").trim())
@@ -279,6 +290,66 @@ export default function PublicOrderPaymentSection({
   const needsCorrection = (info?.proofs || []).some(
     (proof) => proof.status === "Necesita corrección",
   );
+
+  // Minutos desde que se registró el pedido (para el recordatorio escalonado
+  // 5/10/15/20 min y el contador de anulación automática).
+  const paymentPendingReminder = !hasConfirmedPayment && !hasPendingProof;
+  const elapsedMinutes = (() => {
+    if (!info?.createdAt) return 0;
+    const createdAt = new Date(info.createdAt);
+    if (Number.isNaN(createdAt.getTime())) return 0;
+    // reminderTick fuerza el recálculo cada minuto.
+    void reminderTick;
+    return Math.max(0, Math.floor((Date.now() - createdAt.getTime()) / 60_000));
+  })();
+
+  useEffect(() => {
+    if (!paymentPendingReminder || !info?.createdAt) return;
+
+    const timer = window.setInterval(() => {
+      setReminderTick((tick) => tick + 1);
+    }, 60_000);
+
+    return () => window.clearInterval(timer);
+  }, [paymentPendingReminder, info?.createdAt]);
+
+  useEffect(() => {
+    if (!paymentPendingReminder || elapsedMinutes <= 0) return;
+
+    // Recordatorios a los 5/10/15/20 min sin reporte: vibración +
+    // notificación del navegador (si el cliente dio permiso) una sola vez
+    // por umbral.
+    const threshold = [20, 15, 10, 5].find((mark) => elapsedMinutes >= mark);
+    if (!threshold || firedRemindersRef.current.has(threshold)) return;
+    firedRemindersRef.current.add(threshold);
+
+    try {
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate([200, 100, 200]);
+      }
+    } catch {
+      // El banner visual ya recuerda.
+    }
+
+    const notificationsAvailable =
+      typeof window !== "undefined" && "Notification" in window;
+
+    if (notificationsAvailable && Notification.permission === "granted") {
+      const reminderBody =
+        autoCancelMinutes > 0
+          ? `Llevas ${threshold} min sin reportar tu pago. El pedido se anula solo a los ${autoCancelMinutes} min.`
+          : `Llevas ${threshold} min sin reportar tu pago. Repórtalo para que tu pedido entre a preparación.`;
+
+      try {
+        new Notification("Recuerda reportar tu pago", {
+          body: reminderBody,
+          icon: "/icon-192.png",
+        });
+      } catch {
+        // Algunos navegadores móviles bloquean Notification directa.
+      }
+    }
+  }, [paymentPendingReminder, elapsedMinutes, autoCancelMinutes]);
 
   async function handleFileChange(file: File | undefined) {
     setFormError(null);
@@ -548,15 +619,33 @@ export default function PublicOrderPaymentSection({
         </p>
       ) : null}
 
-      {/* Recordatorio: sin pago reportado el pedido no entra a cocina. */}
-      {!hasConfirmedPayment && !hasPendingProof && !isFormOpen ? (
+      {/* Recordatorio: sin pago reportado el pedido no entra a cocina. Se
+          vuelve más insistente con los minutos (5/10/15/20) y muestra el
+          contador de anulación automática si el dueño la activó. */}
+      {paymentPendingReminder && !isFormOpen ? (
         <p
           role="alert"
-          className="mt-4 flex w-full items-start gap-2 rounded-2xl border-[3px] border-amber-500 bg-amber-500/10 px-4 py-3 text-sm font-black leading-5 text-amber-500"
+          className={`mt-4 flex w-full items-start gap-2 rounded-2xl border-[3px] px-4 py-3 text-sm font-black leading-5 ${
+            elapsedMinutes >= 10
+              ? "border-red-500 bg-red-500/10 text-red-400"
+              : "border-amber-500 bg-amber-500/10 text-amber-500"
+          }`}
         >
           <Clock3 size={17} className="mt-0.5 shrink-0 animate-pulse" />
-          Aún no has reportado tu pago. Cancela (paga) con los datos de abajo y
-          toca «Reportar mi pago» para que tu pedido entre a preparación.
+          <span>
+            {elapsedMinutes >= 5
+              ? `Llevas ${elapsedMinutes} minutos sin reportar tu pago. `
+              : "Aún no has reportado tu pago. "}
+            Cancela (paga) con los datos de abajo y toca «Reportar mi pago»
+            para que tu pedido entre a preparación.
+            {autoCancelMinutes > 0 ? (
+              <span className="mt-1 block text-[0.8rem]">
+                {Math.max(0, autoCancelMinutes - elapsedMinutes) > 0
+                  ? `Si no lo reportas, el pedido se anula solo en ${Math.max(0, autoCancelMinutes - elapsedMinutes)} min.`
+                  : "El pedido puede anularse en cualquier momento por falta de pago."}
+              </span>
+            ) : null}
+          </span>
         </p>
       ) : null}
 

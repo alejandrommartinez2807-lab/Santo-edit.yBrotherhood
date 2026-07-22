@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
+import { maybeAutoCancelUnpaidOrder } from "@/lib/unpaidAutoCancel"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
 
@@ -45,6 +46,10 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Anulación automática sin pago (configurable): se evalúa justo cuando
+    // el cliente consulta, así ve el aviso y el motivo al instante.
+    await maybeAutoCancelUnpaidOrder(orderId)
 
     const supabase = getSupabaseAdmin()
     // branch-exempt: lookup puntual por id único e imprevisible (ord-...);
