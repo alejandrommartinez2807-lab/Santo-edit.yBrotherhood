@@ -112,17 +112,14 @@ export default async function StorePage({ params }: { params: Promise<{ slug: st
         </div>
       </header>
 
-      {/* HERO / PORTADA — la imagen se muestra completa (contain) sobre su
-          propia versión difuminada de fondo, así un logo o símbolo nunca sale
-          recortado sin importar sus proporciones. */}
-      <div style={{ position: "relative", height: 240, background: `linear-gradient(120deg, ${accent}, #0f9bd7)`, overflow: "hidden" }}>
+      {/* HERO / PORTADA — banner tipo cover con altura proporcional a la
+          pantalla (más alto en tablet/PC para que la foto no quede como una
+          franja ni flote pequeña en el centro). El logo tiene su propio
+          recuadro abajo y siempre se muestra completo. */}
+      <div style={{ position: "relative", height: "clamp(200px, 30vw, 330px)", background: `linear-gradient(120deg, ${accent}, #0f9bd7)`, overflow: "hidden" }}>
         {s.cover_url && (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={s.cover_url} alt="" aria-hidden style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "blur(22px)", transform: "scale(1.15)", opacity: 0.7 }} />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={s.cover_url} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }} />
-          </>
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={s.cover_url} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }} />
         )}
       </div>
 

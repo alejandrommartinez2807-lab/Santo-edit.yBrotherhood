@@ -24,12 +24,12 @@ begin
     phone='0241-555-1001', microsite_whatsapp='584121001001', instagram='@kalea.super',
     hours=E'Lun–Dom 08:00–21:00',
     promo='🥕 Martes y miércoles: frutas y verduras con 20% de descuento',
-    cover_url='https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=70',
-    gallery='[{"url":"https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&q=70"},{"url":"https://images.unsplash.com/photo-1506617420156-8e4536971650?w=800&q=70"}]'::jsonb,
+    cover_url='/img/tiendas/photo-1542838132-92c53300491e-1200.jpg',
+    gallery='[{"url":"/img/tiendas/photo-1488459716781-31db52582fe9-800.jpg"},{"url":"/img/tiendas/photo-1506617420156-8e4536971650-800.jpg"}]'::jsonb,
     featured_products='[
-      {"name":"Frutas y verduras frescas","price":0,"image":"https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&q=70","description":"Recibimos cosecha fresca todos los días"},
-      {"name":"Frutas de temporada","price":0,"image":"https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=800&q=70","description":"Selección de la semana"},
-      {"name":"Combo despensa semanal","price":25,"image":"https://images.unsplash.com/photo-1506617420156-8e4536971650?w=800&q=70","description":"Arroz, harina, pasta, aceite y más"}
+      {"name":"Frutas y verduras frescas","price":0,"image":"/img/tiendas/photo-1488459716781-31db52582fe9-800.jpg","description":"Recibimos cosecha fresca todos los días"},
+      {"name":"Frutas de temporada","price":0,"image":"/img/tiendas/photo-1618160702438-9b02ab6515c9-800.jpg","description":"Selección de la semana"},
+      {"name":"Combo despensa semanal","price":25,"image":"/img/tiendas/photo-1506617420156-8e4536971650-800.jpg","description":"Arroz, harina, pasta, aceite y más"}
     ]'::jsonb
   where branch_id=b and code='S-01';
 
@@ -40,12 +40,12 @@ begin
     phone='0241-555-1002', microsite_whatsapp='584121001002', instagram='@beco.tiendas',
     hours=E'Lun–Sáb 10:00–20:00\nDom 11:00–19:00',
     promo='👗 Nueva temporada: hasta 30% en moda de dama',
-    cover_url='https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1200&q=70',
-    gallery='[{"url":"https://images.unsplash.com/photo-1445205170230-053b83016050?w=800&q=70"},{"url":"https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=800&q=70"}]'::jsonb,
+    cover_url='/img/tiendas/photo-1441984904996-e0b6ba687e04-1200.jpg',
+    gallery='[{"url":"/img/tiendas/photo-1445205170230-053b83016050-800.jpg"},{"url":"/img/tiendas/photo-1489987707025-afc232f7ea0f-800.jpg"}]'::jsonb,
     featured_products='[
-      {"name":"Camisas de caballero","price":12,"image":"https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=800&q=70","description":"Desde $12 en tallas S a XXL"},
-      {"name":"Jeans de dama","price":18,"image":"https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=800&q=70","description":"Cortes clásicos y de moda"},
-      {"name":"Vestidos de temporada","price":25,"image":"https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&q=70","description":"Colección nueva cada mes"}
+      {"name":"Camisas de caballero","price":12,"image":"/img/tiendas/photo-1596755094514-f87e34085b2c-800.jpg","description":"Desde $12 en tallas S a XXL"},
+      {"name":"Jeans de dama","price":18,"image":"/img/tiendas/photo-1541099649105-f69ad21f3246-800.jpg","description":"Cortes clásicos y de moda"},
+      {"name":"Vestidos de temporada","price":25,"image":"/img/tiendas/photo-1595777457583-95e059d581b8-800.jpg","description":"Colección nueva cada mes"}
     ]'::jsonb
   where branch_id=b and code='A-01';
 
@@ -56,13 +56,13 @@ begin
     phone='0241-555-1003', microsite_whatsapp='584121001003', instagram='@supercines.cc',
     hours=E'Lun–Dom 12:00–22:30',
     promo='🎬 Miércoles 2x1 en entradas 2D',
-    cover_url='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1200&q=70',
-    gallery='[{"url":"https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=800&q=70"},{"url":"https://images.unsplash.com/photo-1512070679279-8988d32161be?w=800&q=70"}]'::jsonb,
+    cover_url='/img/tiendas/photo-1489599849927-2ee91cede3ba-1200.jpg',
+    gallery='[{"url":"/img/tiendas/photo-1517604931442-7e0c8ed2963c-800.jpg"},{"url":"/img/tiendas/photo-1512070679279-8988d32161be-800.jpg"}]'::jsonb,
     featured_products='[
-      {"name":"Entrada 2D","price":4,"image":"https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&q=70","description":"Todas las funciones del día"},
-      {"name":"Entrada 3D","price":6,"image":"https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=800&q=70","description":"Lentes incluidos"},
-      {"name":"Combo cotufas + refresco","price":5.5,"image":"https://images.unsplash.com/photo-1512070679279-8988d32161be?w=800&q=70","description":"Cotufas medianas + bebida"},
-      {"name":"Función VIP","price":8,"image":"https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800&q=70","description":"Butacas reclinables"}
+      {"name":"Entrada 2D","price":4,"image":"/img/tiendas/photo-1489599849927-2ee91cede3ba-800.jpg","description":"Todas las funciones del día"},
+      {"name":"Entrada 3D","price":6,"image":"/img/tiendas/photo-1517604931442-7e0c8ed2963c-800.jpg","description":"Lentes incluidos"},
+      {"name":"Combo cotufas + refresco","price":5.5,"image":"/img/tiendas/photo-1512070679279-8988d32161be-800.jpg","description":"Cotufas medianas + bebida"},
+      {"name":"Función VIP","price":8,"image":"/img/tiendas/photo-1440404653325-ab127d49abc1-800.jpg","description":"Butacas reclinables"}
     ]'::jsonb
   where branch_id=b and code='M-01';
 
@@ -72,11 +72,11 @@ begin
     description='Agencia con taquillas, cajeros automáticos y atención comercial. Apertura de cuentas, tarjetas, pago móvil y créditos para comercios del centro comercial.',
     phone='0241-555-1004', microsite_whatsapp='584121001004', instagram='@banconacional',
     hours=E'Lun–Vie 08:30–15:30',
-    cover_url='https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1200&q=70',
+    cover_url='/img/tiendas/photo-1554224155-6726b3ff858f-1200.jpg',
     featured_products='[
-      {"name":"Cuentas y tarjetas","price":0,"image":"https://images.unsplash.com/photo-1601597111158-2fceff292cdc?w=800&q=70","description":"Apertura el mismo día con tu cédula y RIF"},
-      {"name":"Pago móvil y transferencias","price":0,"image":"https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&q=70","description":"Afiliación y soporte en taquilla"},
-      {"name":"Créditos comerciales","price":0,"image":"https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=70","description":"Para los comercios del centro comercial"}
+      {"name":"Cuentas y tarjetas","price":0,"image":"/img/tiendas/photo-1601597111158-2fceff292cdc-800.jpg","description":"Apertura el mismo día con tu cédula y RIF"},
+      {"name":"Pago móvil y transferencias","price":0,"image":"/img/tiendas/photo-1563013544-824ae1b704d3-800.jpg","description":"Afiliación y soporte en taquilla"},
+      {"name":"Créditos comerciales","price":0,"image":"/img/tiendas/photo-1554224155-6726b3ff858f-800.jpg","description":"Para los comercios del centro comercial"}
     ]'::jsonb
   where branch_id=b and code='B-01';
 
@@ -89,13 +89,13 @@ begin
     phone='0241-555-1201', microsite_whatsapp='584121112233', instagram='@capitangrill',
     hours=E'Lun–Jue 11:00–21:00\nVie–Sáb 11:00–22:00\nDom 12:00–20:00',
     promo='🍔 Combo doble + papas + refresco a precio especial toda la semana',
-    cover_url='https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=1200&q=70',
-    gallery='[{"url":"https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&q=70"},{"url":"https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=800&q=70"},{"url":"https://images.unsplash.com/photo-1553979459-d2229ba7433b?w=800&q=70"}]'::jsonb,
+    cover_url='/img/tiendas/photo-1571091718767-18b5b1457add-1200.jpg',
+    gallery='[{"url":"/img/tiendas/photo-1550547660-d9450f859349-800.jpg"},{"url":"/img/tiendas/photo-1586190848861-99aa4a171e90-800.jpg"},{"url":"/img/tiendas/photo-1553979459-d2229ba7433b-800.jpg"}]'::jsonb,
     featured_products='[
-      {"name":"La Capitana","price":6.5,"image":"https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&q=70","description":"Carne a la parrilla, queso amarillo, tocineta"},
-      {"name":"Doble Tocineta","price":7.5,"image":"https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&q=70","description":"Doble carne, doble queso, tocineta crocante"},
-      {"name":"Combo + papas y refresco","price":8,"image":"https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=800&q=70","description":"Cualquier burger + papas + bebida"},
-      {"name":"Malteada de la casa","price":3.5,"image":"https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=800&q=70","description":"Chocolate, fresa o vainilla"}
+      {"name":"La Capitana","price":6.5,"image":"/img/tiendas/photo-1568901346375-23c9450c58cd-800.jpg","description":"Carne a la parrilla, queso amarillo, tocineta"},
+      {"name":"Doble Tocineta","price":7.5,"image":"/img/tiendas/photo-1550547660-d9450f859349-800.jpg","description":"Doble carne, doble queso, tocineta crocante"},
+      {"name":"Combo + papas y refresco","price":8,"image":"/img/tiendas/photo-1586190848861-99aa4a171e90-800.jpg","description":"Cualquier burger + papas + bebida"},
+      {"name":"Malteada de la casa","price":3.5,"image":"/img/tiendas/photo-1573080496219-bb080dd4f877-800.jpg","description":"Chocolate, fresa o vainilla"}
     ]'::jsonb
   where branch_id=b and code='F-01';
 
@@ -106,12 +106,12 @@ begin
     phone='0241-555-1202', microsite_whatsapp='584121001202', instagram='@mariapaleta',
     hours=E'Lun–Dom 12:00–21:00',
     promo='🍧 Combo 3 paletas de fruta por $5',
-    cover_url='https://images.unsplash.com/photo-1501443762994-82bd5dace89a?w=1200&q=70',
-    gallery='[{"url":"https://images.unsplash.com/photo-1505394033641-40c6ad1178d7?w=800&q=70"},{"url":"https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800&q=70"}]'::jsonb,
+    cover_url='/img/tiendas/photo-1501443762994-82bd5dace89a-1200.jpg',
+    gallery='[{"url":"/img/tiendas/photo-1505394033641-40c6ad1178d7-800.jpg"},{"url":"/img/tiendas/photo-1563805042-7684c019e1cb-800.jpg"}]'::jsonb,
     featured_products='[
-      {"name":"Paleta de fruta natural","price":2,"image":"https://images.unsplash.com/photo-1505394033641-40c6ad1178d7?w=800&q=70","description":"Mango, fresa, parchita o limón"},
-      {"name":"Paleta cremosa","price":2.5,"image":"https://images.unsplash.com/photo-1488900128323-21503983a07e?w=800&q=70","description":"Chocolate, arequipe o coco"},
-      {"name":"Copa especial","price":3.5,"image":"https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=800&q=70","description":"Helado + toppings + sirope"}
+      {"name":"Paleta de fruta natural","price":2,"image":"/img/tiendas/photo-1505394033641-40c6ad1178d7-800.jpg","description":"Mango, fresa, parchita o limón"},
+      {"name":"Paleta cremosa","price":2.5,"image":"/img/tiendas/photo-1488900128323-21503983a07e-800.jpg","description":"Chocolate, arequipe o coco"},
+      {"name":"Copa especial","price":3.5,"image":"/img/tiendas/photo-1563805042-7684c019e1cb-800.jpg","description":"Helado + toppings + sirope"}
     ]'::jsonb
   where branch_id=b and code='F-02';
 
@@ -122,13 +122,13 @@ begin
     phone='0241-555-1203', microsite_whatsapp='584121001203', instagram='@pollosalabrasa.cc',
     hours=E'Lun–Dom 11:00–21:00',
     promo='🍗 Pollo entero + 2 contornos: precio familiar los domingos',
-    cover_url='https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=1200&q=70',
-    gallery='[{"url":"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=800&q=70"},{"url":"https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=70"}]'::jsonb,
+    cover_url='/img/tiendas/photo-1598103442097-8b74394b95c6-1200.jpg',
+    gallery='[{"url":"/img/tiendas/photo-1594221708779-94832f4320d1-800.jpg"},{"url":"/img/tiendas/photo-1555939594-58d7cb561ad1-800.jpg"}]'::jsonb,
     featured_products='[
-      {"name":"Pollo entero + 2 contornos","price":12,"image":"https://images.unsplash.com/photo-1598103442097-8b74394b95c6?w=800&q=70","description":"Arroz, ensalada, yuca o papas"},
-      {"name":"Medio pollo","price":7,"image":"https://images.unsplash.com/photo-1594221708779-94832f4320d1?w=800&q=70","description":"Con un contorno a elección"},
-      {"name":"Cuarto de pollo","price":4.5,"image":"https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=800&q=70","description":"Pierna o pechuga"},
-      {"name":"Parrilla familiar","price":18,"image":"https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=70","description":"Pollo + carne + chorizo para 4"}
+      {"name":"Pollo entero + 2 contornos","price":12,"image":"/img/tiendas/photo-1598103442097-8b74394b95c6-800.jpg","description":"Arroz, ensalada, yuca o papas"},
+      {"name":"Medio pollo","price":7,"image":"/img/tiendas/photo-1594221708779-94832f4320d1-800.jpg","description":"Con un contorno a elección"},
+      {"name":"Cuarto de pollo","price":4.5,"image":"/img/tiendas/photo-1532550907401-a500c9a57435-800.jpg","description":"Pierna o pechuga"},
+      {"name":"Parrilla familiar","price":18,"image":"/img/tiendas/photo-1555939594-58d7cb561ad1-800.jpg","description":"Pollo + carne + chorizo para 4"}
     ]'::jsonb
   where branch_id=b and code='F-03';
 
@@ -139,13 +139,13 @@ begin
     phone='0241-555-1204', microsite_whatsapp='584121001204', instagram='@sushiexpress.vzla',
     hours=E'Lun–Dom 12:00–21:00',
     promo='🍣 Martes de rollos: 8 piezas extra en tu combinado',
-    cover_url='https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=1200&q=70',
-    gallery='[{"url":"https://images.unsplash.com/photo-1553621042-f6e147245754?w=800&q=70"},{"url":"https://images.unsplash.com/photo-1611143669185-af224c5e3252?w=800&q=70"}]'::jsonb,
+    cover_url='/img/tiendas/photo-1579871494447-9811cf80d66c-1200.jpg',
+    gallery='[{"url":"/img/tiendas/photo-1553621042-f6e147245754-800.jpg"},{"url":"/img/tiendas/photo-1611143669185-af224c5e3252-800.jpg"}]'::jsonb,
     featured_products='[
-      {"name":"Rollo California 8p","price":6,"image":"https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800&q=70","description":"Cangrejo, aguacate y ajonjolí"},
-      {"name":"Rollo tempura 8p","price":7.5,"image":"https://images.unsplash.com/photo-1553621042-f6e147245754?w=800&q=70","description":"Camarón tempura y queso crema"},
-      {"name":"Combinado 16 piezas","price":12,"image":"https://images.unsplash.com/photo-1611143669185-af224c5e3252?w=800&q=70","description":"Selección del chef para compartir"},
-      {"name":"Bowl poke","price":8,"image":"https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=800&q=70","description":"Arroz, salmón, aguacate y vegetales"}
+      {"name":"Rollo California 8p","price":6,"image":"/img/tiendas/photo-1579871494447-9811cf80d66c-800.jpg","description":"Cangrejo, aguacate y ajonjolí"},
+      {"name":"Rollo tempura 8p","price":7.5,"image":"/img/tiendas/photo-1553621042-f6e147245754-800.jpg","description":"Camarón tempura y queso crema"},
+      {"name":"Combinado 16 piezas","price":12,"image":"/img/tiendas/photo-1611143669185-af224c5e3252-800.jpg","description":"Selección del chef para compartir"},
+      {"name":"Bowl poke","price":8,"image":"/img/tiendas/photo-1476224203421-9ac39bcb3327-800.jpg","description":"Arroz, salmón, aguacate y vegetales"}
     ]'::jsonb
   where branch_id=b and code='F-04';
 
@@ -155,11 +155,11 @@ begin
     description='Cocina china al wok con el toque criollo que nos encanta: arroz frito, fideos salteados y combos familiares listos en minutos.',
     phone='0241-555-1210', microsite_whatsapp='584121001210', instagram='@wok.cc',
     hours=E'Lun–Dom 11:30–21:00',
-    cover_url='https://images.unsplash.com/photo-1585032226651-759b368d7246?w=1200&q=70',
+    cover_url='/img/tiendas/photo-1585032226651-759b368d7246-1200.jpg',
     featured_products='[
-      {"name":"Arroz frito especial","price":5.5,"image":"https://images.unsplash.com/photo-1585032226651-759b368d7246?w=800&q=70","description":"Pollo, cerdo y camarones"},
-      {"name":"Fideos salteados con pollo","price":6,"image":"https://images.unsplash.com/photo-1563245372-f21724e3856d?w=800&q=70","description":"Al wok con vegetales frescos"},
-      {"name":"Combo familiar","price":15,"image":"https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=70","description":"Para 2-3 personas, incluye lumpias"}
+      {"name":"Arroz frito especial","price":5.5,"image":"/img/tiendas/photo-1585032226651-759b368d7246-800.jpg","description":"Pollo, cerdo y camarones"},
+      {"name":"Fideos salteados con pollo","price":6,"image":"/img/tiendas/photo-1563245372-f21724e3856d-800.jpg","description":"Al wok con vegetales frescos"},
+      {"name":"Combo familiar","price":15,"image":"/img/tiendas/photo-1414235077428-338989a2e8c0-800.jpg","description":"Para 2-3 personas, incluye lumpias"}
     ]'::jsonb
   where branch_id=b and code='MZ-10';
 
@@ -172,11 +172,11 @@ begin
     phone='0241-555-1302', microsite_whatsapp='584121001302', instagram='@saludya.farmacia',
     hours=E'Lun–Dom 08:00–21:00',
     promo='💊 Toma de tensión gratis todos los días',
-    cover_url='https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=1200&q=70',
+    cover_url='/img/tiendas/photo-1587854692152-cbe660dbde88-1200.jpg',
     featured_products='[
-      {"name":"Medicinas con y sin récipe","price":0,"image":"https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=800&q=70","description":"Consulta disponibilidad por WhatsApp"},
-      {"name":"Vitamina C x30","price":4.5,"image":"https://images.unsplash.com/photo-1471864190281-a93a3070b6de?w=800&q=70","description":"Y todo el mundo de suplementos"},
-      {"name":"Dermocosmética","price":0,"image":"https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=800&q=70","description":"Protectores, cremas y cuidado facial"}
+      {"name":"Medicinas con y sin récipe","price":0,"image":"/img/tiendas/photo-1584308666744-24d5c474f2ae-800.jpg","description":"Consulta disponibilidad por WhatsApp"},
+      {"name":"Vitamina C x30","price":4.5,"image":"/img/tiendas/photo-1471864190281-a93a3070b6de-800.jpg","description":"Y todo el mundo de suplementos"},
+      {"name":"Dermocosmética","price":0,"image":"/img/tiendas/photo-1571781926291-c477ebfd024b-800.jpg","description":"Protectores, cremas y cuidado facial"}
     ]'::jsonb
   where branch_id=b and code='PB-02';
 
@@ -187,12 +187,12 @@ begin
     phone='0241-555-1303', microsite_whatsapp='584121114455', instagram='@figaro.barbiere',
     hours=E'Lun–Sáb 09:00–19:00\nDom cerrado',
     promo='💈 Corte + barba con precio combo de martes a jueves',
-    cover_url='https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1200&q=70',
-    gallery='[{"url":"https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=800&q=70"},{"url":"https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=800&q=70"}]'::jsonb,
+    cover_url='/img/tiendas/photo-1585747860715-2ba37e788b70-1200.jpg',
+    gallery='[{"url":"/img/tiendas/photo-1503951914875-452162b0f3f1-800.jpg"},{"url":"/img/tiendas/photo-1599351431202-1e0f0137899a-800.jpg"}]'::jsonb,
     featured_products='[
-      {"name":"Corte clásico","price":8,"image":"https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=800&q=70","description":"Tijera y máquina, con lavado"},
-      {"name":"Corte + barba","price":12,"image":"https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=800&q=70","description":"El combo favorito de la casa"},
-      {"name":"Afeitado a navaja","price":6,"image":"https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&q=70","description":"Con toalla caliente"}
+      {"name":"Corte clásico","price":8,"image":"/img/tiendas/photo-1503951914875-452162b0f3f1-800.jpg","description":"Tijera y máquina, con lavado"},
+      {"name":"Corte + barba","price":12,"image":"/img/tiendas/photo-1599351431202-1e0f0137899a-800.jpg","description":"El combo favorito de la casa"},
+      {"name":"Afeitado a navaja","price":6,"image":"/img/tiendas/photo-1585747860715-2ba37e788b70-800.jpg","description":"Con toalla caliente"}
     ]'::jsonb
   where branch_id=b and code='PB-03';
 
@@ -203,11 +203,11 @@ begin
     phone='0241-555-1304', microsite_whatsapp='584121001304', instagram='@opticavision.cc',
     hours=E'Lun–Sáb 10:00–19:00',
     promo='👓 Examen de la vista GRATIS con la compra de tu montura',
-    cover_url='https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=1200&q=70',
+    cover_url='/img/tiendas/photo-1574258495973-f010dfbb5371-1200.jpg',
     featured_products='[
-      {"name":"Monturas","price":20,"image":"https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=800&q=70","description":"Desde $20, más de 200 modelos"},
-      {"name":"Lentes de sol","price":25,"image":"https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=800&q=70","description":"Protección UV400 certificada"},
-      {"name":"Examen visual computarizado","price":0,"image":"https://images.unsplash.com/photo-1508296695146-257a814070b4?w=800&q=70","description":"Con optometrista certificado"}
+      {"name":"Monturas","price":20,"image":"/img/tiendas/photo-1574258495973-f010dfbb5371-800.jpg","description":"Desde $20, más de 200 modelos"},
+      {"name":"Lentes de sol","price":25,"image":"/img/tiendas/photo-1511499767150-a48a237f0083-800.jpg","description":"Protección UV400 certificada"},
+      {"name":"Examen visual computarizado","price":0,"image":"/img/tiendas/photo-1508296695146-257a814070b4-800.jpg","description":"Con optometrista certificado"}
     ]'::jsonb
   where branch_id=b and code='PB-04';
 
@@ -217,11 +217,11 @@ begin
     description='Oro 18k, plata 925 y relojería fina. Diseños propios, reparación de joyas y grabado personalizado para ocasiones especiales.',
     phone='0241-555-1305', microsite_whatsapp='584121001305', instagram='@eldiamante.joyeria',
     hours=E'Lun–Sáb 10:00–19:00',
-    cover_url='https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1200&q=70',
+    cover_url='/img/tiendas/photo-1599643478518-a784e5dc4c8f-1200.jpg',
     featured_products='[
-      {"name":"Anillos de compromiso","price":0,"image":"https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=70","description":"Oro 18k con certificado"},
-      {"name":"Cadenas y pulseras","price":0,"image":"https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=70","description":"Oro y plata 925"},
-      {"name":"Argollas de matrimonio","price":0,"image":"https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=800&q=70","description":"Grabado personalizado incluido"}
+      {"name":"Anillos de compromiso","price":0,"image":"/img/tiendas/photo-1515562141207-7a88fb7ce338-800.jpg","description":"Oro 18k con certificado"},
+      {"name":"Cadenas y pulseras","price":0,"image":"/img/tiendas/photo-1599643478518-a784e5dc4c8f-800.jpg","description":"Oro y plata 925"},
+      {"name":"Argollas de matrimonio","price":0,"image":"/img/tiendas/photo-1605100804763-247f67b3557e-800.jpg","description":"Grabado personalizado incluido"}
     ]'::jsonb
   where branch_id=b and code='PB-05';
 
@@ -232,13 +232,13 @@ begin
     phone='0241-555-1406', microsite_whatsapp='584121116677', instagram='@tecnostore.cc',
     hours=E'Lun–Sáb 10:00–20:00\nDom 11:00–18:00',
     promo='📱 Instalación de vidrio templado gratis al comprar tu forro',
-    cover_url='https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=1200&q=70',
-    gallery='[{"url":"https://images.unsplash.com/photo-1580910051074-3eb694886505?w=800&q=70"},{"url":"https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?w=800&q=70"}]'::jsonb,
+    cover_url='/img/tiendas/photo-1511707171634-5f897ff02aa9-1200.jpg',
+    gallery='[{"url":"/img/tiendas/photo-1580910051074-3eb694886505-800.jpg"},{"url":"/img/tiendas/photo-1512499617640-c74ae3a79d37-800.jpg"}]'::jsonb,
     featured_products='[
-      {"name":"Audífonos inalámbricos","price":18,"image":"https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=70","description":"Bluetooth 5.3 con estuche de carga"},
-      {"name":"Smartwatch","price":35,"image":"https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=800&q=70","description":"Notificaciones, salud y deporte"},
-      {"name":"Forro + vidrio instalado","price":8,"image":"https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=800&q=70","description":"Para todos los modelos"},
-      {"name":"Cambio de pantalla","price":25,"image":"https://images.unsplash.com/photo-1580910051074-3eb694886505?w=800&q=70","description":"Desde $25, el mismo día"}
+      {"name":"Audífonos inalámbricos","price":18,"image":"/img/tiendas/photo-1505740420928-5e560c06d30e-800.jpg","description":"Bluetooth 5.3 con estuche de carga"},
+      {"name":"Smartwatch","price":35,"image":"/img/tiendas/photo-1546868871-7041f2a55e12-800.jpg","description":"Notificaciones, salud y deporte"},
+      {"name":"Forro + vidrio instalado","price":8,"image":"/img/tiendas/photo-1590874103328-eac38a683ce7-800.jpg","description":"Para todos los modelos"},
+      {"name":"Cambio de pantalla","price":25,"image":"/img/tiendas/photo-1580910051074-3eb694886505-800.jpg","description":"Desde $25, el mismo día"}
     ]'::jsonb
   where branch_id=b and code='PB-06';
 
@@ -249,13 +249,13 @@ begin
     phone='0241-555-1307', microsite_whatsapp='584121001307', instagram='@zapateriapasos',
     hours=E'Lun–Sáb 10:00–20:00\nDom 11:00–18:00',
     promo='👟 Segundo par a mitad de precio en línea escolar',
-    cover_url='https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=1200&q=70',
-    gallery='[{"url":"https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?w=800&q=70"},{"url":"https://images.unsplash.com/photo-1600180758890-6b94519a8ba6?w=800&q=70"}]'::jsonb,
+    cover_url='/img/tiendas/photo-1560769629-975ec94e6a86-1200.jpg',
+    gallery='[{"url":"/img/tiendas/photo-1600185365483-26d7a4cc7519-800.jpg"},{"url":"/img/tiendas/photo-1600180758890-6b94519a8ba6-800.jpg"}]'::jsonb,
     featured_products='[
-      {"name":"Deportivos","price":22,"image":"https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=70","description":"Desde $22, dama y caballero"},
-      {"name":"Casuales de caballero","price":28,"image":"https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&q=70","description":"Cuero genuino"},
-      {"name":"Tacones de dama","price":24,"image":"https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=800&q=70","description":"Fiesta y oficina"},
-      {"name":"Sandalias","price":15,"image":"https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=800&q=70","description":"Comodidad para el día a día"}
+      {"name":"Deportivos","price":22,"image":"/img/tiendas/photo-1542291026-7eec264c27ff-800.jpg","description":"Desde $22, dama y caballero"},
+      {"name":"Casuales de caballero","price":28,"image":"/img/tiendas/photo-1549298916-b41d501d3772-800.jpg","description":"Cuero genuino"},
+      {"name":"Tacones de dama","price":24,"image":"/img/tiendas/photo-1543163521-1bf539c55dd2-800.jpg","description":"Fiesta y oficina"},
+      {"name":"Sandalias","price":15,"image":"/img/tiendas/photo-1595950653106-6c9ebd614d3a-800.jpg","description":"Comodidad para el día a día"}
     ]'::jsonb
   where branch_id=b and code='PB-07';
 
@@ -266,11 +266,11 @@ begin
     phone='0241-555-1308', microsite_whatsapp='584121001308', instagram='@boutiquebella.vzla',
     hours=E'Lun–Sáb 10:00–19:30',
     promo='🛍️ Estrena viernes: 15% en tu segunda pieza',
-    cover_url='https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=1200&q=70',
+    cover_url='/img/tiendas/photo-1489987707025-afc232f7ea0f-1200.jpg',
     featured_products='[
-      {"name":"Vestidos casuales","price":20,"image":"https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&q=70","description":"Tallas S a XL"},
-      {"name":"Blusas de temporada","price":12,"image":"https://images.unsplash.com/photo-1445205170230-053b83016050?w=800&q=70","description":"Nuevos modelos cada semana"},
-      {"name":"Maquillaje y accesorios","price":0,"image":"https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800&q=70","description":"El toque final de tu look"}
+      {"name":"Vestidos casuales","price":20,"image":"/img/tiendas/photo-1595777457583-95e059d581b8-800.jpg","description":"Tallas S a XL"},
+      {"name":"Blusas de temporada","price":12,"image":"/img/tiendas/photo-1445205170230-053b83016050-800.jpg","description":"Nuevos modelos cada semana"},
+      {"name":"Maquillaje y accesorios","price":0,"image":"/img/tiendas/photo-1522335789203-aabd1fc54bc9-800.jpg","description":"El toque final de tu look"}
     ]'::jsonb
   where branch_id=b and code='PB-08';
 
@@ -281,11 +281,11 @@ begin
     phone='0241-555-1309', microsite_whatsapp='584121001309', instagram='@mundofeliz.jugueteria',
     hours=E'Lun–Sáb 10:00–20:00\nDom 11:00–18:00',
     promo='🎁 Envoltura de regalo GRATIS todo el año',
-    cover_url='https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=1200&q=70',
+    cover_url='/img/tiendas/photo-1596461404969-9ae70f2830c1-1200.jpg',
     featured_products='[
-      {"name":"Peluches","price":8,"image":"https://images.unsplash.com/photo-1516627145497-ae6968895b74?w=800&q=70","description":"Desde $8, todos los tamaños"},
-      {"name":"Juguetes didácticos de madera","price":12,"image":"https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=800&q=70","description":"Aprender jugando"},
-      {"name":"Juegos y sets","price":15,"image":"https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=800&q=70","description":"Para compartir en familia"}
+      {"name":"Peluches","price":8,"image":"/img/tiendas/photo-1516627145497-ae6968895b74-800.jpg","description":"Desde $8, todos los tamaños"},
+      {"name":"Juguetes didácticos de madera","price":12,"image":"/img/tiendas/photo-1587654780291-39c9404d746b-800.jpg","description":"Aprender jugando"},
+      {"name":"Juegos y sets","price":15,"image":"/img/tiendas/photo-1596461404969-9ae70f2830c1-800.jpg","description":"Para compartir en familia"}
     ]'::jsonb
   where branch_id=b and code='PB-09';
 
@@ -296,13 +296,13 @@ begin
     phone='0241-555-1310', microsite_whatsapp='584121001310', instagram='@laespiga.pan',
     hours=E'Lun–Dom 07:00–20:30',
     promo='🥖 Hornada de las 4pm: pan campesino recién salido',
-    cover_url='https://images.unsplash.com/photo-1509440159596-0249088772ff?w=1200&q=70',
-    gallery='[{"url":"https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=800&q=70"},{"url":"https://images.unsplash.com/photo-1519415943484-9fa1873496d4?w=800&q=70"}]'::jsonb,
+    cover_url='/img/tiendas/photo-1509440159596-0249088772ff-1200.jpg',
+    gallery='[{"url":"/img/tiendas/photo-1555507036-ab1f4038808a-800.jpg"},{"url":"/img/tiendas/photo-1519415943484-9fa1873496d4-800.jpg"}]'::jsonb,
     featured_products='[
-      {"name":"Pan campesino","price":1.5,"image":"https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&q=70","description":"Masa madre, corteza crujiente"},
-      {"name":"Croissant de mantequilla","price":2,"image":"https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=800&q=70","description":"Hojaldrado y dorado"},
-      {"name":"Canillas y pan dulce","price":1,"image":"https://images.unsplash.com/photo-1517433670267-08bbd4be890f?w=800&q=70","description":"El clásico de todos los días"},
-      {"name":"Tortas por encargo","price":18,"image":"https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&q=70","description":"Cumpleaños y ocasiones especiales"}
+      {"name":"Pan campesino","price":1.5,"image":"/img/tiendas/photo-1509440159596-0249088772ff-800.jpg","description":"Masa madre, corteza crujiente"},
+      {"name":"Croissant de mantequilla","price":2,"image":"/img/tiendas/photo-1549931319-a545dcf3bc73-800.jpg","description":"Hojaldrado y dorado"},
+      {"name":"Canillas y pan dulce","price":1,"image":"/img/tiendas/photo-1517433670267-08bbd4be890f-800.jpg","description":"El clásico de todos los días"},
+      {"name":"Tortas por encargo","price":18,"image":"/img/tiendas/photo-1578985545062-69928b1d9587-800.jpg","description":"Cumpleaños y ocasiones especiales"}
     ]'::jsonb
   where branch_id=b and code='PB-10';
 
@@ -312,11 +312,11 @@ begin
     description='Helados artesanales con más de 20 sabores, barquillas, copas y malteadas. Sabores tropicales que solo consigues aquí: parchita, guanábana y mantecado criollo.',
     phone='0241-555-1311', microsite_whatsapp='584121001311', instagram='@frost.heladeria',
     hours=E'Lun–Dom 11:00–21:00',
-    cover_url='https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?w=1200&q=70',
+    cover_url='/img/tiendas/photo-1497034825429-c343d7c6a68f-1200.jpg',
     featured_products='[
-      {"name":"Barquilla 1 sabor","price":2,"image":"https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?w=800&q=70","description":"Más de 20 sabores artesanales"},
-      {"name":"Copa sundae","price":4,"image":"https://images.unsplash.com/photo-1501443762994-82bd5dace89a?w=800&q=70","description":"2 sabores + sirope + toppings"},
-      {"name":"Malteada","price":3.5,"image":"https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=800&q=70","description":"Cremosa, con el sabor que quieras"}
+      {"name":"Barquilla 1 sabor","price":2,"image":"/img/tiendas/photo-1497034825429-c343d7c6a68f-800.jpg","description":"Más de 20 sabores artesanales"},
+      {"name":"Copa sundae","price":4,"image":"/img/tiendas/photo-1501443762994-82bd5dace89a-800.jpg","description":"2 sabores + sirope + toppings"},
+      {"name":"Malteada","price":3.5,"image":"/img/tiendas/photo-1573080496219-bb080dd4f877-800.jpg","description":"Cremosa, con el sabor que quieras"}
     ]'::jsonb
   where branch_id=b and code='PB-11';
 
@@ -327,11 +327,11 @@ begin
     phone='0241-555-1312', microsite_whatsapp='584121001312', instagram='@libreriapapel',
     hours=E'Lun–Sáb 09:30–19:30',
     promo='📚 Lista escolar completa con 10% de descuento',
-    cover_url='https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=1200&q=70',
+    cover_url='/img/tiendas/photo-1524578271613-d550eacf6090-1200.jpg',
     featured_products='[
-      {"name":"Novedades y best sellers","price":0,"image":"https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800&q=70","description":"Los títulos del momento"},
-      {"name":"Útiles escolares","price":0,"image":"https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=70","description":"Todo para el regreso a clases"},
-      {"name":"Agendas y cuadernos","price":3,"image":"https://images.unsplash.com/photo-1456735190827-d1262f71b8a3?w=800&q=70","description":"Desde $3"}
+      {"name":"Novedades y best sellers","price":0,"image":"/img/tiendas/photo-1512820790803-83ca734da794-800.jpg","description":"Los títulos del momento"},
+      {"name":"Útiles escolares","price":0,"image":"/img/tiendas/photo-1503676260728-1c00da094a0b-800.jpg","description":"Todo para el regreso a clases"},
+      {"name":"Agendas y cuadernos","price":3,"image":"/img/tiendas/photo-1456735190827-d1262f71b8a3-800.jpg","description":"Desde $3"}
     ]'::jsonb
   where branch_id=b and code='PB-12';
 
@@ -342,13 +342,13 @@ begin
     phone='0241-555-1313', microsite_whatsapp='584121001313', instagram='@glamour.salon',
     hours=E'Mar–Sáb 09:00–19:00\nDom–Lun cerrado',
     promo='💅 Lunes de manicure + pedicure a precio especial',
-    cover_url='https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200&q=70',
-    gallery='[{"url":"https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=800&q=70"},{"url":"https://images.unsplash.com/photo-1562322140-8baeececf3df?w=800&q=70"}]'::jsonb,
+    cover_url='/img/tiendas/photo-1560066984-138dadb4c035-1200.jpg',
+    gallery='[{"url":"/img/tiendas/photo-1595476108010-b4d1f102b1b1-800.jpg"},{"url":"/img/tiendas/photo-1562322140-8baeececf3df-800.jpg"}]'::jsonb,
     featured_products='[
-      {"name":"Corte y cepillado","price":10,"image":"https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=800&q=70","description":"Incluye lavado y tratamiento"},
-      {"name":"Tinte y mechas","price":25,"image":"https://images.unsplash.com/photo-1562322140-8baeececf3df?w=800&q=70","description":"Desde $25 según largo"},
-      {"name":"Manicure","price":6,"image":"https://images.unsplash.com/photo-1610992015732-2449b76344bc?w=800&q=70","description":"Tradicional o semipermanente"},
-      {"name":"Pedicure spa","price":8,"image":"https://images.unsplash.com/photo-1576506295286-5cda18df43e7?w=800&q=70","description":"Con exfoliación y masaje"}
+      {"name":"Corte y cepillado","price":10,"image":"/img/tiendas/photo-1522337660859-02fbefca4702-800.jpg","description":"Incluye lavado y tratamiento"},
+      {"name":"Tinte y mechas","price":25,"image":"/img/tiendas/photo-1562322140-8baeececf3df-800.jpg","description":"Desde $25 según largo"},
+      {"name":"Manicure","price":6,"image":"/img/tiendas/photo-1610992015732-2449b76344bc-800.jpg","description":"Tradicional o semipermanente"},
+      {"name":"Pedicure spa","price":8,"image":"/img/tiendas/photo-1576506295286-5cda18df43e7-800.jpg","description":"Con exfoliación y masaje"}
     ]'::jsonb
   where branch_id=b and code='PB-13';
 
@@ -359,12 +359,12 @@ begin
     phone='0241-555-1314', microsite_whatsapp='584121001314', instagram='@esencia.perfumes',
     hours=E'Lun–Sáb 10:00–20:00',
     promo='🌸 Kit de regalo con empaque premium sin costo',
-    cover_url='https://images.unsplash.com/photo-1541643600914-78b084683601?w=1200&q=70',
+    cover_url='/img/tiendas/photo-1541643600914-78b084683601-1200.jpg',
     featured_products='[
-      {"name":"Perfumes de diseñador","price":0,"image":"https://images.unsplash.com/photo-1541643600914-78b084683601?w=800&q=70","description":"100% originales con garantía"},
-      {"name":"Fragancias árabes","price":18,"image":"https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&q=70","description":"Desde $18, larga duración"},
-      {"name":"Cosméticos","price":0,"image":"https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800&q=70","description":"Marcas profesionales"},
-      {"name":"Kits de regalo","price":22,"image":"https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=800&q=70","description":"Perfume + crema en estuche"}
+      {"name":"Perfumes de diseñador","price":0,"image":"/img/tiendas/photo-1541643600914-78b084683601-800.jpg","description":"100% originales con garantía"},
+      {"name":"Fragancias árabes","price":18,"image":"/img/tiendas/photo-1592945403244-b3fbafd7f539-800.jpg","description":"Desde $18, larga duración"},
+      {"name":"Cosméticos","price":0,"image":"/img/tiendas/photo-1596462502278-27bfdc403348-800.jpg","description":"Marcas profesionales"},
+      {"name":"Kits de regalo","price":22,"image":"/img/tiendas/photo-1585386959984-a4155224a1ad-800.jpg","description":"Perfume + crema en estuche"}
     ]'::jsonb
   where branch_id=b and code='PB-14';
 
@@ -375,11 +375,11 @@ begin
     phone='0241-555-1315', microsite_whatsapp='584121001315', instagram='@confort.muebles',
     hours=E'Lun–Sáb 10:00–19:00',
     promo='🛋️ Entrega gratis en Naguanagua y San Diego',
-    cover_url='https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=1200&q=70',
+    cover_url='/img/tiendas/photo-1538688525198-9b88f6f53126-1200.jpg',
     featured_products='[
-      {"name":"Sofás","price":250,"image":"https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=70","description":"Desde $250, telas a elección"},
-      {"name":"Juego de dormitorio","price":380,"image":"https://images.unsplash.com/photo-1567016432779-094069958ea5?w=800&q=70","description":"Cama + mesas de noche + peinadora"},
-      {"name":"Poltronas","price":120,"image":"https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=800&q=70","description":"Reclinables y decorativas"}
+      {"name":"Sofás","price":250,"image":"/img/tiendas/photo-1555041469-a586c61ea9bc-800.jpg","description":"Desde $250, telas a elección"},
+      {"name":"Juego de dormitorio","price":380,"image":"/img/tiendas/photo-1567016432779-094069958ea5-800.jpg","description":"Cama + mesas de noche + peinadora"},
+      {"name":"Poltronas","price":120,"image":"/img/tiendas/photo-1493663284031-b7e3aefcae8e-800.jpg","description":"Reclinables y decorativas"}
     ]'::jsonb
   where branch_id=b and code='PB-15';
 
@@ -390,12 +390,12 @@ begin
     phone='0241-555-1316', microsite_whatsapp='584121001316', instagram='@viajesmundo.agencia',
     hours=E'Lun–Vie 09:00–18:00\nSáb 09:00–14:00',
     promo='✈️ Margarita todo incluido: reserva con 30% de inicial',
-    cover_url='https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&q=70',
+    cover_url='/img/tiendas/photo-1507525428034-b723cf961d3e-1200.jpg',
     featured_products='[
-      {"name":"Paquetes a Margarita","price":0,"image":"https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=70","description":"Vuelo + hotel todo incluido"},
-      {"name":"Boletos aéreos","price":0,"image":"https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&q=70","description":"Nacionales e internacionales"},
-      {"name":"Planes internacionales","price":0,"image":"https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&q=70","description":"Caribe, Europa y más"},
-      {"name":"Escapadas de playa","price":0,"image":"https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=800&q=70","description":"Fines de semana desde Valencia"}
+      {"name":"Paquetes a Margarita","price":0,"image":"/img/tiendas/photo-1507525428034-b723cf961d3e-800.jpg","description":"Vuelo + hotel todo incluido"},
+      {"name":"Boletos aéreos","price":0,"image":"/img/tiendas/photo-1436491865332-7a61a109cc05-800.jpg","description":"Nacionales e internacionales"},
+      {"name":"Planes internacionales","price":0,"image":"/img/tiendas/photo-1488646953014-85cb44e25828-800.jpg","description":"Caribe, Europa y más"},
+      {"name":"Escapadas de playa","price":0,"image":"/img/tiendas/photo-1502920917128-1aa500764cbd-800.jpg","description":"Fines de semana desde Valencia"}
     ]'::jsonb
   where branch_id=b and code='PB-16';
 
@@ -406,12 +406,12 @@ begin
     phone='0241-555-1317', microsite_whatsapp='584121001317', instagram='@jardin.floristeria',
     hours=E'Lun–Sáb 09:00–19:00\nDom 09:00–13:00',
     promo='🌹 Entrega a domicilio el mismo día',
-    cover_url='https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1200&q=70',
-    gallery='[{"url":"https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=800&q=70"}]'::jsonb,
+    cover_url='/img/tiendas/photo-1490750967868-88aa4486c946-1200.jpg',
+    gallery='[{"url":"/img/tiendas/photo-1563241527-3004b7be0ffd-800.jpg"}]'::jsonb,
     featured_products='[
-      {"name":"Ramo de rosas x12","price":15,"image":"https://images.unsplash.com/photo-1526047932273-341f2a7631f9?w=800&q=70","description":"Rosas frescas con follaje"},
-      {"name":"Arreglos para eventos","price":0,"image":"https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=800&q=70","description":"Bodas, cumpleaños y empresas"},
-      {"name":"Bouquet del día","price":8,"image":"https://images.unsplash.com/photo-1519378058457-4c29a0a2efac?w=800&q=70","description":"Flores de temporada"}
+      {"name":"Ramo de rosas x12","price":15,"image":"/img/tiendas/photo-1526047932273-341f2a7631f9-800.jpg","description":"Rosas frescas con follaje"},
+      {"name":"Arreglos para eventos","price":0,"image":"/img/tiendas/photo-1490750967868-88aa4486c946-800.jpg","description":"Bodas, cumpleaños y empresas"},
+      {"name":"Bouquet del día","price":8,"image":"/img/tiendas/photo-1519378058457-4c29a0a2efac-800.jpg","description":"Flores de temporada"}
     ]'::jsonb
   where branch_id=b and code='PB-17';
 
@@ -424,13 +424,13 @@ begin
     phone='0241-555-1401', microsite_whatsapp='584121001401', instagram='@fitzone.gym',
     hours=E'Lun–Vie 06:00–21:00\nSáb 07:00–17:00\nDom 08:00–13:00',
     promo='💪 Inscripción GRATIS este mes',
-    cover_url='https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=1200&q=70',
-    gallery='[{"url":"https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=70"},{"url":"https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=800&q=70"}]'::jsonb,
+    cover_url='/img/tiendas/photo-1583454110551-21f2fa2afe61-1200.jpg',
+    gallery='[{"url":"/img/tiendas/photo-1534438327276-14e5300c3a48-800.jpg"},{"url":"/img/tiendas/photo-1540497077202-7c8a3999166f-800.jpg"}]'::jsonb,
     featured_products='[
-      {"name":"Mensualidad","price":25,"image":"https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=70","description":"Acceso ilimitado + clases grupales"},
-      {"name":"Plan trimestral","price":65,"image":"https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=70","description":"Ahorra $10 vs mensual"},
-      {"name":"Entrenamiento personalizado","price":40,"image":"https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=70","description":"8 sesiones con coach"},
-      {"name":"Pase por día","price":3,"image":"https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=800&q=70","description":"Conoce el gym sin compromiso"}
+      {"name":"Mensualidad","price":25,"image":"/img/tiendas/photo-1534438327276-14e5300c3a48-800.jpg","description":"Acceso ilimitado + clases grupales"},
+      {"name":"Plan trimestral","price":65,"image":"/img/tiendas/photo-1517836357463-d25dfeac3438-800.jpg","description":"Ahorra $10 vs mensual"},
+      {"name":"Entrenamiento personalizado","price":40,"image":"/img/tiendas/photo-1571019613454-1cb2f99b2d8b-800.jpg","description":"8 sesiones con coach"},
+      {"name":"Pase por día","price":3,"image":"/img/tiendas/photo-1540497077202-7c8a3999166f-800.jpg","description":"Conoce el gym sin compromiso"}
     ]'::jsonb
   where branch_id=b and code='MZ-01';
 
@@ -440,12 +440,12 @@ begin
     description='Todo para tu deporte: zapatos de running, ropa técnica, balones y accesorios de entrenamiento. Marcas originales con garantía.',
     phone='0241-555-1402', microsite_whatsapp='584121001402', instagram='@pro.deportes',
     hours=E'Lun–Sáb 10:00–20:00\nDom 11:00–18:00',
-    cover_url='https://images.unsplash.com/photo-1556906781-9a412961c28c?w=1200&q=70',
+    cover_url='/img/tiendas/photo-1556906781-9a412961c28c-1200.jpg',
     featured_products='[
-      {"name":"Zapatos de running","price":45,"image":"https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&q=70","description":"Amortiguación profesional"},
-      {"name":"Balones","price":18,"image":"https://images.unsplash.com/photo-1519861531473-9200262188bf?w=800&q=70","description":"Fútbol, básquet y volleyball"},
-      {"name":"Licras y monos","price":15,"image":"https://images.unsplash.com/photo-1556906781-9a412961c28c?w=800&q=70","description":"Tela técnica que respira"},
-      {"name":"Ciclismo","price":0,"image":"https://images.unsplash.com/photo-1517649763962-0c623066013b?w=800&q=70","description":"Cascos, guantes y accesorios"}
+      {"name":"Zapatos de running","price":45,"image":"/img/tiendas/photo-1461896836934-ffe607ba8211-800.jpg","description":"Amortiguación profesional"},
+      {"name":"Balones","price":18,"image":"/img/tiendas/photo-1519861531473-9200262188bf-800.jpg","description":"Fútbol, básquet y volleyball"},
+      {"name":"Licras y monos","price":15,"image":"/img/tiendas/photo-1556906781-9a412961c28c-800.jpg","description":"Tela técnica que respira"},
+      {"name":"Ciclismo","price":0,"image":"/img/tiendas/photo-1517649763962-0c623066013b-800.jpg","description":"Cascos, guantes y accesorios"}
     ]'::jsonb
   where branch_id=b and code='MZ-02';
 
@@ -456,11 +456,11 @@ begin
     phone='0241-555-1403', microsite_whatsapp='584121001403', instagram='@celularesymas.cc',
     hours=E'Lun–Sáb 10:00–20:00',
     promo='📲 Tu usado vale: plan retoma con garantía',
-    cover_url='https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?w=1200&q=70',
+    cover_url='/img/tiendas/photo-1512499617640-c74ae3a79d37-1200.jpg',
     featured_products='[
-      {"name":"Teléfonos nuevos y seminuevos","price":0,"image":"https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&q=70","description":"Con garantía escrita"},
-      {"name":"Audífonos gamer","price":15,"image":"https://images.unsplash.com/photo-1583394838336-acd977736f90?w=800&q=70","description":"Sonido envolvente"},
-      {"name":"Relojes inteligentes","price":28,"image":"https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=70","description":"Compatibles Android/iPhone"}
+      {"name":"Teléfonos nuevos y seminuevos","price":0,"image":"/img/tiendas/photo-1511707171634-5f897ff02aa9-800.jpg","description":"Con garantía escrita"},
+      {"name":"Audífonos gamer","price":15,"image":"/img/tiendas/photo-1583394838336-acd977736f90-800.jpg","description":"Sonido envolvente"},
+      {"name":"Relojes inteligentes","price":28,"image":"/img/tiendas/photo-1523275335684-37898b6baf30-800.jpg","description":"Compatibles Android/iPhone"}
     ]'::jsonb
   where branch_id=b and code='MZ-03';
 
@@ -471,13 +471,13 @@ begin
     phone='0241-555-1404', microsite_whatsapp='584121001404', instagram='@aroma.cafe',
     hours=E'Lun–Dom 08:00–20:30',
     promo='☕ Combo mañanero: café + croissant hasta las 11am',
-    cover_url='https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1200&q=70',
-    gallery='[{"url":"https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=800&q=70"},{"url":"https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=800&q=70"}]'::jsonb,
+    cover_url='/img/tiendas/photo-1495474472287-4d71bcdd2085-1200.jpg',
+    gallery='[{"url":"/img/tiendas/photo-1470337458703-46ad1756a187-800.jpg"},{"url":"/img/tiendas/photo-1572442388796-11668a67e53d-800.jpg"}]'::jsonb,
     featured_products='[
-      {"name":"Espresso / marrón","price":1.5,"image":"https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&q=70","description":"Grano venezolano de altura"},
-      {"name":"Cappuccino","price":2.5,"image":"https://images.unsplash.com/photo-1541167760496-1628856ab772?w=800&q=70","description":"Con leche vaporizada"},
-      {"name":"Latte art","price":3,"image":"https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=800&q=70","description":"Tan bonito como sabroso"},
-      {"name":"Café en grano 500g","price":8,"image":"https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=800&q=70","description":"Para llevarte el aroma a casa"}
+      {"name":"Espresso / marrón","price":1.5,"image":"/img/tiendas/photo-1509042239860-f550ce710b93-800.jpg","description":"Grano venezolano de altura"},
+      {"name":"Cappuccino","price":2.5,"image":"/img/tiendas/photo-1541167760496-1628856ab772-800.jpg","description":"Con leche vaporizada"},
+      {"name":"Latte art","price":3,"image":"/img/tiendas/photo-1572442388796-11668a67e53d-800.jpg","description":"Tan bonito como sabroso"},
+      {"name":"Café en grano 500g","price":8,"image":"/img/tiendas/photo-1447933601403-0c6688de566e-800.jpg","description":"Para llevarte el aroma a casa"}
     ]'::jsonb
   where branch_id=b and code='MZ-04';
 
@@ -488,13 +488,13 @@ begin
     phone='0241-555-1405', microsite_whatsapp='584121001405', instagram='@relax.spa',
     hours=E'Lun–Sáb 10:00–19:00',
     promo='🧖 Día de spa en pareja con 20% de descuento',
-    cover_url='https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1200&q=70',
-    gallery='[{"url":"https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&q=70"}]'::jsonb,
+    cover_url='/img/tiendas/photo-1544161515-4ab6ce6db874-1200.jpg',
+    gallery='[{"url":"/img/tiendas/photo-1540555700478-4be289fbecef-800.jpg"}]'::jsonb,
     featured_products='[
-      {"name":"Masaje relajante 50 min","price":30,"image":"https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&q=70","description":"Descontractura cuello y espalda"},
-      {"name":"Piedras calientes","price":38,"image":"https://images.unsplash.com/photo-1596178065887-1198b6148b2b?w=800&q=70","description":"Relajación profunda"},
-      {"name":"Día de spa completo","price":60,"image":"https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&q=70","description":"Masaje + facial + manicure"},
-      {"name":"Manicure + pedicure","price":12,"image":"https://images.unsplash.com/photo-1604654894610-df63bc536371?w=800&q=70","description":"Con esmaltado semipermanente"}
+      {"name":"Masaje relajante 50 min","price":30,"image":"/img/tiendas/photo-1540555700478-4be289fbecef-800.jpg","description":"Descontractura cuello y espalda"},
+      {"name":"Piedras calientes","price":38,"image":"/img/tiendas/photo-1596178065887-1198b6148b2b-800.jpg","description":"Relajación profunda"},
+      {"name":"Día de spa completo","price":60,"image":"/img/tiendas/photo-1544161515-4ab6ce6db874-800.jpg","description":"Masaje + facial + manicure"},
+      {"name":"Manicure + pedicure","price":12,"image":"/img/tiendas/photo-1604654894610-df63bc536371-800.jpg","description":"Con esmaltado semipermanente"}
     ]'::jsonb
   where branch_id=b and code='MZ-05';
 
@@ -505,10 +505,10 @@ begin
     phone='0241-555-1406', microsite_whatsapp='584121001406', instagram='@express.lavanderia',
     hours=E'Lun–Sáb 08:00–19:00',
     promo='🧺 Mismo día si la dejas antes de las 11am',
-    cover_url='https://images.unsplash.com/photo-1521656693074-0ef32e80a5d5?w=1200&q=70',
+    cover_url='/img/tiendas/photo-1521656693074-0ef32e80a5d5-1200.jpg',
     featured_products='[
-      {"name":"Lavado y secado por kilo","price":2,"image":"https://images.unsplash.com/photo-1521656693074-0ef32e80a5d5?w=800&q=70","description":"Incluye doblado"},
-      {"name":"Lavado en seco","price":5,"image":"https://images.unsplash.com/photo-1545173168-9f1947eebb7f?w=800&q=70","description":"Trajes, vestidos y piezas delicadas"},
+      {"name":"Lavado y secado por kilo","price":2,"image":"/img/tiendas/photo-1521656693074-0ef32e80a5d5-800.jpg","description":"Incluye doblado"},
+      {"name":"Lavado en seco","price":5,"image":"/img/tiendas/photo-1545173168-9f1947eebb7f-800.jpg","description":"Trajes, vestidos y piezas delicadas"},
       {"name":"Edredones y cobijas","price":8,"image":"","description":"Todos los tamaños"}
     ]'::jsonb
   where branch_id=b and code='MZ-06';
@@ -519,11 +519,11 @@ begin
     description='Barbería de barrio con espíritu clásico: buen corte, buena conversa y precios justos. Atendemos por orden de llegada, sin cita.',
     phone='0241-555-1409', microsite_whatsapp='584121001409', instagram='@barberiaclasica.cc',
     hours=E'Lun–Sáb 09:00–19:30\nDom 09:00–13:00',
-    cover_url='https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=1200&q=70',
+    cover_url='/img/tiendas/photo-1503951914875-452162b0f3f1-1200.jpg',
     featured_products='[
-      {"name":"Corte de caballero","price":7,"image":"https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=800&q=70","description":"Máquina y tijera"},
-      {"name":"Barba y perfilado","price":5,"image":"https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=800&q=70","description":"Con navaja y toalla caliente"},
-      {"name":"Combo corte + barba","price":10,"image":"https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800&q=70","description":"El favorito de la casa"}
+      {"name":"Corte de caballero","price":7,"image":"/img/tiendas/photo-1503951914875-452162b0f3f1-800.jpg","description":"Máquina y tijera"},
+      {"name":"Barba y perfilado","price":5,"image":"/img/tiendas/photo-1599351431202-1e0f0137899a-800.jpg","description":"Con navaja y toalla caliente"},
+      {"name":"Combo corte + barba","price":10,"image":"/img/tiendas/photo-1585747860715-2ba37e788b70-800.jpg","description":"El favorito de la casa"}
     ]'::jsonb
   where branch_id=b and code='MZ-09';
 
@@ -535,10 +535,10 @@ begin
     description='Prensa nacional y regional, revistas, snacks y recargas telefónicas de todas las operadoras. En la entrada principal, de paso rápido.',
     phone='0241-555-1501', microsite_whatsapp='584121001501', instagram='@kioscoprensa',
     hours=E'Lun–Dom 07:30–20:00',
-    cover_url='https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200&q=70',
+    cover_url='/img/tiendas/photo-1504711434969-e33886168f5c-1200.jpg',
     featured_products='[
-      {"name":"Prensa nacional y regional","price":0,"image":"https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&q=70","description":"Todos los días desde temprano"},
-      {"name":"Revistas","price":0,"image":"https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=800&q=70","description":"Moda, deportes y actualidad"},
+      {"name":"Prensa nacional y regional","price":0,"image":"/img/tiendas/photo-1504711434969-e33886168f5c-800.jpg","description":"Todos los días desde temprano"},
+      {"name":"Revistas","price":0,"image":"/img/tiendas/photo-1457369804613-52c61a468e7d-800.jpg","description":"Moda, deportes y actualidad"},
       {"name":"Recargas telefónicas","price":0,"image":"","description":"Todas las operadoras"}
     ]'::jsonb
   where branch_id=b and code='K-01';
@@ -549,11 +549,11 @@ begin
     description='Gomitas, chocolates nacionales e importados y dulces criollos. El punto obligado de los niños (y de los grandes también).',
     phone='0241-555-1502', microsite_whatsapp='584121001502', instagram='@kioscodulces',
     hours=E'Lun–Dom 10:00–20:30',
-    cover_url='https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=1200&q=70',
+    cover_url='/img/tiendas/photo-1582058091505-f87a2e55a40f-1200.jpg',
     featured_products='[
-      {"name":"Gomitas","price":1,"image":"https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=800&q=70","description":"Por peso y en bolsitas"},
-      {"name":"Chocolates","price":1.5,"image":"https://images.unsplash.com/photo-1549007994-cb92caebd54b?w=800&q=70","description":"Nacionales: El Rey, Savoy y más"},
-      {"name":"Chocolate importado","price":3,"image":"https://images.unsplash.com/photo-1511381939415-e44015466834?w=800&q=70","description":"Marcas premium"}
+      {"name":"Gomitas","price":1,"image":"/img/tiendas/photo-1582058091505-f87a2e55a40f-800.jpg","description":"Por peso y en bolsitas"},
+      {"name":"Chocolates","price":1.5,"image":"/img/tiendas/photo-1549007994-cb92caebd54b-800.jpg","description":"Nacionales: El Rey, Savoy y más"},
+      {"name":"Chocolate importado","price":3,"image":"/img/tiendas/photo-1511381939415-e44015466834-800.jpg","description":"Marcas premium"}
     ]'::jsonb
   where branch_id=b and code='K-02';
 
@@ -563,11 +563,11 @@ begin
     description='Forros y vidrios para tu teléfono, lentes de sol, relojes y bisutería. Instalación de accesorios al momento.',
     phone='0241-555-1503', microsite_whatsapp='584121001503', instagram='@kioscoaccesorios',
     hours=E'Lun–Dom 10:00–20:00',
-    cover_url='https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=1200&q=70',
+    cover_url='/img/tiendas/photo-1511499767150-a48a237f0083-1200.jpg',
     featured_products='[
-      {"name":"Forros y vidrios","price":5,"image":"https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=800&q=70","description":"Instalados al momento"},
-      {"name":"Lentes de sol","price":8,"image":"https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=800&q=70","description":"Modelos de temporada"},
-      {"name":"Relojes","price":12,"image":"https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=70","description":"Casuales y deportivos"}
+      {"name":"Forros y vidrios","price":5,"image":"/img/tiendas/photo-1590874103328-eac38a683ce7-800.jpg","description":"Instalados al momento"},
+      {"name":"Lentes de sol","price":8,"image":"/img/tiendas/photo-1511499767150-a48a237f0083-800.jpg","description":"Modelos de temporada"},
+      {"name":"Relojes","price":12,"image":"/img/tiendas/photo-1523275335684-37898b6baf30-800.jpg","description":"Casuales y deportivos"}
     ]'::jsonb
   where branch_id=b and code='K-03';
 
