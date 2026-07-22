@@ -16,11 +16,14 @@ export default function BranchSwitcher() {
   const [branches, setBranches] = useState<Branch[]>([])
   const [selected, setSelected] = useState<string | null>(null)
 
-  // En los módulos del staff (/local-santo/*) la barra de módulos ya muestra
-  // y cambia la sede; el flotante solo estorbaría encima de ella.
+  // SOLO en el panel privado (pedido del dueño 2026-07-21): en la página
+  // pública este flotante tapaba el carrito y confundía al cliente (aparecía
+  // en teléfonos con sesión de staff). En /local-santo/* tampoco va porque
+  // la barra de módulos ya muestra y cambia la sede.
   const [hidden] = useState(() => {
-    if (typeof window === "undefined") return false
-    return /^\/local-santo\/.+/.test(window.location.pathname)
+    if (typeof window === "undefined") return true
+    const path = window.location.pathname
+    return path !== "/pedidos" && !path.startsWith("/pedidos/")
   })
 
   useEffect(() => {

@@ -7,7 +7,6 @@ import { BRAND } from "@/lib/brand";
 import {
   Check,
   Heart,
-  Link2,
   Minus,
   Plus,
   ShoppingCart,
@@ -288,7 +287,6 @@ export default function ProductCard({
   // Ficha del producto: se abre al tocar la foto o el título (imagen grande +
   // descripción completa + botón de elegir ingredientes). Pedido del cliente.
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [linkCopied, setLinkCopied] = useState(false);
   const [formMessage, setFormMessage] = useState("");
   // Selección por grupo de variaciones (estilo BOMBASTYC: burger, tipo de
   // molla, refresco…). key del grupo → keys de opciones elegidas.
@@ -656,7 +654,6 @@ export default function ProductCard({
   }
 
   function openDetail() {
-    setLinkCopied(false);
     setIsDetailOpen(true);
   }
 
@@ -680,17 +677,6 @@ export default function ProductCard({
     return () => window.removeEventListener("hashchange", checkHash);
   }, [id, deepLinkEnabled]);
 
-  async function copyProductLink() {
-    try {
-      const url = new URL(window.location.href);
-      url.hash = `producto-${id}`;
-      await navigator.clipboard.writeText(url.toString());
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 1500);
-    } catch {
-      /* sin permiso de portapapeles */
-    }
-  }
 
   return (
     <>
@@ -956,15 +942,6 @@ export default function ProductCard({
                     )}
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={copyProductLink}
-                    className="flex items-center justify-center gap-2 rounded-xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3.5 text-xs font-black uppercase tracking-[0.06em] text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-[0.98]"
-                    aria-label={`Copiar enlace de ${name}`}
-                  >
-                    <Link2 size={16} />
-                    {linkCopied ? "¡Copiado!" : "Copiar enlace"}
-                  </button>
                 </div>
               </div>
             </div>

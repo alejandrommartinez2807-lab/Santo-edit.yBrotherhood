@@ -258,6 +258,10 @@ function sortPublicProducts(first: Product, second: Product) {
 
 export default function Products({ exchangeRate, onAddToCart, onProductsLoaded }: ProductsProps) {
   const [selectedCategory, setSelectedCategory] = useState("Todos")
+  // Grupo de categorías (botones fijos de la barra compacta del Navbar:
+  // Promos / Hamburguesas / Bebidas...): filtra por VARIAS categorías a la
+  // vez. Se limpia al tocar cualquier categoría del menú.
+  const [selectedCategoryGroup, setSelectedCategoryGroup] = useState<string[]>([])
   const [selectedQuickFilter, setSelectedQuickFilter] =
     useState<QuickMenuFilter>("all")
   const [searchTerm, setSearchTerm] = useState("")
@@ -388,13 +392,22 @@ export default function Products({ exchangeRate, onAddToCart, onProductsLoaded }
         event as CustomEvent<{
           quickFilter?: QuickMenuFilter
           category?: string
+          categories?: string[]
           search?: string
         }>
       ).detail
 
       if (!detail) return
 
-      if (detail.category) setSelectedCategory(detail.category)
+      if (detail.category) {
+        setSelectedCategory(detail.category)
+        setSelectedCategoryGroup([])
+      }
+      if (Array.isArray(detail.categories)) {
+        // Grupo (botones fijos del Navbar): varias categorías a la vez.
+        setSelectedCategoryGroup(detail.categories.filter(Boolean))
+        setSelectedCategory("Todos")
+      }
       if (detail.quickFilter) setSelectedQuickFilter(detail.quickFilter)
       if (typeof detail.search === "string") setSearchTerm(detail.search)
     }
@@ -460,6 +473,9 @@ export default function Products({ exchangeRate, onAddToCart, onProductsLoaded }
           selectedCategory === "Todos" ||
           (selectedCategory === "Favoritos" && favoriteProductIds.includes(product.id)) ||
           product.category === selectedCategory
+        const matchesCategoryGroup =
+          selectedCategoryGroup.length === 0 ||
+          selectedCategoryGroup.includes(product.category)
         const matchesQuickFilter = productMatchesQuickFilter(
           product,
           selectedQuickFilter,
@@ -467,13 +483,21 @@ export default function Products({ exchangeRate, onAddToCart, onProductsLoaded }
         )
         const matchesSearch = productMatchesSearch(product, normalizedSearch)
 
-        return matchesCategory && matchesQuickFilter && matchesSearch
+        return matchesCategory && matchesCategoryGroup && matchesQuickFilter && matchesSearch
       })
       .sort(sortPublicProducts)
-  }, [menuProducts, searchTerm, selectedCategory, selectedQuickFilter, favoriteProductIds])
+  }, [
+    menuProducts,
+    searchTerm,
+    selectedCategory,
+    selectedCategoryGroup,
+    selectedQuickFilter,
+    favoriteProductIds,
+  ])
 
   function clearFilters() {
     setSelectedCategory("Todos")
+    setSelectedCategoryGroup([])
     setSelectedQuickFilter("all")
     setSearchTerm("")
   }
@@ -590,6 +614,7 @@ export default function Products({ exchangeRate, onAddToCart, onProductsLoaded }
                 type="button"
                 onClick={() => {
                   setSelectedCategory("Combos")
+                  setSelectedCategoryGroup([])
                   setSelectedQuickFilter("all")
                 }}
                 className="shrink-0 rounded-full bg-[var(--brand-primary)] px-6 py-3.5 text-xs font-black uppercase tracking-[0.12em] text-black shadow-[0_12px_30px_-12px_rgba(var(--brand-primary-rgb),0.8)] transition hover:bg-[var(--brand-accent)] active:scale-95"
@@ -613,6 +638,7 @@ export default function Products({ exchangeRate, onAddToCart, onProductsLoaded }
                   type="button"
                   onClick={() => {
                     setSelectedCategory(category)
+                    setSelectedCategoryGroup([])
                     setSelectedQuickFilter("all")
                   }}
                   className={`shrink-0 rounded-full border px-4 py-2.5 text-xs font-bold uppercase tracking-[0.1em] transition active:scale-95 sm:px-5 sm:py-3 ${
