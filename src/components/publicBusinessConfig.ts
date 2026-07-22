@@ -66,6 +66,8 @@ export const DEFAULT_PUBLIC_CONFIG: PublicBusinessConfig = {
   publicPrepayNoticeEnabled: true,
   publicPrepayNoticeText: "",
   publicOpenAccountHintHighlighted: true,
+  publicPaymentBeforeRegisterEnabled: false,
+  publicUnpaidAutoCancelMinutes: 0,
   deliveryEnabled: true,
   deliveryModuleEnabled: true,
   paymentProofsEnabled: false,
@@ -549,6 +551,15 @@ export function normalizePublicBusinessConfig(value: unknown): PublicBusinessCon
       businessConfig.publicOpenAccountHintHighlighted,
       true,
     ),
+    publicPaymentBeforeRegisterEnabled: normalizePublicBoolean(
+      businessConfig.publicPaymentBeforeRegisterEnabled,
+      false,
+    ),
+    publicUnpaidAutoCancelMinutes: (() => {
+      const minutes = Number(businessConfig.publicUnpaidAutoCancelMinutes);
+      if (!Number.isFinite(minutes)) return 0;
+      return Math.min(240, Math.max(0, Math.round(minutes)));
+    })(),
     deliveryEnabled:
       normalizePublicBoolean(businessConfig.deliveryEnabled, true) &&
       doesPlanAllowDelivery(membershipPlan),

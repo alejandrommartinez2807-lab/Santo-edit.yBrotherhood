@@ -27,6 +27,7 @@ import {
   Table2,
 } from "lucide-react";
 import { formatPublicUSD as formatUSD, formatVES } from "@/utils/formatCurrency";
+import { isVesPaymentMethod } from "@/lib/paymentOptions";
 import { usePublicCurrencySymbol } from "@/hooks/usePublicCurrencySymbol";
 
 import {
@@ -146,6 +147,20 @@ const ORDER_TYPE_PUBLIC_LABELS: Record<OrderType, string> = {
   "Para llevar": "Pick up",
   Delivery: "Delivery",
 };
+
+// Métodos electrónicos (pago móvil, transferencia, Zelle, Binance...): los
+// que dejan captura/referencia y pueden exigir el comprobante ANTES de
+// registrar cuando el dueño activa ese modo.
+function isElectronicPaymentMethod(method: string) {
+  const normalized = String(method || "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+
+  return ["pago movil", "transferencia", "transf", "zelle", "binance"].some(
+    (keyword) => normalized.includes(keyword),
+  );
+}
 
 function getOrderTypePublicLabel(type: OrderType) {
   return ORDER_TYPE_PUBLIC_LABELS[type] || type;
@@ -368,6 +383,22 @@ export default function CartDrawer({
   // Efectivo: con cuánto va a pagar el cliente, para calcular su vuelto y
   // que caja lo tenga listo (pedido del dueño 2026-07-21).
   const [cashGivenAmount, setCashGivenAmount] = useState("");
+  // Aviso GRANDE de validación: al tocar "Registrar" con datos pendientes se
+  // explica qué falta y se hace scroll a esa sección (sistema a prueba de
+  // apuros, pedido del dueño 2026-07-21).
+  const [validationAlert, setValidationAlert] = useState<string | null>(null);
+  // Modo "pago antes de registrar": captura o referencia adjuntada EN el
+  // checkout (métodos electrónicos). Se reporta sola al crear el pedido.
+  const [checkoutProofDataUrl, setCheckoutProofDataUrl] = useState("");
+  const [checkoutProofFileName, setCheckoutProofFileName] = useState("");
+  const [checkoutProofMimeType, setCheckoutProofMimeType] = useState("");
+  const [checkoutProofReference, setCheckoutProofReference] = useState("");
+  const [checkoutProofError, setCheckoutProofError] = useState<string | null>(null);
+  // Confirmación: cuándo el pago sigue pendiente de reporte (para la
+  // advertencia llamativa y la ventana emergente post-registro).
+  const [lastOrderProofReported, setLastOrderProofReported] = useState(false);
+  const [showPostRegisterPaymentModal, setShowPostRegisterPaymentModal] =
+    useState(false);
   const [customerNote, setCustomerNote] = useState("");
   // El cupón vive plegado: solo un enlace discreto, para no estorbar a la
   // mayoría que no tiene código.
@@ -1125,47 +1156,98 @@ export default function CartDrawer({
       : !isAttachingToOpenAccount;
   const requiresCustomerPhone = isDeliveryOrder || isTakeawayOrder;
 
+  // Modo "pago antes de registrar" (configurable por el dueño): con métodos
+  // electrónicos, la captura o la referencia completa se adjunta EN el
+  // checkout y sin ella no se puede registrar.
+  const requiresProofBeforeRegister =
+    publicConfig.publicPaymentBeforeRegisterEnabled &&
+    isPaymentProofPublicAvailable &&
+    (isDeliveryOrder || isTakeawayOrder) &&
+    selectedPaymentMethods.some(isElectronicPaymentMethod);
+  const checkoutProofDigits = checkoutProofReference.replace(/[^0-9]/g, "");
+  const hasCheckoutProof =
+    Boolean(checkoutProofDataUrl) || checkoutProofDigits.length >= 6;
+
+  // Requisitos del pedido con DESTINO: al tocar "Registrar" con algo
+  // pendiente se muestra el aviso grande y se hace scroll a esa sección.
+  const missingOrderChecks = [
+    {
+      label: "tu nombre",
+      targetId: "checkout-nombre",
+      missing: requiresCustomerName && !customerName.trim(),
+    },
+    {
+      label: "tu teléfono",
+      targetId: "checkout-telefono",
+      missing: requiresCustomerPhone && !customerPhone.trim(),
+    },
+    ...(isDeliveryOrder
+      ? [
+          {
+            label:
+              "tu ubicación (toca “Usar mi ubicación actual” o pega tu link de Maps)",
+            targetId: "checkout-ubicacion",
+            // La ubicación de Maps ES la dirección; el punto de referencia es
+            // opcional. El método de pago siempre obligatorio en delivery.
+            missing: isDistancePricingEnabled && !distanceQuote,
+          },
+          {
+            label: "el método de pago",
+            targetId: "checkout-pago",
+            missing: !paymentMethod.trim(),
+          },
+          {
+            label: "los dos montos del pago mixto",
+            targetId: "checkout-pago",
+            missing: isMixedPayment && !isMixedPaymentComplete,
+          },
+        ]
+      : []),
+    ...(isTakeawayOrder
+      ? [
+          // Pick up: el método de pago es obligatorio igual que en delivery.
+          {
+            label: "el método de pago",
+            targetId: "checkout-pago",
+            missing: !paymentMethod.trim(),
+          },
+          {
+            label: "los dos montos del pago mixto",
+            targetId: "checkout-pago",
+            missing: isMixedPayment && !isMixedPaymentComplete,
+          },
+        ]
+      : [
+          {
+            label: `tu ${(publicConfig.locationLabel || "mesa").toLowerCase()} o ubicación en el local`,
+            targetId: "checkout-mesa",
+            missing: !tableNumber.trim(),
+          },
+        ]),
+    {
+      label: "la captura o la referencia completa de tu pago",
+      targetId: "checkout-comprobante",
+      missing: requiresProofBeforeRegister && !hasCheckoutProof,
+    },
+  ].filter((check) => check.missing);
+
   const canRegisterLocalOrder =
     hasItems &&
     !hasUnavailableItemsForOrderType &&
     !isSubmittingOrder &&
     !needsBranchSelection &&
-    (!requiresCustomerName || customerName.trim().length > 0) &&
-    (!requiresCustomerPhone || customerPhone.trim().length > 0) &&
-    (isDeliveryOrder
-      ? // La ubicación de Maps ES la dirección; el punto de referencia es
-        // opcional. El método de pago siempre obligatorio en delivery.
-        (!isDistancePricingEnabled || Boolean(distanceQuote)) &&
-        paymentMethod.trim().length > 0 &&
-        (!isMixedPayment || isMixedPaymentComplete)
-      : isTakeawayOrder
-        ? // Pick up: el método de pago es obligatorio igual que en delivery.
-          paymentMethod.trim().length > 0 &&
-          (!isMixedPayment || isMixedPaymentComplete)
-        : tableNumber.trim().length > 0 && !isTableReservedNow);
-  const missingOrderFields = [
-    requiresCustomerName && !customerName.trim() ? "tu nombre" : "",
-    requiresCustomerPhone && !customerPhone.trim() ? "tu teléfono" : "",
-    ...(isDeliveryOrder
-      ? [
-          isDistancePricingEnabled && !distanceQuote
-            ? "tu ubicación (toca “Usar mi ubicación actual” o pega tu link de Maps)"
-            : "",
-          paymentMethod.trim() ? "" : "el método de pago",
-          isMixedPayment && !isMixedPaymentComplete
-            ? "los dos montos del pago mixto"
-            : "",
-        ]
-      : []),
-    ...(isTakeawayOrder
-      ? [
-          paymentMethod.trim() ? "" : "el método de pago",
-          isMixedPayment && !isMixedPaymentComplete
-            ? "los dos montos del pago mixto"
-            : "",
-        ]
-      : []),
-  ].filter(Boolean);
+    missingOrderChecks.length === 0 &&
+    !isTableReservedNow;
+  const missingOrderFields = missingOrderChecks.map((check) => check.label);
+
+  // El aviso grande de validación se apaga solo cuando el cliente completa
+  // lo que faltaba (para no dejar un regaño viejo en pantalla).
+  useEffect(() => {
+    if (!validationAlert || !canRegisterLocalOrder) return;
+    // Diferido un tick para no hacer setState síncrono dentro del efecto.
+    const timer = setTimeout(() => setValidationAlert(null), 0);
+    return () => clearTimeout(timer);
+  }, [validationAlert, canRegisterLocalOrder]);
 
   async function requestDistanceQuote(input: {
     mapsUrl?: string;
@@ -1399,11 +1481,108 @@ export default function CartDrawer({
     setMixedUsdAmount(remainingUSD.toFixed(2));
   }
 
+  // Comprobante EN el checkout (modo "pago antes de registrar"): sin captura
+  // o referencia completa no se puede registrar con métodos electrónicos.
+  async function handleCheckoutProofFile(file: File | undefined) {
+    setCheckoutProofError(null);
+
+    if (!file) {
+      setCheckoutProofDataUrl("");
+      setCheckoutProofFileName("");
+      setCheckoutProofMimeType("");
+      return;
+    }
+
+    try {
+      const image = await readImageFileForUpload(file, {
+        fallbackName: "comprobante",
+      });
+      setCheckoutProofDataUrl(image.dataUrl);
+      setCheckoutProofFileName(image.fileName);
+      setCheckoutProofMimeType(image.mimeType);
+    } catch (error) {
+      setCheckoutProofDataUrl("");
+      setCheckoutProofFileName("");
+      setCheckoutProofMimeType("");
+      setCheckoutProofError(
+        error instanceof Error
+          ? error.message
+          : "No se pudo leer la imagen del comprobante.",
+      );
+    }
+  }
+
+  function renderCheckoutProofSection() {
+    if (!requiresProofBeforeRegister) return null;
+
+    return (
+      <div
+        id="checkout-comprobante"
+        className="rounded-2xl border-[3px] border-amber-500 bg-amber-50 px-4 py-4"
+      >
+        <p className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-amber-800">
+          <AlertTriangle size={17} className="shrink-0" />
+          Falta tu comprobante
+        </p>
+        <p className="mt-1.5 text-[0.85rem] font-black leading-5 text-amber-900">
+          Cancela (paga) con los datos de arriba y adjunta AQUÍ la captura o
+          escribe la referencia completa. Sin eso no se puede registrar el
+          pedido (así lo configuró el negocio).
+        </p>
+
+        <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-amber-500/70 bg-white px-4 py-4 text-sm font-bold text-amber-900/80 transition hover:border-amber-600">
+          <ImagePlus size={17} />
+          {checkoutProofFileName || "Toca para adjuntar la captura"}
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(event) =>
+              void handleCheckoutProofFile(event.target.files?.[0])
+            }
+          />
+        </label>
+
+        <input
+          value={checkoutProofReference}
+          onChange={(event) => setCheckoutProofReference(event.target.value)}
+          inputMode="numeric"
+          placeholder="O escribe la referencia completa (todos los dígitos)"
+          className="mt-2 w-full rounded-2xl border-2 border-amber-500/50 bg-white px-4 py-3 text-sm font-bold text-amber-950 outline-none placeholder:text-amber-900/40 focus:border-amber-600"
+        />
+
+        {checkoutProofError ? (
+          <p className="mt-2 text-[0.75rem] font-bold leading-4 text-red-600">
+            {checkoutProofError}
+          </p>
+        ) : null}
+
+        {hasCheckoutProof ? (
+          <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-green-600/15 px-3 py-1.5 text-[0.7rem] font-black uppercase tracking-[0.08em] text-green-700">
+            <CheckCircle2 size={14} />
+            Listo: ya puedes registrar tu pedido
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
   // Vuelto: pagando en efectivo, el cliente indica con cuánto paga y ve su
   // cambio al momento; caja recibe la nota con el vuelto listo. Se usa tanto
   // en Pick up (sección compartida) como en el formulario de Delivery.
   function renderCashChangeSection() {
     if (!cashMethodName) return null;
+
+    // Botones rápidos de billete (nada que escribir): denominaciones que
+    // cubren el total + "pago exacto".
+    const cashDue = cashIsVes ? totalVES : totalUSD;
+    const quickBills = (
+      cashIsVes
+        ? [100, 200, 500, 1000, 2000, 5000, 10000, 20000]
+        : [5, 10, 20, 50, 100]
+    )
+      .filter((bill) => bill >= cashDue)
+      .slice(0, 3);
 
     return (
       <div className="rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] px-4 py-4">
@@ -1415,11 +1594,42 @@ export default function CartDrawer({
           {cashIsVes ? `Bs ${formatVES(totalVES)}` : formatUSD(totalUSD)}
           {cashIsVes ? ` (≈ ${formatUSD(totalUSD)})` : ""}
         </p>
+
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setCashGivenAmount(cashDue.toFixed(2))}
+            className={`rounded-full border-2 px-3.5 py-2 text-[0.68rem] font-black uppercase tracking-[0.06em] transition active:scale-95 ${
+              normalizeFormMoney(cashGivenAmount) === Math.round(cashDue * 100) / 100
+                ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
+                : "border-[var(--brand-primary)]/40 bg-white text-[var(--brand-ink)]"
+            }`}
+          >
+            Pago exacto
+          </button>
+          {quickBills.map((bill) => (
+            <button
+              key={bill}
+              type="button"
+              onClick={() => setCashGivenAmount(String(bill))}
+              className={`rounded-full border-2 px-3.5 py-2 text-[0.68rem] font-black uppercase tracking-[0.06em] transition active:scale-95 ${
+                normalizeFormMoney(cashGivenAmount) === bill
+                  ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
+                  : "border-[var(--brand-primary)]/40 bg-white text-[var(--brand-ink)]"
+              }`}
+            >
+              {cashIsVes ? `Bs ${formatVES(bill)}` : formatUSD(bill)}
+            </button>
+          ))}
+        </div>
+
         <input
           inputMode="decimal"
           value={cashGivenAmount}
           onChange={(event) => setCashGivenAmount(event.target.value)}
-          placeholder={cashIsVes ? "Monto en Bs (ej: 5000)" : "Monto en $ (ej: 20)"}
+          placeholder={
+            cashIsVes ? "O escribe otro monto en Bs" : "O escribe otro monto en $"
+          }
           className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
         />
         {(() => {
@@ -1458,25 +1668,27 @@ export default function CartDrawer({
   function renderCheckoutPaymentSection() {
     return (
       <>
-        <OptionPicker
-          label={
-            <>
-              Método de pago{" "}
-              <span className="font-black text-red-400">* obligatorio</span>
-            </>
-          }
-          value={paymentMethod}
-          placeholder="Selecciona método"
-          options={paymentMethodOptions}
-          isOpen={isPaymentPickerOpen}
-          onToggle={() => {
-            setIsPaymentPickerOpen((current) => !current);
-          }}
-          onSelect={(value) => {
-            setPaymentMethod(value);
-            setIsPaymentPickerOpen(false);
-          }}
-        />
+        <div id="checkout-pago">
+          <OptionPicker
+            label={
+              <>
+                Método de pago{" "}
+                <span className="font-black text-red-400">* obligatorio</span>
+              </>
+            }
+            value={paymentMethod}
+            placeholder="Selecciona método"
+            options={paymentMethodOptions}
+            isOpen={isPaymentPickerOpen}
+            onToggle={() => {
+              setIsPaymentPickerOpen((current) => !current);
+            }}
+            onSelect={(value) => {
+              setPaymentMethod(value);
+              setIsPaymentPickerOpen(false);
+            }}
+          />
+        </div>
 
         {renderCashChangeSection()}
 
@@ -1586,6 +1798,8 @@ export default function CartDrawer({
             </div>
           </div>
         )}
+
+        {renderCheckoutProofSection()}
       </>
     );
   }
@@ -1789,6 +2003,59 @@ export default function CartDrawer({
     }
   }
 
+  // Modo "pago antes de registrar": el comprobante adjuntado en el checkout
+  // se reporta solo al crear el pedido (best-effort: si falla, la
+  // confirmación deja el reporte manual a un toque).
+  async function submitCheckoutProofForOrder(orderId: string) {
+    try {
+      const singleMethod =
+        selectedPaymentMethods.length === 1 ? selectedPaymentMethods[0] : "";
+      const singleIsVes = singleMethod ? isVesPaymentMethod(singleMethod) : false;
+      const amountReportedUSD = isMixedPayment
+        ? mixedUsdValue
+        : singleIsVes
+          ? 0
+          : totalUSD;
+      const amountReportedVES = isMixedPayment
+        ? mixedBsValue
+        : singleIsVes
+          ? Math.round(totalVES * 100) / 100
+          : 0;
+      const reportedMethod = isMixedPayment
+        ? effectivePaymentMethod
+        : singleMethod
+          ? `${singleMethod} (${singleIsVes ? `Bs ${formatVES(amountReportedVES)}` : formatUSD(amountReportedUSD)})`
+          : effectivePaymentMethod;
+
+      const response = await fetch("/api/payment-proofs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId,
+          reportedMethod,
+          amountReportedUSD,
+          amountReportedVES,
+          paymentReference: checkoutProofReference.trim(),
+          customerNote: "Comprobante adjuntado al registrar el pedido",
+          dataUrl: checkoutProofDataUrl,
+          fileName: checkoutProofFileName,
+          mimeType: checkoutProofMimeType,
+          confirmDuplicate: false,
+        }),
+      });
+
+      if (response.ok) {
+        setLastOrderProofReported(true);
+      } else {
+        // Si el envío automático falla, la confirmación muestra el flujo de
+        // reporte manual (advertencia grande + formulario abierto).
+        setShowPostRegisterPaymentModal(true);
+      }
+    } catch {
+      setShowPostRegisterPaymentModal(true);
+    }
+  }
+
   async function handleRegisterLocalOrder() {
     if (hasUnavailableItemsForOrderType) {
       setOrderError(unavailableItemsMessage);
@@ -1984,6 +2251,24 @@ export default function CartDrawer({
         deliveryReference: isDeliveryOrder ? deliveryReference.trim() : "",
       });
 
+      // Flujo de pago tras el registro:
+      // - Modo "antes": el comprobante adjuntado en el checkout se reporta
+      //   solo (el cliente no repite nada).
+      // - Modo normal: si el pago queda pendiente, la confirmación abre con
+      //   la advertencia grande + ventana emergente recordándolo.
+      const orderNeedsPrepayReport =
+        !attachedToOpenAccount &&
+        (orderType === "Para llevar" || orderType === "Delivery") &&
+        publicConfig.publicPrepayNoticeEnabled &&
+        isPaymentProofPublicAvailable;
+
+      setLastOrderProofReported(false);
+      if (requiresProofBeforeRegister && hasCheckoutProof) {
+        void submitCheckoutProofForOrder(orderId);
+      } else if (orderNeedsPrepayReport) {
+        setShowPostRegisterPaymentModal(true);
+      }
+
       setLastCreatedOrder(createdOrder);
       setCustomerName("");
       setCustomerPhone("");
@@ -1999,6 +2284,11 @@ export default function CartDrawer({
       setMixedBsAmount("");
       setMixedUsdMethod("");
       setMixedUsdAmount("");
+      setCheckoutProofDataUrl("");
+      setCheckoutProofFileName("");
+      setCheckoutProofMimeType("");
+      setCheckoutProofReference("");
+      setCheckoutProofError(null);
       setCustomerNote("");
       setCouponInput("");
       setAppliedCoupon(null);
@@ -2195,6 +2485,17 @@ export default function CartDrawer({
   const lastOrderCanReportPayment = Boolean(
     lastCreatedOrder && !lastOrderAttachedToOpenAccount,
   );
+  // Pago pendiente de reporte tras el registro (pick up / delivery con aviso
+  // de pago anticipado): manda la advertencia grande de la confirmación, el
+  // formulario abierto y la ventana emergente.
+  const lastOrderPaymentPending =
+    lastOrderCanReportPayment &&
+    !lastOrderProofReported &&
+    !lastCreatedOrder?.offline &&
+    isPaymentProofPublicAvailable &&
+    publicConfig.publicPrepayNoticeEnabled &&
+    (lastCreatedOrder?.orderType === "Para llevar" ||
+      lastCreatedOrder?.orderType === "Delivery");
   const productCardStyle = {
     "--product-card-bg": publicConfig.productCardBackgroundColor || "#ffffff",
     "--product-card-text": publicConfig.productCardTextColor || "#4a0000",
@@ -2544,16 +2845,26 @@ export default function CartDrawer({
             {lastCreatedOrder ? (
               <div className="space-y-5 px-6 py-7">
                 <div className="text-center">
-                  <CheckCircle2
-                    size={58}
-                    className="mx-auto text-[var(--brand-primary)]"
-                    strokeWidth={2.2}
-                  />
+                  {lastOrderPaymentPending ? (
+                    <AlertTriangle
+                      size={58}
+                      className="mx-auto animate-pulse text-amber-500"
+                      strokeWidth={2.2}
+                    />
+                  ) : (
+                    <CheckCircle2
+                      size={58}
+                      className="mx-auto text-[var(--brand-primary)]"
+                      strokeWidth={2.2}
+                    />
+                  )}
 
                   <p className="mt-5 text-sm font-black uppercase tracking-[0.24em] text-[var(--brand-primary)]">
                     {lastOrderAttachedToOpenAccount
                       ? "Agregado a la cuenta"
-                      : "¡Pedido enviado!"}
+                      : lastOrderPaymentPending
+                        ? "¡Pedido guardado!"
+                        : "¡Pedido enviado!"}
                   </p>
 
                   <h4 className="mt-2 text-3xl font-black text-[var(--brand-ink-3)]">
@@ -2561,9 +2872,11 @@ export default function CartDrawer({
                       ? "Cuenta actualizada"
                       : lastCreatedOrder.offline
                         ? "Guardado sin conexión"
-                        : lastCreatedOrder.hasStaffConfirmationItems
-                          ? "Pendiente de confirmación"
-                          : "El local ya lo recibió"}
+                        : lastOrderPaymentPending
+                          ? "Falta tu pago para prepararlo"
+                          : lastCreatedOrder.hasStaffConfirmationItems
+                            ? "Pendiente de confirmación"
+                            : "El local ya lo recibió"}
                   </h4>
 
                   <p className="mx-auto mt-4 max-w-sm text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
@@ -2571,9 +2884,11 @@ export default function CartDrawer({
                       ? `Este pedido se sumó a la cuenta abierta de ${lastCreatedOrder.openAccountTable || "la mesa"}. Caja lo verá junto con el resto de consumos cuando se cierre la cuenta.`
                       : lastCreatedOrder.offline
                         ? "Tu pedido quedó guardado en este teléfono y se enviará solo apenas vuelva el internet. No hace falta repetirlo."
-                        : lastCreatedOrder.hasStaffConfirmationItems
-                          ? `El pedido fue enviado al local. El personal debe confirmar ${cleanStaffConfirmationProductLabel(lastCreatedOrder.staffConfirmationProductNames || [])} antes de prepararlo.`
-                          : "Tu pedido ya aparece en la pantalla del local y pronto entra a cocina."}
+                        : lastOrderPaymentPending
+                          ? "Cancela (paga) con los datos de abajo y reporta tu captura o referencia. Apenas caja lo confirme, tu pedido entra a cocina."
+                          : lastCreatedOrder.hasStaffConfirmationItems
+                            ? `El pedido fue enviado al local. El personal debe confirmar ${cleanStaffConfirmationProductLabel(lastCreatedOrder.staffConfirmationProductNames || [])} antes de prepararlo.`
+                            : "Tu pedido ya aparece en la pantalla del local y pronto entra a cocina."}
                   </p>
                 </div>
 
@@ -2685,7 +3000,14 @@ export default function CartDrawer({
                     aviso de cobertura y envío solo con referencia). */}
                 {!lastOrderAttachedToOpenAccount && !lastCreatedOrder.offline && (
                   <div className="text-left">
-                    <PublicOrderPaymentSection orderId={lastCreatedOrder.id} />
+                    <PublicOrderPaymentSection
+                      orderId={lastCreatedOrder.id}
+                      autoOpenForm={lastOrderPaymentPending}
+                      onReported={() => {
+                        setLastOrderProofReported(true);
+                        setShowPostRegisterPaymentModal(false);
+                      }}
+                    />
                   </div>
                 )}
 
@@ -2786,7 +3108,7 @@ export default function CartDrawer({
                     </div>
                   ))}
 
-                <div>
+                <div id="checkout-nombre">
                   <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Nombre del cliente{" "}
                     {requiresCustomerName ? (
@@ -2809,7 +3131,7 @@ export default function CartDrawer({
                     su sección): obligatorio en Para llevar para poder avisar;
                     en mesa ayuda a diferenciar clientes pero es opcional. */}
                 {!isDeliveryOrder && (
-                  <div>
+                  <div id="checkout-telefono">
                     <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Teléfono{" "}
                       {requiresCustomerPhone ? (
@@ -2870,7 +3192,7 @@ export default function CartDrawer({
                 )}
 
                 {orderType === "Comer aquí" && !needsBranchSelection && (
-                  <div>
+                  <div id="checkout-mesa">
                     <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       {publicConfig.locationLabel} o ubicación
                     </label>
@@ -3089,7 +3411,10 @@ export default function CartDrawer({
                     {/* 1. Ubicación primero (como las apps grandes): define el
                         costo del envío y la cobertura antes de pedir datos. */}
                     {isDistancePricingEnabled && (
-                      <div className="overflow-hidden rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-[var(--brand-cream)]">
+                      <div
+                        id="checkout-ubicacion"
+                        className="overflow-hidden rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-[var(--brand-cream)]"
+                      >
                         {/* Encabezado con ícono: la sección más importante
                             del delivery merece verse como tarjeta, no como
                             un campo más. */}
@@ -3245,8 +3570,8 @@ export default function CartDrawer({
                       )}
                     </div>
 
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div>
+                    <div id="checkout-pago" className="grid gap-4 sm:grid-cols-2">
+                      <div id="checkout-telefono">
                         <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                           Teléfono{" "}
                           <span className="font-black text-red-400">
@@ -3290,6 +3615,8 @@ export default function CartDrawer({
                     </div>
 
                     {renderCashChangeSection()}
+
+                    {renderCheckoutProofSection()}
 
                     {/* Pago mixto: el cliente reparte el total entre una
                         parte en bolívares y otra en divisas; "Completar"
@@ -3591,6 +3918,19 @@ export default function CartDrawer({
                   </div>
                 )}
 
+                {/* Aviso GRANDE al intentar registrar con datos pendientes:
+                    dice qué falta y la pantalla baja sola a esa sección. */}
+                {validationAlert && (
+                  <div
+                    role="alert"
+                    className="rounded-2xl border-[3px] border-red-500 bg-red-500/15 px-4 py-4"
+                  >
+                    <p className="text-base font-black leading-6 text-red-500">
+                      ⚠️ {validationAlert}
+                    </p>
+                  </div>
+                )}
+
                 {orderError && (
                   <div className="rounded-2xl border-2 border-red-500/35 bg-red-500/15 px-4 py-3">
                     <p className="text-sm font-bold leading-6 text-red-300">
@@ -3601,8 +3941,33 @@ export default function CartDrawer({
 
                 <button
                   type="button"
-                  disabled={!canRegisterLocalOrder}
+                  disabled={isSubmittingOrder || !hasItems}
                   onClick={() => {
+                    // Con datos pendientes NO se bloquea el botón en gris:
+                    // se explica en grande qué falta y se lleva al cliente a
+                    // esa sección (pedido del dueño 2026-07-21).
+                    if (!canRegisterLocalOrder) {
+                      const firstMissing = missingOrderChecks[0];
+                      setValidationAlert(
+                        missingOrderChecks.length > 0
+                          ? `Para registrar tu pedido te falta: ${missingOrderFields.join(", ")}.`
+                          : hasUnavailableItemsForOrderType
+                            ? unavailableItemsMessage
+                            : needsBranchSelection
+                              ? "Elige la sede donde estás pidiendo (arriba en este formulario)."
+                              : isTableReservedNow
+                                ? "Esa mesa está reservada en este horario. Pide apoyo al personal."
+                                : "Revisa los datos del pedido e intenta de nuevo.",
+                      );
+                      if (firstMissing) {
+                        document
+                          .getElementById(firstMissing.targetId)
+                          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }
+                      return;
+                    }
+
+                    setValidationAlert(null);
                     // Con ubicación elegida, primero se confirma la dirección
                     // en el mapa (estilo apps grandes); sin ubicación va
                     // directo.
@@ -3612,8 +3977,8 @@ export default function CartDrawer({
                     }
                     void handleRegisterLocalOrder();
                   }}
-                  className={`mt-2 flex w-full items-center justify-center gap-3 rounded-full border-2 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none ${
-                    canRegisterLocalOrder
+                  className={`mt-2 flex w-full items-center justify-center gap-3 rounded-full border-2 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none disabled:cursor-not-allowed ${
+                    hasItems && !isSubmittingOrder
                       ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
                       : "border-[var(--brand-border)] bg-[#ddd3c4] text-[var(--brand-ink-2)]/35"
                   }`}
@@ -3689,6 +4054,40 @@ export default function CartDrawer({
               className="mt-2 w-full rounded-full px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/60 transition hover:text-[var(--brand-primary)]"
             >
               Volver y revisar mis datos
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Ventana emergente post-registro: lo PRIMERO que ve el cliente si su
+          pago quedó pendiente (pedido del dueño 2026-07-21). */}
+      {showPostRegisterPaymentModal && lastOrderPaymentPending && (
+        <div className="fixed inset-0 z-[130] flex items-end justify-center bg-black/80 p-4 backdrop-blur-sm sm:items-center">
+          <div className="w-full max-w-sm rounded-[1.8rem] border-4 border-amber-500 bg-[var(--brand-cream)] p-6 text-center text-[var(--brand-ink-3)] shadow-2xl shadow-black/60">
+            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-500 text-black">
+              <AlertTriangle size={30} />
+            </span>
+            <p className="mt-4 text-2xl font-black uppercase leading-tight">
+              ¡Falta un paso!
+            </p>
+            <p className="mt-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/80">
+              Tu pedido quedó guardado, pero NO entra a preparación hasta que
+              canceles (pagues) y reportes tu abono con la captura o la
+              referencia completa.
+            </p>
+            {publicConfig.publicUnpaidAutoCancelMinutes > 0 ? (
+              <p className="mt-2 rounded-xl border-2 border-red-400 bg-red-500/10 px-3 py-2 text-[0.8rem] font-black leading-5 text-red-500">
+                Ojo: si no lo reportas en{" "}
+                {publicConfig.publicUnpaidAutoCancelMinutes} minutos, el pedido
+                se anula solo.
+              </p>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setShowPostRegisterPaymentModal(false)}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-amber-600 bg-amber-500 px-5 py-4 text-sm font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90 active:scale-[0.98]"
+            >
+              Reportar mi pago ahora
             </button>
           </div>
         </div>

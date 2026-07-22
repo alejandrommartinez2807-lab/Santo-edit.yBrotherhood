@@ -38,6 +38,7 @@ import {
   Settings2,
   ShieldCheck,
   SlidersHorizontal,
+  Sparkles,
   Store,
   Table2,
   Trash2,
@@ -187,6 +188,9 @@ type BusinessConfig = {
   publicPrepayNoticeEnabled: boolean;
   publicPrepayNoticeText: string;
   publicOpenAccountHintHighlighted: boolean;
+  publicPaymentBeforeRegisterEnabled: boolean;
+  publicUnpaidAutoCancelMinutes: number;
+  promotionPopupEnabled: boolean;
   exchangeRateMode: ExchangeRateMode;
   manualExchangeRate: number;
   deliveryEnabled: boolean;
@@ -364,6 +368,9 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicPrepayNoticeEnabled: true,
   publicPrepayNoticeText: "",
   publicOpenAccountHintHighlighted: true,
+  publicPaymentBeforeRegisterEnabled: false,
+  publicUnpaidAutoCancelMinutes: 0,
+  promotionPopupEnabled: false,
   exchangeRateMode: "automatic",
   manualExchangeRate: 0,
   deliveryEnabled: true,
@@ -1107,6 +1114,21 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
       DEFAULT_BUSINESS_CONFIG.publicPrepayNoticeEnabled,
     ),
     publicPrepayNoticeText: String(source.publicPrepayNoticeText || "").trim(),
+    publicPaymentBeforeRegisterEnabled: normalizeBoolean(
+      source.publicPaymentBeforeRegisterEnabled,
+      DEFAULT_BUSINESS_CONFIG.publicPaymentBeforeRegisterEnabled,
+    ),
+    publicUnpaidAutoCancelMinutes: (() => {
+      const minutes = Number(source.publicUnpaidAutoCancelMinutes);
+      if (!Number.isFinite(minutes)) {
+        return DEFAULT_BUSINESS_CONFIG.publicUnpaidAutoCancelMinutes;
+      }
+      return Math.min(240, Math.max(0, Math.round(minutes)));
+    })(),
+    promotionPopupEnabled: normalizeBoolean(
+      source.promotionPopupEnabled,
+      DEFAULT_BUSINESS_CONFIG.promotionPopupEnabled,
+    ),
     publicOpenAccountHintHighlighted: normalizeBoolean(
       source.publicOpenAccountHintHighlighted,
       DEFAULT_BUSINESS_CONFIG.publicOpenAccountHintHighlighted,
@@ -3054,6 +3076,56 @@ export default function BusinessConfigPage() {
                 </div>
               )}
 
+              {/* Flujo de pago del checkout (pedido del dueño 2026-07-21). */}
+              <label className="mt-3 flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={businessConfig.publicPaymentBeforeRegisterEnabled}
+                  onChange={(e) =>
+                    setBusinessConfig((c) => ({
+                      ...c,
+                      publicPaymentBeforeRegisterEnabled: e.target.checked,
+                    }))
+                  }
+                  className="mt-0.5 h-5 w-5 accent-[var(--brand-primary)]"
+                />
+                <span>
+                  <span className="block text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
+                    Exigir captura o referencia ANTES de registrar
+                  </span>
+                  <span className="mt-0.5 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                    Con pago móvil, transferencia o Zelle el cliente debe
+                    adjuntar la captura o la referencia completa para poder
+                    registrar el pedido. Apagado: registra primero y reporta el
+                    pago en la confirmación (con advertencia y recordatorios).
+                  </span>
+                </span>
+              </label>
+
+              <div className="mt-3">
+                <label className="block text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                  Anular pedidos sin pago reportado (minutos, 0 = nunca)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={240}
+                  value={businessConfig.publicUnpaidAutoCancelMinutes}
+                  onChange={(e) =>
+                    setBusinessConfig((c) => ({
+                      ...c,
+                      publicUnpaidAutoCancelMinutes: Number(e.target.value),
+                    }))
+                  }
+                  className="mt-2 w-40 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                />
+                <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                  Pick up y delivery sin captura ni referencia después de ese
+                  tiempo se anulan solos (el cliente ve el aviso y el motivo).
+                  Caja puede seguir cobrándolos manualmente si el cliente llega.
+                </p>
+              </div>
+
               <label className="mt-3 flex items-start gap-3">
                 <input
                   type="checkbox"
@@ -4946,6 +5018,16 @@ export default function BusinessConfigPage() {
                   checked={businessConfig.promotionActive}
                   onChange={(value) => updateConfig("promotionActive", value)}
                   icon={<Eye size={18} />}
+                  disabled={!canEditPromotion}
+                  lockedText={`No incluido en tu plan. Disponible desde ${promotionAccess.minimumPlanLabel}.`}
+                />
+
+                <ToggleRow
+                  label="Promoción como ventana emergente"
+                  description="Al entrar al menú público sale una ventana con esta promoción (se cierra con la X y no vuelve a molestar hasta que cambies la promoción)."
+                  checked={businessConfig.promotionPopupEnabled}
+                  onChange={(value) => updateConfig("promotionPopupEnabled", value)}
+                  icon={<Sparkles size={18} />}
                   disabled={!canEditPromotion}
                   lockedText={`No incluido en tu plan. Disponible desde ${promotionAccess.minimumPlanLabel}.`}
                 />

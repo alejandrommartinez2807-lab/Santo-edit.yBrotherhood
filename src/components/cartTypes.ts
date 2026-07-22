@@ -123,6 +123,10 @@ export type PublicBusinessConfig = {
   publicPrepayNoticeText: string;
   // Resalta el aviso "si ya abriste cuenta no repitas tus datos" en mesa.
   publicOpenAccountHintHighlighted: boolean;
+  // Exigir captura/referencia ANTES de registrar (métodos electrónicos).
+  publicPaymentBeforeRegisterEnabled: boolean;
+  // Anulación automática sin pago reportado tras X minutos (0 = apagada).
+  publicUnpaidAutoCancelMinutes: number;
   deliveryEnabled: boolean;
   deliveryModuleEnabled: boolean;
   paymentProofsEnabled: boolean;

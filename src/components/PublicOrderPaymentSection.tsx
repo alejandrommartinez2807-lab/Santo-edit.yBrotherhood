@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BadgeCheck,
   CheckCircle2,
@@ -130,8 +130,16 @@ function formatChosenTotal(
 
 export default function PublicOrderPaymentSection({
   orderId,
+  autoOpenForm = false,
+  onReported,
 }: {
   orderId: string;
+  // Abre el formulario de reporte de una vez (confirmación con pago
+  // pendiente: un paso menos para el cliente).
+  autoOpenForm?: boolean;
+  // Avisa al contenedor cuando el pago quedó reportado (la confirmación
+  // apaga su advertencia grande).
+  onReported?: () => void;
 }) {
   usePublicCurrencySymbol();
   const [info, setInfo] = useState<OrderPaymentInfo | null>(null);
@@ -233,6 +241,30 @@ export default function PublicOrderPaymentSection({
       clearTimeout(timer);
     };
   }, [loadInfo, orderId]);
+
+  // Apertura automática del formulario (una sola vez) cuando el pago sigue
+  // pendiente: la confirmación del carrito lo pide con autoOpenForm.
+  const autoOpenedRef = useRef(false);
+
+  useEffect(() => {
+    if (!autoOpenForm || autoOpenedRef.current || isLoading || !info) return;
+
+    const proofs = info.proofs || [];
+    const hasActiveProof = proofs.some(
+      (proof) => proof.status !== "Rechazado",
+    );
+
+    if (info.paymentRegistered || hasActiveProof) return;
+
+    autoOpenedRef.current = true;
+    // Diferido un tick para no hacer setState síncrono dentro del efecto.
+    const timer = setTimeout(() => {
+      setIsFormOpen(true);
+      setPayments(buildInitialPayments());
+    }, 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al cargar la info
+  }, [autoOpenForm, isLoading, info, chosenMethods]);
 
   const activeProofs = (info?.proofs || []).filter(
     (proof) => proof.status !== "Rechazado",
@@ -479,6 +511,7 @@ export default function PublicOrderPaymentSection({
       setSuccessMessage(
         "¡Pago reportado! Caja lo revisará y aquí verás cuando quede confirmado.",
       );
+      onReported?.();
       setIsFormOpen(false);
       setPayments([EMPTY_PAYMENT_ENTRY]);
       setCoverageWarning(null);

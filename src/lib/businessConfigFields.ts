@@ -68,6 +68,18 @@ export const SIMPLE_BUSINESS_CONFIG_FIELDS: readonly SimpleConfigField[] = [
   { key: "publicPrepayNoticeEnabled", type: "boolean", default: true },
   { key: "publicPrepayNoticeText", type: "string", default: "" },
   { key: "publicOpenAccountHintHighlighted", type: "boolean", default: true },
+  // Flujo de pago del checkout público (pedido del dueño 2026-07-21):
+  // - "antes": con métodos electrónicos (pago móvil/transferencia/Zelle...)
+  //   el cliente debe adjuntar captura o referencia ANTES de registrar.
+  // - apagado (default): registra primero y reporta el pago en la
+  //   confirmación, con advertencia grande y recordatorios.
+  { key: "publicPaymentBeforeRegisterEnabled", type: "boolean", default: false },
+  // Anulación automática de pedidos SIN pago reportado tras X minutos
+  // (0 = apagada). Solo aplica a Para llevar/Delivery no confirmados por caja.
+  { key: "publicUnpaidAutoCancelMinutes", type: "number", default: 0, min: 0, max: 240 },
+  // La promoción del dueño también como ventana emergente al entrar (además
+  // de la sección); se recuerda el cierre por contenido para no insistir.
+  { key: "promotionPopupEnabled", type: "boolean", default: false },
   // Apariencia (tema)
   { key: "themePrimaryColor", type: "string", default: "#a00000" },
   { key: "themeAccentColor", type: "string", default: "#ffd23c" },

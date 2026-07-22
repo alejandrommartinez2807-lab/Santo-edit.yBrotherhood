@@ -7,10 +7,10 @@ import { AlertTriangle, ListChecks } from "lucide-react";
 // publicPrepayNoticeEnabled/Text). Pedido del dueño de Brotherhood: que el
 // cliente sepa exactamente qué botón tocar y que NO se prepara sin pagar.
 
-// "Cancelar" = pagar en el habla local; se usan ambos términos como sinónimos
-// para que nadie entienda "cancelar el pedido" (pedido del dueño 2026-07-21).
+// "Cancelar" = pagar en el habla local; se alternan sinónimos (cancelar,
+// pagar, abono) para no repetir "pago" tantas veces (pedido del dueño).
 export const DEFAULT_PREPAY_NOTICE_TEXT =
-  "Tu pedido NO empieza a prepararse hasta que canceles (pagues) y tu pago sea confirmado. Después de registrar el pedido, cancela con tu método preferido y toca «Reportar mi pago».";
+  "Tu pedido NO empieza a prepararse hasta que canceles (pagues) y caja confirme tu abono. Después de registrarlo, cancela con tu método preferido y toca «Reportar mi pago».";
 
 type CheckoutOrderType = "Comer aquí" | "Para llevar" | "Delivery";
 
@@ -94,11 +94,11 @@ export function PublicPrepayNotice({ text }: { text?: string }) {
       role="alert"
       className="rounded-2xl border-[3px] border-amber-500 bg-amber-50 px-4 py-3.5 shadow-[0_4px_0_rgba(217,119,6,0.25)]"
     >
-      <p className="inline-flex items-center gap-2 text-[0.7rem] font-black uppercase tracking-[0.14em] text-amber-800">
-        <AlertTriangle size={16} className="shrink-0" />
+      <p className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.14em] text-amber-800">
+        <AlertTriangle size={18} className="shrink-0" />
         Importante antes de pedir
       </p>
-      <p className="mt-1.5 text-[0.85rem] font-black leading-5 text-amber-900">
+      <p className="mt-2 text-base font-black leading-6 text-amber-900">
         {noticeText}
       </p>
     </div>

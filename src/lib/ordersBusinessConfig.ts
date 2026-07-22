@@ -162,6 +162,12 @@ export type BusinessConfig = {
   publicPrepayNoticeEnabled: boolean
   publicPrepayNoticeText: string
   publicOpenAccountHintHighlighted: boolean
+  // Flujo de pago del checkout: exigir captura/referencia ANTES de registrar
+  // (métodos electrónicos), y anulación automática sin pago tras X min (0=off).
+  publicPaymentBeforeRegisterEnabled: boolean
+  publicUnpaidAutoCancelMinutes: number
+  // La promoción del dueño como ventana emergente al entrar al menú público.
+  promotionPopupEnabled: boolean
   exchangeRateMode: ExchangeRateMode
   manualExchangeRate: number
   deliveryEnabled: boolean
@@ -321,6 +327,9 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicPrepayNoticeEnabled: true,
   publicPrepayNoticeText: "",
   publicOpenAccountHintHighlighted: true,
+  publicPaymentBeforeRegisterEnabled: false,
+  publicUnpaidAutoCancelMinutes: 0,
+  promotionPopupEnabled: false,
   exchangeRateMode: "automatic",
   manualExchangeRate: 0,
   deliveryEnabled: true,
@@ -784,6 +793,21 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     publicOpenAccountHintHighlighted: normalizeBooleanConfig(
       source.publicOpenAccountHintHighlighted,
       DEFAULT_BUSINESS_CONFIG.publicOpenAccountHintHighlighted
+    ),
+    publicPaymentBeforeRegisterEnabled: normalizeBooleanConfig(
+      source.publicPaymentBeforeRegisterEnabled,
+      DEFAULT_BUSINESS_CONFIG.publicPaymentBeforeRegisterEnabled
+    ),
+    publicUnpaidAutoCancelMinutes: (() => {
+      const minutes = Number(source.publicUnpaidAutoCancelMinutes)
+      if (!Number.isFinite(minutes)) {
+        return DEFAULT_BUSINESS_CONFIG.publicUnpaidAutoCancelMinutes
+      }
+      return Math.min(240, Math.max(0, Math.round(minutes)))
+    })(),
+    promotionPopupEnabled: normalizeBooleanConfig(
+      source.promotionPopupEnabled,
+      DEFAULT_BUSINESS_CONFIG.promotionPopupEnabled
     ),
     deliveryEnabled: normalizeBooleanConfig(
       source.deliveryEnabled,

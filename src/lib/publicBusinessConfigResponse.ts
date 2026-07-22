@@ -382,6 +382,16 @@ export function buildPublicBusinessConfigResponse(
     publicPrepayNoticeEnabled: config.publicPrepayNoticeEnabled !== false,
     publicPrepayNoticeText: cleanText(config.publicPrepayNoticeText),
     publicOpenAccountHintHighlighted: config.publicOpenAccountHintHighlighted !== false,
+    // Flujo de pago del checkout (dueño): captura/referencia antes de
+    // registrar, y minutos de anulación automática sin pago (0 = apagada,
+    // el cliente lo ve como aviso en su confirmación).
+    publicPaymentBeforeRegisterEnabled:
+      config.publicPaymentBeforeRegisterEnabled === true,
+    publicUnpaidAutoCancelMinutes: (() => {
+      const minutes = Number(config.publicUnpaidAutoCancelMinutes)
+      if (!Number.isFinite(minutes)) return 0
+      return Math.min(240, Math.max(0, Math.round(minutes)))
+    })(),
     exchangeRateMode:
       normalizeText(config.exchangeRateMode) === "manual"
         ? "manual"
@@ -414,6 +424,8 @@ export function buildPublicBusinessConfigResponse(
     promotionProductName: promotionCanShow ? promotionProductName : "",
     promotionPriceUSD: promotionCanShow ? promotionPriceUSD : 0,
     promotionImage: promotionCanShow ? promotionImage : "",
+    // Ventana emergente de la promoción al entrar (además de la sección).
+    promotionPopupEnabled: promotionCanShow && config.promotionPopupEnabled === true,
     featuredProductsActive: featuredProductsCanShow,
     featuredProductsTitle: featuredProductsCanShow
       ? cleanText(config.featuredProductsTitle) || "Favoritos de la casa"
