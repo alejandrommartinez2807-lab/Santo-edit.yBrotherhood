@@ -152,12 +152,13 @@ export function normalizePublicHiddenCategoryList(value: unknown): string[] {
 // nunca quede sin opciones.
 // "Punto de venta" se eliminó como opción pública (pedido del dueño
 // 2026-07-21): el POS solo aplica pagando en persona y confundía en el checkout.
+// "Por confirmar" se eliminó (pedido del dueño 2026-07-22): el cliente debe
+// elegir con qué paga, no dejar el método sin definir.
 export const DEFAULT_PUBLIC_PAYMENT_METHODS = [
   "Pago móvil",
   "Efectivo en divisas",
   "Efectivo en Bs",
   "Transferencia",
-  "Por confirmar",
 ]
 
 export function normalizePublicPaymentMethods(value: unknown): string[] {
