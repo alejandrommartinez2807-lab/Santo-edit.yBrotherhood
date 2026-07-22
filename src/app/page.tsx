@@ -14,6 +14,7 @@ import FeaturedProducts from "@/components/FeaturedProducts"
 import OpenAccountInfo from "@/components/OpenAccountInfo"
 import PublicLocations from "@/components/PublicLocations"
 import PublicHelpButton from "@/components/PublicHelpButton"
+import PublicPromotionPopup from "@/components/PublicPromotionPopup"
 import BottomInfoSections from "@/components/BottomInfoSections"
 import PublicThemeSync from "@/components/PublicThemeSync"
 
@@ -59,6 +60,8 @@ export default function Home() {
       <BottomInfoSections />
 
       <PublicHelpButton />
+
+      <PublicPromotionPopup />
 
       <CartDrawer
         isOpen={isCartOpen}
