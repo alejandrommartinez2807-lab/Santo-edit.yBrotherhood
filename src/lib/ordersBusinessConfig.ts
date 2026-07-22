@@ -85,6 +85,9 @@ export type BusinessConfig = {
   // Fiscal (Venezuela): IVA por producto + IGTF en divisas. La emisión oficial
   // la hace la máquina fiscal; aquí guardamos los datos para el desglose.
   fiscalEnabled: boolean
+  // Centro comercial / condominio: cobrar condominio prorrateado por alícuota.
+  // Apagado, la emisión mensual solo cobra canon + renta porcentual.
+  alicuotaEnabled: boolean
   rifNumber: string
   razonSocial: string
   fiscalAddress: string
@@ -276,6 +279,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   businessType: "",
   locationLabel: "Mesa",
   fiscalEnabled: false,
+  alicuotaEnabled: true,
   rifNumber: "",
   razonSocial: "",
   fiscalAddress: "",
@@ -625,6 +629,8 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     locationLabel:
       String(source.locationLabel || "").trim() || DEFAULT_BUSINESS_CONFIG.locationLabel,
     fiscalEnabled: source.fiscalEnabled === true,
+    // Encendidas salvo que el dueño las apague explícitamente.
+    alicuotaEnabled: source.alicuotaEnabled !== false,
     rifNumber: String(source.rifNumber || "").trim(),
     razonSocial: String(source.razonSocial || "").trim(),
     fiscalAddress: String(source.fiscalAddress || "").trim(),

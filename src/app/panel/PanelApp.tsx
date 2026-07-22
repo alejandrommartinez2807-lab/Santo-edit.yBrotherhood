@@ -71,6 +71,7 @@ type Link = {
 }
 type Summary = {
   unitsCount: number; residentsCount: number; alicuotaSum: number; balanceDue: number
+  alicuotaEnabled?: boolean
   occupied?: number; available?: number; delinquent?: number
   leasesActive?: number; leasesExpiring?: number
   income?: { canon: number; condominio: number; renta_pct: number; estacionamiento: number; publicidad: number; total: number }
@@ -339,7 +340,7 @@ function ResumenView({ api, goTo }: { api: (p: string, i?: RequestInit) => Promi
               <IncomeCell label="Publicidad" value={money(s.income.publicidad)} icon="📢" />
             </div>
             <div style={{ marginTop: 10, fontSize: 12, color: "#8494a8" }}>
-              Suma de lo emitido/cobrado este mes. La alícuota total {alicuotaOk ? "cuadra en 100 %" : <b style={{ color: "#c0392b" }}>no suma 100 % ({pct(s.alicuotaSum)})</b>}.
+              Suma de lo emitido/cobrado este mes.{s.alicuotaEnabled !== false && <> La alícuota total {alicuotaOk ? "cuadra en 100 %" : <b style={{ color: "#c0392b" }}>no suma 100 % ({pct(s.alicuotaSum)})</b>}.</>}
             </div>
           </Card>
         </div>
@@ -396,6 +397,9 @@ function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
   const [err, setErr] = useState("")
   const [loading, setLoading] = useState(true)
   const [newType, setNewType] = useState("")
+  // Alícuotas opcionales: si el centro comercial no prorratea gastos comunes,
+  // se apagan aquí y desaparecen del formulario, la tabla y la emisión.
+  const [aliEnabled, setAliEnabled] = useState(true)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -403,9 +407,22 @@ function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
       const d = await api("/api/panel/units")
       setUnits((d.units as Unit[]) || [])
       setTypes((d.unitTypes as UnitType[]) || [])
+      setAliEnabled(d.alicuotaEnabled !== false)
     } catch (e) { setErr(String((e as Error).message)) } finally { setLoading(false) }
   }, [api])
   useEffect(() => { load() }, [load])
+
+  async function toggleAlicuota() {
+    const next = !aliEnabled
+    const pregunta = next
+      ? "¿Activar el sistema de alícuotas? La emisión del mes volverá a prorratear el gasto común entre los locales."
+      : "¿Desactivar las alícuotas? La emisión del mes dejará de cobrar condominio prorrateado (solo canon y renta porcentual). Puedes reactivarlas cuando quieras."
+    if (!confirm(pregunta)) return
+    try {
+      const d = await api("/api/panel/units", { method: "POST", body: JSON.stringify({ kind: "settings", alicuotaEnabled: next }) })
+      setAliEnabled(d.alicuotaEnabled !== false)
+    } catch (e) { setErr(String((e as Error).message)) }
+  }
 
   const typeName = useMemo(() => Object.fromEntries(types.map((t) => [t.id, t.name])), [types])
 
@@ -460,7 +477,14 @@ function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
         <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, flex: 1 }}>Locales</h1>
-        <span style={{ fontSize: 13, color: Math.abs(alicuotaSum - 1) < 0.005 ? "#1e874b" : "#c0392b" }}>Alícuota total: {pct(alicuotaSum)}</span>
+        {aliEnabled ? (
+          <span style={{ fontSize: 13, color: Math.abs(alicuotaSum - 1) < 0.005 ? "#1e874b" : "#c0392b" }}>Alícuota total: {pct(alicuotaSum)}</span>
+        ) : (
+          <span style={{ fontSize: 13, color: "#8494a8" }}>Alícuotas desactivadas</span>
+        )}
+        <button onClick={toggleAlicuota} style={btnGhost} title={aliEnabled ? "La emisión dejará de prorratear el gasto común" : "La emisión volverá a prorratear el gasto común"}>
+          {aliEnabled ? "Desactivar alícuotas" : "Activar alícuotas"}
+        </button>
         <button onClick={() => { setForm({ ...emptyUnitForm }); setShowForm((v) => !v) }} style={btnPrimary}>+ Nuevo local</button>
       </div>
       {err && <div style={errBox}>{err}</div>}
@@ -488,7 +512,9 @@ function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
               </div>
             </Field>
             <Field label="Área (m²)"><input type="number" step="0.01" value={form.areaM2} onChange={(e) => setForm({ ...form, areaM2: e.target.value })} style={input} /></Field>
-            <Field label="Alícuota (%)"><input type="number" step="0.0001" value={form.alicuotaPct} onChange={(e) => setForm({ ...form, alicuotaPct: e.target.value })} placeholder="1.25" style={input} /></Field>
+            {aliEnabled && (
+              <Field label="Alícuota (%)"><input type="number" step="0.0001" value={form.alicuotaPct} onChange={(e) => setForm({ ...form, alicuotaPct: e.target.value })} placeholder="1.25" style={input} /></Field>
+            )}
             <Field label="Estac."><input type="number" value={form.parkingSlots} onChange={(e) => setForm({ ...form, parkingSlots: e.target.value })} style={input} /></Field>
             <Field label="Estado">
               <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} style={input}>
@@ -561,7 +587,7 @@ function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
           ) : (
             <div style={{ overflowX: "auto" }}>
               <table style={table}>
-                <thead><tr>{["Código", "Nombre comercial", "Rubro", "Piso", "m²", "Alícuota", "Estado", ""].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                <thead><tr>{["Código", "Nombre comercial", "Rubro", "Piso", "m²", ...(aliEnabled ? ["Alícuota"] : []), "Estado", ""].map((h, i) => <th key={`${h}-${i}`} style={th}>{h}</th>)}</tr></thead>
                 <tbody>
                   {units.map((u) => (
                     <tr key={u.id}>
@@ -570,7 +596,7 @@ function UnidadesView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
                       <td style={td}>{u.activity || "—"}</td>
                       <td style={td}>{u.floor || "—"}</td>
                       <td style={td}>{u.area_m2 || "—"}</td>
-                      <td style={td}>{pct(u.alicuota)}</td>
+                      {aliEnabled && <td style={td}>{pct(u.alicuota)}</td>}
                       <td style={td}><span style={badge(u.status)}>{u.status}</span></td>
                       <td style={{ ...td, whiteSpace: "nowrap" }}>
                         <button onClick={() => edit(u)} style={btnMini}>Editar</button>
@@ -1038,17 +1064,24 @@ function CuotasView({ api }: { api: (p: string, i?: RequestInit) => Promise<Reco
   const now = new Date()
   const firstOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`
   const [form, setForm] = useState({ periodMonth: firstOfMonth, commonExpenseTotal: "", dueDate: "" })
+  // Con las alícuotas apagadas la emisión no prorratea gasto común: se oculta
+  // ese campo y se cobra solo canon + renta porcentual.
+  const [aliEnabled, setAliEnabled] = useState(true)
 
   const load = useCallback(async () => {
-    try { const d = await api("/api/panel/periods"); setPeriods((d.periods as Period[]) || []) } catch (e) { setErr(String((e as Error).message)) }
+    try {
+      const d = await api("/api/panel/periods")
+      setPeriods((d.periods as Period[]) || [])
+      setAliEnabled(d.alicuotaEnabled !== false)
+    } catch (e) { setErr(String((e as Error).message)) }
   }, [api])
   useEffect(() => { load() }, [load])
 
   async function emit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setErr(""); setMsg("")
     try {
-      const d = await api("/api/panel/periods", { method: "POST", body: JSON.stringify({ action: "emit", periodMonth: form.periodMonth, label: form.periodMonth.slice(0, 7), commonExpenseTotal: Number(form.commonExpenseTotal || 0), dueDate: form.dueDate || undefined }) })
-      setMsg(`✓ Emitido a ${d.unitsEmitted} local(es) · canon + condominio · total ${money(Number(d.totalEmitted || 0))}`)
+      const d = await api("/api/panel/periods", { method: "POST", body: JSON.stringify({ action: "emit", periodMonth: form.periodMonth, label: form.periodMonth.slice(0, 7), commonExpenseTotal: aliEnabled ? Number(form.commonExpenseTotal || 0) : 0, dueDate: form.dueDate || undefined }) })
+      setMsg(`✓ Emitido a ${d.unitsEmitted} local(es) · ${aliEnabled ? "canon + condominio" : "canon + renta"} · total ${money(Number(d.totalEmitted || 0))}`)
       setForm({ ...form, commonExpenseTotal: "" }); await load()
     } catch (e) { setErr(String((e as Error).message)) } finally { setBusy(false) }
   }
@@ -1059,10 +1092,16 @@ function CuotasView({ api }: { api: (p: string, i?: RequestInit) => Promise<Reco
       {err && <div style={errBox}>{err}</div>}
       <Card>
         <div style={{ fontWeight: 700, marginBottom: 8 }}>Emitir cobro del mes</div>
-        <p style={{ margin: "0 0 12px", color: "#5b6b82", fontSize: 13 }}>Se cobra a los locales <b>ocupados o con contrato activo</b>: el gasto común se prorratea por <b>alícuota</b> (condominio) y se agrega el <b>canon</b> de cada contrato activo. Cada local recibe su cargo y su recibo.</p>
+        <p style={{ margin: "0 0 12px", color: "#5b6b82", fontSize: 13 }}>
+          {aliEnabled
+            ? <>Se cobra a los locales <b>ocupados o con contrato activo</b>: el gasto común se prorratea por <b>alícuota</b> (condominio) y se agrega el <b>canon</b> de cada contrato activo. Cada local recibe su cargo y su recibo.</>
+            : <>Se cobra a los locales <b>ocupados o con contrato activo</b>: el <b>canon</b> de cada contrato más su <b>renta porcentual</b> si aplica. Las alícuotas están desactivadas (se reactivan en Locales), así que no se prorratea gasto común.</>}
+        </p>
         <form onSubmit={emit} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 12, alignItems: "end" }}>
           <Field label="Mes"><input type="date" value={form.periodMonth} onChange={(e) => setForm({ ...form, periodMonth: e.target.value })} style={input} /></Field>
-          <Field label="Gasto común total ($)"><input type="number" step="0.01" required value={form.commonExpenseTotal} onChange={(e) => setForm({ ...form, commonExpenseTotal: e.target.value })} placeholder="2500" style={input} /></Field>
+          {aliEnabled && (
+            <Field label="Gasto común total ($)"><input type="number" step="0.01" required value={form.commonExpenseTotal} onChange={(e) => setForm({ ...form, commonExpenseTotal: e.target.value })} placeholder="2500" style={input} /></Field>
+          )}
           <Field label="Vence"><input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} style={input} /></Field>
           <button type="submit" disabled={busy} style={btnPrimary}>{busy ? "Emitiendo…" : "Emitir cobro"}</button>
         </form>

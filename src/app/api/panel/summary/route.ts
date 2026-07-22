@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { resolveBranchId } from "@/lib/branch"
+import { getBusinessConfig } from "@/lib/ordersBusinessConfig"
 import { checkPanelAccess } from "../_auth"
 
 export const runtime = "nodejs"
@@ -67,6 +68,10 @@ export async function GET(request: NextRequest) {
 
     const incomeMonth = round2(canonMonth + condoMonth + pctMonth + parkingMonth + adsMonth)
 
+    // Alícuotas opcionales: el resumen oculta la validación del 100% si están apagadas.
+    let alicuotaEnabled = true
+    try { alicuotaEnabled = (await getBusinessConfig()).alicuotaEnabled !== false } catch {}
+
     return NextResponse.json({
       ok: true,
       unitsCount: rows.length,
@@ -75,6 +80,7 @@ export async function GET(request: NextRequest) {
       delinquent,
       residentsCount: residentsCount.count ?? 0,
       alicuotaSum,
+      alicuotaEnabled,
       balanceDue,
       leasesActive,
       leasesExpiring,

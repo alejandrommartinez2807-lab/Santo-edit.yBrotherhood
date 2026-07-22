@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { resolveBranchId } from "@/lib/branch"
+import { getBusinessConfig } from "@/lib/ordersBusinessConfig"
 import { checkPanelAccess } from "../_auth"
+
+// Alícuotas apagadas => la emisión no prorratea gasto común (solo canon + renta %).
+async function readAlicuotaEnabled(): Promise<boolean> {
+  try {
+    const cfg = await getBusinessConfig()
+    return cfg.alicuotaEnabled !== false
+  } catch {
+    return true
+  }
+}
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -24,7 +35,7 @@ export async function GET(request: NextRequest) {
       .eq("branch_id", branchId)
       .order("period_month", { ascending: false })
     if (error) throw new Error(error.message)
-    return NextResponse.json({ ok: true, periods: data ?? [] })
+    return NextResponse.json({ ok: true, periods: data ?? [], alicuotaEnabled: await readAlicuotaEnabled() })
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Error" }, { status: 500 })
   }
@@ -45,7 +56,8 @@ export async function POST(request: NextRequest) {
 
     const periodMonth = text(body.periodMonth) || new Date().toISOString().slice(0, 10)
     const label = text(body.label) || periodMonth.slice(0, 7)
-    const commonExpenseTotal = num(body.commonExpenseTotal)
+    const alicuotaEnabled = await readAlicuotaEnabled()
+    const commonExpenseTotal = alicuotaEnabled ? num(body.commonExpenseTotal) : 0
     const dueDate = text(body.dueDate) || null
 
     // Evita doble emisión del mismo mes.
@@ -112,7 +124,7 @@ export async function POST(request: NextRequest) {
     for (const u of list) {
       const lease = leaseByUnit.get(u.id)
       // Condominio por alícuota (salvo que el canon ya lo incluya).
-      const condoAmount = lease?.condoIncluded ? 0 : round2(commonExpenseTotal * Number(u.alicuota || 0))
+      const condoAmount = !alicuotaEnabled || lease?.condoIncluded ? 0 : round2(commonExpenseTotal * Number(u.alicuota || 0))
       // Canon de arrendamiento (si tiene contrato activo).
       const canonAmount = lease ? round2(lease.canon) : 0
       // Renta porcentual: excedente de (ventas * tasa%) sobre el mínimo garantizado.

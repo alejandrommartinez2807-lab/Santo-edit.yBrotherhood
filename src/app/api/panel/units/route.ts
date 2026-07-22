@@ -2,7 +2,19 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { resolveBranchId } from "@/lib/branch"
 import { slugify, sanitizeProducts } from "@/lib/mallText"
+import { getBusinessConfig, saveBusinessConfig } from "@/lib/ordersBusinessConfig"
 import { checkPanelAccess } from "../_auth"
+
+// Las alícuotas son opcionales: un centro comercial que no prorratea gastos
+// comunes puede apagarlas (se ocultan del panel y la emisión no cobra condominio).
+async function readAlicuotaEnabled(): Promise<boolean> {
+  try {
+    const cfg = await getBusinessConfig()
+    return cfg.alicuotaEnabled !== false
+  } catch {
+    return true
+  }
+}
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -44,7 +56,7 @@ export async function GET(request: NextRequest) {
     ])
     if (unitsRes.error) throw new Error(unitsRes.error.message)
     if (typesRes.error) throw new Error(typesRes.error.message)
-    return NextResponse.json({ ok: true, units: unitsRes.data ?? [], unitTypes: typesRes.data ?? [] })
+    return NextResponse.json({ ok: true, units: unitsRes.data ?? [], unitTypes: typesRes.data ?? [], alicuotaEnabled: await readAlicuotaEnabled() })
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "No se pudieron cargar las unidades" },
@@ -63,6 +75,12 @@ export async function POST(request: NextRequest) {
     const branchId = await resolveBranchId(request)
     if (!branchId) return NextResponse.json({ error: "No hay condominio configurado" }, { status: 400 })
     const supabase = getSupabaseAdmin()
+
+    // Ajustes del módulo (hoy: activar/desactivar el sistema de alícuotas).
+    if (text(body.kind) === "settings") {
+      await saveBusinessConfig({ alicuotaEnabled: bool(body.alicuotaEnabled) })
+      return NextResponse.json({ ok: true, alicuotaEnabled: bool(body.alicuotaEnabled) })
+    }
 
     if (text(body.kind) === "unitType") {
       const name = text(body.name)
