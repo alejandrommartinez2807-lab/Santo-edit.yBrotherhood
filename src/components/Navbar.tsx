@@ -377,10 +377,15 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[var(--brand-border)] bg-[rgba(9,9,9,0.88)] backdrop-blur-xl">
-      {/* Barra completa (logo + redes): se recoge al bajar y vuelve al subir. */}
+      {/* Barra completa (logo + redes): se recoge al bajar y vuelve al subir.
+          La barra que SALE colapsa rápido (200ms, sin espera) y la que ENTRA
+          espera esos 200ms antes de abrir, así nunca se ven las dos a la vez
+          ni la fila de enlaces se monta con la barra compacta (fix 2026-07-22). */}
       <div
-        className={`overflow-hidden transition-all duration-300 ${
-          compact ? "max-h-0 opacity-0" : "max-h-52 opacity-100"
+        className={`overflow-hidden transition-all ${
+          compact
+            ? "max-h-0 opacity-0 pointer-events-none duration-200"
+            : "max-h-52 opacity-100 duration-300 delay-200"
         }`}
       >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
@@ -539,10 +544,13 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
       </div>
       </div>
 
-      {/* Barra compacta al bajar: categorías del menú + sede + carrito. */}
+      {/* Barra compacta al bajar: categorías del menú + sede + carrito.
+          Espera 200ms (a que la completa termine de recogerse) antes de abrir. */}
       <div
-        className={`overflow-hidden transition-all duration-300 ${
-          compact ? "max-h-24 opacity-100" : "max-h-0 opacity-0"
+        className={`overflow-hidden transition-all ${
+          compact
+            ? "max-h-24 opacity-100 duration-300 delay-200"
+            : "max-h-0 opacity-0 pointer-events-none duration-200"
         }`}
       >
         <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2 sm:px-6 lg:px-8">
