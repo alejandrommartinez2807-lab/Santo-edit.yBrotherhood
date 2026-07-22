@@ -76,7 +76,7 @@ type Summary = {
   income?: { canon: number; condominio: number; renta_pct: number; estacionamiento: number; publicidad: number; total: number }
 }
 
-type Tab = "resumen" | "unidades" | "residentes" | "contratos" | "ventas" | "cuotas" | "estado" | "galeria" | "amenidades" | "incidencias" | "estacionamiento" | "publicidad" | "consultorios" | "atencion" | "fidelidad" | "comunicados" | "asambleas" | "accesos" | "documentos" | "fiscal"
+type Tab = "resumen" | "unidades" | "residentes" | "contratos" | "ventas" | "cuotas" | "estado" | "galeria" | "amenidades" | "incidencias" | "estacionamiento" | "publicidad" | "consultorios" | "atencion" | "fidelidad" | "comunicados" | "asambleas" | "accesos" | "seguridad" | "documentos" | "fiscal"
 
 const UNIT_STATUS = ["disponible", "ocupado", "reservado", "mantenimiento", "inactivo"]
 const RES_ROLES = ["propietario", "inquilino", "encargado", "autorizado"]
@@ -102,6 +102,7 @@ const MODULES: { key: Tab | string; label: string; icon: string; ready: boolean 
   { key: "comunicados", label: "Comunicados", icon: "📣", ready: true },
   { key: "asambleas", label: "Asambleas", icon: "🗳️", ready: true },
   { key: "accesos", label: "Accesos", icon: "🚪", ready: true },
+  { key: "seguridad", label: "Seguridad", icon: "🛡️", ready: true },
   { key: "documentos", label: "Documentos", icon: "📄", ready: true },
   { key: "fiscal", label: "Fiscal", icon: "🏛️", ready: true },
 ]
@@ -172,6 +173,7 @@ export default function PanelApp() {
           {tab === "comunicados" && <ComunicadosView api={api} />}
           {tab === "asambleas" && <AsambleasView api={api} />}
           {tab === "accesos" && <AccesosView api={api} />}
+          {tab === "seguridad" && <SeguridadView api={api} />}
           {tab === "documentos" && <DocumentosView api={api} />}
           {tab === "fiscal" && <FiscalView api={api} />}
         </main>
@@ -1976,6 +1978,116 @@ function AtencionView({ api }: { api: (p: string, i?: RequestInit) => Promise<Re
           </div>
         )}
       </Card>
+    </div>
+  )
+}
+
+// ---------- Seguridad (bitácora) ----------
+type SecurityEntry = { id: string; happened_at: string; kind: string; area: string; description: string; severity: string; guard_name: string; resolved: boolean; resolved_note: string }
+const SEC_KINDS = ["ronda", "incidente", "acceso", "objeto_perdido", "emergencia", "nota"]
+const SEC_KIND_LABEL: Record<string, string> = { ronda: "🚶 Ronda", incidente: "⚠️ Incidente", acceso: "🚪 Acceso", objeto_perdido: "🧳 Objeto perdido", emergencia: "🚨 Emergencia", nota: "📝 Nota" }
+const SEC_SEV_COLOR: Record<string, string> = { baja: "#7c93a6", media: "#b9770e", alta: "#c0392b" }
+const emptySecForm = { kind: "ronda", area: "", description: "", severity: "baja", guardName: "" }
+
+function SeguridadView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
+  const [entries, setEntries] = useState<SecurityEntry[]>([])
+  const [openCount, setOpenCount] = useState(0)
+  const [form, setForm] = useState({ ...emptySecForm })
+  const [onlyOpen, setOnlyOpen] = useState(false)
+  const [err, setErr] = useState("")
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(async () => {
+    setLoading(true); setErr("")
+    try {
+      const d = await api("/api/panel/security")
+      setEntries((d.entries as SecurityEntry[]) || [])
+      setOpenCount(Number(d.openCount) || 0)
+    } catch (e) { setErr(String((e as Error).message)) } finally { setLoading(false) }
+  }, [api])
+  useEffect(() => { load() }, [load])
+
+  async function create(e: React.FormEvent) {
+    e.preventDefault(); setErr("")
+    try {
+      await api("/api/panel/security", { method: "POST", body: JSON.stringify({ action: "create", ...form }) })
+      setForm({ ...emptySecForm })
+      await load()
+    } catch (e) { setErr(String((e as Error).message)) }
+  }
+
+  async function resolve(entry: SecurityEntry) {
+    const note = entry.resolved ? "" : (window.prompt("Nota de cierre (opcional):", "") ?? "")
+    try {
+      await api("/api/panel/security", { method: "POST", body: JSON.stringify(entry.resolved ? { action: "reopen", id: entry.id } : { action: "resolve", id: entry.id, resolvedNote: note }) })
+      await load()
+    } catch (e) { setErr(String((e as Error).message)) }
+  }
+
+  const shown = onlyOpen ? entries.filter((x) => !x.resolved) : entries
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
+        <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, flex: 1 }}>Seguridad</h1>
+        <span style={{ fontSize: 13, color: openCount > 0 ? "#c0392b" : "#1e874b", fontWeight: 700 }}>{openCount} abierto(s)</span>
+        <label style={{ fontSize: 13, display: "flex", gap: 6, alignItems: "center", cursor: "pointer" }}>
+          <input type="checkbox" checked={onlyOpen} onChange={(e) => setOnlyOpen(e.target.checked)} /> solo abiertos
+        </label>
+      </div>
+      {err && <div style={errBox}>{err}</div>}
+
+      <Card>
+        <div style={{ fontWeight: 700, marginBottom: 8 }}>Registrar evento</div>
+        <form onSubmit={create} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, alignItems: "end" }}>
+          <Field label="Tipo">
+            <select value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })} style={input}>
+              {SEC_KINDS.map((k) => <option key={k} value={k}>{SEC_KIND_LABEL[k]}</option>)}
+            </select>
+          </Field>
+          <Field label="Gravedad">
+            <select value={form.severity} onChange={(e) => setForm({ ...form, severity: e.target.value })} style={input}>
+              {["baja", "media", "alta"].map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </Field>
+          <Field label="Área / lugar"><input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} placeholder="Sótano, feria, PB…" style={input} /></Field>
+          <Field label="Reporta"><input value={form.guardName} onChange={(e) => setForm({ ...form, guardName: e.target.value })} placeholder="Vigilante / supervisor" style={input} /></Field>
+          <div style={{ gridColumn: "1/-1" }}>
+            <Field label="Descripción *"><textarea required value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Qué pasó, a qué hora, quiénes estuvieron involucrados…" style={{ ...input, minHeight: 60, resize: "vertical" }} /></Field>
+          </div>
+          <button type="submit" style={btnPrimary}>Registrar</button>
+        </form>
+      </Card>
+
+      <div style={{ marginTop: 14 }}>
+        <Card>
+          {loading ? <p style={{ color: "#5b6b82" }}>Cargando…</p> : shown.length === 0 ? (
+            <p style={{ color: "#5b6b82", margin: 0 }}>Sin eventos {onlyOpen ? "abiertos" : "registrados"}.</p>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={table}>
+                <thead><tr>{["Fecha", "Tipo", "Área", "Descripción", "Gravedad", "Reporta", "Estado", ""].map((h) => <th key={h} style={th}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {shown.map((x) => (
+                    <tr key={x.id} style={{ opacity: x.resolved ? 0.65 : 1 }}>
+                      <td style={{ ...td, whiteSpace: "nowrap" }}>{new Date(x.happened_at).toLocaleString("es-VE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</td>
+                      <td style={{ ...td, whiteSpace: "nowrap" }}>{SEC_KIND_LABEL[x.kind] || x.kind}</td>
+                      <td style={td}>{x.area || "—"}</td>
+                      <td style={{ ...td, maxWidth: 320 }}>{x.description}{x.resolved && x.resolved_note ? <div style={{ fontSize: 12, color: "#1e874b" }}>✓ {x.resolved_note}</div> : null}</td>
+                      <td style={td}><span style={{ color: SEC_SEV_COLOR[x.severity] || "#7c93a6", fontWeight: 700 }}>{x.severity}</span></td>
+                      <td style={td}>{x.guard_name || "—"}</td>
+                      <td style={td}>{x.resolved ? "✅ resuelto" : "🔶 abierto"}</td>
+                      <td style={{ ...td, whiteSpace: "nowrap" }}>
+                        <button onClick={() => resolve(x)} style={{ ...btnGhost, padding: "5px 10px", fontSize: 12 }}>{x.resolved ? "Reabrir" : "Resolver"}</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
     </div>
   )
 }
