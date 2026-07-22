@@ -38,6 +38,18 @@ function genCode() {
   return "P-" + c
 }
 
+// La tarifa vigente viaja con el ticket para que el cliente sepa cuánto
+// cuesta la hora antes de que el monto empiece a subir.
+type ParkingCfg = { free_minutes?: number | null; rate_per_hour?: number | null; daily_cap?: number | null; rate_currency?: string | null }
+function tariffOf(cfg: ParkingCfg | null | undefined) {
+  return {
+    freeMinutes: Number(cfg?.free_minutes ?? 15),
+    ratePerHour: Number(cfg?.rate_per_hour ?? 1),
+    dailyCap: Number(cfg?.daily_cap ?? 0),
+    currency: cfg?.rate_currency || "USD",
+  }
+}
+
 // GET ?code=P-XXXXX : el cliente escanea el QR del ticket y ve cuánto debe.
 export async function GET(request: NextRequest) {
   try {
@@ -71,6 +83,7 @@ export async function GET(request: NextRequest) {
       code: t.code, plate: t.plate, status: t.status,
       enteredAt: t.entered_at, exitedAt: t.exited_at,
       minutes, amount, currency: t.currency || config.rate_currency || "USD",
+      tariff: tariffOf(config),
       // Para que el cliente muestre el desglose si paga en divisas efectivo.
       igtf: { enabled: igtf.enabled, rate: igtf.rate },
       nonFiscal: !igtf.fiscalEnabled,
@@ -101,7 +114,7 @@ export async function POST(request: NextRequest) {
       })
       if (limited) return limited
 
-      const { data: cfg } = await supabase.from("parking_config").select("rate_currency").eq("branch_id", branchId).maybeSingle()
+      const { data: cfg } = await supabase.from("parking_config").select("free_minutes, rate_per_hour, daily_cap, rate_currency").eq("branch_id", branchId).maybeSingle()
       const currency = cfg?.rate_currency || "USD"
 
       // Código único (reintenta ante colisión).
@@ -126,7 +139,7 @@ export async function POST(request: NextRequest) {
         .maybeSingle()
       if (error) throw new Error(error.message)
       const igtf = await loadIgtf()
-      return NextResponse.json({ ok: true, ...data, igtf: { enabled: igtf.enabled, rate: igtf.rate }, nonFiscal: !igtf.fiscalEnabled }, { status: 201 })
+      return NextResponse.json({ ok: true, ...data, tariff: tariffOf(cfg), igtf: { enabled: igtf.enabled, rate: igtf.rate }, nonFiscal: !igtf.fiscalEnabled }, { status: 201 })
     }
 
     if (action === "pay") {

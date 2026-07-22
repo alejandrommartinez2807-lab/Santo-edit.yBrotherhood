@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import ImageField, { uploadImageFile } from "@/components/ImageField"
-import { slugify as microsSlug, parseProductsInput, productsToInput, sanitizeProducts } from "@/lib/mallText"
+import { slugify as microsSlug, parseProductsInput, productsToInput, sanitizeProducts, docCategoryLabel, docFileIcon } from "@/lib/mallText"
 
 // Todas las pestañas cargan sus datos al montar con el patrón useEffect(() =>
 // load(), [load]) (load es un useCallback que hace setState tras el fetch). Es
@@ -343,7 +343,7 @@ function VisitasTab({ api }: { api: Api }) {
 }
 
 // ---------- Documentos ----------
-type PDoc = { id: string; title: string; category: string; description: string; file_url: string }
+type PDoc = { id: string; title: string; category: string; description: string; file_url: string; file_name?: string; created_at?: string }
 function DocsTab({ api }: { api: Api }) {
   const [items, setItems] = useState<PDoc[]>([]); const [err, setErr] = useState("")
   const load = useCallback(async () => { try { const d = await api("/api/portal/documents"); setItems((d.documents as PDoc[]) || []) } catch (e) { setErr(String((e as Error).message)) } }, [api])
@@ -353,8 +353,13 @@ function DocsTab({ api }: { api: Api }) {
       {err && <div style={errBox}>{err}</div>}
       {items.length === 0 ? <div style={card}><Empty text="No hay documentos publicados." /></div> : items.map((d) => (
         <a key={d.id} href={d.file_url} target="_blank" rel="noopener" style={{ ...card, marginBottom: 10, display: "flex", gap: 12, alignItems: "center", textDecoration: "none", color: "#0a1a30" }}>
-          <span style={{ fontSize: 24 }}>📄</span>
-          <div><div style={{ fontWeight: 700, color: "#1554b8" }}>{d.title}</div><div style={sub}>{d.category}{d.description ? ` · ${d.description}` : ""}</div></div>
+          <span style={{ fontSize: 24 }}>{docFileIcon(d.file_name || d.file_url)}</span>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontWeight: 700, color: "#1554b8" }}>{d.title}</div>
+            {d.description && <div style={sub}>{d.description}</div>}
+            <div style={{ fontSize: 12, color: "#8494a8", marginTop: 2 }}>{docCategoryLabel(d.category)}{d.created_at ? ` · ${new Date(d.created_at).toLocaleDateString("es-VE")}` : ""}</div>
+          </div>
+          <span style={{ color: "#1554b8", fontSize: 13, fontWeight: 700 }}>Abrir ›</span>
         </a>
       ))}
     </div>

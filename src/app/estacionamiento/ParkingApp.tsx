@@ -22,6 +22,18 @@ type Ticket = {
   enteredAt?: string
 }
 
+type Tariff = { freeMinutes: number; ratePerHour: number; dailyCap: number; currency: string }
+
+// "Tarifa: $1.50 por hora · primeros 15 min gratis · tope diario $10"
+function tariffLine(t: Tariff | null): string {
+  if (!t || !(t.ratePerHour > 0)) return ""
+  const s = (t.currency || "USD") === "VES" ? "Bs " : "$"
+  const parts = [`Tarifa: ${s}${t.ratePerHour} por hora`]
+  if (t.freeMinutes > 0) parts.push(`primeros ${t.freeMinutes} min gratis`)
+  if (t.dailyCap > 0) parts.push(`tope diario ${s}${t.dailyCap}`)
+  return parts.join(" · ")
+}
+
 const C = {
   bg: "#0f9bd7",
   ink: "#163243",
@@ -81,6 +93,7 @@ export default function ParkingApp({
   const [igtf, setIgtf] = useState<{ enabled: boolean; rate: number }>({ enabled: false, rate: 0 })
   const [nonFiscal, setNonFiscal] = useState(false)
   const [bcv, setBcv] = useState<number | null>(null)
+  const [tariff, setTariff] = useState<Tariff | null>(null)
 
   // Último ticket recordado + escáner QR (se resuelven en cliente para no
   // desincronizar la hidratación).
@@ -193,6 +206,7 @@ export default function ParkingApp({
         setTicket(data as Ticket)
         setIgtf(data.igtf || { enabled: false, rate: 0 })
         setNonFiscal(data.nonFiscal !== false)
+        if (data.tariff) setTariff(data.tariff as Tariff)
         rememberTicket(String(data.code || c))
         setScreen("ticket")
       }
@@ -220,6 +234,7 @@ export default function ParkingApp({
         setIgtf(data.igtf || { enabled: false, rate: 0 })
         setNonFiscal(data.nonFiscal !== false)
         setCodeInput(data.code)
+        if (data.tariff) setTariff(data.tariff as Tariff)
         rememberTicket(String(data.code || ""))
         setScreen("ticket")
       }
@@ -363,6 +378,10 @@ export default function ParkingApp({
                 {ticket.status === "pagado" && "✅ Pagado"}
                 {ticket.status === "cortesia" && "🎁 Cortesía"}
               </div>
+              {/* El cliente ve la tarifa desde el primer momento (aunque vaya en $0). */}
+              {tariffLine(tariff) && (
+                <div style={{ fontSize: 12, color: "#8494a8", marginTop: 6, background: "#f6fbfe", borderRadius: 8, padding: "6px 10px", display: "inline-block" }}>{tariffLine(tariff)}</div>
+              )}
             </div>
 
             {/* Estado abierto/por_pagar → registrar pago */}

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import ImageField from "@/components/ImageField"
-import { slugify as slugPreview, parseProductsInput, productsToInput, sanitizeProducts } from "@/lib/mallText"
+import { slugify as slugPreview, parseProductsInput, productsToInput, sanitizeProducts, DOC_CATEGORIES, docCategoryLabel, docFileIcon } from "@/lib/mallText"
 
 // Cada vista carga sus datos al montar con el patrón useEffect(() => load(),
 // [load]) (load es un useCallback que hace setState tras el fetch). Es
@@ -1478,10 +1478,19 @@ function EstacionamientoView({ api }: { api: (p: string, i?: RequestInit) => Pro
         <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, flex: 1 }}>Estacionamiento</h1>
         <span style={{ fontSize: 13, color: "#0a6f9c", fontWeight: 700 }}>🅿️ {open.length} adentro</span>
         <a href="/estacionamiento/qr" target="_blank" rel="noopener" style={{ ...btnGhost, textDecoration: "none" }}>🖨️ Póster QR de entrada</a>
-        <button onClick={() => setShowCfg((v) => !v)} style={btnGhost}>Tarifas</button>
       </div>
       {err && <div style={errBox}>{err}</div>}
       {msg && <div style={{ ...errBox, background: "#e6f4ea", color: "#1e874b" }}>{msg}</div>}
+
+      {/* La tarifa vigente siempre a la vista, con su botón de edición al lado. */}
+      <div style={{ background: "#eef7fc", border: "1px solid #cfe6f2", borderRadius: 12, padding: "10px 14px", marginBottom: 12, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <span style={{ fontSize: 14 }}>
+          💲 Tarifa actual: <b>{sym}{cfgForm.rate_per_hour} por hora</b>
+          {cfgForm.free_minutes > 0 && <> · primeros <b>{cfgForm.free_minutes} min gratis</b></>}
+          {cfgForm.daily_cap > 0 && <> · tope diario <b>{sym}{cfgForm.daily_cap}</b></>}
+        </span>
+        <button onClick={() => setShowCfg((v) => !v)} style={{ ...btnMini, marginLeft: "auto" }}>{showCfg ? "Cerrar" : "✏️ Editar tarifas"}</button>
+      </div>
 
       {showCfg && (
         <Card>
@@ -2393,48 +2402,73 @@ function AccesosView({ api }: { api: (p: string, i?: RequestInit) => Promise<Rec
 }
 
 // ---------- Documentos ----------
-type Doc = { id: string; title: string; category: string; file_url: string; file_name: string; visibility: string; created_at: string }
+type Doc = { id: string; title: string; category: string; description?: string; file_url: string; file_name: string; visibility: string; created_at: string }
 
 function DocumentosView({ api }: { api: (p: string, i?: RequestInit) => Promise<Record<string, unknown>> }) {
   const [items, setItems] = useState<Doc[]>([])
   const [err, setErr] = useState("")
-  const [form, setForm] = useState({ title: "", category: "reglamento", url: "", visibility: "residentes" })
+  const emptyDocForm = { title: "", category: "reglamento", description: "", url: "", visibility: "residentes" }
+  const [form, setForm] = useState({ ...emptyDocForm })
   const [busy, setBusy] = useState(false)
+  const [filterCat, setFilterCat] = useState("todos")
   const load = useCallback(async () => {
     try { const d = await api("/api/panel/documents"); setItems((d.documents as Doc[]) || []) } catch (e) { setErr(String((e as Error).message)) }
   }, [api])
   useEffect(() => { load() }, [load])
-  async function addUrl() { if (!form.title.trim()) { setErr("Escribe el título"); return } setBusy(true); setErr(""); try { await api("/api/panel/documents", { method: "POST", body: JSON.stringify(form) }); setForm({ title: "", category: "reglamento", url: "", visibility: "residentes" }); await load() } catch (e) { setErr(String((e as Error).message)) } finally { setBusy(false) } }
+  async function addUrl() { if (!form.title.trim()) { setErr("Escribe el título"); return } setBusy(true); setErr(""); try { await api("/api/panel/documents", { method: "POST", body: JSON.stringify(form) }); setForm({ ...emptyDocForm }); await load() } catch (e) { setErr(String((e as Error).message)) } finally { setBusy(false) } }
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]; if (!file) return
     if (!form.title.trim()) { setErr("Escribe el título antes de subir"); e.target.value = ""; return }
     const reader = new FileReader()
-    reader.onload = async () => { setBusy(true); setErr(""); try { await api("/api/panel/documents", { method: "POST", body: JSON.stringify({ title: form.title, category: form.category, visibility: form.visibility, dataUrl: reader.result, fileName: file.name }) }); setForm({ title: "", category: "reglamento", url: "", visibility: "residentes" }); await load() } catch (e) { setErr(String((e as Error).message)) } finally { setBusy(false) } }
+    reader.onload = async () => { setBusy(true); setErr(""); try { await api("/api/panel/documents", { method: "POST", body: JSON.stringify({ title: form.title, category: form.category, description: form.description, visibility: form.visibility, dataUrl: reader.result, fileName: file.name }) }); setForm({ ...emptyDocForm }); await load() } catch (e) { setErr(String((e as Error).message)) } finally { setBusy(false) } }
     reader.readAsDataURL(file); e.target.value = ""
   }
   async function remove(id: string) { if (!confirm("¿Eliminar documento?")) return; try { await api("/api/panel/documents", { method: "POST", body: JSON.stringify({ kind: "delete", id }) }); await load() } catch (e) { setErr(String((e as Error).message)) } }
+
+  const cats = Array.from(new Set(items.map((d) => d.category || "general")))
+  const shown = filterCat === "todos" ? items : items.filter((d) => (d.category || "general") === filterCat)
+
   return (
     <div>
-      <h1 style={{ fontSize: 22, fontWeight: 800, margin: "4px 0 14px" }}>Documentos</h1>
+      <h1 style={{ fontSize: 22, fontWeight: 800, margin: "4px 0 6px" }}>Documentos</h1>
+      <p style={{ fontSize: 13, color: "#5b6b82", margin: "0 0 14px" }}>La biblioteca del centro comercial: reglamentos, circulares, planillas y actas. Lo marcado &quot;Comerciantes&quot; aparece en la cuenta de cada inquilino (mi-cuenta → Documentos).</p>
       {err && <div style={errBox}>{err}</div>}
       <Card>
+        <div style={{ fontWeight: 700, marginBottom: 8 }}>Publicar documento</div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 12, alignItems: "end" }}>
           <Field label="Título *"><input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Reglamento interno" style={input} /></Field>
-          <Field label="Categoría"><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} style={input}>{["reglamento", "acta", "estado_financiero", "poliza", "contrato", "general"].map((c) => <option key={c} value={c}>{c}</option>)}</select></Field>
-          <Field label="Visible para"><select value={form.visibility} onChange={(e) => setForm({ ...form, visibility: e.target.value })} style={input}><option value="residentes">Residentes</option><option value="junta">Solo junta</option></select></Field>
-          <Field label="URL (opcional)"><input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://…" style={input} /></Field>
+          <Field label="Categoría"><select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} style={input}>{DOC_CATEGORIES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}</select></Field>
+          <Field label="Visible para"><select value={form.visibility} onChange={(e) => setForm({ ...form, visibility: e.target.value })} style={input}><option value="residentes">Comerciantes</option><option value="junta">Solo administración</option></select></Field>
+          <Field label="URL (si ya está en internet)"><input value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://…" style={input} /></Field>
         </div>
-        <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-          <button onClick={addUrl} disabled={busy} style={btnPrimary}>Agregar por URL</button>
-          <label style={{ ...btnGhost, cursor: "pointer" }}>{busy ? "Subiendo…" : "⬆️ Subir archivo"}<input type="file" onChange={onFile} style={{ display: "none" }} disabled={busy} /></label>
+        <div style={{ marginTop: 10 }}>
+          <Field label="Descripción (opcional)"><input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="De qué trata y a quién aplica" style={input} /></Field>
+        </div>
+        <div style={{ display: "flex", gap: 10, marginTop: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <label style={{ ...btnPrimary, cursor: "pointer" }}>{busy ? "Subiendo…" : "⬆️ Subir archivo (PDF, imagen, Excel…)"}<input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,image/*" onChange={onFile} style={{ display: "none" }} disabled={busy} /></label>
+          <button onClick={addUrl} disabled={busy} style={btnGhost}>Agregar por URL</button>
+          <span style={{ fontSize: 12, color: "#8494a8" }}>Hasta 12 MB por archivo.</span>
         </div>
       </Card>
       <div style={{ marginTop: 14 }}><Card>
-        {items.length === 0 ? <p style={{ color: "#5b6b82", margin: 0 }}>Sin documentos.</p> : items.map((d) => (
-          <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", borderBottom: "1px solid #f0f3f8" }}>
-            <span>📄</span><a href={d.file_url} target="_blank" rel="noopener" style={{ fontWeight: 600, color: "#1554b8", textDecoration: "none" }}>{d.title}</a>
-            <span style={{ fontSize: 12, color: "#8494a8" }}>{d.category} · {d.visibility}</span>
-            <button onClick={() => remove(d.id)} style={{ ...btnMiniDanger, marginLeft: "auto" }}>Eliminar</button>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+          <button onClick={() => setFilterCat("todos")} style={{ ...chip, background: filterCat === "todos" ? "#1554b8" : "#eef3fb", color: filterCat === "todos" ? "#fff" : "#1554b8", border: 0 }}>Todos ({items.length})</button>
+          {cats.map((c) => (
+            <button key={c} onClick={() => setFilterCat(c)} style={{ ...chip, background: filterCat === c ? "#1554b8" : "#eef3fb", color: filterCat === c ? "#fff" : "#1554b8", border: 0 }}>{docCategoryLabel(c)} ({items.filter((d) => (d.category || "general") === c).length})</button>
+          ))}
+        </div>
+        {shown.length === 0 ? <p style={{ color: "#5b6b82", margin: 0 }}>Sin documentos en esta categoría.</p> : shown.map((d) => (
+          <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: "1px solid #f0f3f8" }}>
+            <span style={{ fontSize: 22 }}>{docFileIcon(d.file_name || d.file_url)}</span>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <a href={d.file_url} target="_blank" rel="noopener" style={{ fontWeight: 700, color: "#1554b8", textDecoration: "none" }}>{d.title}</a>
+              {d.description && <div style={{ fontSize: 13, color: "#5b6b82" }}>{d.description}</div>}
+              <div style={{ fontSize: 12, color: "#8494a8", marginTop: 2 }}>
+                {docCategoryLabel(d.category)} · {d.visibility === "junta" ? "Solo administración" : "Comerciantes"} · {d.created_at ? new Date(d.created_at).toLocaleDateString("es-VE") : ""}
+              </div>
+            </div>
+            <a href={d.file_url} target="_blank" rel="noopener" style={{ ...btnMini, textDecoration: "none" }}>Abrir</a>
+            <button onClick={() => remove(d.id)} style={btnMiniDanger}>Eliminar</button>
           </div>
         ))}
       </Card></div>

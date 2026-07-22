@@ -1,0 +1,54 @@
+MENSAJE PARA ENVIAR POR WHATSAPP
+================================
+Un solo mensaje largo, en texto plano, sin asteriscos ni iconos.
+Puedes enviarlo completo o partirlo donde estan las lineas en blanco.
+
+------------------------------------------------------------
+
+Hola, disculpe que no le habia mandado la informacion. Tambien me di cuenta de que nunca le habia dado realmente la explicacion de como funciona el sistema, tanto interna como externamente, y cual es la idea de como va a funcionar. Se la dejo completa aqui, con los enlaces para que vaya probando cada cosa mientras lee.
+
+Lo primero: el sistema es una sola plataforma con tres caras. La parte publica que ve cualquier visitante, la cuenta privada de cada comerciante, y el panel de administracion desde donde usted controla todo el centro comercial. Todo esta conectado: lo que pasa en una parte se refleja en las otras.
+
+PARTE PUBLICA, lo que ve el visitante:
+
+1. El portal del centro comercial: https://concepto-la-granja.vercel.app/portal
+Ahi esta el directorio completo de tiendas con buscador y filtros por rubro, las promociones vigentes de cada local visibles en su tarjeta, los servicios del centro comercial y la seccion de alquiler de locales que manda directo a WhatsApp.
+
+2. Cada local tiene su propia pagina web dentro del portal, con su color, su historia, su horario y sus productos con foto y precio, mas botones de WhatsApp, llamada e Instagram. Vea estos ejemplos:
+https://concepto-la-granja.vercel.app/tienda/capitan-grill
+https://concepto-la-granja.vercel.app/tienda/supermercados-kalea
+Esa pagina la puede administrar usted desde el panel o el propio comerciante desde su cuenta. Es un beneficio real que el centro comercial le entrega a cada inquilino.
+
+3. El mapa por niveles: https://concepto-la-granja.vercel.app/mapa
+Planta baja, mezzanina, feria y torre medica; los locales con pagina propia se abren desde ahi.
+
+4. El estacionamiento autoservicio: https://concepto-la-granja.vercel.app/estacionamiento
+El visitante escanea un afiche QR al entrar y genera su propio ticket. El ticket le muestra la tarifa vigente, el tiempo que lleva y el monto en vivo. Antes de salir paga desde su telefono: pago movil, tarjeta, efectivo o transferencia; si paga en divisas en efectivo el sistema suma el IGTF y muestra el equivalente en bolivares a tasa del BCV. El vigilante confirma el pago desde el panel y listo. El afiche QR para la entrada ya viene listo para imprimir desde el panel.
+
+5. La torre medica: https://concepto-la-granja.vercel.app/consultorios
+Los pacientes ven los doctores con sus horarios y reservan su cita en linea eligiendo el cupo. El sistema no deja reservar dos veces el mismo cupo.
+
+6. Atencion al cliente: https://concepto-la-granja.vercel.app/contacto
+Reclamos, sugerencias y objetos perdidos que llegan ordenados a su panel con estado y prioridad.
+
+PARTE DEL COMERCIANTE:
+
+Cada inquilino entra con su telefono y un codigo de acceso en https://concepto-la-granja.vercel.app/mi-cuenta y desde ahi ve su estado de cuenta con canon, condominio y saldo, reporta sus pagos con referencia para que administracion los confirme, edita su pagina web, reporta las ventas del mes si su contrato tiene renta porcentual (el sistema le calcula al momento cuanto le corresponde), reporta incidencias de mantenimiento, lee los comunicados, vota en consultas y descarga los documentos del centro comercial: reglamento, circulares y planillas.
+
+PARTE INTERNA, su panel de administracion:
+
+Se entra con clave privada en https://concepto-la-granja.vercel.app/panel y tiene dos grandes bloques.
+
+El bloque de dinero: el resumen del mes en una pantalla (ocupacion, morosidad, ingresos por canon, condominio, renta porcentual, estacionamiento y publicidad); los locales y comerciantes; los contratos con canon, deposito, vigencia, mora y renta porcentual con minimo garantizado, con alerta de contratos por vencer; las ventas de cada local para la renta porcentual; la emision del cobro del mes con un solo boton (cada local recibe su cargo y su recibo); el estado de cuenta con los pagos reportados por confirmar; y la configuracion fiscal, que hoy trabaja en modo recibos y queda lista para facturacion cuando usted decida. Un detalle importante: si su modelo no usa alicuotas, se desactivan con un boton y el cobro queda solo con canon y renta.
+
+El bloque de operacion: el estacionamiento con la tarifa siempre a la vista y editable, los vehiculos adentro con el monto en vivo y la confirmacion de pagos en la salida; la publicidad con sus espacios y contrataciones; los consultorios con doctores, horarios y la agenda que entra desde la pagina publica; la bitacora de seguridad con rondas e incidentes; la fidelidad de clientes frecuentes; los documentos del centro comercial; y el dia a dia completo con comunicados, asambleas, accesos, areas comunes e incidencias de mantenimiento.
+
+EN QUE FASE ESTA Y COMO SE VE A FUTURO:
+
+Hoy el sistema esta en fase beta, funcionando completo con un centro comercial de demostracion (41 locales, contratos, cobros, estacionamiento y citas) para que usted lo recorra tal como va a operar. Cuando decida arrancar con nosotros, el paso siguiente es cargarlo con su informacion real: sus locales, sus contratos y sus tarifas, con capacitacion para su equipo. De ahi en adelante crece con dominio propio del centro comercial, cuentas separadas por rol para su personal (administracion, caja, vigilancia, mantenimiento), facturacion fiscal homologada cuando la necesite, ventas automaticas de los locales que usen el punto de venta integrado para que la renta porcentual se calcule sola, la aplicacion instalable en el telefono con notificaciones, y reportes gerenciales mensuales para la junta.
+
+Para que tenga todo esto ordenado y bien presentado, le preparamos una guia visual del sistema, area por area, con los enlaces para probar cada cosa:
+
+https://concepto-la-granja.vercel.app/guia
+
+Cualquier duda me escribe por aqui y con gusto le hago un recorrido en vivo cuando le convenga.

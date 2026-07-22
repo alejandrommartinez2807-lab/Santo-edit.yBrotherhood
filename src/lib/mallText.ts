@@ -44,6 +44,38 @@ export function digitsOnly(v: string): string {
   return String(v ?? "").replace(/[^\d]/g, "")
 }
 
+// Documentos del centro comercial -------------------------------------------
+// Panel y portal del comerciante comparten estas etiquetas (la BD guarda la clave).
+
+export const DOC_CATEGORIES = [
+  { key: "reglamento", label: "Reglamento" },
+  { key: "circular", label: "Circular" },
+  { key: "acta", label: "Acta" },
+  { key: "estado_financiero", label: "Estado financiero" },
+  { key: "poliza", label: "Póliza" },
+  { key: "contrato", label: "Contrato" },
+  { key: "planilla", label: "Planilla / formato" },
+  { key: "manual", label: "Manual" },
+  { key: "general", label: "General" },
+] as const
+
+export function docCategoryLabel(key: string): string {
+  const found = DOC_CATEGORIES.find((c) => c.key === key)
+  if (found) return found.label
+  const clean = String(key ?? "").replace(/_/g, " ").trim()
+  return clean ? clean.charAt(0).toUpperCase() + clean.slice(1) : "General"
+}
+
+// Icono según el tipo de archivo (por extensión de la URL o nombre).
+export function docFileIcon(urlOrName: string): string {
+  const ext = String(urlOrName ?? "").split("?")[0].split(".").pop()?.toLowerCase() || ""
+  if (ext === "pdf") return "📕"
+  if (["png", "jpg", "jpeg", "webp", "gif"].includes(ext)) return "🖼️"
+  if (["xls", "xlsx", "csv"].includes(ext)) return "📊"
+  if (["doc", "docx"].includes(ext)) return "📝"
+  return "📄"
+}
+
 // Productos destacados del micrositio --------------------------------------
 // Se guardan en units.featured_products como [{name, price, image, description}].
 // price = 0 significa "sin precio publicado" (se muestra sólo el nombre).
