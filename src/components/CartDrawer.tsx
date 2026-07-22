@@ -521,6 +521,15 @@ export default function CartDrawer({
     // La cotización por km depende de la sede (cada una tiene su ubicación).
     setDistanceQuote(null);
     setDistanceQuoteError(null);
+
+    // Si el cliente YA marcó su punto de entrega, se recotiza solo contra la
+    // sede nueva (pedido del cliente 2026-07-21: antes quedaba sin costo y
+    // había que volver a marcar la ubicación a mano).
+    const savedMapsUrl = customerMapsUrl.trim();
+    if (savedMapsUrl) {
+      void requestDistanceQuote({ mapsUrl: savedMapsUrl });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al cambiar de sede
   }, [branchSelection.selectedBranchId]);
 
   useEffect(() => {
@@ -843,7 +852,8 @@ export default function CartDrawer({
       ignore = true;
       clearTimeout(timer);
     };
-  }, [isOpen, isPublicDeliveryAvailable]);
+    // La sede define enabled/tiers del envío por km: al cambiarla se recargan.
+  }, [isOpen, isPublicDeliveryAvailable, branchSelection.selectedBranchId]);
 
   // Al abrir el carrito se refrescan los pedidos recientes del dispositivo y
   // se consulta su estado: los que el local ya marcó listos/entregados (o
@@ -1251,7 +1261,11 @@ export default function CartDrawer({
     const startGpsRequest = () => {
       setIsQuotingDistance(true);
       setDistanceQuoteError(null);
-      setGpsAccuracyNotice(null);
+      // En iPhone/Safari el primer fix suele ser burdo: se avisa que estamos
+      // afinando para que el cliente no crea que ya quedó marcado.
+      setGpsAccuracyNotice(
+        "Leyendo tu GPS para afinar el punto (puede tardar unos segundos)…",
+      );
 
       // getCurrentPosition entrega el PRIMER fix disponible, que en teléfonos
       // suele ser la posición aproximada por wifi/antena (±500–2000 m) antes
@@ -1288,11 +1302,19 @@ export default function CartDrawer({
         void requestDistanceQuote({ lat, lng });
 
         // Con precisión pobre (interiores, GPS apagado, laptop) el punto
-        // puede caer lejos: se avisa para que lo verifique en el mapa.
+        // puede caer lejos: se avisa para que lo verifique en el mapa. Con
+        // precisión media (35–150 m, típico en iPhone dentro de casa) también
+        // se pide confirmar el pin, que es donde más se equivocaba.
         if (accuracy > 150) {
           setGpsAccuracyNotice(
-            `Tu ubicación llegó con precisión baja (±${accuracy} m). Revisa en el mapa que el punto marcado sea tu dirección; si no coincide, pega tu link de Google Maps.`,
+            `Tu ubicación llegó con precisión baja (±${accuracy} m). Revisa en el mapa que el punto marcado sea tu dirección; si no coincide, tócalo y ajústalo, o pega tu link de Google Maps.`,
           );
+        } else if (accuracy > GOOD_ACCURACY_M) {
+          setGpsAccuracyNotice(
+            `Punto marcado con precisión de ±${accuracy} m. Confirma en el mini-mapa que sea tu dirección exacta y ajústalo si hace falta.`,
+          );
+        } else {
+          setGpsAccuracyNotice(null);
         }
       };
 
