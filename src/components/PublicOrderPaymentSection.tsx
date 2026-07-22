@@ -38,6 +38,11 @@ type OrderPaymentInfo = {
   exchangeRate: number;
   paymentRegistered: boolean;
   createdAt: string;
+  orderStatus: string;
+  // El servidor decide si a este pedido le aplica la anulación automática
+  // (Pick up/Delivery con método electrónico): solo ahí van el contador y
+  // los recordatorios escalonados — en mesa o efectivo serían amenazas falsas.
+  autoCancelApplies: boolean;
   proofs: PublicProof[];
 };
 
@@ -199,6 +204,8 @@ export default function PublicOrderPaymentSection({
           exchangeRate: Number(data.exchangeRate || 0),
           paymentRegistered: data.paymentRegistered === true,
           createdAt: String(data.createdAt || ""),
+          orderStatus: String(data.orderStatus || ""),
+          autoCancelApplies: data.autoCancelApplies === true,
           proofs: Array.isArray(data.proofs) ? data.proofs : [],
         });
       }
@@ -292,8 +299,12 @@ export default function PublicOrderPaymentSection({
   );
 
   // Minutos desde que se registró el pedido (para el recordatorio escalonado
-  // 5/10/15/20 min y el contador de anulación automática).
-  const paymentPendingReminder = !hasConfirmedPayment && !hasPendingProof;
+  // 5/10/15/20 min y el contador de anulación automática). SOLO aplica a los
+  // pedidos donde la anulación automática existe de verdad (Pick up/Delivery
+  // con método electrónico, lo decide el servidor): en mesa o efectivo el
+  // cliente paga al final y el contador sería una amenaza falsa.
+  const paymentPendingReminder =
+    !hasConfirmedPayment && !hasPendingProof && info?.autoCancelApplies === true;
   const elapsedMinutes = (() => {
     if (!info?.createdAt) return 0;
     const createdAt = new Date(info.createdAt);
@@ -312,6 +323,21 @@ export default function PublicOrderPaymentSection({
 
     return () => window.clearInterval(timer);
   }, [paymentPendingReminder, info?.createdAt]);
+
+  // Refresco periódico del estado de pago: si caja confirma (o el pedido se
+  // anula) mientras el cliente tiene la página abierta, el banner y el
+  // contador se apagan solos en vez de quedarse congelados en el primer
+  // snapshot.
+  useEffect(() => {
+    if (isLoading || !info || hasConfirmedPayment) return;
+    if (info.orderStatus === "Cancelado") return;
+
+    const timer = window.setInterval(() => {
+      void loadInfo();
+    }, 45_000);
+
+    return () => window.clearInterval(timer);
+  }, [isLoading, info, hasConfirmedPayment, loadInfo]);
 
   useEffect(() => {
     if (!paymentPendingReminder || elapsedMinutes <= 0) return;
@@ -604,6 +630,9 @@ export default function PublicOrderPaymentSection({
   }
 
   if (isLoading || !info || !isProofsEnabled) return null;
+  // Pedido anulado: nunca pedirle plata a un pedido muerto (el padre muestra
+  // el aviso rojo de cancelación).
+  if (info.orderStatus === "Cancelado") return null;
 
   return (
     <div className="mt-4 rounded-[2rem] border-4 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-6">

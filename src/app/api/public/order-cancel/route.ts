@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { getBusinessConfig, getPaymentProofs } from "@/lib/orders"
+import { revertInventoryConsumptionForOrder } from "@/lib/ordersInventory"
 import { sendOrderCancelledStaffPush } from "@/lib/orderPushNotifications"
 import { writeAuditLog } from "@/lib/audit"
 import { enforceRateLimit } from "@/lib/rateLimit"
@@ -99,12 +100,15 @@ export async function POST(request: NextRequest) {
       ? `${String(order.customer_note).trim()} | ${reasonNote}`
       : reasonNote
 
-    // Lock optimista: solo cancela si SIGUE en "Nuevo".
+    // Lock optimista: solo cancela si SIGUE en "Nuevo" Y sigue sin cobro (el
+    // cobro de caja no cambia el status; el WHERE re-verifica los montos).
     const { data: updatedRows, error: updateError } = await supabase
       .from("orders")
       .update({ status: "Cancelado", customer_note: nextNote })
       .eq("id", orderId)
       .eq("status", "Nuevo")
+      .eq("amount_received_usd", 0)
+      .eq("amount_received_ves", 0)
       .select("id")
 
     if (updateError) throw new Error(updateError.message)
@@ -117,6 +121,13 @@ export async function POST(request: NextRequest) {
         { status: 409 },
       )
     }
+
+    // El pedido estaba en "Nuevo" (cocina no preparó nada): el consumo
+    // descontado al crearlo vuelve al inventario, con rastro de movimientos.
+    await revertInventoryConsumptionForOrder(
+      orderId,
+      String(order.branch_id || "") || null,
+    ).catch(() => undefined)
 
     await writeAuditLog({
       action: "order.status.updated",

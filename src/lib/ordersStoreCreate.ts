@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import {
   cleanText,
@@ -25,9 +26,13 @@ type LoadOrderWithItems = (
 ) => Promise<LocalOrder>
 
 function generateOrderId(): string {
+  // El id del pedido funciona como "capacidad": quien lo tiene puede ver el
+  // seguimiento, reportar pago y (si sigue en Nuevo) cancelarlo. Por eso la
+  // parte aleatoria es criptográfica y larga (Math.random + 5 chars era
+  // adivinable por fuerza bruta).
   const stamp = Date.now().toString(36)
-  const rand = Math.random().toString(36).slice(2, 7)
-  return `ord-${stamp}-${rand}`
+  const rand = randomBytes(9).toString("base64url").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 10)
+  return `ord-${stamp}-${rand || Math.random().toString(36).slice(2, 12)}`
 }
 
 export async function createOrderInStore(

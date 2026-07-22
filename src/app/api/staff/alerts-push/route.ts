@@ -102,11 +102,23 @@ export async function POST(request: NextRequest) {
     }
 
     // El DUEÑO recibe alertas de TODAS las sedes (branch null = global);
-    // el encargado queda amarrado a su sede activa.
-    const saved = await saveStaffAlertPushSubscription(
-      subscription,
-      roleCheck.access.role === "owner" ? null : await resolveBranchId(request),
-    )
+    // el encargado queda amarrado a su sede activa. branch null es además el
+    // discriminador de "solo dueño" (códigos de anulación): un encargado sin
+    // sede resoluble NO se suscribe con null — se le pide reintentar.
+    const managerBranchId =
+      roleCheck.access.role === "owner" ? null : await resolveBranchId(request)
+
+    if (roleCheck.access.role !== "owner" && !managerBranchId) {
+      return noStoreResponse(
+        {
+          ok: false,
+          error: "No se pudo resolver tu sede activa. Recarga la página e intenta de nuevo.",
+        },
+        { status: 409 },
+      )
+    }
+
+    const saved = await saveStaffAlertPushSubscription(subscription, managerBranchId)
 
     if (!saved) {
       return noStoreResponse(

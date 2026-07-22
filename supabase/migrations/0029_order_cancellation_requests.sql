@@ -29,6 +29,13 @@ create table if not exists order_cancellation_requests (
 create index if not exists idx_order_cancellation_requests_order
   on order_cancellation_requests(order_id);
 
+-- Una sola solicitud pendiente por pedido: dos clics simultáneos no pueden
+-- crear dos códigos distintos (el segundo insert falla y el API reusa la
+-- solicitud ganadora, así el dueño siempre dicta UN solo código).
+create unique index if not exists uq_order_cancellation_pending_per_order
+  on order_cancellation_requests(order_id)
+  where status = 'pending';
+
 create index if not exists idx_order_cancellation_requests_status
   on order_cancellation_requests(status, created_at desc);
 

@@ -65,21 +65,34 @@ export async function updateOrderPaymentInStore(
     updateRow.charged_by_role = cleanText(payment.chargedBy?.role) || null
   }
 
+  // Nunca cobrar sobre un pedido ANULADO (la anulación automática o del
+  // cliente pudo ganar la carrera con una tarjeta de caja desactualizada):
+  // el WHERE lo excluye y 0 filas se reporta como error claro.
   const runUpdate = async () => {
-    let query = supabase.from("orders").update(updateRow).eq("id", orderId)
+    let query = supabase
+      .from("orders")
+      .update(updateRow)
+      .eq("id", orderId)
+      .neq("status", "Cancelado")
+      .select("id")
     if (branchId) query = query.eq("branch_id", branchId)
     return query
   }
 
-  let { error } = await runUpdate()
+  let { data: updatedRows, error } = await runUpdate()
 
   // Migración 0022 sin aplicar: reintenta sin atribución (el cobro no se pierde).
   if (error && chargedByName && isMissingColumnError(error)) {
     attributionKeys.forEach((key) => delete updateRow[key])
-    ;({ error } = await runUpdate())
+    ;({ data: updatedRows, error } = await runUpdate())
   }
 
   if (error) throw new Error(error.message)
+  if (!updatedRows?.length) {
+    throw new Error(
+      "Este pedido está ANULADO: no se puede registrar un cobro. Refresca la lista de caja.",
+    )
+  }
 
   // Si el pedido pertenece a una cuenta abierta, recalcular sus totales.
   if (current.openAccountId) {

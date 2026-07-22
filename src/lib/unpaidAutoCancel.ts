@@ -1,5 +1,8 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { getBusinessConfig, getPaymentProofs } from "@/lib/orders"
+import { isElectronicPaymentMethod } from "@/lib/paymentOptions"
+import { getModulePlanAccess } from "@/lib/localPlans"
+import { revertInventoryConsumptionForOrder } from "@/lib/ordersInventory"
 import { sendOrderCancelledStaffPush } from "@/lib/orderPushNotifications"
 import { writeAuditLog } from "@/lib/audit"
 import { captureError } from "@/lib/monitoring"
@@ -35,12 +38,18 @@ export async function maybeAutoCancelUnpaidOrder(
       return { cancelled: false }
     }
 
+    // Sin el módulo de comprobantes el cliente NO TIENE cómo reportar su
+    // pago: anular por "no reportó" sería una trampa sin salida.
+    if (!getModulePlanAccess(config, "paymentProofs").effectiveEnabled) {
+      return { cancelled: false }
+    }
+
     const supabase = getSupabaseAdmin()
     // branch-exempt: lookup puntual por id único e imprevisible (ord-...).
     const { data: order, error } = await supabase
       .from("orders")
       .select(
-        "id,branch_id,status,order_type,created_at,customer_note,customer_name,amount_received_usd,amount_received_ves,seq,branch_seq,branch_code,is_training",
+        "id,branch_id,status,order_type,payment_method,registered_by_name,created_at,customer_note,customer_name,amount_received_usd,amount_received_ves,seq,branch_seq,branch_code,is_training",
       )
       .eq("id", orderId)
       .maybeSingle()
@@ -58,6 +67,13 @@ export async function maybeAutoCancelUnpaidOrder(
       !isPrepayType ||
       alreadyCharged ||
       order.is_training === true ||
+      // Efectivo / "Por confirmar": el cliente paga al retirar o recibir y no
+      // tiene captura que reportar — la anulación automática NO aplica. Solo
+      // métodos electrónicos (pago móvil, transferencia, Zelle…) prepagan.
+      !isElectronicPaymentMethod(order.payment_method) ||
+      // Pedidos registrados por el STAFF (teléfono/mostrador): el acuerdo de
+      // pago es con el local, no con el flujo web de prepago.
+      String(order.registered_by_name || "").trim() !== "" ||
       minutesSince(order.created_at) < limitMinutes
     ) {
       return { cancelled: false }
@@ -79,16 +95,47 @@ export async function maybeAutoCancelUnpaidOrder(
       ? `${String(order.customer_note).trim()} | ${reasonNote}`
       : reasonNote
 
-    // Lock optimista: solo anula si SIGUE en "Nuevo" (si caja lo movió en el
-    // medio, no se toca).
+    // Lock optimista: solo anula si SIGUE en "Nuevo" Y sigue sin cobro (el
+    // cobro de caja no cambia el status, así que el WHERE re-verifica los
+    // montos: si caja cobró en la ventana, 0 filas y no se toca).
     const { data: updatedRows, error: updateError } = await supabase
       .from("orders")
       .update({ status: "Cancelado", customer_note: nextNote })
       .eq("id", orderId)
       .eq("status", "Nuevo")
+      .eq("amount_received_usd", 0)
+      .eq("amount_received_ves", 0)
       .select("id")
 
     if (updateError || !updatedRows?.length) return { cancelled: false }
+
+    // Compensación anti-carrera: si un comprobante aterrizó entre la lectura
+    // de proofs y el UPDATE, se revierte la anulación (el cliente SÍ reportó).
+    const lateProofs = await getPaymentProofs(
+      { orderId },
+      String(order.branch_id || "") || null,
+    ).catch(() => [])
+    const hasLateProof = lateProofs.some(
+      (proof) => String(proof.status || "") !== "Rechazado",
+    )
+    if (hasLateProof) {
+      await supabase
+        .from("orders")
+        .update({
+          status: "Nuevo",
+          customer_note: String(order.customer_note || "").trim(),
+        })
+        .eq("id", orderId)
+        .eq("status", "Cancelado")
+      return { cancelled: false }
+    }
+
+    // El pedido nunca entró a cocina (estaba en "Nuevo"): los ingredientes no
+    // se usaron, así que el consumo descontado al crearlo vuelve al stock.
+    await revertInventoryConsumptionForOrder(
+      orderId,
+      String(order.branch_id || "") || null,
+    ).catch(() => undefined)
 
     await writeAuditLog({
       action: "order.status.updated",

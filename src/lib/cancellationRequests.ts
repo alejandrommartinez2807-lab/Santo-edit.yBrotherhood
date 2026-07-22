@@ -41,11 +41,21 @@ function isExpired(createdAt: string): boolean {
   return Date.now() - created.getTime() > REQUEST_TTL_MINUTES * 60_000
 }
 
-/** ¿Está aplicada la migración 0029? (con caché por proceso). */
+/** ¿Está aplicada la migración 0029? (con caché por proceso). El "false" se
+ * re-verifica cada pocos minutos: si el dueño aplica la migración con el
+ * deploy ya vivo, el control se activa solo sin redeploy. */
 let availabilityCache: boolean | null = null
+let availabilityCheckedAt = 0
+const AVAILABILITY_RECHECK_MS = 5 * 60_000
 
 export async function isCancellationApprovalAvailable(): Promise<boolean> {
-  if (availabilityCache !== null) return availabilityCache
+  if (availabilityCache === true) return true
+  if (
+    availabilityCache === false &&
+    Date.now() - availabilityCheckedAt < AVAILABILITY_RECHECK_MS
+  ) {
+    return false
+  }
 
   try {
     const supabase = getSupabaseAdmin()
@@ -57,6 +67,7 @@ export async function isCancellationApprovalAvailable(): Promise<boolean> {
     if (error) {
       if (isMissingTableError(error)) {
         availabilityCache = false
+        availabilityCheckedAt = Date.now()
         return false
       }
       // Error transitorio: no cachear, asumir disponible para no saltarse
@@ -72,19 +83,36 @@ export async function isCancellationApprovalAvailable(): Promise<boolean> {
   }
 }
 
+export type CreatedCancellationRequest = {
+  request: CancellationRequest
+  // false = se reusó una solicitud vigente (el dueño YA recibió ese código):
+  // el llamador no debe volver a notificar (evita spam de push/WhatsApp).
+  isNew: boolean
+}
+
+export type CreateCancellationResult =
+  | { ok: true; created: CreatedCancellationRequest }
+  // La tabla no existe (migración 0029 sin aplicar): degradar al flujo viejo.
+  | { ok: false; reason: "unavailable" }
+  // Error inesperado (BD caída, timeout): NO degradar — el llamador debe
+  // negarse a anular para no saltarse el control del dueño por un parpadeo.
+  | { ok: false; reason: "error" }
+
 export async function createCancellationRequest(input: {
   orderId: string
   branchId?: string | null
   displayNumber: string
   reason: string
   requestedBy: string
-}): Promise<CancellationRequest | null> {
+}): Promise<CreateCancellationResult> {
   try {
     const supabase = getSupabaseAdmin()
 
-    // Una solicitud pendiente vigente por pedido: si ya existe, se reusa (el
-    // dueño ya tiene ese código; generar otro solo confunde).
-    const { data: existingRows } = await supabase
+    // Una solicitud pendiente VIGENTE y con intentos disponibles por pedido:
+    // si ya existe, se reusa (el dueño ya tiene ese código; generar otro solo
+    // confunde). Las agotadas por intentos se expiran aquí mismo para que
+    // "pedir la anulación de nuevo" genere de verdad un código nuevo.
+    const { data: existingRows, error: existingError } = await supabase
       .from("order_cancellation_requests")
       .select("*")
       .eq("order_id", input.orderId)
@@ -92,9 +120,21 @@ export async function createCancellationRequest(input: {
       .order("created_at", { ascending: false })
       .limit(1)
 
+    if (existingError && isMissingTableError(existingError)) {
+      return { ok: false, reason: "unavailable" }
+    }
+
     const existing = existingRows?.[0] as Record<string, unknown> | undefined
     if (existing && !isExpired(String(existing.created_at || ""))) {
-      return rowToRequest(existing)
+      if (Number(existing.attempts || 0) < MAX_ATTEMPTS) {
+        return { ok: true, created: { request: rowToRequest(existing), isNew: false } }
+      }
+
+      // Agotada por intentos: se marca expirada y se genera una nueva.
+      await supabase
+        .from("order_cancellation_requests")
+        .update({ status: "expired" })
+        .eq("id", String(existing.id))
     }
 
     const code = String(randomInt(0, 1_000_000)).padStart(6, "0")
@@ -116,14 +156,35 @@ export async function createCancellationRequest(input: {
       .single()
 
     if (error) {
-      if (isMissingTableError(error)) return null
+      if (isMissingTableError(error)) return { ok: false, reason: "unavailable" }
+
+      // Conflicto con el índice único parcial (dos solicitudes a la vez):
+      // la otra petición ya creó la solicitud; se reusa ESA (un solo código).
+      if (String((error as { code?: string }).code || "") === "23505") {
+        const { data: raceRows } = await supabase
+          .from("order_cancellation_requests")
+          .select("*")
+          .eq("order_id", input.orderId)
+          .eq("status", "pending")
+          .order("created_at", { ascending: false })
+          .limit(1)
+
+        const raceRow = raceRows?.[0] as Record<string, unknown> | undefined
+        if (raceRow) {
+          return { ok: true, created: { request: rowToRequest(raceRow), isNew: false } }
+        }
+      }
+
       throw new Error(error.message)
     }
 
-    return rowToRequest(data as Record<string, unknown>)
+    return {
+      ok: true,
+      created: { request: rowToRequest(data as Record<string, unknown>), isNew: true },
+    }
   } catch (error) {
     captureError(error, { route: "lib/cancellationRequests", action: "create" })
-    return null
+    return { ok: false, reason: "error" }
   }
 }
 
@@ -175,9 +236,18 @@ export async function verifyCancellationCode(
 
   const attempts = Number(row.attempts || 0)
   if (attempts >= MAX_ATTEMPTS) {
+    // Se expira la solicitud aquí mismo: así "pedir la anulación de nuevo"
+    // genera un código NUEVO en vez de devolver esta fila bloqueada (antes
+    // quedaba pending y ni el código correcto servía por 2 horas).
+    await supabase
+      .from("order_cancellation_requests")
+      .update({ status: "expired" })
+      .eq("id", String(row.id))
+
     return {
       ok: false,
-      error: "Demasiados intentos con código equivocado. Pide la anulación de nuevo.",
+      error:
+        "Demasiados intentos con código equivocado. Pide la anulación de nuevo: se generará un código nuevo para el dueño.",
     }
   }
 

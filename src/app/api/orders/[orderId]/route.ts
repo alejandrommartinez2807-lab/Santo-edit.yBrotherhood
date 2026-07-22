@@ -469,6 +469,31 @@ export async function PATCH(
     const inventoryWasUsed =
       typeof body.inventoryWasUsed === "boolean" ? body.inventoryWasUsed : null
 
+    // Permisos ANTES del flujo de código del dueño: un rol que no puede
+    // anular (cocina, delivery, promotor…) no debe poder crear solicitudes ni
+    // dispararle push/WhatsApp al dueño (quedaban solicitudes fantasma).
+    if (!canRoleUpdateStatus(access.role, status)) {
+      return forbiddenResponse("Esta clave no puede cambiar el pedido a ese estado")
+    }
+
+    const moduleKey = getStatusModuleForRole(access.role)
+    const moduleCheck = await checkModuleAvailability(
+      moduleKey,
+      moduleKey === "cashier"
+        ? "Caja"
+        : moduleKey === "kitchen"
+          ? "Cocina"
+          : "El panel de pedidos"
+    )
+
+    if (!moduleCheck.ok) {
+      return moduleCheck.response
+    }
+
+    if (!canLocalAccessUseModule(access, moduleKey)) {
+      return forbiddenResponse("Este usuario no tiene permiso para este módulo")
+    }
+
     // Anulación con código del DUEÑO (config cancellationApprovalRequired +
     // migración 0029): los roles que no son dueño necesitan el código de un
     // solo uso que el sistema le envía SOLO al dueño (push a sus equipos,
@@ -506,7 +531,7 @@ export async function PATCH(
                 : orderId
 
           const actor = getLocalAccessAuditActor(access)
-          const cancellationRequest = await createCancellationRequest({
+          const createResult = await createCancellationRequest({
             orderId,
             branchId,
             displayNumber,
@@ -516,43 +541,62 @@ export async function PATCH(
               getRoleLabel(access.role),
           })
 
-          if (cancellationRequest) {
-            const codeMessage = `Código de anulación: ${cancellationRequest.code}\nPedido ${displayNumber} · Motivo: ${cancelReason}\nSolicitado por: ${cancellationRequest.requestedBy}\nSi estás de acuerdo, pásale el código al trabajador.`
-
-            await sendOwnerOnlyPush({
-              title: `Anulación pendiente · ${displayNumber}`,
-              body: codeMessage,
-              url: "/local-santo/dueno",
-            }).catch(() => undefined)
-
-            const ownerWhatsapp = String(
-              cancelConfig.ownerCancelNotifyWhatsapp || "",
-            ).trim()
-            if (ownerWhatsapp && isWhatsAppBusinessConfigured()) {
-              await sendWhatsAppBusinessText(ownerWhatsapp, codeMessage).catch(
-                () => undefined,
-              )
-            }
-
-            await writeAuditLog({
-              action: "order.status.updated",
-              branchId,
-              entityType: "order",
-              entityId: orderId,
-              actor: getLocalAccessAuditActor(access),
-              request,
-              metadata: {
-                status: "Cancelación solicitada",
-                cancelReason,
+          // Error inesperado (BD caída, timeout): fail CLOSED — negarse a
+          // anular en vez de saltarse el control del dueño por un parpadeo.
+          if (!createResult.ok && createResult.reason === "error") {
+            return NextResponse.json(
+              {
+                error:
+                  "No se pudo procesar la solicitud de anulación en este momento. Intenta de nuevo en unos segundos.",
               },
-            }).catch(() => undefined)
+              { status: 503 }
+            )
+          }
+
+          if (createResult.ok) {
+            const cancellationRequest = createResult.created.request
+            const codeMessage = `Código de anulación: ${cancellationRequest.code}\nPedido ${displayNumber} · Motivo: ${cancellationRequest.reason}\nSolicitado por: ${cancellationRequest.requestedBy}\nSi estás de acuerdo, pásale el código al trabajador.`
+
+            // Solo la solicitud NUEVA notifica al dueño: reintentar el botón
+            // reusa la solicitud vigente sin re-enviar push/WhatsApp (evita
+            // spam de 120/min al dueño desde cualquier equipo del staff).
+            if (createResult.created.isNew) {
+              await sendOwnerOnlyPush({
+                title: `Anulación pendiente · ${displayNumber}`,
+                body: codeMessage,
+                url: "/local-santo/dueno",
+              }).catch(() => undefined)
+
+              const ownerWhatsapp = String(
+                cancelConfig.ownerCancelNotifyWhatsapp || "",
+              ).trim()
+              if (ownerWhatsapp && isWhatsAppBusinessConfigured()) {
+                await sendWhatsAppBusinessText(ownerWhatsapp, codeMessage).catch(
+                  () => undefined,
+                )
+              }
+
+              await writeAuditLog({
+                action: "order.status.updated",
+                branchId,
+                entityType: "order",
+                entityId: orderId,
+                actor: getLocalAccessAuditActor(access),
+                request,
+                metadata: {
+                  status: "Cancelación solicitada",
+                  cancelReason,
+                },
+              }).catch(() => undefined)
+            }
 
             return NextResponse.json(
               {
                 requiresCancelCode: true,
                 requestId: cancellationRequest.id,
-                error:
-                  "Anulación pendiente de aprobación: el dueño acaba de recibir un código de 6 dígitos. Pídeselo y escríbelo para completar la anulación.",
+                error: createResult.created.isNew
+                  ? "Anulación pendiente de aprobación: el dueño acaba de recibir un código de 6 dígitos. Pídeselo y escríbelo para completar la anulación."
+                  : "Esta anulación ya tiene un código pendiente enviado al dueño. Pídeselo y escríbelo para completar la anulación.",
               },
               { status: 428 }
             )
@@ -572,28 +616,6 @@ export async function PATCH(
           usedCancellationRequestId = verification.request.id
         }
       }
-    }
-
-    if (!canRoleUpdateStatus(access.role, status)) {
-      return forbiddenResponse("Esta clave no puede cambiar el pedido a ese estado")
-    }
-
-    const moduleKey = getStatusModuleForRole(access.role)
-    const moduleCheck = await checkModuleAvailability(
-      moduleKey,
-      moduleKey === "cashier"
-        ? "Caja"
-        : moduleKey === "kitchen"
-          ? "Cocina"
-          : "El panel de pedidos"
-    )
-
-    if (!moduleCheck.ok) {
-      return moduleCheck.response
-    }
-
-    if (!canLocalAccessUseModule(access, moduleKey)) {
-      return forbiddenResponse("Este usuario no tiene permiso para este módulo")
     }
 
     const order = await updateOrderStatus(orderId, status, branchId)
@@ -623,16 +645,19 @@ export async function PATCH(
 
       // El motivo viaja en la nota del pedido (sin migración): el staff lo ve
       // en la tarjeta y el cliente en su página de seguimiento (ANULADO: …).
+      // El "|" corta lo que ve el cliente: la regex pública captura SOLO el
+      // motivo; quién anuló y el detalle de inventario quedan para el staff.
       const actor = getLocalAccessAuditActor(access)
       const cancelledByLabel =
         [actor.label, getRoleLabel(access.role)].filter(Boolean).join(" · ") ||
         getRoleLabel(access.role)
       const reasonNote = [
-        `ANULADO: ${cancelReason} (${cancelledByLabel})`,
+        `ANULADO: ${cancelReason}`,
+        `Por: ${cancelledByLabel}`,
         inventoryNote,
       ]
         .filter(Boolean)
-        .join(" · ")
+        .join(" | ")
       const nextNote = order.customerNote
         ? `${order.customerNote} | ${reasonNote}`
         : reasonNote

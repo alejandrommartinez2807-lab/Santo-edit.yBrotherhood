@@ -27,7 +27,10 @@ import {
   Table2,
 } from "lucide-react";
 import { formatPublicUSD as formatUSD, formatVES } from "@/utils/formatCurrency";
-import { isVesPaymentMethod } from "@/lib/paymentOptions";
+import {
+  isElectronicPaymentMethod,
+  isVesPaymentMethod,
+} from "@/lib/paymentOptions";
 import { usePublicCurrencySymbol } from "@/hooks/usePublicCurrencySymbol";
 
 import {
@@ -147,20 +150,6 @@ const ORDER_TYPE_PUBLIC_LABELS: Record<OrderType, string> = {
   "Para llevar": "Pick up",
   Delivery: "Delivery",
 };
-
-// Métodos electrónicos (pago móvil, transferencia, Zelle, Binance...): los
-// que dejan captura/referencia y pueden exigir el comprobante ANTES de
-// registrar cuando el dueño activa ese modo.
-function isElectronicPaymentMethod(method: string) {
-  const normalized = String(method || "")
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase();
-
-  return ["pago movil", "transferencia", "transf", "zelle", "binance"].some(
-    (keyword) => normalized.includes(keyword),
-  );
-}
 
 function getOrderTypePublicLabel(type: OrderType) {
   return ORDER_TYPE_PUBLIC_LABELS[type] || type;
@@ -397,6 +386,10 @@ export default function CartDrawer({
   // Confirmación: cuándo el pago sigue pendiente de reporte (para la
   // advertencia llamativa y la ventana emergente post-registro).
   const [lastOrderProofReported, setLastOrderProofReported] = useState(false);
+  // Modo "antes": el comprobante del checkout se está reportando solo; no
+  // auto-abrir el formulario manual mientras tanto (evita duplicados).
+  const [lastOrderUsedCheckoutProof, setLastOrderUsedCheckoutProof] =
+    useState(false);
   const [showPostRegisterPaymentModal, setShowPostRegisterPaymentModal] =
     useState(false);
   const [customerNote, setCustomerNote] = useState("");
@@ -2011,18 +2004,41 @@ export default function CartDrawer({
       const singleMethod =
         selectedPaymentMethods.length === 1 ? selectedPaymentMethods[0] : "";
       const singleIsVes = singleMethod ? isVesPaymentMethod(singleMethod) : false;
+      // Pago mixto: el comprobante reporta SOLO las patas electrónicas (la
+      // parte en efectivo se entrega al retirar/recibir; reportarla haría que
+      // caja marque cobrado el total con un clic sin haber recibido el cash).
+      const mixedUsdIsElectronic =
+        isMixedPayment && isElectronicPaymentMethod(mixedUsdMethod);
+      const mixedBsIsElectronic =
+        isMixedPayment && isElectronicPaymentMethod(mixedBsMethod);
       const amountReportedUSD = isMixedPayment
-        ? mixedUsdValue
+        ? mixedUsdIsElectronic
+          ? mixedUsdValue
+          : 0
         : singleIsVes
           ? 0
           : totalUSD;
       const amountReportedVES = isMixedPayment
-        ? mixedBsValue
+        ? mixedBsIsElectronic
+          ? mixedBsValue
+          : 0
         : singleIsVes
           ? Math.round(totalVES * 100) / 100
           : 0;
+      const mixedCashPart = isMixedPayment
+        ? [
+            !mixedUsdIsElectronic && mixedUsdValue > 0
+              ? `${mixedUsdMethod || "Efectivo"} ${formatUSD(mixedUsdValue)} se paga al entregar`
+              : "",
+            !mixedBsIsElectronic && mixedBsValue > 0
+              ? `${mixedBsMethod || "Efectivo"} Bs ${formatVES(mixedBsValue)} se paga al entregar`
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" · ")
+        : "";
       const reportedMethod = isMixedPayment
-        ? effectivePaymentMethod
+        ? `${effectivePaymentMethod}${mixedCashPart ? ` · ${mixedCashPart}` : ""}`
         : singleMethod
           ? `${singleMethod} (${singleIsVes ? `Bs ${formatVES(amountReportedVES)}` : formatUSD(amountReportedUSD)})`
           : effectivePaymentMethod;
@@ -2049,9 +2065,11 @@ export default function CartDrawer({
       } else {
         // Si el envío automático falla, la confirmación muestra el flujo de
         // reporte manual (advertencia grande + formulario abierto).
+        setLastOrderUsedCheckoutProof(false);
         setShowPostRegisterPaymentModal(true);
       }
     } catch {
+      setLastOrderUsedCheckoutProof(false);
       setShowPostRegisterPaymentModal(true);
     }
   }
@@ -2263,6 +2281,7 @@ export default function CartDrawer({
         isPaymentProofPublicAvailable;
 
       setLastOrderProofReported(false);
+      setLastOrderUsedCheckoutProof(requiresProofBeforeRegister && hasCheckoutProof);
       if (requiresProofBeforeRegister && hasCheckoutProof) {
         void submitCheckoutProofForOrder(orderId);
       } else if (orderNeedsPrepayReport) {
@@ -2485,15 +2504,22 @@ export default function CartDrawer({
   const lastOrderCanReportPayment = Boolean(
     lastCreatedOrder && !lastOrderAttachedToOpenAccount,
   );
+  // El pedido recién creado fue ANULADO (anulación automática por falta de
+  // pago, cancelación del cliente en otra pestaña, o caja): la confirmación
+  // deja de pedir plata y lo dice en rojo.
+  const lastOrderCancelled = createdOrderLive.status === "Cancelado";
   // Pago pendiente de reporte tras el registro (pick up / delivery con aviso
-  // de pago anticipado): manda la advertencia grande de la confirmación, el
-  // formulario abierto y la ventana emergente.
+  // de pago anticipado O con el modo "comprobante antes de registrar", que
+  // son banderas independientes): manda la advertencia grande de la
+  // confirmación, el formulario abierto y la ventana emergente.
   const lastOrderPaymentPending =
     lastOrderCanReportPayment &&
     !lastOrderProofReported &&
+    !lastOrderCancelled &&
     !lastCreatedOrder?.offline &&
     isPaymentProofPublicAvailable &&
-    publicConfig.publicPrepayNoticeEnabled &&
+    (publicConfig.publicPrepayNoticeEnabled ||
+      publicConfig.publicPaymentBeforeRegisterEnabled) &&
     (lastCreatedOrder?.orderType === "Para llevar" ||
       lastCreatedOrder?.orderType === "Delivery");
   const productCardStyle = {
@@ -2860,35 +2886,41 @@ export default function CartDrawer({
                   )}
 
                   <p className="mt-5 text-sm font-black uppercase tracking-[0.24em] text-[var(--brand-primary)]">
-                    {lastOrderAttachedToOpenAccount
-                      ? "Agregado a la cuenta"
-                      : lastOrderPaymentPending
-                        ? "¡Pedido guardado!"
-                        : "¡Pedido enviado!"}
+                    {lastOrderCancelled
+                      ? "Pedido cancelado"
+                      : lastOrderAttachedToOpenAccount
+                        ? "Agregado a la cuenta"
+                        : lastOrderPaymentPending
+                          ? "¡Pedido guardado!"
+                          : "¡Pedido enviado!"}
                   </p>
 
                   <h4 className="mt-2 text-3xl font-black text-[var(--brand-ink-3)]">
-                    {lastOrderAttachedToOpenAccount
-                      ? "Cuenta actualizada"
-                      : lastCreatedOrder.offline
-                        ? "Guardado sin conexión"
-                        : lastOrderPaymentPending
-                          ? "Falta tu pago para prepararlo"
-                          : lastCreatedOrder.hasStaffConfirmationItems
-                            ? "Pendiente de confirmación"
-                            : "El local ya lo recibió"}
+                    {lastOrderCancelled
+                      ? "Este pedido fue cancelado"
+                      : lastOrderAttachedToOpenAccount
+                        ? "Cuenta actualizada"
+                        : lastCreatedOrder.offline
+                          ? "Guardado sin conexión"
+                          : lastOrderPaymentPending
+                            ? "Falta tu pago para prepararlo"
+                            : lastCreatedOrder.hasStaffConfirmationItems
+                              ? "Pendiente de confirmación"
+                              : "El local ya lo recibió"}
                   </h4>
 
                   <p className="mx-auto mt-4 max-w-sm text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
-                    {lastOrderAttachedToOpenAccount
-                      ? `Este pedido se sumó a la cuenta abierta de ${lastCreatedOrder.openAccountTable || "la mesa"}. Caja lo verá junto con el resto de consumos cuando se cierre la cuenta.`
-                      : lastCreatedOrder.offline
-                        ? "Tu pedido quedó guardado en este teléfono y se enviará solo apenas vuelva el internet. No hace falta repetirlo."
-                        : lastOrderPaymentPending
-                          ? "Cancela (paga) con los datos de abajo y reporta tu captura o referencia. Apenas caja lo confirme, tu pedido entra a cocina."
-                          : lastCreatedOrder.hasStaffConfirmationItems
-                            ? `El pedido fue enviado al local. El personal debe confirmar ${cleanStaffConfirmationProductLabel(lastCreatedOrder.staffConfirmationProductNames || [])} antes de prepararlo.`
-                            : "Tu pedido ya aparece en la pantalla del local y pronto entra a cocina."}
+                    {lastOrderCancelled
+                      ? "Ya NO pagues este pedido. Si aún lo quieres, vuelve a pedirlo o escríbenos por WhatsApp y te ayudamos."
+                      : lastOrderAttachedToOpenAccount
+                        ? `Este pedido se sumó a la cuenta abierta de ${lastCreatedOrder.openAccountTable || "la mesa"}. Caja lo verá junto con el resto de consumos cuando se cierre la cuenta.`
+                        : lastCreatedOrder.offline
+                          ? "Tu pedido quedó guardado en este teléfono y se enviará solo apenas vuelva el internet. No hace falta repetirlo."
+                          : lastOrderPaymentPending
+                            ? "Cancela (paga) con los datos de abajo y reporta tu captura o referencia. Apenas caja lo confirme, tu pedido entra a cocina."
+                            : lastCreatedOrder.hasStaffConfirmationItems
+                              ? `El pedido fue enviado al local. El personal debe confirmar ${cleanStaffConfirmationProductLabel(lastCreatedOrder.staffConfirmationProductNames || [])} antes de prepararlo.`
+                              : "Tu pedido ya aparece en la pantalla del local y pronto entra a cocina."}
                   </p>
                 </div>
 
@@ -2905,7 +2937,22 @@ export default function CartDrawer({
                       {createdOrderLive.displayNumber || "…"}
                     </p>
 
-                    {createdOrderLive.status === "Listo" ? (
+                    {lastOrderCancelled ? (
+                      <div className="mt-4 rounded-2xl border-2 border-red-500/60 bg-red-500/10 px-4 py-3 text-left">
+                        <p className="text-sm font-black leading-5 text-red-500">
+                          Este pedido fue cancelado.
+                        </p>
+                        {createdOrderLive.cancelReason ? (
+                          <p className="mt-1 text-[0.78rem] font-bold leading-5 text-red-400/90">
+                            Motivo: {createdOrderLive.cancelReason}
+                          </p>
+                        ) : null}
+                        <p className="mt-1 text-[0.72rem] font-bold leading-4 text-red-400/70">
+                          NO pagues este pedido. Si lo quieres, vuelve a pedirlo
+                          o escríbenos por WhatsApp.
+                        </p>
+                      </div>
+                    ) : createdOrderLive.status === "Listo" ? (
                       <p className="mt-4 rounded-2xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase leading-tight text-black">
                         ¡Listo! Pasa a retirarlo indicando tu número.
                       </p>
@@ -2955,6 +3002,7 @@ export default function CartDrawer({
                 ) : null}
 
                 {lastOrderCanReportPayment &&
+                  !lastOrderCancelled &&
                   publicConfig.onlinePaymentsEnabled &&
                   lastCreatedOrder.totalUSD > 0 &&
                   !lastCreatedOrder.offline && (
@@ -2983,6 +3031,7 @@ export default function CartDrawer({
                     confirmar el pago (configurable por el dueño). */}
                 {publicConfig.publicPrepayNoticeEnabled &&
                   lastOrderCanReportPayment &&
+                  !lastOrderCancelled &&
                   !lastCreatedOrder.offline &&
                   (lastCreatedOrder.orderType === "Para llevar" ||
                     lastCreatedOrder.orderType === "Delivery") && (
@@ -2998,11 +3047,13 @@ export default function CartDrawer({
                     métodos elegidos y mismo formulario de reporte (métodos
                     precargados en su moneda, montos por método, Completar,
                     aviso de cobertura y envío solo con referencia). */}
-                {!lastOrderAttachedToOpenAccount && !lastCreatedOrder.offline && (
+                {!lastOrderAttachedToOpenAccount &&
+                  !lastOrderCancelled &&
+                  !lastCreatedOrder.offline && (
                   <div className="text-left">
                     <PublicOrderPaymentSection
                       orderId={lastCreatedOrder.id}
-                      autoOpenForm={lastOrderPaymentPending}
+                      autoOpenForm={lastOrderPaymentPending && !lastOrderUsedCheckoutProof}
                       onReported={() => {
                         setLastOrderProofReported(true);
                         setShowPostRegisterPaymentModal(false);

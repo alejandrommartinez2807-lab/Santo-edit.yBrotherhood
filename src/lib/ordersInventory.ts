@@ -344,6 +344,20 @@ export async function revertInventoryConsumptionForOrder(
   if (!cleanOrderId) return { reverted: 0 }
 
   const supabase = getSupabaseAdmin()
+
+  // Idempotencia: si este pedido YA se revirtió (hay movimientos "Ajuste"
+  // con su nota de reversión), no se vuelve a sumar stock — reejecutar la
+  // reversión (reintento del API, ciclo de estados) duplicaría insumos.
+  let revertedQuery = supabase
+    .from("inventory_movements")
+    .select("id", { head: true, count: "exact" })
+    .eq("movement_type", "Ajuste")
+    .eq("note", `Reversión pedido ${cleanOrderId}`)
+  if (branchId) revertedQuery = revertedQuery.eq("branch_id", branchId)
+  const { count: alreadyRevertedCount } = await revertedQuery
+
+  if ((alreadyRevertedCount ?? 0) > 0) return { reverted: 0 }
+
   let query = supabase
     .from("inventory_movements")
     .select("id,item_id,item_name,quantity_moved,unit")

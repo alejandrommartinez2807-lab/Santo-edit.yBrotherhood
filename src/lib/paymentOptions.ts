@@ -80,3 +80,34 @@ export function isVesPaymentMethod(name: unknown): boolean {
   if (/\bbs\b/.test(normalized)) return true
   return VES_METHOD_KEYWORDS.some((keyword) => normalized.includes(keyword))
 }
+
+// Métodos ELECTRÓNICOS (dejan captura/referencia verificable): pago móvil,
+// transferencias, Zelle, Binance, Zinli, PayPal, biopago… Lo usan el gating
+// "comprobante antes de registrar" del checkout y la anulación automática
+// por falta de pago (que NUNCA debe tocar pedidos en efectivo: el cliente
+// paga al retirar/recibir y no tiene nada que reportar). Un método "Mixto:"
+// cuenta como electrónico si ALGUNA de sus partes lo es.
+const ELECTRONIC_METHOD_KEYWORDS = [
+  "pago movil",
+  "pagomovil",
+  "transferencia",
+  "transf",
+  "zelle",
+  "binance",
+  "zinli",
+  "paypal",
+  "biopago",
+  "banco",
+  "banesco",
+  "mercantil",
+  "provincial",
+  "bdv",
+  "usdt",
+  "wire",
+]
+
+export function isElectronicPaymentMethod(name: unknown): boolean {
+  const normalized = normalizePaymentMethodText(name)
+  if (!normalized) return false
+  return ELECTRONIC_METHOD_KEYWORDS.some((keyword) => normalized.includes(keyword))
+}

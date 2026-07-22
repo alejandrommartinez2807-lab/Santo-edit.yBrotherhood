@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { getPaymentProofs } from "@/lib/orders"
+import { isElectronicPaymentMethod } from "@/lib/paymentOptions"
 import { maybeAutoCancelUnpaidOrder } from "@/lib/unpaidAutoCancel"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
     // devuelve la sede del pedido para que el reporte de pago llegue a ella.
     const { data, error } = await supabase
       .from("orders")
-      .select("id,branch_id,seq,branch_seq,branch_code,status,total_usd,exchange_rate,amount_received_usd,amount_received_ves,created_at")
+      .select("id,branch_id,seq,branch_seq,branch_code,status,order_type,payment_method,total_usd,exchange_rate,amount_received_usd,amount_received_ves,created_at")
       .eq("id", orderId)
       .maybeSingle()
 
@@ -87,6 +88,14 @@ export async function GET(request: NextRequest) {
       branchId,
       displayNumber,
       orderStatus: String(order.status || ""),
+      // Tipo y método: los recordatorios/contador de anulación solo aplican a
+      // Pick up / Delivery con método electrónico (en mesa o efectivo el
+      // cliente paga al final y amenazarlo con anulación sería falso).
+      orderType: String(order.order_type || ""),
+      autoCancelApplies:
+        (String(order.order_type || "") === "Para llevar" ||
+          String(order.order_type || "") === "Delivery") &&
+        isElectronicPaymentMethod(order.payment_method),
       // Para los recordatorios de pago del cliente (5/10/15/20 min).
       createdAt: String(order.created_at || ""),
       totalUSD: Number(order.total_usd || 0),
