@@ -83,10 +83,18 @@ const HELP_SECTIONS = [
   },
 ]
 
-export default function PublicHelpButton() {
+// Diálogo de la guía, reutilizable: el botón flotante lo abre, pero también
+// se abre DENTRO del carrito/checkout (pedido del dueño 2026-07-22), donde el
+// botón flotante queda tapado por el drawer. Hace su propio fetch del WhatsApp.
+export function PublicHelpGuide({
+  open,
+  onClose,
+}: {
+  open: boolean
+  onClose: () => void
+}) {
   const [whatsapp, setWhatsapp] = useState("")
   const [businessName, setBusinessName] = useState("")
-  const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -119,23 +127,14 @@ export default function PublicHelpButton() {
       )}`
     : ""
 
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        aria-label="Abrir la guía de ayuda"
-        className="fixed bottom-4 left-4 z-40 inline-flex items-center gap-2 rounded-full border border-[var(--brand-border)] bg-black/80 px-4 py-3 text-[0.65rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] shadow-lg shadow-black/40 backdrop-blur transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95"
-      >
-        <LifeBuoy size={16} className="text-[var(--brand-primary)]" />
-        Ayuda
-      </button>
+  if (!open) return null
 
-      {isOpen ? (
-        <div
-          className="fixed inset-0 z-[110] flex items-end justify-center bg-black/80 px-3 py-4 backdrop-blur-sm sm:items-center"
-          onClick={() => setIsOpen(false)}
-        >
+  return (
+    <div
+      // z por encima del carrito/checkout (z-[110]) para verse dentro de ellos.
+      className="fixed inset-0 z-[130] flex items-end justify-center bg-black/80 px-3 py-4 backdrop-blur-sm sm:items-center"
+      onClick={onClose}
+    >
           <div
             className="flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-[1.8rem] border border-[var(--brand-border)] bg-[var(--brand-surface)] shadow-2xl shadow-black/60"
             onClick={(event) => event.stopPropagation()}
@@ -153,7 +152,7 @@ export default function PublicHelpButton() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setIsOpen(false)}
+                  onClick={onClose}
                   aria-label="Cerrar la ayuda"
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
                 >
@@ -199,8 +198,26 @@ export default function PublicHelpButton() {
               ))}
             </div>
           </div>
-        </div>
-      ) : null}
+    </div>
+  )
+}
+
+export default function PublicHelpButton() {
+  const [isOpen, setIsOpen] = useState(false)
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        aria-label="Abrir la guía de ayuda"
+        className="fixed bottom-4 left-4 z-40 inline-flex items-center gap-2 rounded-full border border-[var(--brand-border)] bg-black/80 px-4 py-3 text-[0.65rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] shadow-lg shadow-black/40 backdrop-blur transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95"
+      >
+        <LifeBuoy size={16} className="text-[var(--brand-primary)]" />
+        Ayuda
+      </button>
+
+      <PublicHelpGuide open={isOpen} onClose={() => setIsOpen(false)} />
     </>
   )
 }

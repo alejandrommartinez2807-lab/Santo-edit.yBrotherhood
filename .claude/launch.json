@@ -2,6 +2,13 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "hotel",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "D:/Santo edit/.claude/worktrees/nice-visvesvaraya-5726a1"],
+      "port": 3000,
+      "autoPort": true
+    },
+    {
       "name": "santo-edit",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],

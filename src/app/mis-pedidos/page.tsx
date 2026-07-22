@@ -116,7 +116,7 @@ export default function MisPedidosPage() {
               : "";
 
             lines.push(
-              `• ${numberLabel}${order.label || "Pedido"} · ${formatUSD(order.totalUSD)} (ref ${order.id})`,
+              `• ${numberLabel}${order.label || "Pedido"} · ${formatUSD(order.totalUSD)}`,
             );
           });
 

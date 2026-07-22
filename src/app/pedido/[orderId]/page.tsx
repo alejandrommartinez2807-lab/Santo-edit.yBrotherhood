@@ -99,7 +99,6 @@ export default function PedidoSeguimientoPage({
     ? `https://wa.me/${orderHelpWhatsapp}?text=${encodeURIComponent(
         [
           `Hola ${businessName || BRAND.name}! Tengo una duda sobre mi pedido${displayNumber ? ` ${displayNumber}` : ""}.`,
-          `Ref: ${orderId}`,
           "¿Me pueden ayudar?",
         ].join("\n"),
       )}`

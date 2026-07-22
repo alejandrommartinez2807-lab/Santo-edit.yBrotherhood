@@ -21,6 +21,7 @@ import {
   ClipboardList,
   CheckCircle2,
   Crosshair,
+  LifeBuoy,
   Loader2,
   MapPin,
   Pencil,
@@ -71,6 +72,7 @@ import {
   parseCoordsFromText,
 } from "@/lib/deliveryDistance";
 import PaymentMethodDetailsList from "@/components/PaymentMethodDetailsList";
+import { PublicHelpGuide } from "@/components/PublicHelpButton";
 import PublicOrderPaymentSection from "@/components/PublicOrderPaymentSection";
 import DeliveryMapPicker from "@/components/DeliveryMapPicker";
 import DeliveryPointPreviewMap from "@/components/DeliveryPointPreviewMap";
@@ -386,6 +388,9 @@ export default function CartDrawer({
   // Confirmación: cuándo el pago sigue pendiente de reporte (para la
   // advertencia llamativa y la ventana emergente post-registro).
   const [lastOrderProofReported, setLastOrderProofReported] = useState(false);
+  // Guía de ayuda accesible DENTRO del carrito/checkout (el botón flotante
+  // queda tapado por el drawer): pedido del dueño 2026-07-22.
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   // Modo "antes": el comprobante del checkout se está reportando solo; no
   // auto-abrir el formulario manual mientras tanto (evita duplicados).
   const [lastOrderUsedCheckoutProof, setLastOrderUsedCheckoutProof] =
@@ -2482,7 +2487,7 @@ export default function CartDrawer({
         : "";
 
       lines.push(
-        `• ${numberLabel}${order.label || "Pedido"} · ${formatUSD(order.totalUSD)} (ref ${order.id})`,
+        `• ${numberLabel}${order.label || "Pedido"} · ${formatUSD(order.totalUSD)}`,
       );
     });
 
@@ -2564,14 +2569,28 @@ export default function CartDrawer({
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Cerrar carrito"
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-105"
-            >
-              <X size={28} />
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              {/* Ayuda (guía completa) también dentro del carrito: el botón
+                  flotante queda tapado por el drawer. */}
+              <button
+                type="button"
+                onClick={() => setIsHelpOpen(true)}
+                aria-label="Abrir la guía de ayuda"
+                className="flex h-12 items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-3.5 text-[0.62rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black"
+              >
+                <LifeBuoy size={18} />
+                Ayuda
+              </button>
+
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Cerrar carrito"
+                className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-105"
+              >
+                <X size={28} />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -2822,6 +2841,10 @@ export default function CartDrawer({
         )}
       </aside>
 
+      {/* Guía de ayuda: se abre desde el header del carrito y del checkout;
+          su overlay (z-[130]) queda por encima de ambos. */}
+      <PublicHelpGuide open={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
+
       {isOrderModalOpen && canRegisterOrdersInPanel && (
         // En el teléfono el formulario ocupa toda la pantalla (como una página
         // más, estilo apps grandes); la tarjeta flotante queda para escritorio.
@@ -2857,14 +2880,27 @@ export default function CartDrawer({
                   </h3>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={closeOrderModal}
-                  disabled={isSubmittingOrder}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black disabled:opacity-50 sm:h-11 sm:w-11"
-                >
-                  <X size={22} />
-                </button>
+                <div className="flex shrink-0 items-center gap-2">
+                  {/* Ayuda dentro del checkout: guía completa sin salir. */}
+                  <button
+                    type="button"
+                    onClick={() => setIsHelpOpen(true)}
+                    aria-label="Abrir la guía de ayuda"
+                    className="flex h-10 items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-3 text-[0.6rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black sm:h-11"
+                  >
+                    <LifeBuoy size={16} />
+                    Ayuda
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={closeOrderModal}
+                    disabled={isSubmittingOrder}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black disabled:opacity-50 sm:h-11 sm:w-11"
+                  >
+                    <X size={22} />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -2891,7 +2927,7 @@ export default function CartDrawer({
                       : lastOrderAttachedToOpenAccount
                         ? "Agregado a la cuenta"
                         : lastOrderPaymentPending
-                          ? "¡Pedido guardado!"
+                          ? "Pedido sin pagar"
                           : "¡Pedido enviado!"}
                   </p>
 
@@ -2990,7 +3026,9 @@ export default function CartDrawer({
                       rel="noreferrer"
                       className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-transparent px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:opacity-80"
                     >
-                      Ver el avance de mi pedido
+                      {lastOrderPaymentPending
+                        ? "Reportar pago"
+                        : "Ver el avance de mi pedido"}
                     </a>
 
                     <p className="mt-3 text-[0.7rem] font-bold leading-5 text-[var(--brand-ink-2)]/60">
@@ -3088,9 +3126,11 @@ export default function CartDrawer({
                 <button
                   type="button"
                   onClick={finishCreatedOrderFlow}
-                  className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-center text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none disabled:opacity-50"
                 >
-                  Listo, volver al menú
+                  {lastOrderPaymentPending
+                    ? "Entiendo que no registré mi pago — volver al menú"
+                    : "Listo, volver al menú"}
                 </button>
               </div>
             ) : isSubmittingOrder ? (
