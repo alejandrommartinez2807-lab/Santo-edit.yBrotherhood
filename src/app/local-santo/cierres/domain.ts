@@ -68,6 +68,8 @@ export type DayCloseOrder = {
   totalUSD: number
   receivedEquivalentUSD: number
   registeredBy?: string
+  // Motivo de anulación (solo pedidos Cancelados).
+  cancelReason?: string
   items: DayCloseOrderItem[]
 }
 
@@ -508,6 +510,7 @@ function normalizeDayCloseOrders(value: unknown): DayCloseOrder[] {
         totalUSD: toNumber(order.totalUSD),
         receivedEquivalentUSD: toNumber(order.receivedEquivalentUSD),
         registeredBy: toText(order.registeredBy).trim() || undefined,
+        cancelReason: toText(order.cancelReason).trim() || undefined,
         items,
       }
     })

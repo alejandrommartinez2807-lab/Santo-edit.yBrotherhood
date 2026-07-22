@@ -396,6 +396,13 @@ export async function POST(request: NextRequest) {
       dayClose.orders = realOrders.slice(0, 500).map((order) => {
         const payment = getOrderPayment(order)
         const orderTotals = getOrderTotals(order)
+        // Motivo de anulación: se guarda en la nota como "ANULADO: …". Se
+        // extrae solo ese tramo para el cierre y el historial de cierres.
+        const cancelMatch =
+          order.status === "Cancelado"
+            ? String(order.customerNote || "").match(/ANULADO:\s*([^|]+)/)
+            : null
+        const cancelReason = cancelMatch ? cancelMatch[1].trim() : ""
 
         return {
           id: order.id,
@@ -409,6 +416,7 @@ export async function POST(request: NextRequest) {
           totalUSD: orderTotals.totalUSD,
           receivedEquivalentUSD: payment.receivedEquivalentUSD,
           registeredBy: String(order.registeredByName || "") || undefined,
+          ...(cancelReason ? { cancelReason } : {}),
           items: (order.items || []).map((item) => ({
             name: String(item.name || "Producto"),
             quantity: Number(item.quantity || 0),

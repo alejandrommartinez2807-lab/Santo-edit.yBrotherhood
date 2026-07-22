@@ -1356,6 +1356,14 @@ function CloseDetailModal({
                     {order.registeredBy ? ` · Registró: ${order.registeredBy}` : ""}
                   </p>
 
+                  {/* Motivo de anulación a la vista en el historial de cierres
+                      (pedido del dueño 2026-07-22). */}
+                  {order.status === "Cancelado" && order.cancelReason && (
+                    <p className="mt-1.5 rounded-xl border border-red-300 bg-red-50 px-3 py-1.5 text-xs font-bold leading-4 text-red-700">
+                      Motivo de anulación: {order.cancelReason}
+                    </p>
+                  )}
+
                   {order.items.length > 0 && (
                     <div className="mt-2 space-y-1">
                       {order.items.map((item, itemIndex) => (

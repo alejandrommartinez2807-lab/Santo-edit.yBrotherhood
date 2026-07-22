@@ -62,6 +62,9 @@ export type DayCloseOrder = {
   totalUSD: number
   receivedEquivalentUSD: number
   registeredBy?: string
+  // Motivo de anulación (solo pedidos Cancelados): se extrae de la nota
+  // "ANULADO: …" para que el cierre y el historial lo listen.
+  cancelReason?: string
   items: DayCloseOrderItem[]
 }
 
