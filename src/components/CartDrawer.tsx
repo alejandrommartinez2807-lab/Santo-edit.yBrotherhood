@@ -1225,8 +1225,8 @@ export default function CartDrawer({
             missing: !paymentMethod.trim(),
           },
           {
-            label: "los dos montos del pago mixto",
-            targetId: "checkout-pago",
+            label: "completar el pago mixto (método y monto en Bs Y en divisas)",
+            targetId: "checkout-pago-mixto",
             missing: isMixedPayment && !isMixedPaymentComplete,
           },
         ]
@@ -1240,8 +1240,8 @@ export default function CartDrawer({
             missing: !paymentMethod.trim(),
           },
           {
-            label: "los dos montos del pago mixto",
-            targetId: "checkout-pago",
+            label: "completar el pago mixto (método y monto en Bs Y en divisas)",
+            targetId: "checkout-pago-mixto",
             missing: isMixedPayment && !isMixedPaymentComplete,
           },
         ]
@@ -1250,6 +1250,13 @@ export default function CartDrawer({
             label: `tu ${(publicConfig.locationLabel || "mesa").toLowerCase()} o ubicación en el local`,
             targetId: "checkout-mesa",
             missing: !tableNumber.trim(),
+          },
+          // Mesa con pago mixto elegido: también debe quedar completo (antes
+          // esta rama no lo validaba y pasaba un "Mixto:" a medias).
+          {
+            label: "completar el pago mixto (método y monto en Bs Y en divisas)",
+            targetId: "checkout-pago-mixto",
+            missing: isMixedPayment && !isMixedPaymentComplete,
           },
         ]),
     {
@@ -1293,9 +1300,17 @@ export default function CartDrawer({
       setGpsAccuracyNotice(null);
       setDistanceQuote(null);
 
+      // La sede va EXPLÍCITA en el header (no solo el localStorage que
+      // adjunta AuthBridge): si el cliente acaba de cambiar de sede, la
+      // cotización debe salir con ESA sede sí o sí — era el eslabón frágil
+      // del "cambié de San Diego a Viñedo y el delivery no se ajustó".
+      const quoteBranchId = branchSelection.selectedBranchId || "";
       const response = await fetch("/api/public/delivery-quote", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(quoteBranchId ? { "x-branch-id": quoteBranchId } : {}),
+        },
         body: JSON.stringify(input),
       });
       const data = await readApiResponse(response);
@@ -1828,11 +1843,34 @@ export default function CartDrawer({
     const isOver = missingUSD < -0.01;
     const isExact = Math.abs(missingUSD) <= 0.01;
 
+    // Qué le falta al mixto EXACTAMENTE (para el aviso rojo y el scroll de
+    // la validación): ambos métodos y ambos montos son obligatorios.
+    const mixedMissingParts = [
+      !mixedBsMethod.trim() ? "el método en bolívares" : "",
+      mixedBsValue <= 0 ? "el monto en bolívares" : "",
+      !mixedUsdMethod.trim() ? "el método en divisas" : "",
+      mixedUsdValue <= 0 ? "el monto en divisas" : "",
+    ].filter(Boolean);
+
     return (
-      <div className="rounded-2xl border-2 border-[var(--brand-primary)]/50 bg-[var(--brand-cream)] px-4 py-4">
+      <div
+        id="checkout-pago-mixto"
+        className={`rounded-2xl border-2 bg-[var(--brand-cream)] px-4 py-4 ${
+          validationAlert && mixedMissingParts.length > 0
+            ? "border-red-500"
+            : "border-[var(--brand-primary)]/50"
+        }`}
+      >
         <p className="text-sm font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
           Pago mixto: parte en Bs y parte en $
         </p>
+        {/* Tras tocar "Registrar" con el mixto a medias, el error aparece
+            AQUÍ MISMO (además del aviso del botón) y dice qué falta. */}
+        {validationAlert && mixedMissingParts.length > 0 ? (
+          <p className="mt-2 rounded-xl border-2 border-red-500 bg-red-500/10 px-3 py-2 text-[0.78rem] font-black leading-5 text-red-500">
+            ⚠️ Para el pago mixto te falta: {mixedMissingParts.join(", ")}.
+          </p>
+        ) : null}
         {/* Texto OSCURO fijo: los tokens --brand-ink* son claros (tema
             oscuro) y sobre bg-white quedaban invisibles (reclamo del dueño,
             varias veces: esta casilla se veía en blanco). */}
@@ -1923,11 +1961,15 @@ export default function CartDrawer({
                   <button
                     key={bill}
                     type="button"
-                    // Solo registra CON QUÉ billete paga: NO toca el monto de
-                    // la pata (eso se escribe o se completa aparte). Antes
-                    // rellenaba el monto en divisas y pisaba el reparto con
-                    // el pago móvil (reclamo del dueño 2026-07-23).
-                    onClick={() => setMixedUsdGivenAmount(String(bill))}
+                    // Registra CON QUÉ billete paga. Si aún no escribió cuánto
+                    // de la pata va en efectivo, se completa solo con lo que
+                    // falta del total (editable) — antes tenía que descifrar
+                    // dos números aparte y confundía (dueño 2026-07-23). Con
+                    // un monto ya escrito NO se pisa (reclamo previo).
+                    onClick={() => {
+                      setMixedUsdGivenAmount(String(bill));
+                      if (mixedUsdValue <= 0) completeMixedUsdAmount();
+                    }}
                     className={`rounded-full border-2 px-3.5 py-2 text-[0.68rem] font-black uppercase tracking-[0.06em] shadow-sm transition active:scale-95 ${
                       normalizeFormMoney(mixedUsdGivenAmount) === bill
                         ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
@@ -2522,6 +2564,12 @@ export default function CartDrawer({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          // Sede explícita: el servidor recalcula el costo del delivery con
+          // la sede del checkout, no con un localStorage que pudo quedar
+          // desincronizado (mismo blindaje que la cotización).
+          ...(branchSelection.selectedBranchId
+            ? { "x-branch-id": branchSelection.selectedBranchId }
+            : {}),
         },
         body: JSON.stringify(orderPayload),
       });
@@ -3288,7 +3336,12 @@ export default function CartDrawer({
                             ? "Falta tu pago para prepararlo"
                             : lastCreatedOrder.hasStaffConfirmationItems
                               ? "Pendiente de confirmación"
-                              : "El local ya lo recibió"}
+                              : lastOrderCanReportPayment &&
+                                  (lastOrderProofReported ||
+                                    lastOrderPaymentReportedLive) &&
+                                  !lastOrderPaymentConfirmed
+                                ? "Comprobante recibido"
+                                : "El local ya lo recibió"}
                   </h4>
 
                   <p className="mx-auto mt-4 max-w-sm text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
@@ -3302,7 +3355,12 @@ export default function CartDrawer({
                             ? "Cancela (paga) con los datos de abajo y reporta tu captura o referencia. Apenas caja lo confirme, tu pedido entra a cocina."
                             : lastCreatedOrder.hasStaffConfirmationItems
                               ? `El pedido fue enviado al local. El personal debe confirmar ${cleanStaffConfirmationProductLabel(lastCreatedOrder.staffConfirmationProductNames || [])} antes de prepararlo.`
-                              : "Tu pedido ya aparece en la pantalla del local y pronto entra a cocina."}
+                              : lastOrderCanReportPayment &&
+                                  (lastOrderProofReported ||
+                                    lastOrderPaymentReportedLive) &&
+                                  !lastOrderPaymentConfirmed
+                                ? "El local está revisando tu pago. Apenas lo confirme, tu pedido entra a preparación — esta pantalla avanza sola."
+                                : "Tu pedido ya aparece en la pantalla del local y pronto entra a cocina."}
                   </p>
                 </div>
 
