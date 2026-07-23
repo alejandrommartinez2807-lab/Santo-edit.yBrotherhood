@@ -167,7 +167,9 @@ export default function LocalModuleNav({
             const isCurrent = entry.key === currentModuleKey
             return (
               <a
-                key={entry.key}
+                // key+href: "ownerDashboard" aparece dos veces (Dueño y
+                // Encuestas) y React exige claves únicas.
+                key={`${entry.key}-${entry.href}`}
                 href={entry.href}
                 aria-current={isCurrent ? "page" : undefined}
                 className={
