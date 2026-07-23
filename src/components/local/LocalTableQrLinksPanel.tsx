@@ -37,6 +37,11 @@ type LocalTableQrLinksPanelProps = {
   showPrintButton?: boolean;
   showManagementLink?: boolean;
   managementHref?: string;
+  // Sede de los enlaces QR: por defecto la del dispositivo (getSelectedBranchId).
+  // Si el contenedor deja elegir sede (página de Mesas con selector), la pasa
+  // aquí para que los QR de una sucursal se puedan ver/imprimir sin cambiar la
+  // sede operativa del dispositivo.
+  branchId?: string | null;
 };
 
 type CopiedState = {
@@ -124,11 +129,17 @@ export function LocalTableQrLinksPanel({
   showPrintButton = true,
   showManagementLink = true,
   managementHref = "/local-santo/mesas",
+  branchId: branchIdOverride,
 }: LocalTableQrLinksPanelProps) {
   const [browserBaseUrl, setBrowserBaseUrl] = useState("");
   const [copiedState, setCopiedState] = useState<CopiedState>(null);
-  const [branchId, setBranchId] = useState<string | null>(null);
+  const [deviceBranchId, setDeviceBranchId] = useState<string | null>(null);
   const [branches, setBranches] = useState<StaffBranch[]>([]);
+
+  // La sede la manda el contenedor si eligió una (selector de Mesas); si no, la
+  // del dispositivo.
+  const branchId =
+    branchIdOverride !== undefined ? branchIdOverride : deviceBranchId;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -136,12 +147,12 @@ export function LocalTableQrLinksPanel({
     // Difiere el setState un tick para no hacerlo síncrono en el efecto.
     const timer = setTimeout(() => {
       setBrowserBaseUrl(window.location.origin);
-      setBranchId(getSelectedBranchId());
+      setDeviceBranchId(getSelectedBranchId());
     }, 0);
 
     // Los enlaces llevan ?branch=<sede>; si el staff cambia de sede, se
     // regeneran para que el QR apunte a la sucursal correcta.
-    const handleBranchChange = () => setBranchId(getSelectedBranchId());
+    const handleBranchChange = () => setDeviceBranchId(getSelectedBranchId());
     window.addEventListener(BRANCH_CHANGE_EVENT, handleBranchChange);
 
     fetchActiveBranches().then((activeBranches) => setBranches(activeBranches));

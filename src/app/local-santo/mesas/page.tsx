@@ -1,10 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { BRAND } from "@/lib/brand"
 import Link from "next/link";
 import { ArrowLeft, Loader2, Printer, RefreshCw, Store, Table2 } from "lucide-react";
 import ModuleAccessGuard from "@/components/ModuleAccessGuard";
+import {
+  fetchActiveBranches,
+  getSelectedBranchId,
+  type StaffBranch,
+} from "@/lib/branchClient";
 import { LocalTableQrLinksPanel } from "@/components/local/LocalTableQrLinksPanel";
 import {
   DEFAULT_LOCAL_TABLES,
@@ -111,6 +116,11 @@ function MesasContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState("");
+  // Sede que se está gestionando: cada sucursal administra sus propias mesas y
+  // QR. null = aún no resuelta (no cargar); el selector la cambia y las mesas,
+  // el mapa y los QR se recargan para esa sede.
+  const [branches, setBranches] = useState<StaffBranch[]>([]);
+  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
 
   const activeTables = useMemo(
     () => normalizeLocalTablesForMap(localTables, DEFAULT_LOCAL_TABLES).filter((table) => table.isActive !== false),
@@ -157,19 +167,30 @@ function MesasContent() {
     [selectedTableOpenAccounts, selectedTableOrders],
   );
 
-  async function loadTablesAndOrders() {
+  const loadTablesAndOrders = useCallback(async () => {
+    if (selectedBranchId === null) return;
     setIsLoading(true);
     setErrorMessage(null);
+
+    // La sede elegida en el selector manda: se envía explícita para no depender
+    // de la sede operativa del dispositivo (AuthBridge solo la pone si falta).
+    const branchHeader: Record<string, string> = selectedBranchId
+      ? { "x-branch-id": selectedBranchId }
+      : {};
 
     try {
       const storedPassword = getStoredPassword();
       const [configResponse, ordersResponse, openAccountsResponse] = await Promise.all([
-        fetch("/api/public/business-config", { cache: "no-store" }),
+        fetch("/api/public/business-config", {
+          cache: "no-store",
+          headers: { ...branchHeader },
+        }),
         storedPassword
           ? fetch("/api/orders", {
               cache: "no-store",
               headers: {
                 "x-local-password": storedPassword,
+                ...branchHeader,
               },
             })
           : Promise.resolve(null),
@@ -178,6 +199,7 @@ function MesasContent() {
               cache: "no-store",
               headers: {
                 "x-local-password": storedPassword,
+                ...branchHeader,
               },
             })
           : Promise.resolve(null),
@@ -216,13 +238,38 @@ function MesasContent() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [selectedBranchId]);
+
+  // Carga las sedes una vez y elige la sede inicial (la del dispositivo si está
+  // en la lista, si no la primera).
+  useEffect(() => {
+    let ignore = false;
+
+    fetchActiveBranches()
+      .then((activeBranches) => {
+        if (ignore) return;
+        setBranches(activeBranches);
+        const stored = getSelectedBranchId();
+        const initial =
+          (stored && activeBranches.some((branch) => branch.id === stored) && stored) ||
+          activeBranches[0]?.id ||
+          "";
+        setSelectedBranchId(initial);
+      })
+      .catch(() => {
+        if (!ignore) setSelectedBranchId("");
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   useEffect(() => {
     // Difiere la carga un tick para no hacer setState síncrono en el efecto.
-    const timer = setTimeout(loadTablesAndOrders, 0);
+    const timer = setTimeout(() => void loadTablesAndOrders(), 0);
     return () => clearTimeout(timer);
-  }, []);
+  }, [loadTablesAndOrders]);
 
   function handlePrint() {
     if (typeof window === "undefined") return;
@@ -254,6 +301,32 @@ function MesasContent() {
               <p className="mt-3 max-w-3xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
                 Panel para revisar el estado de mesas y preparar enlaces imprimibles. Los QR abren el menú público con la mesa preseleccionada.
               </p>
+
+              {/* Selector de sede: cada sucursal gestiona sus propias mesas y
+                  QR. Solo aparece con más de una sede. */}
+              {branches.length > 1 ? (
+                <div className="mt-4 print:hidden">
+                  <label className="flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                    <Store size={14} />
+                    Sede que estás gestionando
+                  </label>
+                  <select
+                    value={selectedBranchId || ""}
+                    onChange={(event) => setSelectedBranchId(event.target.value)}
+                    className="mt-1.5 w-full max-w-sm rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-3 text-sm font-black text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  >
+                    {branches.map((branch) => (
+                      <option key={branch.id} value={branch.id}>
+                        {branch.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1.5 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
+                    Las mesas y los QR de abajo son de esta sede. Cada sucursal
+                    tiene sus propias mesas (se editan en Sucursales).
+                  </p>
+                </div>
+              ) : null}
             </div>
 
             <div className="flex flex-wrap gap-2 print:hidden">
@@ -387,6 +460,7 @@ function MesasContent() {
 
         <LocalTableQrLinksPanel
           tables={activeTables}
+          branchId={selectedBranchId}
           title="Tarjetas imprimibles por mesa"
           description="Imprime estas tarjetas, recórtalas y colócalas en cada mesa. El cliente abre el menú con su mesa ya cargada en el carrito."
           showQrImages
