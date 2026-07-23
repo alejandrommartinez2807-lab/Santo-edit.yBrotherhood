@@ -36,20 +36,42 @@ export default function OrderPaymentProofsList({
             proof.paymentReference ? `Ref: ${proof.paymentReference}` : "",
           ].filter(Boolean);
 
-          const content = (
-            <>
+          const itemClassName =
+            "flex w-full items-center gap-3 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-2.5 text-left";
+
+          // Miniatura ampliable (cada imagen es su propio enlace: el pago mixto
+          // puede traer DOS capturas, una por cada pata).
+          const renderThumb = (url: string, label: string) => (
+            <a
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              className="shrink-0 transition hover:opacity-80"
+              title={`${label} — toca para ampliar`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={url}
+                alt={label}
+                className="h-14 w-14 rounded-lg object-cover"
+              />
+            </a>
+          );
+
+          const hasAnyImage = Boolean(proof.proofImageUrl || proof.proofImageUrl2);
+
+          return (
+            <div key={proof.id} className={itemClassName}>
               {proof.proofImageUrl ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={proof.proofImageUrl}
-                  alt="Comprobante de pago"
-                  className="h-14 w-14 shrink-0 rounded-lg object-cover"
-                />
-              ) : (
+                renderThumb(proof.proofImageUrl, "Comprobante de pago")
+              ) : proof.proofImageUrl2 ? null : (
                 <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-[var(--brand-cream)] text-[var(--brand-ink-2)]/50">
                   <ImageIcon size={22} />
                 </span>
               )}
+              {proof.proofImageUrl2
+                ? renderThumb(proof.proofImageUrl2, "Segundo comprobante (pago mixto)")
+                : null}
 
               <span className="min-w-0 flex-1">
                 <span
@@ -66,31 +88,14 @@ export default function OrderPaymentProofsList({
                 <span className="mt-0.5 block truncate text-xs font-bold text-[var(--brand-ink-2)]/75">
                   {detailParts.join(" · ") || "Sin detalles"}
                 </span>
-                {proof.proofImageUrl && (
+                {hasAnyImage && (
                   <span className="mt-0.5 block text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/45">
-                    Toca para ampliar
+                    {proof.proofImageUrl && proof.proofImageUrl2
+                      ? "2 capturas · toca para ampliar"
+                      : "Toca para ampliar"}
                   </span>
                 )}
               </span>
-            </>
-          );
-
-          const itemClassName =
-            "flex w-full items-center gap-3 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-2.5 text-left";
-
-          return proof.proofImageUrl ? (
-            <a
-              key={proof.id}
-              href={proof.proofImageUrl}
-              target="_blank"
-              rel="noreferrer"
-              className={`${itemClassName} transition hover:bg-[rgba(var(--brand-primary-rgb),0.08)]`}
-            >
-              {content}
-            </a>
-          ) : (
-            <div key={proof.id} className={itemClassName}>
-              {content}
             </div>
           );
         })}

@@ -195,6 +195,12 @@ export default function PublicOrderPaymentSection({
   const [dataUrl, setDataUrl] = useState("");
   const [fileName, setFileName] = useState("");
   const [mimeType, setMimeType] = useState("");
+  // Segunda captura (solo pago mixto: una por cada pata). El dueño puede
+  // apagarla desde Configuración (publicMixedSecondProofEnabled).
+  const [allowSecondProof, setAllowSecondProof] = useState(true);
+  const [dataUrl2, setDataUrl2] = useState("");
+  const [fileName2, setFileName2] = useState("");
+  const [mimeType2, setMimeType2] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -239,6 +245,7 @@ export default function PublicOrderPaymentSection({
         if (cancelled) return;
         const config = data?.businessConfig || data?.config || {};
         setIsProofsEnabled(config.paymentProofsEnabled !== false);
+        setAllowSecondProof(config.publicMixedSecondProofEnabled !== false);
         setAllowMethodChange(config.publicPaymentMethodChangeEnabled !== false);
         setAutoCancelMinutes(
           Math.max(0, Math.round(Number(config.publicUnpaidAutoCancelMinutes) || 0)),
@@ -322,6 +329,8 @@ export default function PublicOrderPaymentSection({
   const needsCorrection = (info?.proofs || []).some(
     (proof) => proof.status === "Necesita corrección",
   );
+  // Reporte de pago MIXTO: más de un método (una captura por cada pata).
+  const isMixedReport = payments.length > 1;
 
   // Minutos desde que se registró el pedido (para el recordatorio escalonado
   // 5/10/15/20 min y el contador de anulación automática). SOLO aplica a los
@@ -430,6 +439,36 @@ export default function PublicOrderPaymentSection({
         error instanceof Error
           ? error.message
           : "No se pudo leer la imagen del comprobante.",
+      );
+    }
+  }
+
+  // Segunda captura del pago mixto (una por cada pata).
+  async function handleFileChange2(file: File | undefined) {
+    setFormError(null);
+
+    if (!file) {
+      setDataUrl2("");
+      setFileName2("");
+      setMimeType2("");
+      return;
+    }
+
+    try {
+      const image = await readImageFileForUpload(file, {
+        fallbackName: "comprobante-2",
+      });
+      setDataUrl2(image.dataUrl);
+      setFileName2(image.fileName);
+      setMimeType2(image.mimeType);
+    } catch (error) {
+      setDataUrl2("");
+      setFileName2("");
+      setMimeType2("");
+      setFormError(
+        error instanceof Error
+          ? error.message
+          : "No se pudo leer la segunda imagen del comprobante.",
       );
     }
   }
@@ -645,6 +684,11 @@ export default function PublicOrderPaymentSection({
           dataUrl,
           fileName,
           mimeType,
+          // Segunda captura solo en pago mixto (2+ métodos) y si el dueño la
+          // dejó habilitada.
+          dataUrl2: isMixedReport && allowSecondProof ? dataUrl2 : "",
+          fileName2: isMixedReport && allowSecondProof ? fileName2 : "",
+          mimeType2: isMixedReport && allowSecondProof ? mimeType2 : "",
           confirmDuplicate,
         }),
       });
@@ -674,6 +718,9 @@ export default function PublicOrderPaymentSection({
       setDataUrl("");
       setFileName("");
       setMimeType("");
+      setDataUrl2("");
+      setFileName2("");
+      setMimeType2("");
       await loadInfo();
     } catch (error) {
       setFormError(
@@ -1012,7 +1059,9 @@ export default function PublicOrderPaymentSection({
 
           <div>
             <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-              Captura del pago (opcional si pones la referencia)
+              {isMixedReport && allowSecondProof
+                ? "Captura del PRIMER pago (opcional si pones la referencia)"
+                : "Captura del pago (opcional si pones la referencia)"}
             </label>
             <label className="mt-1.5 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/50 bg-white px-4 py-4 text-sm font-bold text-[var(--brand-ink-3)]/70 transition hover:border-[var(--brand-primary)]">
               <ImagePlus size={17} />
@@ -1025,6 +1074,30 @@ export default function PublicOrderPaymentSection({
               />
             </label>
           </div>
+
+          {/* Segunda captura: solo en pago mixto (una por cada pata, ej. pago
+              móvil + Zelle) y si el dueño la dejó habilitada. */}
+          {isMixedReport && allowSecondProof ? (
+            <div>
+              <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                Captura del SEGUNDO pago (opcional)
+              </label>
+              <label className="mt-1.5 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/50 bg-white px-4 py-4 text-sm font-bold text-[var(--brand-ink-3)]/70 transition hover:border-[var(--brand-primary)]">
+                <ImagePlus size={17} />
+                {fileName2 || "Toca para adjuntar la segunda imagen"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => void handleFileChange2(event.target.files?.[0])}
+                />
+              </label>
+              <p className="mt-1.5 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/60">
+                Pagaste con dos métodos: adjunta una captura por cada uno (por
+                ejemplo, una del pago móvil y otra del Zelle).
+              </p>
+            </div>
+          ) : null}
 
           <div>
             <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">

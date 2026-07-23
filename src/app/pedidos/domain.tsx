@@ -344,6 +344,9 @@ export type PaymentProof = {
   proofImageUrl: string
   proofFileId: string
   proofFileName: string
+  proofImageUrl2: string
+  proofFileId2: string
+  proofFileName2: string
   status: PaymentProofStatus
   reviewedBy: string
   reviewedAt: string

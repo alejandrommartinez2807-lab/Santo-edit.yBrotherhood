@@ -34,6 +34,10 @@ type PublicProofBody = {
   dataUrl?: unknown
   fileName?: unknown
   mimeType?: unknown
+  // Segunda captura (solo pago mixto: una por cada pata).
+  dataUrl2?: unknown
+  fileName2?: unknown
+  mimeType2?: unknown
   // El cliente confirma a propósito que quiere enviar OTRO comprobante para
   // un pedido que ya tiene uno activo (por ejemplo, un segundo abono).
   confirmDuplicate?: unknown
@@ -153,14 +157,26 @@ function normalizeCreatePaymentProofInput(body: PublicProofBody): CreatePaymentP
     throw new Error("Adjunta la captura del pago o indica la referencia de la operación")
   }
 
+  const proofImageMaxBytes = getEnvByteLimit("PAYMENT_PROOF_IMAGE_MAX_BYTES", 5_500_000, {
+    minBytes: 512_000,
+    maxBytes: 7_000_000,
+  })
+
   const image = dataUrl
     ? assertDataUrlImage(dataUrl, {
         label: "El comprobante",
-        maxBytes: getEnvByteLimit("PAYMENT_PROOF_IMAGE_MAX_BYTES", 5_500_000, {
-          minBytes: 512_000,
-          maxBytes: 7_000_000,
-        }),
+        maxBytes: proofImageMaxBytes,
         fallbackMimeType: cleanText(body.mimeType) || "image/jpeg",
+      })
+    : null
+
+  // Segunda captura (pago mixto): opcional; se valida igual que la primera.
+  const dataUrl2 = cleanText(body.dataUrl2)
+  const image2 = dataUrl2
+    ? assertDataUrlImage(dataUrl2, {
+        label: "El segundo comprobante",
+        maxBytes: proofImageMaxBytes,
+        fallbackMimeType: cleanText(body.mimeType2) || "image/jpeg",
       })
     : null
 
@@ -180,6 +196,11 @@ function normalizeCreatePaymentProofInput(body: PublicProofBody): CreatePaymentP
       ? sanitizeUploadedImageFileName(body.fileName, `comprobante-${orderId}`, image.mimeType)
       : "",
     mimeType: image ? image.mimeType : "",
+    dataUrl2,
+    fileName2: image2
+      ? sanitizeUploadedImageFileName(body.fileName2, `comprobante-2-${orderId}`, image2.mimeType)
+      : "",
+    mimeType2: image2 ? image2.mimeType : "",
   }
 }
 
@@ -239,6 +260,13 @@ export async function POST(request: NextRequest) {
 
     const branchId = await resolveBranchId(request)
     const body = (await request.json()) as PublicProofBody
+    // Segunda captura solo si el dueño la dejó habilitada (pago mixto).
+    const proofsConfig = await getBusinessConfig()
+    if ((proofsConfig as Record<string, unknown>).publicMixedSecondProofEnabled === false) {
+      body.dataUrl2 = ""
+      body.fileName2 = ""
+      body.mimeType2 = ""
+    }
     const input = normalizeCreatePaymentProofInput(body)
     const orders = await getOrders(branchId)
     const order = orders.find((item) => item.id === input.orderId)

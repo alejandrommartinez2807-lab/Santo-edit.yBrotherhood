@@ -292,6 +292,11 @@ export type PaymentProof = {
   proofImageUrl: string
   proofFileId: string
   proofFileName: string
+  // Segunda captura del comprobante (solo pago mixto: una por cada pata, ej.
+  // pago móvil + Zelle). Vacío cuando el pago tiene una sola captura.
+  proofImageUrl2: string
+  proofFileId2: string
+  proofFileName2: string
   status: PaymentProofStatus
   reviewedBy: string
   reviewedAt: string

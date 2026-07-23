@@ -14,6 +14,10 @@ export type CreatePaymentProofInput = {
   dataUrl?: string
   fileName?: string
   mimeType?: string
+  // Segunda captura (solo pago mixto: una por cada pata). Opcional.
+  dataUrl2?: string
+  fileName2?: string
+  mimeType2?: string
 }
 
 export type ReviewPaymentProofInput = {
@@ -49,6 +53,9 @@ function paymentProofRowToProof(row: Record<string, unknown>): PaymentProof {
     proofImageUrl: cleanText(row.proof_image_url),
     proofFileId: cleanText(row.proof_file_id),
     proofFileName: cleanText(row.proof_file_name),
+    proofImageUrl2: cleanText(row.proof_image_url_2),
+    proofFileId2: cleanText(row.proof_file_id_2),
+    proofFileName2: cleanText(row.proof_file_name_2),
     status: (cleanText(row.status) || "Comprobante enviado") as PaymentProofStatus,
     reviewedBy: cleanText(row.reviewed_by),
     reviewedAt: cleanText(row.reviewed_at),
@@ -94,30 +101,41 @@ export async function clearPaymentProofs(branchId?: string | null) {
   return { ok: true }
 }
 
+async function uploadProofImage(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  dataUrl: string,
+  mimeType?: string,
+): Promise<{ url: string; fileId: string }> {
+  if (!cleanText(dataUrl)) return { url: "", fileId: "" }
+
+  const image = decodeDataUrlImage(dataUrl, {
+    label: "El comprobante",
+    maxBytes: 7_000_000,
+    fallbackMimeType: mimeType || "image/jpeg",
+  })
+  const path = `proofs/${Date.now()}-${randomSuffix()}`
+  const { error: uploadError } = await supabase.storage
+    .from(PAYMENT_PROOFS_BUCKET)
+    .upload(path, image.buffer, { contentType: image.mimeType, upsert: true })
+  if (uploadError) {
+    throw new Error(uploadError.message || "No se pudo subir el comprobante")
+  }
+  const { data: publicData } = supabase.storage.from(PAYMENT_PROOFS_BUCKET).getPublicUrl(path)
+  return { url: publicData?.publicUrl || "", fileId: path }
+}
+
 export async function createPaymentProof(input: CreatePaymentProofInput, branchId?: string | null) {
   const supabase = getSupabaseAdmin()
   const id = `proof-${Date.now()}-${randomSuffix()}`
 
-  // Subir la imagen del comprobante (si viene) a Supabase Storage
-  let proofImageUrl = ""
-  let proofFileId = ""
-  if (cleanText(input.dataUrl)) {
-    const image = decodeDataUrlImage(input.dataUrl, {
-      label: "El comprobante",
-      maxBytes: 7_000_000,
-      fallbackMimeType: input.mimeType || "image/jpeg",
-    })
-    const path = `proofs/${Date.now()}-${randomSuffix()}`
-    const { error: uploadError } = await supabase.storage
-      .from(PAYMENT_PROOFS_BUCKET)
-      .upload(path, image.buffer, { contentType: image.mimeType, upsert: true })
-    if (uploadError) {
-      throw new Error(uploadError.message || "No se pudo subir el comprobante")
-    }
-    const { data: publicData } = supabase.storage.from(PAYMENT_PROOFS_BUCKET).getPublicUrl(path)
-    proofImageUrl = publicData?.publicUrl || ""
-    proofFileId = path
-  }
+  // Subir la imagen del comprobante (si viene) a Supabase Storage. En pago
+  // mixto puede venir una SEGUNDA captura (una por cada pata).
+  const uploaded = await uploadProofImage(supabase, cleanText(input.dataUrl), input.mimeType)
+  const proofImageUrl = uploaded.url
+  const proofFileId = uploaded.fileId
+  const uploaded2 = await uploadProofImage(supabase, cleanText(input.dataUrl2), input.mimeType2)
+  const proofImageUrl2 = uploaded2.url
+  const proofFileId2 = uploaded2.fileId
 
   // Completar datos del pedido (tipo y total) desde la orden, si existe
   let orderType = ""
@@ -134,28 +152,53 @@ export async function createPaymentProof(input: CreatePaymentProofInput, branchI
     orderTotalUSD = Number(o.total_usd || 0)
   }
 
-  const { data, error } = await supabase
+  // Fila base (una sola imagen): funciona con o sin la migración 0030.
+  const baseRow: Record<string, unknown> = {
+    id,
+    branch_id: branchId ?? null,
+    order_id: cleanText(input.orderId),
+    customer_name: cleanText(input.customerName) || cleanText((orderRow as Record<string, unknown>)?.customer_name),
+    customer_phone: cleanText(input.customerPhone),
+    order_type: orderType,
+    order_total_usd: orderTotalUSD,
+    reported_method: cleanText(input.reportedMethod),
+    amount_reported_usd: Number(input.amountReportedUSD || 0),
+    amount_reported_ves: Number(input.amountReportedVES || 0),
+    payment_reference: cleanText(input.paymentReference),
+    customer_note: cleanText(input.customerNote),
+    proof_image_url: proofImageUrl,
+    proof_file_id: proofFileId,
+    proof_file_name: cleanText(input.fileName),
+    status: "Comprobante enviado",
+  }
+
+  // Solo si hay SEGUNDA captura se tocan las columnas nuevas: así los
+  // comprobantes de una sola imagen siguen funcionando aunque la migración 0030
+  // aún no esté aplicada. Si el insert con las columnas nuevas falla porque no
+  // existen todavía, se reintenta sin ellas (se guarda con la primera imagen).
+  const hasSecondImage = Boolean(proofImageUrl2 || proofFileId2 || cleanText(input.fileName2))
+  const rowWithSecond = hasSecondImage
+    ? {
+        ...baseRow,
+        proof_image_url_2: proofImageUrl2,
+        proof_file_id_2: proofFileId2,
+        proof_file_name_2: cleanText(input.fileName2),
+      }
+    : baseRow
+
+  let { data, error } = await supabase
     .from("payment_proofs")
-    .insert({
-      id,
-      branch_id: branchId ?? null,
-      order_id: cleanText(input.orderId),
-      customer_name: cleanText(input.customerName) || cleanText((orderRow as Record<string, unknown>)?.customer_name),
-      customer_phone: cleanText(input.customerPhone),
-      order_type: orderType,
-      order_total_usd: orderTotalUSD,
-      reported_method: cleanText(input.reportedMethod),
-      amount_reported_usd: Number(input.amountReportedUSD || 0),
-      amount_reported_ves: Number(input.amountReportedVES || 0),
-      payment_reference: cleanText(input.paymentReference),
-      customer_note: cleanText(input.customerNote),
-      proof_image_url: proofImageUrl,
-      proof_file_id: proofFileId,
-      proof_file_name: cleanText(input.fileName),
-      status: "Comprobante enviado",
-    })
+    .insert(rowWithSecond)
     .select("*")
     .single()
+
+  if (error && hasSecondImage && /proof_image_url_2|proof_file_id_2|proof_file_name_2|column/i.test(error.message || "")) {
+    ;({ data, error } = await supabase
+      .from("payment_proofs")
+      .insert(baseRow)
+      .select("*")
+      .single())
+  }
 
   if (error) {
     throw new Error(error.message || "No se pudo enviar el comprobante")
