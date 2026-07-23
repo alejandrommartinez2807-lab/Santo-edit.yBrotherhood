@@ -263,6 +263,7 @@ type BusinessConfig = {
   filtersOpenByDefault: boolean;
   allowCloseWithPendingOrders: boolean;
   allowCloseWithPendingPayments: boolean;
+  cashierDeliveryPaymentInEnabled: boolean;
   kitchenFlowMode: KitchenFlowMode;
   publicPaymentMethodChangeEnabled: boolean;
   updatedAt?: string;
@@ -449,6 +450,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   filtersOpenByDefault: false,
   allowCloseWithPendingOrders: true,
   allowCloseWithPendingPayments: true,
+  cashierDeliveryPaymentInEnabled: true,
   kitchenFlowMode: "kitchen",
   publicPaymentMethodChangeEnabled: true,
 };
@@ -1386,6 +1388,10 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     allowCloseWithPendingPayments: normalizeBoolean(
       source.allowCloseWithPendingPayments,
       DEFAULT_BUSINESS_CONFIG.allowCloseWithPendingPayments,
+    ),
+    cashierDeliveryPaymentInEnabled: normalizeBoolean(
+      source.cashierDeliveryPaymentInEnabled,
+      DEFAULT_BUSINESS_CONFIG.cashierDeliveryPaymentInEnabled,
     ),
     kitchenFlowMode: normalizeKitchenFlowMode(source.kitchenFlowMode),
     publicPaymentMethodChangeEnabled: normalizeBoolean(
@@ -5640,6 +5646,17 @@ export default function BusinessConfigPage() {
                   onClick={() => updateConfig("kitchenFlowMode", option.value)}
                 />
               ))}
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <ToggleRow
+                label="Preguntar en qué se pagó el delivery"
+                description="Muestra el selector “Delivery pagado en” al registrar cobros. Si no te interesa ese dato, apágalo: el costo del delivery se sigue viendo en la página pública, reportes y cierres."
+                checked={businessConfig.cashierDeliveryPaymentInEnabled}
+                onChange={(value) =>
+                  updateConfig("cashierDeliveryPaymentInEnabled", value)
+                }
+                icon={<Truck size={18} />}
+              />
             </div>
             <p className="mt-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
               Recuerda presionar “Guardar cambios” al final de la página. La caja toma el modo nuevo al recargar.

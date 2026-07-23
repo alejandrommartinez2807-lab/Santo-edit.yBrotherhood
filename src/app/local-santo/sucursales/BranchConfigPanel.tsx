@@ -293,6 +293,13 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
                 placeholder="https://maps.app.goo.gl/…"
                 className={`mt-1 ${inputClass}`}
               />
+              <p className="mt-1 text-xs font-bold leading-4 text-[var(--brand-ink-2)]/60">
+                Este link es SOLO de esta sede: alimenta su botón “Cómo llegar”
+                en “Nuestros locales”. El botón de ubicación de la barra
+                superior usa otro link (el general del negocio, en
+                Configuración). Sin link aquí, “Cómo llegar” busca por la
+                dirección escrita arriba.
+              </p>
             </div>
           </div>
 

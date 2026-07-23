@@ -13,6 +13,7 @@ import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import { writeAuditLog } from "@/lib/audit"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
+import { sendOrderMilestonePush } from "@/lib/orderPushNotifications"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -361,6 +362,19 @@ export async function PATCH(
         fiscal: order.fiscal,
       },
     })
+
+    // El pedido quedó PAGADO: avisar al cliente suscrito (además del polling
+    // de su página de seguimiento). Nunca lanza (2026-07-23).
+    if (order.paymentStatus === "Pagado") {
+      const orderLabel = String(
+        (order as unknown as Record<string, unknown>).displayNumber || "",
+      ).trim()
+      await sendOrderMilestonePush(
+        orderId,
+        "✅ Pago registrado",
+        `El local registró el pago de tu pedido${orderLabel ? ` ${orderLabel}` : ""}. ¡Sigue su curso!`,
+      )
+    }
 
     return NextResponse.json({
       order,

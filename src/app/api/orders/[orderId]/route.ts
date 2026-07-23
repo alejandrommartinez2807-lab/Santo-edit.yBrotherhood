@@ -23,6 +23,7 @@ import { OrderActionConflictError } from "@/lib/orderConflicts"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 import {
   sendOrderCancelledStaffPush,
+  sendOrderMilestonePush,
   sendOrderReadyPush,
 } from "@/lib/orderPushNotifications"
 import { getDisplayOrderNumber } from "@/lib/localOrderHelpers"
@@ -686,6 +687,26 @@ export async function PATCH(
       // Aviso web push al cliente suscrito. Nunca lanza: un fallo de push no
       // puede tumbar el cambio de estado de caja/cocina.
       await sendOrderReadyPush(orderId, getDisplayOrderNumber(order))
+    }
+
+    // Hitos intermedios también avisan (pedido del dueño 2026-07-23): que el
+    // cliente sepa cuándo su pedido ENTRA a cocina y cuándo quedó entregado.
+    if (status === "Preparando") {
+      const orderLabel = getDisplayOrderNumber(order) || orderId
+      await sendOrderMilestonePush(
+        orderId,
+        "🍳 ¡Tu pedido entró a cocina!",
+        `Ya estamos preparando tu pedido ${orderLabel}. Te avisamos cuando esté listo.`,
+      )
+    }
+
+    if (status === "Entregado") {
+      const orderLabel = getDisplayOrderNumber(order) || orderId
+      await sendOrderMilestonePush(
+        orderId,
+        "Pedido entregado 🙌",
+        `Tu pedido ${orderLabel} fue entregado. ¡Gracias por tu compra!`,
+      )
     }
 
     if (status === "Cancelado" && (await getBusinessConfig()).cancellationAlertsEnabled !== false) {

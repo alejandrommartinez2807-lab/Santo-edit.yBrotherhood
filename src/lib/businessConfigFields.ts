@@ -94,6 +94,11 @@ export const SIMPLE_BUSINESS_CONFIG_FIELDS: readonly SimpleConfigField[] = [
   // Anulación automática de pedidos SIN pago reportado tras X minutos
   // (0 = apagada). Solo aplica a Para llevar/Delivery no confirmados por caja.
   { key: "publicUnpaidAutoCancelMinutes", type: "number", default: 0, min: 0, max: 240 },
+  // Selector "Delivery pagado en" del cobro de caja (pedido del dueño
+  // 2026-07-23): si al negocio no le interesa registrar en qué moneda se pagó
+  // el delivery, lo apaga y el selector desaparece del modal de cobro. Los
+  // costos de delivery se siguen viendo en el público, reportes y cierres.
+  { key: "cashierDeliveryPaymentInEnabled", type: "boolean", default: true },
   // La promoción del dueño también como ventana emergente al entrar (además
   // de la sección); se recuerda el cierre por contenido para no insistir.
   { key: "promotionPopupEnabled", type: "boolean", default: false },

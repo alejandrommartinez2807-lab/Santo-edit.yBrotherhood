@@ -169,6 +169,8 @@ export type BusinessConfig = {
   publicCashDivisaPhotoRequired: boolean
   // Permitir 2 capturas en el reporte de pago mixto (una por pata, apagable).
   publicMixedSecondProofEnabled: boolean
+  // Selector "Delivery pagado en" del cobro de caja (apagable por el dueño).
+  cashierDeliveryPaymentInEnabled: boolean
   publicUnpaidAutoCancelMinutes: number
   // La promoción del dueño como ventana emergente al entrar al menú público.
   promotionPopupEnabled: boolean
@@ -341,6 +343,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicPaymentBeforeRegisterEnabled: false,
   publicCashDivisaPhotoRequired: false,
   publicMixedSecondProofEnabled: true,
+  cashierDeliveryPaymentInEnabled: true,
   publicUnpaidAutoCancelMinutes: 0,
   promotionPopupEnabled: false,
   cancellationApprovalRequired: false,
@@ -817,6 +820,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     publicCashDivisaPhotoRequired: normalizeBooleanConfig(
       source.publicCashDivisaPhotoRequired,
       DEFAULT_BUSINESS_CONFIG.publicCashDivisaPhotoRequired
+    ),
+    cashierDeliveryPaymentInEnabled: normalizeBooleanConfig(
+      source.cashierDeliveryPaymentInEnabled,
+      DEFAULT_BUSINESS_CONFIG.cashierDeliveryPaymentInEnabled
     ),
     publicMixedSecondProofEnabled: normalizeBooleanConfig(
       source.publicMixedSecondProofEnabled,

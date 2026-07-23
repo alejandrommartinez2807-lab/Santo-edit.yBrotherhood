@@ -161,6 +161,35 @@ export async function sendOrderReadyPush(orderId: string, displayNumber: string)
   }
 }
 
+// Notifica al CLIENTE cualquier hito de su pedido (entró a cocina, pagado,
+// entregado…): mismo canal que "listo", con título/cuerpo parametrizados.
+// Nunca lanza: un fallo de push no puede tumbar la operación.
+export async function sendOrderMilestonePush(
+  orderId: string,
+  title: string,
+  body: string,
+): Promise<void> {
+  if (!isPushConfigured()) return
+
+  try {
+    const supabase = getSupabaseAdmin()
+    // branch-exempt: lectura puntual por order_id (id único e imprevisible).
+    const { data, error } = await supabase
+      .from("push_subscriptions")
+      .select("endpoint, subscription")
+      .eq("order_id", orderId)
+
+    if (error) throw new Error(error.message)
+    if (!data?.length) return
+
+    const payload = JSON.stringify({ title, body, url: `/pedido/${orderId}` })
+
+    await sendPushToSubscriptionRows(data, payload)
+  } catch (error) {
+    captureError(error, { route: "lib/orderPushNotifications", action: "sendOrderMilestonePush" })
+  }
+}
+
 // Notifica al CLIENTE cuando caja revisa su comprobante (confirmado /
 // rechazado / necesita corrección): su página de seguimiento ya sondea, pero
 // con push se entera aunque la tenga cerrada. Solo estados accionables; "En

@@ -38,6 +38,7 @@ import {
   getStaffConfirmationStatusLabel,
   hasStaffConfirmationItems,
 } from "@/lib/localOrderHelpers"
+import { getOrderPaymentLegs } from "@/lib/orderPaymentLegs"
 import {
   ADMIN_STORAGE_KEY,
   CASH_FILTERS,
@@ -58,6 +59,7 @@ import {
   getOpenAccountPendingUSD,
   getOpenAccountTotalUSD,
   getOrderPayment,
+  getOrderTotals,
   getPendingPaymentProofs,
   isDeliveryOrder,
   isDeliveryReported,
@@ -128,6 +130,9 @@ function CajaPageContent() {
     message: "",
     reviewUrl: "",
   })
+  // "Delivery pagado en" del modal de cobro: el dueño puede apagarlo en
+  // Configuración si no le interesa registrar ese dato (2026-07-23).
+  const [deliveryPaymentInEnabled, setDeliveryPaymentInEnabled] = useState(true)
 
   const pendingStatusRef = useRef<Map<string, OrderStatus>>(new Map())
   const isLoggedIn = adminPassword.length > 0
@@ -165,6 +170,9 @@ function CajaPageContent() {
         message: String(businessConfig.postSaleSurveyMessage || ""),
         reviewUrl: String(businessConfig.googleReviewUrl || ""),
       })
+      setDeliveryPaymentInEnabled(
+        businessConfig.cashierDeliveryPaymentInEnabled !== false
+      )
     } catch {
       setLocalTables(DEFAULT_LOCAL_TABLES)
     }
@@ -1229,7 +1237,47 @@ function CajaPageContent() {
               <SelectBox label="Método en bolívares" value={paymentForm.paymentMethodVES} onChange={(value) => updatePaymentForm("paymentMethodVES", value)} options={PAYMENT_METHOD_VES_OPTIONS} emptyLabel="Sin registrar" />
             </div>
 
-            <SelectBox label="Delivery pagado en" value={paymentForm.deliveryPaymentIn} onChange={(value) => updatePaymentForm("deliveryPaymentIn", value as DeliveryPaymentIn)} options={DELIVERY_PAYMENT_OPTIONS} />
+            {/* Solo en pedidos DE DELIVERY (en pick up/mesa la palabra
+                "Delivery" confundía) y solo si el dueño no lo apagó en
+                Configuración. El costo del delivery se sigue viendo en
+                público, reportes y cierres aunque esto esté oculto. */}
+            {deliveryPaymentInEnabled && selectedPaymentOrder && isDeliveryOrder(selectedPaymentOrder) ? (
+              <SelectBox label="Delivery pagado en" value={paymentForm.deliveryPaymentIn} onChange={(value) => updatePaymentForm("deliveryPaymentIn", value as DeliveryPaymentIn)} options={DELIVERY_PAYMENT_OPTIONS} />
+            ) : null}
+
+            {/* El cliente eligió una pata electrónica (Pago móvil/Zelle…) y
+                NO ha subido captura ni referencia: avisar ANTES de registrar
+                (2026-07-23: se marcó "Pagado" un mixto cuya referencia de
+                Pago móvil nunca llegó). No bloquea: caja puede haber
+                verificado el pago directo en su banco. */}
+            {(() => {
+              if (!selectedPaymentOrder) return null
+              const electronicLegs = getOrderPaymentLegs({
+                paymentMethod: selectedPaymentOrder.paymentMethod,
+                totalUSD: getOrderTotals(selectedPaymentOrder).totalUSD,
+                exchangeRate: Number(selectedPaymentOrder.exchangeRate || 0),
+              }).filter((leg) => !leg.isCash)
+              if (!electronicLegs.length) return null
+              const hasElectronicProof = paymentProofs.some(
+                (proof) =>
+                  proof.orderId === selectedPaymentOrder.id &&
+                  proof.status !== "Rechazado" &&
+                  !proof.reportedMethod
+                    .normalize("NFD")
+                    .replace(/[̀-ͯ]/g, "")
+                    .toLowerCase()
+                    .includes("efectivo"),
+              )
+              if (hasElectronicProof) return null
+              return (
+                <p className="rounded-2xl border-2 border-amber-500 bg-[var(--brand-accent-100)] px-4 py-3 text-sm font-black leading-5 text-[var(--brand-amber)]">
+                  ⚠️ El cliente indicó{" "}
+                  {electronicLegs.map((leg) => leg.method).join(" + ")} y aún no
+                  ha subido captura ni referencia. Verifica que el pago llegó
+                  antes de registrar el cobro.
+                </p>
+              )
+            })()}
 
             <div>
               <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">Nota de pago</label>
