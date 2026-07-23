@@ -18,10 +18,46 @@ export default function ServiceWorkerRegister() {
       return
     }
 
+    // Auto-actualización: cuando un SW NUEVO toma el control (tras publicar una
+    // versión), recargamos UNA vez para que el dispositivo cargue los assets
+    // nuevos. Sin esto, los teléfonos con la PWA instalada seguían viendo la
+    // versión vieja y "las features nuevas no aparecían". La guarda evita bucles
+    // y el reload solo ocurre si ya había un SW controlando (no en la primera
+    // instalación).
+    let refreshing = false
+    const hadController = Boolean(navigator.serviceWorker.controller)
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshing || !hadController) return
+      refreshing = true
+      window.location.reload()
+    })
+
     const onLoad = () => {
-      navigator.serviceWorker.register("/sw.js").catch(() => {
-        /* sin SW: la app sigue funcionando normal */
-      })
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((registration) => {
+          // Busca actualizaciones al cargar (además del chequeo del navegador):
+          // si hay un SW en espera, lo activa para que tome control y dispare
+          // la recarga de arriba.
+          registration.update?.().catch(() => {})
+          registration.addEventListener?.("updatefound", () => {
+            const installing = registration.installing
+            if (!installing) return
+            installing.addEventListener("statechange", () => {
+              if (
+                installing.state === "installed" &&
+                navigator.serviceWorker.controller
+              ) {
+                // Hay una versión nueva instalada y ya había un SW controlando:
+                // el nuevo SW (con skipWaiting) tomará control y recargaremos.
+                registration.waiting?.postMessage?.({ type: "SKIP_WAITING" })
+              }
+            })
+          })
+        })
+        .catch(() => {
+          /* sin SW: la app sigue funcionando normal */
+        })
     }
     if (document.readyState === "complete") onLoad()
     else window.addEventListener("load", onLoad, { once: true })

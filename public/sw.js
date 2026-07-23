@@ -6,8 +6,13 @@
 //     ahí y deben ser siempre frescos; offline, /api simplemente falla y la UI
 //     ya lo maneja (cola offline para pedidos).
 
-const STATIC_CACHE = "santo-static-v1"
-const PAGE_CACHE = "santo-pages-v1"
+// La VERSIÓN va en el nombre de la caché: al subirla, el handler `activate`
+// borra las cachés viejas (KEEP solo incluye las actuales), así los dispositivos
+// no se quedan sirviendo assets/HTML de un deploy anterior. SUBIR ESTE NÚMERO
+// en cada release que deba forzar refresco (bug histórico: estaba fijo en v1 y
+// nunca purgaba, por eso las features nuevas "no aparecían" tras publicar).
+const STATIC_CACHE = "santo-static-v2"
+const PAGE_CACHE = "santo-pages-v2"
 const OFFLINE_URL = "/offline.html"
 const KEEP = [STATIC_CACHE, PAGE_CACHE]
 
@@ -17,6 +22,13 @@ self.addEventListener("install", (event) => {
     caches.open(PAGE_CACHE).then((cache) => cache.add(OFFLINE_URL)).catch(() => {}),
   )
   self.skipWaiting()
+})
+
+// Permite que la página fuerce la activación inmediata de un SW en espera
+// (auto-actualización tras publicar). Redundante con el skipWaiting del install,
+// pero deja el mecanismo listo si algún día se quita de ahí.
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting()
 })
 
 self.addEventListener("activate", (event) => {
