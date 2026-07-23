@@ -939,6 +939,9 @@ function CajaPageContent() {
             </button>
           </div>
 
+          {/* La sección ya tiene título y ayuda arriba: el mapa va sin
+              cabecera propia (antes salían dos títulos casi iguales seguidos).
+              Oculto no necesita aviso: el botón dice "Mostrar mapa". */}
           {showTablesMap ? (
             <div className="mt-3">
               <LocalTablesMap
@@ -953,15 +956,11 @@ function CajaPageContent() {
                   setSearchText("")
                 }}
                 onClearSelection={() => setSelectedCashTableName("")}
-                title="Mapa de mesas para caja"
-                description="Toca una mesa para filtrar caja por esa ubicación. Los cobros reales se siguen registrando desde las tarjetas de pedido."
+                title=""
+                description=""
               />
             </div>
-          ) : (
-            <p className="mt-3 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]/70">
-              Mapa oculto. Los pedidos y cobros siguen visibles abajo.
-            </p>
-          )}
+          ) : null}
         </section>
 
         <section className="mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-white p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.08)]">
@@ -984,20 +983,18 @@ function CajaPageContent() {
             </button>
           </div>
 
+          {/* Igual que el mapa: la sección ya se presenta arriba; sin panel
+              duplicando el título y sin aviso de relleno cuando está oculto. */}
           {showQrLinks ? (
             <div className="mt-3">
               <LocalTableQrLinksPanel
                 tables={localTables}
                 compact
-                title="QR y enlaces por mesa"
-                description="Copia enlaces de mesa para imprimirlos como QR o enviarlos al cliente. Caja sigue registrando los cobros reales desde cada pedido."
+                title=""
+                description="Copia enlaces de mesa para imprimirlos como QR o enviarlos al cliente."
               />
             </div>
-          ) : (
-            <p className="mt-3 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]/70">
-              QR ocultos. Usa “Mostrar QR” solo cuando necesites copiar, imprimir o revisar enlaces de mesa.
-            </p>
-          )}
+          ) : null}
         </section>
 
 

@@ -86,14 +86,15 @@ function normalizeBoolean(value: unknown, fallback: boolean) {
 }
 
 function isDeliveryOrder(order: OrderLike) {
+  // Sin customerPhone: Pick up exige teléfono y sonaba como delivery
+  // (mismo criterio que lib/localOrderHelpers, 2026-07-23).
   return (
     order.orderType === "Delivery" ||
     String(order.tableNumber || "")
       .toLowerCase()
       .startsWith("delivery") ||
     Boolean(
-      order.customerPhone ||
-        order.deliveryAddress ||
+      order.deliveryAddress ||
         order.deliveryReference ||
         order.deliveryZone
     )

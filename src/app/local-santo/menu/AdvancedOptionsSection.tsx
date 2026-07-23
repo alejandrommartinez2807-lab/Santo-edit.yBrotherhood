@@ -300,28 +300,40 @@ export function AdvancedOptionsSection({
 
       {isExpanded && (
         <div className="space-y-4 border-t-2 border-[var(--brand-primary)]/15 p-4">
-          {/* Plantilla de hamburguesa de un clic (pedido del dueño 2026-07-22). */}
-          <div className="rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/50 bg-[var(--brand-cream)] p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-                  Plantilla de hamburguesa
-                </p>
-                <p className="mt-1 text-[0.72rem] font-bold leading-4 text-[var(--brand-ink-2)]/70">
-                  Carga de un clic el grupo &quot;Escoge tu proteína&quot;, las custom
-                  fries y los 11 extras. Luego ajustas precios o quitas lo que no
-                  quieras y guardas el producto.
-                </p>
+          {/* Plantilla de hamburguesa de un clic (pedido del dueño 2026-07-22).
+              Con el producto YA configurado, el bloque grande era relleno:
+              queda una sola línea discreta (la plantilla REEMPLAZA lo actual). */}
+          {form.variations.length > 0 || form.addons.length > 0 ? (
+            <button
+              type="button"
+              onClick={applyBurgerTemplate}
+              className="w-full rounded-full border-2 border-dashed border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] px-4 py-2 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]/80 transition hover:text-[var(--brand-primary)]"
+            >
+              Reemplazar todo con la plantilla de hamburguesa
+            </button>
+          ) : (
+            <div className="rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/50 bg-[var(--brand-cream)] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                    Plantilla de hamburguesa
+                  </p>
+                  <p className="mt-1 text-[0.72rem] font-bold leading-4 text-[var(--brand-ink-2)]/70">
+                    Carga de un clic el grupo &quot;Escoge tu proteína&quot;, las custom
+                    fries y los 11 extras. Luego ajustas precios o quitas lo que no
+                    quieras y guardas el producto.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={applyBurgerTemplate}
+                  className="shrink-0 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2.5 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] active:scale-95"
+                >
+                  Cargar plantilla de hamburguesa
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={applyBurgerTemplate}
-                className="shrink-0 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2.5 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] active:scale-95"
-              >
-                Cargar plantilla de hamburguesa
-              </button>
             </div>
-          </div>
+          )}
 
           {productType === "combo" && (
             <ComboBuilder

@@ -290,14 +290,17 @@ export function isComboItem(item: CartItem) {
 }
 
 export function isDeliveryOrder(order: LocalOrder) {
+  // El teléfono NO cuenta como señal de delivery: Pick up lo exige desde el
+  // carrito público y todos los retiros salían con chip "Delivery" e inflaban
+  // la métrica (2026-07-23). Mismo criterio que lib/localOrderHelpers.
   return (
     order.orderType === "Delivery" ||
     order.tableNumber?.toLowerCase().startsWith("delivery") ||
     Boolean(
-      order.customerPhone ||
-        order.deliveryAddress ||
+      order.deliveryAddress ||
         order.deliveryReference ||
-        order.deliveryZone
+        order.deliveryZone ||
+        Number(order.deliveryCostUSD || 0) > 0
     )
   )
 }

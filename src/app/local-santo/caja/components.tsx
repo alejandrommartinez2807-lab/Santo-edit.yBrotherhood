@@ -195,12 +195,16 @@ export function CashOrderCard({
 
           <div className="ml-auto text-right">
             <p className="text-lg font-black leading-none text-[var(--brand-ink-3)]">{formatUSD(orderTotals.totalUSD)}</p>
-            {payment.pendingUSD > 0 && <p className="mt-0.5 text-[0.58rem] font-black uppercase text-red-700">Pendiente {formatUSD(payment.pendingUSD)}</p>}
+            {/* Solo con pago PARCIAL: sin abono, pendiente == total y el
+                chip "Pendiente de cobro" ya lo dice (repetía el monto). */}
+            {payment.receivedEquivalentUSD > 0 && payment.pendingUSD > 0 && <p className="mt-0.5 text-[0.58rem] font-black uppercase text-red-700">Pendiente {formatUSD(payment.pendingUSD)}</p>}
           </div>
         </div>
 
         <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-          <p className="min-w-0 flex-1 basis-40 truncate text-[0.7rem] font-bold text-[var(--brand-ink-2)]/70">{order.customerName || "Cliente"} · {getDisplayLocation(order)} · {formatDate(order.createdAt)} · {getDisplayOrderType(order)}</p>
+          {/* Sin repetir el tipo: en delivery ya está el chip, y en retiros la
+              ubicación ya dice "Para llevar". */}
+          <p className="min-w-0 flex-1 basis-40 truncate text-[0.7rem] font-bold text-[var(--brand-ink-2)]/70">{order.customerName || "Cliente"} · {getDisplayLocation(order)} · {formatDate(order.createdAt)}{isDelivery || getDisplayOrderType(order) === getDisplayLocation(order) ? "" : ` · ${getDisplayOrderType(order)}`}</p>
           <button type="button" onClick={onOpenPayment} className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3 py-1 text-[0.6rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]">
             <CreditCard size={13} /> Cobrar
           </button>

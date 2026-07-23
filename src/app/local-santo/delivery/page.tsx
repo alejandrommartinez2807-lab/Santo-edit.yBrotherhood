@@ -170,14 +170,16 @@ function isComboItem(item: CartItem) {
 }
 
 function isDeliveryOrder(order: LocalOrder) {
+  // Sin customerPhone: Pick up exige teléfono y llenaba el módulo Delivery
+  // de retiros (mismo criterio que lib/localOrderHelpers, 2026-07-23).
   return (
     order.orderType === "Delivery" ||
     order.tableNumber?.toLowerCase().startsWith("delivery") ||
     Boolean(
-      order.customerPhone ||
-        order.deliveryAddress ||
+      order.deliveryAddress ||
         order.deliveryReference ||
-        order.deliveryZone
+        order.deliveryZone ||
+        Number(order.deliveryCostUSD || 0) > 0
     )
   )
 }

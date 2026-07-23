@@ -219,15 +219,23 @@ export function LocalTableQrLinksPanel({
   return (
     <section className={`rounded-[1.5rem] border-4 border-[var(--brand-primary)] bg-white shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)] print:border-0 print:shadow-none ${compact ? "p-4" : "p-4 sm:p-5"}`}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-            <QrCode size={18} />
-            {title}
-          </p>
-          <p className="mt-2 max-w-3xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-            {description}
-          </p>
-        </div>
+        {/* title/description en "" = el contenedor ya puso su propia cabecera
+            (caja): no repetir el mismo título dos veces, una debajo de otra. */}
+        {title || description ? (
+          <div>
+            {title ? (
+              <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                <QrCode size={18} />
+                {title}
+              </p>
+            ) : null}
+            {description ? (
+              <p className="mt-2 max-w-3xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
+                {description}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className="flex flex-wrap items-center gap-2 print:hidden">
           {branchName && (
