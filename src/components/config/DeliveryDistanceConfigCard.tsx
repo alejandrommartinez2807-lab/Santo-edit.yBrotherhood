@@ -178,8 +178,10 @@ export default function DeliveryDistanceConfigCard({
   }, [selectedBranchId, branchHeaders]);
 
   // Recarga la config al elegir sede (y en el arranque cuando ya se resolvió).
+  // Diferida un tick para no hacer setState síncrono dentro del efecto.
   useEffect(() => {
-    void loadSettings();
+    const timer = setTimeout(() => void loadSettings(), 0);
+    return () => clearTimeout(timer);
   }, [loadSettings]);
 
   async function saveSettings(nextEnabled = enabled) {

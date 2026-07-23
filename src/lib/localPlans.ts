@@ -619,7 +619,7 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     ownerConfigKey: "advancedMenuModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
-    routePath: "/local-santo/menu-avanzado",
+    routePath: "/local-santo/menu",
     comingSoon: false,
   },
   {
@@ -631,7 +631,7 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     ownerConfigKey: "productVariationsModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
-    routePath: "/local-santo/menu-avanzado",
+    routePath: "/local-santo/menu",
     comingSoon: false,
   },
   {
@@ -643,7 +643,7 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     ownerConfigKey: "productAddonsModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
-    routePath: "/local-santo/menu-avanzado",
+    routePath: "/local-santo/menu",
     comingSoon: false,
   },
   {
@@ -655,7 +655,7 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     ownerConfigKey: "productBuilderModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
-    routePath: "/local-santo/menu-avanzado",
+    routePath: "/local-santo/menu",
     comingSoon: false,
   },
   {
@@ -667,7 +667,7 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     ownerConfigKey: "productCombosModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
-    routePath: "/local-santo/menu-avanzado",
+    routePath: "/local-santo/menu",
     comingSoon: false,
   },
   {
@@ -679,7 +679,7 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     ownerConfigKey: "productAvailabilityModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
-    routePath: "/local-santo/menu-avanzado",
+    routePath: "/local-santo/menu",
     comingSoon: false,
   },
   {
@@ -691,7 +691,7 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     ownerConfigKey: "salesChannelsModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
-    routePath: "/local-santo/menu-avanzado",
+    routePath: "/local-santo/menu",
     comingSoon: false,
   },
   {

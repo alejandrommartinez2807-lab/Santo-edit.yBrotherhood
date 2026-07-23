@@ -31,6 +31,21 @@ import {
   type ProductSalesChannel,
   type ProductType,
 } from "@/data/products"
+// Fusión del menú avanzado (lote v6 fase B): la config estructurada
+// (variaciones con precio, extras, ingredientes con inventario, combos) se
+// edita AQUÍ, en la sección desplegable "Opciones avanzadas" de cada
+// producto. /local-santo/menu-avanzado quedó como redirección.
+import {
+  EMPTY_FORM as ADVANCED_EMPTY_FORM,
+  buildFormFromProduct as buildAdvancedFormFromProduct,
+  buildPremiumSummary as buildAdvancedPremiumSummary,
+  cleanComboRowsForSave,
+  cleanRowsForSave as cleanAdvancedRowsForSave,
+  cleanVariationGroupsForSave,
+  type AdvancedForm,
+  type InventoryOption,
+} from "../menu-avanzado/domain"
+import { AdvancedOptionsSection } from "./AdvancedOptionsSection"
 
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -582,6 +597,15 @@ export default function LocalMenuPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const imageInputRef = useRef<HTMLInputElement | null>(null)
+  // Opciones avanzadas fusionadas (lote v6 fase B): estado estructurado del
+  // producto en edición + disponibilidad del módulo advancedMenu por plan.
+  const [advancedForm, setAdvancedForm] = useState<AdvancedForm>(ADVANCED_EMPTY_FORM)
+  const [isAdvancedAvailable, setIsAdvancedAvailable] = useState(false)
+  const [isAdvancedExpanded, setIsAdvancedExpanded] = useState(false)
+  const [inventoryOptions, setInventoryOptions] = useState<InventoryOption[]>([])
+  // Deep-link ?producto=<id>: abre ese producto con la sección avanzada
+  // desplegada (reemplaza el viejo /menu-avanzado?producto=).
+  const deepLinkAppliedRef = useRef(false)
 
   const isLoggedIn = adminPassword.length > 0
 
@@ -737,6 +761,55 @@ export default function LocalMenuPage() {
     }
   }
 
+  // ¿El plan incluye el menú avanzado? Si sí, la sección "Opciones avanzadas"
+  // aparece en el formulario y se cargan los insumos para vincular inventario.
+  // Si no (o falla la consulta), el editor sigue con los campos simples.
+  async function loadAdvancedSupport(password = adminPassword) {
+    if (!password) return
+
+    try {
+      const response = await fetch("/api/local-auth?moduleKey=advancedMenu", {
+        headers: { "x-admin-password": password },
+        cache: "no-store",
+      })
+      const data = await readApiResponse(response)
+      const available = Boolean(response.ok && data.ok)
+      setIsAdvancedAvailable(available)
+      if (!available) return
+    } catch {
+      setIsAdvancedAvailable(false)
+      return
+    }
+
+    try {
+      const response = await fetch("/api/inventory", {
+        headers: { "x-admin-password": password },
+        cache: "no-store",
+      })
+
+      if (!response.ok) {
+        setInventoryOptions([])
+        return
+      }
+
+      const data = (await response.json().catch(() => ({}))) as {
+        inventory?: Array<{ id?: unknown; name?: unknown; unit?: unknown }>
+      }
+
+      setInventoryOptions(
+        (data.inventory || [])
+          .map((item) => ({
+            id: String(item.id || "").trim(),
+            name: String(item.name || "").trim(),
+            unit: String(item.unit || "").trim(),
+          }))
+          .filter((item) => item.id && item.name),
+      )
+    } catch {
+      setInventoryOptions([])
+    }
+  }
+
   async function handleLogin() {
     const password = passwordInput.trim()
 
@@ -750,6 +823,7 @@ export default function LocalMenuPage() {
       setAdminPassword(password)
       setPasswordInput(password)
       await loadMenuProducts(password)
+      void loadAdvancedSupport(password)
     } catch (error) {
       window.localStorage.removeItem(ADMIN_STORAGE_KEY)
       setAdminPassword("")
@@ -802,6 +876,7 @@ export default function LocalMenuPage() {
         setAdminPassword(savedPassword)
         setPasswordInput(savedPassword)
         await loadMenuProducts(savedPassword)
+        void loadAdvancedSupport(savedPassword)
       } catch (error) {
         window.localStorage.removeItem(ADMIN_STORAGE_KEY)
         setAdminPassword("")
@@ -824,6 +899,36 @@ export default function LocalMenuPage() {
     restoreSavedSession()
   }, [])
 
+  // Deep-link ?producto=<id> (lo usaba /menu-avanzado?producto=, que ahora
+  // redirige aquí): abre ese producto con la sección avanzada desplegada.
+  useEffect(() => {
+    if (deepLinkAppliedRef.current || !isLoggedIn || menuProducts.length === 0) return
+    deepLinkAppliedRef.current = true
+
+    let raw = ""
+    try {
+      raw = new URLSearchParams(window.location.search).get("producto") || ""
+    } catch {
+      raw = ""
+    }
+    if (!raw) return
+
+    const target = menuProducts.find((product) => String(product.id) === raw)
+    if (!target) return
+
+    // Diferido un tick para no hacer setState síncrono dentro del efecto.
+    const timer = setTimeout(() => {
+      editProduct(target, { expandAdvanced: true })
+      window.setTimeout(() => {
+        document
+          .getElementById("opciones-avanzadas")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 200)
+    }, 0)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al cargar productos
+  }, [isLoggedIn, menuProducts])
+
   function updateForm<K extends keyof MenuForm>(field: K, value: MenuForm[K]) {
     setForm((currentForm) => ({
       ...currentForm,
@@ -835,6 +940,8 @@ export default function LocalMenuPage() {
 
   function resetForm() {
     setForm(emptyForm)
+    setAdvancedForm(ADVANCED_EMPTY_FORM)
+    setIsAdvancedExpanded(false)
     setSuccessMessage(null)
     setErrorMessage(null)
   }
@@ -902,6 +1009,55 @@ export default function LocalMenuPage() {
       form.category === "Otros" && form.customCategory.trim()
         ? form.customCategory.trim()
         : form.category
+
+    // Con el módulo avanzado disponible, la config estructurada (grupos de
+    // variación con precio, extras, ingredientes con inventario, combos) sale
+    // del estado de la sección "Opciones avanzadas". Sin módulo, se usa el
+    // camino simple de siempre (texto plano → estructuras básicas).
+    const advancedVariations = cleanVariationGroupsForSave(advancedForm.variations)
+    const advancedAddons = cleanAdvancedRowsForSave(advancedForm.addons)
+    const advancedComboItems = cleanComboRowsForSave(advancedForm.comboItems)
+    const advancedIncluded = cleanAdvancedRowsForSave(advancedForm.includedIngredients)
+    const advancedRemovable = cleanAdvancedRowsForSave(advancedForm.removableIngredients)
+    const advancedPayload = isAdvancedAvailable
+      ? {
+          variations: advancedVariations,
+          addons: advancedAddons,
+          comboItems: advancedComboItems,
+          includedIngredients: advancedIncluded,
+          removableIngredients: advancedRemovable,
+          selectionRules: {
+            ...form.selectionRulesBase,
+            minAddons: normalizePositiveInteger(form.minAddons) || undefined,
+            maxAddons: normalizePositiveInteger(form.maxAddons) || undefined,
+            notes: advancedForm.internalRulesNote.trim() || undefined,
+            requiresStaffReview: form.requiresWaiterConfirmation,
+          },
+          premiumSummary: buildAdvancedPremiumSummary({
+            productType: normalizeProductType(form.productType),
+            salesChannels: normalizeSalesChannels(form.salesChannels),
+            variations: advancedVariations,
+            addons: advancedAddons,
+            comboItems: advancedComboItems,
+            removableIngredients: advancedRemovable,
+            preparationMinutes: normalizePositiveInteger(form.preparationMinutes),
+            requiresWaiterConfirmation: form.requiresWaiterConfirmation,
+            inventoryDiscountEnabled: form.inventoryDiscountEnabled,
+          }),
+        }
+      : {
+          variations: buildVariationGroupsFromText(form.variationText),
+          addons: buildAddonsFromRows(form.addonRows),
+          includedIngredients: buildIngredientsFromText(form.includedIngredientsText, "included"),
+          removableIngredients: buildIngredientsFromText(form.removableIngredientsText, "removable"),
+          // Conserva las reglas del Menú avanzado y pisa solo min/máx.
+          selectionRules: {
+            ...form.selectionRulesBase,
+            minAddons: normalizePositiveInteger(form.minAddons) || undefined,
+            maxAddons: normalizePositiveInteger(form.maxAddons) || undefined,
+          },
+        }
+
     const input = customInput || {
       id: form.id ? Number(form.id) : undefined,
       name: form.name.trim(),
@@ -915,16 +1071,7 @@ export default function LocalMenuPage() {
       sortOrder: normalizeNumber(form.sortOrder),
       productType: normalizeProductType(form.productType),
       salesChannels: normalizeSalesChannels(form.salesChannels),
-      variations: buildVariationGroupsFromText(form.variationText),
-      addons: buildAddonsFromRows(form.addonRows),
-      includedIngredients: buildIngredientsFromText(form.includedIngredientsText, "included"),
-      removableIngredients: buildIngredientsFromText(form.removableIngredientsText, "removable"),
-      // Conserva las reglas del Menú avanzado y pisa solo min/máx de selección.
-      selectionRules: {
-        ...form.selectionRulesBase,
-        minAddons: normalizePositiveInteger(form.minAddons) || undefined,
-        maxAddons: normalizePositiveInteger(form.maxAddons) || undefined,
-      },
+      ...advancedPayload,
       preparationMinutes: normalizePositiveInteger(form.preparationMinutes),
       requiresWaiterConfirmation: form.requiresWaiterConfirmation,
       inventoryDiscountEnabled: form.inventoryDiscountEnabled,
@@ -981,6 +1128,8 @@ export default function LocalMenuPage() {
 
       if (!customInput) {
         setForm(emptyForm)
+        setAdvancedForm(ADVANCED_EMPTY_FORM)
+        setIsAdvancedExpanded(false)
         setIsFormVisible(false)
         setSuccessMessage("Producto del menú guardado correctamente.")
       }
@@ -1132,8 +1281,12 @@ export default function LocalMenuPage() {
     }
   }
 
-  function editProduct(product: MenuProduct) {
+  function editProduct(product: MenuProduct, options: { expandAdvanced?: boolean } = {}) {
     setForm(buildFormFromProduct(product, categoryOptions))
+    // La config estructurada del producto (variaciones/extras/combos) se carga
+    // junto con lo básico: un solo formulario, un solo Guardar.
+    setAdvancedForm(buildAdvancedFormFromProduct(product))
+    if (options.expandAdvanced) setIsAdvancedExpanded(true)
     setIsFormVisible(true)
     setSuccessMessage("Producto cargado para editar.")
     setErrorMessage(null)
@@ -1390,8 +1543,8 @@ export default function LocalMenuPage() {
                     </p>
                     <p className="mt-1 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/65">
                       Variaciones, adicionales e ingredientes que el cliente verá
-                      al personalizar este producto en el menú público. Para
-                      secciones obligatorias y precios extra, usa Menú avanzado.
+                      al personalizar este producto en el menú público. Todo se
+                      configura y se guarda desde este mismo formulario.
                     </p>
                   </div>
 
@@ -1478,36 +1631,67 @@ export default function LocalMenuPage() {
                     </div>
                   </div>
 
-                  <TagListEditor
-                    label="Variaciones"
-                    value={form.variationText}
-                    onChange={(value) => updateForm("variationText", value)}
-                    placeholder="Escribe una opción y presiona Enter"
-                    helper="Opciones simples de una sola elección (ej: tamaños). Para secciones con precio extra y obligatorias, usa Menú avanzado."
-                  />
+                  {isAdvancedAvailable ? (
+                    // Fusión (lote v6 fase B): con el módulo avanzado activo,
+                    // variaciones/extras/ingredientes/combos se editan en la
+                    // sección estructurada, con precios, inventario y todo lo
+                    // que antes vivía en /menu-avanzado. Mismo botón Guardar.
+                    <div className="lg:col-span-2">
+                      <AdvancedOptionsSection
+                        form={advancedForm}
+                        onChange={(next) => {
+                          setAdvancedForm(next)
+                          setSuccessMessage(null)
+                          setErrorMessage(null)
+                        }}
+                        productType={normalizeProductType(form.productType)}
+                        salesChannels={normalizeSalesChannels(form.salesChannels)}
+                        productOptions={menuProducts
+                          .filter((product) => String(product.id) !== form.id)
+                          .map((product) => ({
+                            id: product.id,
+                            name: product.name,
+                            price: product.price,
+                          }))}
+                        inventoryOptions={inventoryOptions}
+                        isExpanded={isAdvancedExpanded}
+                        onToggle={() => setIsAdvancedExpanded((value) => !value)}
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <TagListEditor
+                        label="Variaciones"
+                        value={form.variationText}
+                        onChange={(value) => updateForm("variationText", value)}
+                        placeholder="Escribe una opción y presiona Enter"
+                        helper="Opciones simples de una sola elección (ej: tamaños). Las secciones con precio extra y obligatorias requieren el módulo de menú avanzado."
+                      />
 
-                  <AddonPriceListEditor
-                    label="Adicionales"
-                    rows={form.addonRows}
-                    onChange={(rows) => updateForm("addonRows", rows)}
-                    helper="Cada adicional puede tener precio. Los de $0 salen como ingredientes sin costo; los que tienen precio suman al total del cliente."
-                  />
+                      <AddonPriceListEditor
+                        label="Adicionales"
+                        rows={form.addonRows}
+                        onChange={(rows) => updateForm("addonRows", rows)}
+                        helper="Cada adicional puede tener precio. Los de $0 salen como ingredientes sin costo; los que tienen precio suman al total del cliente."
+                      />
 
-                  <TagListEditor
-                    label="Ingredientes incluidos"
-                    value={form.includedIngredientsText}
-                    onChange={(value) => updateForm("includedIngredientsText", value)}
-                    placeholder="Escribe un ingrediente y presiona Enter"
-                    helper="Lo que trae el producto. Sirve para recetas y para informar al cliente."
-                  />
+                      <TagListEditor
+                        label="Ingredientes incluidos"
+                        value={form.includedIngredientsText}
+                        onChange={(value) => updateForm("includedIngredientsText", value)}
+                        placeholder="Escribe un ingrediente y presiona Enter"
+                        helper="Lo que trae el producto. Sirve para recetas y para informar al cliente."
+                      />
 
-                  <TagListEditor
-                    label="Ingredientes removibles"
-                    value={form.removableIngredientsText}
-                    onChange={(value) => updateForm("removableIngredientsText", value)}
-                    placeholder="Escribe un ingrediente y presiona Enter"
-                    helper="El cliente podrá pedir el producto sin estos ingredientes."
-                  />
+                      <TagListEditor
+                        label="Ingredientes removibles"
+                        value={form.removableIngredientsText}
+                        onChange={(value) => updateForm("removableIngredientsText", value)}
+                        placeholder="Escribe un ingrediente y presiona Enter"
+                        helper="El cliente podrá pedir el producto sin estos ingredientes."
+                      />
+                    </>
+                  )}
 
                   <div className="lg:col-span-2 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
                     <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
@@ -1913,17 +2097,26 @@ export default function LocalMenuPage() {
                       </button>
                     </div>
 
-                    {/* Paso 2 del mismo producto: variaciones, adicionales con
-                        precio, ingredientes removibles y combos se preparan en
-                        Menú avanzado. Este enlace abre ESTE producto allá
-                        (fusión por fases: un solo flujo desde aquí). */}
-                    <a
-                      href={`/local-santo/menu-avanzado?producto=${encodeURIComponent(product.id)}`}
-                      className="mt-2 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)] bg-[rgba(var(--brand-primary-rgb),0.06)] px-4 py-2.5 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
-                    >
-                      <SlidersHorizontal size={16} />
-                      Opciones avanzadas (variaciones, extras…)
-                    </a>
+                    {/* Un solo editor (lote v6 fase B): abre ESTE producto en
+                        el formulario de arriba con la sección "Opciones
+                        avanzadas" desplegada (ya no hay página aparte). */}
+                    {isAdvancedAvailable && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          editProduct(product, { expandAdvanced: true })
+                          window.setTimeout(() => {
+                            document
+                              .getElementById("opciones-avanzadas")
+                              ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                          }, 200)
+                        }}
+                        className="mt-2 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)] bg-[rgba(var(--brand-primary-rgb),0.06)] px-4 py-2.5 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
+                      >
+                        <SlidersHorizontal size={16} />
+                        Opciones avanzadas (variaciones, extras…)
+                      </button>
+                    )}
                   </div>
                 </article>
               )

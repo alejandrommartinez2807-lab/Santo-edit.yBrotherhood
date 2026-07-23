@@ -313,9 +313,13 @@ export default function PublicOrderPaymentSection({
   // precarga. Se ignora el valor inicial 0 (no abrir al montar).
   useEffect(() => {
     if (!forceOpenSignal) return;
-    setSuccessMessage(null);
-    setIsFormOpen(true);
-    setPayments(buildInitialPayments());
+    // Diferido un tick para no hacer setState síncrono dentro del efecto.
+    const timer = setTimeout(() => {
+      setSuccessMessage(null);
+      setIsFormOpen(true);
+      setPayments(buildInitialPayments());
+    }, 0);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo reaccionar a la señal
   }, [forceOpenSignal]);
 

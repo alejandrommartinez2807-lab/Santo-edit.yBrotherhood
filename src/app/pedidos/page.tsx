@@ -1277,7 +1277,6 @@ export default function PedidosPage() {
   const inventoryAccess = getModulePlanAccess(businessConfig, "inventory")
   const paymentProofsAccess = getModulePlanAccess(businessConfig, "paymentProofs")
   const openAccountsAccess = getModulePlanAccess(businessConfig, "openAccounts")
-  const advancedMenuAccess = getModulePlanAccess(businessConfig, "advancedMenu")
   const tablesAccess = getModulePlanAccess(businessConfig, "tables")
   const qrTablesAccess = getModulePlanAccess(businessConfig, "qrTables")
   const kitchenItemsAccess = getModulePlanAccess(businessConfig, "kitchenItems")
@@ -1313,8 +1312,6 @@ export default function PedidosPage() {
     canUseOperationalPanel && paymentProofsAccess.effectiveEnabled
   const isOpenAccountsModuleVisible =
     canUseOperationalPanel && openAccountsAccess.effectiveEnabled
-  const isAdvancedMenuModuleVisible =
-    isOwnerAccess && advancedMenuAccess.effectiveEnabled
   const isTablesModuleVisible =
     canUseOperationalPanel && (tablesAccess.effectiveEnabled || qrTablesAccess.effectiveEnabled)
   const isKitchenItemsModuleVisible =
@@ -1351,7 +1348,6 @@ export default function PedidosPage() {
     isInventoryModuleVisible,
     isPaymentProofsModuleVisible,
     isOpenAccountsModuleVisible,
-    isAdvancedMenuModuleVisible,
     isTablesModuleVisible,
     isKitchenItemsModuleVisible,
     isTicketsModuleVisible,
@@ -3801,16 +3797,9 @@ export default function PedidosPage() {
             />
           )}
 
-          {isAdvancedMenuModuleVisible && (
-            <ModuleAccessCard
-              href="/local-santo/menu-avanzado"
-              icon={<Store size={24} />}
-              eyebrow="Menú premium"
-              title="Menú avanzado"
-              description="Configura variaciones, adicionales, ingredientes, canales y productos armables."
-              metric="Opciones"
-            />
-          )}
+          {/* "Menú avanzado" ya no es entrada aparte (lote v6 fase B): sus
+              opciones viven dentro del editor de menú, en la sección
+              desplegable "Opciones avanzadas" de cada producto. */}
 
           {isTablesModuleVisible && (
             <ModuleAccessCard

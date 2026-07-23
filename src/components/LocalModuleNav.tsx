@@ -44,7 +44,8 @@ const NAV_ENTRIES: NavEntry[] = [
   { key: "history", label: "Cierres", href: "/local-santo/cierres" },
   { key: "reports", label: "Reportes", href: "/local-santo/reportes" },
   { key: "menuProducts", label: "Menú", href: "/local-santo/menu" },
-  { key: "advancedMenu", label: "Menú avanzado", href: "/local-santo/menu-avanzado" },
+  // "Menú avanzado" ya no es página aparte (lote v6 fase B): sus opciones
+  // viven dentro del editor de menú como sección desplegable por producto.
   { key: "ownerDashboard", label: "Dueño", href: "/local-santo/dueno" },
   { key: "roles", label: "Usuarios", href: "/local-santo/usuarios" },
   { key: "branches", label: "Sucursales", href: "/local-santo/sucursales" },
