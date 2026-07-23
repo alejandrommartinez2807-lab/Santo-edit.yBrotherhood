@@ -20,6 +20,9 @@ export type PublicOrderPaymentInfo = {
   reportable: boolean;
   reported: boolean;
   confirmed: boolean;
+  // USD equivalentes de la parte ELECTRÓNICA aún sin comprobante (en mixto,
+  // la foto de los billetes no cubre la pata de Pago móvil/Zelle).
+  pendingReportUSD: number;
 };
 
 type PublicOrderStatus = {
@@ -33,10 +36,12 @@ type PublicOrderStatus = {
 const POLL_INTERVAL_MS = 10_000;
 const FINAL_STATUSES = new Set(["Entregado", "Cancelado"]);
 
-// Botón "Avisarme al estar listo" apagado por ahora (pedido del dueño
-// 2026-07-11): la lógica de notificaciones queda intacta; poner en true para
-// volver a mostrarlo aquí y en la página de seguimiento /pedido/[id].
-export const NOTIFY_READY_BUTTON_ENABLED: boolean = false;
+// Botón de avisos reactivado (pedido del dueño 2026-07-23): el cliente que
+// lo toca recibe push en cada hito del pedido (entró a cocina, pagado, listo,
+// entregado). En iPhone solo funciona con la app instalada en pantalla de
+// inicio (limitación de iOS); si el navegador no soporta Notification, el
+// botón no aparece y el seguimiento sigue por polling.
+export const NOTIFY_READY_BUTTON_ENABLED: boolean = true;
 
 function canUseNotifications() {
   return typeof window !== "undefined" && "Notification" in window;
@@ -81,6 +86,7 @@ export function usePublicOrderStatus(orderId: string) {
                   reportable: data.payment.reportable === true,
                   reported: data.payment.reported === true,
                   confirmed: data.payment.confirmed === true,
+                  pendingReportUSD: Number(data.payment.pendingReportUSD || 0),
                 }
               : null,
           );

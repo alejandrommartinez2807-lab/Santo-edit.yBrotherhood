@@ -371,6 +371,32 @@ export default function PublicOrderPaymentSection({
   const needsCorrection = (info?.proofs || []).some(
     (proof) => proof.status === "Necesita corrección",
   );
+  // Cobertura POR PATAS (bug real 2026-07-23): en mixto efectivo+electrónico,
+  // la foto de los billetes creaba un proof y todo se daba por reportado sin
+  // que nadie pidiera la captura/referencia de Pago móvil/Zelle. La foto del
+  // efectivo (método con "efectivo") NO cuenta para la parte electrónica.
+  const infoExchangeRate = Number(info?.exchangeRate || 0);
+  const requiredElectronicUSD = Number(info?.requiredReportUSD || 0);
+  const electronicReportedUSD = activeProofs.reduce((total, proof) => {
+    const isCashProof = String(proof.reportedMethod || "")
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toLowerCase()
+      .includes("efectivo");
+    if (isCashProof) return total;
+    let usd = Number(proof.amountReportedUSD || 0);
+    if (infoExchangeRate > 0) {
+      usd += Number(proof.amountReportedVES || 0) / infoExchangeRate;
+    }
+    return total + usd;
+  }, 0);
+  const pendingElectronicUSD = Math.max(
+    0,
+    Math.round((requiredElectronicUSD - electronicReportedUSD) * 100) / 100,
+  );
+  // true = lo electrónico exigible ya está cubierto por comprobantes.
+  const reportCovered =
+    requiredElectronicUSD <= 0 || pendingElectronicUSD <= 0.01;
   // Reporte de pago MIXTO: más de un método (una captura por cada pata).
   const isMixedReport = payments.length > 1;
 
@@ -862,12 +888,34 @@ export default function PublicOrderPaymentSection({
         </p>
       ) : null}
 
-      {/* Con el pago YA reportado y en revisión, los datos para pagar y el
-          CTA de reportar sobran (el cliente ya pagó y ya reportó): solo se
-          muestra el estado del comprobante. Si el negocio pide corrección,
+      {/* Falta la parte ELECTRÓNICA del mixto (solo llegó la foto del
+          efectivo): pedirla con nombre y monto, no dar el pago por hecho. */}
+      {!hasConfirmedPayment && hasPendingProof && !reportCovered ? (
+        <p
+          role="alert"
+          className="mt-4 rounded-2xl border-[3px] border-amber-500 bg-amber-500/10 px-4 py-3 text-sm font-black leading-5 text-amber-500"
+        >
+          📸 Recibimos la foto de tu efectivo. Falta la captura o referencia de
+          la parte electrónica
+          {(info?.expectedPayments || []).length
+            ? ` (${(info?.expectedPayments || [])
+                .map((payment) =>
+                  payment.currency === "VES"
+                    ? `${payment.method}: Bs ${formatVES(payment.amount)}`
+                    : `${payment.method}: ${formatUSD(payment.amount)}`,
+                )
+                .join(" + ")})`
+            : ` (~${formatUSD(pendingElectronicUSD)})`}
+          . Repórtala aquí abajo para que tu pedido avance.
+        </p>
+      ) : null}
+
+      {/* Con el pago YA reportado COMPLETO y en revisión, los datos para
+          pagar y el CTA de reportar sobran: solo se muestra el estado del
+          comprobante. Si el negocio pide corrección (o falta una pata),
           vuelven a aparecer. */}
       {!hasConfirmedPayment &&
-        (!hasPendingProof || needsCorrection) &&
+        (!hasPendingProof || needsCorrection || !reportCovered) &&
         (() => {
           const filtered = chosenMethods.length
             ? Object.fromEntries(
@@ -958,7 +1006,7 @@ export default function PublicOrderPaymentSection({
         </div>
       )}
 
-      {hasPendingProof && !hasConfirmedPayment ? (
+      {hasPendingProof && !hasConfirmedPayment && reportCovered ? (
         <p className="mt-3 text-[0.72rem] font-bold leading-5 text-[var(--brand-ink-2)]/60">
           Tu pago ya fue reportado y está en revisión: no hace falta enviarlo
           otra vez. Aquí verás cuando quede confirmado.
@@ -971,14 +1019,14 @@ export default function PublicOrderPaymentSection({
         </p>
       )}
 
-      {!hasConfirmedPayment && !isFormOpen && !hasPendingProof ? (
+      {!hasConfirmedPayment && !isFormOpen && (!hasPendingProof || !reportCovered) ? (
         <span className="mt-4 inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
           Paso 2
         </span>
       ) : null}
 
       {!hasConfirmedPayment && !isFormOpen ? (
-        hasPendingProof && !needsCorrection ? (
+        hasPendingProof && !needsCorrection && reportCovered ? (
           // Reportado y en revisión: nada que hacer. Solo un enlace discreto
           // por si adjuntó la captura equivocada.
           <button
@@ -1003,7 +1051,11 @@ export default function PublicOrderPaymentSection({
             className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90"
           >
             <ImagePlus size={15} />
-            {needsCorrection ? "Enviar otro comprobante" : "Reportar mi pago"}
+            {needsCorrection
+              ? "Enviar otro comprobante"
+              : hasPendingProof && !reportCovered
+                ? "Reportar la parte electrónica"
+                : "Reportar mi pago"}
           </button>
         )
       ) : null}

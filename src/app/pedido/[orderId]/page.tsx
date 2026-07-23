@@ -304,18 +304,21 @@ export default function PedidoSeguimientoPage({
                   ) : null}
 
                   {/* Línea de progreso (con "Esperando pago" delante cuando
-                      el pedido se paga por vía electrónica) */}
-                  <div className="mt-7 flex items-center justify-center gap-2">
+                      el pedido se paga en caja). Compacta: con 4 pasos, la
+                      versión anterior se salía de la pantalla en teléfonos
+                      (reporte del dueño 2026-07-23) — círculos más chicos,
+                      conectores cortos y etiquetas que quiebran en 2 líneas. */}
+                  <div className="mt-7 flex items-start justify-center gap-0.5">
                     {steps.map((step, index) => {
                       const label =
                         step === "Esperando pago" && paymentConfirmed
                           ? "Pagado"
                           : step;
                       return (
-                        <div key={step} className="flex items-center gap-2">
-                          <div className="flex flex-col items-center gap-1.5">
+                        <div key={step} className="flex items-start gap-0.5">
+                          <div className="flex w-14 flex-col items-center gap-1 sm:w-[4.2rem]">
                             <span
-                              className={`flex h-9 w-9 items-center justify-center rounded-full border-2 ${
+                              className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${
                                 index <= activeStep
                                   ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-black"
                                   : "border-[var(--brand-border)] bg-transparent text-[var(--brand-ink-2)]/40"
@@ -324,7 +327,7 @@ export default function PedidoSeguimientoPage({
                               {stepIcon(label)}
                             </span>
                             <span
-                              className={`text-[0.6rem] font-black uppercase tracking-[0.08em] ${
+                              className={`text-center text-[0.55rem] font-black uppercase leading-[1.15] tracking-[0.04em] ${
                                 index <= activeStep
                                   ? "text-[var(--brand-primary)]"
                                   : "text-[var(--brand-ink-2)]/40"
@@ -335,7 +338,7 @@ export default function PedidoSeguimientoPage({
                           </div>
                           {index < steps.length - 1 ? (
                             <span
-                              className={`mb-5 h-0.5 w-8 rounded-full ${
+                              className={`mt-[0.95rem] h-0.5 w-2 shrink-0 rounded-full sm:w-6 ${
                                 index < activeStep
                                   ? "bg-[var(--brand-primary)]"
                                   : "bg-[var(--brand-border)]"
@@ -386,7 +389,7 @@ export default function PedidoSeguimientoPage({
                       className="mt-6 inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90"
                     >
                       <Bell size={15} />
-                      Avisarme cuando esté listo
+                      Avisarme de los avances de mi pedido
                     </button>
                   ) : null}
 

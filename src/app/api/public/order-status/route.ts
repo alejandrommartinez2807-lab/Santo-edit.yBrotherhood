@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { isElectronicPaymentMethod } from "@/lib/paymentOptions"
+import { getRequiredReportUSD } from "@/lib/orderPaymentLegs"
 import { maybeAutoCancelUnpaidOrder } from "@/lib/unpaidAutoCancel"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
@@ -58,7 +59,7 @@ export async function GET(request: NextRequest) {
     let { data, error } = await supabase
       .from("orders")
       .select(
-        "id,status,seq,branch_seq,branch_code,customer_note,order_type,payment_method,payment_status,open_account_id"
+        "id,status,seq,branch_seq,branch_code,customer_note,order_type,payment_method,payment_status,open_account_id,total_usd,exchange_rate"
       )
       .eq("id", orderId)
       .maybeSingle()
@@ -70,7 +71,7 @@ export async function GET(request: NextRequest) {
       ;({ data, error } = await supabase
         .from("orders")
         .select(
-          "id,status,seq,branch_seq,branch_code,customer_note,order_type,payment_status,open_account_id"
+          "id,status,seq,branch_seq,branch_code,customer_note,order_type,payment_status,open_account_id,total_usd,exchange_rate"
         )
         .eq("id", orderId)
         .maybeSingle())
@@ -150,18 +151,53 @@ export async function GET(request: NextRequest) {
 
     let paymentReported = false
     let proofConfirmed = false
+    let pendingReportUSD = 0
     if (awaitsCashierPayment) {
-      // Solo el estado de los comprobantes (sin montos ni imágenes); si la
-      // consulta falla el seguimiento sigue con el estado del pedido.
+      // Estado de los comprobantes + montos reportados: "reportado" exige que
+      // las patas ELECTRÓNICAS estén cubiertas por comprobantes no-efectivo.
+      // (Bug real 2026-07-23: en mixto efectivo+Pago móvil, la sola foto de
+      // los billetes daba el pago por reportado y nadie pedía la referencia.)
+      // Si la consulta falla, el seguimiento sigue con el estado del pedido.
       const { data: proofRows } = await supabase
         .from("payment_proofs")
-        .select("status")
+        .select("status,reported_method,amount_reported_usd,amount_reported_ves")
         .eq("order_id", orderId)
+
+      const exchangeRate = Number(orderRecord.exchange_rate || 0)
+      const requiredReportUSD = getRequiredReportUSD({
+        paymentMethod: orderRecord.payment_method,
+        totalUSD: Number(orderRecord.total_usd || 0),
+        exchangeRate,
+      })
+
+      let hasActiveProof = false
+      let electronicCoveredUSD = 0
       for (const row of proofRows ?? []) {
-        const proofStatus = String((row as Record<string, unknown>).status || "")
-        if (proofStatus !== "Rechazado") paymentReported = true
+        const proof = row as Record<string, unknown>
+        const proofStatus = String(proof.status || "")
+        if (proofStatus === "Rechazado") continue
+        hasActiveProof = true
         if (proofStatus === "Confirmado por caja") proofConfirmed = true
+
+        // La foto de los billetes (pata en efectivo) no cubre lo electrónico.
+        const isCashProof = String(proof.reported_method || "")
+          .normalize("NFD")
+          .replace(/[̀-ͯ]/g, "")
+          .toLowerCase()
+          .includes("efectivo")
+        if (!isCashProof) {
+          electronicCoveredUSD += Number(proof.amount_reported_usd || 0)
+          if (exchangeRate > 0) {
+            electronicCoveredUSD += Number(proof.amount_reported_ves || 0) / exchangeRate
+          }
+        }
       }
+
+      pendingReportUSD =
+        Math.round(Math.max(0, requiredReportUSD - electronicCoveredUSD) * 100) / 100
+      paymentReported =
+        requiredReportUSD > 0 ? pendingReportUSD <= 0.01 : hasActiveProof
+      if (pendingReportUSD <= 0.01) pendingReportUSD = 0
     }
 
     const paymentConfirmed = paymentStatusRaw === "Pagado" || proofConfirmed
@@ -177,6 +213,10 @@ export async function GET(request: NextRequest) {
         reportable: paymentReportable,
         reported: paymentReported || paymentConfirmed,
         confirmed: paymentConfirmed,
+        // > 0 = al reporte le falta la parte electrónica (USD equivalentes);
+        // el seguimiento lo usa para pedir "la parte de Pago móvil" en vez de
+        // un genérico "no has reportado".
+        pendingReportUSD: paymentConfirmed ? 0 : pendingReportUSD,
       },
       ...(cancelReason ? { cancelReason } : {}),
     })
