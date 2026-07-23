@@ -1693,11 +1693,13 @@ export default function CartDrawer({
             className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
           >
             <option value="">Método para los bolívares…</option>
-            {availablePaymentMethods.map((method) => (
-              <option key={method} value={method}>
-                {method}
-              </option>
-            ))}
+            {availablePaymentMethods
+              .filter((method) => isVesPaymentMethod(method))
+              .map((method) => (
+                <option key={method} value={method}>
+                  {method}
+                </option>
+              ))}
           </select>
           <div className="mt-2 flex gap-2">
             <input
@@ -1730,11 +1732,13 @@ export default function CartDrawer({
             className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
           >
             <option value="">Método para las divisas…</option>
-            {availablePaymentMethods.map((method) => (
-              <option key={method} value={method}>
-                {method}
-              </option>
-            ))}
+            {availablePaymentMethods
+              .filter((method) => !isVesPaymentMethod(method))
+              .map((method) => (
+                <option key={method} value={method}>
+                  {method}
+                </option>
+              ))}
           </select>
           <div className="mt-2 flex gap-2">
             <input
