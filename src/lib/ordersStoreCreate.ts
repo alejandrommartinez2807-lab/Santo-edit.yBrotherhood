@@ -103,6 +103,10 @@ export async function createOrderInStore(
     payment_received_equiv_usd: 0,
     payment_pending_usd: totals.totalUSD,
     delivery_payment_in: "Sin registrar",
+    // Método que ELIGIÓ el cliente al pedir ("Pago móvil", "Mixto: …"): lo
+    // leen el reporte de pago público, la anulación automática y la precarga
+    // de caja. Antes solo se leía y la columna no existía (0031).
+    payment_method: cleanText(input.paymentMethod) || null,
   }
 
   // Modo entrenamiento: solo referenciamos la columna is_training cuando el
@@ -124,6 +128,13 @@ export async function createOrderInStore(
 
   // branch-exempt: orderRow incluye branch_id (asignado arriba).
   let { error: insertError } = await supabase.from("orders").insert(orderRow)
+
+  // Migración 0031 sin aplicar: reintenta sin payment_method (la venta no se
+  // pierde; el método del cliente empieza a guardarse al aplicar 0031).
+  if (insertError && "payment_method" in orderRow && isMissingColumnError(insertError)) {
+    delete orderRow.payment_method
+    ;({ error: insertError } = await supabase.from("orders").insert(orderRow))
+  }
 
   // Migración 0022 sin aplicar: reintenta sin atribución (la venta no se pierde).
   if (insertError && registeredByName && isMissingColumnError(insertError)) {

@@ -332,14 +332,14 @@ export default function PublicOrderModeGuide() {
 
           <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-ink)] shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.12)]">
+              <p className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-black shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.12)]">
                 <ClipboardList size={16} />
                 Pedido fácil
               </p>
               <h2 className="mt-4 max-w-4xl text-4xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl lg:text-6xl">
                 {config.quickOrderTitle || "Cómo pedir"}
               </h2>
-              <p className="mt-4 max-w-3xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75 sm:text-base">
+              <p className="mt-4 max-w-3xl text-sm font-bold leading-6 text-[#1a1a1a]/75 sm:text-base">
                 {config.quickOrderText || DEFAULT_CONFIG.quickOrderText}
               </p>
               {scheduleText ? (
@@ -383,7 +383,7 @@ export default function PublicOrderModeGuide() {
                   <span
                     className={`flex h-12 w-12 items-center justify-center rounded-[1.1rem] border-2 ${
                       card.featured
-                        ? "border-white/50 bg-[var(--brand-accent)] text-[var(--brand-ink)]"
+                        ? "border-white/50 bg-[var(--brand-accent)] text-black"
                         : "border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-primary)]"
                     }`}
                   >

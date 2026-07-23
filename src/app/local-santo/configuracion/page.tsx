@@ -212,6 +212,7 @@ type BusinessConfig = {
   promotionActive: boolean;
   promotionTitle: string;
   promotionText: string;
+  promotionPopupText: string;
   promotionHighlight: string;
   promotionButtonText: string;
   promotionButtonHref: string;
@@ -396,6 +397,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   promotionActive: false,
   promotionTitle: "Promoción especial",
   promotionText: `Aprovecha una oferta preparada para disfrutar en ${BRAND.name}.`,
+  promotionPopupText: "",
   promotionHighlight: "Disponible por tiempo limitado.",
   promotionButtonText: "Ver menú",
   promotionButtonHref: "#menu",
@@ -1207,6 +1209,7 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     promotionText:
       String(source.promotionText || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.promotionText,
+    promotionPopupText: String(source.promotionPopupText || "").trim(),
     promotionHighlight:
       String(source.promotionHighlight || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.promotionHighlight,
@@ -5364,6 +5367,13 @@ export default function BusinessConfigPage() {
                   value={businessConfig.promotionText}
                   onChange={(value) => updateConfig("promotionText", value)}
                   placeholder="Describe la promoción de forma clara para el cliente."
+                  disabled={!canEditPromotion}
+                />
+                <TextAreaInput
+                  label="Texto de la ventana emergente"
+                  value={businessConfig.promotionPopupText}
+                  onChange={(value) => updateConfig("promotionPopupText", value)}
+                  placeholder="Mensaje propio del pop-up (distinto al del producto). Vacío = usa el texto corto."
                   disabled={!canEditPromotion}
                 />
                 <div className="grid gap-4">

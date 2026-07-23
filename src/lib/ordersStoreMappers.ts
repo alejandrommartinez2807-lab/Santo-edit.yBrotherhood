@@ -133,7 +133,11 @@ export function orderRowToLocalOrder(row: Row, items: OrderItem[]): LocalOrder {
     deliveryAddress: cleanText(row.delivery_address) || undefined,
     deliveryReference: cleanText(row.delivery_reference) || undefined,
     deliveryZone: cleanText(row.delivery_zone) || undefined,
-    paymentMethod: cleanText(row.payment_method_usd) || undefined,
+    // Método que ELIGIÓ el cliente al pedir (columna payment_method, 0031).
+    // OJO: antes esto leía payment_method_usd (el método del COBRO de caja),
+    // por lo que el pedido "no traía" método hasta que alguien cobraba.
+    paymentMethod:
+      cleanText(row.payment_method) || cleanText(row.payment_method_usd) || undefined,
     deliveryCostUSD: num(row.delivery_cost_usd),
     totalBeforeDeliveryUSD: num(row.total_before_delivery_usd),
 

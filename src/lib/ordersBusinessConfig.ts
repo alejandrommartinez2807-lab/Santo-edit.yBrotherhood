@@ -194,6 +194,9 @@ export type BusinessConfig = {
   promotionActive: boolean
   promotionTitle: string
   promotionText: string
+  // Texto PROPIO de la ventana emergente (editable, distinto del texto del
+  // producto/sección); vacío = usa promotionText.
+  promotionPopupText: string
   promotionHighlight: string
   promotionButtonText: string
   promotionButtonHref: string
@@ -360,6 +363,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   promotionActive: false,
   promotionTitle: "Promoción especial",
   promotionText: `Aprovecha una oferta preparada para disfrutar en ${BRAND.name}.`,
+  promotionPopupText: "",
   promotionHighlight: "Disponible por tiempo limitado.",
   promotionButtonText: "Ver menú",
   promotionButtonHref: "#menu",
@@ -884,6 +888,7 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     promotionText:
       String(source.promotionText || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.promotionText,
+    promotionPopupText: String(source.promotionPopupText || "").trim(),
     promotionHighlight:
       String(source.promotionHighlight || "").trim() ||
       DEFAULT_BUSINESS_CONFIG.promotionHighlight,

@@ -55,13 +55,26 @@ export async function GET(request: NextRequest) {
     const supabase = getSupabaseAdmin()
     // branch-exempt: lookup puntual por id único e imprevisible (ord-...);
     // el pedido pertenece a una sola sede y no expone datos de otras.
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("orders")
       .select(
         "id,status,seq,branch_seq,branch_code,customer_note,order_type,payment_method,payment_status,open_account_id"
       )
       .eq("id", orderId)
       .maybeSingle()
+
+    // Migración 0031 sin aplicar (payment_method no existe): el SEGUIMIENTO
+    // nunca puede caerse por el dato del pago — reintenta sin la columna y el
+    // bloque payment degrada a "no aplica".
+    if (error && /payment_method/i.test(error.message || "")) {
+      ;({ data, error } = await supabase
+        .from("orders")
+        .select(
+          "id,status,seq,branch_seq,branch_code,customer_note,order_type,payment_status,open_account_id"
+        )
+        .eq("id", orderId)
+        .maybeSingle())
+    }
 
     if (error) throw new Error(error.message)
 

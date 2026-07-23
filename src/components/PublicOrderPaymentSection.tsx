@@ -32,6 +32,12 @@ type PublicProof = {
   internalNote: string;
 };
 
+type ExpectedPayment = {
+  method: string;
+  currency: "USD" | "VES";
+  amount: number;
+};
+
 type OrderPaymentInfo = {
   branchId: string;
   totalUSD: number;
@@ -43,6 +49,10 @@ type OrderPaymentInfo = {
   // (Pick up/Delivery con método electrónico): solo ahí van el contador y
   // los recordatorios escalonados — en mesa o efectivo serían amenazas falsas.
   autoCancelApplies: boolean;
+  // Patas electrónicas que eligió el cliente al pedir (método + monto en su
+  // moneda): precargan el formulario y definen cuánto se debe reportar.
+  expectedPayments: ExpectedPayment[];
+  requiredReportUSD: number;
   proofs: PublicProof[];
 };
 
@@ -226,6 +236,16 @@ export default function PublicOrderPaymentSection({
           createdAt: String(data.createdAt || ""),
           orderStatus: String(data.orderStatus || ""),
           autoCancelApplies: data.autoCancelApplies === true,
+          expectedPayments: Array.isArray(data.expectedPayments)
+            ? data.expectedPayments
+                .map((leg: Partial<ExpectedPayment>) => ({
+                  method: String(leg.method || "").trim(),
+                  currency: leg.currency === "VES" ? ("VES" as const) : ("USD" as const),
+                  amount: Number(leg.amount || 0),
+                }))
+                .filter((leg: ExpectedPayment) => leg.method && leg.amount > 0)
+            : [],
+          requiredReportUSD: Number(data.requiredReportUSD ?? data.totalUSD ?? 0),
           proofs: Array.isArray(data.proofs) ? data.proofs : [],
         });
       }
@@ -322,6 +342,21 @@ export default function PublicOrderPaymentSection({
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo reaccionar a la señal
   }, [forceOpenSignal]);
+
+  // Si el formulario se abrió ANTES de que /order-payment respondiera (caso
+  // típico: "Reportar pago" apenas registrado el pedido), los montos quedaban
+  // vacíos aunque el método sí apareciera. Al llegar la info se precargan
+  // solos — únicamente si el cliente no ha escrito ningún monto.
+  useEffect(() => {
+    if (!isFormOpen || !info) return;
+    const hasAmounts = payments.some(
+      (entry) => entry.amountUSD.trim() !== "" || entry.amountVES.trim() !== "",
+    );
+    if (hasAmounts) return;
+    const timer = setTimeout(() => setPayments(buildInitialPayments()), 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reprecarga solo al llegar la info
+  }, [isFormOpen, info]);
 
   const activeProofs = (info?.proofs || []).filter(
     (proof) => proof.status !== "Rechazado",
@@ -503,9 +538,21 @@ export default function PublicOrderPaymentSection({
     };
   }
 
-  // Precarga del formulario: un bloque por método elegido al pedir; si fue
-  // uno solo, su monto arranca con el total del pedido en su moneda.
+  // Precarga del formulario: un bloque por método elegido al pedir, CON su
+  // monto (lote v6.1). La fuente preferida son las patas que calcula el
+  // servidor desde el pedido (expectedPayments: método + monto por pata,
+  // también en mixto); si aún no cargaron, se usan los métodos guardados en
+  // el dispositivo y el total.
   function buildInitialPayments(): PaymentEntry[] {
+    const expected = info?.expectedPayments || [];
+    if (expected.length > 0) {
+      return expected.map((leg) => ({
+        method: leg.method,
+        amountUSD: leg.currency === "USD" ? leg.amount.toFixed(2) : "",
+        amountVES: leg.currency === "VES" ? leg.amount.toFixed(2) : "",
+      }));
+    }
+
     const chosen = chosenMethods.filter(Boolean);
     const totalUSD = Number(info?.totalUSD || 0);
 
@@ -517,8 +564,8 @@ export default function PublicOrderPaymentSection({
       return [buildPrefilledEntry(chosen[0], totalUSD)];
     }
 
-    // Varios métodos: los montos quedan vacíos para que el cliente reparta
-    // cuánto pagó con cada uno (el botón "Completar" ayuda con el faltante).
+    // Varios métodos sin patas del servidor: montos vacíos para repartir
+    // (el botón "Completar" ayuda con el faltante).
     return chosen.map((methodName) => ({ method: methodName, amountUSD: "", amountVES: "" }));
   }
 
@@ -533,10 +580,12 @@ export default function PublicOrderPaymentSection({
     }, 0);
   }
 
-  // "Completar": llena el bloque con lo que falta para cubrir el total,
-  // en la moneda del método elegido.
+  // "Completar": llena el bloque con lo que falta para cubrir lo que
+  // corresponde reportar (el total, o las patas electrónicas en mixto), en la
+  // moneda del método elegido.
   function completeEntryAmount(index: number) {
-    const totalUSD = Number(info?.totalUSD || 0);
+    const requiredUSD = Number(info?.requiredReportUSD ?? 0);
+    const totalUSD = requiredUSD > 0 ? requiredUSD : Number(info?.totalUSD || 0);
     if (totalUSD <= 0) return;
 
     const remainingUSD = Math.max(totalUSD - getCoveredUSDExcept(index), 0);
@@ -572,7 +621,11 @@ export default function PublicOrderPaymentSection({
 
   async function submitProof(confirmDuplicate = false, confirmPartial = false) {
     const hasProofOrReference = Boolean(dataUrl) || reference.trim().length > 0;
-    const totalUSDForAssume = Number(info?.totalUSD || 0);
+    // Lo que corresponde reportar por vía electrónica: la(s) pata(s) que
+    // eligió el cliente (en mixto, la parte en efectivo se entrega en mano).
+    const requiredBaseUSD = Number(info?.requiredReportUSD ?? info?.totalUSD ?? 0);
+    const totalUSDForAssume =
+      requiredBaseUSD > 0 ? requiredBaseUSD : Number(info?.totalUSD || 0);
     const rateForAssume = Number(info?.exchangeRate || 0);
 
     let entries = payments
@@ -648,18 +701,30 @@ export default function PublicOrderPaymentSection({
       return;
     }
 
-    // Cobertura del total: si lo reportado no alcanza, avisar antes de enviar
-    // (se puede enviar igual: los abonos parciales son válidos).
+    // Cobertura OBLIGATORIA (lote v6.1, pedido del dueño): lo reportado debe
+    // cubrir completo lo que corresponde pagar por vía electrónica — el total
+    // del pedido, o la suma exacta de las patas si eligió 2 métodos. Si falta,
+    // NO se deja enviar (los abonos a medias confundían a caja). Reportar de
+    // más sí se puede confirmar (bancos que redondean).
     const rate = Number(info?.exchangeRate || 0);
-    const totalUSD = Number(info?.totalUSD || 0);
-    if (!confirmPartial && totalUSD > 0 && (reportedVES <= 0 || rate > 0)) {
+    if (requiredBaseUSD > 0 && (reportedVES <= 0 || rate > 0)) {
       const reportedEquivalentUSD = reportedUSD + (rate > 0 ? reportedVES / rate : 0);
-      const missingUSD = Math.round((totalUSD - reportedEquivalentUSD) * 100) / 100;
+      const missingUSD = Math.round((requiredBaseUSD - reportedEquivalentUSD) * 100) / 100;
 
-      if (missingUSD > 0.01) {
+      if (missingUSD > 0.05) {
+        setCoverageWarning(null);
+        setFormError(
+          `El monto no cubre lo que corresponde pagar: faltan ${formatUSD(missingUSD)}${
+            rate > 0 ? ` (Bs ${formatVES(missingUSD * rate)})` : ""
+          } para completar ${formatUSD(requiredBaseUSD)}. Toca "Completar" o corrige el monto: no se puede enviar incompleto.`,
+        );
+        return;
+      }
+
+      if (!confirmPartial && missingUSD < -0.05) {
         setFormError(null);
         setCoverageWarning(
-          `Lo reportado no cubre el total del pedido: faltan ${formatUSD(missingUSD)} (total ${formatUSD(totalUSD)}). Usa "Completar" para ajustar el monto, o envíalo así si es un abono parcial.`,
+          `Estás reportando ${formatUSD(Math.abs(missingUSD))} de MÁS de lo que corresponde (${formatUSD(requiredBaseUSD)}). Revisa el monto; si de verdad pagaste eso, confírmalo abajo.`,
         );
         return;
       }
@@ -1160,7 +1225,7 @@ export default function PublicOrderPaymentSection({
                 onClick={() => submitProof(false, true)}
                 className="mt-2 inline-flex items-center gap-2 rounded-full border-2 border-yellow-500 px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.1em] text-yellow-500 transition hover:bg-yellow-500/10 disabled:opacity-50"
               >
-                Es un abono parcial, enviar así
+                Sí pagué ese monto, enviar así
               </button>
             </div>
           )}

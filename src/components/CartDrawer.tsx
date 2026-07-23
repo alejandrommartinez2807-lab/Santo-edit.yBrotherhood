@@ -1545,6 +1545,33 @@ export default function CartDrawer({
     }
   }
 
+  // Con "Exigir captura o referencia ANTES de registrar" activo, el cliente
+  // debe entender EL ORDEN desde el principio (no al chocar con el error):
+  // pagar → adjuntar captura/referencia → registrar (lote v6.1, pedido del
+  // dueño 2026-07-23). Sale arriba de la sección de pago en Pick up/Delivery.
+  function renderPrepayFlowNotice() {
+    if (!publicConfig.publicPaymentBeforeRegisterEnabled) return null;
+    if (!isPaymentProofPublicAvailable) return null;
+    if (!(isDeliveryOrder || isTakeawayOrder)) return null;
+
+    return (
+      <div className="rounded-2xl border-[3px] border-[var(--brand-primary)] bg-[var(--brand-cream)] px-4 py-3.5">
+        <p className="text-[0.78rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+          💡 Aquí se paga ANTES de registrar el pedido
+        </p>
+        <ol className="mt-2 space-y-1 text-[0.8rem] font-bold leading-5 text-[var(--brand-ink)]">
+          <li>1. Elige tu método de pago y paga con los datos que verás aquí.</li>
+          <li>2. Adjunta la captura del pago (o escribe la referencia completa).</li>
+          <li>3. Solo entonces podrás tocar «Registrar pedido».</li>
+        </ol>
+        <p className="mt-2 text-[0.7rem] font-bold leading-4 text-[var(--brand-ink-2)]/70">
+          Aplica a métodos electrónicos (pago móvil, transferencia, Zelle…). Si
+          pagas en efectivo, lo entregas al retirar o recibir.
+        </p>
+      </div>
+    );
+  }
+
   // Aviso temprano (lote v6): apenas elige efectivo en divisas, el cliente
   // sabe que deberá subir la foto de los billetes (no se entera al final).
   function renderDivisaPhotoNotice(active: boolean) {
@@ -1806,13 +1833,16 @@ export default function CartDrawer({
         <p className="text-sm font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
           Pago mixto: parte en Bs y parte en $
         </p>
+        {/* Texto OSCURO fijo: los tokens --brand-ink* son claros (tema
+            oscuro) y sobre bg-white quedaban invisibles (reclamo del dueño,
+            varias veces: esta casilla se veía en blanco). */}
         <div className="mt-2 rounded-2xl border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-2.5 text-center">
-          <p className="text-[0.62rem] font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/55">
+          <p className="text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#1a1a1a]/60">
             Total a repartir
           </p>
-          <p className="text-lg font-black leading-none text-[var(--brand-ink-3)]">
+          <p className="text-lg font-black leading-none text-[#1a1a1a]">
             {formatUSD(totalUSD)}{" "}
-            <span className="text-[var(--brand-ink-2)]/55">≈</span> Bs{" "}
+            <span className="text-[#1a1a1a]/55">≈</span> Bs{" "}
             {formatVES(totalVES)}
           </p>
         </div>
@@ -1893,10 +1923,11 @@ export default function CartDrawer({
                   <button
                     key={bill}
                     type="button"
-                    onClick={() => {
-                      setMixedUsdGivenAmount(String(bill));
-                      if (!mixedUsdAmount.trim()) completeMixedUsdAmount();
-                    }}
+                    // Solo registra CON QUÉ billete paga: NO toca el monto de
+                    // la pata (eso se escribe o se completa aparte). Antes
+                    // rellenaba el monto en divisas y pisaba el reparto con
+                    // el pago móvil (reclamo del dueño 2026-07-23).
+                    onClick={() => setMixedUsdGivenAmount(String(bill))}
                     className={`rounded-full border-2 px-3.5 py-2 text-[0.68rem] font-black uppercase tracking-[0.06em] shadow-sm transition active:scale-95 ${
                       normalizeFormMoney(mixedUsdGivenAmount) === bill
                         ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
@@ -1978,6 +2009,8 @@ export default function CartDrawer({
   function renderCheckoutPaymentSection() {
     return (
       <>
+        {renderPrepayFlowNotice()}
+
         <div id="checkout-pago">
           <OptionPicker
             label={
@@ -4069,6 +4102,8 @@ export default function CartDrawer({
                         }}
                       />
                     </div>
+
+                    {renderPrepayFlowNotice()}
 
                     {renderDivisaPhotoNotice(isCashDivisaMethod)}
 

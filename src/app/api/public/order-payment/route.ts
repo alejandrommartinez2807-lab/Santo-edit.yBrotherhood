@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { getPaymentProofs } from "@/lib/orders"
 import { isElectronicPaymentMethod } from "@/lib/paymentOptions"
+import { getOrderPaymentLegs, getRequiredReportUSD } from "@/lib/orderPaymentLegs"
 import { maybeAutoCancelUnpaidOrder } from "@/lib/unpaidAutoCancel"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
@@ -52,11 +53,22 @@ export async function GET(request: NextRequest) {
     const supabase = getSupabaseAdmin()
     // branch-exempt: lookup puntual por id único e imprevisible (ord-...);
     // devuelve la sede del pedido para que el reporte de pago llegue a ella.
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("orders")
       .select("id,branch_id,seq,branch_seq,branch_code,status,order_type,payment_method,total_usd,exchange_rate,amount_received_usd,amount_received_ves,created_at")
       .eq("id", orderId)
       .maybeSingle()
+
+    // Migración 0031 sin aplicar (payment_method no existe): este endpoint
+    // llevaba tiempo cayéndose ENTERO por esa columna (500 silencioso: sin
+    // totales/tasa el reporte no precargaba montos). Reintenta sin ella.
+    if (error && /payment_method/i.test(error.message || "")) {
+      ;({ data, error } = await supabase
+        .from("orders")
+        .select("id,branch_id,seq,branch_seq,branch_code,status,order_type,total_usd,exchange_rate,amount_received_usd,amount_received_ves,created_at")
+        .eq("id", orderId)
+        .maybeSingle())
+    }
 
     if (error) throw new Error(error.message)
 
@@ -82,6 +94,17 @@ export async function GET(request: NextRequest) {
 
     const proofs = await getPaymentProofs({ orderId }, branchId || null)
 
+    // Patas de pago que eligió el cliente al pedir (lote v6.1): el reporte se
+    // precarga con método Y MONTO por pata, y valida que lo reportado cubra
+    // lo requerido (las patas en efectivo se entregan en mano, no se reportan).
+    const legsInput = {
+      paymentMethod: order.payment_method,
+      totalUSD: Number(order.total_usd || 0),
+      exchangeRate: Number(order.exchange_rate || 0),
+    }
+    const expectedPayments = getOrderPaymentLegs(legsInput).filter((leg) => !leg.isCash)
+    const requiredReportUSD = getRequiredReportUSD(legsInput)
+
     return noStoreResponse({
       ok: true,
       orderId,
@@ -103,6 +126,8 @@ export async function GET(request: NextRequest) {
       // el método elegido es en bolívares (pago móvil, punto…).
       exchangeRate: Number(order.exchange_rate || 0),
       paymentRegistered,
+      expectedPayments,
+      requiredReportUSD,
       // Subconjunto seguro: sin teléfono ni imagen (la captura puede traer
       // datos bancarios del cliente; solo caja la ve en su panel).
       proofs: proofs.map((proof) => ({

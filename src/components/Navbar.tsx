@@ -378,21 +378,12 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[var(--brand-border)] bg-[rgba(9,9,9,0.88)] backdrop-blur-xl">
       {/* Barra completa (logo + redes): se recoge al bajar y vuelve al subir.
-          La barra que SALE colapsa rápido (200ms, sin espera) y la que ENTRA
-          espera esos 200ms antes de abrir, así nunca se ven las dos a la vez
-          ni la fila de enlaces se monta con la barra compacta (fix 2026-07-22). */}
-      <div
-        className={`overflow-hidden transition-all ${
-          compact
-            ? "max-h-0 opacity-0 pointer-events-none duration-200"
-            : // En desktop el contenido real es solo la fila del logo (~72px): un
-              // max-h ajustado (lg:max-h-24) hace que al colapsar la altura baje
-              // de inmediato en vez de "esperar" a que un max-h-52 sobredimensionado
-              // cruce el contenido, lo que dejaba la fila de nav de escritorio
-              // solapada un instante con la barra compacta (fix desktop 2026-07-22).
-              "max-h-52 lg:max-h-24 opacity-100 duration-300 delay-200"
-        }`}
-      >
+          FIX DEFINITIVO 2026-07-23 (el dueño reportó VARIAS veces que las
+          barras se mezclaban): se eliminó el crossfade con max-h/delays — se
+          monta UNA SOLA barra a la vez (swap instantáneo). Sin las dos en el
+          DOM, es imposible que se solapen en ningún momento del scroll. */}
+      {!compact && (
+      <div className="overflow-hidden">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
         {/* Logotipo vectorizado: el guion ya dice el nombre, sin texto duplicado. */}
         <a href="#inicio" className="group flex min-w-0 items-center">
@@ -548,16 +539,12 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
         </nav>
       </div>
       </div>
+      )}
 
-      {/* Barra compacta al bajar: categorías del menú + sede + carrito.
-          Espera 200ms (a que la completa termine de recogerse) antes de abrir. */}
-      <div
-        className={`overflow-hidden transition-all ${
-          compact
-            ? "max-h-24 opacity-100 duration-300 delay-200"
-            : "max-h-0 opacity-0 pointer-events-none duration-200"
-        }`}
-      >
+      {/* Barra compacta al bajar: categorías del menú + carrito. Solo se
+          monta cuando la completa NO está (swap exclusivo, ver arriba). */}
+      {compact && (
+      <div className="overflow-hidden">
         <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2 sm:px-6 lg:px-8">
           <nav
             aria-label="Categorías del menú"
@@ -592,6 +579,7 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
           </button>
         </div>
       </div>
+      )}
     </header>
   )
 }

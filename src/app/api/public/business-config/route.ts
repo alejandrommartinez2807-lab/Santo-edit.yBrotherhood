@@ -42,6 +42,14 @@ export async function GET(request: NextRequest) {
       if (branchConfig.deliveryWhatsapp) {
         scopedConfig = { ...scopedConfig, deliveryWhatsapp: branchConfig.deliveryWhatsapp }
       }
+      // Ubicación de Google POR SEDE (lote v6.1): el botón "Abrir ubicación"
+      // del hero/nav/pie debe llevar a la sede que el cliente eligió, no a la
+      // global. El dueño la edita en Sucursales → Configuración por sede.
+      if (branchConfig.googleMapsUrl) {
+        scopedConfig = { ...scopedConfig, googleMapsUrl: branchConfig.googleMapsUrl }
+      }
+      if (branchConfig.address) scopedConfig = { ...scopedConfig, address: branchConfig.address }
+      if (branchConfig.zone) scopedConfig = { ...scopedConfig, zone: branchConfig.zone }
     }
 
     return NextResponse.json(

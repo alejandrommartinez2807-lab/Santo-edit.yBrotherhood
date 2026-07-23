@@ -417,6 +417,8 @@ export function buildPublicBusinessConfigResponse(
     promotionActive: promotionCanShow,
     promotionTitle: promotionCanShow ? promotionTitle : "",
     promotionText: promotionCanShow ? promotionText : "",
+    // Texto propio de la ventana emergente (vacío = usa promotionText).
+    promotionPopupText: promotionCanShow ? cleanText(config.promotionPopupText) : "",
     promotionHighlight: promotionCanShow ? promotionHighlight : "",
     promotionButtonText: promotionCanShow
       ? cleanText(config.promotionButtonText) || "Ver menú"

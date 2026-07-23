@@ -412,6 +412,7 @@ function normalizeBusinessConfigPayload(
   const promotionTextKeys = [
     "promotionTitle",
     "promotionText",
+    "promotionPopupText",
     "promotionHighlight",
     "promotionButtonText",
     "promotionButtonHref",

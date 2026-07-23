@@ -4,7 +4,7 @@ import { formatUSD, formatVES } from "@/utils/formatCurrency"
 import type { OpenAccount } from "@/types/localOrders"
 import { normalizeLocalTableText } from "@/components/local/LocalTablesMap"
 import { formatMoneyForInput, parseMoneyInput, roundMoney } from "@/lib/localOrderMoney"
-import { isVesPaymentMethod } from "@/lib/paymentOptions"
+import { getOrderPaymentLegs } from "@/lib/orderPaymentLegs"
 
 export const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -528,47 +528,44 @@ export function getOrderPayment(order: LocalOrder): OrderPayment {
   }
 }
 
-// Método(s) que el cliente ELIGIÓ al pedir, derivados de order.paymentMethod
-// (lote v6 D.1): al abrir "Cobrar" los selects vienen preseleccionados en vez
-// de "Sin registrar". Soporta el método único y el "Mixto: X Bs … + Y $…".
+// Lo que el cliente DIJO que iba a pagar, derivado de order.paymentMethod +
+// totales (lote v6 D.1 y v6.1): al abrir "Cobrar", los selects Y LOS MONTOS
+// vienen precargados (editable si al final pagó distinto). Soporta el método
+// único (monto = total en su moneda) y el "Mixto: X Bs 1.234,56 + Y $10.00"
+// (cada pata con su monto, incluida la de efectivo que caja recibe en mano).
 export function derivePaymentPrefillFromOrder(order: LocalOrder): {
+  amountReceivedUSD: string
+  amountReceivedVES: string
   paymentMethodUSD: string
   paymentMethodVES: string
   deliveryPaymentIn: DeliveryPaymentIn
 } | null {
-  const raw = String(order.paymentMethod || "").trim()
-  if (!raw || /por confirmar/i.test(raw)) return null
+  const legs = getOrderPaymentLegs({
+    paymentMethod: order.paymentMethod,
+    totalUSD: getOrderTotals(order).totalUSD,
+    exchangeRate: Number(order.exchangeRate || 0),
+  })
+  if (!legs.length) return null
 
-  if (/^mixto\b/i.test(raw)) {
-    const body = raw.replace(/^mixto:?\s*/i, "")
-    let methodVES = ""
-    let methodUSD = ""
-    for (const part of body.split(" + ")) {
-      // Pata Bs: "<método> Bs 1.234,56" · pata divisas: "<método> $10.00".
-      const bsMatch = part.match(/^(.*?)\s+Bs\b/i)
-      const usdMatch = part.match(/^(.*?)\s+\$/)
-      if (bsMatch && !methodVES) methodVES = normalizePaymentMethodVES(bsMatch[1])
-      else if (usdMatch && !methodUSD) methodUSD = normalizePaymentMethodUSD(usdMatch[1])
-    }
-    if (!methodVES && !methodUSD) return null
-    return { paymentMethodUSD: methodUSD, paymentMethodVES: methodVES, deliveryPaymentIn: "Mixto" }
+  const usdLegs = legs.filter((leg) => leg.currency === "USD")
+  const vesLegs = legs.filter((leg) => leg.currency === "VES")
+  const amountUSD = roundMoney(usdLegs.reduce((total, leg) => total + leg.amount, 0))
+  const amountVES = roundMoney(vesLegs.reduce((total, leg) => total + leg.amount, 0))
+
+  return {
+    amountReceivedUSD: amountUSD > 0 ? String(amountUSD) : "",
+    amountReceivedVES: amountVES > 0 ? String(amountVES) : "",
+    paymentMethodUSD: usdLegs.length ? normalizePaymentMethodUSD(usdLegs[0].method) : "",
+    paymentMethodVES: vesLegs.length ? normalizePaymentMethodVES(vesLegs[0].method) : "",
+    deliveryPaymentIn:
+      usdLegs.length && vesLegs.length ? "Mixto" : vesLegs.length ? "Bolívares" : "Divisas",
   }
-
-  if (isVesPaymentMethod(raw)) {
-    const methodVES = normalizePaymentMethodVES(raw)
-    if (!methodVES) return null
-    return { paymentMethodUSD: "", paymentMethodVES: methodVES, deliveryPaymentIn: "Bolívares" }
-  }
-
-  const methodUSD = normalizePaymentMethodUSD(raw)
-  if (!methodUSD) return null
-  return { paymentMethodUSD: methodUSD, paymentMethodVES: "", deliveryPaymentIn: "Divisas" }
 }
 
 export function createPaymentFormFromOrder(order: LocalOrder): PaymentForm {
   const payment = getOrderPayment(order)
   // Sin cobro previo ni métodos guardados: precargar lo que eligió el cliente
-  // (editable si al final pagó distinto).
+  // (métodos y montos, editable si al final pagó distinto).
   const nothingRegistered =
     payment.amountReceivedUSD <= 0 &&
     payment.amountReceivedVES <= 0 &&
@@ -577,8 +574,14 @@ export function createPaymentFormFromOrder(order: LocalOrder): PaymentForm {
   const prefill = nothingRegistered ? derivePaymentPrefillFromOrder(order) : null
 
   return {
-    amountReceivedUSD: payment.amountReceivedUSD > 0 ? String(payment.amountReceivedUSD) : "",
-    amountReceivedVES: payment.amountReceivedVES > 0 ? String(payment.amountReceivedVES) : "",
+    amountReceivedUSD:
+      payment.amountReceivedUSD > 0
+        ? String(payment.amountReceivedUSD)
+        : prefill?.amountReceivedUSD || "",
+    amountReceivedVES:
+      payment.amountReceivedVES > 0
+        ? String(payment.amountReceivedVES)
+        : prefill?.amountReceivedVES || "",
     paymentMethodUSD: prefill?.paymentMethodUSD || payment.paymentMethodUSD,
     paymentMethodVES: prefill?.paymentMethodVES || payment.paymentMethodVES,
     deliveryPaymentIn:

@@ -2,15 +2,20 @@
 
 import { useEffect, useState } from "react"
 import Image from "next/image"
-import { Sparkles, X } from "lucide-react"
+import { Flame, Sparkles, X } from "lucide-react"
 import { formatPublicUSD as formatUSD } from "@/utils/formatCurrency"
 import { usePublicCurrencySymbol } from "@/hooks/usePublicCurrencySymbol"
 
-// Promoción del dueño como VENTANA EMERGENTE al entrar al menú público
-// (pedido del dueño 2026-07-21). Usa la misma promoción de Configuración
-// (producto elegido, textos, imagen); el dueño la activa con
-// promotionPopupEnabled. El cierre se recuerda POR CONTENIDO: al cambiar la
-// promoción, la ventana vuelve a salir una vez para todos.
+// Promoción del dueño como VENTANA EMERGENTE al entrar al menú público.
+// Lote v6.1 (pedidos del dueño 2026-07-23):
+// - Sale RÁPIDO (300ms tras cargar la config, sin esperar a "no asaltar").
+// - Se ve DISTINTA al resto: franja "PROMOCIÓN" arriba, borde llamativo y
+//   animación de entrada.
+// - El texto es PROPIO del pop-up (promotionPopupText, editable en
+//   Configuración; distinto del texto del producto).
+// - "Ver promoción" abre la FICHA del producto en promoción
+//   (#producto-<id>, mismo deep-link que compartir por WhatsApp).
+// El cierre se recuerda POR CONTENIDO: al cambiar la promoción vuelve a salir.
 
 const DISMISS_KEY = "bh_promo_popup_dismissed"
 
@@ -20,6 +25,7 @@ type PromotionPopupData = {
   highlight: string
   buttonText: string
   buttonHref: string
+  productId: number
   productName: string
   priceUSD: number
   image: string
@@ -32,6 +38,7 @@ function popupSignature(promotion: PromotionPopupData) {
     promotion.priceUSD,
     promotion.image,
     promotion.highlight,
+    promotion.text,
   ].join("|")
 }
 
@@ -53,12 +60,23 @@ export default function PublicPromotionPopup() {
           return
         }
 
+        const productId = Math.round(Number(config.promotionProductId || 0))
         const nextPromotion: PromotionPopupData = {
           title: String(config.promotionTitle || "").trim(),
-          text: String(config.promotionText || "").trim(),
+          // Texto propio del pop-up; si el dueño no lo escribió, cae al
+          // texto corto de la promoción.
+          text:
+            String(config.promotionPopupText || "").trim() ||
+            String(config.promotionText || "").trim(),
           highlight: String(config.promotionHighlight || "").trim(),
-          buttonText: String(config.promotionButtonText || "").trim() || "Lo quiero",
-          buttonHref: String(config.promotionButtonHref || "").trim() || "#menu",
+          buttonText: String(config.promotionButtonText || "").trim() || "Ver promoción",
+          // Con producto vinculado, el botón abre SU ficha (deep-link
+          // #producto-<id>); sin producto, el destino configurado o el menú.
+          buttonHref:
+            productId > 0
+              ? `#producto-${productId}`
+              : String(config.promotionButtonHref || "").trim() || "#menu",
+          productId,
           productName: String(config.promotionProductName || "").trim(),
           priceUSD: Number(config.promotionPriceUSD || 0),
           image: String(config.promotionImage || "").trim(),
@@ -75,10 +93,10 @@ export default function PublicPromotionPopup() {
         }
 
         setPromotion(nextPromotion)
-        // Pequeña pausa para que primero cargue la página (no asaltar).
+        // Apenas carga la config (el dueño la quiere DE UNA al entrar).
         window.setTimeout(() => {
           if (!cancelled) setIsOpen(true)
-        }, 1200)
+        }, 300)
       })
       .catch(() => {
         // Sin config no hay promoción emergente.
@@ -104,13 +122,25 @@ export default function PublicPromotionPopup() {
 
   return (
     <div
-      className="fixed inset-0 z-[105] flex items-end justify-center bg-black/75 px-4 py-6 backdrop-blur-sm sm:items-center"
+      className="fixed inset-0 z-[105] flex items-end justify-center bg-black/80 px-4 py-6 backdrop-blur-sm sm:items-center"
       onClick={dismiss}
     >
+      {/* Animación de entrada + doble borde: que se note que ES una promo. */}
+      <style>{`@keyframes promoPopIn{0%{opacity:0;transform:translateY(24px) scale(0.92)}60%{transform:translateY(-4px) scale(1.02)}100%{opacity:1;transform:translateY(0) scale(1)}}`}</style>
       <div
-        className="w-full max-w-sm overflow-hidden rounded-[1.8rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface)] shadow-2xl shadow-black/60"
+        className="w-full max-w-sm overflow-hidden rounded-[1.8rem] border-4 border-[var(--brand-primary)] bg-[var(--brand-surface)] shadow-2xl shadow-black/70 ring-4 ring-[var(--brand-primary)]/30"
+        style={{ animation: "promoPopIn 0.4s ease-out both" }}
         onClick={(event) => event.stopPropagation()}
       >
+        {/* Franja superior inconfundible: esto es una PROMOCIÓN. */}
+        <div className="flex items-center justify-center gap-2 bg-[var(--brand-primary)] px-4 py-2.5">
+          <Flame size={17} className="text-black" />
+          <p className="text-[0.78rem] font-black uppercase tracking-[0.3em] text-black">
+            Promoción
+          </p>
+          <Flame size={17} className="text-black" />
+        </div>
+
         <div className="relative">
           {promotion.image ? (
             <Image
@@ -119,7 +149,7 @@ export default function PublicPromotionPopup() {
               width={640}
               height={400}
               unoptimized
-              className="h-48 w-full object-cover"
+              className="h-44 w-full object-cover"
             />
           ) : (
             <div className="flex h-28 items-center justify-center bg-[rgba(var(--brand-primary-rgb),0.12)]">
@@ -136,10 +166,11 @@ export default function PublicPromotionPopup() {
             <X size={20} />
           </button>
 
-          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-primary)] px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
-            <Sparkles size={13} />
-            Promoción
-          </span>
+          {promotion.priceUSD > 0 ? (
+            <span className="absolute bottom-3 right-3 rounded-2xl border-2 border-black/20 bg-[var(--brand-primary)] px-3.5 py-1.5 text-xl font-black leading-none text-black shadow-lg">
+              {formatUSD(promotion.priceUSD)}
+            </span>
+          ) : null}
         </div>
 
         <div className="p-5 text-center">
@@ -159,18 +190,13 @@ export default function PublicPromotionPopup() {
             </p>
           ) : null}
 
-          {promotion.priceUSD > 0 ? (
-            <p className="mt-3 text-3xl font-black leading-none text-[var(--brand-ink-3)]">
-              {formatUSD(promotion.priceUSD)}
-            </p>
-          ) : null}
-
           <a
             href={promotion.buttonHref}
             onClick={dismiss}
             className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-[var(--brand-primary)] px-5 py-4 text-sm font-black uppercase tracking-[0.1em] text-black transition hover:bg-[var(--brand-accent)] active:scale-[0.98]"
           >
-            {promotion.buttonText}
+            <Sparkles size={16} />
+            {promotion.productId > 0 ? "Ver promoción" : promotion.buttonText}
           </a>
 
           <button

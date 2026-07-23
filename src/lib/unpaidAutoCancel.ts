@@ -100,13 +100,28 @@ export async function maybeAutoCancelUnpaidOrder(
 
     const supabase = getSupabaseAdmin()
     // branch-exempt: lookup puntual por id único e imprevisible (ord-...).
-    const { data: order, error } = await supabase
+    let { data: order, error } = await supabase
       .from("orders")
       .select(
         "id,branch_id,status,order_type,payment_method,registered_by_name,created_at,customer_note,customer_name,amount_received_usd,amount_received_ves,seq,branch_seq,branch_code,is_training",
       )
       .eq("id", orderId)
       .maybeSingle()
+
+    // Migración 0031 sin aplicar (payment_method no existe): este select
+    // fallaba COMPLETO en silencio y la anulación automática nunca corría.
+    // Sin la columna no se puede saber si el método es electrónico, así que
+    // el filtro de abajo (isElectronicPaymentMethod(undefined) = false) hace
+    // que no se anule nada: seguro, y al aplicar 0031 queda operativa.
+    if (error && /payment_method/i.test(error.message || "")) {
+      ;({ data: order, error } = await supabase
+        .from("orders")
+        .select(
+          "id,branch_id,status,order_type,registered_by_name,created_at,customer_note,customer_name,amount_received_usd,amount_received_ves,seq,branch_seq,branch_code,is_training",
+        )
+        .eq("id", orderId)
+        .maybeSingle())
+    }
 
     if (error || !order) return { cancelled: false }
 
