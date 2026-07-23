@@ -42,6 +42,29 @@ Trabaja el lote v6 de Brotherhood en la rama `brotherhood-publico` (repo D:/Sant
 
 **Riesgo:** es un refactor grande (dos editores de ~2200 y ~1200 líneas, dos módulos, dos modelos de datos). Hacerlo por sub-fases con verificación (tsc+tests+build) entre cada una. El objetivo final: un solo editor de menú, sin la página avanzada aparte, sin perder ninguna capacidad (variaciones/adicionales/combos siguen llegando al carrito público).
 
+## Fase C — Flujo del carrito / estado del pedido (público)
+
+1. **Reabrir el carrito → "Ver" un pedido SIN pago reportado:** hoy lo primero que sale es el estado del pedido. Debe salir PRIMERO el aviso/CTA de reportar pago: "No has reportado el pago de tu pedido. Repórtalo y se empezará a procesar." (con el formulario de reporte). Solo si ya reportó/pagó, mostrar el estado. Archivos: `src/components/CartDrawer.tsx` (Pedidos recientes → "Ver"), `src/app/pedido/[orderId]/page.tsx`, `src/components/recentPublicOrders.ts`, `usePublicOrderStatus`.
+2. **Paso "Esperando pago" en la línea de estado:** hoy `STEPS = ["Recibido", "Preparando", "Listo"]` (`src/app/pedido/[orderId]/page.tsx:29`). Agregar un paso ANTES: "Esperando pago". Mientras el pago no esté confirmado por caja, el pedido está en "Esperando pago"; cuando caja confirma el pago (o lo marca), pasa a "Recibido" → "Preparando" → "Listo". Reflejarlo igual en la tarjeta de confirmación del carrito. Cuidado: solo aplica cuando hay pago pendiente reportable (Pick up/Delivery electrónico); en mesa/efectivo no.
+
+## Fase D — Mejoras de Caja (`src/app/local-santo/caja/page.tsx` + `components.tsx` + `domain.tsx`)
+
+La sección de Comprobantes aparte se mantiene (buen manejo), pero en la tarjeta de caja hay varios problemas:
+
+1. **Precargar el método del cliente al Cobrar:** hoy al tocar "Cobrar" (`openPaymentModal`, ~línea 551) los selects "Método en divisas"/"Método en bolívares" (~1227/1229) arrancan vacíos ("Sin registrar") y caja los pone a mano. Deben venir **preseleccionados** con el/los método(s) que el cliente eligió al pedir (viajan en el pedido / la nota / el comprobante). 
+2. **Ver la captura del cliente DENTRO de la tarjeta de caja** (sin ir a Comprobantes): ya existe `OrderPaymentProofsList` en la tarjeta (lote v3), pero el cliente reporta que no aparece — VERIFICAR y arreglar que la imagen recién subida se vea en la tarjeta (miniatura ampliable), tanto la 1ª como la 2ª (pago mixto).
+3. **Textos de estado:** el InfoBox "Pendiente" (payment.pendingUSD, `components.tsx:356`) debe decir **"Pendiente de cobro"**. Revisar también "Por confirmar" (status Nuevo) y "Delivery por confirmar" para que se entiendan.
+4. **Costos de delivery por sucursal:** cuando el pedido es delivery, el costo del delivery NO se ve según la sede elegida. Conectar con el envío por sede (Fase F3 del lote v5) y la cotización guardada del pedido, para que caja vea el costo correcto de esa sucursal.
+5. **Reducir tamaño** de la sub-tarjeta con datos del cliente (teléfono, ubicación de delivery) dentro de la tarjeta de caja.
+6. **Reducir el tamaño de los botones** al desplegar la tarjeta completa: Registrar / Enviar / Cancelar pedido y Marcar como listo (ocupan mucho).
+7. **Vuelto:** verificar que el vuelto funcione con método **divisas** y con **mixto** (incluyendo la pata de divisas). Hoy el vuelto del efectivo viaja en la nota; confirmar que se calcula/guarda bien en esos casos.
+8. **Billete elegido visible en caja:** caja debe poder saber con qué **tipo de billete** indicó el cliente que iba a pagar en divisas (o en la pata de divisas del mixto). Los botones rápidos de billete (5/10/20/50/100) que el cliente toca deben viajar al pedido y verse en caja (en la nota o un campo), para cuadrar el vuelto.
+9. **Revisar que TODOS los flujos lógicos funcionen** (cobro, mixto, divisas, delivery por sede, comprobantes, estados) tras estos cambios.
+
+## Fase E — Barrido de contraste en pantallas de STAFF
+
+Mismo bug del tema oscuro que se arregló en el público: inputs/casillas `bg-white` con texto claro del tema (`text-[var(--brand-ink)]` / `text-[var(--brand-ink-3)]`, casi blancos) = ilegibles. Quedan en pantallas privadas: caja (`components.tsx`), mesas (`LocalTablesMap`), cuentas abiertas (`openAccountsComponents`, `OpenAccountsPanel`, `SepararCuentaModal`), `PanelPrimitiveCards`, `ModuleAccessGuard`, `LocalModuleNav`, `FiscalBreakdown`, `LocalTableQrLinksPanel`. Barrer y poner texto oscuro fijo (`#1a1a1a`) en todas las casillas `bg-white` sólidas, sin cambiar la estética.
+
 ## Cierre
 
 `npx tsc --noEmit` + `npx vitest run` + `npm run build`; un commit por fase; correr scripts de datos si hacen falta; subir la versión de caché del SW si aplica; `npx vercel --prod --yes`; actualizar las memorias `brotherhood-feedback-julio21` y `santo-edit-menu-editor`.
