@@ -37,6 +37,7 @@ import { resolveBranchId, resolveScopedBranchId } from "@/lib/branch"
 import { maybeDispatchPostSaleSurveys } from "@/lib/surveyAutoSend"
 import { maybeDispatchRestockAlerts } from "@/lib/inventoryRestockAlerts"
 import { maybeDispatchPayablesReminders } from "@/lib/payablesReminderAlerts"
+import { maybeAutoCancelStaleUnpaidOrders } from "@/lib/unpaidAutoCancel"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
 import { DataUrlImageError, assertDataUrlImage, sanitizeUploadedImageFileName } from "@/lib/dataUrlImages"
@@ -223,6 +224,9 @@ export async function GET(request: NextRequest) {
       maybeDispatchPostSaleSurveys(),
       maybeDispatchRestockAlerts(),
       maybeDispatchPayablesReminders(),
+      // Anula pedidos vencidos sin pago aunque el cliente cerró la app, para
+      // que salgan de "activos" y se vean Cancelado en la privada (F5/F9).
+      maybeAutoCancelStaleUnpaidOrders(),
     ])
 
     const allOrders = await getOrders(

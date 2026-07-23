@@ -27,6 +27,58 @@ function minutesSince(value: unknown): number {
   return (Date.now() - createdAt.getTime()) / 60_000
 }
 
+// Barrido periódico desde el panel: la anulación por pedido de abajo solo se
+// evalúa cuando el CLIENTE consulta su seguimiento. Si el cliente cerró la app,
+// el pedido vencido se quedaba en "Nuevo" y seguía apareciendo ACTIVO en la
+// privada (nunca pasaba a Cancelado). Este barrido lo dispara el polling de
+// /api/orders (staff), así el pedido se anula aunque el cliente no vuelva.
+const SWEEP_INTERVAL_MS = 45_000
+let lastSweepAt = 0
+let sweepRunning = false
+
+export async function maybeAutoCancelStaleUnpaidOrders(): Promise<void> {
+  const now = Date.now()
+  if (sweepRunning || now - lastSweepAt < SWEEP_INTERVAL_MS) return
+  lastSweepAt = now
+  sweepRunning = true
+
+  try {
+    const config = await getBusinessConfig()
+    const limitMinutes = Number(config.publicUnpaidAutoCancelMinutes || 0)
+    if (!Number.isFinite(limitMinutes) || limitMinutes <= 0) return
+    // Sin el módulo de comprobantes el cliente no puede reportar: no se anula.
+    if (!getModulePlanAccess(config, "paymentProofs").effectiveEnabled) return
+
+    const supabase = getSupabaseAdmin()
+    const cutoffIso = new Date(now - limitMinutes * 60_000).toISOString()
+
+    // Candidatos: prepago (Para llevar/Delivery) aún en "Nuevo", sin cobro y ya
+    // vencidos. Los demás filtros finos (método electrónico, registrado por
+    // staff, comprobante activo, entrenamiento) los re-verifica la anulación por
+    // pedido de abajo, que además hace la compensación anti-carrera.
+    const { data: rows, error } = await supabase
+      .from("orders")
+      .select("id")
+      .eq("status", "Nuevo")
+      .in("order_type", ["Para llevar", "Delivery"])
+      .eq("amount_received_usd", 0)
+      .eq("amount_received_ves", 0)
+      .lte("created_at", cutoffIso)
+      .limit(50)
+
+    if (error || !rows?.length) return
+
+    for (const row of rows) {
+      const orderId = String((row as { id?: unknown }).id || "")
+      if (orderId) await maybeAutoCancelUnpaidOrder(orderId)
+    }
+  } catch (error) {
+    captureError(error, { route: "lib/unpaidAutoCancel", action: "maybeAutoCancelStaleUnpaidOrders" })
+  } finally {
+    sweepRunning = false
+  }
+}
+
 export async function maybeAutoCancelUnpaidOrder(
   orderId: string,
 ): Promise<AutoCancelResult> {
