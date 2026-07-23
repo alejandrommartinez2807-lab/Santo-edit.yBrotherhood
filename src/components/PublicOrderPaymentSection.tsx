@@ -862,7 +862,12 @@ export default function PublicOrderPaymentSection({
         </p>
       ) : null}
 
+      {/* Con el pago YA reportado y en revisión, los datos para pagar y el
+          CTA de reportar sobran (el cliente ya pagó y ya reportó): solo se
+          muestra el estado del comprobante. Si el negocio pide corrección,
+          vuelven a aparecer. */}
       {!hasConfirmedPayment &&
+        (!hasPendingProof || needsCorrection) &&
         (() => {
           const filtered = chosenMethods.length
             ? Object.fromEntries(
@@ -973,20 +978,34 @@ export default function PublicOrderPaymentSection({
       ) : null}
 
       {!hasConfirmedPayment && !isFormOpen ? (
-        <button
-          type="button"
-          onClick={() => {
-            setIsFormOpen(true);
-            setSuccessMessage(null);
-            setPayments(buildInitialPayments());
-          }}
-          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90"
-        >
-          <ImagePlus size={15} />
-          {hasPendingProof || needsCorrection
-            ? "Enviar otro comprobante"
-            : "Reportar mi pago"}
-        </button>
+        hasPendingProof && !needsCorrection ? (
+          // Reportado y en revisión: nada que hacer. Solo un enlace discreto
+          // por si adjuntó la captura equivocada.
+          <button
+            type="button"
+            onClick={() => {
+              setIsFormOpen(true);
+              setSuccessMessage(null);
+              setPayments(buildInitialPayments());
+            }}
+            className="mt-3 w-full rounded-full px-4 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/45 transition hover:text-[var(--brand-ink-2)]"
+          >
+            ¿Enviaste la captura equivocada? Reportar de nuevo
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setIsFormOpen(true);
+              setSuccessMessage(null);
+              setPayments(buildInitialPayments());
+            }}
+            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90"
+          >
+            <ImagePlus size={15} />
+            {needsCorrection ? "Enviar otro comprobante" : "Reportar mi pago"}
+          </button>
+        )
       ) : null}
 
       {isFormOpen && (
