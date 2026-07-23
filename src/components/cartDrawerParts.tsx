@@ -414,24 +414,34 @@ export function CartSummaryFooter({
         </div>
       )}
       <div className="rounded-[1.05rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-3.5 py-2.5 shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.12)]">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[0.64rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
-              {publicConfig.publicCartTotalLabel || "Total a cobrar"}
+        {/* Redacción para tercera edad (pedido del dueño): en vez de
+            "Total / desglose" se dice en cristiano CUÁNTO se paga y en qué
+            moneda. Los montos son el mismo cálculo. */}
+        <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+          Tienes que pagar lo siguiente:
+        </p>
+
+        {exchangeRate > 0 && totalVES > 0 ? (
+          <div className="mt-1.5 space-y-1.5">
+            <p className="text-sm font-black leading-tight text-[var(--brand-ink-3)]">
+              Tienes que pagar esta cantidad en bolívares:
+              <span className="mt-0.5 block text-2xl font-black leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+                Bs {formatVES(totalVES)}
+              </span>
             </p>
-            <p className="hidden text-[0.68rem] font-black leading-4 text-[var(--brand-ink-2)]/60 sm:block">
-              {publicConfig.publicCartTotalHint || "Total general en divisas"}
+            <p className="text-sm font-black leading-tight text-[var(--brand-ink-2)]">
+              O esta cantidad en dólares:
+              <span className="ml-1.5 text-lg font-black text-[var(--brand-ink-3)]">
+                {formatUSD(totalUSD)}
+              </span>
             </p>
           </div>
-
-          <p className="shrink-0 text-2xl font-black leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-[1.75rem]">
-            {formatUSD(totalUSD)}
-          </p>
-        </div>
-
-        {exchangeRate > 0 && (
-          <p className="mt-1 text-right text-xs font-black text-[var(--brand-ink-2)]/75">
-            ≈ Bs {formatVES(totalVES)}
+        ) : (
+          <p className="mt-1.5 text-sm font-black leading-tight text-[var(--brand-ink-3)]">
+            Tienes que pagar:
+            <span className="mt-0.5 block text-2xl font-black leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+              {formatUSD(totalUSD)}
+            </span>
           </p>
         )}
 
