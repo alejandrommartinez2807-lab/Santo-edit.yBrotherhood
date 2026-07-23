@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
+import { isElectronicPaymentMethod } from "@/lib/paymentOptions"
 import { maybeAutoCancelUnpaidOrder } from "@/lib/unpaidAutoCancel"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
@@ -56,7 +57,9 @@ export async function GET(request: NextRequest) {
     // el pedido pertenece a una sola sede y no expone datos de otras.
     const { data, error } = await supabase
       .from("orders")
-      .select("id,status,seq,branch_seq,branch_code,customer_note")
+      .select(
+        "id,status,seq,branch_seq,branch_code,customer_note,order_type,payment_method,payment_status,open_account_id"
+      )
       .eq("id", orderId)
       .maybeSingle()
 
@@ -112,12 +115,47 @@ export async function GET(request: NextRequest) {
         : null
     const cancelReason = cancelMatch ? cancelMatch[1].trim() : ""
 
+    // Estado del pago para la línea de avance del cliente (lote v6): aplica
+    // "Esperando pago" solo a Pick up/Delivery con método electrónico (en mesa
+    // o efectivo puro el cliente paga al entregar y no reporta nada). Se
+    // sondea junto al estado, así el "Pagado" de caja llega solo al cliente.
+    const orderRecord = data as Record<string, unknown>
+    const orderType = String(orderRecord.order_type || "").trim()
+    const paymentReportable =
+      (orderType === "Para llevar" || orderType === "Delivery") &&
+      !orderRecord.open_account_id &&
+      isElectronicPaymentMethod(orderRecord.payment_method)
+    const paymentStatusRaw = String(orderRecord.payment_status || "").trim()
+
+    let paymentReported = false
+    let proofConfirmed = false
+    if (paymentReportable) {
+      // Solo el estado de los comprobantes (sin montos ni imágenes); si la
+      // consulta falla el seguimiento sigue con el estado del pedido.
+      const { data: proofRows } = await supabase
+        .from("payment_proofs")
+        .select("status")
+        .eq("order_id", orderId)
+      for (const row of proofRows ?? []) {
+        const proofStatus = String((row as Record<string, unknown>).status || "")
+        if (proofStatus !== "Rechazado") paymentReported = true
+        if (proofStatus === "Confirmado por caja") proofConfirmed = true
+      }
+    }
+
+    const paymentConfirmed = paymentStatusRaw === "Pagado" || proofConfirmed
+
     return noStoreResponse({
       ok: true,
       orderId: String(data.id || orderId),
       displayNumber,
       status,
       items,
+      payment: {
+        reportable: paymentReportable,
+        reported: paymentReported || paymentConfirmed,
+        confirmed: paymentConfirmed,
+      },
       ...(cancelReason ? { cancelReason } : {}),
     })
   } catch (error) {

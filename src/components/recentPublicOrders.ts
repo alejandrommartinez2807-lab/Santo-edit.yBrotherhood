@@ -60,7 +60,13 @@ export const RECENT_ORDER_HIDDEN_STATUSES = new Set([
   "Cancelado",
 ]);
 
-export type RecentOrderLiveInfo = { status: string; displayNumber: string };
+export type RecentOrderLiveInfo = {
+  status: string;
+  displayNumber: string;
+  // Estado del pago (lote v6): permite que "Tus pedidos en curso" avise
+  // "Reporta tu pago" en vez de mostrar solo el avance de cocina.
+  payment?: { reportable: boolean; reported: boolean; confirmed: boolean };
+};
 
 // Consulta el estado en vivo de cada pedido guardado. Devuelve el avance de
 // los activos (número visible + estado) y los ids ya terminados para podarlos.
@@ -85,7 +91,12 @@ export async function fetchRecentOrdersLiveInfo(
         // pedidos): sale de la lista igual que un entregado. Si se dejara,
         // los pedidos viejos se acumularían 7 días en "Pedidos recientes".
         if (response.status === 404) {
-          return { id: order.id, status: "__gone__", displayNumber: "" };
+          return {
+            id: order.id,
+            status: "__gone__",
+            displayNumber: "",
+            payment: undefined,
+          };
         }
 
         if (!response.ok || !data?.ok) return null;
@@ -94,6 +105,14 @@ export async function fetchRecentOrdersLiveInfo(
           id: order.id,
           status: String(data.status || ""),
           displayNumber: String(data.displayNumber || ""),
+          payment:
+            data.payment && typeof data.payment === "object"
+              ? {
+                  reportable: data.payment.reportable === true,
+                  reported: data.payment.reported === true,
+                  confirmed: data.payment.confirmed === true,
+                }
+              : undefined,
         };
       } catch {
         return null;
@@ -113,6 +132,7 @@ export async function fetchRecentOrdersLiveInfo(
       live[result.id] = {
         status: result.status,
         displayNumber: result.displayNumber,
+        payment: result.payment,
       };
     }
   }

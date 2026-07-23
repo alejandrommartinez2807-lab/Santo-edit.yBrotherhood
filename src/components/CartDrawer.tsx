@@ -2765,9 +2765,16 @@ export default function CartDrawer({
   // de pago anticipado O con el modo "comprobante antes de registrar", que
   // son banderas independientes): manda la advertencia grande de la
   // confirmación, el formulario abierto y la ventana emergente.
+  // Estado del pago en vivo (lote v6): si caja ya confirmó el cobro (o el
+  // reporte llegó por otra pestaña), la advertencia de "sin pagar" se apaga
+  // sola con el polling.
+  const lastOrderPaymentConfirmed = createdOrderLive.payment?.confirmed === true;
+  const lastOrderPaymentReportedLive =
+    lastOrderPaymentConfirmed || createdOrderLive.payment?.reported === true;
   const lastOrderPaymentPending =
     lastOrderCanReportPayment &&
     !lastOrderProofReported &&
+    !lastOrderPaymentReportedLive &&
     !lastOrderCancelled &&
     !lastCreatedOrder?.offline &&
     isPaymentProofPublicAvailable &&
@@ -3025,11 +3032,31 @@ export default function CartDrawer({
                           )}{" "}
                           · {formatUSD(recentOrder.totalUSD)}
                         </span>
-                        {live?.status ? (
+                        {live?.payment?.reportable && !live.payment.confirmed ? (
+                          // Pago pendiente manda sobre el avance de cocina:
+                          // primero que reporte (o que sepa que está en
+                          // revisión), después el estado (lote v6).
+                          <span
+                            className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[0.58rem] font-black uppercase tracking-[0.08em] ${
+                              live.payment.reported
+                                ? "border-sky-500 bg-sky-50 text-sky-800"
+                                : "border-amber-500 bg-amber-50 text-amber-800"
+                            }`}
+                          >
+                            {live.payment.reported
+                              ? "Pago en revisión"
+                              : "Reporta tu pago"}
+                          </span>
+                        ) : live?.status ? (
                           <span
                             className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[0.58rem] font-black uppercase tracking-[0.08em] ${getPublicOrderDeliveryClass(live.status)}`}
                           >
-                            {getPublicOrderDeliveryLabel(live.status)}
+                            {live.status === "Nuevo" ||
+                            live.status === "Pendiente"
+                              ? live.payment?.confirmed
+                                ? "Pagado · Recibido"
+                                : getPublicOrderDeliveryLabel(live.status)
+                              : getPublicOrderDeliveryLabel(live.status)}
                           </span>
                         ) : null}
                       </span>
@@ -3214,6 +3241,19 @@ export default function CartDrawer({
                       {createdOrderLive.displayNumber || "…"}
                     </p>
 
+                    {!lastOrderCancelled && lastOrderPaymentConfirmed ? (
+                      <p className="mt-4 rounded-2xl border-2 border-green-600 bg-green-600/15 px-4 py-2.5 text-[0.85rem] font-black leading-5 text-green-700">
+                        ✅ Pedido pagado: el local confirmó tu pago.
+                      </p>
+                    ) : !lastOrderCancelled &&
+                      lastOrderCanReportPayment &&
+                      (lastOrderProofReported || lastOrderPaymentReportedLive) ? (
+                      <p className="mt-4 rounded-2xl border-2 border-sky-500/60 bg-sky-500/10 px-4 py-2.5 text-[0.8rem] font-black leading-5 text-sky-700">
+                        Pago reportado: el local lo está verificando. Apenas lo
+                        confirme, tu pedido avanza solo.
+                      </p>
+                    ) : null}
+
                     {lastOrderCancelled ? (
                       <div className="mt-4 rounded-2xl border-2 border-red-500/60 bg-red-500/10 px-4 py-3 text-left">
                         <p className="text-sm font-black leading-5 text-red-500">
@@ -3256,7 +3296,12 @@ export default function CartDrawer({
                             En preparación…
                           </>
                         ) : createdOrderLive.status ? (
-                          "Recibido, en espera de cocina"
+                          createdOrderLive.payment?.reportable &&
+                          !createdOrderLive.payment.confirmed ? (
+                            "Esperando pago · entra a cocina al confirmarse"
+                          ) : (
+                            "Recibido, en espera de cocina"
+                          )
                         ) : (
                           <>
                             <Loader2

@@ -8,9 +8,11 @@ import {
   BellRing,
   CheckCircle2,
   CookingPot,
+  ImagePlus,
   Loader2,
   MessageCircle,
   Star,
+  Wallet,
 } from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import {
@@ -26,12 +28,28 @@ import PublicOrderPaymentSection from "@/components/PublicOrderPaymentSection";
 // confirmación (o la recibe por WhatsApp) y ve su pedido avanzar en vivo.
 // No expone datos personales ni montos: solo número visible y estado.
 
-const STEPS = ["Recibido", "Preparando", "Listo"] as const;
+// Con pago reportable (Pick up/Delivery electrónico) la línea arranca en
+// "Esperando pago" y avanza a "Recibido" cuando caja confirma el cobro
+// (lote v6). En mesa/efectivo se mantienen los 3 pasos de siempre.
+const STEPS_BASE = ["Recibido", "Preparando", "Listo"] as const;
+const STEPS_WITH_PAYMENT = [
+  "Esperando pago",
+  "Recibido",
+  "Preparando",
+  "Listo",
+] as const;
 
 function stepIndexForStatus(status: string) {
   if (status === "Preparando") return 1;
   if (status === "Listo" || status === "Entregado") return 2;
   return 0;
+}
+
+function stepIcon(step: string) {
+  if (step === "Esperando pago" || step === "Pagado") return <Wallet size={17} />;
+  if (step === "Recibido") return <CheckCircle2 size={17} />;
+  if (step === "Preparando") return <CookingPot size={17} />;
+  return <BellRing size={17} />;
 }
 
 export default function PedidoSeguimientoPage({
@@ -41,8 +59,11 @@ export default function PedidoSeguimientoPage({
 }) {
   const { orderId: rawOrderId } = use(params);
   const orderId = decodeURIComponent(String(rawOrderId || "")).trim().toLowerCase();
-  const { status, displayNumber, items, cancelReason, notFound } =
+  const { status, displayNumber, items, cancelReason, payment, notFound } =
     usePublicOrderStatus(orderId);
+  // Señal para abrir el formulario de reporte de pago desde el CTA de arriba
+  // (mismo mecanismo que la confirmación del carrito).
+  const [openReportSignal, setOpenReportSignal] = useState(0);
   const [notifyEnabled, setNotifyEnabled] = useState(false);
   const [googleReviewUrl, setGoogleReviewUrl] = useState("");
   // Pop-up de reseña tras la venta: se abre UNA vez cuando el pedido pasa a
@@ -115,7 +136,40 @@ export default function PedidoSeguimientoPage({
   const isReady = status === "Listo";
   const isDelivered = status === "Entregado";
   const isCancelled = status === "Cancelado";
-  const activeStep = stepIndexForStatus(status);
+  // Estado del pago (solo Pick up/Delivery electrónico): manda el paso
+  // "Esperando pago", los avisos y el CTA de reportar (lote v6).
+  const paymentReportable = payment?.reportable === true;
+  const paymentConfirmed = payment?.confirmed === true;
+  const paymentReported = payment?.reported === true;
+  const needsPaymentReport =
+    paymentReportable &&
+    !paymentConfirmed &&
+    !paymentReported &&
+    !isCancelled &&
+    !isDelivered;
+  const steps: readonly string[] = paymentReportable
+    ? STEPS_WITH_PAYMENT
+    : STEPS_BASE;
+  const baseStep = stepIndexForStatus(status);
+  // Con pago reportable: cocina avanzada arrastra la línea (aunque caja no
+  // haya marcado el cobro); si sigue en Nuevo, "Recibido" solo se alcanza al
+  // confirmarse el pago.
+  const activeStep = paymentReportable
+    ? baseStep > 0
+      ? baseStep + 1
+      : paymentConfirmed
+        ? 1
+        : 0
+    : baseStep;
+
+  function openPaymentReport() {
+    setOpenReportSignal((current) => current + 1);
+    window.setTimeout(() => {
+      document
+        .getElementById("reporte-pago-seccion")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
+  }
 
   useEffect(() => {
     if (!isDelivered || !googleReviewUrl) return;
@@ -215,47 +269,80 @@ export default function PedidoSeguimientoPage({
                 </div>
               ) : (
                 <>
-                  {/* Línea de progreso Recibido → Preparando → Listo */}
+                  {/* Estado del pago ANTES que todo (lote v6): si falta
+                      reportar, el CTA sale primero; si ya está pagado, el
+                      cliente lo ve de una. */}
+                  {needsPaymentReport ? (
+                    <div className="mt-5 rounded-2xl border-[3px] border-amber-500 bg-amber-500/10 px-4 py-4 text-left">
+                      <p className="text-sm font-black leading-5 text-amber-600">
+                        No has reportado el pago de tu pedido.
+                      </p>
+                      <p className="mt-1 text-[0.8rem] font-bold leading-5 text-[var(--brand-ink-2)]/75">
+                        Repórtalo aquí abajo y tu pedido se empezará a
+                        procesar.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={openPaymentReport}
+                        className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3.5 text-sm font-black uppercase tracking-[0.12em] text-black transition hover:opacity-90 active:translate-y-0.5"
+                      >
+                        <ImagePlus size={17} />
+                        Reportar mi pago
+                      </button>
+                    </div>
+                  ) : paymentReportable && paymentConfirmed ? (
+                    <p className="mt-5 rounded-2xl border-2 border-green-600 bg-green-600/15 px-4 py-3 text-sm font-black leading-5 text-green-500">
+                      ✅ Pedido pagado: el local confirmó tu pago.
+                    </p>
+                  ) : paymentReportable && paymentReported ? (
+                    <p className="mt-5 rounded-2xl border-2 border-sky-500/60 bg-sky-500/10 px-4 py-3 text-[0.85rem] font-black leading-5 text-sky-500">
+                      Pago reportado: el local lo está verificando. Apenas lo
+                      confirme, tu pedido avanza solo.
+                    </p>
+                  ) : null}
+
+                  {/* Línea de progreso (con "Esperando pago" delante cuando
+                      el pedido se paga por vía electrónica) */}
                   <div className="mt-7 flex items-center justify-center gap-2">
-                    {STEPS.map((step, index) => (
-                      <div key={step} className="flex items-center gap-2">
-                        <div className="flex flex-col items-center gap-1.5">
-                          <span
-                            className={`flex h-9 w-9 items-center justify-center rounded-full border-2 ${
-                              index <= activeStep
-                                ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-black"
-                                : "border-[var(--brand-border)] bg-transparent text-[var(--brand-ink-2)]/40"
-                            }`}
-                          >
-                            {index === 0 ? (
-                              <CheckCircle2 size={17} />
-                            ) : index === 1 ? (
-                              <CookingPot size={17} />
-                            ) : (
-                              <BellRing size={17} />
-                            )}
-                          </span>
-                          <span
-                            className={`text-[0.6rem] font-black uppercase tracking-[0.08em] ${
-                              index <= activeStep
-                                ? "text-[var(--brand-primary)]"
-                                : "text-[var(--brand-ink-2)]/40"
-                            }`}
-                          >
-                            {step}
-                          </span>
+                    {steps.map((step, index) => {
+                      const label =
+                        step === "Esperando pago" && paymentConfirmed
+                          ? "Pagado"
+                          : step;
+                      return (
+                        <div key={step} className="flex items-center gap-2">
+                          <div className="flex flex-col items-center gap-1.5">
+                            <span
+                              className={`flex h-9 w-9 items-center justify-center rounded-full border-2 ${
+                                index <= activeStep
+                                  ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-black"
+                                  : "border-[var(--brand-border)] bg-transparent text-[var(--brand-ink-2)]/40"
+                              }`}
+                            >
+                              {stepIcon(label)}
+                            </span>
+                            <span
+                              className={`text-[0.6rem] font-black uppercase tracking-[0.08em] ${
+                                index <= activeStep
+                                  ? "text-[var(--brand-primary)]"
+                                  : "text-[var(--brand-ink-2)]/40"
+                              }`}
+                            >
+                              {label}
+                            </span>
+                          </div>
+                          {index < steps.length - 1 ? (
+                            <span
+                              className={`mb-5 h-0.5 w-8 rounded-full ${
+                                index < activeStep
+                                  ? "bg-[var(--brand-primary)]"
+                                  : "bg-[var(--brand-border)]"
+                              }`}
+                            />
+                          ) : null}
                         </div>
-                        {index < STEPS.length - 1 ? (
-                          <span
-                            className={`mb-5 h-0.5 w-8 rounded-full ${
-                              index < activeStep
-                                ? "bg-[var(--brand-primary)]"
-                                : "bg-[var(--brand-border)]"
-                            }`}
-                          />
-                        ) : null}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {isReady && !isDelivered ? (
@@ -363,10 +450,14 @@ export default function PedidoSeguimientoPage({
         {/* Pagos: reportar la captura después y ver cuándo caja la confirma.
             Solo cuando el pedido existe y no está cancelado. */}
         {!notFound && status && !isCancelled ? (
-          <PublicOrderPaymentSection
-            orderId={orderId}
-            proofsEnabled={paymentProofsEnabled}
-          />
+          <div id="reporte-pago-seccion">
+            <PublicOrderPaymentSection
+              orderId={orderId}
+              proofsEnabled={paymentProofsEnabled}
+              autoOpenForm={needsPaymentReport}
+              forceOpenSignal={openReportSignal}
+            />
+          </div>
         ) : null}
 
         {/* Camino directo al negocio con el mensaje ya armado (número y

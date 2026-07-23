@@ -10,11 +10,20 @@ export type PublicOrderItem = {
   subtotalUSD: number;
 };
 
+// Estado del pago que viaja junto al estado del pedido (lote v6): permite
+// mostrar "Esperando pago" → "Pagado" en vivo cuando caja registra el cobro.
+export type PublicOrderPaymentInfo = {
+  reportable: boolean;
+  reported: boolean;
+  confirmed: boolean;
+};
+
 type PublicOrderStatus = {
   status: string;
   displayNumber: string;
   items: PublicOrderItem[];
   cancelReason?: string;
+  payment?: PublicOrderPaymentInfo;
 };
 
 const POLL_INTERVAL_MS = 10_000;
@@ -36,6 +45,7 @@ export function usePublicOrderStatus(orderId: string) {
   const [displayNumber, setDisplayNumber] = useState("");
   const [items, setItems] = useState<PublicOrderItem[]>([]);
   const [cancelReason, setCancelReason] = useState("");
+  const [payment, setPayment] = useState<PublicOrderPaymentInfo | null>(null);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
@@ -57,6 +67,15 @@ export function usePublicOrderStatus(orderId: string) {
           setDisplayNumber(String(data.displayNumber || ""));
           setItems(Array.isArray(data.items) ? data.items : []);
           setCancelReason(String(data.cancelReason || ""));
+          setPayment(
+            data.payment && typeof data.payment === "object"
+              ? {
+                  reportable: data.payment.reportable === true,
+                  reported: data.payment.reported === true,
+                  confirmed: data.payment.confirmed === true,
+                }
+              : null,
+          );
           setNotFound(false);
         }
 
@@ -84,7 +103,14 @@ export function usePublicOrderStatus(orderId: string) {
 
   // Sin id de pedido no hay nada que sondear: cuenta como "no encontrado"
   // derivado, sin setState síncrono dentro del efecto.
-  return { status, displayNumber, items, cancelReason, notFound: notFound || !orderId };
+  return {
+    status,
+    displayNumber,
+    items,
+    cancelReason,
+    payment,
+    notFound: notFound || !orderId,
+  };
 }
 
 // Vibración + notificación del navegador la primera vez que el pedido pasa a
