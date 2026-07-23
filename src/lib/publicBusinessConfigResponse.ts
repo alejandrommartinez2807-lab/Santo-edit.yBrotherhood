@@ -387,6 +387,10 @@ export function buildPublicBusinessConfigResponse(
     // el cliente lo ve como aviso en su confirmación).
     publicPaymentBeforeRegisterEnabled:
       config.publicPaymentBeforeRegisterEnabled === true,
+    // Foto obligatoria de divisas en efectivo (default off) y 2 capturas en
+    // pago mixto (default on): banderas del checkout/reporte público.
+    publicCashDivisaPhotoRequired: config.publicCashDivisaPhotoRequired === true,
+    publicMixedSecondProofEnabled: config.publicMixedSecondProofEnabled !== false,
     publicUnpaidAutoCancelMinutes: (() => {
       const minutes = Number(config.publicUnpaidAutoCancelMinutes)
       if (!Number.isFinite(minutes)) return 0

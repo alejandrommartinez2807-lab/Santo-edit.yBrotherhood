@@ -67,6 +67,8 @@ export const DEFAULT_PUBLIC_CONFIG: PublicBusinessConfig = {
   publicPrepayNoticeText: "",
   publicOpenAccountHintHighlighted: true,
   publicPaymentBeforeRegisterEnabled: false,
+  publicCashDivisaPhotoRequired: false,
+  publicMixedSecondProofEnabled: true,
   publicUnpaidAutoCancelMinutes: 0,
   deliveryEnabled: true,
   deliveryModuleEnabled: true,
@@ -554,6 +556,14 @@ export function normalizePublicBusinessConfig(value: unknown): PublicBusinessCon
     publicPaymentBeforeRegisterEnabled: normalizePublicBoolean(
       businessConfig.publicPaymentBeforeRegisterEnabled,
       false,
+    ),
+    publicCashDivisaPhotoRequired: normalizePublicBoolean(
+      businessConfig.publicCashDivisaPhotoRequired,
+      false,
+    ),
+    publicMixedSecondProofEnabled: normalizePublicBoolean(
+      businessConfig.publicMixedSecondProofEnabled,
+      true,
     ),
     publicUnpaidAutoCancelMinutes: (() => {
       const minutes = Number(businessConfig.publicUnpaidAutoCancelMinutes);

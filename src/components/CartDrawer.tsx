@@ -1169,6 +1169,19 @@ export default function CartDrawer({
   const hasCheckoutProof =
     Boolean(checkoutProofDataUrl) || checkoutProofDigits.length >= 6;
 
+  // Foto obligatoria de las divisas en efectivo (F8, configurable): con efectivo
+  // EN DIVISAS y destino (pick up/delivery), el cliente sube una foto de los
+  // billetes antes de registrar, para que el negocio vea que tiene el efectivo.
+  // Reusa el estado del comprobante de checkout: son excluyentes (el efectivo en
+  // divisas no es método electrónico, así que nunca coincide con el modo "pago
+  // antes de registrar").
+  const isCashDivisaMethod = Boolean(cashMethodName) && !cashIsVes;
+  const requiresCashDivisaPhoto =
+    publicConfig.publicCashDivisaPhotoRequired &&
+    isCashDivisaMethod &&
+    (isDeliveryOrder || isTakeawayOrder);
+  const hasCashDivisaPhoto = Boolean(checkoutProofDataUrl);
+
   // Requisitos del pedido con DESTINO: al tocar "Registrar" con algo
   // pendiente se muestra el aviso grande y se hace scroll a esa sección.
   const missingOrderChecks = [
@@ -1229,6 +1242,11 @@ export default function CartDrawer({
       label: "la captura o la referencia completa de tu pago",
       targetId: "checkout-comprobante",
       missing: requiresProofBeforeRegister && !hasCheckoutProof,
+    },
+    {
+      label: "la foto de tus billetes en divisas",
+      targetId: "checkout-divisa-foto",
+      missing: requiresCashDivisaPhoto && !hasCashDivisaPhoto,
     },
   ].filter((check) => check.missing);
 
@@ -1568,6 +1586,57 @@ export default function CartDrawer({
     );
   }
 
+  // F8: foto obligatoria de los billetes en divisas (efectivo en divisas). No es
+  // un pago reportado con referencia: solo la foto de los billetes para que el
+  // negocio vea que el cliente tiene el efectivo.
+  function renderCashDivisaPhotoSection() {
+    if (!requiresCashDivisaPhoto) return null;
+
+    return (
+      <div
+        id="checkout-divisa-foto"
+        className="rounded-2xl border-[3px] border-amber-500 bg-amber-50 px-4 py-4"
+      >
+        <p className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-amber-800">
+          <AlertTriangle size={17} className="shrink-0" />
+          Falta la foto de tus billetes
+        </p>
+        <p className="mt-1.5 text-[0.85rem] font-black leading-5 text-amber-900">
+          Vas a pagar en efectivo en divisas: toma una foto de los billetes con
+          los que vas a pagar y adjúntala aquí. Sin esa foto no se puede
+          registrar el pedido (así lo configuró el negocio). El efectivo lo
+          entregas al retirar o recibir.
+        </p>
+
+        <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-amber-500/70 bg-white px-4 py-4 text-sm font-bold text-amber-900/80 transition hover:border-amber-600">
+          <ImagePlus size={17} />
+          {checkoutProofFileName || "Toca para adjuntar la foto de los billetes"}
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(event) =>
+              void handleCheckoutProofFile(event.target.files?.[0])
+            }
+          />
+        </label>
+
+        {checkoutProofError ? (
+          <p className="mt-2 text-[0.75rem] font-bold leading-4 text-red-600">
+            {checkoutProofError}
+          </p>
+        ) : null}
+
+        {hasCashDivisaPhoto ? (
+          <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-green-600/15 px-3 py-1.5 text-[0.7rem] font-black uppercase tracking-[0.08em] text-green-700">
+            <CheckCircle2 size={14} />
+            Listo: ya puedes registrar tu pedido
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
   // Vuelto: pagando en efectivo, el cliente indica con cuánto paga y ve su
   // cambio al momento; caja recibe la nota con el vuelto listo. Se usa tanto
   // en Pick up (sección compartida) como en el formulario de Delivery.
@@ -1838,6 +1907,8 @@ export default function CartDrawer({
         )}
 
         {renderCheckoutProofSection()}
+
+        {renderCashDivisaPhotoSection()}
       </>
     );
   }
@@ -2119,6 +2190,39 @@ export default function CartDrawer({
     }
   }
 
+  // F8: adjunta la FOTO de los billetes en divisas al pedido (como comprobante
+  // con la foto, para que caja la vea). No es un pago confirmado: el efectivo se
+  // entrega al retirar/recibir, y la nota lo deja claro.
+  async function submitCashDivisaPhotoForOrder(orderId: string) {
+    try {
+      const response = await fetch("/api/payment-proofs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId,
+          reportedMethod: `${cashMethodName || "Efectivo en divisas"} (${formatUSD(totalUSD)})`,
+          amountReportedUSD: totalUSD,
+          amountReportedVES: 0,
+          paymentReference: "",
+          customerNote:
+            "Foto de las divisas en efectivo enviada al registrar. El efectivo se entrega al retirar/recibir.",
+          dataUrl: checkoutProofDataUrl,
+          fileName: checkoutProofFileName,
+          mimeType: checkoutProofMimeType,
+          confirmDuplicate: false,
+        }),
+      });
+
+      if (response.ok) {
+        setLastOrderProofReported(true);
+      } else {
+        setLastOrderUsedCheckoutProof(false);
+      }
+    } catch {
+      setLastOrderUsedCheckoutProof(false);
+    }
+  }
+
   async function handleRegisterLocalOrder() {
     if (hasUnavailableItemsForOrderType) {
       setOrderError(unavailableItemsMessage);
@@ -2326,9 +2430,13 @@ export default function CartDrawer({
         isPaymentProofPublicAvailable;
 
       setLastOrderProofReported(false);
-      setLastOrderUsedCheckoutProof(requiresProofBeforeRegister && hasCheckoutProof);
-      if (requiresProofBeforeRegister && hasCheckoutProof) {
+      const usedCheckoutProof = requiresProofBeforeRegister && hasCheckoutProof;
+      const usedCashDivisaPhoto = requiresCashDivisaPhoto && hasCashDivisaPhoto;
+      setLastOrderUsedCheckoutProof(usedCheckoutProof || usedCashDivisaPhoto);
+      if (usedCheckoutProof) {
         void submitCheckoutProofForOrder(orderId);
+      } else if (usedCashDivisaPhoto) {
+        void submitCashDivisaPhotoForOrder(orderId);
       } else if (orderNeedsPrepayReport) {
         setShowPostRegisterPaymentModal(true);
       }
@@ -3775,6 +3883,8 @@ export default function CartDrawer({
                     {renderCashChangeSection()}
 
                     {renderCheckoutProofSection()}
+
+                    {renderCashDivisaPhotoSection()}
 
                     {renderMixedPaymentSection()}
 

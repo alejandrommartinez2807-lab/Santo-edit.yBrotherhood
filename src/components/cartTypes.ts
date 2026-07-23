@@ -125,6 +125,10 @@ export type PublicBusinessConfig = {
   publicOpenAccountHintHighlighted: boolean;
   // Exigir captura/referencia ANTES de registrar (métodos electrónicos).
   publicPaymentBeforeRegisterEnabled: boolean;
+  // Exigir foto de las divisas en efectivo antes de registrar (apagable).
+  publicCashDivisaPhotoRequired: boolean;
+  // Permitir 2 capturas en el reporte de pago mixto (una por pata, apagable).
+  publicMixedSecondProofEnabled: boolean;
   // Anulación automática sin pago reportado tras X minutos (0 = apagada).
   publicUnpaidAutoCancelMinutes: number;
   deliveryEnabled: boolean;

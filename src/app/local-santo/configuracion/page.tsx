@@ -191,6 +191,8 @@ type BusinessConfig = {
   publicPrepayNoticeText: string;
   publicOpenAccountHintHighlighted: boolean;
   publicPaymentBeforeRegisterEnabled: boolean;
+  publicCashDivisaPhotoRequired: boolean;
+  publicMixedSecondProofEnabled: boolean;
   publicUnpaidAutoCancelMinutes: number;
   promotionPopupEnabled: boolean;
   exchangeRateMode: ExchangeRateMode;
@@ -373,6 +375,8 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicPrepayNoticeText: "",
   publicOpenAccountHintHighlighted: true,
   publicPaymentBeforeRegisterEnabled: false,
+  publicCashDivisaPhotoRequired: false,
+  publicMixedSecondProofEnabled: true,
   publicUnpaidAutoCancelMinutes: 0,
   promotionPopupEnabled: false,
   exchangeRateMode: "automatic",
@@ -1126,6 +1130,14 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     publicPaymentBeforeRegisterEnabled: normalizeBoolean(
       source.publicPaymentBeforeRegisterEnabled,
       DEFAULT_BUSINESS_CONFIG.publicPaymentBeforeRegisterEnabled,
+    ),
+    publicCashDivisaPhotoRequired: normalizeBoolean(
+      source.publicCashDivisaPhotoRequired,
+      DEFAULT_BUSINESS_CONFIG.publicCashDivisaPhotoRequired,
+    ),
+    publicMixedSecondProofEnabled: normalizeBoolean(
+      source.publicMixedSecondProofEnabled,
+      DEFAULT_BUSINESS_CONFIG.publicMixedSecondProofEnabled,
     ),
     publicUnpaidAutoCancelMinutes: (() => {
       const minutes = Number(source.publicUnpaidAutoCancelMinutes);
@@ -3179,6 +3191,56 @@ export default function BusinessConfigPage() {
                   Caja puede seguir cobrándolos manualmente si el cliente llega.
                 </p>
               </div>
+
+              {/* Foto obligatoria de las divisas en efectivo (F8). */}
+              <label className="mt-3 flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={businessConfig.publicCashDivisaPhotoRequired}
+                  onChange={(e) =>
+                    setBusinessConfig((c) => ({
+                      ...c,
+                      publicCashDivisaPhotoRequired: e.target.checked,
+                    }))
+                  }
+                  className="mt-0.5 h-5 w-5 accent-[var(--brand-primary)]"
+                />
+                <span>
+                  <span className="block text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
+                    Exigir foto de las divisas en efectivo
+                  </span>
+                  <span className="mt-0.5 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                    Cuando el cliente elige EFECTIVO EN DIVISAS, debe subir una
+                    foto de los billetes antes de registrar el pedido, para que
+                    veas que tiene el efectivo. Apagado: no se pide la foto.
+                  </span>
+                </span>
+              </label>
+
+              {/* Permitir 2 capturas en el reporte de pago mixto (F8). */}
+              <label className="mt-3 flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={businessConfig.publicMixedSecondProofEnabled}
+                  onChange={(e) =>
+                    setBusinessConfig((c) => ({
+                      ...c,
+                      publicMixedSecondProofEnabled: e.target.checked,
+                    }))
+                  }
+                  className="mt-0.5 h-5 w-5 accent-[var(--brand-primary)]"
+                />
+                <span>
+                  <span className="block text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
+                    Permitir 2 capturas en pago mixto
+                  </span>
+                  <span className="mt-0.5 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                    Solo en pago mixto, el cliente puede subir dos comprobantes
+                    (por ejemplo uno del pago móvil y otro del Zelle), uno por
+                    cada parte del pago. Apagado: una sola captura.
+                  </span>
+                </span>
+              </label>
 
               <label className="mt-3 flex items-start gap-3">
                 <input

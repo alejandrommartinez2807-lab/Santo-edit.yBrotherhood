@@ -82,6 +82,15 @@ export const SIMPLE_BUSINESS_CONFIG_FIELDS: readonly SimpleConfigField[] = [
   // - apagado (default): registra primero y reporta el pago en la
   //   confirmación, con advertencia grande y recordatorios.
   { key: "publicPaymentBeforeRegisterEnabled", type: "boolean", default: false },
+  // Foto obligatoria de las divisas en efectivo (pedido del dueño 2026-07-22):
+  // cuando el cliente elige EFECTIVO EN DIVISAS, se le exige subir una foto de
+  // los billetes antes de registrar el pedido, para que el negocio vea que
+  // tiene el efectivo. Apagable.
+  { key: "publicCashDivisaPhotoRequired", type: "boolean", default: false },
+  // Permitir DOS capturas en el reporte de pago MIXTO (una por cada pata, ej.
+  // pago móvil + Zelle). Solo aparece en mixto; apagable. Requiere la migración
+  // 0030 (2ª imagen del comprobante); sin ella se ignora la segunda captura.
+  { key: "publicMixedSecondProofEnabled", type: "boolean", default: true },
   // Anulación automática de pedidos SIN pago reportado tras X minutos
   // (0 = apagada). Solo aplica a Para llevar/Delivery no confirmados por caja.
   { key: "publicUnpaidAutoCancelMinutes", type: "number", default: 0, min: 0, max: 240 },

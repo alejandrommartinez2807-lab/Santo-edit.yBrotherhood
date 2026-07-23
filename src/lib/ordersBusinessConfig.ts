@@ -165,6 +165,10 @@ export type BusinessConfig = {
   // Flujo de pago del checkout: exigir captura/referencia ANTES de registrar
   // (métodos electrónicos), y anulación automática sin pago tras X min (0=off).
   publicPaymentBeforeRegisterEnabled: boolean
+  // Foto obligatoria de las divisas en efectivo antes de registrar (apagable).
+  publicCashDivisaPhotoRequired: boolean
+  // Permitir 2 capturas en el reporte de pago mixto (una por pata, apagable).
+  publicMixedSecondProofEnabled: boolean
   publicUnpaidAutoCancelMinutes: number
   // La promoción del dueño como ventana emergente al entrar al menú público.
   promotionPopupEnabled: boolean
@@ -332,6 +336,8 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicPrepayNoticeText: "",
   publicOpenAccountHintHighlighted: true,
   publicPaymentBeforeRegisterEnabled: false,
+  publicCashDivisaPhotoRequired: false,
+  publicMixedSecondProofEnabled: true,
   publicUnpaidAutoCancelMinutes: 0,
   promotionPopupEnabled: false,
   cancellationApprovalRequired: false,
@@ -803,6 +809,14 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
     publicPaymentBeforeRegisterEnabled: normalizeBooleanConfig(
       source.publicPaymentBeforeRegisterEnabled,
       DEFAULT_BUSINESS_CONFIG.publicPaymentBeforeRegisterEnabled
+    ),
+    publicCashDivisaPhotoRequired: normalizeBooleanConfig(
+      source.publicCashDivisaPhotoRequired,
+      DEFAULT_BUSINESS_CONFIG.publicCashDivisaPhotoRequired
+    ),
+    publicMixedSecondProofEnabled: normalizeBooleanConfig(
+      source.publicMixedSecondProofEnabled,
+      DEFAULT_BUSINESS_CONFIG.publicMixedSecondProofEnabled
     ),
     publicUnpaidAutoCancelMinutes: (() => {
       const minutes = Number(source.publicUnpaidAutoCancelMinutes)
