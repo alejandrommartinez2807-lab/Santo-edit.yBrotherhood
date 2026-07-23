@@ -375,7 +375,7 @@ export default function PublicOrderModeGuide() {
               const className = `group flex min-h-[178px] flex-col rounded-[1.45rem] border-2 p-5 transition hover:-translate-y-0.5 ${
                 card.featured
                   ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.18)]"
-                  : "border-[var(--brand-primary)]/18 bg-white text-[var(--brand-ink-3)] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.08)] hover:border-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
+                  : "border-[var(--brand-primary)]/18 bg-white text-[#1a1a1a] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.08)] hover:border-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
               }`
 
               const content = (

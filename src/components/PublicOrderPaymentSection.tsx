@@ -961,7 +961,7 @@ export default function PublicOrderPaymentSection({
                 value={entry.method}
                 onChange={(event) => changePaymentEntryMethod(index, event.target.value)}
                 disabled={!allowMethodChange && chosenMethods.length > 0}
-                className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink-3)] outline-none placeholder:text-[var(--brand-ink-3)]/40 focus:border-[var(--brand-primary)] disabled:opacity-60"
+                className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)] disabled:opacity-60"
               >
                 <option value="">Selecciona el método</option>
                 {!paymentMethods.includes(entry.method) && entry.method ? (
@@ -996,7 +996,7 @@ export default function PublicOrderPaymentSection({
                           }
                           inputMode="decimal"
                           placeholder="0.00"
-                          className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink-3)] outline-none placeholder:text-[var(--brand-ink-3)]/40 focus:border-[var(--brand-primary)]"
+                          className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
                         />
                       </div>
                     )}
@@ -1012,7 +1012,7 @@ export default function PublicOrderPaymentSection({
                           }
                           inputMode="decimal"
                           placeholder="0,00"
-                          className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink-3)] outline-none placeholder:text-[var(--brand-ink-3)]/40 focus:border-[var(--brand-primary)]"
+                          className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
                         />
                         {(() => {
                           // El monto en Bs también en dólares, con la tasa
@@ -1065,7 +1065,7 @@ export default function PublicOrderPaymentSection({
               value={reference}
               onChange={(event) => setReference(event.target.value)}
               placeholder="Todos los dígitos de la operación"
-              className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink-3)] outline-none placeholder:text-[var(--brand-ink-3)]/40 focus:border-[var(--brand-primary)]"
+              className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
             />
           </div>
 
@@ -1075,7 +1075,7 @@ export default function PublicOrderPaymentSection({
                 ? "Captura del PRIMER pago (opcional si pones la referencia)"
                 : "Captura del pago (opcional si pones la referencia)"}
             </label>
-            <label className="mt-1.5 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/50 bg-white px-4 py-4 text-sm font-bold text-[var(--brand-ink-3)]/70 transition hover:border-[var(--brand-primary)]">
+            <label className="mt-1.5 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/50 bg-white px-4 py-4 text-sm font-bold text-[#1a1a1a]/80 transition hover:border-[var(--brand-primary)]">
               <ImagePlus size={17} />
               {fileName || "Toca para adjuntar la imagen"}
               <input
@@ -1094,7 +1094,7 @@ export default function PublicOrderPaymentSection({
               <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
                 Captura del SEGUNDO pago (opcional)
               </label>
-              <label className="mt-1.5 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/50 bg-white px-4 py-4 text-sm font-bold text-[var(--brand-ink-3)]/70 transition hover:border-[var(--brand-primary)]">
+              <label className="mt-1.5 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/50 bg-white px-4 py-4 text-sm font-bold text-[#1a1a1a]/80 transition hover:border-[var(--brand-primary)]">
                 <ImagePlus size={17} />
                 {fileName2 || "Toca para adjuntar la segunda imagen"}
                 <input
@@ -1119,7 +1119,7 @@ export default function PublicOrderPaymentSection({
               value={customerNote}
               onChange={(event) => setCustomerNote(event.target.value)}
               placeholder="Ejemplo: pagó mi mamá desde su cuenta"
-              className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink-3)] outline-none placeholder:text-[var(--brand-ink-3)]/40 focus:border-[var(--brand-primary)]"
+              className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
             />
           </div>
 
