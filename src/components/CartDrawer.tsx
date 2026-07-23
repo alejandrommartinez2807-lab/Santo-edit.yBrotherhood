@@ -385,6 +385,12 @@ export default function CartDrawer({
   const [checkoutProofMimeType, setCheckoutProofMimeType] = useState("");
   const [checkoutProofReference, setCheckoutProofReference] = useState("");
   const [checkoutProofError, setCheckoutProofError] = useState<string | null>(null);
+  // Foto de los billetes en divisas con adjunto PROPIO: en pago mixto puede
+  // convivir con la captura electrónica de la otra pata (dos archivos).
+  const [divisaPhotoDataUrl, setDivisaPhotoDataUrl] = useState("");
+  const [divisaPhotoFileName, setDivisaPhotoFileName] = useState("");
+  const [divisaPhotoMimeType, setDivisaPhotoMimeType] = useState("");
+  const [divisaPhotoError, setDivisaPhotoError] = useState<string | null>(null);
   // Confirmación: cuándo el pago sigue pendiente de reporte (para la
   // advertencia llamativa y la ventana emergente post-registro).
   const [lastOrderProofReported, setLastOrderProofReported] = useState(false);
@@ -1176,11 +1182,16 @@ export default function CartDrawer({
   // divisas no es método electrónico, así que nunca coincide con el modo "pago
   // antes de registrar").
   const isCashDivisaMethod = Boolean(cashMethodName) && !cashIsVes;
+  // Lote v6: también cuenta la pata de divisas del pago mixto cuando es
+  // efectivo (el método único en efectivo divisas O el mixto con esa pata).
+  const isMixedDivisaCash =
+    isMixedPayment && mixedUsdMethod.toLowerCase().includes("efectivo");
+  const divisaCashSelected = isCashDivisaMethod || isMixedDivisaCash;
   const requiresCashDivisaPhoto =
     publicConfig.publicCashDivisaPhotoRequired &&
-    isCashDivisaMethod &&
+    divisaCashSelected &&
     (isDeliveryOrder || isTakeawayOrder);
-  const hasCashDivisaPhoto = Boolean(checkoutProofDataUrl);
+  const hasCashDivisaPhoto = Boolean(divisaPhotoDataUrl);
 
   // Requisitos del pedido con DESTINO: al tocar "Registrar" con algo
   // pendiente se muestra el aviso grande y se hace scroll a esa sección.
@@ -1531,6 +1542,51 @@ export default function CartDrawer({
     }
   }
 
+  // Aviso temprano (lote v6): apenas elige efectivo en divisas, el cliente
+  // sabe que deberá subir la foto de los billetes (no se entera al final).
+  function renderDivisaPhotoNotice(active: boolean) {
+    if (!active || !publicConfig.publicCashDivisaPhotoRequired) return null;
+    if (!(isDeliveryOrder || isTakeawayOrder)) return null;
+
+    return (
+      <p className="mt-2 rounded-xl border-2 border-amber-500/60 bg-amber-500/10 px-3 py-2 text-[0.72rem] font-black leading-4 text-amber-800">
+        📸 Con efectivo en divisas tendrás que adjuntar una foto de los
+        billetes al registrar tu pedido.
+      </p>
+    );
+  }
+
+  // Foto de los billetes en divisas: adjunto separado del comprobante
+  // electrónico (en mixto se suben los dos, uno por pata).
+  async function handleDivisaPhotoFile(file: File | undefined) {
+    setDivisaPhotoError(null);
+
+    if (!file) {
+      setDivisaPhotoDataUrl("");
+      setDivisaPhotoFileName("");
+      setDivisaPhotoMimeType("");
+      return;
+    }
+
+    try {
+      const image = await readImageFileForUpload(file, {
+        fallbackName: "billetes",
+      });
+      setDivisaPhotoDataUrl(image.dataUrl);
+      setDivisaPhotoFileName(image.fileName);
+      setDivisaPhotoMimeType(image.mimeType);
+    } catch (error) {
+      setDivisaPhotoDataUrl("");
+      setDivisaPhotoFileName("");
+      setDivisaPhotoMimeType("");
+      setDivisaPhotoError(
+        error instanceof Error
+          ? error.message
+          : "No se pudo leer la foto de los billetes.",
+      );
+    }
+  }
+
   function renderCheckoutProofSection() {
     if (!requiresProofBeforeRegister) return null;
 
@@ -1602,35 +1658,38 @@ export default function CartDrawer({
           Falta la foto de tus billetes
         </p>
         <p className="mt-1.5 text-[0.85rem] font-black leading-5 text-amber-900">
-          Vas a pagar en efectivo en divisas: toma una foto de los billetes con
-          los que vas a pagar y adjúntala aquí. Sin esa foto no se puede
-          registrar el pedido (así lo configuró el negocio). El efectivo lo
-          entregas al retirar o recibir.
+          {isMixedDivisaCash
+            ? `Parte de tu pago (${formatUSD(mixedUsdValue)}) es en efectivo en divisas: toma una foto de esos billetes y adjúntala aquí.`
+            : "Vas a pagar en efectivo en divisas: toma una foto de los billetes con los que vas a pagar y adjúntala aquí."}{" "}
+          Sin esa foto no se puede registrar el pedido (así lo configuró el
+          negocio). El efectivo lo entregas al retirar o recibir.
         </p>
 
         <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-amber-500/70 bg-white px-4 py-4 text-sm font-bold text-amber-900/80 transition hover:border-amber-600">
           <ImagePlus size={17} />
-          {checkoutProofFileName || "Toca para adjuntar la foto de los billetes"}
+          {divisaPhotoFileName || "Toca para adjuntar la foto de los billetes"}
           <input
             type="file"
             accept="image/*"
             className="hidden"
             onChange={(event) =>
-              void handleCheckoutProofFile(event.target.files?.[0])
+              void handleDivisaPhotoFile(event.target.files?.[0])
             }
           />
         </label>
 
-        {checkoutProofError ? (
+        {divisaPhotoError ? (
           <p className="mt-2 text-[0.75rem] font-bold leading-4 text-red-600">
-            {checkoutProofError}
+            {divisaPhotoError}
           </p>
         ) : null}
 
         {hasCashDivisaPhoto ? (
           <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-green-600/15 px-3 py-1.5 text-[0.7rem] font-black uppercase tracking-[0.08em] text-green-700">
             <CheckCircle2 size={14} />
-            Listo: ya puedes registrar tu pedido
+            {requiresProofBeforeRegister
+              ? "Foto de los billetes adjuntada"
+              : "Listo: ya puedes registrar tu pedido"}
           </p>
         ) : null}
       </div>
@@ -1816,6 +1875,8 @@ export default function CartDrawer({
               ))}
           </select>
 
+          {renderDivisaPhotoNotice(isMixedDivisaCash)}
+
           {/* Efectivo en divisas: botones rápidos de billete para no escribir
               (los mismos que en el efectivo normal). El cliente igual puede
               escribir otro monto abajo. */}
@@ -1906,6 +1967,7 @@ export default function CartDrawer({
               setIsPaymentPickerOpen(false);
             }}
           />
+          {renderDivisaPhotoNotice(isCashDivisaMethod)}
         </div>
 
         {renderCashChangeSection()}
@@ -2218,20 +2280,27 @@ export default function CartDrawer({
   // entrega al retirar/recibir, y la nota lo deja claro.
   async function submitCashDivisaPhotoForOrder(orderId: string) {
     try {
+      // En mixto la foto reporta SOLO la pata de divisas en efectivo (su
+      // método y su monto), no el total del pedido; en método único, el total.
+      const divisaLegMethod = isMixedDivisaCash
+        ? mixedUsdMethod || "Efectivo en divisas"
+        : cashMethodName || "Efectivo en divisas";
+      const divisaLegAmountUSD = isMixedDivisaCash ? mixedUsdValue : totalUSD;
+
       const response = await fetch("/api/payment-proofs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orderId,
-          reportedMethod: `${cashMethodName || "Efectivo en divisas"} (${formatUSD(totalUSD)})`,
-          amountReportedUSD: totalUSD,
+          reportedMethod: `${divisaLegMethod} (${formatUSD(divisaLegAmountUSD)})${isMixedDivisaCash ? " · pata en efectivo del pago mixto" : ""}`,
+          amountReportedUSD: divisaLegAmountUSD,
           amountReportedVES: 0,
           paymentReference: "",
           customerNote:
             "Foto de las divisas en efectivo enviada al registrar. El efectivo se entrega al retirar/recibir.",
-          dataUrl: checkoutProofDataUrl,
-          fileName: checkoutProofFileName,
-          mimeType: checkoutProofMimeType,
+          dataUrl: divisaPhotoDataUrl,
+          fileName: divisaPhotoFileName,
+          mimeType: divisaPhotoMimeType,
           confirmDuplicate: false,
         }),
       });
@@ -2456,11 +2525,15 @@ export default function CartDrawer({
       const usedCheckoutProof = requiresProofBeforeRegister && hasCheckoutProof;
       const usedCashDivisaPhoto = requiresCashDivisaPhoto && hasCashDivisaPhoto;
       setLastOrderUsedCheckoutProof(usedCheckoutProof || usedCashDivisaPhoto);
+      // En mixto pueden viajar los DOS: la captura electrónica de una pata y
+      // la foto de los billetes de la otra (cada una reporta su monto).
       if (usedCheckoutProof) {
         void submitCheckoutProofForOrder(orderId);
-      } else if (usedCashDivisaPhoto) {
+      }
+      if (usedCashDivisaPhoto) {
         void submitCashDivisaPhotoForOrder(orderId);
-      } else if (orderNeedsPrepayReport) {
+      }
+      if (!usedCheckoutProof && !usedCashDivisaPhoto && orderNeedsPrepayReport) {
         setShowPostRegisterPaymentModal(true);
       }
 
@@ -2484,6 +2557,10 @@ export default function CartDrawer({
       setCheckoutProofMimeType("");
       setCheckoutProofReference("");
       setCheckoutProofError(null);
+      setDivisaPhotoDataUrl("");
+      setDivisaPhotoFileName("");
+      setDivisaPhotoMimeType("");
+      setDivisaPhotoError(null);
       setCustomerNote("");
       setCouponInput("");
       setAppliedCoupon(null);
@@ -3902,6 +3979,8 @@ export default function CartDrawer({
                         }}
                       />
                     </div>
+
+                    {renderDivisaPhotoNotice(isCashDivisaMethod)}
 
                     {renderCashChangeSection()}
 
