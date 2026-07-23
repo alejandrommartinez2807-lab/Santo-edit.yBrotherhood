@@ -34,7 +34,10 @@ export default function Home() {
   }, [])
 
   return (
-    <main className="min-h-screen bg-[var(--brand-cream)] text-[var(--brand-ink-3)]">
+    // [overflow-anchor:none]: sin esto, cuando la barra superior cambia de
+    // altura el navegador "compensa" moviendo el scroll y ese ajuste
+    // retroalimentaba el detector de dirección de la Navbar (parpadeo).
+    <main className="min-h-screen bg-[var(--brand-cream)] text-[var(--brand-ink-3)] [overflow-anchor:none]">
       <PublicThemeSync />
       <Navbar
         totalItems={cart.totalItems}

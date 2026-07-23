@@ -175,6 +175,21 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
   useEffect(() => {
     let lastY = window.scrollY
     let ticking = false
+    // Candado anti-parpadeo: al cambiar de barra el header cambia de altura y
+    // el navegador dispara scrolls de compensación (scroll anchoring / clamp
+    // cerca del fondo). Si se leyeran como scroll del usuario, la barra
+    // rebotaría entre completa y compacta sin parar (bug reportado por el
+    // dueño 2026-07-23 al salir el pop-up de promoción). Tras cada cambio se
+    // absorben los deltas durante un instante; solo "volver arriba" pasa.
+    let isCompact = false
+    let lockUntil = 0
+
+    function applyCompact(next: boolean, now: number) {
+      if (next === isCompact) return
+      isCompact = next
+      lockUntil = now + 350
+      setCompact(next)
+    }
 
     function handleScroll() {
       if (ticking) return
@@ -183,17 +198,25 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
       window.requestAnimationFrame(() => {
         const y = window.scrollY
         const delta = y - lastY
-
-        if (y < 120) {
-          setCompact(false)
-        } else if (delta > 6) {
-          setCompact(true)
-        } else if (delta < -6) {
-          setCompact(false)
-        }
-
         lastY = y
         ticking = false
+
+        const now = performance.now()
+
+        if (y < 120) {
+          // Cerca del tope siempre gana la barra completa (estado terminal:
+          // con y < 120 ningún ajuste puede reactivar el lazo).
+          applyCompact(false, now)
+          return
+        }
+
+        if (now < lockUntil) return
+
+        if (delta > 6) {
+          applyCompact(true, now)
+        } else if (delta < -6) {
+          applyCompact(false, now)
+        }
       })
     }
 
