@@ -1765,7 +1765,7 @@ export default function CartDrawer({
           <select
             value={mixedBsMethod}
             onChange={(event) => setMixedBsMethod(event.target.value)}
-            className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+            className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
           >
             <option value="">Método para los bolívares…</option>
             {availablePaymentMethods
@@ -1782,7 +1782,7 @@ export default function CartDrawer({
               value={mixedBsAmount}
               onChange={(event) => setMixedBsAmount(event.target.value)}
               placeholder="Monto en Bs"
-              className="min-w-0 flex-1 rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+              className="min-w-0 flex-1 rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
             />
             <button
               type="button"
@@ -1804,7 +1804,7 @@ export default function CartDrawer({
           <select
             value={mixedUsdMethod}
             onChange={(event) => setMixedUsdMethod(event.target.value)}
-            className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+            className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
           >
             <option value="">Método para las divisas…</option>
             {availablePaymentMethods
@@ -1815,13 +1815,36 @@ export default function CartDrawer({
                 </option>
               ))}
           </select>
+
+          {/* Efectivo en divisas: botones rápidos de billete para no escribir
+              (los mismos que en el efectivo normal). El cliente igual puede
+              escribir otro monto abajo. */}
+          {mixedUsdMethod.toLowerCase().includes("efectivo") ? (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {[5, 10, 20, 50, 100].map((bill) => (
+                <button
+                  key={bill}
+                  type="button"
+                  onClick={() => setMixedUsdAmount(String(bill))}
+                  className={`rounded-full border-2 px-3.5 py-2 text-[0.68rem] font-black uppercase tracking-[0.06em] shadow-sm transition active:scale-95 ${
+                    normalizeFormMoney(mixedUsdAmount) === bill
+                      ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
+                      : "border-[var(--brand-primary)] bg-white text-[#1a1a1a]"
+                  }`}
+                >
+                  {formatUSD(bill)}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
           <div className="mt-2 flex gap-2">
             <input
               inputMode="decimal"
               value={mixedUsdAmount}
               onChange={(event) => setMixedUsdAmount(event.target.value)}
               placeholder="Monto en $"
-              className="min-w-0 flex-1 rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+              className="min-w-0 flex-1 rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
             />
             <button
               type="button"
@@ -3742,7 +3765,7 @@ export default function CartDrawer({
                             }}
                             placeholder="https://maps.app.goo.gl/..."
                             inputMode="url"
-                            className="w-full min-w-0 rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                            className="w-full min-w-0 rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
                           />
 
                           {/* Punto elegido: mini mapa de confirmación visual
@@ -3931,52 +3954,57 @@ export default function CartDrawer({
 
                 <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                    Resumen de cobro
+                    Tienes que pagar lo siguiente:
                   </p>
 
-                  <div className="mt-3 space-y-2 text-sm font-black text-[var(--brand-ink-3)]">
-                    {hasCombos && (
-                      <p>
-                        Combos solo divisas:{" "}
-                        <span className="text-[var(--brand-primary)]">
-                          {formatUSD(comboTotalPrice)}
+                  {/* Redacción fácil de entender (mismo cálculo que antes): se
+                      dice en cristiano cuánto y en qué moneda. El desglose queda
+                      como detalle chico debajo. */}
+                  <div className="mt-3 space-y-1.5">
+                    {exchangeRate > 0 && totalVES > 0 ? (
+                      <>
+                        <p className="text-sm font-black leading-tight text-[var(--brand-ink-3)]">
+                          Tienes que pagar esta cantidad en bolívares:
+                          <span className="mt-0.5 block text-2xl font-black leading-none text-[var(--brand-primary)]">
+                            Bs {formatVES(totalVES)}
+                          </span>
+                        </p>
+                        <p className="text-sm font-black leading-tight text-[var(--brand-ink-2)]">
+                          O esta cantidad en dólares:
+                          <span className="ml-1.5 text-lg font-black text-[var(--brand-ink-3)]">
+                            {formatUSD(totalUSD)}
+                          </span>
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-sm font-black leading-tight text-[var(--brand-ink-3)]">
+                        Tienes que pagar:
+                        <span className="mt-0.5 block text-2xl font-black leading-none text-[var(--brand-primary)]">
+                          {formatUSD(totalUSD)}
                         </span>
                       </p>
                     )}
+                  </div>
 
+                  {/* Desglose (detalle) para quien lo quiera revisar. */}
+                  <div className="mt-3 space-y-1 border-t border-[var(--brand-border)] pt-2 text-[0.72rem] font-bold text-[var(--brand-ink-2)]/70">
+                    {hasCombos && (
+                      <p>
+                        Combos (solo divisas): {formatUSD(comboTotalPrice)}
+                      </p>
+                    )}
                     {hasRegularProducts && (
                       <p>
-                        Productos normales:{" "}
-                        <span className="text-[var(--brand-primary)]">
-                          {formatUSD(regularTotalPrice)}
-                        </span>{" "}
-                        / Bs {formatVES(regularTotalVES)}
+                        Productos normales: {formatUSD(regularTotalPrice)} · Bs{" "}
+                        {formatVES(regularTotalVES)}
                       </p>
                     )}
-
                     {isDeliveryOrder && (
                       <p>
-                        Delivery:{" "}
-                        <span className="text-[var(--brand-primary)]">
-                          {formatUSD(deliveryCostValue)}
-                        </span>{" "}
-                        / Bs {formatVES(deliveryCostValue * exchangeRate)}
+                        Delivery: {formatUSD(deliveryCostValue)} · Bs{" "}
+                        {formatVES(deliveryCostValue * exchangeRate)}
                       </p>
                     )}
-
-                    <p>
-                      Total final en divisas:{" "}
-                      <span className="text-[var(--brand-primary)]">
-                        {formatUSD(totalUSD)}
-                      </span>
-                    </p>
-
-                    <p>
-                      Total en bolívares (referencia):{" "}
-                      <span className="text-[var(--brand-primary)]">
-                        Bs {formatVES(totalVES)}
-                      </span>
-                    </p>
                   </div>
                 </div>
 
