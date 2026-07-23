@@ -2897,6 +2897,13 @@ export default function CartDrawer({
   const lastOrderPaymentConfirmed = createdOrderLive.payment?.confirmed === true;
   const lastOrderPaymentReportedLive =
     lastOrderPaymentConfirmed || createdOrderLive.payment?.reported === true;
+  // Mixto a medias (llegó la foto del efectivo pero falta la captura de la
+  // pata electrónica): el servidor manda pendingReportUSD > 0. En ese caso la
+  // confirmación NO puede decir "reportado/recibido" como si estuviera listo.
+  const lastOrderReportIncomplete =
+    !lastOrderPaymentConfirmed &&
+    Number(createdOrderLive.payment?.pendingReportUSD || 0) > 0 &&
+    (lastOrderProofReported || lastOrderPaymentReportedLive);
   const lastOrderPaymentPending =
     lastOrderCanReportPayment &&
     !lastOrderProofReported &&
@@ -3336,12 +3343,14 @@ export default function CartDrawer({
                             ? "Falta tu pago para prepararlo"
                             : lastCreatedOrder.hasStaffConfirmationItems
                               ? "Pendiente de confirmación"
-                              : lastOrderCanReportPayment &&
-                                  (lastOrderProofReported ||
-                                    lastOrderPaymentReportedLive) &&
-                                  !lastOrderPaymentConfirmed
-                                ? "Comprobante recibido"
-                                : "El local ya lo recibió"}
+                              : lastOrderReportIncomplete
+                                ? "Falta una parte de tu pago"
+                                : lastOrderCanReportPayment &&
+                                    (lastOrderProofReported ||
+                                      lastOrderPaymentReportedLive) &&
+                                    !lastOrderPaymentConfirmed
+                                  ? "Comprobante recibido"
+                                  : "El local ya lo recibió"}
                   </h4>
 
                   <p className="mx-auto mt-4 max-w-sm text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
@@ -3355,12 +3364,14 @@ export default function CartDrawer({
                             ? "Cancela (paga) con los datos de abajo y reporta tu captura o referencia. Apenas caja lo confirme, tu pedido entra a cocina."
                             : lastCreatedOrder.hasStaffConfirmationItems
                               ? `El pedido fue enviado al local. El personal debe confirmar ${cleanStaffConfirmationProductLabel(lastCreatedOrder.staffConfirmationProductNames || [])} antes de prepararlo.`
-                              : lastOrderCanReportPayment &&
-                                  (lastOrderProofReported ||
-                                    lastOrderPaymentReportedLive) &&
-                                  !lastOrderPaymentConfirmed
-                                ? "El local está revisando tu pago. Apenas lo confirme, tu pedido entra a preparación — esta pantalla avanza sola."
-                                : "Tu pedido ya aparece en la pantalla del local y pronto entra a cocina."}
+                              : lastOrderReportIncomplete
+                                ? "Recibimos la foto de tu efectivo, pero falta la captura o referencia de la parte electrónica. Repórtala aquí abajo para que tu pedido avance."
+                                : lastOrderCanReportPayment &&
+                                    (lastOrderProofReported ||
+                                      lastOrderPaymentReportedLive) &&
+                                    !lastOrderPaymentConfirmed
+                                  ? "El local está revisando tu pago. Apenas lo confirme, tu pedido entra a preparación — esta pantalla avanza sola."
+                                  : "Tu pedido ya aparece en la pantalla del local y pronto entra a cocina."}
                   </p>
                 </div>
 
@@ -3380,6 +3391,11 @@ export default function CartDrawer({
                     {!lastOrderCancelled && lastOrderPaymentConfirmed ? (
                       <p className="mt-4 rounded-2xl border-2 border-green-600 bg-green-600/15 px-4 py-2.5 text-[0.85rem] font-black leading-5 text-green-700">
                         ✅ Pedido pagado: el local confirmó tu pago.
+                      </p>
+                    ) : !lastOrderCancelled && lastOrderReportIncomplete ? (
+                      <p className="mt-4 rounded-2xl border-2 border-amber-500 bg-amber-500/10 px-4 py-2.5 text-[0.8rem] font-black leading-5 text-amber-600">
+                        📸 Foto del efectivo recibida. Falta la captura o
+                        referencia de la parte electrónica — repórtala abajo.
                       </p>
                     ) : !lastOrderCancelled &&
                       lastOrderCanReportPayment &&

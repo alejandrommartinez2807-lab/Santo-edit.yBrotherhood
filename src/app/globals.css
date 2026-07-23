@@ -92,3 +92,14 @@ html {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(var(--brand-primary-rgb), 0.75);
 }
+/* iPhone (Safari/WebKit): al enfocar un input con fuente menor a 16px, iOS
+   hace zoom automático a toda la página y el checkout "salta" (reporte del
+   dueño 2026-07-23). max(1em, 16px) sube SOLO los campos pequeños y respeta
+   los que ya son grandes. El @supports limita la regla a WebKit/iOS. */
+@supports (-webkit-touch-callout: none) {
+  input,
+  select,
+  textarea {
+    font-size: max(1em, 16px);
+  }
+}

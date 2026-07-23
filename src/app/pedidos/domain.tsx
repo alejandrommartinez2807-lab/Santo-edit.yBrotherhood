@@ -11,6 +11,7 @@ import {
   type LocalPlanMode,
 } from "@/lib/localPlans"
 import { formatMoneyForInput, parseMoneyInput, roundMoney } from "@/lib/localOrderMoney"
+import { getOrderPaymentLegs } from "@/lib/orderPaymentLegs"
 import type { LocalTable } from "@/lib/orders"
 import type { OpenAccount, OrderFiscalSnapshot } from "@/types/localOrders"
 import {
@@ -1235,18 +1236,64 @@ export function getPaymentStatusStyle(status: PaymentStatus) {
   return "bg-red-100 text-red-700 border border-red-300"
 }
 
+// Lo que el cliente DIJO que iba a pagar, derivado de order.paymentMethod +
+// totales (misma precarga que caja, lote v7: el fix v6 D.1 solo se había
+// aplicado a /caja y en esta pantalla el cobro seguía arrancando vacío).
+function derivePaymentPrefillFromOrder(order: LocalOrder): {
+  amountReceivedUSD: string
+  amountReceivedVES: string
+  paymentMethodUSD: string
+  paymentMethodVES: string
+  deliveryPaymentIn: DeliveryPaymentIn
+} | null {
+  const legs = getOrderPaymentLegs({
+    paymentMethod: order.paymentMethod,
+    totalUSD: getOrderTotals(order).totalUSD,
+    exchangeRate: Number(order.exchangeRate || 0),
+  })
+  if (!legs.length) return null
+
+  const usdLegs = legs.filter((leg) => leg.currency === "USD")
+  const vesLegs = legs.filter((leg) => leg.currency === "VES")
+  const amountUSD = roundMoney(usdLegs.reduce((total, leg) => total + leg.amount, 0))
+  const amountVES = roundMoney(vesLegs.reduce((total, leg) => total + leg.amount, 0))
+
+  return {
+    amountReceivedUSD: amountUSD > 0 ? String(amountUSD) : "",
+    amountReceivedVES: amountVES > 0 ? String(amountVES) : "",
+    paymentMethodUSD: usdLegs.length ? normalizePaymentMethodUSD(usdLegs[0].method) : "",
+    paymentMethodVES: vesLegs.length ? normalizePaymentMethodVES(vesLegs[0].method) : "",
+    deliveryPaymentIn:
+      usdLegs.length && vesLegs.length ? "Mixto" : vesLegs.length ? "Bolívares" : "Divisas",
+  }
+}
+
 export function createPaymentFormFromOrder(order: LocalOrder): PaymentForm {
   const payment = getOrderPayment(order)
+  // Sin cobro previo ni métodos guardados: precargar lo que eligió el cliente
+  // (métodos y montos, editable si al final pagó distinto).
+  const nothingRegistered =
+    payment.amountReceivedUSD <= 0 &&
+    payment.amountReceivedVES <= 0 &&
+    !payment.paymentMethodUSD &&
+    !payment.paymentMethodVES
+  const prefill = nothingRegistered ? derivePaymentPrefillFromOrder(order) : null
 
   return {
     amountReceivedUSD:
-      payment.amountReceivedUSD > 0 ? String(payment.amountReceivedUSD) : "",
+      payment.amountReceivedUSD > 0
+        ? String(payment.amountReceivedUSD)
+        : prefill?.amountReceivedUSD || "",
     amountReceivedVES:
-      payment.amountReceivedVES > 0 ? String(payment.amountReceivedVES) : "",
-    paymentMethodUSD: payment.paymentMethodUSD,
-    paymentMethodVES: payment.paymentMethodVES,
+      payment.amountReceivedVES > 0
+        ? String(payment.amountReceivedVES)
+        : prefill?.amountReceivedVES || "",
+    paymentMethodUSD: prefill?.paymentMethodUSD || payment.paymentMethodUSD,
+    paymentMethodVES: prefill?.paymentMethodVES || payment.paymentMethodVES,
     deliveryPaymentIn: isDeliveryOrder(order)
-      ? payment.deliveryPaymentIn
+      ? payment.deliveryPaymentIn === "Sin registrar" && prefill
+        ? prefill.deliveryPaymentIn
+        : payment.deliveryPaymentIn
       : "Sin registrar",
     paymentNote: payment.paymentNote,
   }
