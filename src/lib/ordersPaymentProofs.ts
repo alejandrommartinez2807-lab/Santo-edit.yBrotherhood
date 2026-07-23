@@ -186,6 +186,7 @@ export async function createPaymentProof(input: CreatePaymentProofInput, branchI
       }
     : baseRow
 
+  // branch-exempt: baseRow/rowWithSecond llevan branch_id asignado arriba.
   let { data, error } = await supabase
     .from("payment_proofs")
     .insert(rowWithSecond)
@@ -193,6 +194,7 @@ export async function createPaymentProof(input: CreatePaymentProofInput, branchI
     .single()
 
   if (error && hasSecondImage && /proof_image_url_2|proof_file_id_2|proof_file_name_2|column/i.test(error.message || "")) {
+    // branch-exempt: baseRow lleva branch_id asignado arriba.
     ;({ data, error } = await supabase
       .from("payment_proofs")
       .insert(baseRow)

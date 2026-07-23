@@ -56,6 +56,8 @@ export async function maybeAutoCancelStaleUnpaidOrders(): Promise<void> {
     // vencidos. Los demás filtros finos (método electrónico, registrado por
     // staff, comprobante activo, entrenamiento) los re-verifica la anulación por
     // pedido de abajo, que además hace la compensación anti-carrera.
+    // branch-exempt: barrido de mantenimiento GLOBAL (todas las sedes); cada
+    // pedido lo anula maybeAutoCancelUnpaidOrder por id (sin lectura cruzada).
     const { data: rows, error } = await supabase
       .from("orders")
       .select("id")
