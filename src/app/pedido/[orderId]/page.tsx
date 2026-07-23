@@ -58,6 +58,13 @@ export default function PedidoSeguimientoPage({
   // (el dueño lo activa/apaga desde Configuración).
   const [orderHelpWhatsapp, setOrderHelpWhatsapp] = useState("");
   const [businessName, setBusinessName] = useState("");
+  // Fuente única de si el reporte de pago está disponible (la resuelve la
+  // config pública que igual cargamos aquí). Se pasa al PublicOrderPaymentSection
+  // para que su render NO dependa de un segundo fetch que puede fallar en el
+  // teléfono y dejar el reporte de pago muerto en silencio.
+  const [paymentProofsEnabled, setPaymentProofsEnabled] = useState<
+    boolean | undefined
+  >(undefined);
 
   useOrderReadyAlert({ orderId, status, displayNumber, notifyEnabled });
 
@@ -75,6 +82,7 @@ export default function PedidoSeguimientoPage({
         }
 
         setBusinessName(String(config.businessName || "").trim());
+        setPaymentProofsEnabled(config.paymentProofsEnabled !== false);
 
         if (config.orderHelpWhatsappEnabled !== false) {
           const phone = String(
@@ -355,7 +363,10 @@ export default function PedidoSeguimientoPage({
         {/* Pagos: reportar la captura después y ver cuándo caja la confirma.
             Solo cuando el pedido existe y no está cancelado. */}
         {!notFound && status && !isCancelled ? (
-          <PublicOrderPaymentSection orderId={orderId} />
+          <PublicOrderPaymentSection
+            orderId={orderId}
+            proofsEnabled={paymentProofsEnabled}
+          />
         ) : null}
 
         {/* Camino directo al negocio con el mensaje ya armado (número y

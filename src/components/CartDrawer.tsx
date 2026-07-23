@@ -3155,6 +3155,7 @@ export default function CartDrawer({
                       orderId={lastCreatedOrder.id}
                       autoOpenForm={lastOrderPaymentPending && !lastOrderUsedCheckoutProof}
                       forceOpenSignal={openReportSignal}
+                      proofsEnabled={isPaymentProofPublicAvailable}
                       onReported={() => {
                         setLastOrderProofReported(true);
                         setShowPostRegisterPaymentModal(false);

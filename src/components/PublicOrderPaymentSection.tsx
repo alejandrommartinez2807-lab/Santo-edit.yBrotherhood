@@ -138,6 +138,7 @@ export default function PublicOrderPaymentSection({
   orderId,
   autoOpenForm = false,
   forceOpenSignal = 0,
+  proofsEnabled,
   onReported,
 }: {
   orderId: string;
@@ -148,6 +149,14 @@ export default function PublicOrderPaymentSection({
   // confirmación): cada vez que sube el número, se abre el form. Más confiable
   // que un evento porque no depende del orden de montaje.
   forceOpenSignal?: number;
+  // Fuente ÚNICA de si el reporte de pago está disponible: el contenedor
+  // (carrito / página de seguimiento) ya cargó la config pública para poder
+  // renderizarse, así que la pasa aquí. Antes el hijo hacía su PROPIO fetch a
+  // business-config y, si fallaba o tardaba (teléfono con mala señal, PWA), el
+  // flag se quedaba en false y la sección entera retornaba null: el botón
+  // "Reportar pago" no abría nada. Con el prop nunca divergen ni se cierra por
+  // un fetch caído. Si viene undefined, se usa el fetch propio como respaldo.
+  proofsEnabled?: boolean;
   // Avisa al contenedor cuando el pago quedó reportado (la confirmación
   // apaga su advertencia grande).
   onReported?: () => void;
@@ -677,7 +686,10 @@ export default function PublicOrderPaymentSection({
     }
   }
 
-  if (isLoading || !info || !isProofsEnabled) return null;
+  // Disponibilidad del reporte: manda el prop del contenedor (fuente única);
+  // solo si no vino, se usa el fetch propio del hijo como respaldo.
+  const proofsAvailable = proofsEnabled !== undefined ? proofsEnabled : isProofsEnabled;
+  if (isLoading || !info || !proofsAvailable) return null;
   // Pedido anulado: nunca pedirle plata a un pedido muerto (el padre muestra
   // el aviso rojo de cancelación).
   if (info.orderStatus === "Cancelado") return null;
