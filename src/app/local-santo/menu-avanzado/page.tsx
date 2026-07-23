@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import { BRAND } from "@/lib/brand"
-import { useEffect, useEffectEvent, useMemo, useState } from "react"
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react"
 import {
   ArrowLeft,
   Eye,
@@ -122,6 +122,36 @@ export default function AdvancedMenuPage() {
     () => (selectedProduct ? buildConfigWarnings(form) : []),
     [form, selectedProduct],
   )
+
+  // Deep-link desde "Menú editable": al abrir con ?producto=<id>, se selecciona
+  // ese producto de una vez (fusión por fases — un solo flujo). Solo una vez.
+  const deepLinkAppliedRef = useRef(false)
+  useEffect(() => {
+    if (deepLinkAppliedRef.current || !isLoggedIn || products.length === 0) return
+    deepLinkAppliedRef.current = true
+
+    let raw = ""
+    try {
+      raw = new URLSearchParams(window.location.search).get("producto") || ""
+    } catch {
+      raw = ""
+    }
+    if (!raw) return
+
+    const target = products.find((product) => String(product.id) === raw)
+    if (!target) return
+
+    // Diferido un tick para no hacer setState síncrono dentro del efecto.
+    const timer = setTimeout(() => {
+      setSelectedProductId(target.id)
+      setForm(buildFormFromProduct(target))
+      setSuccessMessage(`${target.name} cargado para configurar.`)
+      document
+        .getElementById("advanced-product-form")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [isLoggedIn, products])
 
   function updateForm<K extends keyof AdvancedForm>(field: K, value: AdvancedForm[K]) {
     setForm((currentForm) => ({
@@ -729,7 +759,7 @@ export default function AdvancedMenuPage() {
                 </h1>
 
                 <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-                  Prepara variaciones, adicionales, ingredientes removibles, canales de venta y reglas internas. Esta fase guarda la configuración premium, pero no cambia todavía el carrito público.
+                  Es el <span className="text-[var(--brand-primary)]">paso 2 del mismo producto</span> que creaste en Menú editable: aquí le agregas variaciones, adicionales con precio, ingredientes removibles y combos. Estas opciones SÍ aparecen en el carrito público cuando el cliente personaliza el producto.
                 </p>
               </div>
 
@@ -861,7 +891,7 @@ export default function AdvancedMenuPage() {
                 </p>
               </div>
             ) : (
-              <div>
+              <div id="advanced-product-form">
                 <div className="flex flex-col gap-3 border-b-2 border-[var(--brand-primary)]/15 pb-4 lg:flex-row lg:items-start lg:justify-between">
                   <div>
                     <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">

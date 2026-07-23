@@ -15,6 +15,7 @@ import {
   Plus,
   RefreshCw,
   Search,
+  SlidersHorizontal,
   Star,
   Trash2,
   UploadCloud,
@@ -1911,6 +1912,18 @@ export default function LocalMenuPage() {
                         Desactivar
                       </button>
                     </div>
+
+                    {/* Paso 2 del mismo producto: variaciones, adicionales con
+                        precio, ingredientes removibles y combos se preparan en
+                        Menú avanzado. Este enlace abre ESTE producto allá
+                        (fusión por fases: un solo flujo desde aquí). */}
+                    <a
+                      href={`/local-santo/menu-avanzado?producto=${encodeURIComponent(product.id)}`}
+                      className="mt-2 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)] bg-[rgba(var(--brand-primary-rgb),0.06)] px-4 py-2.5 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.12)]"
+                    >
+                      <SlidersHorizontal size={16} />
+                      Opciones avanzadas (variaciones, extras…)
+                    </a>
                   </div>
                 </article>
               )
