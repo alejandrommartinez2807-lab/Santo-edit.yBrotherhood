@@ -49,6 +49,10 @@ import {
   type VariationGroup,
 } from "./domain"
 import {
+  buildBurgerTemplateAddons,
+  buildBurgerTemplateVariations,
+} from "./burgerTemplate"
+import {
   AddonsBuilder,
   AdvancedTextArea,
   ComboBuilder,
@@ -126,6 +130,34 @@ export default function AdvancedMenuPage() {
     }))
     setErrorMessage(null)
     setSuccessMessage(null)
+  }
+
+  // Carga la plantilla de hamburguesa (proteína + custom fries + 11 extras) en
+  // el producto abierto, para que el dueño no la arme a mano (pedido 2026-07-22).
+  // Pide confirmación si ya hay variaciones/extras, para no borrar sin querer.
+  function applyBurgerTemplate() {
+    const hasContent = form.variations.length > 0 || form.addons.length > 0
+    if (
+      hasContent &&
+      typeof window !== "undefined" &&
+      !window.confirm(
+        "Esto reemplaza las variaciones y extras actuales por la plantilla de hamburguesa (proteína, custom fries y extras). ¿Continuar?",
+      )
+    ) {
+      return
+    }
+
+    setForm((currentForm) => ({
+      ...currentForm,
+      productType: "buildable",
+      variations: buildBurgerTemplateVariations(),
+      addons: buildBurgerTemplateAddons(),
+      inventoryDiscountEnabled: true,
+    }))
+    setErrorMessage(null)
+    setSuccessMessage(
+      "Plantilla de hamburguesa cargada. Ajusta precios/deltas o quita lo que no quieras y guarda.",
+    )
   }
 
   function toggleSalesChannel(channel: ProductSalesChannel) {
@@ -926,6 +958,32 @@ export default function AdvancedMenuPage() {
                       />
                     </div>
                   )}
+
+                  {/* Plantilla de hamburguesa de un clic: llena proteína +
+                      custom fries + extras para que el dueño no la arme a mano.
+                      Puede editarla o quitarla (= producto normal). */}
+                  <div className="xl:col-span-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/50 bg-[var(--brand-cream)] p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                          Plantilla de hamburguesa
+                        </p>
+                        <p className="mt-1 text-[0.72rem] font-bold leading-4 text-[var(--brand-ink-2)]/70">
+                          Carga de un clic el grupo &quot;Escoge tu proteína&quot;, las
+                          custom fries y los 11 extras. Luego ajustas precios o
+                          quitas lo que no quieras. Para un producto normal, no la
+                          cargues (o borra sus variaciones y extras).
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={applyBurgerTemplate}
+                        className="shrink-0 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2.5 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] active:scale-95"
+                      >
+                        Cargar plantilla de hamburguesa
+                      </button>
+                    </div>
+                  </div>
 
                   <div className="xl:col-span-2">
                     <VariationsBuilder
