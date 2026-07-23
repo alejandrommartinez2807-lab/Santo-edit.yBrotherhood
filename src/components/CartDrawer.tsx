@@ -391,6 +391,9 @@ export default function CartDrawer({
   // Guía de ayuda accesible DENTRO del carrito/checkout (el botón flotante
   // queda tapado por el drawer): pedido del dueño 2026-07-22.
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  // Señal para abrir el formulario de reporte de pago desde el botón grande
+  // "Reportar pago" de la confirmación (cada toque sube el número).
+  const [openReportSignal, setOpenReportSignal] = useState(0);
   // Modo "antes": el comprobante del checkout se está reportando solo; no
   // auto-abrir el formulario manual mientras tanto (evita duplicados).
   const [lastOrderUsedCheckoutProof, setLastOrderUsedCheckoutProof] =
@@ -3015,6 +3018,14 @@ export default function CartDrawer({
                           o escríbenos por WhatsApp.
                         </p>
                       </div>
+                    ) : lastOrderPaymentPending ? (
+                      // Sin pagar: NO se muestra el estado del pedido todavía;
+                      // el cliente solo ve el avance una vez que reporta/paga
+                      // (pedido del dueño 2026-07-22).
+                      <p className="mt-4 rounded-2xl border-2 border-amber-500 bg-amber-500/10 px-4 py-3 text-sm font-black leading-5 text-amber-700">
+                        Aún sin pagar. Reporta tu pago aquí abajo; verás el
+                        avance de tu pedido apenas caja confirme tu pago.
+                      </p>
                     ) : createdOrderLive.status === "Listo" ? (
                       <p className="mt-4 rounded-2xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase leading-tight text-black">
                         ¡Listo! Pasa a retirarlo indicando tu número.
@@ -3055,17 +3066,16 @@ export default function CartDrawer({
                       <button
                         type="button"
                         onClick={() => {
-                          const section = document.getElementById(
-                            "reporte-pago-seccion",
-                          );
-                          section?.scrollIntoView({
-                            behavior: "smooth",
-                            block: "center",
-                          });
-                          // Avisa a la sección que abra su formulario de reporte.
-                          window.dispatchEvent(
-                            new CustomEvent("santo:abrir-reporte-pago"),
-                          );
+                          // Abre el formulario de reporte (señal) y baja a él.
+                          setOpenReportSignal((current) => current + 1);
+                          window.setTimeout(() => {
+                            document
+                              .getElementById("reporte-pago-seccion")
+                              ?.scrollIntoView({
+                                behavior: "smooth",
+                                block: "start",
+                              });
+                          }, 60);
                         }}
                         className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3.5 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_4px_0_rgba(var(--brand-accent-rgb),0.6)] transition hover:bg-[var(--brand-accent)] active:translate-y-0.5 active:shadow-none"
                       >
@@ -3144,6 +3154,7 @@ export default function CartDrawer({
                     <PublicOrderPaymentSection
                       orderId={lastCreatedOrder.id}
                       autoOpenForm={lastOrderPaymentPending && !lastOrderUsedCheckoutProof}
+                      forceOpenSignal={openReportSignal}
                       onReported={() => {
                         setLastOrderProofReported(true);
                         setShowPostRegisterPaymentModal(false);

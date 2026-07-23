@@ -137,12 +137,17 @@ function formatChosenTotal(
 export default function PublicOrderPaymentSection({
   orderId,
   autoOpenForm = false,
+  forceOpenSignal = 0,
   onReported,
 }: {
   orderId: string;
   // Abre el formulario de reporte de una vez (confirmación con pago
   // pendiente: un paso menos para el cliente).
   autoOpenForm?: boolean;
+  // Señal para abrir el formulario desde afuera (botón "Reportar pago" de la
+  // confirmación): cada vez que sube el número, se abre el form. Más confiable
+  // que un evento porque no depende del orden de montaje.
+  forceOpenSignal?: number;
   // Avisa al contenedor cuando el pago quedó reportado (la confirmación
   // apaga su advertencia grande).
   onReported?: () => void;
@@ -284,20 +289,16 @@ export default function PublicOrderPaymentSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al cargar la info
   }, [autoOpenForm, isLoading, info, chosenMethods]);
 
-  // El botón "Reportar pago" de la confirmación pide abrir este formulario
-  // (en vez de mandar al cliente a otra página). Abre el form y lo precarga.
+  // El botón "Reportar pago" de la confirmación abre este formulario (en vez de
+  // mandar al cliente a otra página). Cada subida de forceOpenSignal lo abre y
+  // precarga. Se ignora el valor inicial 0 (no abrir al montar).
   useEffect(() => {
-    function openReportForm() {
-      setSuccessMessage(null);
-      setIsFormOpen(true);
-      setPayments(buildInitialPayments());
-    }
-
-    window.addEventListener("santo:abrir-reporte-pago", openReportForm);
-    return () =>
-      window.removeEventListener("santo:abrir-reporte-pago", openReportForm);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- buildInitialPayments usa info/chosenMethods vía closure fresco
-  }, [info, chosenMethods]);
+    if (!forceOpenSignal) return;
+    setSuccessMessage(null);
+    setIsFormOpen(true);
+    setPayments(buildInitialPayments());
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo reaccionar a la señal
+  }, [forceOpenSignal]);
 
   const activeProofs = (info?.proofs || []).filter(
     (proof) => proof.status !== "Rechazado",
