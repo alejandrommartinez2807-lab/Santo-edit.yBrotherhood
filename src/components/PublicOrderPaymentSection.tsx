@@ -286,14 +286,17 @@ export default function PublicOrderPaymentSection({
   const autoOpenedRef = useRef(false);
 
   useEffect(() => {
-    if (!autoOpenForm || autoOpenedRef.current || isLoading || !info) return;
+    // Se abre aunque `info` no haya cargado (null): reportar pago no debe
+    // depender de que /order-payment responda. Si ya hay pago/comprobante, no
+    // se abre (pero eso solo se sabe con info).
+    if (!autoOpenForm || autoOpenedRef.current || isLoading) return;
 
-    const proofs = info.proofs || [];
+    const proofs = info?.proofs || [];
     const hasActiveProof = proofs.some(
       (proof) => proof.status !== "Rechazado",
     );
 
-    if (info.paymentRegistered || hasActiveProof) return;
+    if (info?.paymentRegistered || hasActiveProof) return;
 
     autoOpenedRef.current = true;
     // Diferido un tick para no hacer setState síncrono dentro del efecto.
@@ -736,10 +739,15 @@ export default function PublicOrderPaymentSection({
   // Disponibilidad del reporte: manda el prop del contenedor (fuente única);
   // solo si no vino, se usa el fetch propio del hijo como respaldo.
   const proofsAvailable = proofsEnabled !== undefined ? proofsEnabled : isProofsEnabled;
-  if (isLoading || !info || !proofsAvailable) return null;
+  // IMPORTANTE: no se retorna null por `!info`. Si /order-payment no cargó
+  // (mala señal, timeout), antes la sección desaparecía y "Reportar pago" no
+  // abría NADA. Ahora se muestra igual con datos en cero: el cliente puede
+  // adjuntar su captura/referencia y enviarla. Reportar pago NUNCA es un
+  // callejón sin salida.
+  if (isLoading || !proofsAvailable) return null;
   // Pedido anulado: nunca pedirle plata a un pedido muerto (el padre muestra
   // el aviso rojo de cancelación).
-  if (info.orderStatus === "Cancelado") return null;
+  if (info && info.orderStatus === "Cancelado") return null;
 
   return (
     <div className="mt-4 rounded-[2rem] border-4 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-6">
@@ -814,9 +822,13 @@ export default function PublicOrderPaymentSection({
                   </span>
                 )}
               </p>
-              {info.totalUSD > 0 ? (
+              {(info?.totalUSD ?? 0) > 0 ? (
                 <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/75">
-                  Total a pagar: {formatChosenTotal(info, chosenMethods)}
+                  Total a pagar:{" "}
+                  {formatChosenTotal(
+                    info ?? { totalUSD: 0, exchangeRate: 0 },
+                    chosenMethods,
+                  )}
                 </p>
               ) : null}
               <div className="mt-2">
@@ -826,9 +838,9 @@ export default function PublicOrderPaymentSection({
           );
         })()}
 
-      {info.proofs.length > 0 && (
+      {(info?.proofs?.length ?? 0) > 0 && (
         <div className="mt-4 space-y-2">
-          {info.proofs.map((proof, index) => {
+          {(info?.proofs ?? []).map((proof, index) => {
             const chip = proofStatusChip(proof.status);
             return (
               <div
@@ -1020,7 +1032,7 @@ export default function PublicOrderPaymentSection({
                 );
               })()}
 
-              {info.totalUSD > 0 ? (
+              {(info?.totalUSD ?? 0) > 0 ? (
                 <button
                   type="button"
                   onClick={() => completeEntryAmount(index)}
