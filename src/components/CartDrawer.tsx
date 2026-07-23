@@ -3374,8 +3374,11 @@ export default function CartDrawer({
                             En preparación…
                           </>
                         ) : createdOrderLive.status ? (
-                          createdOrderLive.payment?.reportable &&
-                          !createdOrderLive.payment.confirmed ? (
+                          // "expected" cubre también efectivo: el pedido espera
+                          // el cobro de caja aunque no haya captura que subir.
+                          (createdOrderLive.payment?.expected ||
+                            createdOrderLive.payment?.reportable) &&
+                          !createdOrderLive.payment?.confirmed ? (
                             "Esperando pago · entra a cocina al confirmarse"
                           ) : (
                             "Recibido, en espera de cocina"

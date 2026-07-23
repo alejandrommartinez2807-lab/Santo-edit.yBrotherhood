@@ -134,15 +134,23 @@ export async function GET(request: NextRequest) {
     // sondea junto al estado, así el "Pagado" de caja llega solo al cliente.
     const orderRecord = data as Record<string, unknown>
     const orderType = String(orderRecord.order_type || "").trim()
-    const paymentReportable =
+    // "expected": el pedido tiene un método elegido por el cliente y se cobra
+    // en caja (Pick up/Delivery sin cuenta abierta) → la línea muestra
+    // "Esperando pago" hasta que caja registre el cobro, SEA CUAL SEA el
+    // método (el dueño reportó 2026-07-23 que con efectivo no salía el paso).
+    // "reportable" (más estricto) sigue mandando el CTA de subir captura:
+    // solo métodos electrónicos; el efectivo se entrega en mano.
+    const awaitsCashierPayment =
       (orderType === "Para llevar" || orderType === "Delivery") &&
       !orderRecord.open_account_id &&
-      isElectronicPaymentMethod(orderRecord.payment_method)
+      String(orderRecord.payment_method || "").trim() !== ""
+    const paymentReportable =
+      awaitsCashierPayment && isElectronicPaymentMethod(orderRecord.payment_method)
     const paymentStatusRaw = String(orderRecord.payment_status || "").trim()
 
     let paymentReported = false
     let proofConfirmed = false
-    if (paymentReportable) {
+    if (awaitsCashierPayment) {
       // Solo el estado de los comprobantes (sin montos ni imágenes); si la
       // consulta falla el seguimiento sigue con el estado del pedido.
       const { data: proofRows } = await supabase
@@ -165,6 +173,7 @@ export async function GET(request: NextRequest) {
       status,
       items,
       payment: {
+        expected: awaitsCashierPayment,
         reportable: paymentReportable,
         reported: paymentReported || paymentConfirmed,
         confirmed: paymentConfirmed,

@@ -13,6 +13,10 @@ export type PublicOrderItem = {
 // Estado del pago que viaja junto al estado del pedido (lote v6): permite
 // mostrar "Esperando pago" → "Pagado" en vivo cuando caja registra el cobro.
 export type PublicOrderPaymentInfo = {
+  // El pedido se paga en caja (Pick up/Delivery con método elegido): la línea
+  // muestra "Esperando pago" aunque el método sea efectivo.
+  expected: boolean;
+  // Además admite reporte con captura/referencia (solo métodos electrónicos).
   reportable: boolean;
   reported: boolean;
   confirmed: boolean;
@@ -70,6 +74,10 @@ export function usePublicOrderStatus(orderId: string) {
           setPayment(
             data.payment && typeof data.payment === "object"
               ? {
+                  // Respuestas viejas (sin "expected") degradan a reportable.
+                  expected:
+                    data.payment.expected === true ||
+                    data.payment.reportable === true,
                   reportable: data.payment.reportable === true,
                   reported: data.payment.reported === true,
                   confirmed: data.payment.confirmed === true,

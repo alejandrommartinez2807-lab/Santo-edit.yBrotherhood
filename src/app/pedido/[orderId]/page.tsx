@@ -136,8 +136,10 @@ export default function PedidoSeguimientoPage({
   const isReady = status === "Listo";
   const isDelivered = status === "Entregado";
   const isCancelled = status === "Cancelado";
-  // Estado del pago (solo Pick up/Delivery electrónico): manda el paso
-  // "Esperando pago", los avisos y el CTA de reportar (lote v6).
+  // Estado del pago: "expected" (Pick up/Delivery con método elegido, incluso
+  // efectivo) manda el paso "Esperando pago"; "reportable" (solo electrónico)
+  // manda el CTA de subir captura/referencia (lote v6 + ajuste 2026-07-23).
+  const paymentExpected = payment?.expected === true || payment?.reportable === true;
   const paymentReportable = payment?.reportable === true;
   const paymentConfirmed = payment?.confirmed === true;
   const paymentReported = payment?.reported === true;
@@ -147,14 +149,14 @@ export default function PedidoSeguimientoPage({
     !paymentReported &&
     !isCancelled &&
     !isDelivered;
-  const steps: readonly string[] = paymentReportable
+  const steps: readonly string[] = paymentExpected
     ? STEPS_WITH_PAYMENT
     : STEPS_BASE;
   const baseStep = stepIndexForStatus(status);
-  // Con pago reportable: cocina avanzada arrastra la línea (aunque caja no
+  // Con pago esperado: cocina avanzada arrastra la línea (aunque caja no
   // haya marcado el cobro); si sigue en Nuevo, "Recibido" solo se alcanza al
   // confirmarse el pago.
-  const activeStep = paymentReportable
+  const activeStep = paymentExpected
     ? baseStep > 0
       ? baseStep + 1
       : paymentConfirmed
@@ -290,11 +292,11 @@ export default function PedidoSeguimientoPage({
                         Reportar mi pago
                       </button>
                     </div>
-                  ) : paymentReportable && paymentConfirmed ? (
+                  ) : paymentExpected && paymentConfirmed ? (
                     <p className="mt-5 rounded-2xl border-2 border-green-600 bg-green-600/15 px-4 py-3 text-sm font-black leading-5 text-green-500">
                       ✅ Pedido pagado: el local confirmó tu pago.
                     </p>
-                  ) : paymentReportable && paymentReported ? (
+                  ) : paymentExpected && paymentReported ? (
                     <p className="mt-5 rounded-2xl border-2 border-sky-500/60 bg-sky-500/10 px-4 py-3 text-[0.85rem] font-black leading-5 text-sky-500">
                       Pago reportado: el local lo está verificando. Apenas lo
                       confirme, tu pedido avanza solo.
