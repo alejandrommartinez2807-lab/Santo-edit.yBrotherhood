@@ -1571,42 +1571,32 @@ export default function CartDrawer({
   function renderCashChangeSection() {
     if (!cashMethodName) return null;
 
-    // Botones rápidos de billete (nada que escribir): denominaciones que
-    // cubren el total + "pago exacto". En divisas se ofrecen los billetes
-    // 5/10/20/50/100 (pedido del dueño 2026-07-22); en Bs se acotan para no
-    // llenar la pantalla de opciones.
+    // Botones rápidos de billete (nada que escribir). En divisas se muestran
+    // SIEMPRE los 5 billetes 5/10/20/50/100 (pedido del dueño 2026-07-22), aunque
+    // alguno no cubra el total (abajo se avisa si falta). En Bs se acotan a los
+    // que cubren el total para no llenar la pantalla de opciones.
     const cashDue = cashIsVes ? totalVES : totalUSD;
-    const quickBills = (
-      cashIsVes
-        ? [100, 200, 500, 1000, 2000, 5000, 10000, 20000]
-        : [5, 10, 20, 50, 100]
-    )
-      .filter((bill) => bill >= cashDue)
-      .slice(0, cashIsVes ? 4 : 5);
+    const quickBills = cashIsVes
+      ? [100, 200, 500, 1000, 2000, 5000, 10000, 20000]
+          .filter((bill) => bill >= cashDue)
+          .slice(0, 4)
+      : [5, 10, 20, 50, 100];
 
     return (
       <div className="rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] px-4 py-4">
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+        <p className="text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
           ¿Con cuánto vas a pagar?
         </p>
-        <p className="mt-1 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
-          Para tener tu vuelto listo. Total:{" "}
-          {cashIsVes ? `Bs ${formatVES(totalVES)}` : formatUSD(totalUSD)}
-          {cashIsVes ? ` (≈ ${formatUSD(totalUSD)})` : ""}
+        <p className="mt-1 text-[0.72rem] font-bold leading-4 text-[var(--brand-ink-2)]/70">
+          Toca el billete con el que vas a pagar (o escribe el monto abajo) y
+          tendremos tu vuelto listo. Total a pagar:{" "}
+          <span className="font-black text-[var(--brand-ink-3)]">
+            {cashIsVes ? `Bs ${formatVES(totalVES)}` : formatUSD(totalUSD)}
+            {cashIsVes ? ` (≈ ${formatUSD(totalUSD)})` : ""}
+          </span>
         </p>
 
         <div className="mt-2 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setCashGivenAmount(cashDue.toFixed(2))}
-            className={`rounded-full border-2 px-3.5 py-2 text-[0.68rem] font-black uppercase tracking-[0.06em] transition active:scale-95 ${
-              normalizeFormMoney(cashGivenAmount) === Math.round(cashDue * 100) / 100
-                ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
-                : "border-[var(--brand-primary)]/40 bg-white text-[var(--brand-ink)]"
-            }`}
-          >
-            Pago exacto
-          </button>
           {quickBills.map((bill) => (
             <button
               key={bill}
@@ -1630,7 +1620,7 @@ export default function CartDrawer({
           placeholder={
             cashIsVes ? "O escribe otro monto en Bs" : "O escribe otro monto en $"
           }
-          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink-3)] outline-none placeholder:text-[var(--brand-ink-3)]/45 focus:border-[var(--brand-primary)]"
         />
         {(() => {
           if (cashGivenValue <= 0) return null;
@@ -2591,47 +2581,44 @@ export default function CartDrawer({
         <div className="relative shrink-0 overflow-hidden border-b-4 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-5 py-5 sm:px-8">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(var(--brand-accent-rgb),0.32),transparent_42%)]" />
 
-          <div className="relative flex items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="text-xs font-black uppercase tracking-[0.35em] text-[var(--brand-primary)]">
-                {businessName}
-              </p>
-
-              <div className="mt-2 flex min-w-0 items-center gap-3">
-                <ShoppingCart
-                  className="shrink-0 text-[var(--brand-primary)]"
-                  size={32}
-                />
-
-                <h2 className="pb-1 text-[2.35rem] font-black uppercase leading-[1.02] text-[var(--brand-primary)] drop-shadow-[0_4px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-5xl">
+          <div className="relative flex items-center justify-between gap-3">
+            <div className="min-w-0 flex items-center gap-2.5">
+              <ShoppingCart
+                className="shrink-0 text-[var(--brand-primary)]"
+                size={26}
+              />
+              <div className="min-w-0">
+                <p className="text-[0.62rem] font-black uppercase tracking-[0.3em] text-[var(--brand-primary)]">
+                  {businessName}
+                </p>
+                {/* "Tu pedido" más chico (pedido del dueño 2026-07-22) para
+                    dejar aire al botón de ayuda. */}
+                <h2 className="truncate text-2xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_2px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-3xl">
                   {publicConfig.publicCartTitle || "Tu pedido"}
                 </h2>
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
-              {/* Ayuda (guía completa) también dentro del carrito: el botón
-                  flotante queda tapado por el drawer. */}
-              <button
-                type="button"
-                onClick={() => setIsHelpOpen(true)}
-                aria-label="Abrir la guía de ayuda"
-                className="flex h-12 items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-3.5 text-[0.62rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black"
-              >
-                <LifeBuoy size={18} />
-                Ayuda
-              </button>
-
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Cerrar carrito"
-                className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-105"
-              >
-                <X size={28} />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Cerrar carrito"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-105"
+            >
+              <X size={24} />
+            </button>
           </div>
+
+          {/* Ayuda grande y llamativa dentro del carrito (el botón flotante
+              queda tapado por el drawer). Pedido del dueño 2026-07-22. */}
+          <button
+            type="button"
+            onClick={() => setIsHelpOpen(true)}
+            className="relative mt-3 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2.5 text-xs font-black uppercase tracking-[0.08em] text-black shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.6)] transition hover:bg-[var(--brand-accent)] active:translate-y-0.5 active:shadow-none"
+          >
+            <LifeBuoy size={18} />
+            ¿Necesitas ayuda con tu pedido?
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-6 sm:px-8">
@@ -2892,56 +2879,52 @@ export default function CartDrawer({
           <div className="h-full max-h-full w-full overflow-y-auto bg-[var(--brand-cream)] text-[var(--brand-ink-3)] shadow-none sm:h-auto sm:max-h-[94vh] sm:max-w-lg sm:rounded-[2rem] sm:border-4 sm:border-[var(--brand-primary)] sm:shadow-2xl sm:shadow-black/45">
             <div className="hidden h-1.5 shrink-0 bg-[linear-gradient(90deg,var(--brand-primary),var(--brand-accent))] sm:block" />
 
-            {/* Barra superior tipo app: fija arriba mientras se hace scroll,
-                con flecha de volver en el teléfono. */}
-            <div className="sticky top-0 z-30 border-b-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3.5 sm:relative sm:border-b-0 sm:px-6 sm:py-5">
-              <div className="flex items-center justify-between gap-3 sm:items-start sm:gap-4">
+            {/* Barra superior tipo app: fija arriba, COMPACTA (sin el eyebrow
+                "Pedido del cliente", pedido del dueño 2026-07-22). El botón de
+                Ayuda grande va en su propia fila, abajo, para que se vea. */}
+            <div className="sticky top-0 z-30 border-b-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-2.5 sm:relative sm:border-b-0 sm:px-6 sm:py-3">
+              <div className="flex items-center justify-between gap-3">
                 <button
                   type="button"
                   onClick={closeOrderModal}
                   disabled={isSubmittingOrder}
                   aria-label="Volver"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] text-[var(--brand-ink)] disabled:opacity-50 sm:hidden"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] text-[var(--brand-ink)] disabled:opacity-50 sm:hidden"
                 >
-                  <ArrowLeft size={20} />
+                  <ArrowLeft size={18} />
                 </button>
 
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-black uppercase tracking-[0.28em] text-[var(--brand-primary)]">
-                    Pedido del cliente
-                  </p>
-
-                  <h3 className="mt-1 text-2xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)] sm:mt-2 sm:text-3xl">
-                    {lastCreatedOrder
+                <h3 className="min-w-0 flex-1 truncate text-lg font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_2px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-xl">
+                  {lastOrderPaymentPending
+                    ? "Pedido sin pagar"
+                    : lastCreatedOrder
                       ? "Pedido confirmado"
                       : isSubmittingOrder
                         ? "Enviando pedido"
-                        : "Identificar pedido"}
-                  </h3>
-                </div>
+                        : "Confirma tu pedido"}
+                </h3>
 
-                <div className="flex shrink-0 items-center gap-2">
-                  {/* Ayuda dentro del checkout: guía completa sin salir. */}
-                  <button
-                    type="button"
-                    onClick={() => setIsHelpOpen(true)}
-                    aria-label="Abrir la guía de ayuda"
-                    className="flex h-10 items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-3 text-[0.6rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black sm:h-11"
-                  >
-                    <LifeBuoy size={16} />
-                    Ayuda
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={closeOrderModal}
-                    disabled={isSubmittingOrder}
-                    className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black disabled:opacity-50 sm:h-11 sm:w-11"
-                  >
-                    <X size={22} />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={closeOrderModal}
+                  disabled={isSubmittingOrder}
+                  aria-label="Cerrar"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black disabled:opacity-50 sm:h-10 sm:w-10"
+                >
+                  <X size={20} />
+                </button>
               </div>
+
+              {/* Ayuda grande y llamativa: imposible de ignorar para quien se
+                  pierde en el pago (pedido del dueño 2026-07-22). */}
+              <button
+                type="button"
+                onClick={() => setIsHelpOpen(true)}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2.5 text-xs font-black uppercase tracking-[0.08em] text-black shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.6)] transition hover:bg-[var(--brand-accent)] active:translate-y-0.5 active:shadow-none"
+              >
+                <LifeBuoy size={18} />
+                ¿Necesitas ayuda con tu pedido?
+              </button>
             </div>
 
             {lastCreatedOrder ? (
@@ -3060,16 +3043,41 @@ export default function CartDrawer({
                       </p>
                     )}
 
-                    <a
-                      href={`/pedido/${encodeURIComponent(lastCreatedOrder.id)}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-transparent px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:opacity-80"
-                    >
-                      {lastOrderPaymentPending
-                        ? "Reportar pago"
-                        : "Ver el avance de mi pedido"}
-                    </a>
+                    {lastOrderPaymentPending ? (
+                      // Sin pagar: NO mandar a otra página. Lleva al formulario
+                      // de reporte que ya está en este mismo modal (más abajo) y
+                      // lo abre/enfoca (fix bug 2026-07-22: antes solo abría el
+                      // seguimiento y no dejaba reportar).
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const section = document.getElementById(
+                            "reporte-pago-seccion",
+                          );
+                          section?.scrollIntoView({
+                            behavior: "smooth",
+                            block: "center",
+                          });
+                          // Avisa a la sección que abra su formulario de reporte.
+                          window.dispatchEvent(
+                            new CustomEvent("santo:abrir-reporte-pago"),
+                          );
+                        }}
+                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3.5 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_4px_0_rgba(var(--brand-accent-rgb),0.6)] transition hover:bg-[var(--brand-accent)] active:translate-y-0.5 active:shadow-none"
+                      >
+                        <ImagePlus size={17} />
+                        Reportar pago
+                      </button>
+                    ) : (
+                      <a
+                        href={`/pedido/${encodeURIComponent(lastCreatedOrder.id)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-transparent px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:opacity-80"
+                      >
+                        Ver el avance de mi pedido
+                      </a>
+                    )}
 
                     <p className="mt-3 text-[0.7rem] font-bold leading-5 text-[var(--brand-ink-2)]/60">
                       Si cierras esta página no se pierde nada: tu pedido queda
@@ -3128,7 +3136,7 @@ export default function CartDrawer({
                 {!lastOrderAttachedToOpenAccount &&
                   !lastOrderCancelled &&
                   !lastCreatedOrder.offline && (
-                  <div className="text-left">
+                  <div id="reporte-pago-seccion" className="text-left">
                     <PublicOrderPaymentSection
                       orderId={lastCreatedOrder.id}
                       autoOpenForm={lastOrderPaymentPending && !lastOrderUsedCheckoutProof}

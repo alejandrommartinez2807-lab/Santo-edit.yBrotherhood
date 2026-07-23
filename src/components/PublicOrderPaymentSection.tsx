@@ -284,6 +284,21 @@ export default function PublicOrderPaymentSection({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al cargar la info
   }, [autoOpenForm, isLoading, info, chosenMethods]);
 
+  // El botón "Reportar pago" de la confirmación pide abrir este formulario
+  // (en vez de mandar al cliente a otra página). Abre el form y lo precarga.
+  useEffect(() => {
+    function openReportForm() {
+      setSuccessMessage(null);
+      setIsFormOpen(true);
+      setPayments(buildInitialPayments());
+    }
+
+    window.addEventListener("santo:abrir-reporte-pago", openReportForm);
+    return () =>
+      window.removeEventListener("santo:abrir-reporte-pago", openReportForm);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- buildInitialPayments usa info/chosenMethods vía closure fresco
+  }, [info, chosenMethods]);
+
   const activeProofs = (info?.proofs || []).filter(
     (proof) => proof.status !== "Rechazado",
   );
