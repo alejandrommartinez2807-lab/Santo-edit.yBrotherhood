@@ -603,6 +603,10 @@ export default function LocalMenuPage() {
   const [isAdvancedAvailable, setIsAdvancedAvailable] = useState(false)
   const [isAdvancedExpanded, setIsAdvancedExpanded] = useState(false)
   const [inventoryOptions, setInventoryOptions] = useState<InventoryOption[]>([])
+  // El módulo Inventario respondió OK: se puede crear un insumo nuevo desde la
+  // fila del ingrediente (sin ir a la pantalla de Inventario a cargarlo antes).
+  const [isInventoryAvailable, setIsInventoryAvailable] = useState(false)
+  const [creatingInsumoRowId, setCreatingInsumoRowId] = useState<string | null>(null)
   // Deep-link ?producto=<id>: abre ese producto con la sección avanzada
   // desplegada (reemplaza el viejo /menu-avanzado?producto=).
   const deepLinkAppliedRef = useRef(false)
@@ -789,6 +793,7 @@ export default function LocalMenuPage() {
 
       if (!response.ok) {
         setInventoryOptions([])
+        setIsInventoryAvailable(false)
         return
       }
 
@@ -796,6 +801,7 @@ export default function LocalMenuPage() {
         inventory?: Array<{ id?: unknown; name?: unknown; unit?: unknown }>
       }
 
+      setIsInventoryAvailable(true)
       setInventoryOptions(
         (data.inventory || [])
           .map((item) => ({
@@ -807,6 +813,82 @@ export default function LocalMenuPage() {
       )
     } catch {
       setInventoryOptions([])
+      setIsInventoryAvailable(false)
+    }
+  }
+
+  // Crea el insumo en Inventario desde la fila del ingrediente y lo deja
+  // vinculado (pedido del dueño 2026-07-23: escribir cada insumo aparte era
+  // demasiado manual). El patch se aplica por id de fila con updater
+  // funcional, así no pisa lo que se edite mientras responde la API.
+  async function createInsumoForIngredient(
+    field: "includedIngredients" | "removableIngredients",
+    rowId: string,
+    name: string,
+  ) {
+    const insumoName = name.trim()
+    if (!adminPassword || !insumoName || creatingInsumoRowId) return
+
+    try {
+      setCreatingInsumoRowId(rowId)
+      setErrorMessage(null)
+
+      const response = await fetch("/api/inventory", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": adminPassword,
+        },
+        body: JSON.stringify({
+          inventoryItem: { name: insumoName, unit: "unidades", quantity: 0 },
+        }),
+      })
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string
+        inventoryItem?: { id?: unknown; name?: unknown; unit?: unknown }
+      }
+
+      if (!response.ok || !data.inventoryItem) {
+        throw new Error(data.error || "No se pudo crear el insumo en inventario")
+      }
+
+      const newOption: InventoryOption = {
+        id: String(data.inventoryItem.id || "").trim(),
+        name: String(data.inventoryItem.name || insumoName).trim(),
+        unit: String(data.inventoryItem.unit || "unidades").trim(),
+      }
+
+      if (!newOption.id) {
+        throw new Error("El inventario no devolvió el insumo creado")
+      }
+
+      setInventoryOptions((currentOptions) =>
+        [...currentOptions.filter((option) => option.id !== newOption.id), newOption].sort(
+          (a, b) => a.name.localeCompare(b.name),
+        ),
+      )
+      setAdvancedForm((currentForm) => ({
+        ...currentForm,
+        [field]: currentForm[field].map((row) =>
+          row.id === rowId
+            ? {
+                ...row,
+                inventoryItemId: newOption.id,
+                inventoryUnit: newOption.unit,
+                inventoryQuantity: row.inventoryQuantity || 1,
+              }
+            : row,
+        ),
+      }))
+      setSuccessMessage(
+        `Insumo "${newOption.name}" creado en Inventario y vinculado. Ajusta su stock/costo en la pantalla de Inventario cuando quieras.`,
+      )
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "No se pudo crear el insumo en inventario",
+      )
+    } finally {
+      setCreatingInsumoRowId(null)
     }
   }
 
@@ -1654,6 +1736,9 @@ export default function LocalMenuPage() {
                             price: product.price,
                           }))}
                         inventoryOptions={inventoryOptions}
+                        inventoryAvailable={isInventoryAvailable}
+                        creatingInventoryRowId={creatingInsumoRowId}
+                        onCreateInventoryForIngredient={createInsumoForIngredient}
                         isExpanded={isAdvancedExpanded}
                         onToggle={() => setIsAdvancedExpanded((value) => !value)}
                       />

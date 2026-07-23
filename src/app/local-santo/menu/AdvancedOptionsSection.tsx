@@ -39,6 +39,9 @@ export function AdvancedOptionsSection({
   salesChannels,
   productOptions,
   inventoryOptions,
+  inventoryAvailable = false,
+  creatingInventoryRowId = null,
+  onCreateInventoryForIngredient,
   isExpanded,
   onToggle,
 }: {
@@ -50,11 +53,35 @@ export function AdvancedOptionsSection({
   salesChannels: ProductSalesChannel[]
   productOptions: ComboProductOption[]
   inventoryOptions: InventoryOption[]
+  // Crear el insumo en Inventario directo desde la fila del ingrediente.
+  inventoryAvailable?: boolean
+  creatingInventoryRowId?: string | null
+  onCreateInventoryForIngredient?: (
+    field: "includedIngredients" | "removableIngredients",
+    rowId: string,
+    name: string,
+  ) => void
   isExpanded: boolean
   onToggle: () => void
 }) {
   function update<K extends keyof AdvancedForm>(field: K, value: AdvancedForm[K]) {
     onChange({ ...form, [field]: value })
+  }
+
+  // La fila nueva se agrega al FINAL de su sección, muchas veces fuera de la
+  // pantalla: el dueño tocaba "Agregar grupo" y creía que no había funcionado
+  // (reporte 2026-07-23). Tras agregar, se hace scroll y focus al campo nuevo.
+  function focusLastInput(placeholder: string) {
+    if (typeof window === "undefined") return
+    window.setTimeout(() => {
+      const inputs = document.querySelectorAll<HTMLInputElement>(
+        `input[placeholder="${placeholder}"]`,
+      )
+      const lastInput = inputs[inputs.length - 1]
+      if (!lastInput) return
+      lastInput.scrollIntoView({ behavior: "smooth", block: "center" })
+      lastInput.focus({ preventScroll: true })
+    }, 80)
   }
 
   const warnings = buildConfigWarnings({ ...form, productType, salesChannels })
@@ -102,6 +129,7 @@ export function AdvancedOptionsSection({
         sortOrder: form.variations.length + 1,
       },
     ])
+    focusLastInput("Nombre del grupo (ej: Tamaño)")
   }
 
   function updateVariationGroup(index: number, patch: Partial<VariationGroup>) {
@@ -178,6 +206,7 @@ export function AdvancedOptionsSection({
       ...form.addons,
       { id: randomRowId("adicional"), name: "", price: 0, category: "", maxQuantity: 1, isActive: true },
     ])
+    focusLastInput("Nombre (ej: Tocineta)")
   }
 
   function updateAddon(index: number, patch: Partial<OptionValue>) {
@@ -227,6 +256,7 @@ export function AdvancedOptionsSection({
         isActive: true,
       },
     ])
+    focusLastInput("Ingrediente")
   }
 
   function updateIngredient(
@@ -330,6 +360,13 @@ export function AdvancedOptionsSection({
             onAdd={() => addIngredient("includedIngredients")}
             onUpdate={(index, patch) => updateIngredient("includedIngredients", index, patch)}
             onRemove={(index) => removeIngredient("includedIngredients", index)}
+            creatingRowId={creatingInventoryRowId}
+            onCreateInventory={
+              inventoryAvailable && onCreateInventoryForIngredient
+                ? (rowId, name) =>
+                    onCreateInventoryForIngredient("includedIngredients", rowId, name)
+                : undefined
+            }
           />
 
           <IngredientsBuilder
@@ -341,6 +378,13 @@ export function AdvancedOptionsSection({
             onAdd={() => addIngredient("removableIngredients")}
             onUpdate={(index, patch) => updateIngredient("removableIngredients", index, patch)}
             onRemove={(index) => removeIngredient("removableIngredients", index)}
+            creatingRowId={creatingInventoryRowId}
+            onCreateInventory={
+              inventoryAvailable && onCreateInventoryForIngredient
+                ? (rowId, name) =>
+                    onCreateInventoryForIngredient("removableIngredients", rowId, name)
+                : undefined
+            }
           />
 
           <AdvancedTextArea

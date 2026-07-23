@@ -433,6 +433,8 @@ export function IngredientsBuilder({
   onAdd,
   onUpdate,
   onRemove,
+  creatingRowId = null,
+  onCreateInventory,
 }: {
   title: string
   helper?: string
@@ -442,6 +444,10 @@ export function IngredientsBuilder({
   onAdd: () => void
   onUpdate: (index: number, patch: Partial<OptionValue>) => void
   onRemove: (index: number) => void
+  // Crear el insumo en Inventario con el nombre de la fila y dejarlo
+  // vinculado, sin ir a la pantalla de Inventario (2026-07-23).
+  creatingRowId?: string | null
+  onCreateInventory?: (rowId: string, name: string) => void
 }) {
   return (
     <div className={SECTION_CLASS}>
@@ -481,6 +487,19 @@ export function IngredientsBuilder({
                   </option>
                 ))}
               </select>
+            )}
+
+            {onCreateInventory && !row.inventoryItemId && row.name.trim() && (
+              <button
+                type="button"
+                disabled={Boolean(creatingRowId)}
+                onClick={() => onCreateInventory(String(row.id || ""), row.name)}
+                title="Crea este ingrediente como insumo en Inventario y lo vincula de una"
+                className="inline-flex items-center gap-1 rounded-full border-2 border-dashed border-[var(--brand-primary)]/50 bg-white px-2.5 py-1.5 text-[0.58rem] font-black uppercase tracking-[0.08em] text-[var(--brand-primary)] disabled:opacity-40"
+              >
+                <Plus size={12} />
+                {creatingRowId === row.id ? "Creando…" : "Crear insumo"}
+              </button>
             )}
 
             {inventoryOptions.length > 0 && row.inventoryItemId && (
