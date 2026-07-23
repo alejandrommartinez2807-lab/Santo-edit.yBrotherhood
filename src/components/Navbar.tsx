@@ -385,7 +385,12 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
         className={`overflow-hidden transition-all ${
           compact
             ? "max-h-0 opacity-0 pointer-events-none duration-200"
-            : "max-h-52 opacity-100 duration-300 delay-200"
+            : // En desktop el contenido real es solo la fila del logo (~72px): un
+              // max-h ajustado (lg:max-h-24) hace que al colapsar la altura baje
+              // de inmediato en vez de "esperar" a que un max-h-52 sobredimensionado
+              // cruce el contenido, lo que dejaba la fila de nav de escritorio
+              // solapada un instante con la barra compacta (fix desktop 2026-07-22).
+              "max-h-52 lg:max-h-24 opacity-100 duration-300 delay-200"
         }`}
       >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
