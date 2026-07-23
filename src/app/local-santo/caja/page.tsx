@@ -594,6 +594,9 @@ function CajaPageContent() {
       window.setTimeout(() => {
         loadOrders(adminPassword, true)
         loadOpenAccounts(adminPassword, true)
+        // Los comprobantes también, para que el estado del reporte del
+        // cliente quede al día apenas se registra el cobro.
+        loadPaymentProofs(adminPassword, true)
       }, 600)
     } catch (error) {
       setPaymentMessage(error instanceof Error ? error.message : "No se pudo registrar el cobro")

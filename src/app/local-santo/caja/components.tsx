@@ -40,6 +40,8 @@ import {
   getDisplayLocation,
   getDisplayOrderNumber,
   getDisplayOrderType,
+  getOrderCashPaymentNotes,
+  getOrderCustomerNoteForDisplay,
   getOrderOpenAccountId,
   getOrderPayment,
   getOrderTotals,
@@ -108,6 +110,9 @@ export function CashOrderCard({
   const hasPendingStaffConfirmation = staffConfirmationSummary.pendingCount > 0
   const staffConfirmationLabel = getStaffConfirmationStatusLabel(staffConfirmationSummary.status)
   const hasOpenAccount = Boolean(getOrderOpenAccountId(order))
+  // Vuelto/billete indicado por el cliente y nota limpia (lote v6 D.7/D.8).
+  const cashPaymentNotes = getOrderCashPaymentNotes(order)
+  const customerNoteDisplay = getOrderCustomerNoteForDisplay(order)
   // Plegada por defecto: la cabecera compacta trae lo esencial (estado, total,
   // pendiente y la acción del momento) para que en una laptop entren varios
   // pedidos por pantalla; el detalle completo se abre solo cuando hace falta.
@@ -156,8 +161,8 @@ export function CashOrderCard({
       <div className={`bg-[var(--brand-cream)] px-3 py-2 ${isExpanded ? "border-b-2 border-[var(--brand-primary)]" : ""}`}>
         <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
           <p className="text-xl font-black leading-none text-[var(--brand-primary)] drop-shadow-[0_2px_0_rgba(var(--brand-accent-rgb),0.75)]">{getDisplayOrderNumber(order)}</p>
-          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.58rem] font-black uppercase ${getStatusStyle(order.status)}`}>{getStatusIcon(order.status)}{order.status === "Nuevo" ? "Por confirmar" : order.status}</span>
-          <span className={`inline-flex rounded-full px-2 py-0.5 text-[0.58rem] font-black uppercase ${getPaymentStatusStyle(payment.status)}`}>{payment.status}</span>
+          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.58rem] font-black uppercase ${getStatusStyle(order.status)}`}>{getStatusIcon(order.status)}{order.status === "Nuevo" ? "Nuevo · sin confirmar" : order.status}</span>
+          <span className={`inline-flex rounded-full px-2 py-0.5 text-[0.58rem] font-black uppercase ${getPaymentStatusStyle(payment.status)}`}>{payment.status === "Pendiente" ? "Pendiente de cobro" : payment.status}</span>
           {isDelivery && <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-primary)] px-2 py-0.5 text-[0.58rem] font-black uppercase text-white"><Truck size={12} />Delivery</span>}
           {deliveryReported && <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[0.58rem] font-black uppercase text-green-700"><PackageCheck size={12} />Entrega reportada</span>}
           {hasRequiredStaffConfirmation && (
@@ -246,6 +251,18 @@ export function CashOrderCard({
           </button>
         </div>
 
+        {/* Vuelto/billete del cliente A LA VISTA (sin expandir): con qué
+            billete dijo que paga y cuánto hay que tener de cambio. */}
+        {cashPaymentNotes.length > 0 && (
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {cashPaymentNotes.map((note) => (
+              <span key={note} className="inline-flex items-center gap-1 rounded-full border border-[var(--brand-primary)]/60 bg-[var(--brand-accent-100)] px-2.5 py-1 text-[0.62rem] font-black text-[var(--brand-amber)]">
+                💵 {note}
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* Comprobante a la vista SIN expandir: caja ve la miniatura (y la
             amplía tocándola) apenas el cliente la manda, sin ir a la sección
             Comprobantes (pedido del dueño 2026-07-22). Al expandir ya sale en
@@ -315,7 +332,7 @@ export function CashOrderCard({
                   type="button"
                   onClick={onConfirmStaffItems}
                   disabled={isConfirmingStaff}
-                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)] disabled:opacity-50"
+                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-white transition hover:bg-[var(--brand-primary-dark)] disabled:opacity-50"
                 >
                   {isConfirmingStaff ? <Loader2 size={17} className="animate-spin" /> : <CheckCircle2 size={17} />}
                   Confirmar revisión
@@ -325,7 +342,7 @@ export function CashOrderCard({
                   type="button"
                   onClick={onResetStaffItems}
                   disabled={isConfirmingStaff}
-                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border-2 border-green-600 bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-green-700 transition hover:bg-green-100 disabled:opacity-50"
+                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border-2 border-green-600 bg-white px-4 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-green-700 transition hover:bg-green-100 disabled:opacity-50"
                 >
                   {isConfirmingStaff ? <Loader2 size={17} className="animate-spin" /> : <RefreshCw size={17} />}
                   Reabrir revisión
@@ -337,9 +354,9 @@ export function CashOrderCard({
 
         {deliveryReported && (
           <div className="rounded-[1.4rem] border-2 border-green-600 bg-green-50 p-4">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-green-700">Delivery por confirmar</p>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-green-700">Entrega reportada: falta confirmarla</p>
             <p className="mt-2 text-sm font-bold leading-6 text-[#234000]">
-              Entrega reportada por {order.deliveryReportedBy || "Delivery"}. Caja debe revisar cobro/estado y presionar “Confirmar entregado”.
+              El repartidor ({order.deliveryReportedBy || "Delivery"}) reportó que entregó este pedido. Revisa el cobro y toca “Confirmar entregado” para cerrarlo.
             </p>
             {order.deliveryReportedAt && (
               <p className="mt-2 text-xs font-black uppercase tracking-[0.14em] text-green-700">
@@ -353,8 +370,15 @@ export function CashOrderCard({
           <InfoBox label="Cliente" value={order.customerName || "Cliente"} />
           <InfoBox label={isDelivery ? "Zona" : "Mesa / ubicación"} value={getDisplayLocation(order)} />
           <InfoBox label="Cobrado equiv." value={formatUSD(payment.receivedEquivalentUSD)} />
-          <InfoBox label="Pendiente" value={formatUSD(payment.pendingUSD)} />
+          <InfoBox label="Pendiente de cobro" value={formatUSD(payment.pendingUSD)} />
         </div>
+
+        {customerNoteDisplay && (
+          <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3">
+            <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">Nota del cliente</p>
+            <p className="mt-1 break-words text-sm font-bold leading-5 text-[var(--brand-ink-3)]">{customerNoteDisplay}</p>
+          </div>
+        )}
 
         {suggestedOpenAccount && (
           <div className="rounded-[1.4rem] border-2 border-yellow-500 bg-yellow-50 p-4">
@@ -372,7 +396,7 @@ export function CashOrderCard({
                 type="button"
                 onClick={() => onAttachToSuggestedOpenAccount(suggestedOpenAccount)}
                 disabled={isAttachingToOpenAccount}
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
               >
                 {isAttachingToOpenAccount ? <Loader2 size={17} className="animate-spin" /> : <Link2 size={17} />}
                 Asociar a cuenta
@@ -382,36 +406,38 @@ export function CashOrderCard({
         )}
 
         {isDelivery && (
-          <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4">
-            <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]"><Truck size={16} />Datos delivery</p>
-            <div className="mt-3 grid gap-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/80">
-              <p className="rounded-2xl bg-white px-3 py-2"><strong>Teléfono:</strong> {order.customerPhone || "Sin teléfono"}</p>
-              <p className="rounded-2xl bg-white px-3 py-2"><strong>Dirección:</strong> {order.deliveryAddress || "Sin dirección"}</p>
-              <p className="rounded-2xl bg-white px-3 py-2"><strong>Referencia:</strong> {order.deliveryReference || "Sin referencia"}</p>
-              <p className="rounded-2xl bg-white px-3 py-2"><strong>Delivery:</strong> {formatUSD(orderTotals.deliveryCostUSD)} / Bs {formatVES(orderTotals.deliveryCostUSD * Number(order.exchangeRate || 0))}</p>
+          // Compacta (lote v6 D.5): datos en dos columnas y tipografía menor
+          // para que la tarjeta expandida no se coma la pantalla.
+          <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3">
+            <p className="flex items-center gap-1.5 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]"><Truck size={13} />Datos delivery</p>
+            <div className="mt-2 grid gap-1.5 text-[0.78rem] font-bold leading-5 text-[#1a1a1a] sm:grid-cols-2">
+              <p className="rounded-xl bg-white px-2.5 py-1.5"><strong>Teléfono:</strong> {order.customerPhone || "Sin teléfono"}</p>
+              <p className="rounded-xl bg-white px-2.5 py-1.5"><strong>Delivery:</strong> {formatUSD(orderTotals.deliveryCostUSD)} / Bs {formatVES(orderTotals.deliveryCostUSD * Number(order.exchangeRate || 0))}</p>
+              <p className="rounded-xl bg-white px-2.5 py-1.5 sm:col-span-2"><strong>Dirección:</strong> {order.deliveryAddress || "Sin dirección"}</p>
+              <p className="rounded-xl bg-white px-2.5 py-1.5 sm:col-span-2"><strong>Referencia:</strong> {order.deliveryReference || "Sin referencia"}</p>
             </div>
 
             <button
               type="button"
               onClick={copyCourierHandoff}
-              className={`mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 px-4 py-3 text-xs font-black uppercase tracking-[0.12em] transition ${
+              className={`mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-full border-2 px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] transition ${
                 courierCopied
                   ? "border-green-600 bg-green-100 text-green-700"
                   : "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[var(--brand-accent-200)]"
               }`}
             >
-              <ClipboardCopy size={16} />
+              <ClipboardCopy size={14} />
               {courierCopied ? "¡Copiado! Pégalo al repartidor" : "Copiar datos para el repartidor"}
             </button>
 
             {phone ? (
-              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                <WhatsAppButton href={buildDeliveryWhatsAppUrl(order, "confirm")} label="Confirmar" />
-                <WhatsAppButton href={buildDeliveryWhatsAppUrl(order, "preparing")} label="Preparación" />
-                <WhatsAppButton href={buildDeliveryWhatsAppUrl(order, "onTheWay")} label="Avisar salida" dark />
+              <div className="mt-2 grid gap-1.5 sm:grid-cols-3">
+                <WhatsAppButton href={buildDeliveryWhatsAppUrl(order, "confirm")} label="Confirmar" compact />
+                <WhatsAppButton href={buildDeliveryWhatsAppUrl(order, "preparing")} label="Preparación" compact />
+                <WhatsAppButton href={buildDeliveryWhatsAppUrl(order, "onTheWay")} label="Avisar salida" dark compact />
               </div>
             ) : (
-              <p className="mt-3 rounded-2xl border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-3 py-2 text-xs font-black text-[var(--brand-amber)]">Este delivery no tiene teléfono válido para WhatsApp.</p>
+              <p className="mt-2 rounded-xl border-2 border-yellow-400 bg-[var(--brand-accent-100)] px-3 py-1.5 text-[0.68rem] font-black text-[var(--brand-amber)]">Este delivery no tiene teléfono válido para WhatsApp.</p>
             )}
           </div>
         )}
@@ -425,41 +451,41 @@ export function CashOrderCard({
         </div>
 
         <div className="grid gap-2 sm:grid-cols-2">
-          <button type="button" onClick={onOpenPayment} className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]">
+          <button type="button" onClick={onOpenPayment} className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]">
             <CreditCard size={17} /> Registrar cobro
           </button>
 
           {order.status === "Nuevo" && hasPendingStaffConfirmation && (
-            <div className="rounded-full border-2 border-yellow-500 bg-[var(--brand-accent-100)] px-5 py-3 text-center text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-amber)]">
+            <div className="rounded-full border-2 border-yellow-500 bg-[var(--brand-accent-100)] px-4 py-2 text-center text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-amber)]">
               Confirma la revisión para continuar
             </div>
           )}
 
           {canMarkReadyFromCash && (
-            <button type="button" onClick={onMarkReady} className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-green-600 bg-green-500 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-green-400">
+            <button type="button" onClick={onMarkReady} className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-green-600 bg-green-500 px-4 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-white transition hover:bg-green-400">
               <PackageCheck size={17} /> Marcar como Listo
             </button>
           )}
 
           {showSendToKitchen && (
-            <button type="button" onClick={onSendToKitchen} className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)]">
+            <button type="button" onClick={onSendToKitchen} className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-white transition hover:bg-[var(--brand-primary-dark)]">
               <Send size={17} /> {kitchenFlowMode === "mixed" ? "Enviar a cocina" : "Pedido confirmado / enviar a cocina"}
             </button>
           )}
 
           {order.status === "Preparando" && kitchenFlowMode === "kitchen" && (
-            <div className="rounded-full border-2 border-orange-400 bg-orange-100 px-5 py-3 text-center text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-amber)]">
+            <div className="rounded-full border-2 border-orange-400 bg-orange-100 px-4 py-2 text-center text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-amber)]">
               En cocina
             </div>
           )}
 
           {order.status === "Listo" && (
             hasPendingStaffConfirmation ? (
-              <div className="rounded-full border-2 border-yellow-500 bg-[var(--brand-accent-100)] px-5 py-3 text-center text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-amber)]">
+              <div className="rounded-full border-2 border-yellow-500 bg-[var(--brand-accent-100)] px-4 py-2 text-center text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-amber)]">
                 Revisión pendiente antes de entregar
               </div>
             ) : (
-              <button type="button" onClick={onMarkDelivered} className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-green-600 bg-green-500 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-green-400">
+              <button type="button" onClick={onMarkDelivered} className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-green-600 bg-green-500 px-4 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-white transition hover:bg-green-400">
                 <CheckCircle2 size={17} /> Confirmar entregado
               </button>
             )
@@ -470,7 +496,7 @@ export function CashOrderCard({
           )}
 
           {order.status === "Entregado" && (
-            <div className="rounded-full border-2 border-green-600 bg-green-50 px-5 py-3 text-center text-xs font-black uppercase tracking-[0.12em] text-green-700">
+            <div className="rounded-full border-2 border-green-600 bg-green-50 px-4 py-2 text-center text-[0.66rem] font-black uppercase tracking-[0.1em] text-green-700">
               Pedido entregado
             </div>
           )}
@@ -488,7 +514,7 @@ export function CashOrderCard({
           )}
 
           {order.status === "Cancelado" && (
-            <div className="rounded-full border-2 border-[var(--brand-ink-3)] bg-[var(--brand-ink-3)] px-5 py-3 text-center text-xs font-black uppercase tracking-[0.12em] text-white">
+            <div className="rounded-full border-2 border-[var(--brand-ink-3)] bg-[var(--brand-ink-3)] px-4 py-2 text-center text-[0.66rem] font-black uppercase tracking-[0.1em] text-white">
               Pedido cancelado
             </div>
           )}
@@ -505,7 +531,7 @@ export function CashOrderCard({
                   onCancelOrder()
                 }
               }}
-              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-ink-3)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink-3)] transition hover:bg-red-50 hover:text-red-700"
+              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-ink-3)] bg-white px-4 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-3)] transition hover:bg-red-50 hover:text-red-700"
             >
               <XCircle size={17} />
               Cancelar pedido
@@ -518,16 +544,19 @@ export function CashOrderCard({
   )
 }
 
-export function WhatsAppButton({ href, label, dark, green, onOpen }: { href: string; label: string; dark?: boolean; green?: boolean; onOpen?: () => void }) {
+export function WhatsAppButton({ href, label, dark, green, compact, onOpen }: { href: string; label: string; dark?: boolean; green?: boolean; compact?: boolean; onOpen?: () => void }) {
   const className = green
     ? "border-green-600 bg-green-500 text-white hover:bg-green-400"
     : dark
       ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-dark)]"
       : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"
+  const sizing = compact
+    ? "gap-1.5 px-3 py-2 text-[0.62rem]"
+    : "gap-2 px-4 py-3 text-[0.68rem]"
 
   return (
-    <a href={href} target="_blank" rel="noreferrer" onClick={onOpen} className={`inline-flex items-center justify-center gap-2 rounded-full border-2 px-4 py-3 text-center text-[0.68rem] font-black uppercase tracking-[0.1em] transition ${className}`}>
-      <MessageCircle size={16} /> {label}
+    <a href={href} target="_blank" rel="noreferrer" onClick={onOpen} className={`inline-flex items-center justify-center rounded-full border-2 text-center font-black uppercase tracking-[0.1em] transition ${sizing} ${className}`}>
+      <MessageCircle size={compact ? 14 : 16} /> {label}
     </a>
   )
 }

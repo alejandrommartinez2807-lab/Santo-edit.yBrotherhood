@@ -4,6 +4,7 @@ import { formatUSD, formatVES } from "@/utils/formatCurrency"
 import type { OpenAccount } from "@/types/localOrders"
 import { normalizeLocalTableText } from "@/components/local/LocalTablesMap"
 import { formatMoneyForInput, parseMoneyInput, roundMoney } from "@/lib/localOrderMoney"
+import { isVesPaymentMethod } from "@/lib/paymentOptions"
 
 export const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -418,21 +419,12 @@ export function getDisplayLocation(order: LocalOrder) {
 }
 
 export function getOrderDeliveryCost(order: LocalOrder) {
+  // Cotizaci\u00f3n guardada del pedido: el servidor la calcula con el env\u00edo por
+  // sede (delivery_distance_settings) al registrar. Es la fuente de verdad;
+  // la vieja tabla fija de zonas (Santo Perrito) mostraba montos de otra
+  // sucursal y se retir\u00f3 (lote v6 D.4).
   const savedCost = Number(order.deliveryCostUSD || 0)
   if (savedCost > 0) return savedCost
-  if (!isDeliveryOrder(order)) return 0
-
-  const normalizedZone = String(order.deliveryZone || order.tableNumber || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-
-  if (normalizedZone.includes("trigalena")) return 2
-  if (normalizedZone.includes("centro")) return 1
-  if (normalizedZone.includes("prebo")) return 2.5
-  if (normalizedZone.includes("naguanagua")) return 3
-  if (normalizedZone.includes("samanes")) return 3
-  if (normalizedZone.includes("san diego")) return 4
   return 0
 }
 
@@ -536,14 +528,63 @@ export function getOrderPayment(order: LocalOrder): OrderPayment {
   }
 }
 
+// Método(s) que el cliente ELIGIÓ al pedir, derivados de order.paymentMethod
+// (lote v6 D.1): al abrir "Cobrar" los selects vienen preseleccionados en vez
+// de "Sin registrar". Soporta el método único y el "Mixto: X Bs … + Y $…".
+export function derivePaymentPrefillFromOrder(order: LocalOrder): {
+  paymentMethodUSD: string
+  paymentMethodVES: string
+  deliveryPaymentIn: DeliveryPaymentIn
+} | null {
+  const raw = String(order.paymentMethod || "").trim()
+  if (!raw || /por confirmar/i.test(raw)) return null
+
+  if (/^mixto\b/i.test(raw)) {
+    const body = raw.replace(/^mixto:?\s*/i, "")
+    let methodVES = ""
+    let methodUSD = ""
+    for (const part of body.split(" + ")) {
+      // Pata Bs: "<método> Bs 1.234,56" · pata divisas: "<método> $10.00".
+      const bsMatch = part.match(/^(.*?)\s+Bs\b/i)
+      const usdMatch = part.match(/^(.*?)\s+\$/)
+      if (bsMatch && !methodVES) methodVES = normalizePaymentMethodVES(bsMatch[1])
+      else if (usdMatch && !methodUSD) methodUSD = normalizePaymentMethodUSD(usdMatch[1])
+    }
+    if (!methodVES && !methodUSD) return null
+    return { paymentMethodUSD: methodUSD, paymentMethodVES: methodVES, deliveryPaymentIn: "Mixto" }
+  }
+
+  if (isVesPaymentMethod(raw)) {
+    const methodVES = normalizePaymentMethodVES(raw)
+    if (!methodVES) return null
+    return { paymentMethodUSD: "", paymentMethodVES: methodVES, deliveryPaymentIn: "Bolívares" }
+  }
+
+  const methodUSD = normalizePaymentMethodUSD(raw)
+  if (!methodUSD) return null
+  return { paymentMethodUSD: methodUSD, paymentMethodVES: "", deliveryPaymentIn: "Divisas" }
+}
+
 export function createPaymentFormFromOrder(order: LocalOrder): PaymentForm {
   const payment = getOrderPayment(order)
+  // Sin cobro previo ni métodos guardados: precargar lo que eligió el cliente
+  // (editable si al final pagó distinto).
+  const nothingRegistered =
+    payment.amountReceivedUSD <= 0 &&
+    payment.amountReceivedVES <= 0 &&
+    !payment.paymentMethodUSD &&
+    !payment.paymentMethodVES
+  const prefill = nothingRegistered ? derivePaymentPrefillFromOrder(order) : null
+
   return {
     amountReceivedUSD: payment.amountReceivedUSD > 0 ? String(payment.amountReceivedUSD) : "",
     amountReceivedVES: payment.amountReceivedVES > 0 ? String(payment.amountReceivedVES) : "",
-    paymentMethodUSD: payment.paymentMethodUSD,
-    paymentMethodVES: payment.paymentMethodVES,
-    deliveryPaymentIn: payment.deliveryPaymentIn,
+    paymentMethodUSD: prefill?.paymentMethodUSD || payment.paymentMethodUSD,
+    paymentMethodVES: prefill?.paymentMethodVES || payment.paymentMethodVES,
+    deliveryPaymentIn:
+      payment.deliveryPaymentIn === "Sin registrar" && prefill
+        ? prefill.deliveryPaymentIn
+        : payment.deliveryPaymentIn,
     paymentNote: payment.paymentNote,
   }
 }
@@ -618,6 +659,28 @@ export function normalizePhoneForWhatsApp(value: string) {
 export function getCustomerPhoneLabel(order: LocalOrder) {
   const phone = String(order.customerPhone || "").trim()
   return phone || "Sin teléfono registrado"
+}
+
+// Vuelto/billete que indicó el cliente (viaja en la nota del pedido, p.ej.
+// "Paga con $20 (vuelto: $8.00)" o "Pata efectivo divisas: paga con $50…"):
+// caja lo necesita A LA VISTA para cuadrar el cambio (lote v6 D.7/D.8).
+export function getOrderCashPaymentNotes(order: LocalOrder): string[] {
+  return String(order.customerNote || "")
+    .split("|")
+    .map((part) => part.trim())
+    .filter((part) => /paga con|vuelto|pago exacto|pata efectivo/i.test(part))
+}
+
+// Nota del cliente SIN los fragmentos de vuelto (que ya se muestran aparte) ni
+// el tramo interno de anulación.
+export function getOrderCustomerNoteForDisplay(order: LocalOrder): string {
+  return String(order.customerNote || "")
+    .split("|")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .filter((part) => !/paga con|vuelto|pago exacto|pata efectivo/i.test(part))
+    .filter((part) => !/^ANULADO:/i.test(part))
+    .join(" · ")
 }
 
 export function buildDeliveryProductsMessage(order: LocalOrder) {

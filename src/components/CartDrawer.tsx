@@ -455,6 +455,9 @@ export default function CartDrawer({
   const [mixedBsAmount, setMixedBsAmount] = useState("");
   const [mixedUsdMethod, setMixedUsdMethod] = useState("");
   const [mixedUsdAmount, setMixedUsdAmount] = useState("");
+  // Billete con el que paga la pata en EFECTIVO del mixto (lote v6): viaja en
+  // la nota para que caja tenga el vuelto listo.
+  const [mixedUsdGivenAmount, setMixedUsdGivenAmount] = useState("");
   const [distanceQuote, setDistanceQuote] = useState<{
     distanceKm: number;
     costUSD: number;
@@ -1877,25 +1880,53 @@ export default function CartDrawer({
 
           {renderDivisaPhotoNotice(isMixedDivisaCash)}
 
-          {/* Efectivo en divisas: botones rápidos de billete para no escribir
-              (los mismos que en el efectivo normal). El cliente igual puede
-              escribir otro monto abajo. */}
+          {/* Efectivo en divisas: el cliente indica con QUÉ billete paga esa
+              parte (lote v6): el billete viaja a caja para cuadrar el vuelto.
+              El monto de la pata se rellena solo si aún estaba vacío. */}
           {mixedUsdMethod.toLowerCase().includes("efectivo") ? (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {[5, 10, 20, 50, 100].map((bill) => (
-                <button
-                  key={bill}
-                  type="button"
-                  onClick={() => setMixedUsdAmount(String(bill))}
-                  className={`rounded-full border-2 px-3.5 py-2 text-[0.68rem] font-black uppercase tracking-[0.06em] shadow-sm transition active:scale-95 ${
-                    normalizeFormMoney(mixedUsdAmount) === bill
-                      ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
-                      : "border-[var(--brand-primary)] bg-white text-[#1a1a1a]"
-                  }`}
-                >
-                  {formatUSD(bill)}
-                </button>
-              ))}
+            <div className="mt-2">
+              <p className="text-[0.68rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-3)]">
+                ¿Con qué billete pagas esa parte?
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-2">
+                {[5, 10, 20, 50, 100].map((bill) => (
+                  <button
+                    key={bill}
+                    type="button"
+                    onClick={() => {
+                      setMixedUsdGivenAmount(String(bill));
+                      if (!mixedUsdAmount.trim()) completeMixedUsdAmount();
+                    }}
+                    className={`rounded-full border-2 px-3.5 py-2 text-[0.68rem] font-black uppercase tracking-[0.06em] shadow-sm transition active:scale-95 ${
+                      normalizeFormMoney(mixedUsdGivenAmount) === bill
+                        ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
+                        : "border-[var(--brand-primary)] bg-white text-[#1a1a1a]"
+                    }`}
+                  >
+                    {formatUSD(bill)}
+                  </button>
+                ))}
+              </div>
+              {(() => {
+                const given = normalizeFormMoney(mixedUsdGivenAmount);
+                if (given <= 0 || mixedUsdValue <= 0) return null;
+                const change = Math.round((given - mixedUsdValue) * 100) / 100;
+                if (change < 0) {
+                  return (
+                    <p className="mt-2 rounded-xl border-2 border-red-500 bg-white px-3 py-2 text-[0.72rem] font-black leading-4 text-red-600">
+                      Ese billete no cubre los {formatUSD(mixedUsdValue)} en
+                      efectivo: faltan {formatUSD(Math.abs(change))}.
+                    </p>
+                  );
+                }
+                return (
+                  <p className="mt-2 rounded-xl border-2 border-[var(--brand-primary)]/50 bg-white px-3 py-2 text-[0.72rem] font-black leading-4 text-[#1a1a1a]">
+                    {change > 0
+                      ? `Pagas la parte en efectivo con ${formatUSD(given)}: tu vuelto será ${formatUSD(change)}.`
+                      : "Pago exacto en la parte de efectivo: sin vuelto."}
+                  </p>
+                );
+              })()}
             </div>
           ) : null}
 
@@ -2384,7 +2415,20 @@ export default function CartDrawer({
                 : " (pago exacto)"
             }`
           : "";
-      const noteWithCoupon = [customerNote.trim(), cashNote, couponNote]
+      // Billete de la pata en efectivo del mixto: caja lo ve en la tarjeta
+      // para tener el vuelto de esa parte listo (lote v6).
+      const mixedCashGiven = normalizeFormMoney(mixedUsdGivenAmount);
+      const mixedCashChange =
+        Math.round((mixedCashGiven - mixedUsdValue) * 100) / 100;
+      const mixedCashNote =
+        isMixedDivisaCash && mixedCashGiven > 0
+          ? `Pata efectivo divisas: paga con ${formatUSD(mixedCashGiven)}${
+              mixedCashChange > 0
+                ? ` (vuelto: ${formatUSD(mixedCashChange)})`
+                : " (pago exacto)"
+            }`
+          : "";
+      const noteWithCoupon = [customerNote.trim(), cashNote, mixedCashNote, couponNote]
         .filter(Boolean)
         .join(" | ");
       const finalCustomerNote = cleanCustomerNoteWithStaffConfirmation(
@@ -2552,6 +2596,7 @@ export default function CartDrawer({
       setMixedBsAmount("");
       setMixedUsdMethod("");
       setMixedUsdAmount("");
+      setMixedUsdGivenAmount("");
       setCheckoutProofDataUrl("");
       setCheckoutProofFileName("");
       setCheckoutProofMimeType("");
