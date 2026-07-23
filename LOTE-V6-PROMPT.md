@@ -1,5 +1,7 @@
 # Prompt para la próxima sesión — Lote v6 Brotherhood
 
+> **EJECUTADO COMPLETO el 2026-07-23** (fases A, C, D, E y B + cierre; commits 3f7150a..1767777, SW caché v3, deploy lanzado). Detalle en la memoria `brotherhood-feedback-julio21`.
+
 > Pega esto tal cual (o di: "lee LOTE-V6-PROMPT.md y ejecútalo por fases").
 
 ---
