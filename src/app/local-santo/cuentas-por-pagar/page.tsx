@@ -261,7 +261,7 @@ function CuentasPorPagarContent() {
                 <Loader2 className="animate-spin" size={18} /> Cargando…
               </p>
             ) : pending.length === 0 ? (
-              <p className="mt-6 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-6 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[#1a1a1a]/60">
                 No tienes cuentas por pagar. Todas las compras están al día. 🎉
               </p>
             ) : (

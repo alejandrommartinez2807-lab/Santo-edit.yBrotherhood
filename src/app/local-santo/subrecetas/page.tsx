@@ -289,7 +289,7 @@ function SubrecetasContent() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Ej: Carne mechada, Masa de pizza…"
-                    className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                    className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
@@ -300,7 +300,7 @@ function SubrecetasContent() {
                     step="0.001"
                     value={yieldQuantity}
                     onChange={(e) => setYieldQuantity(e.target.value)}
-                    className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                    className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
@@ -309,7 +309,7 @@ function SubrecetasContent() {
                     value={yieldUnit}
                     onChange={(e) => setYieldUnit(e.target.value)}
                     placeholder="porción, kg, litro…"
-                    className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                    className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                   />
                 </label>
               </div>
@@ -338,7 +338,7 @@ function SubrecetasContent() {
                               ),
                             )
                           }
-                          className="min-w-0 flex-1 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                          className="min-w-0 flex-1 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                         >
                           <option value="">Insumo…</option>
                           {inventory.map((i) => (
@@ -360,7 +360,7 @@ function SubrecetasContent() {
                             )
                           }
                           placeholder="Cant."
-                          className="w-24 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                          className="w-24 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                         />
                         <span className="w-16 shrink-0 text-xs font-bold text-[var(--brand-ink-2)]/55">
                           {item?.unit || ""}
@@ -400,7 +400,7 @@ function SubrecetasContent() {
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="Opcional (preparación, tiempos…)"
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                 />
               </label>
 
@@ -443,7 +443,7 @@ function SubrecetasContent() {
                 <Loader2 className="animate-spin" size={18} /> Cargando…
               </p>
             ) : subrecipes.length === 0 ? (
-              <p className="mt-6 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-6 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[#1a1a1a]/60">
                 Aún no hay subrecetas. Crea la primera arriba.
               </p>
             ) : (

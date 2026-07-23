@@ -810,7 +810,7 @@ function MesoneroContent() {
                               {getOrderItemDetailLines(item).map((line) => (
                                 <p
                                   key={line}
-                                  className="mt-1 rounded-lg bg-white px-2 py-1 text-[0.68rem] font-bold text-[var(--brand-ink-2)]/75"
+                                  className="mt-1 rounded-lg bg-white px-2 py-1 text-[0.68rem] font-bold text-[#1a1a1a]/75"
                                 >
                                   {line}
                                 </p>

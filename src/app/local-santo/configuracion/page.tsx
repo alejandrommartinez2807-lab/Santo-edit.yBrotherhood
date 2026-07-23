@@ -2848,7 +2848,7 @@ export default function BusinessConfigPage() {
                     }
                     rows={4}
                     placeholder="Déjalo vacío para usar la encuesta estándar. Si escribes aquí, se envía exactamente este texto (el link de la encuesta se agrega solo)."
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
@@ -2865,7 +2865,7 @@ export default function BusinessConfigPage() {
                       }))
                     }
                     placeholder="Sabor de la comida, Tiempo de entrega, Atención"
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                   />
                   <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/55">
                     Separados por coma. Cada aspecto aparece con sus estrellas en la
@@ -2914,7 +2914,7 @@ export default function BusinessConfigPage() {
                           postSaleSurveyDelayMinutes: Number(e.target.value) || 40,
                         }))
                       }
-                      className="mt-2 w-40 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                      className="mt-2 w-40 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                     />
                   </div>
                 )}
@@ -2985,7 +2985,7 @@ export default function BusinessConfigPage() {
                     }))
                   }
                   placeholder="Ej: 0412-0000000 (se usa cuando WhatsApp Business esté conectado)"
-                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                 />
               </div>
             )}
@@ -3056,7 +3056,7 @@ export default function BusinessConfigPage() {
                       payablesReminderDaysBefore: Number(e.target.value) || 0,
                     }))
                   }
-                  className="mt-2 w-40 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  className="mt-2 w-40 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                 />
                 <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/55">
                   Ejemplo: 3 = te aviso cuando falten 3 días o menos para el
@@ -3137,7 +3137,7 @@ export default function BusinessConfigPage() {
                     }
                     rows={3}
                     placeholder="Déjalo vacío para usar el texto estándar: «Tu pedido NO empieza a prepararse hasta que canceles (pagues) y tu pago sea confirmado…»"
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                   />
                 </div>
               )}
@@ -3183,7 +3183,7 @@ export default function BusinessConfigPage() {
                       publicUnpaidAutoCancelMinutes: Number(e.target.value),
                     }))
                   }
-                  className="mt-2 w-40 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                  className="mt-2 w-40 rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                 />
                 <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
                   Pick up y delivery sin captura ni referencia después de ese
@@ -3292,7 +3292,7 @@ export default function BusinessConfigPage() {
                     className={`rounded-2xl border-2 p-4 text-left transition ${
                       selected
                         ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
-                        : "border-[var(--brand-primary)]/20 bg-white text-[var(--brand-ink)] hover:border-[var(--brand-primary)]/50"
+                        : "border-[var(--brand-primary)]/20 bg-white text-[#1a1a1a] hover:border-[var(--brand-primary)]/50"
                     }`}
                   >
                     <p className="text-sm font-black uppercase tracking-[0.06em]">
@@ -3603,7 +3603,7 @@ export default function BusinessConfigPage() {
                   <select
                     value={businessConfig.publicCurrencySymbol}
                     onChange={(e) => updateConfig("publicCurrencySymbol", e.target.value)}
-                    className="mt-3 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-3 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                   >
                     <option value="$">Dólar ($)</option>
                     <option value="€">Euro (€)</option>
@@ -3620,7 +3620,7 @@ export default function BusinessConfigPage() {
                   <select
                     value={businessConfig.printFlowMode}
                     onChange={(e) => updateConfig("printFlowMode", e.target.value)}
-                    className="mt-3 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                    className="mt-3 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                   >
                     <option value="none">Sin impresión (no se imprime nada)</option>
                     <option value="auto">
@@ -3877,7 +3877,7 @@ export default function BusinessConfigPage() {
                 <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
                   {activePlan.description}
                 </p>
-                <p className="mt-3 rounded-2xl bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)]/70">
+                <p className="mt-3 rounded-2xl bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#1a1a1a]/70">
                   {businessConfig.membershipPlanMode === "custom"
                     ? "Configuración personalizada por soporte"
                     : "Plan fijo configurado por soporte"}
@@ -4184,7 +4184,7 @@ export default function BusinessConfigPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="rounded-[1.3rem] border-2 border-[var(--brand-primary)]/15 bg-white px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/65">
+                  <p className="rounded-[1.3rem] border-2 border-[var(--brand-primary)]/15 bg-white px-4 py-3 text-sm font-bold leading-6 text-[#1a1a1a]/65">
                     No hay sucursales cargadas todavía o no se pudieron leer en
                     este momento.
                   </p>
@@ -5159,7 +5159,7 @@ export default function BusinessConfigPage() {
                     onChange={(event) =>
                       applyPromotionProduct(Number(event.target.value || 0))
                     }
-                    className="mt-3 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-sm font-black text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-[#f3ead7] disabled:text-[var(--brand-ink)]/50"
+                    className="mt-3 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-sm font-black text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-[#f3ead7] disabled:text-[#1a1a1a]/50"
                   >
                     <option value={0}>Promoción general sin producto</option>
                     {availableProducts.map((product) => (
@@ -5290,7 +5290,7 @@ export default function BusinessConfigPage() {
                           updateConfig("promotionImage", event.target.value)
                         }
                         placeholder="Sube una foto o pega /producto.png o https://..."
-                        className="w-full rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-4 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-[#f3ead7] disabled:text-[var(--brand-ink)]/50"
+                        className="w-full rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-4 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)] disabled:cursor-not-allowed disabled:bg-[#f3ead7] disabled:text-[#1a1a1a]/50"
                       />
 
                       <button

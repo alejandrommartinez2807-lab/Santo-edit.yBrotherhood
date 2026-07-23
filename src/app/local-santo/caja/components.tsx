@@ -531,7 +531,7 @@ export function CashOrderCard({
                   onCancelOrder()
                 }
               }}
-              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-ink-3)] bg-white px-4 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-3)] transition hover:bg-red-50 hover:text-red-700"
+              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-ink-3)] bg-white px-4 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[#1a1a1a] transition hover:bg-red-50 hover:text-red-700"
             >
               <XCircle size={17} />
               Cancelar pedido
@@ -574,7 +574,7 @@ export function ProductGroup({ title, items, exchangeRate, onlyCurrency }: { tit
             isStaffConfirmationItemRequired(item) && !isStaffConfirmationItemConfirmed(item)
 
           return (
-            <div key={`${item.id}-${item.name}-${index}`} className="rounded-xl bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)]">
+            <div key={`${item.id}-${item.name}-${index}`} className="rounded-xl bg-white px-3 py-2 text-sm font-bold text-[#1a1a1a]">
               <div className="flex items-start justify-between gap-3">
                 <p>{item.name} x{item.quantity}</p>
                 <p className="shrink-0 font-black text-[var(--brand-primary)]">{formatUSD(subtotal)}</p>
@@ -602,7 +602,7 @@ export function InputBox({ label, value, onChange, placeholder, helper }: { labe
   return (
     <div>
       <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">{label}</label>
-      <input type="text" inputMode="decimal" value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]" />
+      <input type="text" inputMode="decimal" value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]" />
       {helper && <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">{helper}</p>}
     </div>
   )
@@ -612,7 +612,7 @@ export function SelectBox({ label, value, onChange, options, emptyLabel = "Sin r
   return (
     <div>
       <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">{label}</label>
-      <select value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]">
+      <select value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]">
         {value && !options.includes(value) && <option value={value}>{value}</option>}
         {options.map((option) => <option key={option || `${label}-empty`} value={option}>{option || emptyLabel}</option>)}
       </select>
@@ -621,7 +621,7 @@ export function SelectBox({ label, value, onChange, options, emptyLabel = "Sin r
 }
 
 export function MetricCard({ label, value, tone = "red" }: { label: string; value: string | number; tone?: "red" | "yellow" | "soft" }) {
-  const style = tone === "yellow" ? "border-yellow-400 bg-[var(--brand-accent-100)] text-[var(--brand-amber)]" : tone === "soft" ? "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]" : "border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-primary)]"
+  const style = tone === "yellow" ? "border-yellow-400 bg-[var(--brand-accent-100)] text-[var(--brand-amber)]" : tone === "soft" ? "border-[var(--brand-primary)]/25 bg-white text-[#1a1a1a]" : "border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-primary)]"
   // min-w-0 + break-words: etiquetas largas ("Comprobantes", "Por revisar")
   // se parten en vez de sobresalir de la tarjeta en la grilla del encabezado.
   return <div className={`min-w-0 overflow-hidden rounded-[1.2rem] border-2 p-3 ${style}`}><p className="break-words text-[0.6rem] font-black uppercase leading-4 tracking-[0.08em]">{label}</p><p className="mt-1 text-2xl font-black">{value}</p></div>

@@ -326,7 +326,7 @@ function AuditoriaPageContent() {
   })()
 
   const inputClass =
-    "rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+    "rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
 
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-4 py-8 text-[var(--brand-ink-2)]">
@@ -395,7 +395,7 @@ function AuditoriaPageContent() {
                       setFromDate("")
                       setToDate("")
                     }}
-                    className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-xs font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)]/60"
+                    className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-xs font-black uppercase tracking-[0.08em] text-[#1a1a1a]/60"
                   >
                     Todas las fechas
                   </button>
@@ -495,7 +495,7 @@ function AuditoriaPageContent() {
                         className={`inline-flex items-center gap-2 rounded-full border-2 px-3 py-1.5 text-xs font-black transition ${
                           isActive
                             ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white"
-                            : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-3)] hover:border-[var(--brand-primary)]"
+                            : "border-[var(--brand-primary)]/25 bg-white text-[#1a1a1a] hover:border-[var(--brand-primary)]"
                         }`}
                       >
                         {actor.name}
@@ -566,7 +566,7 @@ function AuditoriaPageContent() {
                               .getElementById(`audit-day-${dayKey}`)
                               ?.scrollIntoView({ behavior: "smooth", block: "start" })
                           }
-                          className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-xs font-black text-[var(--brand-ink-3)] transition hover:border-[var(--brand-primary)]"
+                          className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-xs font-black text-[#1a1a1a] transition hover:border-[var(--brand-primary)]"
                         >
                           {dayLabel(dayKey)}
                           <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--brand-cream)] px-1.5 text-[0.62rem] text-[var(--brand-primary)]">

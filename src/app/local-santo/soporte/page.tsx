@@ -814,7 +814,7 @@ function ModeButton({
       className={`rounded-[1.2rem] border-2 p-4 text-left transition ${
         active
           ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
-          : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-3)] hover:border-[var(--brand-primary)]"
+          : "border-[var(--brand-primary)]/25 bg-white text-[#1a1a1a] hover:border-[var(--brand-primary)]"
       }`}
     >
       <p className="text-sm font-black uppercase">{label}</p>
@@ -890,7 +890,7 @@ function ModulePlanCard({
       </div>
 
       {moduleItem.moduleKey === "menuProducts" && (
-        <p className="mt-3 rounded-2xl border border-[var(--brand-primary)]/15 bg-white px-3 py-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
+        <p className="mt-3 rounded-2xl border border-[var(--brand-primary)]/15 bg-white px-3 py-2 text-xs font-bold leading-5 text-[#1a1a1a]/65">
           Este módulo controla el editor de productos del menú. Si está bloqueado, el cliente no debe poder crear ni modificar productos desde el panel, pero el menú público ya guardado se mantiene funcionando.
         </p>
       )}
@@ -908,7 +908,7 @@ function ModulePlanCard({
           {included ? "Bloquear en este cliente" : "Incluir en este cliente"}
         </button>
       ) : (
-        <p className="mt-4 rounded-2xl border border-[var(--brand-primary)]/15 bg-white px-3 py-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
+        <p className="mt-4 rounded-2xl border border-[var(--brand-primary)]/15 bg-white px-3 py-2 text-xs font-bold leading-5 text-[#1a1a1a]/65">
           {moduleItem.moduleKey === "support"
             ? "Acceso interno de soporte. No se vende como módulo del negocio."
             : "Activa el modo personalizado para cambiar este módulo manualmente."}

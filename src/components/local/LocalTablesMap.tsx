@@ -474,25 +474,25 @@ export function LocalTablesMap({
                       {/* Detalle solo de la mesa seleccionada. */}
                       {isSelected && summary.status !== "free" && (
                         <div className="mt-3 space-y-1">
-                          <p className="rounded-xl bg-white/80 px-3 py-2 text-[0.68rem] font-black text-[var(--brand-ink-2)]">
+                          <p className="rounded-xl bg-white/80 px-3 py-2 text-[0.68rem] font-black text-[#1a1a1a]">
                             Total mesa/cuenta: {formatUSD(summary.totalUSD)} · Activos: {summary.activeOrders.length}
                           </p>
 
                           {summary.activeOpenAccounts.slice(0, 2).map((account) => (
-                            <p key={account.id} className="rounded-xl bg-white/80 px-3 py-2 text-[0.68rem] font-bold text-[var(--brand-ink-2)]">
+                            <p key={account.id} className="rounded-xl bg-white/80 px-3 py-2 text-[0.68rem] font-bold text-[#1a1a1a]">
                               Cuenta abierta · {account.customerName || account.tableNumber || "Mesa"} · Pendiente {formatUSD(getAccountPendingUSD(account))}
                             </p>
                           ))}
 
                           {showOrderPreview &&
                             summary.tableOrders.slice(0, 3).map((order) => (
-                              <p key={order.id} className="rounded-xl bg-white/80 px-3 py-2 text-[0.68rem] font-bold text-[var(--brand-ink-2)]">
+                              <p key={order.id} className="rounded-xl bg-white/80 px-3 py-2 text-[0.68rem] font-bold text-[#1a1a1a]">
                                 {getDisplayOrderNumber(order)} · {order.customerName || "Cliente"} · {hasPendingStaffConfirmation(order) ? "Por revisar" : getOrderPaymentStatus(order)}
                               </p>
                             ))}
 
                           {showOrderPreview && summary.tableOrders.length > 3 && (
-                            <p className="rounded-xl bg-white/80 px-3 py-2 text-[0.68rem] font-black text-[var(--brand-ink-2)]/70">
+                            <p className="rounded-xl bg-white/80 px-3 py-2 text-[0.68rem] font-black text-[#1a1a1a]/70">
                               +{summary.tableOrders.length - 3} pedido(s) más
                             </p>
                           )}

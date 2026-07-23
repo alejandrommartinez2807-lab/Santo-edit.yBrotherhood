@@ -1278,7 +1278,7 @@ function CloseDetailModal({
           </div>
         </div>
 
-        <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-white px-4 py-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
+        <div className="rounded-[1.2rem] border border-[var(--brand-primary)]/20 bg-white px-4 py-3 text-xs font-bold leading-5 text-[#1a1a1a]/70">
           Vista actual: <strong>{viewMode}</strong>. El historial ahora muestra cada cierre con secciones desplegables para revisar solo lo que haga falta.
         </div>
 
@@ -1329,7 +1329,7 @@ function CloseDetailModal({
                     <p className="text-lg font-black leading-none text-[var(--brand-primary)]">
                       {order.displayNumber || order.id}
                     </p>
-                    <span className="inline-flex rounded-full bg-white px-2.5 py-1 text-[0.6rem] font-black uppercase text-[var(--brand-ink-2)]/70">
+                    <span className="inline-flex rounded-full bg-white px-2.5 py-1 text-[0.6rem] font-black uppercase text-[#1a1a1a]/70">
                       {order.status}
                     </span>
                     <span
@@ -1369,7 +1369,7 @@ function CloseDetailModal({
                       {order.items.map((item, itemIndex) => (
                         <div
                           key={`${order.id}-item-${itemIndex}`}
-                          className="rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-[var(--brand-ink-3)]"
+                          className="rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-[#1a1a1a]"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <span>
@@ -1664,7 +1664,7 @@ function CloseDetailModal({
             />
           </div>
 
-          <p className="mt-4 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
+          <p className="mt-4 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-3 text-sm font-bold leading-6 text-[#1a1a1a]/70">
             Este bloque resume las compras relacionadas con inventario que quedaron dentro del cierre. Los descuentos por receta se ejecutan cuando los pedidos se marcan como entregados y se revisan mejor desde el módulo de inventario.
           </p>
         </DetailToggleSection>
@@ -1674,7 +1674,7 @@ function CloseDetailModal({
           description="Texto completo guardado con el cierre para enviar, imprimir o revisar fuera del sistema."
           defaultOpen={showAdvancedSections}
         >
-          <pre className="max-h-[420px] overflow-y-auto whitespace-pre-wrap rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 text-sm font-bold leading-6 text-[var(--brand-ink-2)]">
+          <pre className="max-h-[420px] overflow-y-auto whitespace-pre-wrap rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-4 text-sm font-bold leading-6 text-[#1a1a1a]">
             {close.summaryText || "Sin resumen guardado."}
           </pre>
         </DetailToggleSection>
@@ -2036,7 +2036,7 @@ function DateFilterInput({
         type="date"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-1 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-black text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+        className="mt-1 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-black text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
       />
     </label>
   )
@@ -2744,7 +2744,7 @@ function MetricCard({
     tone === "yellow"
       ? "border-yellow-400 bg-[var(--brand-accent-100)] text-[var(--brand-amber)]"
       : tone === "soft"
-        ? "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]"
+        ? "border-[var(--brand-primary)]/25 bg-white text-[#1a1a1a]"
         : "border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-primary)]"
 
   return (

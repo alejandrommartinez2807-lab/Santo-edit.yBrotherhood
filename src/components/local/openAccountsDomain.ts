@@ -224,7 +224,7 @@ function getAccountDeliveryTone(accountOrders: OpenAccountOrderSummary[]) {
     return {
       label: "Sin entregas activas",
       className:
-        "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]",
+        "border-[var(--brand-primary)]/25 bg-white text-[#1a1a1a]",
       text: "La cuenta todavía no tiene pedidos activos para entregar.",
     };
   }

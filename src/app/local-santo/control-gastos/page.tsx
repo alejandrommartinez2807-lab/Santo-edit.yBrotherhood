@@ -500,12 +500,12 @@ function ControlGastosContent() {
               value={concept}
               onChange={(e) => setConcept(e.target.value)}
               placeholder="Concepto (ej. verduras, gas, sueldo…)"
-              className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)] sm:col-span-2"
+              className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)] sm:col-span-2"
             />
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+              className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
             >
               {EXPENSE_CATEGORIES.map((c) => (
                 <option key={c} value={c}>
@@ -517,7 +517,7 @@ function ControlGastosContent() {
               value={method}
               onChange={(e) => setMethod(e.target.value)}
               placeholder="Método (efectivo, pago móvil…)"
-              className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+              className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
             />
             <input
               type="number"
@@ -526,13 +526,13 @@ function ControlGastosContent() {
               value={amountUSD}
               onChange={(e) => setAmountUSD(e.target.value)}
               placeholder="Monto USD"
-              className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+              className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
             />
             <input
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Nota (opcional)"
-              className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+              className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
             />
             <div className="sm:col-span-2">
               <button

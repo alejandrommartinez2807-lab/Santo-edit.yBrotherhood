@@ -1435,10 +1435,10 @@ function DeliveryPageContent() {
                         )}
                       </button>
 
-                      <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/80">
+                      <p className="mt-3 rounded-2xl bg-white px-4 py-3 text-sm font-bold leading-6 text-[#1a1a1a]/80">
                         <strong>Dirección:</strong> {order.deliveryAddress || "Sin dirección registrada"}
                       </p>
-                      <p className="mt-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/80">
+                      <p className="mt-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold leading-6 text-[#1a1a1a]/80">
                         <strong>Referencia:</strong> {order.deliveryReference || "Sin referencia registrada"}
                       </p>
                     </div>
@@ -1530,7 +1530,7 @@ function DeliveryPageContent() {
                                 )}
                               </div>
                               {getOrderItemDetailLines(item).map((line) => (
-                                <p key={line} className="mt-1 rounded-lg bg-white px-2 py-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/75">
+                                <p key={line} className="mt-1 rounded-lg bg-white px-2 py-1 text-xs font-bold leading-5 text-[#1a1a1a]/75">
                                   {line}
                                 </p>
                               ))}
@@ -1605,7 +1605,7 @@ function DeliveryPageContent() {
                       )}
                     </div>
 
-                    <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-3 text-xs font-black leading-5 text-[var(--brand-ink-2)]/70">
+                    <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white px-4 py-3 text-xs font-black leading-5 text-[#1a1a1a]/70">
                       El botón “Llegué” solo envía WhatsApp. El botón “Reportar entrega a caja” no cambia el estado principal; Caja confirma Entregado.
                     </div>
                   </div>

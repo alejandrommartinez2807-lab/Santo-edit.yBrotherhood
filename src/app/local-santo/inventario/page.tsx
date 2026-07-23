@@ -2856,7 +2856,7 @@ function InventoryPageContent() {
                         ? "border-green-500/35 bg-green-50 text-green-800"
                         : row.difference < 0
                           ? "border-orange-400 bg-orange-50 text-orange-800"
-                          : "border-[var(--brand-primary)]/15 bg-white text-[var(--brand-ink-2)]/65"
+                          : "border-[var(--brand-primary)]/15 bg-white text-[#1a1a1a]/65"
 
                       return (
                         <div
@@ -2888,7 +2888,7 @@ function InventoryPageContent() {
                               value={row.rawValue}
                               onChange={(event) => updatePhysicalCountValue(row.item.id, event.target.value)}
                               placeholder={`Contado real en ${row.item.unit}`}
-                              className="w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-base font-black text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]"
+                              className="w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-base font-black text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/40 focus:border-[var(--brand-primary)]"
                             />
 
                             <button
@@ -3050,7 +3050,7 @@ function InventoryPageContent() {
                       <select
                         value={transferTargetBranchId}
                         onChange={(event) => setTransferTargetBranchId(event.target.value)}
-                        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                       >
                         <option value="">Elige a dónde va el inventario…</option>
                         {transferBranches.map((branch) => (
@@ -3070,7 +3070,7 @@ function InventoryPageContent() {
                         value={transferNote}
                         onChange={(event) => setTransferNote(event.target.value)}
                         placeholder="Ejemplo: surtido para la feria del sábado"
-                        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                       />
                     </label>
                   </div>
@@ -3129,7 +3129,7 @@ function InventoryPageContent() {
                               }
                               inputMode="decimal"
                               placeholder="0"
-                              className="w-24 shrink-0 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-right text-sm font-black text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                              className="w-24 shrink-0 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-right text-sm font-black text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                             />
                           </div>
                         ))}
@@ -3209,7 +3209,7 @@ function InventoryPageContent() {
                         <select
                           value={recipeForm.productId}
                           onChange={(event) => updateRecipeForm("productId", event.target.value)}
-                          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                         >
                           <option value="">Selecciona un producto</option>
                           {recipeMenuProducts.map((product) => (
@@ -3248,13 +3248,13 @@ function InventoryPageContent() {
                             value={recipeIngredientSearch}
                             onChange={(event) => setRecipeIngredientSearch(event.target.value)}
                             placeholder="Buscar insumo: pan, salchicha polaca, queso..."
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                           />
 
                           <select
                             value={recipeForm.ingredientItemId}
                             onChange={(event) => updateRecipeForm("ingredientItemId", event.target.value)}
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                           >
                             <option value="">Selecciona un insumo guardado</option>
                             {selectedRecipeIngredient &&
@@ -3271,7 +3271,7 @@ function InventoryPageContent() {
                           </select>
 
                           {recipeAvailableInventory.length === 0 && (
-                            <p className="mt-2 rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-white px-4 py-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
+                            <p className="mt-2 rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-white px-4 py-3 text-xs font-bold leading-5 text-[#1a1a1a]/65">
                               No hay insumos que coincidan con esa búsqueda. Créalo primero en “Nuevo producto o ajuste”, guarda inventario y luego presiona Actualizar insumos.
                             </p>
                           )}
@@ -3287,7 +3287,7 @@ function InventoryPageContent() {
                             value={recipeForm.ingredientQuantity}
                             onChange={(event) => updateRecipeForm("ingredientQuantity", event.target.value)}
                             placeholder="Ej: 1"
-                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                           />
                         </div>
 
@@ -3340,7 +3340,7 @@ function InventoryPageContent() {
                           value={recipeForm.note}
                           onChange={(event) => updateRecipeForm("note", event.target.value)}
                           placeholder="Ej: usar poca salsa, queso opcional o revisar porciones reales"
-                          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                         />
                         <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
                           Esta nota es solo informativa. Para que el inventario descuente, el insumo debe aparecer arriba en “Insumos de esta receta”.
@@ -3414,7 +3414,7 @@ function InventoryPageContent() {
 
                             <div className="mt-3 flex flex-wrap gap-2">
                               {recipe.ingredients.map((ingredient) => (
-                                <span key={ingredient.itemId} className="rounded-full bg-white px-3 py-2 text-xs font-black text-[var(--brand-ink)]">
+                                <span key={ingredient.itemId} className="rounded-full bg-white px-3 py-2 text-xs font-black text-[#1a1a1a]">
                                   {ingredient.itemName}: {ingredient.quantity} {ingredient.unit}
                                 </span>
                               ))}
@@ -3506,13 +3506,13 @@ function InventoryPageContent() {
                             value={newQuickItemName}
                             onChange={(event) => setNewQuickItemName(event.target.value)}
                             placeholder="Ej: Carbón, salsa de ajo, envases"
-                            className="rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                           />
 
                           <select
                             value={newQuickItemCategory}
                             onChange={(event) => setNewQuickItemCategory(event.target.value)}
-                            className="rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                           >
                             {INVENTORY_CATEGORIES.map((category) => (
                               <option key={category} value={category}>
@@ -3524,7 +3524,7 @@ function InventoryPageContent() {
                           <select
                             value={newQuickItemUnit}
                             onChange={(event) => setNewQuickItemUnit(event.target.value)}
-                            className="rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                            className="rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                           >
                             {UNIT_OPTIONS.map((unit) => (
                               <option key={unit} value={unit}>
@@ -3547,7 +3547,7 @@ function InventoryPageContent() {
                           {quickInventoryItems.map((item) => (
                             <span
                               key={item.id}
-                              className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)]/20 bg-white px-3 py-2 text-xs font-black text-[var(--brand-ink)]"
+                              className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)]/20 bg-white px-3 py-2 text-xs font-black text-[#1a1a1a]"
                             >
                               {item.name}
                               <button
@@ -4094,7 +4094,7 @@ function InventoryPageContent() {
                     {isMovementProductSummaryVisible && (
                       <div className="mt-3 grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
                         {movementProductSummary.length === 0 ? (
-                          <p className="rounded-2xl bg-white px-4 py-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
+                          <p className="rounded-2xl bg-white px-4 py-3 text-xs font-bold leading-5 text-[#1a1a1a]/65">
                             No hay productos para resumir con los filtros actuales.
                           </p>
                         ) : (
@@ -4182,7 +4182,7 @@ function InventoryPageContent() {
                             value={movementSearchText}
                             onChange={(event) => setMovementSearchText(event.target.value)}
                             placeholder="Buscar movimiento, producto, motivo o nota"
-                            className="w-full rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                            className="w-full rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-11 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
                           />
                         </div>
 
@@ -4345,7 +4345,7 @@ function InventoryPageContent() {
                             </div>
 
                             {(movement.relatedExpense || movement.expenseId || movement.note) && (
-                              <p className="mt-3 rounded-xl bg-white/70 px-3 py-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/70">
+                              <p className="mt-3 rounded-xl bg-white/70 px-3 py-2 text-xs font-bold leading-5 text-[#1a1a1a]/70">
                                 {movement.relatedExpense ? "Relacionado con gasto. " : ""}
                                 {movement.expenseId ? `ID gasto: ${movement.expenseId}. ` : ""}
                                 {movement.note}

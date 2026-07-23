@@ -1760,7 +1760,7 @@ export default function LocalMenuPage() {
                     value={searchText}
                     onChange={(event) => setSearchText(event.target.value)}
                     placeholder="Buscar producto, categoría, descripción o imagen"
-                    className="w-full rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-11 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                    className="w-full rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-11 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
@@ -2008,7 +2008,7 @@ function TagListEditor({
             {items.map((item) => (
               <span
                 key={item}
-                className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-1 text-xs font-black text-[var(--brand-ink)]"
+                className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-1 text-xs font-black text-[#1a1a1a]"
               >
                 {item}
                 <button
@@ -2034,7 +2034,7 @@ function TagListEditor({
               }
             }}
             placeholder={placeholder}
-            className="min-w-0 flex-1 rounded-xl border-2 border-transparent bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]/40"
+            className="min-w-0 flex-1 rounded-xl border-2 border-transparent bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/40 focus:border-[var(--brand-primary)]/40"
           />
           <button
             type="button"
@@ -2105,7 +2105,7 @@ function AddonPriceListEditor({
             {rows.map((row) => (
               <span
                 key={row.name}
-                className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-1 text-xs font-black text-[var(--brand-ink)]"
+                className="inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-1 text-xs font-black text-[#1a1a1a]"
               >
                 {row.name}
                 {Number(row.price) > 0 ? (
@@ -2138,7 +2138,7 @@ function AddonPriceListEditor({
               }
             }}
             placeholder="Escribe un adicional"
-            className="min-w-0 flex-1 basis-40 rounded-xl border-2 border-transparent bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]/40"
+            className="min-w-0 flex-1 basis-40 rounded-xl border-2 border-transparent bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/40 focus:border-[var(--brand-primary)]/40"
           />
           <input
             value={draftPrice}
@@ -2152,7 +2152,7 @@ function AddonPriceListEditor({
             placeholder="Precio $"
             inputMode="decimal"
             aria-label={`Precio del adicional de ${label}`}
-            className="w-24 shrink-0 rounded-xl border-2 border-transparent bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]/40"
+            className="w-24 shrink-0 rounded-xl border-2 border-transparent bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/40 focus:border-[var(--brand-primary)]/40"
           />
           <button
             type="button"

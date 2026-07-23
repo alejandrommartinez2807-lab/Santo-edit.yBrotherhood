@@ -383,7 +383,7 @@ function ProductLineCard({
       </div>
 
       {line.selectionSummary ? (
-        <p className="mt-3 rounded-xl border border-[var(--brand-primary)]/20 bg-white px-3 py-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/75">
+        <p className="mt-3 rounded-xl border border-[var(--brand-primary)]/20 bg-white px-3 py-2 text-xs font-bold leading-5 text-[#1a1a1a]/75">
           {line.selectionSummary}
         </p>
       ) : null}

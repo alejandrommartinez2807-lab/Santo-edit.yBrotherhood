@@ -395,7 +395,7 @@ function ComprasPageContent() {
             la configuración del negocio. Inicia sesión como dueño.
           </p>
         ) : suppliers.length === 0 ? (
-          <p className="mt-8 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/65">
+          <p className="mt-8 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[#1a1a1a]/65">
             Primero agrega proveedores en{" "}
             <Link href="/local-santo/proveedores" className="text-[var(--brand-primary)] underline">
               Proveedores
@@ -411,7 +411,7 @@ function ComprasPageContent() {
                 <select
                   value={supplierId}
                   onChange={(e) => setSupplierId(e.target.value)}
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                 >
                   <option value="">Selecciona un proveedor…</option>
                   {suppliers.map((s) => (
@@ -430,7 +430,7 @@ function ComprasPageContent() {
                   value={date}
                   max={todayISO()}
                   onChange={(e) => setDate(e.target.value)}
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                 />
               </label>
               <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
@@ -439,7 +439,7 @@ function ComprasPageContent() {
                   value={documentNumber}
                   onChange={(e) => setDocumentNumber(e.target.value)}
                   placeholder="Opcional"
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                 />
               </label>
 
@@ -449,7 +449,7 @@ function ComprasPageContent() {
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                 />
               </label>
 
@@ -462,7 +462,7 @@ function ComprasPageContent() {
                   value={totalUSD}
                   onChange={(e) => setTotalUSD(e.target.value)}
                   placeholder="0.00"
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                 />
               </label>
               <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
@@ -474,7 +474,7 @@ function ComprasPageContent() {
                   value={totalVES}
                   onChange={(e) => setTotalVES(e.target.value)}
                   placeholder="0.00"
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                 />
               </label>
 
@@ -484,7 +484,7 @@ function ComprasPageContent() {
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="Opcional (qué se compró, condiciones…)"
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                 />
               </label>
 
@@ -506,7 +506,7 @@ function ComprasPageContent() {
                         <select
                           value={invItemId}
                           onChange={(e) => setInvItemId(e.target.value)}
-                          className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                          className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                         >
                           <option value="">Selecciona un insumo…</option>
                           {inventoryItems.map((i) => (
@@ -522,7 +522,7 @@ function ComprasPageContent() {
                           value={invQty}
                           onChange={(e) => setInvQty(e.target.value)}
                           placeholder={`Cantidad${invItemId ? ` (${inventoryItems.find((i) => i.id === invItemId)?.unit || ""})` : ""}`}
-                          className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                          className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                         />
                       </div>
                       <p className="mt-2 text-[0.68rem] font-bold text-[var(--brand-ink-2)]/55">
@@ -554,7 +554,7 @@ function ComprasPageContent() {
                 <select
                   value={filterSupplier}
                   onChange={(e) => setFilterSupplier(e.target.value)}
-                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                  className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                 >
                   <option value="">Todos los proveedores</option>
                   {suppliers.map((s) => (
@@ -576,7 +576,7 @@ function ComprasPageContent() {
                 <Loader2 className="animate-spin" size={18} /> Cargando…
               </p>
             ) : purchases.length === 0 ? (
-              <p className="mt-6 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-6 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[#1a1a1a]/60">
                 Aún no hay compras registradas{filterSupplier ? " para este proveedor" : ""}.
               </p>
             ) : (
@@ -789,7 +789,7 @@ function ComprasPageContent() {
                                 {payments.map((pay) => (
                                   <li
                                     key={pay.id}
-                                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-[var(--brand-ink-2)]"
+                                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-[#1a1a1a]"
                                   >
                                     <span>
                                       {pay.paymentDate}

@@ -407,7 +407,7 @@ function getAlertClasses(level: AlertLevel) {
   if (level === "critical") return "border-red-700 bg-red-100 text-red-900";
   if (level === "warning") return "border-yellow-500 bg-[var(--brand-accent-100)] text-[var(--brand-ink)]";
 
-  return "border-[var(--brand-primary)]/30 bg-white text-[var(--brand-ink)]";
+  return "border-[var(--brand-primary)]/30 bg-white text-[#1a1a1a]";
 }
 
 function getMovementClasses(type: string) {
@@ -853,7 +853,7 @@ function InventoryAlertsPageContent() {
                 <select
                   value={filter}
                   onChange={(event) => setFilter(event.target.value as "all" | AlertLevel)}
-                  className="rounded-full border-2 border-[var(--brand-primary)]/35 bg-white px-4 py-2 text-sm font-black text-[var(--brand-ink)] outline-none"
+                  className="rounded-full border-2 border-[var(--brand-primary)]/35 bg-white px-4 py-2 text-sm font-black text-[#1a1a1a] outline-none"
                 >
                   <option value="all">Todas</option>
                   <option value="critical">Críticas</option>

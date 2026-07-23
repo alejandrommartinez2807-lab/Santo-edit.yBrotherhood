@@ -208,7 +208,7 @@ function ProveedoresPageContent() {
                 <Loader2 className="animate-spin" size={18} /> Cargando…
               </p>
             ) : suppliers.length === 0 ? (
-              <p className="mt-8 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[var(--brand-ink-2)]/60">
+              <p className="mt-8 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/25 bg-white p-5 font-bold text-[#1a1a1a]/60">
                 Aún no hay proveedores. Agrega el primero arriba.
               </p>
             ) : (
@@ -234,7 +234,7 @@ function ProveedoresPageContent() {
                           className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${
                             s.isActive
                               ? "border-green-600/30 bg-green-50 text-green-700"
-                              : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]/60"
+                              : "border-[var(--brand-primary)]/25 bg-white text-[#1a1a1a]/60"
                           }`}
                         >
                           {s.isActive ? "Activo" : "Inactivo"}

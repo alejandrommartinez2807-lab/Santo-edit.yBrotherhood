@@ -341,7 +341,7 @@ function ProductGroup({
           return (
             <div
               key={`${item.id}-${item.name}-${index}`}
-              className="rounded-xl bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)]"
+              className="rounded-xl bg-white px-3 py-2 text-sm font-bold text-[#1a1a1a]"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <p>

@@ -513,7 +513,7 @@ function TicketShell({
   footer?: string;
 }) {
   return (
-    <article className="ticket-paper mx-auto w-full max-w-[380px] bg-white p-5 font-mono text-[var(--brand-ink-3)] shadow-xl print:shadow-none">
+    <article className="ticket-paper mx-auto w-full max-w-[380px] bg-white p-5 font-mono text-[#1a1a1a] shadow-xl print:shadow-none">
       <div className="border-b-2 border-[var(--brand-ink-3)] pb-3 text-center">
         <p className="text-[18px] font-black uppercase leading-none">{BRAND.name}</p>
         <p className="mt-1 text-[12px] font-black uppercase tracking-[0.16em]">{title}</p>

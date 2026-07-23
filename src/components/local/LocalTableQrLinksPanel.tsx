@@ -367,7 +367,7 @@ export function LocalTableQrLinksPanel({
                   </a>
                 </div>
 
-                <p className="mt-3 break-all rounded-xl bg-white/80 px-3 py-2 text-[0.62rem] font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                <p className="mt-3 break-all rounded-xl bg-white/80 px-3 py-2 text-[0.62rem] font-bold leading-5 text-[#1a1a1a]/60">
                   Alterno: {directMenuPath}
                 </p>
 

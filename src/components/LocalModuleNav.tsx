@@ -172,7 +172,7 @@ export default function LocalModuleNav({
                 className={
                   isCurrent
                     ? "inline-flex items-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.1em] text-white"
-                    : "inline-flex items-center rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+                    : "inline-flex items-center rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.1em] text-[#1a1a1a] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
                 }
               >
                 {entry.label}

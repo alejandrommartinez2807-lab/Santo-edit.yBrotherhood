@@ -79,7 +79,7 @@ function BranchLinksPanel({ branches }: { branches: Branch[] }) {
                     type="button"
                     onClick={() => copy(url)}
                     title={url}
-                    className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+                    className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#1a1a1a] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
                   >
                     {copied === url ? (
                       <Check size={12} className="text-green-600" />
@@ -214,7 +214,7 @@ function EventInventoryTools({ event, sedes }: { event: Branch; sedes: Branch[] 
         <button
           type="button"
           onClick={toggleOpen}
-          className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+          className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#1a1a1a] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
         >
           {open ? "Cerrar traslado" : "Trasladar stock"}
         </button>
@@ -628,7 +628,7 @@ function EventsPanel({
                       className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${
                         event.is_active
                           ? "border-green-600/30 bg-green-50 text-green-700"
-                          : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]/60"
+                          : "border-[var(--brand-primary)]/25 bg-white text-[#1a1a1a]/60"
                       }`}
                     >
                       {event.is_active ? "En curso" : "Finalizado"}
@@ -645,7 +645,7 @@ function EventsPanel({
                       <button
                         onClick={() => onPatch(event.id, { is_active: true })}
                         disabled={busy}
-                        className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-xs font-black uppercase text-[var(--brand-ink-2)]/70 disabled:opacity-50"
+                        className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-xs font-black uppercase text-[#1a1a1a]/70 disabled:opacity-50"
                       >
                         Reactivar
                       </button>
@@ -691,7 +691,7 @@ function EventsPanel({
                         <button
                           type="button"
                           onClick={() => copyLink(link)}
-                          className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+                          className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#1a1a1a] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
                         >
                           {copied === link ? <Check size={12} className="text-green-600" /> : <Copy size={12} />}
                           Copiar enlace
@@ -700,7 +700,7 @@ function EventsPanel({
                           type="button"
                           onClick={() => printEventQr(event, link)}
                           title="Tarjeta imprimible con logo para el stand"
-                          className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+                          className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#1a1a1a] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
                         >
                           <Printer size={12} /> Imprimir QR
                         </button>
@@ -708,7 +708,7 @@ function EventsPanel({
                           href={link}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+                          className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#1a1a1a] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
                         >
                           <ExternalLink size={12} /> Abrir menú
                         </a>
@@ -717,7 +717,7 @@ function EventsPanel({
                           target="_blank"
                           rel="noreferrer"
                           title="Pantalla de números para el TV/tablet del stand"
-                          className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+                          className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.08em] text-[#1a1a1a] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
                         >
                           <MonitorPlay size={12} /> Pantalla del stand
                         </a>
@@ -966,7 +966,7 @@ export default function SucursalesPage() {
                         className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${
                           b.is_active
                             ? "border-green-600/30 bg-green-50 text-green-700"
-                            : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]/60"
+                            : "border-[var(--brand-primary)]/25 bg-white text-[#1a1a1a]/60"
                         }`}
                       >
                         {b.is_active ? "Activa" : "Inactiva"}

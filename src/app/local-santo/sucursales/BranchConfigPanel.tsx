@@ -317,7 +317,7 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
                   className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${
                     rateMode === option.value
                       ? "border-green-600/30 bg-green-50 text-green-700"
-                      : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]/60"
+                      : "border-[var(--brand-primary)]/25 bg-white text-[#1a1a1a]/60"
                   }`}
                 >
                   {option.label}
@@ -361,7 +361,7 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
                 className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${
                   !useOwnTables
                     ? "border-green-600/30 bg-green-50 text-green-700"
-                    : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]/60"
+                    : "border-[var(--brand-primary)]/25 bg-white text-[#1a1a1a]/60"
                 }`}
               >
                 Usar mesas globales
@@ -375,7 +375,7 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
                 className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${
                   useOwnTables
                     ? "border-green-600/30 bg-green-50 text-green-700"
-                    : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]/60"
+                    : "border-[var(--brand-primary)]/25 bg-white text-[#1a1a1a]/60"
                 }`}
               >
                 Mesas propias

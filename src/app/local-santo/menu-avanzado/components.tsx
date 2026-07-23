@@ -135,7 +135,7 @@ export function ToggleCard({
 }
 
 const ROW_INPUT_CLASS =
-  "w-full rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/40 focus:border-[var(--brand-primary)]"
+  "w-full rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/40 focus:border-[var(--brand-primary)]"
 
 const SECTION_CLASS =
   "rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-4"

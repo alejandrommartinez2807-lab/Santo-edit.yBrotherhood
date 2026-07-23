@@ -610,7 +610,7 @@ export function getClosePaymentState(close: SavedDayClose) {
   if (!hasSoldAmount && !hasCollectedAmount && !hasPendingAmount) {
     return {
       label: "Sin cobros",
-      className: "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]/70",
+      className: "border-[var(--brand-primary)]/25 bg-white text-[#1a1a1a]/70",
     }
   }
 
@@ -644,7 +644,7 @@ export function getClosePaymentState(close: SavedDayClose) {
 
   return {
     label: "Sin cobros",
-    className: "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]/70",
+    className: "border-[var(--brand-primary)]/25 bg-white text-[#1a1a1a]/70",
   }
 }
 

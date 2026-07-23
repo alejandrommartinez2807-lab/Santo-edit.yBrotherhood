@@ -78,7 +78,7 @@ export default function FiscalBreakdown({
   if (totals.totalBeforeIgtfUSD <= 0) return null
 
   return (
-    <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white/70 p-4 text-[var(--brand-ink-2)]">
+    <div className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white/70 p-4 text-[#1a1a1a]">
       <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
         Desglose fiscal
       </p>

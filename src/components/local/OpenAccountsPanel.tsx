@@ -909,7 +909,7 @@ export function OpenAccountsPanel({
         />
       </div>
 
-      <div className="mt-3 rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-white p-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/75">
+      <div className="mt-3 rounded-[1.2rem] border-2 border-[var(--brand-primary)]/20 bg-white p-3 text-xs font-bold leading-5 text-[#1a1a1a]/75">
         Cuentas abiertas organizan pedidos por mesa.{" "}
         <strong>
           Cerrar una cuenta no cobra, no marca pedidos como pagados y no cambia
@@ -936,7 +936,7 @@ export function OpenAccountsPanel({
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
         {visibleAccounts.length === 0 ? (
-          <div className="rounded-[1.2rem] border-2 border-dashed border-[var(--brand-primary)]/35 bg-white p-5 text-sm font-bold text-[var(--brand-ink-2)]/70 xl:col-span-2">
+          <div className="rounded-[1.2rem] border-2 border-dashed border-[var(--brand-primary)]/35 bg-white p-5 text-sm font-bold text-[#1a1a1a]/70 xl:col-span-2">
             {viewMode === "all"
               ? "No hay cuentas registradas en este momento."
               : "No hay cuentas abiertas activas en este momento."}
@@ -1213,7 +1213,7 @@ export function OpenAccountsPanel({
                           [account.id]: event.target.value,
                         }))
                       }
-                      className="w-full min-w-0 flex-1 rounded-2xl border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)] outline-none focus:border-[var(--brand-primary)] sm:w-auto sm:basis-[16rem]"
+                      className="w-full min-w-0 flex-1 rounded-2xl border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.08em] text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)] sm:w-auto sm:basis-[16rem]"
                     >
                       <option value="">
                         Asociar pedido local pendiente de cuenta
@@ -1472,7 +1472,7 @@ export function OpenAccountsPanel({
                             )
                           }
                           rows={3}
-                          className="mt-2 w-full resize-none rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                          className="mt-2 w-full resize-none rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                         />
                       </div>
 

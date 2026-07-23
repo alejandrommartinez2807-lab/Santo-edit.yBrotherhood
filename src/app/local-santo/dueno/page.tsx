@@ -2417,7 +2417,7 @@ function DateFilterInput({
         type="date"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-black text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-black text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
       />
     </label>
   )
@@ -2692,7 +2692,7 @@ function AttentionOrderCard({ order }: { order: LocalOrder }) {
               {getDisplayOrderNumber(order)}
             </span>
 
-            <span className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1 text-xs font-black uppercase text-[var(--brand-ink-2)]">
+            <span className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1 text-xs font-black uppercase text-[#1a1a1a]">
               {payment.status}
             </span>
 

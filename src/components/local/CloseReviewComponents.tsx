@@ -37,7 +37,7 @@ export function CloseDetailSection({
           )}
         </div>
 
-        <span className="inline-flex w-fit rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] group-open:bg-[var(--brand-accent)] group-open:text-[var(--brand-ink)]">
+        <span className="inline-flex w-fit rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] group-open:bg-[var(--brand-accent)] group-open:text-[#1a1a1a]">
           <span className="group-open:hidden">Mostrar</span>
           <span className="hidden group-open:inline">Ocultar</span>
         </span>

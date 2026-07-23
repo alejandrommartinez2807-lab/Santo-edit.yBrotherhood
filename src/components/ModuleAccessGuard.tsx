@@ -259,7 +259,7 @@ function InlineLoginForm({ onLoggedIn }: { onLoggedIn: () => void }) {
   }
 
   const inputClassName =
-    "mt-1 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+    "mt-1 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-base font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
   const labelClassName =
     "text-left text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
 

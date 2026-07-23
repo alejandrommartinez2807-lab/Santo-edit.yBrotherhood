@@ -211,7 +211,7 @@ function ModuleCheckboxes({
             className={`flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-xs font-black uppercase tracking-[0.08em] ${
               checked
                 ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
-                : "border-[var(--brand-primary)]/20 bg-white text-[var(--brand-ink-2)]/70"
+                : "border-[var(--brand-primary)]/20 bg-white text-[#1a1a1a]/70"
             }`}
           >
             <input
@@ -250,7 +250,7 @@ function BranchCheckboxes({
 
   return (
     <div className="space-y-2">
-      <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/20 bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.08em] text-[var(--brand-ink-2)]">
+      <label className="flex items-center gap-2 rounded-xl border-2 border-[var(--brand-primary)]/20 bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.08em] text-[#1a1a1a]">
         <input
           type="checkbox"
           checked={allBranches}
@@ -268,7 +268,7 @@ function BranchCheckboxes({
                 className={`flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-xs font-black uppercase tracking-[0.08em] ${
                   checked
                     ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]"
-                    : "border-[var(--brand-primary)]/20 bg-white text-[var(--brand-ink-2)]/70"
+                    : "border-[var(--brand-primary)]/20 bg-white text-[#1a1a1a]/70"
                 }`}
               >
                 <input
@@ -403,7 +403,7 @@ function StaffFormFields({
               onChange={(allowedModules) => setForm({ ...form, allowedModules })}
             />
           ) : (
-            <p className="rounded-xl border border-[var(--brand-primary)]/15 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink-2)]/70">
+            <p className="rounded-xl border border-[var(--brand-primary)]/15 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a]/70">
               {summarizeModules(roleModules)}
             </p>
           )}

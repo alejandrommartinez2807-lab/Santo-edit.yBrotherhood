@@ -385,7 +385,7 @@ function ReportesPageContent() {
                 value={fromDate}
                 max={toDate || undefined}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
               />
             </label>
             <label className="flex flex-col gap-1 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
@@ -395,7 +395,7 @@ function ReportesPageContent() {
                 value={toDate}
                 min={fromDate || undefined}
                 onChange={(e) => setToDate(e.target.value)}
-                className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                className="rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
               />
             </label>
             <span className="pb-2 text-xs font-bold text-[var(--brand-ink-2)]/60">
@@ -449,7 +449,7 @@ function ReportesPageContent() {
                       ? "border-red-300 bg-red-50 text-red-800"
                       : alert.level === "warning"
                         ? "border-yellow-300 bg-yellow-50 text-yellow-900"
-                        : "border-[var(--brand-primary)]/20 bg-white text-[var(--brand-ink-2)]"
+                        : "border-[var(--brand-primary)]/20 bg-white text-[#1a1a1a]"
                   return (
                     <div key={i} className={`rounded-2xl border-2 p-4 ${tone}`}>
                       <p className="text-sm font-black">{alert.title}</p>

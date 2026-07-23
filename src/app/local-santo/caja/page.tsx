@@ -834,7 +834,7 @@ function CajaPageContent() {
                     {isLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
                     Actualizar
                   </button>
-                  <a href="/local-santo/comprobantes" className={`inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition ${pendingPaymentProofsCount > 0 ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[var(--brand-accent-200)]" : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"}`}>
+                  <a href="/local-santo/comprobantes" className={`inline-flex items-center gap-2 rounded-full border-2 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] transition ${pendingPaymentProofsCount > 0 ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[#1a1a1a] hover:bg-[var(--brand-accent-200)]" : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"}`}>
                     <UploadCloud size={16} />
                     Comprobantes{pendingPaymentProofsCount > 0 ? ` · ${pendingPaymentProofsCount}` : ""}
                   </a>
@@ -1072,7 +1072,7 @@ function CajaPageContent() {
                   {CASH_FILTERS.map((filter) => {
                     const isActive = activeFilter === filter
                     return (
-                      <button key={filter} type="button" onClick={() => setActiveFilter(filter)} className={`shrink-0 rounded-full border-2 px-4 py-3 text-xs font-black uppercase tracking-[0.1em] transition ${isActive ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]" : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"}`}>
+                      <button key={filter} type="button" onClick={() => setActiveFilter(filter)} className={`shrink-0 rounded-full border-2 px-4 py-3 text-xs font-black uppercase tracking-[0.1em] transition ${isActive ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[#1a1a1a]" : "border-[var(--brand-primary)] bg-white text-[var(--brand-primary)] hover:bg-[var(--brand-accent-100)]"}`}>
                         {filter}
                       </button>
                     )
@@ -1236,7 +1236,7 @@ function CajaPageContent() {
 
             <div>
               <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">Nota de pago</label>
-              <textarea value={paymentForm.paymentNote} onChange={(event) => updatePaymentForm("paymentNote", event.target.value)} placeholder="Ejemplo: Cliente pagó productos mixto y delivery por pago móvil." rows={4} className="mt-2 w-full resize-none rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]" />
+              <textarea value={paymentForm.paymentNote} onChange={(event) => updatePaymentForm("paymentNote", event.target.value)} placeholder="Ejemplo: Cliente pagó productos mixto y delivery por pago móvil." rows={4} className="mt-2 w-full resize-none rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-4 text-base font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]" />
             </div>
 
             {paymentMessage && (

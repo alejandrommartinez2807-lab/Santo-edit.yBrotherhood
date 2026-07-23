@@ -193,7 +193,7 @@ export function SepararCuentaModal({
                         setCustomAmount(index, event.target.value)
                       }
                       placeholder="0.00"
-                      className="min-w-0 flex-1 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[var(--brand-ink-3)] outline-none focus:border-[var(--brand-primary)]"
+                      className="min-w-0 flex-1 rounded-xl border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-2 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
                     />
                     {onUseAmount && (
                       <button

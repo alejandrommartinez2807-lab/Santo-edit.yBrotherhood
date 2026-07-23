@@ -21,7 +21,7 @@ function MiniStat({
       ? "border-yellow-500 bg-[var(--brand-accent-100)] text-[var(--brand-ink)]"
       : tone === "success"
         ? "border-green-600 bg-green-100 text-green-800"
-        : "border-[var(--brand-primary)]/25 bg-white text-[var(--brand-ink-2)]";
+        : "border-[var(--brand-primary)]/25 bg-white text-[#1a1a1a]";
 
   return (
     <div className={`rounded-2xl border-2 p-3 ${toneClass}`}>
@@ -51,7 +51,7 @@ function OrderPill({
         ? "border-green-600 bg-green-100 text-green-800"
         : tone === "muted"
           ? "border-zinc-300 bg-zinc-100 text-zinc-700"
-          : "border-[var(--brand-primary)]/20 bg-white text-[var(--brand-ink-2)]";
+          : "border-[var(--brand-primary)]/20 bg-white text-[#1a1a1a]";
 
   return (
     <div className={`rounded-xl border px-3 py-2 ${toneClass}`}>
@@ -98,7 +98,7 @@ function OrderItemsPreview({
 
   if (itemLines.length === 0) {
     return (
-      <p className="mt-2 rounded-xl border border-dashed border-[var(--brand-primary)]/20 bg-white px-3 py-2 text-[0.7rem] font-bold text-[var(--brand-ink-2)]/55">
+      <p className="mt-2 rounded-xl border border-dashed border-[var(--brand-primary)]/20 bg-white px-3 py-2 text-[0.7rem] font-bold text-[#1a1a1a]/55">
         Sin detalle de productos guardado en esta cuenta.
       </p>
     );
@@ -206,7 +206,7 @@ function PaymentInput({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
       />
     </label>
   );
@@ -233,7 +233,7 @@ function PaymentSelect({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+        className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
       >
         {options.map((option) => (
           <option key={option || "empty"} value={option}>
