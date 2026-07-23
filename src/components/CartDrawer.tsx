@@ -1605,10 +1605,10 @@ export default function CartDrawer({
               key={bill}
               type="button"
               onClick={() => setCashGivenAmount(String(bill))}
-              className={`rounded-full border-2 px-3.5 py-2 text-[0.68rem] font-black uppercase tracking-[0.06em] transition active:scale-95 ${
+              className={`rounded-full border-2 px-3.5 py-2 text-[0.68rem] font-black uppercase tracking-[0.06em] shadow-sm transition active:scale-95 ${
                 normalizeFormMoney(cashGivenAmount) === bill
                   ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
-                  : "border-[var(--brand-primary)]/40 bg-white text-[var(--brand-ink)]"
+                  : "border-[var(--brand-primary)] bg-white text-[#1a1a1a]"
               }`}
             >
               {cashIsVes ? `Bs ${formatVES(bill)}` : formatUSD(bill)}
@@ -1616,14 +1616,17 @@ export default function CartDrawer({
           ))}
         </div>
 
+        <label className="mt-3 block text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+          O escribe el monto con el que pagas
+        </label>
         <input
           inputMode="decimal"
           value={cashGivenAmount}
           onChange={(event) => setCashGivenAmount(event.target.value)}
           placeholder={
-            cashIsVes ? "O escribe otro monto en Bs" : "O escribe otro monto en $"
+            cashIsVes ? "Escribe el monto en Bs" : "Escribe el monto en $"
           }
-          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[var(--brand-ink-3)] outline-none placeholder:text-[var(--brand-ink-3)]/45 focus:border-[var(--brand-primary)]"
+          className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-base font-black text-[#1a1a1a] outline-none placeholder:font-bold placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary-dark)]"
         />
         {(() => {
           if (cashGivenValue <= 0) return null;
@@ -1632,7 +1635,7 @@ export default function CartDrawer({
 
           if (change < 0) {
             return (
-              <p className="mt-2 rounded-xl bg-white/70 px-3 py-2 text-[0.7rem] font-bold leading-4 text-red-500">
+              <p className="mt-2 rounded-xl border-2 border-red-500 bg-white px-3 py-2 text-[0.72rem] font-black leading-4 text-red-600">
                 Ese monto no cubre el total: faltan{" "}
                 {cashIsVes
                   ? `Bs ${formatVES(Math.abs(change))}`
@@ -1643,7 +1646,7 @@ export default function CartDrawer({
           }
 
           return (
-            <p className="mt-2 rounded-xl bg-white/70 px-3 py-2 text-[0.7rem] font-bold leading-4 text-[var(--brand-ink-2)]/75">
+            <p className="mt-2 rounded-xl border-2 border-[var(--brand-primary)]/50 bg-white px-3 py-2 text-[0.72rem] font-black leading-4 text-[#1a1a1a]">
               {change > 0
                 ? `Tu vuelto será ${cashIsVes ? `Bs ${formatVES(change)}` : formatUSD(change)}.`
                 : "Pago exacto: sin vuelto."}
