@@ -1,18 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Loader2, MapPin, Plus, Route, Save, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Loader2, MapPin, Plus, Route, Save, Store, Trash2 } from "lucide-react";
 import {
   DEFAULT_DELIVERY_DISTANCE_SETTINGS,
   type DeliveryDistanceSettings,
   type DeliveryDistanceTier,
 } from "@/lib/deliveryDistance";
+import { getSelectedBranchId } from "@/lib/branchClient";
 
 // Tarjeta "Envío por distancia" dentro de Configuración → Zonas de delivery.
 // Es autónoma (carga y guarda contra /api/delivery-distance con la clave del
 // dueño) para no engordar el monolito de la página de configuración.
+//
+// Por SEDE: cada sucursal tiene su propio link de Maps, sus rangos y su factor
+// de ruta (misma tabla delivery_distance_settings, una fila por sede). El
+// selector de arriba elige qué sede se edita y viaja como x-branch-id; una sede
+// sin configuración propia hereda la de la sucursal principal hasta que se
+// guarde algo aquí. La cotización pública (/api/public/delivery-quote) ya usa
+// la sede del pedido, así que San Diego cotiza con su propio origen y rangos.
 
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session";
+
+type BranchOption = { id: string; name: string };
 
 type TierDraft = { upToKm: string; costUSD: string };
 
@@ -72,53 +82,105 @@ export default function DeliveryDistanceConfigCard({
   );
   const [message, setMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // Sedes para el selector: cada una edita su propia fila (x-branch-id). null =
+  // aún no elegimos (no cargar hasta saber la sede); "" = sin sedes (una sola).
+  const [branches, setBranches] = useState<BranchOption[]>([]);
+  const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
 
+  // Headers con la clave del dueño + la sede que se está editando.
+  const branchHeaders = useCallback((extra?: Record<string, string>) => {
+    const headers: Record<string, string> = {
+      "x-admin-password": readStoredPassword(),
+      ...extra,
+    };
+    if (selectedBranchId) headers["x-branch-id"] = selectedBranchId;
+    return headers;
+  }, [selectedBranchId]);
+
+  // Carga la lista de sedes una vez y elige la sede inicial (la del dispositivo
+  // si está en la lista, si no la primera).
   useEffect(() => {
     let ignore = false;
 
-    async function loadSettings() {
+    async function loadBranches() {
       try {
-        setIsLoading(true);
-
-        const response = await fetch("/api/delivery-distance", {
+        const response = await fetch("/api/branches", {
           cache: "no-store",
           headers: { "x-admin-password": readStoredPassword() },
         });
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "No se pudo cargar el envío por distancia");
-        }
+        const data = await response.json().catch(() => ({}));
+        const list: BranchOption[] = Array.isArray(data?.branches)
+          ? data.branches
+              .map((branch: { id?: unknown; name?: unknown; is_active?: unknown }) => ({
+                id: String(branch.id || "").trim(),
+                name: String(branch.name || "").trim(),
+                isActive: branch.is_active !== false,
+              }))
+              .filter((branch: { id: string; name: string; isActive: boolean }) => branch.id && branch.name && branch.isActive)
+              .map((branch: { id: string; name: string }) => ({ id: branch.id, name: branch.name }))
+          : [];
 
         if (ignore) return;
 
-        const settings = (data.settings || {}) as DeliveryDistanceSettings;
-        setEnabled(settings.enabled === true);
-        setOriginMapsUrl(String(settings.originMapsUrl || ""));
-        setHasOrigin(settings.originLat !== null && settings.originLng !== null);
-        setRoadFactor(
-          String(settings.roadFactor || DEFAULT_DELIVERY_DISTANCE_SETTINGS.roadFactor),
-        );
-        setTierDrafts(tiersToDrafts(Array.isArray(settings.tiers) ? settings.tiers : []));
-      } catch (error) {
-        if (!ignore) {
-          setErrorMessage(
-            error instanceof Error
-              ? error.message
-              : "No se pudo cargar el envío por distancia",
-          );
-        }
-      } finally {
-        if (!ignore) setIsLoading(false);
+        setBranches(list);
+        const stored = getSelectedBranchId();
+        const initial =
+          (stored && list.some((branch) => branch.id === stored) && stored) ||
+          list[0]?.id ||
+          "";
+        setSelectedBranchId(initial);
+      } catch {
+        // Sin lista de sedes: se edita la sede por defecto (sin selector).
+        if (!ignore) setSelectedBranchId("");
       }
     }
 
-    loadSettings();
-
+    loadBranches();
     return () => {
       ignore = true;
     };
   }, []);
+
+  const loadSettings = useCallback(async () => {
+    if (selectedBranchId === null) return;
+    try {
+      setIsLoading(true);
+      setMessage(null);
+      setErrorMessage(null);
+
+      const response = await fetch("/api/delivery-distance", {
+        cache: "no-store",
+        headers: branchHeaders(),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudo cargar el envío por distancia");
+      }
+
+      const settings = (data.settings || {}) as DeliveryDistanceSettings;
+      setEnabled(settings.enabled === true);
+      setOriginMapsUrl(String(settings.originMapsUrl || ""));
+      setHasOrigin(settings.originLat !== null && settings.originLng !== null);
+      setRoadFactor(
+        String(settings.roadFactor || DEFAULT_DELIVERY_DISTANCE_SETTINGS.roadFactor),
+      );
+      setTierDrafts(tiersToDrafts(Array.isArray(settings.tiers) ? settings.tiers : []));
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "No se pudo cargar el envío por distancia",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedBranchId, branchHeaders]);
+
+  // Recarga la config al elegir sede (y en el arranque cuando ya se resolvió).
+  useEffect(() => {
+    void loadSettings();
+  }, [loadSettings]);
 
   async function saveSettings(nextEnabled = enabled) {
     try {
@@ -128,10 +190,7 @@ export default function DeliveryDistanceConfigCard({
 
       const response = await fetch("/api/delivery-distance", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-password": readStoredPassword(),
-        },
+        headers: branchHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({
           settings: {
             enabled: nextEnabled,
@@ -155,10 +214,13 @@ export default function DeliveryDistanceConfigCard({
       setEnabled(settings.enabled === true);
       setHasOrigin(settings.originLat !== null && settings.originLng !== null);
       setTierDrafts(tiersToDrafts(Array.isArray(settings.tiers) ? settings.tiers : []));
+      const sedeName =
+        branches.find((branch) => branch.id === selectedBranchId)?.name || "";
+      const sedeLabel = sedeName ? ` de ${sedeName}` : "";
       setMessage(
         settings.enabled
-          ? "Envío por distancia guardado. El carrito ya cotiza con el link del cliente."
-          : "Envío por distancia guardado (desactivado).",
+          ? `Envío por distancia${sedeLabel} guardado. El carrito ya cotiza con el link del cliente en esta sede.`
+          : `Envío por distancia${sedeLabel} guardado (desactivado).`,
       );
     } catch (error) {
       setErrorMessage(
@@ -200,6 +262,34 @@ export default function DeliveryDistanceConfigCard({
           </span>
         </label>
       </div>
+
+      {/* Selector de sede: cada sucursal tiene su propio envío por distancia.
+          Solo aparece cuando hay más de una sede. */}
+      {branches.length > 1 ? (
+        <div className="mt-3">
+          <label className="flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+            <Store size={14} />
+            Sede que estás configurando
+          </label>
+          <select
+            value={selectedBranchId || ""}
+            disabled={isSaving}
+            onChange={(event) => setSelectedBranchId(event.target.value)}
+            className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-4 py-3 text-sm font-black text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {branches.map((branch) => (
+              <option key={branch.id} value={branch.id}>
+                {branch.name}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1.5 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
+            Cada sede cotiza con su propio local y sus rangos. Si una sede no
+            tiene esto configurado, usa el de la sucursal principal hasta que
+            guardes aquí.
+          </p>
+        </div>
+      ) : null}
 
       <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
         El cliente pega el link de Google Maps de su casa en el carrito y el
