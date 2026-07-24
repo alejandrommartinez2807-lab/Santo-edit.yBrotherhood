@@ -65,6 +65,21 @@ export async function updateOrderStatusInStore(
     }
   }
 
+  if (status === "Entregado") {
+    // Pedido ENTREGADO completo ⇒ sus ítems también quedan entregados: antes
+    // un pedido "Entregado" podía mostrar "0/3 entregados" en la vista por
+    // producto del mesonero (auditoría 2026-07-23, P2). Solo se estampan los
+    // que faltaban; sin migración 0026 se omite en silencio.
+    const { error: itemsError } = await supabase
+      .from("order_items")
+      .update({ delivered_at: new Date().toISOString() })
+      .eq("order_id", orderId)
+      .is("delivered_at", null)
+    if (itemsError && !isMissingColumnError(itemsError)) {
+      throw new Error(itemsError.message)
+    }
+  }
+
   return loadOrderWithItems(orderId, branchId)
 }
 

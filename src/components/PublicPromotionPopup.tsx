@@ -85,11 +85,19 @@ export default function PublicPromotionPopup() {
         if (!nextPromotion.title && !nextPromotion.productName) return
 
         try {
-          if (window.localStorage.getItem(DISMISS_KEY) === popupSignature(nextPromotion)) {
-            return
+          // El cierre VENCE a las 12 horas (antes era para siempre mientras la
+          // promo no cambiara y el dueño "no volvía a ver la promoción",
+          // 2026-07-23). Cambio de contenido también la re-muestra. Formato
+          // viejo (string plano) se trata como vencido.
+          const rawDismiss = window.localStorage.getItem(DISMISS_KEY)
+          if (rawDismiss) {
+            const parsed = JSON.parse(rawDismiss) as { sig?: string; at?: number }
+            const isSamePromo = parsed?.sig === popupSignature(nextPromotion)
+            const ageMs = Date.now() - Number(parsed?.at || 0)
+            if (isSamePromo && ageMs < 12 * 60 * 60 * 1000) return
           }
         } catch {
-          // Sin localStorage se muestra una vez por visita.
+          // Formato viejo o sin localStorage: se muestra y se re-guarda.
         }
 
         setPromotion(nextPromotion)
@@ -113,7 +121,10 @@ export default function PublicPromotionPopup() {
     setIsOpen(false)
     try {
       if (promotion) {
-        window.localStorage.setItem(DISMISS_KEY, popupSignature(promotion))
+        window.localStorage.setItem(
+          DISMISS_KEY,
+          JSON.stringify({ sig: popupSignature(promotion), at: Date.now() }),
+        )
       }
     } catch {
       // Sin localStorage solo se repetiría en la próxima visita.

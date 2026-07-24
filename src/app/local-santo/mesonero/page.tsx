@@ -475,6 +475,21 @@ function MesoneroContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Auto-refresco silencioso como cocina y caja (2.5s): el mesonero era el
+  // único módulo SIN polling y no veía los avances de cocina/caja hasta tocar
+  // "Actualizar" a mano (auditoría 2026-07-23).
+  useEffect(() => {
+    if (!adminPassword) return;
+
+    const timer = window.setInterval(() => {
+      loadOrders(adminPassword, true);
+      loadOpenAccounts(adminPassword, true);
+    }, 2500);
+
+    return () => window.clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adminPassword]);
+
   return (
     <main className="min-h-screen bg-[var(--brand-cream)] px-3 py-4 text-[var(--brand-ink-3)] sm:px-4 sm:py-6">
       <div className="mx-auto max-w-7xl">

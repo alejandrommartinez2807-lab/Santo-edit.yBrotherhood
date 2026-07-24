@@ -92,6 +92,11 @@ export function orderItemToRow(item: OrderItem, orderId: string, sortOrder: numb
     staff_confirmed_at: item.staffConfirmedAt ?? null,
     staff_confirmed_by: item.staffConfirmedBy ?? null,
     staff_confirmed_role: item.staffConfirmedRole ?? null,
+    // Marca de entrega por ítem (mesonero): round-trip-safe — si un flujo
+    // futuro reescribe las filas con este builder, la entrega no se pierde
+    // (auditoría 2026-07-23, P4).
+    delivered_at: item.deliveredAt ?? null,
+    delivered_by: item.deliveredBy ?? null,
     iva_rate: item.ivaRate ?? null,
     sort_order: sortOrder,
   }

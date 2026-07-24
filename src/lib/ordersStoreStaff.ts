@@ -128,29 +128,69 @@ export async function setOrderItemDeliveredInStore(
     if (!itemName && !productId) {
       throw new Error("No se pudo identificar el producto del pedido")
     }
-    let fallbackQuery = supabase
+    // Fallback sin line_id (pedidos viejos): se toca UNA sola línea — antes
+    // marcaba TODAS las líneas del mismo producto a la vez (auditoría
+    // 2026-07-23, P5). Se busca la primera en el estado contrario y se
+    // actualiza por id.
+    let findQuery = supabase
       .from("order_items")
-      .update(patch)
+      .select("id")
       .eq("order_id", orderId)
-    if (productId) fallbackQuery = fallbackQuery.eq("product_id", productId)
-    if (itemName) fallbackQuery = fallbackQuery.eq("name", itemName)
-    const { data, error } = await fallbackQuery.select("id")
-    if (error) {
-      if (isMissingColumnError(error)) {
+    if (productId) findQuery = findQuery.eq("product_id", productId)
+    if (itemName) findQuery = findQuery.eq("name", itemName)
+    findQuery = input.delivered
+      ? findQuery.is("delivered_at", null)
+      : findQuery.not("delivered_at", "is", null)
+    const { data: candidates, error: findError } = await findQuery
+      .order("sort_order", { ascending: true })
+      .limit(1)
+    if (findError) {
+      if (isMissingColumnError(findError)) {
         throw new Error(
           "Falta aplicar la migración 0026 en Supabase para marcar productos entregados.",
         )
       }
-      throw new Error(error.message)
+      throw new Error(findError.message)
     }
-    updated = data?.length ?? 0
+    const targetId = candidates?.[0]?.id
+    if (targetId) {
+      const { data, error } = await supabase
+        .from("order_items")
+        .update(patch)
+        .eq("id", targetId)
+        .select("id")
+      if (error) throw new Error(error.message)
+      updated = data?.length ?? 0
+    }
   }
 
   if (!updated) {
     throw new Error("No se encontró ese producto dentro del pedido")
   }
 
-  return loadOrderWithItems(orderId, branchId)
+  const order = await loadOrderWithItems(orderId, branchId)
+
+  // Todos los ítems entregados y el pedido ya estaba "Listo" ⇒ el pedido
+  // completo pasa a "Entregado" solo (auditoría 2026-07-23, P2: antes quedaba
+  // "3/3 entregados" con estado Listo y el staff lo leía como incoherencia).
+  // Solo desde "Listo": no se salta cocina ni estados anteriores.
+  if (
+    input.delivered &&
+    order.status === "Listo" &&
+    order.items.length > 0 &&
+    order.items.every((item) => Boolean(item.deliveredAt))
+  ) {
+    const { error: advanceError } = await supabase
+      .from("orders")
+      .update({ status: "Entregado" })
+      .eq("id", orderId)
+      .eq("status", "Listo")
+    if (!advanceError) {
+      return loadOrderWithItems(orderId, branchId)
+    }
+  }
+
+  return order
 }
 
 export async function resetOrderStaffItemsInStore(

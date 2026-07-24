@@ -17,6 +17,7 @@ import {
   type LocalRole,
 } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
+import { canRoleUpdateStatus } from "@/lib/orderStatusPermissions"
 import { resolveBranchId } from "@/lib/branch"
 import { writeAuditLog } from "@/lib/audit"
 import { OrderActionConflictError } from "@/lib/orderConflicts"
@@ -153,40 +154,8 @@ function isValidStatus(value: unknown): value is OrderStatus {
   )
 }
 
-function canRoleUpdateStatus(role: LocalRole, status: OrderStatus) {
-  if (role === "owner" || role === "manager") {
-    return true
-  }
-
-  if (role === "cashier") {
-    // "Listo": en los flujos mixto/sin cocina (kitchenFlowMode) caja marca
-    // Listo directamente sin pasar por cocina.
-    return (
-      status === "Nuevo" ||
-      status === "Preparando" ||
-      status === "Listo" ||
-      status === "Entregado" ||
-      status === "Cancelado"
-    )
-  }
-
-  // Cocina solo avanza la preparación: nunca cancela ni entrega.
-  if (role === "kitchen") {
-    return status === "Preparando" || status === "Listo"
-  }
-
-  // El promotor de eventos entrega lo que vende, pero no cancela pedidos.
-  if (role === "promoter") {
-    return (
-      status === "Nuevo" ||
-      status === "Preparando" ||
-      status === "Listo" ||
-      status === "Entregado"
-    )
-  }
-
-  return false
-}
+// canRoleUpdateStatus vive ahora en lib/orderStatusPermissions (fuente única
+// compartida con el endpoint de cuentas abiertas — auditoría 2026-07-23, P1).
 
 function getStatusModuleForRole(role: LocalRole): LocalModuleKey {
   if (role === "cashier") return "cashier"

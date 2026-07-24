@@ -184,10 +184,46 @@ async function getPublicBusinessConfig() {
   )
 }
 
+type BranchReviewLink = { name: string; url: string }
+
 export default function Hero() {
   const [businessConfig, setBusinessConfig] = useState<PublicBusinessConfig>(
     DEFAULT_PUBLIC_CONFIG
   )
+  // Links de reseñas POR SEDE (Sucursales → "Link de reseñas de Google"):
+  // con 2+ sedes con link, el botón "Reseñas" abre un selector.
+  const [branchReviews, setBranchReviews] = useState<BranchReviewLink[]>([])
+  const [isReviewChooserOpen, setIsReviewChooserOpen] = useState(false)
+
+  useEffect(() => {
+    let isMounted = true
+
+    fetch("/api/public/branches", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => {
+        if (!isMounted) return
+        const list = Array.isArray(data?.branches) ? data.branches : []
+        setBranchReviews(
+          list
+            .map((branch: Record<string, unknown>) => ({
+              name: String(branch.name || "").trim(),
+              url: String(branch.googleReviewUrl || "").trim(),
+            }))
+            .filter(
+              (item: BranchReviewLink) =>
+                item.name &&
+                (item.url.startsWith("https://") || item.url.startsWith("http://")),
+            ),
+        )
+      })
+      .catch(() => {
+        // Sin sedes cargadas, el botón usa el link general (o se oculta).
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   useEffect(() => {
     let isMounted = true
@@ -325,19 +361,86 @@ export default function Hero() {
             {businessConfig.locationButtonText}
           </a>
 
-          {/* Con el link de reseñas de Google configurado, el botón abre las
-              reseñas REALES en Maps; sin él, baja a la sección de reseñas. */}
-          <a
-            href={businessConfig.googleReviewUrl || "#resena"}
-            {...(businessConfig.googleReviewUrl
-              ? { target: "_blank", rel: "noreferrer" }
-              : {})}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-border)] bg-black/30 px-4 py-4 text-sm font-extrabold uppercase tracking-wide text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95"
-          >
-            <Star size={19} />
-            {businessConfig.reviewsTitle || "Reseñas"}
-          </a>
+          {/* Reseñas REALES de Google: con 2+ sedes con link abre el selector
+              de sede; con 1, va directo; sin sedes usa el link general; y sin
+              nada configurado el botón no se muestra (el viejo ancla #resena
+              no existía y el botón "no servía" — dueño 2026-07-23). */}
+          {(() => {
+            const hasChooser = branchReviews.length >= 2;
+            const directUrl =
+              branchReviews.length === 1
+                ? branchReviews[0].url
+                : businessConfig.googleReviewUrl;
+            if (!hasChooser && !directUrl) return null;
+
+            const buttonClass =
+              "inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-border)] bg-black/30 px-4 py-4 text-sm font-extrabold uppercase tracking-wide text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95";
+
+            return hasChooser ? (
+              <button
+                type="button"
+                onClick={() => setIsReviewChooserOpen(true)}
+                className={buttonClass}
+              >
+                <Star size={19} />
+                {businessConfig.reviewsTitle || "Reseñas"}
+              </button>
+            ) : (
+              <a
+                href={directUrl}
+                target="_blank"
+                rel="noreferrer"
+                className={buttonClass}
+              >
+                <Star size={19} />
+                {businessConfig.reviewsTitle || "Reseñas"}
+              </a>
+            );
+          })()}
         </div>
+
+        {/* Selector de sede para dejar la reseña (cada local tiene su ficha
+            de Google). */}
+        {isReviewChooserOpen ? (
+          <div
+            className="fixed inset-0 z-[110] flex items-end justify-center bg-black/80 px-4 py-6 backdrop-blur-sm sm:items-center"
+            onClick={() => setIsReviewChooserOpen(false)}
+          >
+            <div
+              className="w-full max-w-sm rounded-[1.8rem] border-4 border-[var(--brand-primary)] bg-[var(--brand-surface)] p-6 text-center shadow-2xl shadow-black/70"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--brand-primary)] text-black">
+                <Star size={26} fill="currentColor" />
+              </span>
+              <p className="mt-4 text-xl font-black uppercase leading-tight text-[var(--brand-ink-3)]">
+                ¿A cuál sede le dejas tu reseña?
+              </p>
+              <div className="mt-4 space-y-2.5">
+                {branchReviews.map((branch) => (
+                  <a
+                    key={branch.name}
+                    href={branch.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => setIsReviewChooserOpen(false)}
+                    className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3.5 text-sm font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90"
+                  >
+                    <MapPin size={16} />
+                    {branch.name}
+                  </a>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsReviewChooserOpen(false)}
+                className="mt-3 w-full rounded-full px-5 py-2.5 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/50 transition hover:text-[var(--brand-ink-2)]"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         {/* Las tarjetas de garantías (Carne/Queso/Pan) se retiraron a pedido
             del dueño (2026-07-23): esos textos siguen SOLO en la cinta en

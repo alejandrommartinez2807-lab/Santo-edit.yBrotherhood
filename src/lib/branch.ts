@@ -349,6 +349,9 @@ export type BranchScopedConfig = {
   address?: string
   zone?: string
   googleMapsUrl?: string
+  // Link de reseñas de Google DE ESTA SEDE (cada local tiene su ficha):
+  // alimenta el botón "Reseñas" del Hero con selector de sede.
+  googleReviewUrl?: string
   estimatedTimeText?: string
   mainWhatsapp?: string
   deliveryWhatsapp?: string
@@ -373,6 +376,7 @@ const BRANCH_SCOPED_TEXT_FIELDS = [
   "address",
   "zone",
   "googleMapsUrl",
+  "googleReviewUrl",
   "estimatedTimeText",
   "mainWhatsapp",
   "deliveryWhatsapp",
@@ -555,6 +559,7 @@ export function buildSafePublicBranch(
     address: branchConfig.address,
     zone: branchConfig.zone,
     googleMapsUrl: branchConfig.googleMapsUrl,
+    googleReviewUrl: branchConfig.googleReviewUrl,
     estimatedTimeText: branchConfig.estimatedTimeText,
     mainWhatsapp: branchConfig.mainWhatsapp,
     config: branchConfig,

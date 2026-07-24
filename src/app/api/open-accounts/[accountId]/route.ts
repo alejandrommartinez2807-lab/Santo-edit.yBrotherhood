@@ -11,6 +11,7 @@ import {
 } from "@/lib/orders";
 import { getLocalAccessAuditActor, getRequestAccess, type LocalRole } from "@/lib/localAccess";
 import { getModulePlanAccess } from "@/lib/localPlans";
+import { canRoleUpdateStatus } from "@/lib/orderStatusPermissions";
 import { resolveBranchId } from "@/lib/branch";
 import { writeAuditLog } from "@/lib/audit";
 import { OrderActionConflictError } from "@/lib/orderConflicts";
@@ -354,6 +355,15 @@ export async function PATCH(
         return NextResponse.json(
           { error: "No se puede cambiar la entrega de un pedido cancelado" },
           { status: 400 },
+        );
+      }
+
+      // Mismo permiso rol→estado que /api/orders (fuente única): antes esta
+      // puerta autorizaba distinto (auditoría 2026-07-23, P1).
+      if (!canRoleUpdateStatus(access.role, status)) {
+        return NextResponse.json(
+          { error: "Tu rol no puede poner ese estado en un pedido" },
+          { status: 403 },
         );
       }
 

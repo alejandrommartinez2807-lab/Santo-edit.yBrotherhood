@@ -12,6 +12,7 @@ type BranchScopedConfig = {
   address?: string
   zone?: string
   googleMapsUrl?: string
+  googleReviewUrl?: string
   localTables?: { name?: string; area?: string }[]
   exchangeRateMode?: "automatic" | "automaticEur" | "manual"
   manualExchangeRate?: number
@@ -40,6 +41,7 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
   const [address, setAddress] = useState("")
   const [zone, setZone] = useState("")
   const [googleMapsUrl, setGoogleMapsUrl] = useState("")
+  const [googleReviewUrl, setGoogleReviewUrl] = useState("")
   const [useOwnTables, setUseOwnTables] = useState(false)
   const [tables, setTables] = useState<BranchTable[]>([])
   const [copyFrom, setCopyFrom] = useState("")
@@ -58,6 +60,7 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
     setAddress(config.address || "")
     setZone(config.zone || "")
     setGoogleMapsUrl(config.googleMapsUrl || "")
+    setGoogleReviewUrl(config.googleReviewUrl || "")
     setRateMode(
       config.exchangeRateMode === "automatic" ||
         config.exchangeRateMode === "automaticEur" ||
@@ -160,6 +163,7 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
           address: address.trim() || null,
           zone: zone.trim() || null,
           googleMapsUrl: googleMapsUrl.trim() || null,
+          googleReviewUrl: googleReviewUrl.trim() || null,
           localTables: useOwnTables ? cleanedTables.map((t) => (t.area ? t : { name: t.name })) : null,
           exchangeRateMode: rateMode || null,
           manualExchangeRate: rateMode === "manual" ? manualRateValue : null,
@@ -299,6 +303,23 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
                 superior usa otro link (el general del negocio, en
                 Configuración). Sin link aquí, “Cómo llegar” busca por la
                 dirección escrita arriba.
+              </p>
+            </div>
+            <div>
+              <label className={labelClass} htmlFor="branch-config-reviews">
+                Link de reseñas de Google de la sede
+              </label>
+              <input
+                id="branch-config-reviews"
+                value={googleReviewUrl}
+                onChange={(e) => setGoogleReviewUrl(e.target.value)}
+                placeholder="https://g.page/r/…/review"
+                className={`mt-1 ${inputClass}`}
+              />
+              <p className="mt-1 text-xs font-bold leading-4 text-[var(--brand-ink-2)]/60">
+                El botón “Reseñas” de la página pública deja elegir la sede y
+                abre ESTE link (en Google Maps: tu ficha → Reseñas →
+                compartir). Sin link, la sede no aparece en ese selector.
               </p>
             </div>
           </div>

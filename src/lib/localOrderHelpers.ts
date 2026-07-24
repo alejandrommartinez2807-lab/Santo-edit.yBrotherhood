@@ -158,23 +158,13 @@ export function getOrderOpenAccountOperationalText(
 }
 
 export function getOrderDeliveryCost(order: LocalOrder) {
+  // Solo la cotización GUARDADA del pedido (el servidor la calcula por sede
+  // al registrar). La vieja tabla fija por zonas (Santo Perrito) se retiró:
+  // hacía que dueño/pantalla sumaran un envío distinto al de caja para el
+  // mismo pedido (auditoría 2026-07-23, P3 — mismo patrón que el bug
+  // histórico de isDeliveryOrder duplicado).
   const savedCost = Number(order.deliveryCostUSD || 0)
-
-  if (savedCost > 0) return savedCost
-  if (!isDeliveryOrder(order)) return 0
-
-  const normalizedZone = normalizeComparableText(
-    String(order.deliveryZone || order.tableNumber || "")
-  )
-
-  if (normalizedZone.includes("trigalena")) return 2
-  if (normalizedZone.includes("centro")) return 1
-  if (normalizedZone.includes("prebo")) return 2.5
-  if (normalizedZone.includes("naguanagua")) return 3
-  if (normalizedZone.includes("samanes")) return 3
-  if (normalizedZone.includes("san diego")) return 4
-
-  return 0
+  return savedCost > 0 ? savedCost : 0
 }
 
 function calculateDeliveryMessageOrderTotals(order: LocalOrder): OrderTotals {
