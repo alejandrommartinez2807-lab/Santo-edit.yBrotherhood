@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "./supabaseServer"
+import { signPaymentProofPaths } from "./ordersPaymentProofs"
 
 export type DayCloseSummaryItem = {
   label: string
@@ -81,6 +82,9 @@ export type DayCloseProof = {
   status: string
   createdAt: string
   proofImageUrl: string
+  // Ruta del archivo en Storage (bucket privado): permite re-firmar la URL al
+  // ver un cierre viejo, porque las URLs firmadas caducan.
+  proofFileId?: string
 }
 
 export type DayCloseInventoryProduct = {
@@ -284,7 +288,7 @@ export async function getDayCloses(branchId?: string | null) {
     throw new Error(error.message || "No se pudieron cargar los cierres guardados")
   }
 
-  return (data ?? []).map((raw) => {
+  const closes = (data ?? []).map((raw) => {
     const row = raw as Record<string, unknown>
     const payload = (row.data && typeof row.data === "object" ? row.data : {}) as Record<string, unknown>
     return {
@@ -294,6 +298,31 @@ export async function getDayCloses(branchId?: string | null) {
       branchId: cleanText(row.branch_id) || undefined,
     } as SavedDayClose
   })
+
+  // Bucket de comprobantes es privado: las URLs firmadas guardadas en el
+  // snapshot del cierre caducan. Re-firmamos desde la ruta (proofFileId) para
+  // que el historial de cierres siga mostrando las imágenes. Los cierres
+  // viejos sin proofFileId conservan la URL que traían.
+  const proofPaths: string[] = []
+  for (const close of closes) {
+    for (const proof of close.paymentProofs ?? []) {
+      if (proof.proofFileId) proofPaths.push(proof.proofFileId)
+    }
+  }
+
+  if (proofPaths.length > 0) {
+    const signedByPath = await signPaymentProofPaths(proofPaths)
+    for (const close of closes) {
+      if (!Array.isArray(close.paymentProofs)) continue
+      close.paymentProofs = close.paymentProofs.map((proof) =>
+        proof.proofFileId && signedByPath.has(proof.proofFileId)
+          ? { ...proof, proofImageUrl: signedByPath.get(proof.proofFileId) || "" }
+          : proof,
+      )
+    }
+  }
+
+  return closes
 }
 
 

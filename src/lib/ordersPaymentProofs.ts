@@ -36,6 +36,50 @@ function cleanText(value: unknown) {
 
 const PAYMENT_PROOFS_BUCKET = "payment-proofs"
 
+// Vigencia de las URLs firmadas de comprobantes. El panel las usa al vuelo
+// (ver/abrir la imagen); 1 hora sobra y evita que un link reenviado sirva
+// para siempre.
+const SIGNED_PROOF_TTL_SECONDS = 60 * 60
+
+// Genera una URL firmada de corta duración para una ruta del bucket privado.
+// Si no hay ruta o falla la firma, devuelve "" (el panel muestra "sin imagen").
+async function signProofPath(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  path: string,
+): Promise<string> {
+  const cleanPath = cleanText(path)
+  if (!cleanPath) return ""
+
+  const { data, error } = await supabase.storage
+    .from(PAYMENT_PROOFS_BUCKET)
+    .createSignedUrl(cleanPath, SIGNED_PROOF_TTL_SECONDS)
+
+  if (error || !data?.signedUrl) return ""
+  return data.signedUrl
+}
+
+// Firma varias rutas en una sola llamada (bucket privado). Devuelve un mapa
+// ruta -> URL firmada; las rutas vacías o que fallen quedan fuera. Lo usa el
+// historial de cierres, que puede traer muchos comprobantes de golpe.
+export async function signPaymentProofPaths(
+  paths: string[],
+): Promise<Map<string, string>> {
+  const result = new Map<string, string>()
+  const cleanPaths = [...new Set(paths.map(cleanText).filter(Boolean))]
+  if (cleanPaths.length === 0) return result
+
+  const supabase = getSupabaseAdmin()
+  const { data, error } = await supabase.storage
+    .from(PAYMENT_PROOFS_BUCKET)
+    .createSignedUrls(cleanPaths, SIGNED_PROOF_TTL_SECONDS)
+
+  if (error || !Array.isArray(data)) return result
+  for (const entry of data) {
+    if (entry?.path && entry.signedUrl) result.set(entry.path, entry.signedUrl)
+  }
+  return result
+}
+
 function paymentProofRowToProof(row: Record<string, unknown>): PaymentProof {
   return {
     id: cleanText(row.id),
@@ -83,7 +127,24 @@ export async function getPaymentProofs(
     throw new Error(error.message || "No se pudieron cargar los comprobantes")
   }
 
-  return (data ?? []).map((row) => paymentProofRowToProof(row as Record<string, unknown>))
+  const proofs = (data ?? []).map((row) =>
+    paymentProofRowToProof(row as Record<string, unknown>),
+  )
+
+  // Bucket privado: reemplazamos la URL guardada por una URL firmada fresca,
+  // generada desde la ruta del archivo (proofFileId). Cubre comprobantes
+  // viejos y nuevos sin migrar datos.
+  return Promise.all(
+    proofs.map(async (proof) => ({
+      ...proof,
+      proofImageUrl: proof.proofFileId
+        ? await signProofPath(supabase, proof.proofFileId)
+        : "",
+      proofImageUrl2: proof.proofFileId2
+        ? await signProofPath(supabase, proof.proofFileId2)
+        : "",
+    })),
+  )
 }
 
 // Limpieza al cierre del día: los comprobantes quedan fotografiados DENTRO
@@ -120,8 +181,11 @@ async function uploadProofImage(
   if (uploadError) {
     throw new Error(uploadError.message || "No se pudo subir el comprobante")
   }
-  const { data: publicData } = supabase.storage.from(PAYMENT_PROOFS_BUCKET).getPublicUrl(path)
-  return { url: publicData?.publicUrl || "", fileId: path }
+  // Bucket privado: no hay URL pública estable. Guardamos una URL firmada
+  // inicial como respaldo, pero la fuente de verdad para mostrar es la ruta
+  // (fileId), que getPaymentProofs vuelve a firmar en cada lectura.
+  const signedUrl = await signProofPath(supabase, path)
+  return { url: signedUrl, fileId: path }
 }
 
 export async function createPaymentProof(input: CreatePaymentProofInput, branchId?: string | null) {

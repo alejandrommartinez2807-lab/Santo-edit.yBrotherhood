@@ -437,6 +437,7 @@ export async function POST(request: NextRequest) {
         status: proof.status,
         createdAt: proof.createdAt,
         proofImageUrl: proof.proofImageUrl,
+        proofFileId: proof.proofFileId,
       }))
     } catch {
       // Sin fotografía: el cierre conserva los totales de siempre.
