@@ -212,6 +212,8 @@ export default function PublicOrderPaymentSection({
   const [payments, setPayments] = useState<PaymentEntry[]>([EMPTY_PAYMENT_ENTRY]);
   const [reference, setReference] = useState("");
   const [customerNote, setCustomerNote] = useState("");
+  // La nota es opcional y casi nadie la usa: vive detrás de una casilla.
+  const [wantsNote, setWantsNote] = useState(false);
   const [dataUrl, setDataUrl] = useState("");
   const [fileName, setFileName] = useState("");
   const [mimeType, setMimeType] = useState("");
@@ -405,6 +407,11 @@ export default function PublicOrderPaymentSection({
   // true = lo electrónico exigible ya está cubierto por comprobantes.
   const reportCovered =
     requiredElectronicUSD <= 0 || pendingElectronicUSD <= 0;
+  // Nombre(s) de la(s) pata(s) electrónica(s) pendiente(s), para los CTAs.
+  const pendingElectronicLabel = (info?.expectedPayments || [])
+    .filter((payment) => !isCashReportedMethod(payment.method))
+    .map((payment) => payment.method)
+    .join(" + ");
   // Reporte de pago MIXTO: más de un método (una captura por cada pata).
   const isMixedReport = payments.length > 1;
 
@@ -614,22 +621,8 @@ export default function PublicOrderPaymentSection({
     }, 0);
   }
 
-  // "Completar": llena el bloque con lo que falta para cubrir lo que
-  // corresponde reportar (el total, o las patas electrónicas en mixto), en la
-  // moneda del método elegido.
-  function completeEntryAmount(index: number) {
-    const requiredUSD = Number(info?.requiredReportUSD ?? 0);
-    const totalUSD = requiredUSD > 0 ? requiredUSD : Number(info?.totalUSD || 0);
-    if (totalUSD <= 0) return;
-
-    const remainingUSD = Math.max(totalUSD - getCoveredUSDExcept(index), 0);
-    const prefilled = buildPrefilledEntry(payments[index]?.method || "", remainingUSD);
-
-    updatePaymentEntry(index, {
-      amountUSD: prefilled.amountUSD,
-      amountVES: prefilled.amountVES,
-    });
-  }
+  // (El botón "Completar lo que falta" se retiró: los montos ya llegan
+  // precargados con la pata exacta — dueño 2026-07-23.)
 
   function updatePaymentEntry(index: number, patch: Partial<PaymentEntry>) {
     setPayments((current) =>
@@ -896,39 +889,28 @@ export default function PublicOrderPaymentSection({
         </p>
       ) : null}
 
-      {/* Falta la parte ELECTRÓNICA del mixto (solo llegó la foto del
-          efectivo): pedirla con nombre y monto, no dar el pago por hecho. */}
-      {!hasConfirmedPayment && hasPendingProof && !reportCovered ? (
-        <p
-          role="alert"
-          className="mt-4 rounded-2xl border-[3px] border-amber-500 bg-amber-500/10 px-4 py-3 text-sm font-black leading-5 text-amber-500"
-        >
-          📸 Recibimos la foto de tu efectivo. Falta la captura o referencia de
-          la parte electrónica
-          {(info?.expectedPayments || []).length
-            ? ` (${(info?.expectedPayments || [])
-                .map((payment) =>
-                  payment.currency === "VES"
-                    ? `${payment.method}: Bs ${formatVES(payment.amount)}`
-                    : `${payment.method}: ${formatUSD(payment.amount)}`,
-                )
-                .join(" + ")})`
-            : ` (~${formatUSD(pendingElectronicUSD)})`}
-          . Repórtala aquí abajo para que tu pedido avance.
-        </p>
-      ) : null}
-
       {/* Con el pago YA reportado COMPLETO y en revisión, los datos para
           pagar y el CTA de reportar sobran: solo se muestra el estado del
           comprobante. Si el negocio pide corrección (o falta una pata),
-          vuelven a aparecer. */}
+          vuelven a aparecer. Con la pata electrónica pendiente (llegó solo la
+          foto del efectivo) la MISMA tarjeta se vuelve el aviso: título
+          "Falta registrar la parte de X", datos SOLO de ese método y el monto
+          de ESA pata — un solo mensaje, sin banner aparte (dueño 2026-07-23). */}
       {!hasConfirmedPayment &&
         (!hasPendingProof || needsCorrection || !reportCovered) &&
         (() => {
-          const filtered = chosenMethods.length
+          const isPartialPending = hasPendingProof && !reportCovered;
+          const electronicLegs = (info?.expectedPayments || []).filter(
+            (payment) => !isCashReportedMethod(payment.method),
+          );
+          const cardMethods = isPartialPending && electronicLegs.length
+            ? electronicLegs.map((payment) => payment.method)
+            : chosenMethods;
+
+          const filtered = cardMethods.length
             ? Object.fromEntries(
                 Object.entries(paymentMethodDetails).filter(([methodName]) =>
-                  chosenMethods.includes(methodName),
+                  cardMethods.includes(methodName),
                 ),
               )
             : paymentMethodDetails;
@@ -939,20 +921,55 @@ export default function PublicOrderPaymentSection({
           if (!Object.keys(visibleDetails).length) return null;
 
           return (
-            <div className="mt-4 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/40 px-4 py-4 text-left">
-              <span className="inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
-                Paso 1
-              </span>
-              <p className="mt-2 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-                Paga con estos datos
-                {chosenMethods.length > 0 && (
-                  <span className="text-[var(--brand-ink-2)]/45">
-                    {" "}
-                    ({chosenMethods.join(" + ")})
-                  </span>
-                )}
+            <div
+              role={isPartialPending ? "alert" : undefined}
+              className={`mt-4 rounded-2xl border-2 px-4 py-4 text-left ${
+                isPartialPending
+                  ? "border-amber-500 bg-amber-500/10"
+                  : "border-[var(--brand-border)] bg-[var(--brand-cream)]/40"
+              }`}
+            >
+              {!isPartialPending ? (
+                <span className="inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
+                  Paso 1
+                </span>
+              ) : null}
+              <p
+                className={`text-sm font-black uppercase tracking-[0.12em] ${
+                  isPartialPending
+                    ? "text-amber-500"
+                    : "mt-2 text-[var(--brand-primary)]"
+                }`}
+              >
+                {isPartialPending
+                  ? `📸 Foto recibida · falta registrar la parte de ${
+                      electronicLegs.map((payment) => payment.method).join(" + ") ||
+                      "tu pago electrónico"
+                    }`
+                  : (
+                    <>
+                      Paga con estos datos
+                      {chosenMethods.length > 0 && (
+                        <span className="text-[var(--brand-ink-2)]/45">
+                          {" "}
+                          ({chosenMethods.join(" + ")})
+                        </span>
+                      )}
+                    </>
+                  )}
               </p>
-              {(info?.totalUSD ?? 0) > 0 ? (
+              {isPartialPending && electronicLegs.length ? (
+                <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/85">
+                  Monto a reportar:{" "}
+                  {electronicLegs
+                    .map((payment) =>
+                      payment.currency === "VES"
+                        ? `Bs ${formatVES(payment.amount)}`
+                        : formatUSD(payment.amount),
+                    )
+                    .join(" + ")}
+                </p>
+              ) : !isPartialPending && (info?.totalUSD ?? 0) > 0 ? (
                 <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/75">
                   Total a pagar:{" "}
                   {formatChosenTotal(
@@ -1026,7 +1043,10 @@ export default function PublicOrderPaymentSection({
           <p className="mt-3 rounded-2xl border-2 border-green-600 bg-green-600/15 px-4 py-3 text-sm font-black leading-5 text-green-400">
             {successMessage}
           </p>
-          {showTrackingLink ? (
+          {/* "Ver el avance" SOLO con el reporte completo: si falta la pata
+              electrónica, el botón que sigue es el de reportarla (abajo) —
+              mandarlo al seguimiento aquí confundía (dueño 2026-07-23). */}
+          {showTrackingLink && reportCovered ? (
             <a
               href={`/pedido/${orderId}`}
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3.5 text-xs font-black uppercase tracking-[0.12em] text-black transition hover:opacity-90"
@@ -1038,7 +1058,9 @@ export default function PublicOrderPaymentSection({
         </>
       )}
 
-      {!hasConfirmedPayment && !isFormOpen && (!hasPendingProof || !reportCovered) ? (
+      {/* El chip "Paso 2" solo en el flujo fresco: con la pata pendiente ya
+          hay un solo mensaje + un solo botón (sin numerar pasos de más). */}
+      {!hasConfirmedPayment && !isFormOpen && !hasPendingProof ? (
         <span className="mt-4 inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
           Paso 2
         </span>
@@ -1076,7 +1098,7 @@ export default function PublicOrderPaymentSection({
             {needsCorrection
               ? "Enviar otro comprobante"
               : hasPendingProof && !reportCovered
-                ? "Reportar la parte electrónica"
+                ? `Reportar la parte de ${pendingElectronicLabel || "mi pago"}`
                 : "Reportar mi pago"}
           </button>
         )
@@ -1103,7 +1125,9 @@ export default function PublicOrderPaymentSection({
             >
               <div className="flex items-center justify-between gap-2">
                 <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-                  {payments.length > 1 ? `Método ${index + 1}` : "¿Cómo pagaste?"}
+                  {payments.length > 1
+                    ? `Método ${index + 1}`
+                    : "Indicaste que ibas a pagar con este método"}
                 </label>
                 {payments.length > 1 && (
                   <button
@@ -1194,16 +1218,9 @@ export default function PublicOrderPaymentSection({
                 );
               })()}
 
-              {(info?.totalUSD ?? 0) > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => completeEntryAmount(index)}
-                  className="mt-2 inline-flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)]/50 px-3.5 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-primary)]/10"
-                >
-                  <CheckCircle2 size={13} />
-                  Completar lo que falta
-                </button>
-              ) : null}
+              {/* El botón "Completar lo que falta" se retiró: el monto ya
+                  viene precargado con la pata exacta y no se puede pagar
+                  menos — era un botón de más (dueño 2026-07-23). */}
             </div>
           ))}
 
@@ -1273,16 +1290,31 @@ export default function PublicOrderPaymentSection({
             </div>
           ) : null}
 
+          {/* La nota vive detrás de una casilla (mismo patrón que el punto de
+              referencia del delivery): menos campos a la vista. */}
           <div>
-            <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-              Nota (opcional)
+            <label className="flex cursor-pointer items-center gap-2.5">
+              <input
+                type="checkbox"
+                checked={wantsNote}
+                onChange={(event) => {
+                  setWantsNote(event.target.checked);
+                  if (!event.target.checked) setCustomerNote("");
+                }}
+                className="h-5 w-5 shrink-0 accent-[var(--brand-primary)]"
+              />
+              <span className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                Agregar una nota
+              </span>
             </label>
-            <input
-              value={customerNote}
-              onChange={(event) => setCustomerNote(event.target.value)}
-              placeholder="Ejemplo: pagó mi mamá desde su cuenta"
-              className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
-            />
+            {wantsNote ? (
+              <input
+                value={customerNote}
+                onChange={(event) => setCustomerNote(event.target.value)}
+                placeholder="Ejemplo: pagó mi mamá desde su cuenta"
+                className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
+              />
+            ) : null}
           </div>
 
           {formError && (

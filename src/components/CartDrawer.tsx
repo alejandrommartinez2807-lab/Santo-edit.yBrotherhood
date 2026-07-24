@@ -1772,13 +1772,23 @@ export default function CartDrawer({
           </span>
         </p>
 
-        <div className="mt-2 flex flex-wrap gap-2">
+        {/* En divisas son 5 billetes fijos: una sola fila pareja (el de $100
+            se caía abajo). En Bs los montos son largos y variables: fluyen. */}
+        <div
+          className={`mt-2 ${
+            cashIsVes ? "flex flex-wrap gap-2" : "grid grid-cols-5 gap-1.5"
+          }`}
+        >
           {quickBills.map((bill) => (
             <button
               key={bill}
               type="button"
               onClick={() => setCashGivenAmount(String(bill))}
-              className={`rounded-full border-2 px-3.5 py-2 text-[0.68rem] font-black uppercase tracking-[0.06em] shadow-sm transition active:scale-95 ${
+              className={`min-w-0 rounded-full border-2 py-2 text-center font-black shadow-sm transition active:scale-95 ${
+                cashIsVes
+                  ? "px-3.5 text-[0.68rem] uppercase tracking-[0.06em]"
+                  : "px-1 text-[0.66rem] tracking-[0.02em]"
+              } ${
                 normalizeFormMoney(cashGivenAmount) === bill
                   ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
                   : "border-[var(--brand-primary)] bg-white text-[#1a1a1a]"
@@ -1957,7 +1967,9 @@ export default function CartDrawer({
                 ¿Con qué billete pagas esa parte?{" "}
                 <span className="text-[var(--brand-ink-2)]/50">(opcional)</span>
               </p>
-              <div className="mt-1.5 flex flex-wrap gap-2">
+              {/* Una sola fila de 5 iguales: el de $100 se caía a una segunda
+                  línea (reporte del dueño 2026-07-23). */}
+              <div className="mt-1.5 grid grid-cols-5 gap-1.5">
                 {[5, 10, 20, 50, 100].map((bill) => (
                   <button
                     key={bill}
@@ -1978,7 +1990,7 @@ export default function CartDrawer({
                         if (cap > 0) setMixedUsdAmount(String(cap));
                       }
                     }}
-                    className={`rounded-full border-2 px-3.5 py-2 text-[0.68rem] font-black uppercase tracking-[0.06em] shadow-sm transition active:scale-95 ${
+                    className={`min-w-0 rounded-full border-2 px-1 py-2 text-center text-[0.66rem] font-black tracking-[0.02em] shadow-sm transition active:scale-95 ${
                       normalizeFormMoney(mixedUsdGivenAmount) === bill
                         ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
                         : "border-[var(--brand-primary)] bg-white text-[#1a1a1a]"
@@ -3339,6 +3351,9 @@ export default function CartDrawer({
                     />
                   )}
 
+                  {/* Con el reporte a medias NO puede decir "¡Pedido enviado!"
+                      arriba: la gente lee eso y se va sin subir la otra parte
+                      (dueño 2026-07-23). */}
                   <p className="mt-5 text-sm font-black uppercase tracking-[0.24em] text-[var(--brand-primary)]">
                     {lastOrderCancelled
                       ? "Pedido cancelado"
@@ -3346,7 +3361,9 @@ export default function CartDrawer({
                         ? "Agregado a la cuenta"
                         : lastOrderPaymentPending
                           ? "Pedido sin pagar"
-                          : "¡Pedido enviado!"}
+                          : lastOrderReportIncomplete
+                            ? "⚠️ Te falta un paso"
+                            : "¡Pedido enviado!"}
                   </p>
 
                   <h4 className="mt-2 text-3xl font-black text-[var(--brand-ink-3)]">
