@@ -150,6 +150,7 @@ export default function PublicOrderPaymentSection({
   forceOpenSignal = 0,
   proofsEnabled,
   onReported,
+  showTrackingLink = false,
 }: {
   orderId: string;
   // Abre el formulario de reporte de una vez (confirmación con pago
@@ -170,6 +171,11 @@ export default function PublicOrderPaymentSection({
   // Avisa al contenedor cuando el pago quedó reportado (la confirmación
   // apaga su advertencia grande).
   onReported?: () => void;
+  // Tras enviar el reporte, ofrecer ir al seguimiento /pedido/<id> (lo usa la
+  // confirmación del carrito: mucha gente cierra la pantalla después de
+  // reportar y perdía el link del avance — dueño 2026-07-23). La página de
+  // seguimiento no lo pasa porque ya ES esa página.
+  showTrackingLink?: boolean;
 }) {
   usePublicCurrencySymbol();
   const [info, setInfo] = useState<OrderPaymentInfo | null>(null);
@@ -1014,9 +1020,20 @@ export default function PublicOrderPaymentSection({
       ) : null}
 
       {successMessage && (
-        <p className="mt-3 rounded-2xl border-2 border-green-600 bg-green-600/15 px-4 py-3 text-sm font-black leading-5 text-green-400">
-          {successMessage}
-        </p>
+        <>
+          <p className="mt-3 rounded-2xl border-2 border-green-600 bg-green-600/15 px-4 py-3 text-sm font-black leading-5 text-green-400">
+            {successMessage}
+          </p>
+          {showTrackingLink ? (
+            <a
+              href={`/pedido/${orderId}`}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3.5 text-xs font-black uppercase tracking-[0.12em] text-black transition hover:opacity-90"
+            >
+              <CheckCircle2 size={16} />
+              Ver el avance de mi pedido
+            </a>
+          ) : null}
+        </>
       )}
 
       {!hasConfirmedPayment && !isFormOpen && (!hasPendingProof || !reportCovered) ? (
@@ -1027,8 +1044,10 @@ export default function PublicOrderPaymentSection({
 
       {!hasConfirmedPayment && !isFormOpen ? (
         hasPendingProof && !needsCorrection && reportCovered ? (
+          requiredElectronicUSD <= 0 ? null : (
           // Reportado y en revisión: nada que hacer. Solo un enlace discreto
-          // por si adjuntó la captura equivocada.
+          // por si adjuntó la captura equivocada. En efectivo PURO ni eso:
+          // no hay captura electrónica que corregir (dueño 2026-07-23).
           <button
             type="button"
             onClick={() => {
@@ -1040,6 +1059,7 @@ export default function PublicOrderPaymentSection({
           >
             ¿Enviaste la captura equivocada? Reportar de nuevo
           </button>
+          )
         ) : (
           <button
             type="button"

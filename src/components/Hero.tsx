@@ -325,25 +325,9 @@ export default function Hero() {
           </a>
         </div>
 
-        {/* Garantías */}
-        <div className="mt-10 grid w-full max-w-md grid-cols-3 gap-3">
-          {guarantees.map(({ icon: Icon, top, bottom }) => (
-            <div
-              key={top}
-              className="flex flex-col items-center gap-2 rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface)] px-2 py-4 transition hover:border-[rgba(var(--brand-primary-rgb),0.5)]"
-            >
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(var(--brand-primary-rgb),0.12)] text-[var(--brand-primary)]">
-                <Icon size={20} />
-              </span>
-              <span className="text-[0.7rem] font-bold uppercase tracking-wide text-[var(--brand-ink-3)]">
-                {top}
-              </span>
-              <span className="-mt-1.5 text-[0.6rem] uppercase tracking-wide text-[var(--brand-ink-2)]">
-                {bottom}
-              </span>
-            </div>
-          ))}
-        </div>
+        {/* Las tarjetas de garantías (Carne/Queso/Pan) se retiraron a pedido
+            del dueño (2026-07-23): esos textos siguen SOLO en la cinta en
+            movimiento de abajo (marqueeItems). */}
       </div>
 
       {/* Cinta en movimiento con lo esencial de la marca */}

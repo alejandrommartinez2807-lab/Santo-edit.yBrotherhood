@@ -73,6 +73,9 @@ export const SIMPLE_BUSINESS_CONFIG_FIELDS: readonly SimpleConfigField[] = [
   // el dueño decide si se muestran y puede escribir su propio texto de
   // "paga antes de que tu pedido se procese".
   { key: "publicOrderStepsEnabled", type: "boolean", default: true },
+  // Textos de AYUDA del checkout (tips de GPS, notas aclaratorias): el dueño
+  // los apaga si le estorban. NO toca errores de validación ni avisos de pago.
+  { key: "publicCheckoutHintsEnabled", type: "boolean", default: true },
   { key: "publicPrepayNoticeEnabled", type: "boolean", default: true },
   { key: "publicPrepayNoticeText", type: "string", default: "" },
   { key: "publicOpenAccountHintHighlighted", type: "boolean", default: true },

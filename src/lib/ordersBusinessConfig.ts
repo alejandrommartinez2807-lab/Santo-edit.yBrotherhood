@@ -159,6 +159,8 @@ export type BusinessConfig = {
   payablesReminderDaysBefore: number
   // Guía paso a paso y advertencias del checkout público (configurables).
   publicOrderStepsEnabled: boolean
+  // Textos de ayuda del checkout (tips, notas aclaratorias): apagables.
+  publicCheckoutHintsEnabled: boolean
   publicPrepayNoticeEnabled: boolean
   publicPrepayNoticeText: string
   publicOpenAccountHintHighlighted: boolean
@@ -337,6 +339,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   payablesReminderPushEnabled: true,
   payablesReminderDaysBefore: 3,
   publicOrderStepsEnabled: true,
+  publicCheckoutHintsEnabled: true,
   publicPrepayNoticeEnabled: true,
   publicPrepayNoticeText: "",
   publicOpenAccountHintHighlighted: true,
@@ -800,6 +803,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       }
       return Math.min(60, Math.max(0, Math.round(days)))
     })(),
+    publicCheckoutHintsEnabled: normalizeBooleanConfig(
+      source.publicCheckoutHintsEnabled,
+      DEFAULT_BUSINESS_CONFIG.publicCheckoutHintsEnabled
+    ),
     publicOrderStepsEnabled: normalizeBooleanConfig(
       source.publicOrderStepsEnabled,
       DEFAULT_BUSINESS_CONFIG.publicOrderStepsEnabled

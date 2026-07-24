@@ -117,6 +117,8 @@ export type PublicBusinessConfig = {
   orderHelpWhatsappEnabled: boolean;
   // Guía paso a paso del checkout (qué botones tocar y qué sigue), apagable.
   publicOrderStepsEnabled: boolean;
+  // Textos de ayuda del checkout (tips/notas aclaratorias): apagables.
+  publicCheckoutHintsEnabled: boolean;
   // Advertencia visible "paga antes de que tu pedido se procese" en
   // delivery/pick up. Texto editable por el dueño (vacío = texto estándar).
   publicPrepayNoticeEnabled: boolean;

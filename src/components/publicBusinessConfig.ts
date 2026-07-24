@@ -63,6 +63,7 @@ export const DEFAULT_PUBLIC_CONFIG: PublicBusinessConfig = {
   deliveryWhatsapp: "",
   orderHelpWhatsappEnabled: true,
   publicOrderStepsEnabled: true,
+  publicCheckoutHintsEnabled: true,
   publicPrepayNoticeEnabled: true,
   publicPrepayNoticeText: "",
   publicOpenAccountHintHighlighted: true,
@@ -542,6 +543,10 @@ export function normalizePublicBusinessConfig(value: unknown): PublicBusinessCon
     ),
     publicOrderStepsEnabled: normalizePublicBoolean(
       businessConfig.publicOrderStepsEnabled,
+      true,
+    ),
+    publicCheckoutHintsEnabled: normalizePublicBoolean(
+      businessConfig.publicCheckoutHintsEnabled,
       true,
     ),
     publicPrepayNoticeEnabled: normalizePublicBoolean(

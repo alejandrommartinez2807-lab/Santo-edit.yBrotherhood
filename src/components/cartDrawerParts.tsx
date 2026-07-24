@@ -425,7 +425,9 @@ export function CartSummaryFooter({
           <div className="mt-1.5 space-y-1.5">
             <p className="text-sm font-black leading-tight text-[var(--brand-ink-3)]">
               Tienes que pagar esta cantidad en bolívares:
-              <span className="mt-0.5 block text-2xl font-black leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+              {/* Sin la sombra dura de 3px: hacía ver el número "doble" y
+                  raro (reporte del dueño 2026-07-23). El color se queda. */}
+              <span className="mt-0.5 block text-2xl font-black leading-none text-[var(--brand-primary)]">
                 Bs {formatVES(totalVES)}
               </span>
             </p>
@@ -439,7 +441,7 @@ export function CartSummaryFooter({
         ) : (
           <p className="mt-1.5 text-sm font-black leading-tight text-[var(--brand-ink-3)]">
             Tienes que pagar:
-            <span className="mt-0.5 block text-2xl font-black leading-none text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+            <span className="mt-0.5 block text-2xl font-black leading-none text-[var(--brand-primary)]">
               {formatUSD(totalUSD)}
             </span>
           </p>

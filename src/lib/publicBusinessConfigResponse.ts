@@ -379,6 +379,7 @@ export function buildPublicBusinessConfigResponse(
     postSaleSurveyMessage: cleanText(config.postSaleSurveyMessage),
     // Guía y advertencias del checkout público (configurables por el dueño).
     publicOrderStepsEnabled: config.publicOrderStepsEnabled !== false,
+    publicCheckoutHintsEnabled: config.publicCheckoutHintsEnabled !== false,
     publicPrepayNoticeEnabled: config.publicPrepayNoticeEnabled !== false,
     publicPrepayNoticeText: cleanText(config.publicPrepayNoticeText),
     publicOpenAccountHintHighlighted: config.publicOpenAccountHintHighlighted !== false,

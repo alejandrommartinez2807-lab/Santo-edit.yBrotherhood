@@ -1053,7 +1053,7 @@ export default function ProductCard({
                           </span>
                         ) : null}
                       </div>
-                      <div className="grid gap-2 sm:grid-cols-2">
+                      <div className="grid grid-cols-2 gap-2">
                         {!group.required && !group.multiple ? (
                           <ChoiceButton
                             label="Base"
@@ -1097,7 +1097,7 @@ export default function ProductCard({
                         Sin costo extra
                       </span>
                     </div>
-                    <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="grid grid-cols-2 gap-2">
                       {includedAddons.map((option) => {
                         const selected = selectedAddonKeys.includes(option.key);
                         const quantity = getAddonQuantity(option.key);
@@ -1139,7 +1139,7 @@ export default function ProductCard({
                         </p>
                       </div>
                     </div>
-                    <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="grid grid-cols-2 gap-2">
                       {paidAddons.map((option) => {
                         const selected = selectedAddonKeys.includes(option.key);
                         const quantity = getAddonQuantity(option.key);
@@ -1173,7 +1173,7 @@ export default function ProductCard({
                     <p className="mb-3 text-sm font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
                       Ingredientes que puedes quitar
                     </p>
-                    <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="grid grid-cols-2 gap-2">
                       {selectableRemovableIngredients.map((option) => (
                         <ChoiceButton
                           key={option.key}

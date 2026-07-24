@@ -187,6 +187,7 @@ type BusinessConfig = {
   payablesReminderDaysBefore: number;
   // Guía paso a paso y advertencias del checkout público.
   publicOrderStepsEnabled: boolean;
+  publicCheckoutHintsEnabled: boolean;
   publicPrepayNoticeEnabled: boolean;
   publicPrepayNoticeText: string;
   publicOpenAccountHintHighlighted: boolean;
@@ -373,6 +374,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   payablesReminderPushEnabled: true,
   payablesReminderDaysBefore: 3,
   publicOrderStepsEnabled: true,
+  publicCheckoutHintsEnabled: true,
   publicPrepayNoticeEnabled: true,
   publicPrepayNoticeText: "",
   publicOpenAccountHintHighlighted: true,
@@ -1125,6 +1127,10 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     publicOrderStepsEnabled: normalizeBoolean(
       source.publicOrderStepsEnabled,
       DEFAULT_BUSINESS_CONFIG.publicOrderStepsEnabled,
+    ),
+    publicCheckoutHintsEnabled: normalizeBoolean(
+      source.publicCheckoutHintsEnabled,
+      DEFAULT_BUSINESS_CONFIG.publicCheckoutHintsEnabled,
     ),
     publicPrepayNoticeEnabled: normalizeBoolean(
       source.publicPrepayNoticeEnabled,
@@ -3103,6 +3109,30 @@ export default function BusinessConfigPage() {
                     Lista numerada al inicio del checkout que le dice al
                     cliente qué botón tocar y qué sigue, según sea mesa, pick
                     up o delivery.
+                  </span>
+                </span>
+              </label>
+
+              <label className="mt-3 flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={businessConfig.publicCheckoutHintsEnabled}
+                  onChange={(e) =>
+                    setBusinessConfig((c) => ({
+                      ...c,
+                      publicCheckoutHintsEnabled: e.target.checked,
+                    }))
+                  }
+                  className="mt-0.5 h-5 w-5 accent-[var(--brand-primary)]"
+                />
+                <span>
+                  <span className="block text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
+                    Textos de ayuda del checkout
+                  </span>
+                  <span className="mt-0.5 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                    Tips y notas aclaratorias al llenar los datos (consejos de
+                    ubicación/GPS, explicaciones cortas). Apagarlo NO quita los
+                    errores de validación ni los avisos de pago.
                   </span>
                 </span>
               </label>

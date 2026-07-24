@@ -1954,7 +1954,8 @@ export default function CartDrawer({
           {mixedUsdMethod.toLowerCase().includes("efectivo") ? (
             <div className="mt-2">
               <p className="text-[0.68rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-3)]">
-                ¿Con qué billete pagas esa parte?
+                ¿Con qué billete pagas esa parte?{" "}
+                <span className="text-[var(--brand-ink-2)]/50">(opcional)</span>
               </p>
               <div className="mt-1.5 flex flex-wrap gap-2">
                 {[5, 10, 20, 50, 100].map((bill) => (
@@ -1962,13 +1963,20 @@ export default function CartDrawer({
                     key={bill}
                     type="button"
                     // Registra CON QUÉ billete paga. Si aún no escribió cuánto
-                    // de la pata va en efectivo, se completa solo con lo que
-                    // falta del total (editable) — antes tenía que descifrar
-                    // dos números aparte y confundía (dueño 2026-07-23). Con
-                    // un monto ya escrito NO se pisa (reclamo previo).
+                    // de la pata va en efectivo, se propone EL BILLETE como
+                    // tope (no todo lo que falta: eso comía el reparto con la
+                    // otra pata — bug reportado 2026-07-23 v2). Tocas $20 en
+                    // un pedido de $24.50 → efectivo $20 y quedan $4.50 para
+                    // la otra pata. Con un monto ya escrito NO se pisa.
                     onClick={() => {
                       setMixedUsdGivenAmount(String(bill));
-                      if (mixedUsdValue <= 0) completeMixedUsdAmount();
+                      if (mixedUsdValue <= 0) {
+                        const cap =
+                          Math.round(
+                            Math.min(bill, Math.max(missingUSD, 0)) * 100,
+                          ) / 100;
+                        if (cap > 0) setMixedUsdAmount(String(cap));
+                      }
                     }}
                     className={`rounded-full border-2 px-3.5 py-2 text-[0.68rem] font-black uppercase tracking-[0.06em] shadow-sm transition active:scale-95 ${
                       normalizeFormMoney(mixedUsdGivenAmount) === bill
@@ -1980,6 +1988,15 @@ export default function CartDrawer({
                   </button>
                 ))}
               </div>
+              {/* Varios billetes (ej: 2 de $10): se escribe el monto total
+                  con el que paga, sin flujos extra (dueño 2026-07-23). */}
+              <input
+                inputMode="decimal"
+                value={mixedUsdGivenAmount}
+                onChange={(event) => setMixedUsdGivenAmount(event.target.value)}
+                placeholder="O escribe con cuánto pagas (ej: 20 si son 2 de $10)"
+                className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
+              />
               {(() => {
                 const given = normalizeFormMoney(mixedUsdGivenAmount);
                 if (given <= 0 || mixedUsdValue <= 0) return null;
@@ -3567,6 +3584,7 @@ export default function CartDrawer({
                       autoOpenForm={lastOrderPaymentPending && !lastOrderUsedCheckoutProof}
                       forceOpenSignal={openReportSignal}
                       proofsEnabled={isPaymentProofPublicAvailable}
+                      showTrackingLink
                       onReported={() => {
                         setLastOrderProofReported(true);
                         setShowPostRegisterPaymentModal(false);
@@ -3992,10 +4010,12 @@ export default function CartDrawer({
                             <span className="block text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
                               ¿A dónde te lo llevamos?
                             </span>
-                            <span className="mt-0.5 block text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
-                              Con tu ubicación calculamos el costo exacto del
-                              envío
-                            </span>
+                            {publicConfig.publicCheckoutHintsEnabled !== false ? (
+                              <span className="mt-0.5 block text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
+                                Con tu ubicación calculamos el costo exacto del
+                                envío
+                              </span>
+                            ) : null}
                           </span>
                         </div>
 
@@ -4084,7 +4104,9 @@ export default function CartDrawer({
                             </p>
                           )}
 
-                          {!distanceQuote &&
+                          {/* Texto de ayuda (apagable en Configuración). */}
+                          {publicConfig.publicCheckoutHintsEnabled !== false &&
+                            !distanceQuote &&
                             !distanceQuoteError &&
                             distanceMaxKm > 0 && (
                               <p className="mt-2 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
