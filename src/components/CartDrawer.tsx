@@ -2680,7 +2680,9 @@ export default function CartDrawer({
         !attachedToOpenAccount &&
         (orderType === "Para llevar" || orderType === "Delivery") &&
         publicConfig.publicPrepayNoticeEnabled &&
-        isPaymentProofPublicAvailable;
+        isPaymentProofPublicAvailable &&
+        // Solo electrónicos (pago móvil, Zelle, transferencia…); en efectivo no.
+        selectedPaymentMethods.some(isElectronicPaymentMethod);
 
       setLastOrderProofReported(false);
       const usedCheckoutProof = requiresProofBeforeRegister && hasCheckoutProof;
@@ -2947,6 +2949,9 @@ export default function CartDrawer({
     !lastOrderCancelled &&
     !lastCreatedOrder?.offline &&
     isPaymentProofPublicAvailable &&
+    // Solo métodos ELECTRÓNICOS piden reporte de pago: en efectivo se paga al
+    // recibir/retirar, así que no debe salir "Falta tu pago / reporta captura".
+    (lastCreatedOrder?.paymentMethods || []).some(isElectronicPaymentMethod) &&
     (publicConfig.publicPrepayNoticeEnabled ||
       publicConfig.publicPaymentBeforeRegisterEnabled) &&
     (lastCreatedOrder?.orderType === "Para llevar" ||
