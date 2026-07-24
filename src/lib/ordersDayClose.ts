@@ -454,9 +454,16 @@ export async function saveDayExpense(input: SaveDayExpenseInput, branchId?: stri
   return expense
 }
 
-export async function deleteDayExpense(expenseId: string) {
+export async function deleteDayExpense(
+  expenseId: string,
+  branchId?: string | null,
+) {
   const supabase = getSupabaseAdmin()
-  const { error } = await supabase.from("day_expenses").delete().eq("id", cleanText(expenseId))
+  let query = supabase.from("day_expenses").delete().eq("id", cleanText(expenseId))
+  // Guard de sede (auditoría R4): sin esto un manager podía borrar un gasto de
+  // otra sede si conocía el id. saveDayExpense/getDayExpenses ya acotaban.
+  if (branchId) query = query.eq("branch_id", branchId)
+  const { error } = await query
 
   if (error) {
     throw new Error(error.message || "No se pudo eliminar el gasto del día")

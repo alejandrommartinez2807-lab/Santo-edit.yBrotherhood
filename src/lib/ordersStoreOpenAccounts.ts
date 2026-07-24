@@ -147,7 +147,11 @@ export async function recomputeOpenAccountTotals(
   branchId?: string | null,
 ): Promise<void> {
   const supabase = getSupabaseAdmin()
-  const orders = await loadAccountOrderSummaries(accountId, branchId)
+  // Los pedidos CANCELADOS no cuentan en el total de la cuenta (antes inflaban
+  // total_estimated/pending y bloqueaban el auto-cierre) — auditoría R3.
+  const orders = (await loadAccountOrderSummaries(accountId, branchId)).filter(
+    (o) => o.status !== "Cancelado",
+  )
   const totalEstimated = roundMoney(orders.reduce((s, o) => s + o.totalUSD, 0))
   const totalCollected = roundMoney(orders.reduce((s, o) => s + o.receivedEquivalentUSD, 0))
   const pending = roundMoney(Math.max(totalEstimated - totalCollected, 0))

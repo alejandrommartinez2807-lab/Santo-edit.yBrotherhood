@@ -357,7 +357,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    await deleteDayExpense(expenseId)
+    await deleteDayExpense(expenseId, await resolveBranchId(request))
 
     return NextResponse.json({
       ok: true,
