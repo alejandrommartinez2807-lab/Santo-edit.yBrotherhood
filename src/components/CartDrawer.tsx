@@ -228,7 +228,7 @@ function PublicOpenAccountPanel({
 
   return (
     <div
-      className={`${compact ? "mt-4" : "mt-3"} rounded-[1.25rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3`}
+      className={`${compact ? "mt-4" : "mt-3"} rounded-[1.25rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3`}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -1598,7 +1598,7 @@ export default function CartDrawer({
     if (!(isDeliveryOrder || isTakeawayOrder)) return null;
 
     return (
-      <p className="mt-2 rounded-xl border-2 border-amber-500/60 bg-amber-500/10 px-3 py-2 text-[0.72rem] font-black leading-4 text-amber-800">
+      <p className="mt-2 rounded-xl border border-amber-500/60 bg-amber-500/10 px-3 py-2 text-[0.72rem] font-black leading-4 text-amber-800">
         📸 Con efectivo en divisas tendrás que adjuntar una foto de los
         billetes al registrar tu pedido.
       </p>
@@ -1654,7 +1654,7 @@ export default function CartDrawer({
           pedido (así lo configuró el negocio).
         </p>
 
-        <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-amber-500/70 bg-white px-4 py-4 text-sm font-bold text-amber-900/80 transition hover:border-amber-600">
+        <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-amber-500/70 bg-white px-4 py-4 text-sm font-bold text-amber-900/80 transition hover:border-amber-600">
           <ImagePlus size={17} />
           {checkoutProofFileName || "Toca para adjuntar la captura"}
           <input
@@ -1672,7 +1672,7 @@ export default function CartDrawer({
           onChange={(event) => setCheckoutProofReference(event.target.value)}
           inputMode="numeric"
           placeholder="O escribe la referencia completa (todos los dígitos)"
-          className="mt-2 w-full rounded-2xl border-2 border-amber-500/50 bg-white px-4 py-3 text-sm font-bold text-amber-950 outline-none placeholder:text-amber-900/40 focus:border-amber-600"
+          className="mt-2 w-full rounded-2xl border border-amber-500/50 bg-white px-4 py-3 text-sm font-bold text-amber-950 outline-none placeholder:text-amber-900/40 focus:border-amber-600"
         />
 
         {checkoutProofError ? (
@@ -1714,7 +1714,7 @@ export default function CartDrawer({
           negocio). El efectivo lo entregas al retirar o recibir.
         </p>
 
-        <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-amber-500/70 bg-white px-4 py-4 text-sm font-bold text-amber-900/80 transition hover:border-amber-600">
+        <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-amber-500/70 bg-white px-4 py-4 text-sm font-bold text-amber-900/80 transition hover:border-amber-600">
           <ImagePlus size={17} />
           {divisaPhotoFileName || "Toca para adjuntar la foto de los billetes"}
           <input
@@ -1763,7 +1763,7 @@ export default function CartDrawer({
       : [5, 10, 20, 50, 100];
 
     return (
-      <div className="rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] px-4 py-4">
+      <div className="rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] px-4 py-4">
         <p className="text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
           ¿Con cuánto vas a pagar?
         </p>
@@ -1788,7 +1788,7 @@ export default function CartDrawer({
               key={bill}
               type="button"
               onClick={() => setCashGivenAmount(String(bill))}
-              className={`min-w-0 rounded-full border-2 py-2 text-center font-black shadow-sm transition active:scale-95 ${
+              className={`min-w-0 rounded-full border py-2 text-center font-black shadow-sm transition active:scale-95 ${
                 cashIsVes
                   ? "px-3.5 text-[0.68rem] uppercase tracking-[0.06em]"
                   : "px-1 text-[0.66rem] tracking-[0.02em]"
@@ -1813,7 +1813,7 @@ export default function CartDrawer({
           placeholder={
             cashIsVes ? "Escribe el monto en Bs" : "Escribe el monto en $"
           }
-          className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-base font-black text-[#1a1a1a] outline-none placeholder:font-bold placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary-dark)]"
+          className="mt-1.5 w-full rounded-2xl border border-[var(--brand-primary)] bg-white px-4 py-3 text-base font-black text-[#1a1a1a] outline-none placeholder:font-bold placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary-dark)]"
         />
         {(() => {
           if (cashGivenValue <= 0) return null;
@@ -1822,7 +1822,7 @@ export default function CartDrawer({
 
           if (change < 0) {
             return (
-              <p className="mt-2 rounded-xl border-2 border-red-500 bg-white px-3 py-2 text-[0.72rem] font-black leading-4 text-red-600">
+              <p className="mt-2 rounded-xl border border-red-500 bg-white px-3 py-2 text-[0.72rem] font-black leading-4 text-red-600">
                 Ese monto no cubre el total: faltan{" "}
                 {cashIsVes
                   ? `Bs ${formatVES(Math.abs(change))}`
@@ -1833,7 +1833,7 @@ export default function CartDrawer({
           }
 
           return (
-            <p className="mt-2 rounded-xl border-2 border-[var(--brand-primary)]/50 bg-white px-3 py-2 text-[0.72rem] font-black leading-4 text-[#1a1a1a]">
+            <p className="mt-2 rounded-xl border border-[var(--brand-primary)]/50 bg-white px-3 py-2 text-[0.72rem] font-black leading-4 text-[#1a1a1a]">
               {change > 0
                 ? `Tu vuelto será ${cashIsVes ? `Bs ${formatVES(change)}` : formatUSD(change)}.`
                 : "Pago exacto: sin vuelto."}
@@ -1869,7 +1869,7 @@ export default function CartDrawer({
     return (
       <div
         id="checkout-pago-mixto"
-        className={`rounded-2xl border-2 bg-[var(--brand-cream)] px-4 py-4 ${
+        className={`rounded-2xl border bg-[var(--brand-cream)] px-4 py-4 ${
           validationAlert && mixedMissingParts.length > 0
             ? "border-red-500"
             : "border-[var(--brand-primary)]/50"
@@ -1881,14 +1881,14 @@ export default function CartDrawer({
         {/* Tras tocar "Registrar" con el mixto a medias, el error aparece
             AQUÍ MISMO (además del aviso del botón) y dice qué falta. */}
         {validationAlert && mixedMissingParts.length > 0 ? (
-          <p className="mt-2 rounded-xl border-2 border-red-500 bg-red-500/10 px-3 py-2 text-[0.78rem] font-black leading-5 text-red-500">
+          <p className="mt-2 rounded-xl border border-red-500 bg-red-500/10 px-3 py-2 text-[0.78rem] font-black leading-5 text-red-500">
             ⚠️ Para el pago mixto te falta: {mixedMissingParts.join(", ")}.
           </p>
         ) : null}
         {/* Texto OSCURO fijo: los tokens --brand-ink* son claros (tema
             oscuro) y sobre bg-white quedaban invisibles (reclamo del dueño,
             varias veces: esta casilla se veía en blanco). */}
-        <div className="mt-2 rounded-2xl border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-2.5 text-center">
+        <div className="mt-2 rounded-2xl border border-[var(--brand-primary)]/30 bg-white px-3 py-2.5 text-center">
           <p className="text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#1a1a1a]/60">
             Total a repartir
           </p>
@@ -1909,7 +1909,7 @@ export default function CartDrawer({
           <select
             value={mixedBsMethod}
             onChange={(event) => setMixedBsMethod(event.target.value)}
-            className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
+            className="mt-1.5 w-full rounded-2xl border border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
           >
             <option value="">Método para los bolívares…</option>
             {availablePaymentMethods
@@ -1926,12 +1926,12 @@ export default function CartDrawer({
               value={mixedBsAmount}
               onChange={(event) => setMixedBsAmount(event.target.value)}
               placeholder="Monto en Bs"
-              className="min-w-0 flex-1 rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
+              className="min-w-0 flex-1 rounded-2xl border border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
             />
             <button
               type="button"
               onClick={completeMixedBsAmount}
-              className="shrink-0 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3.5 py-2 text-[0.64rem] font-black uppercase tracking-[0.08em] text-black transition active:scale-95"
+              className="shrink-0 rounded-2xl border border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3.5 py-2 text-[0.64rem] font-black uppercase tracking-[0.08em] text-black transition active:scale-95"
             >
               Completar lo que falta
             </button>
@@ -1948,7 +1948,7 @@ export default function CartDrawer({
           <select
             value={mixedUsdMethod}
             onChange={(event) => setMixedUsdMethod(event.target.value)}
-            className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
+            className="mt-1.5 w-full rounded-2xl border border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none focus:border-[var(--brand-primary)]"
           >
             <option value="">Método para las divisas…</option>
             {availablePaymentMethods
@@ -1994,7 +1994,7 @@ export default function CartDrawer({
                         if (cap > 0) setMixedUsdAmount(String(cap));
                       }
                     }}
-                    className={`min-w-0 rounded-full border-2 px-1 py-2 text-center text-[0.66rem] font-black tracking-[0.02em] shadow-sm transition active:scale-95 ${
+                    className={`min-w-0 rounded-full border px-1 py-2 text-center text-[0.66rem] font-black tracking-[0.02em] shadow-sm transition active:scale-95 ${
                       normalizeFormMoney(mixedUsdGivenAmount) === bill
                         ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
                         : "border-[var(--brand-primary)] bg-white text-[#1a1a1a]"
@@ -2011,7 +2011,7 @@ export default function CartDrawer({
                 value={mixedUsdGivenAmount}
                 onChange={(event) => setMixedUsdGivenAmount(event.target.value)}
                 placeholder="O escribe con cuánto pagas (ej: 20 si son 2 de $10)"
-                className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
+                className="mt-2 w-full rounded-2xl border border-[var(--brand-primary)]/45 bg-white px-4 py-2.5 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
               />
               {(() => {
                 const given = normalizeFormMoney(mixedUsdGivenAmount);
@@ -2019,14 +2019,14 @@ export default function CartDrawer({
                 const change = Math.round((given - mixedUsdValue) * 100) / 100;
                 if (change < 0) {
                   return (
-                    <p className="mt-2 rounded-xl border-2 border-red-500 bg-white px-3 py-2 text-[0.72rem] font-black leading-4 text-red-600">
+                    <p className="mt-2 rounded-xl border border-red-500 bg-white px-3 py-2 text-[0.72rem] font-black leading-4 text-red-600">
                       Ese billete no cubre los {formatUSD(mixedUsdValue)} en
                       efectivo: faltan {formatUSD(Math.abs(change))}.
                     </p>
                   );
                 }
                 return (
-                  <p className="mt-2 rounded-xl border-2 border-[var(--brand-primary)]/50 bg-white px-3 py-2 text-[0.72rem] font-black leading-4 text-[#1a1a1a]">
+                  <p className="mt-2 rounded-xl border border-[var(--brand-primary)]/50 bg-white px-3 py-2 text-[0.72rem] font-black leading-4 text-[#1a1a1a]">
                     {change > 0
                       ? `Pagas la parte en efectivo con ${formatUSD(given)}: tu vuelto será ${formatUSD(change)}.`
                       : "Pago exacto en la parte de efectivo: sin vuelto."}
@@ -2042,12 +2042,12 @@ export default function CartDrawer({
               value={mixedUsdAmount}
               onChange={(event) => setMixedUsdAmount(event.target.value)}
               placeholder="Monto en $"
-              className="min-w-0 flex-1 rounded-2xl border-2 border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
+              className="min-w-0 flex-1 rounded-2xl border border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
             />
             <button
               type="button"
               onClick={completeMixedUsdAmount}
-              className="shrink-0 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3.5 py-2 text-[0.64rem] font-black uppercase tracking-[0.08em] text-black transition active:scale-95"
+              className="shrink-0 rounded-2xl border border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3.5 py-2 text-[0.64rem] font-black uppercase tracking-[0.08em] text-black transition active:scale-95"
             >
               Completar lo que falta
             </button>
@@ -2056,18 +2056,18 @@ export default function CartDrawer({
 
         {/* Helper "en cristiano": dice si falta, sobra o está completo. */}
         {isExact ? (
-          <p className="mt-3 rounded-xl border-2 border-green-600 bg-green-600/10 px-3 py-2 text-[0.75rem] font-black leading-4 text-green-700">
+          <p className="mt-3 rounded-xl border border-green-600 bg-green-600/10 px-3 py-2 text-[0.75rem] font-black leading-4 text-green-700">
             ¡Listo! Cubres el total: Bs {formatVES(mixedBsValue)} con{" "}
             {mixedBsMethod || "…"} y {formatUSD(mixedUsdValue)} con{" "}
             {mixedUsdMethod || "…"}.
           </p>
         ) : isOver ? (
-          <p className="mt-3 rounded-xl border-2 border-amber-500 bg-amber-500/10 px-3 py-2 text-[0.75rem] font-black leading-4 text-amber-700">
+          <p className="mt-3 rounded-xl border border-amber-500 bg-amber-500/10 px-3 py-2 text-[0.75rem] font-black leading-4 text-amber-700">
             Te pasaste del total por {formatUSD(Math.abs(missingUSD))}. Baja uno
             de los dos montos.
           </p>
         ) : (
-          <p className="mt-3 rounded-xl border-2 border-amber-500 bg-amber-500/10 px-3 py-2 text-[0.75rem] font-black leading-4 text-amber-700">
+          <p className="mt-3 rounded-xl border border-amber-500 bg-amber-500/10 px-3 py-2 text-[0.75rem] font-black leading-4 text-amber-700">
             Todavía falta {formatUSD(missingUSD)}
             {rate > 0 ? ` (Bs ${formatVES(missingUSD * rate)})` : ""}. Escribe el
             otro monto o toca «Completar lo que falta».
@@ -2950,11 +2950,13 @@ export default function CartDrawer({
       publicConfig.publicPaymentBeforeRegisterEnabled) &&
     (lastCreatedOrder?.orderType === "Para llevar" ||
       lastCreatedOrder?.orderType === "Delivery");
+  // Defaults alineados al tema oscuro Brotherhood (rediseño); la config del
+  // dueño (business_config) sigue mandando si trae valores propios.
   const productCardStyle = {
-    "--product-card-bg": publicConfig.productCardBackgroundColor || "#ffffff",
-    "--product-card-text": publicConfig.productCardTextColor || "#4a0000",
-    "--product-card-border": publicConfig.productCardBorderColor || "#a00000",
-    "--product-card-button": publicConfig.productCardButtonColor || "#ffd23c",
+    "--product-card-bg": publicConfig.productCardBackgroundColor || "#141414",
+    "--product-card-text": publicConfig.productCardTextColor || "#ffffff",
+    "--product-card-border": publicConfig.productCardBorderColor || "#f5a623",
+    "--product-card-button": publicConfig.productCardButtonColor || "#f5a623",
   } as CSSProperties;
 
   if (!isOpen) return null;
@@ -2968,10 +2970,10 @@ export default function CartDrawer({
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
       />
 
-      <aside className="absolute right-0 top-0 flex h-full w-full max-w-xl flex-col overflow-hidden border-l-4 border-[var(--brand-primary)] bg-[var(--brand-cream)] text-[var(--brand-ink-3)] shadow-2xl shadow-black/40 sm:w-[92%]">
+      <aside className="absolute right-0 top-0 flex h-full w-full max-w-xl flex-col overflow-hidden border-l border-[rgba(var(--brand-primary-rgb),0.45)] bg-[var(--brand-cream)] text-[var(--brand-ink-3)] shadow-2xl shadow-black/40 sm:w-[92%]">
         <div className="h-1.5 shrink-0 bg-[linear-gradient(90deg,var(--brand-primary),var(--brand-accent))]" />
 
-        <div className="relative shrink-0 overflow-hidden border-b-4 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-5 py-5 sm:px-8">
+        <div className="relative shrink-0 overflow-hidden border-b border-[rgba(var(--brand-primary-rgb),0.35)] bg-[var(--brand-surface-2)] px-5 py-5 sm:px-8">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(var(--brand-accent-rgb),0.32),transparent_42%)]" />
 
           <div className="relative flex items-center justify-between gap-3">
@@ -2986,7 +2988,7 @@ export default function CartDrawer({
                 </p>
                 {/* "Tu pedido" más chico (pedido del dueño 2026-07-22) para
                     dejar aire al botón de ayuda. */}
-                <h2 className="truncate text-2xl font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_2px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-3xl">
+                <h2 className="font-display truncate text-2xl uppercase leading-none text-[var(--brand-primary)] [text-shadow:0_6px_24px_rgba(var(--brand-primary-rgb),0.35)] sm:text-3xl">
                   {publicConfig.publicCartTitle || "Tu pedido"}
                 </h2>
               </div>
@@ -2996,7 +2998,7 @@ export default function CartDrawer({
               type="button"
               onClick={onClose}
               aria-label="Cerrar carrito"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-105"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition hover:scale-105"
             >
               <X size={24} />
             </button>
@@ -3007,7 +3009,7 @@ export default function CartDrawer({
           <button
             type="button"
             onClick={() => setIsHelpOpen(true)}
-            className="relative mt-3 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2.5 text-xs font-black uppercase tracking-[0.08em] text-black shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.6)] transition hover:bg-[var(--brand-accent)] active:translate-y-0.5 active:shadow-none"
+            className="relative mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2.5 text-xs font-black uppercase tracking-[0.08em] text-black shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition hover:bg-[var(--brand-accent)] active:scale-95"
           >
             <LifeBuoy size={18} />
             ¿Necesitas ayuda con tu pedido?
@@ -3050,7 +3052,7 @@ export default function CartDrawer({
 
           {hasItems && SHOW_COUPON_FIELD ? (
             appliedCoupon ? (
-              <div className="mt-4 flex items-center justify-between gap-3 rounded-[1.25rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-2.5">
+              <div className="mt-4 flex items-center justify-between gap-3 rounded-[1.25rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-2.5">
                 <p className="text-sm font-black text-[var(--brand-primary)]">
                   Cupón {appliedCoupon.code}: −{appliedCoupon.percent}% aplicado
                 </p>
@@ -3075,7 +3077,7 @@ export default function CartDrawer({
                 ¿Tienes un cupón?
               </button>
             ) : (
-              <div className="mt-4 rounded-[1.25rem] border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
+              <div className="mt-4 rounded-[1.25rem] border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/70">
                     ¿Tienes un cupón?
@@ -3104,13 +3106,13 @@ export default function CartDrawer({
                     }}
                     placeholder="Escribe tu código"
                     maxLength={20}
-                    className="w-full rounded-xl border-2 border-[var(--brand-border)] bg-transparent px-3 py-2 text-sm font-bold uppercase text-[var(--brand-ink-3)] outline-none transition focus:border-[var(--brand-primary)] placeholder:normal-case placeholder:text-[var(--brand-ink-2)]/40"
+                    className="w-full rounded-xl border border-[var(--brand-border)] bg-transparent px-3 py-2 text-sm font-bold uppercase text-[var(--brand-ink-3)] outline-none transition focus:border-[var(--brand-primary)] placeholder:normal-case placeholder:text-[var(--brand-ink-2)]/40"
                   />
                   <button
                     type="button"
                     onClick={handleApplyCoupon}
                     disabled={isCheckingCoupon || !couponInput.trim()}
-                    className="shrink-0 rounded-xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90 disabled:opacity-50"
+                    className="shrink-0 rounded-xl border border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90 disabled:opacity-50"
                   >
                     {isCheckingCoupon ? "..." : "Aplicar"}
                   </button>
@@ -3125,7 +3127,7 @@ export default function CartDrawer({
           ) : null}
 
           {hasItems && hasUnavailableItemsForOrderType ? (
-            <div className="mt-4 rounded-[1.25rem] border-2 border-red-500/30 bg-red-500/15 px-4 py-3">
+            <div className="mt-4 rounded-[1.25rem] border border-red-500/30 bg-red-500/15 px-4 py-3">
               <p className="text-xs font-black uppercase tracking-[0.12em] text-red-300">
                 Revisa el tipo de pedido
               </p>
@@ -3136,7 +3138,7 @@ export default function CartDrawer({
           ) : null}
 
           {hasItems && hasStaffConfirmationItems ? (
-            <div className="mt-4 rounded-[1.25rem] border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3">
+            <div className="mt-4 rounded-[1.25rem] border border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3">
               <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                 Confirmación del personal
               </p>
@@ -3159,7 +3161,7 @@ export default function CartDrawer({
               haya cerrado la página de confirmación. Los que el local ya
               marcó listos/entregados salen solos de la lista. */}
           {recentPublicOrders.length > 0 && (
-            <div className="mx-5 mb-4 mt-8 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4">
+            <div className="mx-5 mb-4 mt-8 rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4">
               <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
                 Tus pedidos en curso
               </p>
@@ -3177,14 +3179,14 @@ export default function CartDrawer({
                       href={`/pedido/${encodeURIComponent(recentOrder.id)}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center gap-3 rounded-xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-3 py-3 transition hover:border-[var(--brand-primary)]"
+                      className="flex items-center gap-3 rounded-xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-3 py-3 transition hover:border-[var(--brand-primary)]"
                     >
                       {live?.displayNumber ? (
                         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-primary)] text-sm font-black text-black">
                           {live.displayNumber}
                         </span>
                       ) : (
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-2 border-[var(--brand-border)] text-[var(--brand-primary)]">
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[var(--brand-border)] text-[var(--brand-primary)]">
                           <ClipboardList size={18} />
                         </span>
                       )}
@@ -3248,7 +3250,7 @@ export default function CartDrawer({
                 href={orderHelpWhatsappHref}
                 target="_blank"
                 rel="noreferrer"
-                className="flex w-full items-center justify-center gap-2.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-5 py-3.5 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black"
+                className="flex w-full items-center justify-center gap-2.5 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-5 py-3.5 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black"
               >
                 <MessageCircle size={17} />
                 ¿Dudas con tu pedido? Escríbenos
@@ -3289,25 +3291,25 @@ export default function CartDrawer({
         // En el teléfono el formulario ocupa toda la pantalla (como una página
         // más, estilo apps grandes); la tarjeta flotante queda para escritorio.
         <div className="fixed inset-0 z-[110] flex items-stretch justify-center bg-black/75 backdrop-blur-sm sm:items-center sm:px-4 sm:py-4">
-          <div className="h-full max-h-full w-full overflow-y-auto bg-[var(--brand-cream)] text-[var(--brand-ink-3)] shadow-none sm:h-auto sm:max-h-[94vh] sm:max-w-lg sm:rounded-[2rem] sm:border-4 sm:border-[var(--brand-primary)] sm:shadow-2xl sm:shadow-black/45">
+          <div className="h-full max-h-full w-full overflow-y-auto bg-[var(--brand-cream)] text-[var(--brand-ink-3)] shadow-none sm:h-auto sm:max-h-[94vh] sm:max-w-lg sm:rounded-[2rem] sm:border sm:border-[var(--brand-primary)] sm:shadow-2xl sm:shadow-black/45">
             <div className="hidden h-1.5 shrink-0 bg-[linear-gradient(90deg,var(--brand-primary),var(--brand-accent))] sm:block" />
 
             {/* Barra superior tipo app: fija arriba, COMPACTA (sin el eyebrow
                 "Pedido del cliente", pedido del dueño 2026-07-22). El botón de
                 Ayuda grande va en su propia fila, abajo, para que se vea. */}
-            <div className="sticky top-0 z-30 border-b-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-2.5 sm:relative sm:border-b-0 sm:px-6 sm:py-3">
+            <div className="sticky top-0 z-30 border-b border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-2.5 sm:relative sm:border-b-0 sm:px-6 sm:py-3">
               <div className="flex items-center justify-between gap-3">
                 <button
                   type="button"
                   onClick={closeOrderModal}
                   disabled={isSubmittingOrder}
                   aria-label="Volver"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] text-[var(--brand-ink)] disabled:opacity-50 sm:hidden"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--brand-border)] bg-[var(--brand-cream)] text-[var(--brand-ink)] disabled:opacity-50 sm:hidden"
                 >
                   <ArrowLeft size={18} />
                 </button>
 
-                <h3 className="min-w-0 flex-1 truncate text-lg font-black uppercase leading-none text-[var(--brand-primary)] drop-shadow-[0_2px_0_rgba(var(--brand-accent-rgb),0.75)] sm:text-xl">
+                <h3 className="min-w-0 flex-1 truncate text-lg font-black uppercase leading-none text-[var(--brand-primary)] sm:text-xl">
                   {lastOrderPaymentPending
                     ? "Pedido sin pagar"
                     : lastCreatedOrder
@@ -3322,7 +3324,7 @@ export default function CartDrawer({
                   onClick={closeOrderModal}
                   disabled={isSubmittingOrder}
                   aria-label="Cerrar"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black disabled:opacity-50 sm:h-10 sm:w-10"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black disabled:opacity-50 sm:h-10 sm:w-10"
                 >
                   <X size={20} />
                 </button>
@@ -3333,7 +3335,7 @@ export default function CartDrawer({
               <button
                 type="button"
                 onClick={() => setIsHelpOpen(true)}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2.5 text-xs font-black uppercase tracking-[0.08em] text-black shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.6)] transition hover:bg-[var(--brand-accent)] active:translate-y-0.5 active:shadow-none"
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2.5 text-xs font-black uppercase tracking-[0.08em] text-black shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition hover:bg-[var(--brand-accent)] active:scale-95"
               >
                 <LifeBuoy size={18} />
                 ¿Necesitas ayuda con tu pedido?
@@ -3421,7 +3423,7 @@ export default function CartDrawer({
                     cliente menciona por WhatsApp o en el mostrador para que
                     el local lo ubique al instante. */}
                 {createdOrderTrackingId ? (
-                  <div className="rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-5 text-center">
+                  <div className="rounded-[1.5rem] border border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-5 text-center">
                     <p className="text-xs font-black uppercase tracking-[0.2em] text-[var(--brand-primary)]">
                       Tu número de pedido
                     </p>
@@ -3431,25 +3433,25 @@ export default function CartDrawer({
                     </p>
 
                     {!lastOrderCancelled && lastOrderPaymentConfirmed ? (
-                      <p className="mt-4 rounded-2xl border-2 border-green-600 bg-green-600/15 px-4 py-2.5 text-[0.85rem] font-black leading-5 text-green-700">
+                      <p className="mt-4 rounded-2xl border border-green-600 bg-green-600/15 px-4 py-2.5 text-[0.85rem] font-black leading-5 text-green-700">
                         ✅ Pedido pagado: el local confirmó tu pago.
                       </p>
                     ) : !lastOrderCancelled && lastOrderReportIncomplete ? (
-                      <p className="mt-4 rounded-2xl border-2 border-amber-500 bg-amber-500/10 px-4 py-2.5 text-[0.8rem] font-black leading-5 text-amber-600">
+                      <p className="mt-4 rounded-2xl border border-amber-500 bg-amber-500/10 px-4 py-2.5 text-[0.8rem] font-black leading-5 text-amber-600">
                         📸 Foto del efectivo recibida. Falta la captura o
                         referencia de la parte electrónica — repórtala abajo.
                       </p>
                     ) : !lastOrderCancelled &&
                       lastOrderCanReportPayment &&
                       (lastOrderProofReported || lastOrderPaymentReportedLive) ? (
-                      <p className="mt-4 rounded-2xl border-2 border-sky-500/60 bg-sky-500/10 px-4 py-2.5 text-[0.8rem] font-black leading-5 text-sky-700">
+                      <p className="mt-4 rounded-2xl border border-sky-500/60 bg-sky-500/10 px-4 py-2.5 text-[0.8rem] font-black leading-5 text-sky-700">
                         Pago reportado: el local lo está verificando. Apenas lo
                         confirme, tu pedido avanza solo.
                       </p>
                     ) : null}
 
                     {lastOrderCancelled ? (
-                      <div className="mt-4 rounded-2xl border-2 border-red-500/60 bg-red-500/10 px-4 py-3 text-left">
+                      <div className="mt-4 rounded-2xl border border-red-500/60 bg-red-500/10 px-4 py-3 text-left">
                         <p className="text-sm font-black leading-5 text-red-500">
                           Este pedido fue cancelado.
                         </p>
@@ -3467,7 +3469,7 @@ export default function CartDrawer({
                       // Sin pagar: NO se muestra el estado del pedido todavía;
                       // el cliente solo ve el avance una vez que reporta/paga
                       // (pedido del dueño 2026-07-22).
-                      <p className="mt-4 rounded-2xl border-2 border-amber-500 bg-amber-500/10 px-4 py-3 text-sm font-black leading-5 text-amber-700">
+                      <p className="mt-4 rounded-2xl border border-amber-500 bg-amber-500/10 px-4 py-3 text-sm font-black leading-5 text-amber-700">
                         Aún sin pagar. Reporta tu pago aquí abajo; verás el
                         avance de tu pedido apenas caja confirme tu pago.
                       </p>
@@ -3476,7 +3478,7 @@ export default function CartDrawer({
                         ¡Listo! Pasa a retirarlo indicando tu número.
                       </p>
                     ) : createdOrderLive.status === "Entregado" ? (
-                      <p className="mt-4 rounded-2xl border-2 border-green-600 bg-green-600/15 px-4 py-3 text-sm font-black text-green-700">
+                      <p className="mt-4 rounded-2xl border border-green-600 bg-green-600/15 px-4 py-3 text-sm font-black text-green-700">
                         Pedido entregado. ¡Gracias por tu compra!
                       </p>
                     ) : (
@@ -3530,7 +3532,7 @@ export default function CartDrawer({
                               });
                           }, 60);
                         }}
-                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3.5 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_4px_0_rgba(var(--brand-accent-rgb),0.6)] transition hover:bg-[var(--brand-accent)] active:translate-y-0.5 active:shadow-none"
+                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3.5 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition hover:bg-[var(--brand-accent)] active:scale-95"
                       >
                         <ImagePlus size={17} />
                         {lastOrderReportIncomplete
@@ -3542,7 +3544,7 @@ export default function CartDrawer({
                         href={`/pedido/${encodeURIComponent(lastCreatedOrder.id)}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-transparent px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:opacity-80"
+                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] bg-transparent px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:opacity-80"
                       >
                         Ver el avance de mi pedido
                       </a>
@@ -3566,7 +3568,7 @@ export default function CartDrawer({
                         type="button"
                         onClick={handlePayOnline}
                         disabled={isStartingPayment}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-emerald-700 bg-emerald-600 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-emerald-700 bg-emerald-600 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white transition hover:bg-emerald-700 disabled:opacity-60"
                       >
                         <CreditCard size={18} />
                         {isStartingPayment
@@ -3614,7 +3616,7 @@ export default function CartDrawer({
                 )}
 
                 {lastOrderAttachedToOpenAccount ? (
-                  <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-left">
+                  <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-left">
                     <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
                       Cuenta abierta
                     </p>
@@ -3628,7 +3630,7 @@ export default function CartDrawer({
 
                 {lastOrderCanReportPayment &&
                   !isPaymentProofPublicAvailable && (
-                    <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-left">
+                    <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-left">
                       <p className="text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
                         El pedido ya quedó registrado. Si ya pagaste, comunícate
                         con el local por el canal indicado.
@@ -3639,7 +3641,7 @@ export default function CartDrawer({
                 <button
                   type="button"
                   onClick={finishCreatedOrderFlow}
-                  className="flex w-full items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-center text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-center text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition active:translate-y-1 active:shadow-none disabled:opacity-50"
                 >
                   {lastOrderPaymentPending
                     ? "Entiendo que no registré mi pago — volver al menú"
@@ -3692,7 +3694,7 @@ export default function CartDrawer({
                 {orderType === "Comer aquí" &&
                   publicConfig.openAccountsEnabled &&
                   (publicConfig.publicOpenAccountHintHighlighted ? (
-                    <div className="rounded-2xl border-[3px] border-[var(--brand-primary)] bg-[var(--brand-accent)]/25 px-4 py-3.5 shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.2)]">
+                    <div className="rounded-2xl border-[3px] border-[var(--brand-primary)] bg-[var(--brand-accent)]/25 px-4 py-3.5 shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)]">
                       <p className="inline-flex items-center gap-2 text-[0.7rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
                         <Table2 size={15} className="shrink-0" />
                         ¿Ya abriste una cuenta en tu mesa?
@@ -3703,7 +3705,7 @@ export default function CartDrawer({
                       </p>
                     </div>
                   ) : (
-                    <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.06)] px-4 py-2.5">
+                    <div className="rounded-2xl border border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.06)] px-4 py-2.5">
                       <p className="text-[0.7rem] font-bold leading-4 text-[var(--brand-ink-2)]/65">
                         ¿Ya abriste una cuenta en tu mesa? No hace falta poner
                         tus datos otra vez: indica la misma mesa y tu pedido se
@@ -3727,7 +3729,7 @@ export default function CartDrawer({
                     onChange={(event) => setCustomerName(event.target.value)}
                     placeholder="Ejemplo: Carlos"
                     autoComplete="name"
-                    className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                    className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
@@ -3752,7 +3754,7 @@ export default function CartDrawer({
                       value={customerPhone}
                       onChange={(event) => setCustomerPhone(event.target.value)}
                       placeholder="Ejemplo: 0412-0000000"
-                      className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                      className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                     />
                   </div>
                 )}
@@ -3770,7 +3772,7 @@ export default function CartDrawer({
                         key={type}
                         type="button"
                         onClick={() => selectOrderType(type)}
-                        className={`rounded-2xl border-2 px-1.5 py-4 text-[0.72rem] font-black uppercase leading-tight transition sm:px-4 sm:text-sm ${
+                        className={`rounded-2xl border px-1.5 py-4 text-[0.72rem] font-black uppercase leading-tight transition sm:px-4 sm:text-sm ${
                           orderType === type
                             ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
                             : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)]"
@@ -3783,7 +3785,7 @@ export default function CartDrawer({
                 </div>
 
                 {orderType === "Comer aquí" && needsBranchSelection && (
-                  <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.08)] px-4 py-3">
+                  <div className="rounded-2xl border border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.08)] px-4 py-3">
                     <p className="inline-flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                       <Table2 size={15} />
                       Elige tu sede primero
@@ -3802,7 +3804,7 @@ export default function CartDrawer({
                     </label>
 
                     {hasValidQrTableNotice && (
-                      <div className="mt-2 rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.08)] px-4 py-3">
+                      <div className="mt-2 rounded-2xl border border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.08)] px-4 py-3">
                         <p className="inline-flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                           <Table2 size={15} />
                           Mesa preseleccionada
@@ -3816,7 +3818,7 @@ export default function CartDrawer({
                     )}
 
                     {hasInvalidQrTableNotice && (
-                      <div className="mt-2 rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3">
+                      <div className="mt-2 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3">
                         <p className="inline-flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-amber-800">
                           <AlertTriangle size={15} />
                           Mesa no encontrada
@@ -3841,7 +3843,7 @@ export default function CartDrawer({
                               setQrTableNotice(null);
                             }
                           }}
-                          className={`rounded-xl border-2 px-3 py-3 text-xs font-black uppercase transition ${
+                          className={`rounded-xl border px-3 py-3 text-xs font-black uppercase transition ${
                             tableNumber === place
                               ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
                               : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)]"
@@ -3861,11 +3863,11 @@ export default function CartDrawer({
                         }
                       }}
                       placeholder="O escribe otra ubicación..."
-                      className="mt-3 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                      className="mt-3 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                     />
 
                     {isLoadingTableAccountNotice && tableNumber.trim() ? (
-                      <div className="mt-3 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
+                      <div className="mt-3 rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
                         <p className="inline-flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                           <Loader2 size={15} className="animate-spin" />
                           Consultando mesa
@@ -3879,7 +3881,7 @@ export default function CartDrawer({
 
                     {!isLoadingTableAccountNotice &&
                     hasOpenAccountTableNotice ? (
-                      <div className="mt-3 rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.08)] px-4 py-3">
+                      <div className="mt-3 rounded-2xl border border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.08)] px-4 py-3">
                         <p className="inline-flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                           <Table2 size={15} />
                           Mesa con cuenta abierta
@@ -3902,7 +3904,7 @@ export default function CartDrawer({
                           onClick={() =>
                             setAttachToTableOpenAccount((current) => !current)
                           }
-                          className={`mt-3 flex w-full items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 text-left transition ${
+                          className={`mt-3 flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition ${
                             attachToTableOpenAccount
                               ? "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-ink)]"
                               : "border-[var(--brand-border)] bg-[var(--brand-cream)] text-[var(--brand-ink)]/70"
@@ -3921,7 +3923,7 @@ export default function CartDrawer({
                             </span>
                           </span>
                           <span
-                            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 text-xs font-black ${
+                            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-black ${
                               attachToTableOpenAccount
                                 ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
                                 : "border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-ink)]/45"
@@ -3934,7 +3936,7 @@ export default function CartDrawer({
                     ) : null}
 
                     {!isLoadingTableAccountNotice && isTableReservedNow ? (
-                      <div className="mt-3 rounded-2xl border-2 border-red-300 bg-red-50 px-4 py-3">
+                      <div className="mt-3 rounded-2xl border border-red-300 bg-red-50 px-4 py-3">
                         <p className="inline-flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-red-700">
                           <Table2 size={15} />
                           Mesa reservada
@@ -3950,7 +3952,7 @@ export default function CartDrawer({
                     ) : null}
 
                     {!isLoadingTableAccountNotice && hasFreeTableNotice && !isTableReservedNow ? (
-                      <div className="mt-3 rounded-2xl border-2 border-emerald-600/20 bg-emerald-50 px-4 py-3">
+                      <div className="mt-3 rounded-2xl border border-emerald-600/20 bg-emerald-50 px-4 py-3">
                         <p className="inline-flex items-center gap-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-emerald-800">
                           <CheckCircle2 size={15} />
                           Mesa sin cuenta abierta
@@ -3965,7 +3967,7 @@ export default function CartDrawer({
                           type="button"
                           onClick={handleOpenTableAccount}
                           disabled={isOpeningTableAccount}
-                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-emerald-700 bg-emerald-600 px-4 py-3 text-[0.72rem] font-black uppercase tracking-[0.12em] text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border border-emerald-700 bg-emerald-600 px-4 py-3 text-[0.72rem] font-black uppercase tracking-[0.12em] text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <Table2 size={15} />
                           {isOpeningTableAccount
@@ -4017,13 +4019,13 @@ export default function CartDrawer({
                     {isDistancePricingEnabled && (
                       <div
                         id="checkout-ubicacion"
-                        className="overflow-hidden rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-[var(--brand-cream)]"
+                        className="overflow-hidden rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-cream)]"
                       >
                         {/* Encabezado con ícono: la sección más importante
                             del delivery merece verse como tarjeta, no como
                             un campo más. */}
-                        <div className="flex items-center gap-3 border-b-2 border-[var(--brand-primary)]/15 bg-[rgba(var(--brand-primary-rgb),0.09)] px-4 py-3">
-                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary)] text-black shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.6)]">
+                        <div className="flex items-center gap-3 border-b border-[var(--brand-primary)]/15 bg-[rgba(var(--brand-primary-rgb),0.09)] px-4 py-3">
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary)] text-black shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)]">
                             <MapPin size={18} />
                           </span>
                           <span className="min-w-0">
@@ -4047,7 +4049,7 @@ export default function CartDrawer({
                             type="button"
                             onClick={handleQuoteFromGps}
                             disabled={isQuotingDistance}
-                            className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-3.5 text-xs font-black uppercase tracking-[0.1em] text-black shadow-[0_4px_0_rgba(var(--brand-accent-rgb),0.5)] transition hover:opacity-90 active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-3.5 text-xs font-black uppercase tracking-[0.1em] text-black shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             {isQuotingDistance ? (
                               <Loader2 size={16} className="animate-spin" />
@@ -4082,7 +4084,7 @@ export default function CartDrawer({
                             }}
                             placeholder="https://maps.app.goo.gl/..."
                             inputMode="url"
-                            className="w-full min-w-0 rounded-2xl border-2 border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
+                            className="w-full min-w-0 rounded-2xl border border-[var(--brand-border)] bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
                           />
 
                           {/* Punto elegido: mini mapa de confirmación visual
@@ -4096,7 +4098,7 @@ export default function CartDrawer({
                               <button
                                 type="button"
                                 onClick={() => setIsAdjustMapOpen(true)}
-                                className="absolute right-2 top-2 z-[600] flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-3 py-1.5 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] shadow-md transition hover:bg-[var(--brand-accent)] hover:text-black"
+                                className="absolute right-2 top-2 z-[600] flex items-center gap-1.5 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-cream)] px-3 py-1.5 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] shadow-md transition hover:bg-[var(--brand-accent)] hover:text-black"
                               >
                                 <Pencil size={12} />
                                 Ajustar
@@ -4105,7 +4107,7 @@ export default function CartDrawer({
                           )}
 
                           {distanceQuote && (
-                            <p className="mt-3 flex items-center gap-2 rounded-2xl border-2 border-green-600 bg-green-600/15 px-4 py-3 text-sm font-black leading-5 text-green-600">
+                            <p className="mt-3 flex items-center gap-2 rounded-2xl border border-green-600 bg-green-600/15 px-4 py-3 text-sm font-black leading-5 text-green-600">
                               <CheckCircle2 size={17} className="shrink-0" />
                               Estás a ~{distanceQuote.distanceKm.toFixed(1)} km
                               · Envío {formatUSD(distanceQuote.costUSD)}
@@ -4113,13 +4115,13 @@ export default function CartDrawer({
                           )}
 
                           {distanceQuoteError && (
-                            <p className="mt-3 rounded-2xl border-2 border-orange-400/40 bg-orange-100 px-4 py-3 text-sm font-bold leading-5 text-orange-800">
+                            <p className="mt-3 rounded-2xl border border-orange-400/40 bg-orange-100 px-4 py-3 text-sm font-bold leading-5 text-orange-800">
                               {distanceQuoteError}
                             </p>
                           )}
 
                           {gpsAccuracyNotice && !distanceQuoteError && (
-                            <p className="mt-3 rounded-2xl border-2 border-amber-400/60 bg-amber-50 px-4 py-3 text-sm font-bold leading-5 text-amber-800">
+                            <p className="mt-3 rounded-2xl border border-amber-400/60 bg-amber-50 px-4 py-3 text-sm font-bold leading-5 text-amber-800">
                               {gpsAccuracyNotice}
                             </p>
                           )}
@@ -4173,7 +4175,7 @@ export default function CartDrawer({
                             setDeliveryReference(event.target.value)
                           }
                           placeholder="Ejemplo: Torre Azul apto 4B, portón negro, frente a la farmacia..."
-                          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                          className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                         />
                       )}
                     </div>
@@ -4195,7 +4197,7 @@ export default function CartDrawer({
                             setCustomerPhone(event.target.value)
                           }
                           placeholder="Ejemplo: 0412-0000000"
-                          className="mt-2 w-full rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3.5 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                          className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3.5 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                         />
                       </div>
 
@@ -4253,7 +4255,7 @@ export default function CartDrawer({
                       </div>
                     )}
 
-                    <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3">
+                    <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3">
                       <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                         Costo de delivery
                       </p>
@@ -4275,7 +4277,7 @@ export default function CartDrawer({
                   </div>
                 )}
 
-                <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
+                <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Tienes que pagar lo siguiente:
                   </p>
@@ -4340,7 +4342,7 @@ export default function CartDrawer({
                     value={customerNote}
                     onChange={(event) => setCustomerNote(event.target.value)}
                     placeholder="Ejemplo: cliente espera afuera, entregar rápido..."
-                    className="mt-2 min-h-20 w-full resize-none rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                    className="mt-2 min-h-20 w-full resize-none rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
                   />
                 </div>
 
@@ -4354,7 +4356,7 @@ export default function CartDrawer({
                   </p>
 
                   {orderAttachmentDataUrl ? (
-                    <div className="mt-2 flex items-center gap-3 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-3 py-2">
+                    <div className="mt-2 flex items-center gap-3 rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-3 py-2">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={orderAttachmentDataUrl}
@@ -4367,13 +4369,13 @@ export default function CartDrawer({
                       <button
                         type="button"
                         onClick={clearOrderAttachment}
-                        className="rounded-full border-2 border-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
+                        className="rounded-full border border-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]"
                       >
                         Quitar
                       </button>
                     </div>
                   ) : (
-                    <label className="mt-2 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.08)]">
+                    <label className="mt-2 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.08)]">
                       <ImagePlus size={18} />
                       Elegir imagen
                       <input
@@ -4393,7 +4395,7 @@ export default function CartDrawer({
                 </div>
 
                 {hasUnavailableItemsForOrderType && (
-                  <div className="rounded-2xl border-2 border-red-500/35 bg-red-500/15 px-4 py-3">
+                  <div className="rounded-2xl border border-red-500/35 bg-red-500/15 px-4 py-3">
                     <p className="text-xs font-black uppercase tracking-[0.12em] text-red-300">
                       Productos no disponibles para {orderTypeChannelLabel}
                     </p>
@@ -4410,7 +4412,7 @@ export default function CartDrawer({
                 )}
 
                 {hasStaffConfirmationItems && (
-                  <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3">
+                  <div className="rounded-2xl border border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3">
                     <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                       Confirmación del personal
                     </p>
@@ -4421,7 +4423,7 @@ export default function CartDrawer({
                 )}
 
                 {needsBranchSelection && (
-                  <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3">
+                  <div className="rounded-2xl border border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3">
                     <p className="text-sm font-bold leading-6 text-[var(--brand-ink)]/80">
                       Para registrar el pedido, primero elige la sede donde
                       estás.
@@ -4430,7 +4432,7 @@ export default function CartDrawer({
                 )}
 
                 {hasItems && missingOrderFields.length > 0 && (
-                  <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3">
+                  <div className="rounded-2xl border border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3">
                     <p className="text-sm font-bold leading-6 text-[var(--brand-ink)]/80">
                       Para registrar el pedido falta:{" "}
                       {missingOrderFields.join(", ")}.
@@ -4452,7 +4454,7 @@ export default function CartDrawer({
                 )}
 
                 {orderError && (
-                  <div className="rounded-2xl border-2 border-red-500/35 bg-red-500/15 px-4 py-3">
+                  <div className="rounded-2xl border border-red-500/35 bg-red-500/15 px-4 py-3">
                     <p className="text-sm font-bold leading-6 text-red-300">
                       {orderError}
                     </p>
@@ -4497,7 +4499,7 @@ export default function CartDrawer({
                     }
                     void handleRegisterLocalOrder();
                   }}
-                  className={`mt-2 flex w-full items-center justify-center gap-3 rounded-full border-2 px-6 py-4 text-sm font-black uppercase tracking-[0.12em] shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none disabled:cursor-not-allowed ${
+                  className={`mt-2 flex w-full items-center justify-center gap-3 rounded-full border px-6 py-4 text-sm font-black uppercase tracking-[0.12em] shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition active:translate-y-1 active:shadow-none disabled:cursor-not-allowed ${
                     hasItems && !isSubmittingOrder
                       ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
                       : "border-[var(--brand-border)] bg-[#ddd3c4] text-[var(--brand-ink-2)]/35"
@@ -4518,7 +4520,7 @@ export default function CartDrawer({
           que registra de verdad. */}
       {isAddressConfirmOpen && deliveryPointCoords && (
         <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/80 p-4 backdrop-blur-sm sm:items-center">
-          <div className="w-full max-w-md rounded-[1.8rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] p-5 text-[var(--brand-ink-3)]">
+          <div className="w-full max-w-md rounded-[1.8rem] border border-[var(--brand-primary)] bg-[var(--brand-cream)] p-5 text-[var(--brand-ink-3)]">
             <h4 className="text-center text-lg font-black leading-6 text-[var(--brand-ink-3)]">
               Antes de continuar, ¿es esta la ubicación donde quieres que
               llegue tu pedido?
@@ -4533,7 +4535,7 @@ export default function CartDrawer({
               <button
                 type="button"
                 onClick={() => setIsAdjustMapOpen(true)}
-                className="absolute right-2 top-2 z-[600] flex items-center gap-1.5 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-3 py-1.5 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] shadow-md transition hover:bg-[var(--brand-accent)] hover:text-black"
+                className="absolute right-2 top-2 z-[600] flex items-center gap-1.5 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-cream)] px-3 py-1.5 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] shadow-md transition hover:bg-[var(--brand-accent)] hover:text-black"
               >
                 <Pencil size={12} />
                 Ajustar
@@ -4563,7 +4565,7 @@ export default function CartDrawer({
                 setIsAddressConfirmOpen(false);
                 void handleRegisterLocalOrder();
               }}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-4 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-4 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition active:translate-y-1 active:shadow-none disabled:cursor-not-allowed disabled:opacity-50"
             >
               La ubicación es correcta →
             </button>
@@ -4583,7 +4585,7 @@ export default function CartDrawer({
           pago quedó pendiente (pedido del dueño 2026-07-21). */}
       {showPostRegisterPaymentModal && lastOrderPaymentPending && (
         <div className="fixed inset-0 z-[130] flex items-end justify-center bg-black/80 p-4 backdrop-blur-sm sm:items-center">
-          <div className="w-full max-w-sm rounded-[1.8rem] border-4 border-amber-500 bg-[var(--brand-cream)] p-6 text-center text-[var(--brand-ink-3)] shadow-2xl shadow-black/60">
+          <div className="w-full max-w-sm rounded-[1.8rem] border border-amber-500 bg-[var(--brand-cream)] p-6 text-center text-[var(--brand-ink-3)] shadow-2xl shadow-black/60">
             <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-500 text-black">
               <AlertTriangle size={30} />
             </span>
@@ -4596,7 +4598,7 @@ export default function CartDrawer({
               referencia completa.
             </p>
             {publicConfig.publicUnpaidAutoCancelMinutes > 0 ? (
-              <p className="mt-2 rounded-xl border-2 border-red-400 bg-red-500/10 px-3 py-2 text-[0.8rem] font-black leading-5 text-red-500">
+              <p className="mt-2 rounded-xl border border-red-400 bg-red-500/10 px-3 py-2 text-[0.8rem] font-black leading-5 text-red-500">
                 Ojo: si no lo reportas en{" "}
                 {publicConfig.publicUnpaidAutoCancelMinutes} minutos, el pedido
                 se anula solo.
@@ -4605,7 +4607,7 @@ export default function CartDrawer({
             <button
               type="button"
               onClick={() => setShowPostRegisterPaymentModal(false)}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-amber-600 bg-amber-500 px-5 py-4 text-sm font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90 active:scale-[0.98]"
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-amber-600 bg-amber-500 px-5 py-4 text-sm font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90 active:scale-[0.98]"
             >
               Reportar mi pago ahora
             </button>

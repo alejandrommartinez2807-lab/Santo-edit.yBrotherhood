@@ -194,7 +194,8 @@ export default function PublicPromotion() {
 
   return (
     <section
-      className="bg-[var(--brand-cream)] px-4 py-10 text-[var(--brand-ink-3)] sm:px-6 lg:px-8"
+      id="promos"
+      className="scroll-mt-28 bg-[var(--brand-cream)] px-4 py-10 text-[var(--brand-ink-3)] sm:px-6 lg:px-8"
       style={colorStyle}
     >
       <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[1.8rem] border border-[rgba(var(--brand-primary-rgb),0.45)] bg-[var(--promo-card-bg)] text-[var(--promo-card-text)]">

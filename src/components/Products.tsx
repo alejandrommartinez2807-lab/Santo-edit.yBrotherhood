@@ -1,7 +1,9 @@
 "use client"
 
 import { useEffect, useEffectEvent, useMemo, useState, type CSSProperties } from "react"
+import Image from "next/image"
 import {
+  ArrowRight,
   BadgePercent,
   Beef,
   Bike,
@@ -17,6 +19,7 @@ import {
   Sandwich,
   Search,
   Sparkles,
+  Tag,
   Utensils,
   UtensilsCrossed,
   X,
@@ -56,6 +59,7 @@ type PublicProductsResponse = {
 }
 
 type PublicMenuConfig = {
+  promotionActive?: boolean
   publicMenuEyebrow?: string
   publicMenuTitle?: string
   publicMenuText?: string
@@ -89,6 +93,7 @@ const PUBLIC_MENU_FAVORITES_STORAGE_KEY = "santo-public-menu-favorites"
 const SHOW_COMBO_BANNER: boolean = false
 
 const DEFAULT_PUBLIC_MENU_CONFIG: Required<PublicMenuConfig> = {
+  promotionActive: false,
   publicMenuEyebrow: `Menú ${BRAND.name}`,
   publicMenuTitle: "Elige tu pedido",
   publicMenuText:
@@ -126,6 +131,7 @@ function normalizePublicMenuConfig(value: unknown): Required<PublicMenuConfig> {
   )
 
   return {
+    promotionActive: Boolean(source.promotionActive),
     publicMenuEyebrow: cleanPublicText(
       source.publicMenuEyebrow,
       DEFAULT_PUBLIC_MENU_CONFIG.publicMenuEyebrow,
@@ -595,6 +601,18 @@ export default function Products({ exchangeRate, onAddToCart, onProductsLoaded }
       <div className="pointer-events-none absolute -left-36 top-24 h-80 w-80 rounded-full bg-[rgba(var(--brand-primary-rgb),0.09)] blur-3xl" />
       <div className="pointer-events-none absolute -right-36 bottom-44 h-96 w-96 rounded-full bg-[rgba(var(--brand-primary-rgb),0.06)] blur-3xl" />
 
+      {/* Marca de agua con el wordmark script (mockup-3): el logotipo original
+          vuelve como textura de fondo, sin competir con el título en bloque. */}
+      <Image
+        src={BRAND.wordmarkDarkBgUrl}
+        alt=""
+        aria-hidden
+        width={640}
+        height={240}
+        unoptimized
+        className="pointer-events-none absolute -right-8 top-8 w-72 -rotate-6 opacity-[0.05] sm:-right-4 sm:top-10 sm:w-[26rem]"
+      />
+
       <div className="relative mx-auto max-w-7xl">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -642,6 +660,48 @@ export default function Products({ exchangeRate, onAddToCart, onProductsLoaded }
           <div className="mt-5 rounded-2xl border border-[rgba(var(--brand-primary-rgb),0.4)] bg-[var(--brand-surface)] px-4 py-3 text-sm font-semibold leading-6 text-[var(--brand-accent)]">
             {menuWarning}
           </div>
+        )}
+
+        {/* Banner "Promos disponibles" (mockup-3 del rediseño): solo aparece
+            cuando el dueño tiene la promoción activa en Configuración y baja
+            a la sección de promoción (#promos). */}
+        {publicMenuConfig.promotionActive && (
+          <a
+            href="#promos"
+            className="group relative mt-8 block overflow-hidden rounded-[1.4rem] border border-[rgba(var(--brand-primary-rgb),0.5)] bg-[linear-gradient(100deg,rgba(var(--brand-primary-rgb),0.16),rgba(var(--brand-primary-rgb),0.04)_45%,transparent_70%)] transition hover:border-[var(--brand-primary)]"
+          >
+            {/* Foto de burger desvanecida a la derecha, como en el mockup. */}
+            <div aria-hidden className="absolute inset-y-0 right-0 w-2/5 sm:w-1/3">
+              <Image
+                src="/brotherhood-hero-burger.jpg"
+                alt=""
+                fill
+                sizes="(max-width: 640px) 40vw, 430px"
+                className="object-cover object-center opacity-60"
+              />
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,#0d0d0d,rgba(13,13,13,0.55)_55%,rgba(13,13,13,0.15))]" />
+            </div>
+
+            <div className="relative flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-6">
+              <div className="flex items-center gap-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--brand-primary)] text-black shadow-[0_10px_26px_-10px_rgba(var(--brand-primary-rgb),0.9)]">
+                  <Tag size={22} />
+                </span>
+                <div>
+                  <p className="font-display text-2xl uppercase leading-none text-[var(--brand-primary)] sm:text-3xl">
+                    Promos disponibles
+                  </p>
+                  <p className="mt-1.5 max-w-md text-sm font-medium leading-5 text-[var(--brand-ink-2)]">
+                    Descubre nuestras promociones exclusivas por tiempo limitado.
+                  </p>
+                </div>
+              </div>
+              <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-[var(--brand-primary)] px-6 py-3.5 text-xs font-black uppercase tracking-[0.12em] text-black shadow-[0_12px_30px_-12px_rgba(var(--brand-primary-rgb),0.8)] transition group-hover:bg-[var(--brand-accent)] group-active:scale-95 sm:self-auto">
+                Ver promos
+                <ArrowRight size={15} />
+              </span>
+            </div>
+          </a>
         )}
 
         {SHOW_COMBO_BANNER && comboProducts.length > 0 && (
