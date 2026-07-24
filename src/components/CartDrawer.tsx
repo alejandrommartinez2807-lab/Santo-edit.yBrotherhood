@@ -394,6 +394,10 @@ export default function CartDrawer({
   // Confirmación: cuándo el pago sigue pendiente de reporte (para la
   // advertencia llamativa y la ventana emergente post-registro).
   const [lastOrderProofReported, setLastOrderProofReported] = useState(false);
+  // Sube cada vez que un comprobante del checkout TERMINÓ de subir: la
+  // sección de pagos recarga su info al instante (sin esperar el sondeo) y
+  // así no muestra un flash del estado anterior (dueño 2026-07-23).
+  const [proofSyncSignal, setProofSyncSignal] = useState(0);
   // Guía de ayuda accesible DENTRO del carrito/checkout (el botón flotante
   // queda tapado por el drawer): pedido del dueño 2026-07-22.
   const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -2398,6 +2402,7 @@ export default function CartDrawer({
 
       if (response.ok) {
         setLastOrderProofReported(true);
+        setProofSyncSignal((current) => current + 1);
       } else {
         // Si el envío automático falla, la confirmación muestra el flujo de
         // reporte manual (advertencia grande + formulario abierto).
@@ -2442,6 +2447,7 @@ export default function CartDrawer({
 
       if (response.ok) {
         setLastOrderProofReported(true);
+        setProofSyncSignal((current) => current + 1);
       } else {
         setLastOrderUsedCheckoutProof(false);
       }
@@ -3595,6 +3601,10 @@ export default function CartDrawer({
                       forceOpenSignal={openReportSignal}
                       proofsEnabled={isPaymentProofPublicAvailable}
                       showTrackingLink
+                      refreshSignal={proofSyncSignal}
+                      expectProofPending={
+                        lastOrderUsedCheckoutProof && !lastOrderPaymentConfirmed
+                      }
                       onReported={() => {
                         setLastOrderProofReported(true);
                         setShowPostRegisterPaymentModal(false);

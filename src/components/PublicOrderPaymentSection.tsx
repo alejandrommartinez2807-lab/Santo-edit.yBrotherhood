@@ -155,6 +155,8 @@ export default function PublicOrderPaymentSection({
   proofsEnabled,
   onReported,
   showTrackingLink = false,
+  refreshSignal = 0,
+  expectProofPending = false,
 }: {
   orderId: string;
   // Abre el formulario de reporte de una vez (confirmación con pago
@@ -180,6 +182,14 @@ export default function PublicOrderPaymentSection({
   // reportar y perdía el link del avance — dueño 2026-07-23). La página de
   // seguimiento no lo pasa porque ya ES esa página.
   showTrackingLink?: boolean;
+  // Sube cuando el checkout terminó de subir un comprobante (foto de billetes
+  // o captura): recarga la info AL INSTANTE en vez de esperar el sondeo de
+  // 45s — el cliente veía un flash del estado viejo (dueño 2026-07-23).
+  refreshSignal?: number;
+  // true = el checkout subió (o está subiendo) un comprobante: si la info aún
+  // no lo trae, se muestra "registrando tu comprobante" en vez del estado
+  // genérico viejo.
+  expectProofPending?: boolean;
 }) {
   usePublicCurrencySymbol();
   const [info, setInfo] = useState<OrderPaymentInfo | null>(null);
@@ -457,6 +467,28 @@ export default function PublicOrderPaymentSection({
 
     return () => window.clearInterval(timer);
   }, [isLoading, info, hasConfirmedPayment, loadInfo]);
+
+  // Recarga inmediata cuando el checkout termina de subir un comprobante
+  // (foto de billetes / captura): sin esto, el cliente veía por hasta 45s el
+  // estado ANTERIOR a su envío (parecía "una versión vieja de la página").
+  useEffect(() => {
+    if (!refreshSignal) return;
+    void loadInfo();
+  }, [refreshSignal, loadInfo]);
+
+  // El checkout dice que subió un comprobante pero la info aún no lo trae:
+  // ventana de sincronización (subida en curso o consulta por refrescar).
+  const awaitingProofSync =
+    expectProofPending && !hasConfirmedPayment && activeProofs.length === 0;
+
+  // Mientras dura esa ventana, sondeo corto para engancharlo apenas exista.
+  useEffect(() => {
+    if (!awaitingProofSync || isLoading) return;
+    const timer = window.setInterval(() => {
+      void loadInfo();
+    }, 4_000);
+    return () => window.clearInterval(timer);
+  }, [awaitingProofSync, isLoading, loadInfo]);
 
   useEffect(() => {
     if (!paymentPendingReminder || elapsedMinutes <= 0) return;
@@ -864,7 +896,16 @@ export default function PublicOrderPaymentSection({
       {/* Recordatorio: sin pago reportado el pedido no entra a cocina. Se
           vuelve más insistente con los minutos (5/10/15/20) y muestra el
           contador de anulación automática si el dueño la activó. */}
-      {paymentPendingReminder && !isFormOpen ? (
+      {/* El comprobante del checkout va en camino: ni regaño ni datos viejos
+          — un "registrando…" hasta que la consulta lo traiga (4s máx). */}
+      {awaitingProofSync ? (
+        <p className="mt-4 flex items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/40 px-4 py-3 text-sm font-black leading-5 text-[var(--brand-ink-2)]/75">
+          <Loader2 size={16} className="animate-spin text-[var(--brand-primary)]" />
+          Registrando tu comprobante…
+        </p>
+      ) : null}
+
+      {paymentPendingReminder && !awaitingProofSync && !isFormOpen ? (
         <p
           role="alert"
           className={`mt-4 flex w-full items-start gap-2 rounded-2xl border-[3px] px-4 py-3 text-sm font-black leading-5 ${
@@ -899,6 +940,7 @@ export default function PublicOrderPaymentSection({
           "Falta registrar la parte de X", datos SOLO de ese método y el monto
           de ESA pata — un solo mensaje, sin banner aparte (dueño 2026-07-23). */}
       {!hasConfirmedPayment &&
+        !awaitingProofSync &&
         (!hasPendingProof || needsCorrection || !reportCovered) &&
         (() => {
           const isPartialPending = hasPendingProof && !reportCovered;
@@ -1065,13 +1107,13 @@ export default function PublicOrderPaymentSection({
 
       {/* El chip "Paso 2" solo en el flujo fresco: con la pata pendiente ya
           hay un solo mensaje + un solo botón (sin numerar pasos de más). */}
-      {!hasConfirmedPayment && !isFormOpen && !hasPendingProof ? (
+      {!hasConfirmedPayment && !awaitingProofSync && !isFormOpen && !hasPendingProof ? (
         <span className="mt-4 inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
           Paso 2
         </span>
       ) : null}
 
-      {!hasConfirmedPayment && !isFormOpen ? (
+      {!hasConfirmedPayment && !awaitingProofSync && !isFormOpen ? (
         hasPendingProof && !needsCorrection && reportCovered ? (
           requiredElectronicUSD <= 0 ? null : (
           // Reportado y en revisión: nada que hacer. Solo un enlace discreto
