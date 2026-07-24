@@ -3337,7 +3337,9 @@ export default function CartDrawer({
             {lastCreatedOrder ? (
               <div className="space-y-5 px-6 py-7">
                 <div className="text-center">
-                  {lastOrderPaymentPending ? (
+                  {/* El check grande SOLO cuando no falta nada: con el reporte
+                      a medias también va la alerta (dueño 2026-07-23). */}
+                  {lastOrderPaymentPending || lastOrderReportIncomplete ? (
                     <AlertTriangle
                       size={58}
                       className="mx-auto animate-pulse text-amber-500"
@@ -3503,11 +3505,11 @@ export default function CartDrawer({
                       </p>
                     )}
 
-                    {lastOrderPaymentPending ? (
-                      // Sin pagar: NO mandar a otra página. Lleva al formulario
-                      // de reporte que ya está en este mismo modal (más abajo) y
-                      // lo abre/enfoca (fix bug 2026-07-22: antes solo abría el
-                      // seguimiento y no dejaba reportar).
+                    {lastOrderPaymentPending || lastOrderReportIncomplete ? (
+                      // Sin pagar O con el reporte a medias: NO mandar al
+                      // seguimiento — el botón lleva al formulario de reporte
+                      // de este mismo modal (la gente veía "Ver el avance"
+                      // primero y se iba sin subir la otra parte, 2026-07-23).
                       <button
                         type="button"
                         onClick={() => {
@@ -3525,7 +3527,9 @@ export default function CartDrawer({
                         className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3.5 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_4px_0_rgba(var(--brand-accent-rgb),0.6)] transition hover:bg-[var(--brand-accent)] active:translate-y-0.5 active:shadow-none"
                       >
                         <ImagePlus size={17} />
-                        Reportar pago
+                        {lastOrderReportIncomplete
+                          ? "Reportar lo que falta del pago"
+                          : "Reportar pago"}
                       </button>
                     ) : (
                       <a
@@ -3571,21 +3575,10 @@ export default function CartDrawer({
                     </div>
                   )}
 
-                {/* Recordatorio de pago anticipado en la confirmación: para
-                    Pick up / Delivery el pedido no entra a preparación hasta
-                    confirmar el pago (configurable por el dueño). */}
-                {publicConfig.publicPrepayNoticeEnabled &&
-                  lastOrderCanReportPayment &&
-                  !lastOrderCancelled &&
-                  !lastCreatedOrder.offline &&
-                  (lastCreatedOrder.orderType === "Para llevar" ||
-                    lastCreatedOrder.orderType === "Delivery") && (
-                    <div className="text-left">
-                      <PublicPrepayNotice
-                        text={publicConfig.publicPrepayNoticeText}
-                      />
-                    </div>
-                  )}
+                {/* El "Importante antes de pedir" se retiró de la CONFIRMACIÓN
+                    (dueño 2026-07-23: a este punto ya está sobreentendido y el
+                    estado del pago lo dicen el encabezado y los botones). En el
+                    CHECKOUT sigue saliendo igual. */}
 
                 {/* Pasos de pago unificados con la página de seguimiento
                     (/pedido/[id]): mismos datos de pago filtrados a los

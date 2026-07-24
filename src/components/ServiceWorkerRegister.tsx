@@ -26,10 +26,29 @@ export default function ServiceWorkerRegister() {
     // instalación).
     let refreshing = false
     const hadController = Boolean(navigator.serviceWorker.controller)
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (refreshing || !hadController) return
+    const reloadNow = () => {
+      if (refreshing) return
       refreshing = true
       window.location.reload()
+    }
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshing || !hadController) return
+      // NO recargar en plena cara del cliente si está pagando o escribiendo
+      // (la pantalla "hacía un extraño" justo tras registrar el pedido —
+      // dueño 2026-07-23): si la confirmación/reporte está a la vista o hay
+      // un campo enfocado, la recarga espera a que suelte la pestaña.
+      const activeTag = document.activeElement?.tagName || ""
+      const isBusy =
+        Boolean(document.getElementById("reporte-pago-seccion")) ||
+        ["INPUT", "TEXTAREA", "SELECT"].includes(activeTag)
+      if (!isBusy) return reloadNow()
+
+      const onHide = () => {
+        if (document.visibilityState !== "hidden") return
+        document.removeEventListener("visibilitychange", onHide)
+        reloadNow()
+      }
+      document.addEventListener("visibilitychange", onHide)
     })
 
     const onLoad = () => {

@@ -214,6 +214,8 @@ export default function PublicOrderPaymentSection({
   const [customerNote, setCustomerNote] = useState("");
   // La nota es opcional y casi nadie la usa: vive detrás de una casilla.
   const [wantsNote, setWantsNote] = useState(false);
+  // Igual la referencia: la mayoría solo adjunta la captura.
+  const [wantsReference, setWantsReference] = useState(false);
   const [dataUrl, setDataUrl] = useState("");
   const [fileName, setFileName] = useState("");
   const [mimeType, setMimeType] = useState("");
@@ -961,13 +963,16 @@ export default function PublicOrderPaymentSection({
               {isPartialPending && electronicLegs.length ? (
                 <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/85">
                   Monto a reportar:{" "}
-                  {electronicLegs
-                    .map((payment) =>
-                      payment.currency === "VES"
-                        ? `Bs ${formatVES(payment.amount)}`
-                        : formatUSD(payment.amount),
-                    )
-                    .join(" + ")}
+                  {/* La cantidad BRILLA sobre el resto (dueño 2026-07-23). */}
+                  <span className="text-[1.1rem] font-black text-amber-300 [text-shadow:0_0_14px_rgba(251,191,36,0.6)]">
+                    {electronicLegs
+                      .map((payment) =>
+                        payment.currency === "VES"
+                          ? `Bs ${formatVES(payment.amount)}`
+                          : formatUSD(payment.amount),
+                      )
+                      .join(" + ")}
+                  </span>
                 </p>
               ) : !isPartialPending && (info?.totalUSD ?? 0) > 0 ? (
                 <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/75">
@@ -1098,7 +1103,7 @@ export default function PublicOrderPaymentSection({
             {needsCorrection
               ? "Enviar otro comprobante"
               : hasPendingProof && !reportCovered
-                ? `Reportar la parte de ${pendingElectronicLabel || "mi pago"}`
+                ? "Reportar lo que falta del pago"
                 : "Reportar mi pago"}
           </button>
         )
@@ -1236,16 +1241,31 @@ export default function PublicOrderPaymentSection({
             </button>
           )}
 
+          {/* La mayoría solo adjunta la captura: la referencia vive detrás de
+              una casilla, como la nota (dueño 2026-07-23). */}
           <div>
-            <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-              Referencia completa (opcional si adjuntas la captura)
+            <label className="flex cursor-pointer items-center gap-2.5">
+              <input
+                type="checkbox"
+                checked={wantsReference}
+                onChange={(event) => {
+                  setWantsReference(event.target.checked);
+                  if (!event.target.checked) setReference("");
+                }}
+                className="h-5 w-5 shrink-0 accent-[var(--brand-primary)]"
+              />
+              <span className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                Escribir la referencia (si no adjuntas captura)
+              </span>
             </label>
-            <input
-              value={reference}
-              onChange={(event) => setReference(event.target.value)}
-              placeholder="Todos los dígitos de la operación"
-              className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
-            />
+            {wantsReference ? (
+              <input
+                value={reference}
+                onChange={(event) => setReference(event.target.value)}
+                placeholder="Todos los dígitos de la operación"
+                className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
+              />
+            ) : null}
           </div>
 
           <div>
