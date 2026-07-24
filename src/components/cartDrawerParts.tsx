@@ -261,11 +261,11 @@ export function CartLineItem({
               {showSelectionSegments ? (
                 <div className="mt-2 space-y-2 rounded-2xl border border-[var(--product-card-border)]/20 bg-[var(--brand-cream)] px-3 py-2.5">
                   {selectionSegments.variation ? (
-                    <div className="flex items-baseline gap-2">
-                      <span className="shrink-0 text-[0.58rem] font-black uppercase tracking-[0.14em] text-[var(--product-card-border)]">
+                    <div>
+                      <span className="block text-[0.56rem] font-black uppercase tracking-[0.14em] text-[var(--product-card-border)]">
                         {selectionSegments.variation.groupName || "Elección"}
                       </span>
-                      <span className="text-xs font-black leading-4 text-[var(--product-card-text)]">
+                      <span className="mt-0.5 block text-sm font-black leading-tight text-[var(--product-card-text)]">
                         {selectionSegments.variation.label}
                       </span>
                     </div>
