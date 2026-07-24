@@ -411,8 +411,9 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
       <style>{`@keyframes bhNavIn{from{opacity:0}to{opacity:1}}`}</style>
       {!compact && (
       <div className="overflow-hidden" style={{ animation: "bhNavIn 180ms ease-out" }}>
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
-        {/* Logotipo vectorizado: el guion ya dice el nombre, sin texto duplicado. */}
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3.5 sm:gap-3 sm:px-6 lg:px-8">
+        {/* Logotipo vectorizado, más presente: la fila se veía con mucho
+            negro vacío entre el logo y los botones (dueño 2026-07-23). */}
         <a href="#inicio" className="group flex min-w-0 items-center">
           <Image
             src={BRAND.wordmarkDarkBgUrl}
@@ -421,7 +422,7 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
             height={103}
             unoptimized
             priority
-            className="h-9 w-auto max-w-[44vw] object-contain transition group-hover:opacity-90 sm:h-11"
+            className="h-11 w-auto max-w-[46vw] object-contain transition group-hover:opacity-90 sm:h-12"
           />
         </a>
 
@@ -466,13 +467,15 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
             </a>
           ) : null}
 
+          {/* WhatsApp también en el teléfono: acción clave del negocio y
+              llena el espacio vacío de la fila (dueño 2026-07-23). */}
           {whatsappUrl ? (
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noreferrer"
               aria-label="Abrir WhatsApp"
-              className="hidden h-11 w-11 items-center justify-center rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] sm:flex"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
             >
               <MessageCircle size={20} strokeWidth={2.2} />
             </a>

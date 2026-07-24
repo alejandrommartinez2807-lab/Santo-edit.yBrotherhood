@@ -28,6 +28,9 @@ type PublicBusinessConfig = {
   scheduleTitle: string
   scheduleLine1: string
   reviewsTitle: string
+  // Link directo a las reseñas de Google (Configuración → googleReviewUrl):
+  // con él, el botón "Reseñas" abre Google Maps; sin él, baja a la sección.
+  googleReviewUrl: string
 }
 
 const DEFAULT_PUBLIC_CONFIG: PublicBusinessConfig = {
@@ -45,6 +48,7 @@ const DEFAULT_PUBLIC_CONFIG: PublicBusinessConfig = {
   scheduleTitle: "Horario",
   scheduleLine1: "Horario disponible",
   reviewsTitle: "Reseñas",
+  googleReviewUrl: "",
 }
 
 function readText(source: Record<string, unknown>, keys: string[], fallback: string) {
@@ -156,6 +160,10 @@ function normalizePublicBusinessConfig(value: unknown): PublicBusinessConfig {
       ["reviewsTitle", "publicReviewsTitle", "reviewTitle"],
       DEFAULT_PUBLIC_CONFIG.reviewsTitle
     ),
+    googleReviewUrl: (() => {
+      const url = readText(source, ["googleReviewUrl"], "")
+      return url.startsWith("https://") || url.startsWith("http://") ? url : ""
+    })(),
   }
 }
 
@@ -317,8 +325,13 @@ export default function Hero() {
             {businessConfig.locationButtonText}
           </a>
 
+          {/* Con el link de reseñas de Google configurado, el botón abre las
+              reseñas REALES en Maps; sin él, baja a la sección de reseñas. */}
           <a
-            href="#resena"
+            href={businessConfig.googleReviewUrl || "#resena"}
+            {...(businessConfig.googleReviewUrl
+              ? { target: "_blank", rel: "noreferrer" }
+              : {})}
             className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-border)] bg-black/30 px-4 py-4 text-sm font-extrabold uppercase tracking-wide text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95"
           >
             <Star size={19} />
