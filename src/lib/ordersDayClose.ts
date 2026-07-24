@@ -300,13 +300,19 @@ export async function getDayCloses(branchId?: string | null) {
   })
 
   // Bucket de comprobantes es privado: las URLs firmadas guardadas en el
-  // snapshot del cierre caducan. Re-firmamos desde la ruta (proofFileId) para
-  // que el historial de cierres siga mostrando las imágenes. Los cierres
-  // viejos sin proofFileId conservan la URL que traían.
+  // snapshot del cierre caducan. Re-firmamos desde la ruta del archivo para que
+  // el historial siga mostrando las imágenes. La ruta sale de `proofFileId`
+  // (cierres nuevos) o, si no está, se deriva de la URL pública vieja guardada
+  // en `proofImageUrl` (cierres previos al bucket privado): así el historial
+  // antiguo no se rompe con la migración a privado.
+  const pathForProof = (proof: DayCloseProof) =>
+    cleanText(proof.proofFileId) || extractStoredProofPath(proof.proofImageUrl)
+
   const proofPaths: string[] = []
   for (const close of closes) {
     for (const proof of close.paymentProofs ?? []) {
-      if (proof.proofFileId) proofPaths.push(proof.proofFileId)
+      const path = pathForProof(proof)
+      if (path) proofPaths.push(path)
     }
   }
 
@@ -314,15 +320,31 @@ export async function getDayCloses(branchId?: string | null) {
     const signedByPath = await signPaymentProofPaths(proofPaths)
     for (const close of closes) {
       if (!Array.isArray(close.paymentProofs)) continue
-      close.paymentProofs = close.paymentProofs.map((proof) =>
-        proof.proofFileId && signedByPath.has(proof.proofFileId)
-          ? { ...proof, proofImageUrl: signedByPath.get(proof.proofFileId) || "" }
-          : proof,
-      )
+      close.paymentProofs = close.paymentProofs.map((proof) => {
+        const path = pathForProof(proof)
+        return path && signedByPath.has(path)
+          ? { ...proof, proofImageUrl: signedByPath.get(path) || "" }
+          : proof
+      })
     }
   }
 
   return closes
+}
+
+// Extrae la ruta del bucket ("proofs/xxxx") desde una URL de Storage guardada
+// (pública `/object/public/payment-proofs/...` o firmada `/object/sign/...`),
+// para poder re-firmarla cuando el snapshot no trae `proofFileId`.
+function extractStoredProofPath(url: unknown): string {
+  const value = cleanText(url)
+  if (!value) return ""
+  const match = value.match(/\/payment-proofs\/([^?]+)/)
+  if (!match) return ""
+  try {
+    return decodeURIComponent(match[1])
+  } catch {
+    return match[1]
+  }
 }
 
 
