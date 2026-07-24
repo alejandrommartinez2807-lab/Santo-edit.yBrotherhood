@@ -119,6 +119,33 @@ function cleanPublicLabel(value: unknown, fallback: string) {
   return text || fallback;
 }
 
+// Orden fijo de los grupos de opciones al personalizar (pedido del dueño):
+// 1) tipo de hamburguesa, 2) proteína, 3) resto, 4) custom fries (van justo
+// antes de los adicionales con costo). Estable: dentro del mismo rango se
+// conserva el orden original del producto.
+function variationGroupRank(name: string) {
+  const key = String(name || "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+
+  if (/\btipo\b/.test(key)) return 0;
+  if (/proteina/.test(key)) return 1;
+  if (/custom fries|papas custom|\bfries\b/.test(key)) return 3;
+  return 2;
+}
+
+function orderVariationGroups<T extends { name?: string }>(groups: T[]): T[] {
+  return groups
+    .map((group, index) => ({ group, index }))
+    .sort(
+      (a, b) =>
+        variationGroupRank(a.group.name || "") -
+          variationGroupRank(b.group.name || "") || a.index - b.index,
+    )
+    .map((entry) => entry.group);
+}
+
 function ChoiceButton({
   label,
   detail,
@@ -320,7 +347,7 @@ export default function ProductCard({
     productType === "combo" ||
     category === "Combos";
   const variationGroups = useMemo(
-    () => readVariationGroups(variations),
+    () => orderVariationGroups(readVariationGroups(variations)),
     [variations],
   );
   const selectableAddons = useMemo(() => flattenAddonOptions(addons), [addons]);
