@@ -412,18 +412,28 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
       {!compact && (
       <div className="overflow-hidden" style={{ animation: "bhNavIn 180ms ease-out" }}>
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3.5 sm:gap-3 sm:px-6 lg:px-8">
-        {/* Logotipo vectorizado, más presente: la fila se veía con mucho
-            negro vacío entre el logo y los botones (dueño 2026-07-23). */}
-        <a href="#inicio" className="group flex min-w-0 items-center">
-          <Image
-            src={BRAND.wordmarkDarkBgUrl}
-            alt={businessName}
-            width={320}
-            height={103}
-            unoptimized
-            priority
-            className="h-11 w-auto max-w-[46vw] object-contain transition group-hover:opacity-90 sm:h-12"
-          />
+        {/* Logo como en el mockup del rediseño: símbolo en círculo + nombre
+            en bloque + tagline naranja (ambos editables desde la config). */}
+        <a href="#inicio" className="group flex min-w-0 items-center gap-2.5">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--brand-border)] bg-black transition group-hover:border-[rgba(var(--brand-primary-rgb),0.6)] sm:h-12 sm:w-12">
+            <Image
+              src={BRAND.symbolDarkBgUrl}
+              alt=""
+              width={96}
+              height={96}
+              unoptimized
+              priority
+              className="h-7 w-7 object-contain sm:h-8 sm:w-8"
+            />
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate font-display text-lg leading-none text-[var(--brand-ink-3)] transition group-hover:text-white sm:text-xl">
+              {businessName}
+            </span>
+            <span className="mt-0.5 block truncate text-[0.58rem] font-bold uppercase tracking-[0.14em] text-[var(--brand-primary)] sm:text-[0.62rem]">
+              {businessConfig.businessShortDescription}
+            </span>
+          </span>
         </a>
 
         {/* Nav central (escritorio) */}

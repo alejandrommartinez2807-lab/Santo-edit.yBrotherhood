@@ -7,6 +7,7 @@ import {
   Beef,
   Flame,
   MapPin,
+  MessageCircle,
   Sandwich,
   Star,
   UtensilsCrossed,
@@ -41,8 +42,12 @@ const DEFAULT_PUBLIC_CONFIG: PublicBusinessConfig = {
   googleMapsUrl: "",
   instagramUrl: `https://www.instagram.com/${BRAND.instagram}/`,
   heroBadgeText: "Smash burgers · Delivery y Pick Up",
-  heroSubtitle: "Porque nos gustan las buenas burgers",
-  heroDescription: BRAND.description,
+  // Defaults alineados al mockup del rediseño: el subtítulo naranja es la
+  // línea de productos y la descripción cuenta el "porqué" de la marca.
+  // La config del dueño (heroSubtitle/heroDescription) sigue mandando.
+  heroSubtitle: BRAND.tagline,
+  heroDescription:
+    "Porque nos gustan las buenas burgers: smash jugosas, ingredientes de calidad y mucho sabor. Delivery y pick up en Valencia y San Diego.",
   locationButtonText: "Ubicación",
   publicMenuTitle: "Ver menú",
   scheduleTitle: "Horario",
@@ -194,6 +199,9 @@ export default function Hero() {
   // con 2+ sedes con link, el botón "Reseñas" abre un selector.
   const [branchReviews, setBranchReviews] = useState<BranchReviewLink[]>([])
   const [isReviewChooserOpen, setIsReviewChooserOpen] = useState(false)
+  // Nombres de TODAS las sedes (tengan o no link de reseñas): alimentan la
+  // franja de sedes bajo la foto del hero (rediseño 2026-07).
+  const [branchNames, setBranchNames] = useState<string[]>([])
 
   useEffect(() => {
     let isMounted = true
@@ -203,6 +211,14 @@ export default function Hero() {
       .then((data) => {
         if (!isMounted) return
         const list = Array.isArray(data?.branches) ? data.branches : []
+        setBranchNames(
+          list
+            .map((branch: Record<string, unknown>) =>
+              String(branch.name || "").trim(),
+            )
+            .filter(Boolean)
+            .slice(0, 4),
+        )
         setBranchReviews(
           list
             .map((branch: Record<string, unknown>) => ({
@@ -250,11 +266,23 @@ export default function Hero() {
     }
   }, [])
 
+  // Chips de garantías sobre la foto del hero (textos del mockup aprobado).
   const guarantees = [
-    { icon: Beef, top: "Carne", bottom: "100% res" },
-    { icon: Flame, top: "Queso", bottom: "americano" },
-    { icon: Sandwich, top: "Pan", bottom: "brioche" },
+    { icon: Flame, top: "Carne smash", bottom: "100% res" },
+    { icon: Beef, top: "Queso fundido", bottom: "y toppings" },
+    { icon: Sandwich, top: "Pan brioche", bottom: "artesanal" },
   ]
+
+  // WhatsApp para mostrar (0412 446 7558) y para el link wa.me.
+  const whatsappDigits = businessConfig.mainWhatsapp.replace(/[^0-9]/g, "")
+  const whatsappDisplay = (() => {
+    const local = whatsappDigits.startsWith("58")
+      ? `0${whatsappDigits.slice(2)}`
+      : whatsappDigits
+    return local.length === 11
+      ? `${local.slice(0, 4)} ${local.slice(4, 7)} ${local.slice(7)}`
+      : local
+  })()
 
   const marqueeItems = [
     ...businessConfig.heroBadgeText
@@ -303,31 +331,24 @@ export default function Hero() {
         <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_55%,var(--brand-cream)_100%)]" />
       </div>
 
-      <div className="relative mx-auto flex max-w-4xl flex-col items-center px-5 pb-12 pt-10 text-center sm:px-6 sm:pt-16">
+      <div className="relative mx-auto grid max-w-7xl gap-9 px-5 pb-12 pt-10 sm:px-6 sm:pt-14 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-12 lg:pb-16">
+        {/* Columna de texto (en el teléfono va arriba, centrada) */}
+        <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
         {/* Badge */}
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand-primary-rgb),0.45)] bg-black/50 px-4 py-2 text-[0.62rem] font-bold uppercase tracking-[0.22em] text-[var(--brand-primary)] backdrop-blur sm:text-xs">
+        <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[rgba(var(--brand-primary-rgb),0.45)] bg-black/50 px-4 py-2 text-[0.62rem] font-bold uppercase tracking-[0.22em] text-[var(--brand-primary)] backdrop-blur sm:text-xs">
           <Flame size={14} />
           {businessConfig.heroBadgeText}
         </div>
 
-        {/* Título: el logotipo vectorizado ES el nombre; el h1 queda para
-            lectores de pantalla y buscadores sin repetir el texto en la vista. */}
-        <h1 className="sr-only">{businessConfig.businessName}</h1>
-        <div className="relative w-full max-w-[34rem]">
-          <div className="absolute inset-x-8 inset-y-4 -z-10 rounded-full bg-[rgba(var(--brand-primary-rgb),0.22)] blur-3xl" />
-          <Image
-            src={BRAND.wordmarkDarkBgUrl}
-            alt={businessConfig.businessName}
-            width={1600}
-            height={513}
-            unoptimized
-            priority
-            className="h-auto w-full object-contain drop-shadow-[0_18px_60px_rgba(var(--brand-primary-rgb),0.35)]"
-          />
-        </div>
+        {/* Título en bloque (Anton), como en el mockup del rediseño: el
+            nombre configurable vuelve a ser texto grande y con textura de
+            luz; el logotipo script sigue vivo en la barra y el fondo. */}
+        <h1 className="font-display mt-5 w-full text-[16vw] uppercase leading-[0.88] text-[var(--brand-ink-3)] [text-shadow:0_16px_70px_rgba(var(--brand-primary-rgb),0.4)] sm:text-[5.4rem] lg:text-[5.2rem] xl:text-[6.2rem]">
+          {businessConfig.businessName}
+        </h1>
 
         {/* Subtítulo */}
-        <p className="mt-4 font-display text-xl uppercase tracking-[0.06em] text-[var(--brand-primary)] sm:text-3xl">
+        <p className="mt-3 font-display text-xl uppercase tracking-[0.06em] text-[var(--brand-primary)] sm:text-3xl lg:text-2xl xl:text-3xl">
           {businessConfig.heroSubtitle}
         </p>
 
@@ -339,13 +360,13 @@ export default function Hero() {
         {/* CTA primaria: un solo botón al menú. El "Pedir ahora" por WhatsApp
             se quitó (2026-07-12): el cliente casi siempre LLEGA desde
             WhatsApp, así que mandarlo de vuelta no tenía sentido. */}
-        <div className="mt-9 w-full max-w-md">
+        <div className="mt-8 w-full max-w-md">
           <a
             href="#menu"
             className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--brand-primary)] px-6 py-4 text-sm font-extrabold uppercase tracking-wide text-black shadow-[0_14px_38px_-10px_rgba(var(--brand-primary-rgb),0.65)] transition hover:bg-[var(--brand-accent)] active:scale-95"
           >
             <UtensilsCrossed size={18} />
-            Descubre el menú
+            Ver menú
             <ArrowRight
               size={16}
               className="transition-transform group-hover:translate-x-1"
@@ -408,6 +429,80 @@ export default function Hero() {
           })()}
         </div>
 
+        {/* Franja de datos rápidos (mockup): sedes reales + WhatsApp. Solo
+            se pinta lo que exista; los nombres salen de /api/public/branches
+            y el número de la config (con default de la marca). */}
+        {(branchNames.length > 0 || whatsappDigits) && (
+          <div className="mt-6 flex w-full max-w-md flex-wrap items-center justify-center gap-x-5 gap-y-2.5 rounded-2xl border border-[var(--brand-border)] bg-black/40 px-5 py-3.5 lg:justify-start">
+            {branchNames.map((branchName) => (
+              <a
+                key={branchName}
+                href="#ubicaciones"
+                className="inline-flex items-center gap-1.5 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink)] transition hover:text-[var(--brand-primary)]"
+              >
+                <MapPin size={13} className="text-[var(--brand-primary)]" />
+                {branchName}
+              </a>
+            ))}
+            {whatsappDigits ? (
+              <a
+                href={`https://wa.me/${whatsappDigits}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-[0.68rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink)] transition hover:text-[var(--brand-primary)]"
+              >
+                <MessageCircle size={13} className="text-[var(--brand-primary)]" />
+                {whatsappDisplay}
+              </a>
+            ) : null}
+          </div>
+        )}
+        </div>
+
+        {/* Columna de la foto: burger real en tarjeta redondeada con borde
+            naranja y chips de garantías encima (mockup del rediseño). */}
+        <div className="relative">
+          <div
+            aria-hidden
+            className="absolute -inset-6 -z-10 rounded-[2.4rem] bg-[radial-gradient(ellipse_at_center,rgba(var(--brand-primary-rgb),0.22),transparent_70%)] blur-2xl"
+          />
+          <div className="relative overflow-hidden rounded-[1.8rem] border border-[rgba(var(--brand-primary-rgb),0.55)] bg-black shadow-[0_36px_90px_-42px_rgba(var(--brand-primary-rgb),0.55)]">
+            <Image
+              src="/brotherhood-hero-burger.jpg"
+              alt="Smash burger doble con tocineta de Brotherhood"
+              width={790}
+              height={610}
+              priority
+              className="h-auto w-full object-cover"
+            />
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-[linear-gradient(180deg,transparent_55%,rgba(0,0,0,0.82)_100%)]"
+            />
+            <div className="absolute inset-x-2.5 bottom-2.5 grid grid-cols-3 gap-1.5 sm:inset-x-3 sm:bottom-3 sm:gap-2">
+              {guarantees.map(({ icon: GuaranteeIcon, top, bottom }) => (
+                <div
+                  key={top}
+                  className="flex flex-col items-center justify-center gap-0.5 rounded-xl border border-white/10 bg-black/65 px-1.5 py-2 text-center backdrop-blur-sm sm:flex-row sm:gap-2 sm:rounded-2xl sm:px-3 sm:py-2.5"
+                >
+                  <GuaranteeIcon
+                    size={15}
+                    className="shrink-0 text-[var(--brand-primary)]"
+                  />
+                  <span className="min-w-0">
+                    <span className="block text-[0.56rem] font-black uppercase leading-tight tracking-[0.04em] text-white sm:text-[0.64rem]">
+                      {top}
+                    </span>
+                    <span className="block text-[0.52rem] font-bold uppercase leading-tight tracking-[0.04em] text-[var(--brand-primary)] sm:text-[0.58rem]">
+                      {bottom}
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Selector de sede para dejar la reseña (cada local tiene su ficha
             de Google). */}
         {isReviewChooserOpen ? (
@@ -451,9 +546,9 @@ export default function Hero() {
           </div>
         ) : null}
 
-        {/* Las tarjetas de garantías (Carne/Queso/Pan) se retiraron a pedido
-            del dueño (2026-07-23): esos textos siguen SOLO en la cinta en
-            movimiento de abajo (marqueeItems). */}
+        {/* Las garantías (Carne/Queso/Pan) viven como chips SOBRE la foto
+            del hero y en la cinta en movimiento; las tarjetas sueltas se
+            retiraron a pedido del dueño (2026-07-23). */}
       </div>
 
       {/* Cinta en movimiento con lo esencial de la marca */}

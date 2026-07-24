@@ -1,7 +1,27 @@
 "use client"
 
 import { useEffect, useEffectEvent, useMemo, useState, type CSSProperties } from "react"
-import { Search, Sparkles, X } from "lucide-react"
+import {
+  BadgePercent,
+  Beef,
+  Bike,
+  Candy,
+  Cookie,
+  CupSoda,
+  Droplets,
+  Drumstick,
+  Flame,
+  Heart,
+  IceCreamCone,
+  LayoutGrid,
+  Sandwich,
+  Search,
+  Sparkles,
+  Utensils,
+  UtensilsCrossed,
+  X,
+  type LucideIcon,
+} from "lucide-react"
 import ProductCard from "@/components/ProductCard"
 import { BRAND } from "@/lib/brand"
 import {
@@ -191,6 +211,37 @@ function normalizeSearchText(value: unknown) {
     .toLowerCase()
     .trim()
 }
+
+// Icono por categor\u00eda (mockup del redise\u00f1o: chips con dibujito). Se resuelve
+// por palabras clave para aguantar los nombres reales que ponga el due\u00f1o.
+function getCategoryIcon(category: string): LucideIcon {
+  const key = normalizeSearchText(category)
+
+  if (key === "todos") return LayoutGrid
+  if (key === "favoritos") return Heart
+  if (/promo|favorita|epa bro|oferta/.test(key)) return BadgePercent
+  if (/combo/.test(key)) return UtensilsCrossed
+  if (/pollo|chicken|nugget/.test(key)) return Drumstick
+  if (/hamburgues|burger|smash|biggie|veggie|basic/.test(key)) return Sandwich
+  if (/kid/.test(key)) return Candy
+  if (/refresco|bebida|jugo|te frio|malta|agua/.test(key)) return CupSoda
+  if (/postre|dulce|brownie|helado/.test(key)) return IceCreamCone
+  if (/antojo/.test(key)) return Cookie
+  if (/papa|frita|side|extra|acompan/.test(key)) return Utensils
+
+  return Utensils
+}
+
+// Franja de features del final del men\u00fa (mockup del redise\u00f1o): argumentos
+// fijos de la marca, mismos textos de la cinta del hero + operaci\u00f3n.
+const MENU_FEATURE_STRIP: { icon: LucideIcon; title: string; detail: string }[] = [
+  { icon: Beef, title: "Carne 100% res", detail: "Smash al momento" },
+  { icon: Flame, title: "Queso fundido", detail: "En cada mordida" },
+  { icon: Sandwich, title: "Pan brioche", detail: "Suave y dorado" },
+  { icon: Utensils, title: "Papas frescas", detail: "Corte grueso" },
+  { icon: Droplets, title: "Salsas caseras", detail: "Hechas por nosotros" },
+  { icon: Bike, title: "Pedido r\u00e1pido", detail: "Delivery y Pick Up" },
+]
 
 function hasSelectablePublicOptions(product: Product) {
   return Boolean(
@@ -631,6 +682,7 @@ export default function Products({ exchangeRate, onAddToCart, onProductsLoaded }
           <div className="flex gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:pb-0">
             {visibleMenuCategories.map((category) => {
               const isActive = selectedCategory === category
+              const CategoryIcon = getCategoryIcon(category)
 
               return (
                 <button
@@ -641,12 +693,16 @@ export default function Products({ exchangeRate, onAddToCart, onProductsLoaded }
                     setSelectedCategoryGroup([])
                     setSelectedQuickFilter("all")
                   }}
-                  className={`shrink-0 rounded-full border px-4 py-2.5 text-xs font-bold uppercase tracking-[0.1em] transition active:scale-95 sm:px-5 sm:py-3 ${
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-4 py-2.5 text-xs font-bold uppercase tracking-[0.1em] transition active:scale-95 sm:gap-2 sm:px-5 sm:py-3 ${
                     isActive
                       ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-black shadow-[0_10px_26px_-12px_rgba(var(--brand-primary-rgb),0.8)]"
                       : "border-[var(--brand-border)] bg-[var(--brand-surface)] text-[var(--brand-ink)] hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
                   }`}
                 >
+                  <CategoryIcon
+                    size={15}
+                    className={isActive ? "text-black" : "text-[var(--brand-primary)]"}
+                  />
                   {category}
                 </button>
               )
@@ -698,6 +754,29 @@ export default function Products({ exchangeRate, onAddToCart, onProductsLoaded }
             ))}
           </div>
         )}
+
+        {/* Franja de features (mockup del rediseño): cierra el menú con los
+            argumentos de la marca. Solo decorativa, no depende de la config. */}
+        <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-6 rounded-[1.6rem] border border-[var(--brand-border)] bg-black/40 px-5 py-7 sm:grid-cols-3 lg:grid-cols-6">
+          {MENU_FEATURE_STRIP.map(({ icon: FeatureIcon, title, detail }) => (
+            <div
+              key={title}
+              className="flex items-center gap-3 sm:flex-col sm:gap-2 sm:text-center lg:flex-row lg:gap-3 lg:text-left"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[rgba(var(--brand-primary-rgb),0.35)] bg-[var(--brand-surface)] text-[var(--brand-primary)]">
+                <FeatureIcon size={18} />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[0.7rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-3)]">
+                  {title}
+                </span>
+                <span className="mt-0.5 block text-[0.62rem] font-bold uppercase tracking-[0.06em] text-[var(--brand-ink-2)]">
+                  {detail}
+                </span>
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   )

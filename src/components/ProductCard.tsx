@@ -6,12 +6,12 @@ import { motion } from "motion/react";
 import { BRAND } from "@/lib/brand";
 import {
   Check,
+  Flame,
   Heart,
   Minus,
   Plus,
   ShoppingCart,
   SlidersHorizontal,
-  Sparkles,
   X,
 } from "lucide-react";
 import { formatPublicUSD as formatUSD, formatVES } from "@/utils/formatCurrency";
@@ -718,7 +718,7 @@ export default function ProductCard({
             // "Pago en divisas" que va junto al precio. Menos ruido en la foto.
             isFeatured ? (
               <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-[var(--product-card-button)] px-2 py-1 text-[0.52rem] font-black uppercase tracking-[0.08em] text-black shadow-lg shadow-black/40">
-                <Sparkles size={10} />
+                <Flame size={10} />
                 Top ventas
               </span>
             ) : null
@@ -731,7 +731,7 @@ export default function ProductCard({
               <div className="absolute right-4 top-4 flex max-w-[58%] flex-col items-end gap-2">
                 {isFeatured ? (
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--product-card-button)] px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.12em] text-black shadow-lg shadow-black/40">
-                    <Sparkles size={13} />
+                    <Flame size={13} />
                     Top ventas
                   </span>
                 ) : null}
