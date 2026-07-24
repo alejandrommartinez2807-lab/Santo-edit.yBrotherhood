@@ -11,8 +11,8 @@
 // no se quedan sirviendo assets/HTML de un deploy anterior. SUBIR ESTE NÚMERO
 // en cada release que deba forzar refresco (bug histórico: estaba fijo en v1 y
 // nunca purgaba, por eso las features nuevas "no aparecían" tras publicar).
-const STATIC_CACHE = "santo-static-v12"
-const PAGE_CACHE = "santo-pages-v12"
+const STATIC_CACHE = "santo-static-v13"
+const PAGE_CACHE = "santo-pages-v13"
 const OFFLINE_URL = "/offline.html"
 const KEEP = [STATIC_CACHE, PAGE_CACHE]
 

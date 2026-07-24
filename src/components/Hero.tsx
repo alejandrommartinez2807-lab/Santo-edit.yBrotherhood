@@ -304,23 +304,24 @@ export default function Hero() {
           </a>
         </div>
 
-        {/* CTAs secundarias */}
-        <div className="mt-3 grid w-full max-w-md grid-cols-2 gap-3">
+        {/* CTAs secundarias: más grandes desde que se retiraron las tarjetas
+            de garantías (el espacio libre las hacía ver chiquitas). */}
+        <div className="mt-4 grid w-full max-w-md grid-cols-2 gap-3">
           {/* Baja a "Nuestros locales" (mapas interactivos por sede) en vez
               de abrir un solo link externo que además podía venir vacío. */}
           <a
             href="#ubicaciones"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--brand-border)] bg-black/30 px-4 py-3 text-xs font-bold uppercase tracking-wide text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-border)] bg-black/30 px-4 py-4 text-sm font-extrabold uppercase tracking-wide text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95"
           >
-            <MapPin size={16} />
+            <MapPin size={19} />
             {businessConfig.locationButtonText}
           </a>
 
           <a
             href="#resena"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--brand-border)] bg-black/30 px-4 py-3 text-xs font-bold uppercase tracking-wide text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-border)] bg-black/30 px-4 py-4 text-sm font-extrabold uppercase tracking-wide text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95"
           >
-            <Star size={16} />
+            <Star size={19} />
             {businessConfig.reviewsTitle || "Reseñas"}
           </a>
         </div>

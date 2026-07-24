@@ -226,6 +226,9 @@ export default function PublicOrderPaymentSection({
   const [wantsNote, setWantsNote] = useState(false);
   // Igual la referencia: la mayoría solo adjunta la captura.
   const [wantsReference, setWantsReference] = useState(false);
+  // true entre "reporte enviado OK" y "la info ya lo trae": evita pintar el
+  // estado anterior un instante (flash de versión vieja).
+  const [syncingAfterReport, setSyncingAfterReport] = useState(false);
   const [dataUrl, setDataUrl] = useState("");
   const [fileName, setFileName] = useState("");
   const [mimeType, setMimeType] = useState("");
@@ -478,8 +481,10 @@ export default function PublicOrderPaymentSection({
 
   // El checkout dice que subió un comprobante pero la info aún no lo trae:
   // ventana de sincronización (subida en curso o consulta por refrescar).
+  // syncingAfterReport cubre lo mismo para el reporte MANUAL recién enviado.
   const awaitingProofSync =
-    expectProofPending && !hasConfirmedPayment && activeProofs.length === 0;
+    syncingAfterReport ||
+    (expectProofPending && !hasConfirmedPayment && activeProofs.length === 0);
 
   // Mientras dura esa ventana, sondeo corto para engancharlo apenas exista.
   useEffect(() => {
@@ -843,6 +848,10 @@ export default function PublicOrderPaymentSection({
         "¡Pago reportado! Caja lo revisará y aquí verás cuando quede confirmado.",
       );
       onReported?.();
+      // Mientras la info se recarga con el reporte nuevo, la sección muestra
+      // "actualizando" en vez del estado ANTERIOR (flash de versión vieja,
+      // dueño 2026-07-23 v2).
+      setSyncingAfterReport(true);
       setIsFormOpen(false);
       setPayments([EMPTY_PAYMENT_ENTRY]);
       setCoverageWarning(null);
@@ -863,6 +872,7 @@ export default function PublicOrderPaymentSection({
       );
     } finally {
       setIsSubmitting(false);
+      setSyncingAfterReport(false);
     }
   }
 

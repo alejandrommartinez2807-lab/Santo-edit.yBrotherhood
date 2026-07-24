@@ -405,8 +405,12 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
           barras se mezclaban): se eliminó el crossfade con max-h/delays — se
           monta UNA SOLA barra a la vez (swap instantáneo). Sin las dos en el
           DOM, es imposible que se solapen en ningún momento del scroll. */}
+      {/* Fade de entrada del swap: sin esto el cambio completa↔compacta se
+          sentía como "una recarga rara" (dueño 2026-07-23). Las barras siguen
+          montándose UNA a la vez: no puede volver el bug de la mezcla. */}
+      <style>{`@keyframes bhNavIn{from{opacity:0}to{opacity:1}}`}</style>
       {!compact && (
-      <div className="overflow-hidden">
+      <div className="overflow-hidden" style={{ animation: "bhNavIn 180ms ease-out" }}>
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
         {/* Logotipo vectorizado: el guion ya dice el nombre, sin texto duplicado. */}
         <a href="#inicio" className="group flex min-w-0 items-center">
@@ -567,7 +571,7 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
       {/* Barra compacta al bajar: categorías del menú + carrito. Solo se
           monta cuando la completa NO está (swap exclusivo, ver arriba). */}
       {compact && (
-      <div className="overflow-hidden">
+      <div className="overflow-hidden" style={{ animation: "bhNavIn 180ms ease-out" }}>
         <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2 sm:px-6 lg:px-8">
           <nav
             aria-label="Categorías del menú"
