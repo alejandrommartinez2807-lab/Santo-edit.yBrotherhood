@@ -971,7 +971,7 @@ export default function ProductCard({
               </button>
             </div>
 
-            <div className="grid overflow-y-auto lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+            <div className="grid min-h-0 flex-1 overflow-y-auto lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
               <div className="border-b border-[var(--brand-border)] p-5 sm:p-6 lg:border-b-0 lg:border-r">
                 <div className="overflow-hidden rounded-[1.4rem] border border-[var(--brand-border)] bg-black">
                   <Image
@@ -980,7 +980,7 @@ export default function ProductCard({
                     width={640}
                     height={288}
                     unoptimized
-                    className="h-56 w-full object-cover sm:h-72"
+                    className="h-36 w-full object-cover sm:h-72"
                     onError={(event) => {
                       event.currentTarget.src = "/logoremovebg.png";
                     }}
@@ -1041,7 +1041,7 @@ export default function ProductCard({
                                 : "Esta selección es obligatoria."}
                             </p>
                           ) : null}
-                          {group.multiple && group.maxSelections > 0 ? (
+                          {group.multiple && group.maxSelections > 1 ? (
                             <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
                               Elegidos: {groupKeys.length}/{group.maxSelections}
                             </p>
@@ -1217,16 +1217,38 @@ export default function ProductCard({
                   </div>
                 )}
 
-                {formMessage ? (
-                  <p className="rounded-xl border border-[rgba(var(--brand-primary-rgb),0.4)] bg-[rgba(var(--brand-primary-rgb),0.08)] px-3 py-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
-                    {formMessage}
+              </div>
+            </div>
+
+            {/* Footer fijo (mockup del rediseño): precio final + CTA siempre
+                a la vista, sin tener que bajar hasta el fondo del modal. El
+                mensaje de validación aparece aquí, junto al botón. */}
+            <div className="shrink-0 border-t border-[var(--brand-border)] bg-black/60 px-5 py-4 backdrop-blur-sm sm:px-6">
+              {formMessage ? (
+                <p className="mb-3 rounded-xl border border-[rgba(var(--brand-primary-rgb),0.4)] bg-[rgba(var(--brand-primary-rgb),0.08)] px-3 py-2 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                  {formMessage}
+                </p>
+              ) : null}
+
+              <div className="flex items-center gap-3">
+                <div className="shrink-0">
+                  <p className="text-[0.6rem] font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]">
+                    Total
                   </p>
-                ) : null}
+                  <p className="text-2xl font-black leading-none text-[var(--brand-ink-3)]">
+                    {formatUSD(finalUnitPrice)}
+                  </p>
+                  {!isCombo ? (
+                    <p className="text-[0.68rem] font-black text-[var(--brand-ink-2)]/70">
+                      Bs {formatVES(finalVES)}
+                    </p>
+                  ) : null}
+                </div>
 
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  className={`flex w-full items-center justify-center gap-3 rounded-xl px-4 py-4 font-black uppercase transition active:scale-[0.98] ${
+                  className={`flex flex-1 items-center justify-center gap-3 rounded-xl px-4 py-4 font-black uppercase transition active:scale-[0.98] ${
                     added
                       ? "bg-green-500 text-white"
                       : "bg-[var(--brand-primary)] text-black shadow-[0_12px_30px_-12px_rgba(var(--brand-primary-rgb),0.7)] hover:brightness-110"
@@ -1240,7 +1262,7 @@ export default function ProductCard({
                   ) : (
                     <>
                       <Plus size={18} />
-                      Agregar al pedido {formatUSD(finalUnitPrice)}
+                      Agregar al pedido
                     </>
                   )}
                 </button>

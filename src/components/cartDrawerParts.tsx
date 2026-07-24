@@ -16,7 +16,10 @@ import { BRAND } from "@/lib/brand";
 import { formatPublicUSD as formatUSD, formatVES } from "@/utils/formatCurrency";
 import type { CartItem, OrderType, PublicBusinessConfig } from "@/components/cartTypes";
 import FiscalBreakdown from "@/components/FiscalBreakdown";
-import { getSelectionSummary } from "@/components/cartSelection";
+import {
+  buildSelectionSegments,
+  hasSelectionSegments,
+} from "@/components/cartSelection";
 import {
   formatItemSalesChannels,
   getCartLineId,
@@ -224,7 +227,8 @@ export function CartLineItem({
   const isCombo = isComboItem(item);
   const canUseNotes = item.category !== "Bebidas";
   const cartLineId = getCartLineId(item);
-  const selectionSummary = getSelectionSummary(item);
+  const selectionSegments = buildSelectionSegments(item);
+  const showSelectionSegments = hasSelectionSegments(selectionSegments);
 
   return (
     <article className="overflow-hidden rounded-[1.6rem] border border-[var(--product-card-border)] bg-[var(--product-card-bg)] text-[var(--product-card-text)] shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)]">
@@ -254,10 +258,59 @@ export function CartLineItem({
                 {item.name}
               </h3>
 
-              {selectionSummary ? (
-                <p className="mt-2 rounded-2xl border border-[var(--product-card-border)]/15 bg-[var(--brand-cream)] px-3 py-2 text-xs font-black leading-5 text-[var(--product-card-text)]">
-                  {selectionSummary}
-                </p>
+              {showSelectionSegments ? (
+                <div className="mt-2 space-y-2 rounded-2xl border border-[var(--product-card-border)]/20 bg-[var(--brand-cream)] px-3 py-2.5">
+                  {selectionSegments.variation ? (
+                    <div className="flex items-baseline gap-2">
+                      <span className="shrink-0 text-[0.58rem] font-black uppercase tracking-[0.14em] text-[var(--product-card-border)]">
+                        {selectionSegments.variation.groupName || "Elección"}
+                      </span>
+                      <span className="text-xs font-black leading-4 text-[var(--product-card-text)]">
+                        {selectionSegments.variation.label}
+                      </span>
+                    </div>
+                  ) : null}
+
+                  {selectionSegments.addons.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectionSegments.addons.map((addon, index) => (
+                        <span
+                          key={`${addon.label}-${index}`}
+                          className="inline-flex items-center gap-1 rounded-full border border-[var(--product-card-border)]/30 bg-[var(--brand-surface-2)]/60 px-2 py-1 text-[0.64rem] font-black uppercase tracking-[0.04em] text-[var(--product-card-text)]"
+                        >
+                          {addon.label}
+                          {addon.priceDelta > 0 ? (
+                            <span className="text-[var(--product-card-border)]">
+                              +{formatUSD(addon.priceDelta)}
+                            </span>
+                          ) : null}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {selectionSegments.removed.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectionSegments.removed.map((name, index) => (
+                        <span
+                          key={`${name}-${index}`}
+                          className="inline-flex items-center rounded-full border border-red-500/30 bg-red-500/10 px-2 py-1 text-[0.64rem] font-black uppercase tracking-[0.04em] text-red-300"
+                        >
+                          Sin {name}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {selectionSegments.notes.map((note, index) => (
+                    <p
+                      key={`${note}-${index}`}
+                      className="text-[0.64rem] font-bold leading-4 text-[var(--product-card-text)]/60"
+                    >
+                      {note}
+                    </p>
+                  ))}
+                </div>
               ) : null}
 
               <p

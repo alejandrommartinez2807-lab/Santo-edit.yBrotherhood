@@ -83,3 +83,54 @@ export function getSelectionSummary(item: CartItem) {
 
   return buildSelectionLines(item).join(" · ");
 }
+
+// Desglose ESTRUCTURADO de la selección para pintar el resumen con jerarquía
+// visual en el carrito (proteína/variación aparte, extras como chips, quitados
+// aparte), en vez de un solo texto concatenado.
+export type CartSelectionSegments = {
+  variation: { label: string; groupName: string } | null;
+  addons: { label: string; priceDelta: number }[];
+  removed: string[];
+  notes: string[];
+};
+
+export function buildSelectionSegments(item: CartItem): CartSelectionSegments {
+  const selectedVariation = cleanSelectionOption(item.selectedVariation);
+  const selectedAddons = cleanSelectionOptions(item.selectedAddons);
+  const removedIngredients = cleanSelectionOptions(item.removedIngredients);
+
+  const variation = selectedVariation
+    ? {
+        label:
+          selectedVariation.quantity && selectedVariation.quantity > 1
+            ? `${selectedVariation.name} x${selectedVariation.quantity}`
+            : selectedVariation.name,
+        groupName: selectedVariation.groupName || "",
+      }
+    : null;
+
+  const addons = selectedAddons.map((option) => ({
+    label:
+      option.quantity && option.quantity > 1
+        ? `${option.name} x${option.quantity}`
+        : option.name,
+    priceDelta: Number(option.priceDelta || 0),
+  }));
+
+  const removed = removedIngredients.map((option) => option.name);
+
+  const notes = item.requiresWaiterConfirmation
+    ? ["Requiere confirmación del personal"]
+    : [];
+
+  return { variation, addons, removed, notes };
+}
+
+export function hasSelectionSegments(segments: CartSelectionSegments) {
+  return Boolean(
+    segments.variation ||
+      segments.addons.length > 0 ||
+      segments.removed.length > 0 ||
+      segments.notes.length > 0,
+  );
+}
