@@ -3252,7 +3252,7 @@ export default function CartDrawer({
               negocio con el mensaje ya armado (incluye número y referencia de
               sus pedidos activos). El dueño lo activa/apaga en Configuración. */}
           {showOrderHelpButton && (
-            <div className="mx-5 mb-5">
+            <div className="mx-5 mb-5 mt-6">
               <a
                 href={orderHelpWhatsappHref}
                 target="_blank"
