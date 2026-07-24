@@ -207,7 +207,12 @@ export default function Hero() {
           list
             .map((branch: Record<string, unknown>) => ({
               name: String(branch.name || "").trim(),
-              url: String(branch.googleReviewUrl || "").trim(),
+              // Preferencia: link de reseñas propio; sin él, la ficha de Maps
+              // de la sede (ahí también viven las reseñas). Así el botón
+              // NUNCA desaparece aunque falte configurar (dueño 2026-07-24).
+              url:
+                String(branch.googleReviewUrl || "").trim() ||
+                String(branch.googleMapsUrl || "").trim(),
             }))
             .filter(
               (item: BranchReviewLink) =>
@@ -367,11 +372,16 @@ export default function Hero() {
               no existía y el botón "no servía" — dueño 2026-07-23). */}
           {(() => {
             const hasChooser = branchReviews.length >= 2;
+            // Cadena de respaldos para que el botón SIEMPRE exista: sede
+            // única → su link; sin sedes → link general de reseñas → link
+            // general de Maps → sección "Nuestros locales".
             const directUrl =
               branchReviews.length === 1
                 ? branchReviews[0].url
-                : businessConfig.googleReviewUrl;
-            if (!hasChooser && !directUrl) return null;
+                : businessConfig.googleReviewUrl ||
+                  businessConfig.googleMapsUrl ||
+                  "#ubicaciones";
+            const isExternal = directUrl.startsWith("http");
 
             const buttonClass =
               "inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-border)] bg-black/30 px-4 py-4 text-sm font-extrabold uppercase tracking-wide text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95";
@@ -388,8 +398,7 @@ export default function Hero() {
             ) : (
               <a
                 href={directUrl}
-                target="_blank"
-                rel="noreferrer"
+                {...(isExternal ? { target: "_blank", rel: "noreferrer" } : {})}
                 className={buttonClass}
               >
                 <Star size={19} />
