@@ -5,7 +5,7 @@
 // "Mixto: <método> Bs 1.234,56 + <método> $10.00" que arma el carrito
 // (formatVES es-VE y formatUSD en-US; el símbolo público puede ser $ o €).
 
-import { isVesPaymentMethod } from "@/lib/paymentOptions"
+import { isElectronicPaymentMethod, isVesPaymentMethod } from "@/lib/paymentOptions"
 
 export type OrderPaymentLeg = {
   method: string
@@ -107,6 +107,39 @@ export function sumLegsUSD(legs: OrderPaymentLeg[], exchangeRate: number): numbe
       return rate > 0 ? total + leg.amount / rate : total
     }, 0),
   )
+}
+
+// ¿El método REPORTADO en un comprobante es SOLO efectivo? La foto de los
+// billetes viaja como proof con método "Efectivo en divisas (…) · pata en
+// efectivo…": NUNCA cuenta como pago electrónico recibido ni cubre lo
+// reportable. Un reporte manual combinado ("Efectivo + pago móvil") SÍ trae
+// parte electrónica y no se bloquea.
+export function isCashReportedMethod(method: unknown): boolean {
+  const normalized = String(method || "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+  return normalized.includes("efectivo") && !isElectronicPaymentMethod(method)
+}
+
+// Cuánto le falta al reporte ELECTRÓNICO (USD equivalentes) dados los
+// comprobantes activos (sin los rechazados). Fuente única para el estado
+// público (/api/public/order-status) y la sección de pagos del cliente:
+// antes cada uno tenía su copia del cálculo (lote v9).
+export function computePendingElectronicUSD(input: {
+  requiredUSD: number
+  exchangeRate: number
+  proofs: { method: unknown; amountUSD: number; amountVES: number }[]
+}): number {
+  const rate = Number(input.exchangeRate) || 0
+  const coveredUSD = input.proofs.reduce((total, proof) => {
+    if (isCashReportedMethod(proof.method)) return total
+    let usd = Number(proof.amountUSD || 0)
+    if (rate > 0) usd += Number(proof.amountVES || 0) / rate
+    return total + usd
+  }, 0)
+  const pending = round2(Math.max(0, round2(Number(input.requiredUSD) || 0) - coveredUSD))
+  return pending <= 0.01 ? 0 : pending
 }
 
 // Lo que el cliente DEBE reportar con captura/referencia: las patas

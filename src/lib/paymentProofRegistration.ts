@@ -4,7 +4,11 @@
 //   - Nunca pisa un cobro existente (updateOrderPayment REEMPLAZA montos):
 //     si el pedido ya tiene algo recibido, se salta y Caja ajusta a mano.
 //   - Sin montos reportados no hay nada que registrar.
+//   - La foto de los billetes (efectivo) NUNCA registra cobro: el efectivo se
+//     recibe en persona y lo registra caja.
 // La decisión es pura para poder testearla sin Supabase.
+
+import { isCashReportedMethod } from "@/lib/orderPaymentLegs"
 
 export type ProofPaymentData = {
   reportedMethod: string
@@ -48,6 +52,18 @@ export function buildPaymentFromProof(
     return {
       ok: false,
       reason: "No se encontró el pedido del comprobante; registra el cobro desde Caja.",
+    }
+  }
+
+  // Foto de los billetes (pata en efectivo): confirmarla solo valida que el
+  // efectivo existe — el dinero se entrega EN PERSONA y ese cobro lo registra
+  // caja al recibirlo. Registrarlo aquí marcaba "Pagado" un efectivo que aún
+  // no llegó (fix lote v9).
+  if (isCashReportedMethod(proof.reportedMethod)) {
+    return {
+      ok: false,
+      reason:
+        "La foto del efectivo no registra cobro: ese dinero se recibe en persona y lo registra Caja al cobrarlo.",
     }
   }
 

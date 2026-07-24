@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { isElectronicPaymentMethod } from "@/lib/paymentOptions"
-import { getRequiredReportUSD } from "@/lib/orderPaymentLegs"
+import {
+  computePendingElectronicUSD,
+  getRequiredReportUSD,
+  isCashReportedMethod,
+} from "@/lib/orderPaymentLegs"
 import { maybeAutoCancelUnpaidOrder } from "@/lib/unpaidAutoCancel"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
@@ -171,33 +175,35 @@ export async function GET(request: NextRequest) {
       })
 
       let hasActiveProof = false
-      let electronicCoveredUSD = 0
+      const activeProofInputs: { method: unknown; amountUSD: number; amountVES: number }[] = []
       for (const row of proofRows ?? []) {
         const proof = row as Record<string, unknown>
         const proofStatus = String(proof.status || "")
         if (proofStatus === "Rechazado") continue
         hasActiveProof = true
-        if (proofStatus === "Confirmado por caja") proofConfirmed = true
-
-        // La foto de los billetes (pata en efectivo) no cubre lo electrónico.
-        const isCashProof = String(proof.reported_method || "")
-          .normalize("NFD")
-          .replace(/[̀-ͯ]/g, "")
-          .toLowerCase()
-          .includes("efectivo")
-        if (!isCashProof) {
-          electronicCoveredUSD += Number(proof.amount_reported_usd || 0)
-          if (exchangeRate > 0) {
-            electronicCoveredUSD += Number(proof.amount_reported_ves || 0) / exchangeRate
-          }
+        // Solo un comprobante ELECTRÓNICO confirmado implica pago: confirmar
+        // la foto de los billetes solo valida que el efectivo existe — el
+        // cobro real lo registra caja al recibirlo (fix lote v9).
+        if (
+          proofStatus === "Confirmado por caja" &&
+          !isCashReportedMethod(proof.reported_method)
+        ) {
+          proofConfirmed = true
         }
+        activeProofInputs.push({
+          method: proof.reported_method,
+          amountUSD: Number(proof.amount_reported_usd || 0),
+          amountVES: Number(proof.amount_reported_ves || 0),
+        })
       }
 
-      pendingReportUSD =
-        Math.round(Math.max(0, requiredReportUSD - electronicCoveredUSD) * 100) / 100
+      pendingReportUSD = computePendingElectronicUSD({
+        requiredUSD: requiredReportUSD,
+        exchangeRate,
+        proofs: activeProofInputs,
+      })
       paymentReported =
-        requiredReportUSD > 0 ? pendingReportUSD <= 0.01 : hasActiveProof
-      if (pendingReportUSD <= 0.01) pendingReportUSD = 0
+        requiredReportUSD > 0 ? pendingReportUSD <= 0 : hasActiveProof
     }
 
     const paymentConfirmed = paymentStatusRaw === "Pagado" || proofConfirmed

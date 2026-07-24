@@ -111,6 +111,10 @@ import { readRecentPublicOrders } from "@/components/recentPublicOrders";
 // indicadores de divisa mandan (Zelle/Binance/"…internacional"/"…en dólares" son
 // en $); pago móvil, punto, transferencia local, efectivo Bs, biopago son en Bs.
 import { isVesPaymentMethod } from "@/lib/paymentOptions";
+import {
+  computePendingElectronicUSD,
+  isCashReportedMethod,
+} from "@/lib/orderPaymentLegs";
 import { readImageFileForUpload } from "@/lib/clientImage";
 
 type PaymentEntry = {
@@ -367,9 +371,16 @@ export default function PublicOrderPaymentSection({
   const activeProofs = (info?.proofs || []).filter(
     (proof) => proof.status !== "Rechazado",
   );
+  // Solo un comprobante ELECTRÓNICO confirmado implica pago: confirmar la
+  // foto de los billetes valida que el efectivo existe, pero el cobro real lo
+  // registra caja al recibirlo (fix lote v9, alineado con order-status).
   const hasConfirmedPayment =
     info?.paymentRegistered ||
-    activeProofs.some((proof) => proof.status === "Confirmado por caja");
+    activeProofs.some(
+      (proof) =>
+        proof.status === "Confirmado por caja" &&
+        !isCashReportedMethod(proof.reportedMethod),
+    );
   const hasPendingProof = activeProofs.some(
     (proof) =>
       proof.status === "Comprobante enviado" || proof.status === "En revisión",
@@ -381,28 +392,19 @@ export default function PublicOrderPaymentSection({
   // la foto de los billetes creaba un proof y todo se daba por reportado sin
   // que nadie pidiera la captura/referencia de Pago móvil/Zelle. La foto del
   // efectivo (método con "efectivo") NO cuenta para la parte electrónica.
-  const infoExchangeRate = Number(info?.exchangeRate || 0);
   const requiredElectronicUSD = Number(info?.requiredReportUSD || 0);
-  const electronicReportedUSD = activeProofs.reduce((total, proof) => {
-    const isCashProof = String(proof.reportedMethod || "")
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .toLowerCase()
-      .includes("efectivo");
-    if (isCashProof) return total;
-    let usd = Number(proof.amountReportedUSD || 0);
-    if (infoExchangeRate > 0) {
-      usd += Number(proof.amountReportedVES || 0) / infoExchangeRate;
-    }
-    return total + usd;
-  }, 0);
-  const pendingElectronicUSD = Math.max(
-    0,
-    Math.round((requiredElectronicUSD - electronicReportedUSD) * 100) / 100,
-  );
+  const pendingElectronicUSD = computePendingElectronicUSD({
+    requiredUSD: requiredElectronicUSD,
+    exchangeRate: Number(info?.exchangeRate || 0),
+    proofs: activeProofs.map((proof) => ({
+      method: proof.reportedMethod,
+      amountUSD: Number(proof.amountReportedUSD || 0),
+      amountVES: Number(proof.amountReportedVES || 0),
+    })),
+  });
   // true = lo electrónico exigible ya está cubierto por comprobantes.
   const reportCovered =
-    requiredElectronicUSD <= 0 || pendingElectronicUSD <= 0.01;
+    requiredElectronicUSD <= 0 || pendingElectronicUSD <= 0;
   // Reporte de pago MIXTO: más de un método (una captura por cada pata).
   const isMixedReport = payments.length > 1;
 

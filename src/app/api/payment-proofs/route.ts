@@ -9,6 +9,11 @@ import {
 import { getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
+import {
+  computePendingElectronicUSD,
+  getRequiredReportUSD,
+  isCashReportedMethod,
+} from "@/lib/orderPaymentLegs"
 import { writeAuditLog } from "@/lib/audit"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
@@ -279,11 +284,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Este pedido está cancelado y no puede recibir comprobantes" }, { status: 409 })
     }
 
-    // Anti-duplicado: si el pedido ya tiene un comprobante activo (enviado,
-    // en revisión o confirmado), no se acepta otro sin confirmación expresa.
+    // Anti-duplicado POR PATA (fix lote v9): un comprobante activo solo
+    // bloquea otro del MISMO tipo (efectivo vs electrónico) — la foto de los
+    // billetes no puede tapar la referencia del pago móvil que llega después.
+    // Y entre electrónicos: mientras lo exigible NO esté cubierto, un segundo
+    // comprobante es la OTRA pata del mixto (Zelle + pago móvil), no un
+    // duplicado; el 409 vuelve cuando ya está todo reportado.
     if (body.confirmDuplicate !== true) {
+      const incomingIsCash = isCashReportedMethod(input.reportedMethod)
       const existingProofs = await getPaymentProofs({ orderId: input.orderId }, branchId)
-      const activeProof = existingProofs.find((proof) => ACTIVE_PROOF_STATUSES.has(proof.status))
+      const activeProofs = existingProofs.filter((proof) =>
+        ACTIVE_PROOF_STATUSES.has(proof.status),
+      )
+      let activeProof = activeProofs.find(
+        (proof) => isCashReportedMethod(proof.reportedMethod) === incomingIsCash,
+      )
+
+      if (activeProof && !incomingIsCash) {
+        const exchangeRate = Number(order.exchangeRate || 0)
+        const pendingElectronicUSD = computePendingElectronicUSD({
+          requiredUSD: getRequiredReportUSD({
+            paymentMethod: order.paymentMethod,
+            totalUSD: Number(order.totalUSD || order.totalPrice || 0),
+            exchangeRate,
+          }),
+          exchangeRate,
+          proofs: activeProofs.map((proof) => ({
+            method: proof.reportedMethod,
+            amountUSD: Number(proof.amountReportedUSD || 0),
+            amountVES: Number(proof.amountReportedVES || 0),
+          })),
+        })
+        if (pendingElectronicUSD > 0) activeProof = undefined
+      }
 
       if (activeProof) {
         const isConfirmed = activeProof.status === "Confirmado por caja"
