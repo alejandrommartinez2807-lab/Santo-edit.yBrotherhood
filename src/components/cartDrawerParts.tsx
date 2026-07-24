@@ -16,7 +16,10 @@ import { BRAND } from "@/lib/brand";
 import { formatPublicUSD as formatUSD, formatVES } from "@/utils/formatCurrency";
 import type { CartItem, OrderType, PublicBusinessConfig } from "@/components/cartTypes";
 import FiscalBreakdown from "@/components/FiscalBreakdown";
-import { getSelectionSummary } from "@/components/cartSelection";
+import {
+  buildSelectionSegments,
+  hasSelectionSegments,
+} from "@/components/cartSelection";
 import {
   formatItemSalesChannels,
   getCartLineId,
@@ -60,9 +63,9 @@ export function OptionPicker({
       <button
         type="button"
         onClick={onToggle}
-        className={`mt-2 flex w-full items-center justify-between gap-3 rounded-2xl border-2 px-4 py-4 text-left text-sm font-black outline-none transition ${
+        className={`mt-2 flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-4 text-left text-sm font-black outline-none transition ${
           isOpen
-            ? "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] shadow-[0_5px_0_rgba(var(--brand-primary-rgb),0.12)]"
+            ? "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)]"
             : "border-[var(--brand-border)] bg-[var(--brand-cream)] hover:border-[var(--brand-primary)]/60"
         }`}
       >
@@ -78,7 +81,7 @@ export function OptionPicker({
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.45rem)] z-[180] overflow-hidden rounded-[1.25rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] shadow-[0_16px_34px_rgba(74,0,0,0.22)]">
+        <div className="absolute left-0 right-0 top-[calc(100%+0.45rem)] z-[180] overflow-hidden rounded-[1.25rem] border border-[var(--brand-primary)] bg-[var(--brand-surface-2)] shadow-[0_16px_34px_rgba(74,0,0,0.22)]">
           <div className="max-h-72 overflow-y-auto p-2">
             <button
               type="button"
@@ -123,7 +126,7 @@ export function OptionPicker({
                   </span>
 
                   {selected && (
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary)] text-[0.68rem] font-black text-white">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary)] text-[0.68rem] font-black text-black">
                       ✓
                     </span>
                   )}
@@ -155,7 +158,7 @@ export function EmptyCartState({
   onRestoreLastOrder,
 }: EmptyCartStateProps) {
   return (
-    <div className="flex min-h-[calc(100vh-210px)] flex-col items-center justify-center rounded-[2rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-6 py-12 text-center shadow-[0_10px_0_rgba(var(--brand-primary-rgb),0.12)]">
+    <div className="flex min-h-[calc(100vh-210px)] flex-col items-center justify-center rounded-[2rem] border border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-6 py-12 text-center shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)]">
       <Image
         src={BRAND.logoUrl || "/logoremovebg.png"}
         alt={businessName}
@@ -165,7 +168,7 @@ export function EmptyCartState({
         className="mb-6 h-44 w-44 object-contain drop-shadow-[0_16px_18px_rgba(var(--brand-primary-rgb),0.16)] sm:h-52 sm:w-52"
       />
 
-      <h3 className="text-3xl font-black uppercase leading-tight text-[var(--brand-primary)] drop-shadow-[0_3px_0_rgba(var(--brand-accent-rgb),0.75)]">
+      <h3 className="font-display text-3xl uppercase leading-tight text-[var(--brand-primary)] [text-shadow:0_6px_24px_rgba(var(--brand-primary-rgb),0.35)]">
         {title || "Tu carrito está vacío"}
       </h3>
 
@@ -176,7 +179,7 @@ export function EmptyCartState({
       <a
         href="#menu"
         onClick={onClose}
-        className="mt-7 inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-7 py-4 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_6px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:scale-105"
+        className="mt-7 inline-flex items-center justify-center rounded-full border border-[var(--brand-primary)] bg-[var(--brand-accent)] px-7 py-4 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition hover:scale-105"
       >
         {buttonText || "Ver menú"}
       </a>
@@ -185,7 +188,7 @@ export function EmptyCartState({
         <button
           type="button"
           onClick={onRestoreLastOrder}
-          className="mt-3 inline-flex items-center justify-center rounded-full border-2 border-[var(--brand-primary)] bg-transparent px-7 py-3.5 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-primary)] hover:text-black"
+          className="mt-3 inline-flex items-center justify-center rounded-full border border-[var(--brand-primary)] bg-transparent px-7 py-3.5 text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-primary)] hover:text-black"
         >
           Repetir mi último pedido
         </button>
@@ -224,12 +227,13 @@ export function CartLineItem({
   const isCombo = isComboItem(item);
   const canUseNotes = item.category !== "Bebidas";
   const cartLineId = getCartLineId(item);
-  const selectionSummary = getSelectionSummary(item);
+  const selectionSegments = buildSelectionSegments(item);
+  const showSelectionSegments = hasSelectionSegments(selectionSegments);
 
   return (
-    <article className="overflow-hidden rounded-[1.6rem] border-2 border-[var(--product-card-border)] bg-[var(--product-card-bg)] text-[var(--product-card-text)] shadow-[0_7px_0_rgba(var(--brand-primary-rgb),0.12)]">
+    <article className="overflow-hidden rounded-[1.6rem] border border-[var(--product-card-border)] bg-[var(--product-card-bg)] text-[var(--product-card-text)] shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)]">
       <div className="grid grid-cols-[96px_1fr] gap-4 p-4">
-        <div className="h-24 w-24 overflow-hidden rounded-[1.2rem] border-2 border-[var(--product-card-border)]/35 bg-[var(--brand-cream)]">
+        <div className="h-24 w-24 overflow-hidden rounded-[1.2rem] border border-[var(--product-card-border)]/35 bg-[var(--brand-cream)]">
           <Image
             src={item.image || (BRAND.logoUrl || "/logoremovebg.png")}
             alt={item.name}
@@ -254,10 +258,59 @@ export function CartLineItem({
                 {item.name}
               </h3>
 
-              {selectionSummary ? (
-                <p className="mt-2 rounded-2xl border border-[var(--product-card-border)]/15 bg-[var(--brand-cream)] px-3 py-2 text-xs font-black leading-5 text-[var(--product-card-text)]">
-                  {selectionSummary}
-                </p>
+              {showSelectionSegments ? (
+                <div className="mt-2 space-y-2 rounded-2xl border border-[var(--product-card-border)]/20 bg-[var(--brand-cream)] px-3 py-2.5">
+                  {selectionSegments.variation ? (
+                    <div>
+                      <span className="block text-[0.56rem] font-black uppercase tracking-[0.14em] text-[var(--product-card-border)]">
+                        {selectionSegments.variation.groupName || "Elección"}
+                      </span>
+                      <span className="mt-0.5 block text-sm font-black leading-tight text-[var(--product-card-text)]">
+                        {selectionSegments.variation.label}
+                      </span>
+                    </div>
+                  ) : null}
+
+                  {selectionSegments.addons.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectionSegments.addons.map((addon, index) => (
+                        <span
+                          key={`${addon.label}-${index}`}
+                          className="inline-flex items-center gap-1 rounded-full border border-[var(--product-card-border)]/30 bg-[var(--brand-surface-2)]/60 px-2 py-1 text-[0.64rem] font-black uppercase tracking-[0.04em] text-[var(--product-card-text)]"
+                        >
+                          {addon.label}
+                          {addon.priceDelta > 0 ? (
+                            <span className="text-[var(--product-card-border)]">
+                              +{formatUSD(addon.priceDelta)}
+                            </span>
+                          ) : null}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {selectionSegments.removed.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectionSegments.removed.map((name, index) => (
+                        <span
+                          key={`${name}-${index}`}
+                          className="inline-flex items-center rounded-full border border-red-500/30 bg-red-500/10 px-2 py-1 text-[0.64rem] font-black uppercase tracking-[0.04em] text-red-300"
+                        >
+                          Sin {name}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {selectionSegments.notes.map((note, index) => (
+                    <p
+                      key={`${note}-${index}`}
+                      className="text-[0.64rem] font-bold leading-4 text-[var(--product-card-text)]/60"
+                    >
+                      {note}
+                    </p>
+                  ))}
+                </div>
               ) : null}
 
               <p
@@ -275,18 +328,18 @@ export function CartLineItem({
               type="button"
               onClick={() => removeItem(cartLineId)}
               aria-label={`Eliminar ${item.name}`}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-[var(--product-card-border)] bg-[var(--brand-surface-2)] text-[var(--product-card-border)] transition hover:bg-[var(--product-card-border)] hover:text-white"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--product-card-border)] bg-[var(--brand-surface-2)] text-[var(--product-card-border)] transition hover:bg-[var(--product-card-border)] hover:text-white"
             >
               <Trash2 size={18} />
             </button>
           </div>
 
           <div className="mt-4 flex items-center justify-between gap-3">
-            <div className="flex items-center rounded-full border-2 border-[var(--product-card-border)] bg-[var(--brand-cream)] p-1">
+            <div className="flex items-center rounded-full border border-[var(--product-card-border)] bg-[var(--brand-cream)] p-1">
               <button
                 type="button"
                 onClick={() => decreaseQuantity(cartLineId)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--product-card-border)] text-white transition hover:scale-105"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--product-card-border)] text-black transition hover:scale-105"
                 aria-label="Disminuir cantidad"
               >
                 <Minus size={17} />
@@ -299,7 +352,7 @@ export function CartLineItem({
               <button
                 type="button"
                 onClick={() => increaseQuantity(cartLineId)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--product-card-button)] text-[var(--product-card-text)] transition hover:scale-105"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--product-card-button)] text-black transition hover:scale-105"
                 aria-label="Aumentar cantidad"
               >
                 <Plus size={17} />
@@ -332,7 +385,7 @@ export function CartLineItem({
       </div>
 
       {canUseNotes && updateItemNote && updateItemNoteEnabled && (
-        <div className="border-t-2 border-[var(--product-card-border)]/15 bg-[var(--brand-cream)] px-4 py-4">
+        <div className="border-t border-[var(--product-card-border)]/15 bg-[var(--brand-cream)] px-4 py-4">
           <label className="flex items-center gap-3 text-sm font-black uppercase tracking-[0.08em] text-[var(--product-card-border)]">
             <input
               type="checkbox"
@@ -350,7 +403,7 @@ export function CartLineItem({
               value={item.note || ""}
               onChange={(event) => updateItemNote(cartLineId, event.target.value)}
               placeholder="Ejemplo: sin cebolla, extra salsa, sin picante..."
-              className="mt-3 min-h-20 w-full resize-none rounded-2xl border-2 border-[var(--product-card-border)]/25 bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--product-card-text)] outline-none placeholder:text-[var(--product-card-text)]/45 focus:border-[var(--product-card-border)]"
+              className="mt-3 min-h-20 w-full resize-none rounded-2xl border border-[var(--product-card-border)]/25 bg-[var(--brand-surface-2)] px-4 py-3 text-sm font-bold text-[var(--product-card-text)] outline-none placeholder:text-[var(--product-card-text)]/45 focus:border-[var(--product-card-border)]"
             />
           )}
         </div>
@@ -407,13 +460,13 @@ export function CartSummaryFooter({
   const detailsVisibilityClass = showMobileDetails ? "block" : "hidden sm:block";
 
   return (
-    <div className="shrink-0 border-t-4 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2.5 sm:px-6">
+    <div className="shrink-0 border-t border-[var(--brand-primary)] bg-[var(--brand-surface-2)] px-4 py-2.5 sm:px-6">
       {publicConfig.fiscalEnabled && (
         <div className="mb-2.5">
           <FiscalBreakdown items={items} config={publicConfig} />
         </div>
       )}
-      <div className="rounded-[1.05rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-cream)] px-3.5 py-2.5 shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.12)]">
+      <div className="rounded-[1.05rem] border border-[var(--brand-primary)] bg-[var(--brand-cream)] px-3.5 py-2.5 shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)]">
         {/* Redacción para tercera edad (pedido del dueño): en vez de
             "Total / desglose" se dice en cristiano CUÁNTO se paga y en qué
             moneda. Los montos son el mismo cálculo. */}
@@ -570,7 +623,7 @@ export function CartSummaryFooter({
           <button
             type="button"
             onClick={onOpenOrderModal}
-            className="flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-black shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.18)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)] active:translate-y-1 active:shadow-none"
+            className="flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] text-black shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition hover:bg-[rgba(var(--brand-primary-rgb),0.2)] active:translate-y-1 active:shadow-none"
           >
             <Store size={17} />
             {publicConfig.publicCartLocalOrderButtonText || "Registrar pedido local"}
@@ -589,9 +642,9 @@ export function CartSummaryFooter({
             onClick={(event) => {
               if (!whatsappHref) event.preventDefault();
             }}
-            className={`flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] shadow-[0_4px_0_rgba(var(--brand-primary-rgb),0.18)] transition active:translate-y-1 active:shadow-none ${
+            className={`flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition active:translate-y-1 active:shadow-none ${
               whatsappHref
-                ? "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-accent)] hover:text-black"
+                ? "bg-[var(--brand-primary)] text-black hover:bg-[var(--brand-accent)]"
                 : "cursor-not-allowed bg-[#ddd3c4] text-[var(--brand-ink-2)]/45"
             }`}
           >

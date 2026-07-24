@@ -360,9 +360,9 @@ export default function Hero() {
               de abrir un solo link externo que además podía venir vacío. */}
           <a
             href="#ubicaciones"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-border)] bg-black/30 px-4 py-4 text-sm font-extrabold uppercase tracking-wide text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[var(--brand-border)] bg-black/30 px-3 py-2.5 text-xs font-extrabold uppercase tracking-wide text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95"
           >
-            <MapPin size={19} />
+            <MapPin size={16} />
             {businessConfig.locationButtonText}
           </a>
 
@@ -384,7 +384,7 @@ export default function Hero() {
             const isExternal = directUrl.startsWith("http");
 
             const buttonClass =
-              "inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-border)] bg-black/30 px-4 py-4 text-sm font-extrabold uppercase tracking-wide text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95";
+              "inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--brand-border)] bg-black/30 px-3 py-2.5 text-xs font-extrabold uppercase tracking-wide text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] active:scale-95";
 
             return hasChooser ? (
               <button
@@ -392,7 +392,7 @@ export default function Hero() {
                 onClick={() => setIsReviewChooserOpen(true)}
                 className={buttonClass}
               >
-                <Star size={19} />
+                <Star size={16} />
                 {businessConfig.reviewsTitle || "Reseñas"}
               </button>
             ) : (
@@ -401,12 +401,54 @@ export default function Hero() {
                 {...(isExternal ? { target: "_blank", rel: "noreferrer" } : {})}
                 className={buttonClass}
               >
-                <Star size={19} />
+                <Star size={16} />
                 {businessConfig.reviewsTitle || "Reseñas"}
               </a>
             );
           })()}
         </div>
+
+        {/* Foto apetitosa de la burger, justo debajo de los botones (pedido
+            del dueño). Enlaza al menú. */}
+        <a
+          href="#menu"
+          className="group relative mt-6 block w-full max-w-md overflow-hidden rounded-[1.6rem] border border-[rgba(var(--brand-primary-rgb),0.55)] bg-black shadow-[0_28px_70px_-38px_rgba(var(--brand-primary-rgb),0.6)]"
+        >
+          <Image
+            src="/brotherhood-hero-burger.jpg"
+            alt="Smash burger doble con tocineta de Brotherhood"
+            width={790}
+            height={610}
+            priority
+            sizes="(min-width: 640px) 28rem, 92vw"
+            className="h-auto w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+          />
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-[linear-gradient(180deg,transparent_55%,rgba(0,0,0,0.82)_100%)]"
+          />
+          <div className="absolute inset-x-2.5 bottom-2.5 grid grid-cols-3 gap-1.5">
+            {guarantees.map(({ icon: GuaranteeIcon, top, bottom }) => (
+              <div
+                key={top}
+                className="flex flex-col items-center justify-center gap-0.5 rounded-xl border border-white/10 bg-black/65 px-1.5 py-2 text-center backdrop-blur-sm"
+              >
+                <GuaranteeIcon
+                  size={15}
+                  className="shrink-0 text-[var(--brand-primary)]"
+                />
+                <span className="min-w-0">
+                  <span className="block text-[0.56rem] font-black uppercase leading-tight tracking-[0.04em] text-white">
+                    {top}
+                  </span>
+                  <span className="block text-[0.52rem] font-bold uppercase leading-tight tracking-[0.04em] text-[var(--brand-primary)]">
+                    {bottom}
+                  </span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </a>
 
         {/* Selector de sede para dejar la reseña (cada local tiene su ficha
             de Google). */}
