@@ -126,7 +126,7 @@ export function OptionPicker({
                   </span>
 
                   {selected && (
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary)] text-[0.68rem] font-black text-white">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary)] text-[0.68rem] font-black text-black">
                       ✓
                     </span>
                   )}
@@ -644,7 +644,7 @@ export function CartSummaryFooter({
             }}
             className={`flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] px-5 py-2.5 text-xs font-black uppercase tracking-[0.12em] shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition active:translate-y-1 active:shadow-none ${
               whatsappHref
-                ? "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-accent)] hover:text-black"
+                ? "bg-[var(--brand-primary)] text-black hover:bg-[var(--brand-accent)]"
                 : "cursor-not-allowed bg-[#ddd3c4] text-[var(--brand-ink-2)]/45"
             }`}
           >

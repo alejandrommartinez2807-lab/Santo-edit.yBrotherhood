@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import Image from "next/image";
 import { BRAND } from "@/lib/brand";
 import {
   ArrowLeft,
@@ -2983,12 +2984,18 @@ export default function CartDrawer({
                 size={26}
               />
               <div className="min-w-0">
-                <p className="text-[0.62rem] font-black uppercase tracking-[0.3em] text-[var(--brand-primary)]">
-                  {businessName}
-                </p>
+                {/* Logo REAL del negocio (no texto genérico), pedido del dueño. */}
+                <Image
+                  src={BRAND.wordmarkDarkBgUrl}
+                  alt={businessName}
+                  width={320}
+                  height={103}
+                  unoptimized
+                  className="h-5 w-auto max-w-[42vw] object-contain object-left sm:h-6"
+                />
                 {/* "Tu pedido" más chico (pedido del dueño 2026-07-22) para
                     dejar aire al botón de ayuda. */}
-                <h2 className="font-display truncate text-2xl uppercase leading-none text-[var(--brand-primary)] [text-shadow:0_6px_24px_rgba(var(--brand-primary-rgb),0.35)] sm:text-3xl">
+                <h2 className="font-display mt-1 truncate text-2xl uppercase leading-none text-[var(--brand-primary)] [text-shadow:0_6px_24px_rgba(var(--brand-primary-rgb),0.35)] sm:text-3xl">
                   {publicConfig.publicCartTitle || "Tu pedido"}
                 </h2>
               </div>
