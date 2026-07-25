@@ -178,6 +178,7 @@ export {
   deleteDayExpense,
   getDayCloses,
   getDayExpenses,
+  markDayExpensesClosed,
   saveDayClose,
   saveDayExpense,
 } from "./ordersDayClose"

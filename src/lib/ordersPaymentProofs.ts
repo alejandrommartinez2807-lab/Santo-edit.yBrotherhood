@@ -152,6 +152,11 @@ export async function getPaymentProofs(
 // comprobantes arranque limpio. Las imágenes en Storage se conservan (los
 // links del historial siguen funcionando).
 export async function clearPaymentProofs(branchId?: string | null) {
+  // Fail-closed (auditoría 2026-07-24, B): sin sede resuelta el `neq("id","")`
+  // vaciaba el buzón de comprobantes de TODAS las sucursales.
+  if (!branchId) {
+    throw new Error("No se pudo resolver la sucursal: no se archivan los comprobantes")
+  }
   const supabase = getSupabaseAdmin()
   let query = supabase.from("payment_proofs").delete()
   query = branchId ? query.eq("branch_id", branchId) : query.neq("id", "")

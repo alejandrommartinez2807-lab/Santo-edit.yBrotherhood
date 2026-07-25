@@ -1632,6 +1632,14 @@ function InventoryPageContent() {
     const manualEquivalentUSD = parseNumberInput(expenseForm.equivalentUSD)
     const equivalentUSD = manualEquivalentUSD > 0 ? manualEquivalentUSD : amountUSD
 
+    // P0 #6 (2026-07-24): una compra pagada SOLO en Bs sin equivalente manual
+    // se registraba como $0 y el cierre nunca la restaba.
+    if (amountVES > 0 && amountUSD <= 0 && manualEquivalentUSD <= 0) {
+      throw new Error(
+        "La compra es en bolívares: indica también su equivalente en USD para que el cierre la reste.",
+      )
+    }
+
     const response = await fetch("/api/day-expenses", {
       method: "POST",
       headers: {
@@ -1647,6 +1655,11 @@ function InventoryPageContent() {
         amountVES,
         equivalentUSD,
         method: expenseForm.method || "Sin registrar",
+        // P0 #6: sin dateValue el gasto quedaba con date_value "" — invisible
+        // para el cierre y control de gastos PARA SIEMPRE (ellos filtran por
+        // ?dateValue=<hoy>). Mismo formato que el panel de pedidos.
+        dateValue: getTodayDateKeyInCaracas(),
+        dateLabel: formatDate(new Date().toISOString()),
         note:
           expenseForm.note.trim() ||
           `Entrada de inventario: +${quantityDelta} ${savedItem.unit}. Producto: ${savedItem.name}.`,

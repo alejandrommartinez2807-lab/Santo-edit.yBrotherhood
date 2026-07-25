@@ -163,12 +163,19 @@ export async function GET(request: NextRequest) {
     const dateFrom = normalizeText(searchParams.get("dateFrom"))
     const dateTo = normalizeText(searchParams.get("dateTo"))
     const dateValue = normalizeText(searchParams.get("dateValue"))
+    // includeClosed=1: las vistas de historial pueden pedir también los gastos
+    // ya archivados en un cierre (por defecto quedan fuera para que el día
+    // reinicie en cero y un segundo cierre no los reste otra vez).
+    const includeClosed = ["1", "true"].includes(
+      normalizeText(searchParams.get("includeClosed")).toLowerCase(),
+    )
 
     const dayExpenses = await getDayExpenses(
       {
         ...(dateFrom ? { dateFrom } : {}),
         ...(dateTo ? { dateTo } : {}),
         ...(dateValue ? { dateValue } : {}),
+        ...(includeClosed ? { includeClosed: true } : {}),
       },
       await resolveScopedBranchId(request, access.role),
     )

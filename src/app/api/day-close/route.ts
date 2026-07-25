@@ -4,9 +4,12 @@ import {
   getBusinessConfig,
   getOrders,
   getPaymentProofs,
+  isTrainingModeActive,
+  markDayExpensesClosed,
   saveDayClose,
   type SaveDayCloseInput,
 } from "@/lib/orders"
+import { captureError } from "@/lib/monitoring"
 import { getDisplayOrderNumber } from "@/lib/localOrderHelpers"
 import { getOrderPayment, getOrderTotals } from "@/lib/localOrderMoney"
 import { getLocalAccessAuditActor, getRequestAccess, type LocalRole } from "@/lib/localAccess"
@@ -170,6 +173,19 @@ export async function POST(request: NextRequest) {
     const businessConfig = await getBusinessConfig()
     const businessConfigRecord =
       businessConfig as unknown as Record<string, unknown>
+
+    // Modo entrenamiento (P0 #10, 2026-07-24): GET /api/orders devuelve solo
+    // pedidos de práctica mientras está activo, así que los totales del cierre
+    // serían de mentira. Se rechaza con instrucción clara.
+    if (isTrainingModeActive(businessConfig)) {
+      return NextResponse.json(
+        {
+          error:
+            "El modo entrenamiento está activo: los totales serían de práctica. Desactívalo en Configuración antes de guardar el cierre.",
+        },
+        { status: 409 },
+      )
+    }
 
     const historyAccess = getModulePlanAccess(businessConfigRecord, "history")
 
@@ -382,6 +398,7 @@ export async function POST(request: NextRequest) {
     // los comprobantes con su pedido asociado. Se toma aquí (servidor) porque
     // el reinicio que sigue al cierre borra los pedidos vivos. No-fatal: si
     // la fotografía falla, el cierre con los totales se guarda igual.
+    let snapshotWarning = ""
     try {
       const [ordersToday, proofsToday] = await Promise.all([
         getOrders(branchId),
@@ -439,11 +456,29 @@ export async function POST(request: NextRequest) {
         proofImageUrl: proof.proofImageUrl,
         proofFileId: proof.proofFileId,
       }))
-    } catch {
-      // Sin fotografía: el cierre conserva los totales de siempre.
+    } catch (snapshotError) {
+      // Sin fotografía: el cierre conserva los totales de siempre — pero el
+      // fallo ya no es invisible (antes era un catch vacío, P1 #8).
+      captureError(snapshotError, { route: "/api/day-close", action: "snapshot" })
+      snapshotWarning =
+        "El cierre se guardó sin la lista de pedidos/comprobantes del día (falló la fotografía)."
     }
 
     const savedDayClose = await saveDayClose(dayClose, branchId)
+
+    // P0 #5: los gastos incluidos quedan marcados como CERRADOS — un segundo
+    // cierre del mismo día ya no los vuelve a restar. No-fatal pero visible.
+    if (Array.isArray(dayClose.expenses) && dayClose.expenses.length) {
+      try {
+        await markDayExpensesClosed(
+          dayClose.expenses.map((expense) => String(expense?.id || "")),
+          savedDayClose.id,
+          branchId,
+        )
+      } catch (markError) {
+        captureError(markError, { route: "/api/day-close", action: "markExpensesClosed" })
+      }
+    }
 
     // Los comprobantes ya quedaron archivados dentro del cierre: se limpian
     // del panel para que el día siguiente arranque en cero (las imágenes en
@@ -451,9 +486,10 @@ export async function POST(request: NextRequest) {
     if (Array.isArray(dayClose.paymentProofs)) {
       try {
         await clearPaymentProofs(branchId)
-      } catch {
+      } catch (clearError) {
         // Si la limpieza falla, los comprobantes siguen visibles en el panel;
-        // nada se pierde.
+        // nada se pierde — pero queda registrado (antes catch vacío).
+        captureError(clearError, { route: "/api/day-close", action: "clearPaymentProofs" })
       }
     }
 
@@ -476,6 +512,7 @@ export async function POST(request: NextRequest) {
       ok: true,
       dayClose: savedDayClose,
       message: "Cierre guardado correctamente.",
+      ...(snapshotWarning ? { warning: snapshotWarning } : {}),
       access: {
         role: access.role,
         moduleKey: "history",

@@ -148,6 +148,11 @@ export async function deleteOrderInStore(
 export async function clearOrdersInStore(
   branchId?: string | null,
 ): Promise<{ ok: boolean; deleted: number; message: string }> {
+  // Fail-closed (auditoría 2026-07-24, B): sin sede resuelta el `neq("id","")`
+  // borraba los pedidos de TODAS las sucursales.
+  if (!branchId) {
+    throw new Error("No se pudo resolver la sucursal: no se reinician los pedidos")
+  }
   const supabase = getSupabaseAdmin()
   // Red de seguridad R2 (auditoría 2026-07-24): NO borrar los pedidos atados a
   // una cuenta AÚN "Abierta" — perderían su pendiente y la cuenta quedaría

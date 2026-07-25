@@ -251,7 +251,7 @@ export type DayExpenseFilters = {
   dateFrom?: string
   dateTo?: string
   dateValue?: string
-  includeClosed?: boolean
+  includeClosed?: boolean // true = incluir gastos ya archivados en un cierre
 }
 
 // Caja (cierres y gastos) en Supabase. Cierres y gastos guardan
@@ -349,6 +349,11 @@ function extractStoredProofPath(url: unknown): string {
 
 
 export async function clearDayCloses(branchId?: string | null) {
+  // Fail-closed (auditoría 2026-07-24, B): sin sede resuelta el `neq("id","")`
+  // arrasaba el historial de TODAS las sucursales.
+  if (!branchId) {
+    throw new Error("No se pudo resolver la sucursal: no se borra el historial")
+  }
   const supabase = getSupabaseAdmin()
   let countQ = supabase.from("day_closes").select("id", { count: "exact", head: true })
   if (branchId) countQ = countQ.eq("branch_id", branchId)
@@ -410,6 +415,44 @@ export async function getDayExpenses(
   }
 
   return expenses
+}
+
+// Marca como CERRADOS los gastos incluidos en un cierre guardado (P0 #5,
+// 2026-07-24): close_status existía desde la migración 0006 pero NADIE lo
+// escribía — un segundo cierre del mismo día volvía a restar los mismos
+// gastos. Con la marca, getDayExpenses (sin includeClosed) ya no los devuelve
+// y el siguiente cierre arranca en cero; el detalle queda dentro del cierre.
+export async function markDayExpensesClosed(
+  expenseIds: string[],
+  closeId: string,
+  branchId?: string | null,
+) {
+  const ids = [...new Set(expenseIds.map((id) => cleanText(id)).filter(Boolean))]
+  if (!ids.length) return { marked: 0 }
+
+  const supabase = getSupabaseAdmin()
+  let query = supabase.from("day_expenses").select("id, data").in("id", ids)
+  if (branchId) query = query.eq("branch_id", branchId)
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+
+  let marked = 0
+  for (const raw of data ?? []) {
+    const row = raw as Record<string, unknown>
+    const expense = (row.data && typeof row.data === "object" ? row.data : {}) as DayExpense
+
+    const { error: updateError } = await supabase
+      .from("day_expenses")
+      .update({
+        close_status: "Cerrado",
+        data: { ...expense, closeStatus: "Cerrado", closeId },
+      })
+      .eq("id", String(row.id))
+    if (updateError) throw new Error(updateError.message)
+    marked += 1
+  }
+
+  return { marked }
 }
 
 export async function saveDayExpense(input: SaveDayExpenseInput, branchId?: string | null) {
