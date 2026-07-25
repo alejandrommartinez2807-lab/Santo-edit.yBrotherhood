@@ -2731,10 +2731,16 @@ export default function BusinessConfigPage() {
           </section>
         )}
 
+        {/* Índice de secciones (Parte B, 2026-07-25): la página tiene 16
+            secciones en un solo scroll — este índice agrupado por temas lleva
+            directo a cada una (y la expande). No se pierde ninguna opción. */}
+        <ConfigSectionIndex />
+
         <section className="mt-4 grid gap-4 xl:grid-cols-[1fr_0.8fr]">
           <SectionCard
             icon={<Store size={22} />}
             title="Datos básicos"
+            id="sec-datos-basicos"
             description="Información principal del negocio. Estos datos se pueden ajustar en todos los planes."
           >
             <div className="grid gap-4 sm:grid-cols-2">
@@ -3310,6 +3316,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<Store size={22} />}
             title="Tipo de negocio"
+            id="sec-tipo-negocio"
             defaultCollapsed
             description="Elige un preset y activamos los módulos recomendados para tu rubro. Puedes ajustar cada módulo abajo después."
           >
@@ -3353,6 +3360,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<Receipt size={22} />}
             title="Facturación fiscal (Venezuela)"
+            id="sec-fiscal"
             defaultCollapsed
             description="IVA por producto e IGTF en divisas. El documento fiscal oficial lo emite tu máquina fiscal; aquí calculamos el desglose para el ticket."
           >
@@ -3503,6 +3511,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<Store size={22} />}
             title="Colores y vista previa"
+            id="sec-colores"
             defaultCollapsed
             description="Edita colores y textos visibles desde el mismo lugar. La vista previa se actualiza en vivo y los cambios se publican cuando guardas."
           >
@@ -3900,6 +3909,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<ShieldCheck size={22} />}
             title="Plan activo"
+            id="sec-plan"
             defaultCollapsed
             description="El dueño ve su plan. Soporte puede cambiar el plan o activar una combinación personalizada de módulos."
           >
@@ -4057,6 +4067,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<Building2 size={22} />}
             title="Sedes y sucursales"
+            id="sec-sedes"
             description="Revisa y edita lo básico de las sucursales conectadas al sistema sin tocar pedidos, caja ni cierres."
             locked={!canEditBranches}
             lockedText="Soporte puede revisar las sedes, pero solo el dueño puede crear, renombrar o activar sucursales."
@@ -4237,6 +4248,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<Truck size={22} />}
             title="Envío por distancia"
+            id="sec-envio-distancia"
             defaultCollapsed
             description="El cliente comparte su ubicación de Google Maps y el costo del delivery se calcula solo por kilómetros, con los rangos que definas aquí."
             locked={!canEditDeliveryZones}
@@ -4260,6 +4272,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<Table2 size={22} />}
             title="Mesas y QR"
+            id="sec-mesas-qr"
             defaultCollapsed
             description="Edita las mesas reales que aparecen en el carrito público, el panel de mesas y las tarjetas QR por mesa."
             locked={!canEditTables}
@@ -4418,6 +4431,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<Grid2X2 size={22} />}
             title="Módulos del negocio"
+            id="sec-modulos"
             description="Puedes activar o desactivar los módulos incluidos en tu plan. Los no incluidos quedan visibles con candado y no se pueden activar desde aquí."
           >
             <div className="mb-4 rounded-[1.3rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
@@ -4464,6 +4478,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<Store size={22} />}
             title="Productos del menú"
+            id="sec-productos"
             description="Acceso directo para crear productos con foto, precio, categoría, descripción, disponibilidad y estado destacado."
             locked={!canEditMenuProducts}
             lockedText={`Disponible desde ${menuProductsAccess.minimumPlanLabel}. Si el módulo no está incluido o está apagado, el dueño no podrá editar el menú desde esta sección.`}
@@ -4503,6 +4518,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<Store size={22} />}
             title="Información pública avanzada"
+            id="sec-info-publica"
             defaultCollapsed
             description="Edita lo que sí se ve hoy en la página pública: textos principales, menú, botones superiores, categorías, destacados y contacto."
             locked={!canEditAdvancedPublic}
@@ -5146,6 +5162,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<Grid2X2 size={22} />}
             title="Promoción pública"
+            id="sec-promocion"
             defaultCollapsed
             description="Configura una promoción visible en la página pública. Puede ser una oferta general o estar relacionada con un producto o combo del menú editable."
             locked={!canEditPromotion}
@@ -5442,6 +5459,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<Store size={22} />}
             title="Destacados públicos"
+            id="sec-destacados"
             defaultCollapsed
             description="Selecciona productos o combos para mostrarlos como recomendados en la página pública. El editor completo del menú está en Productos del menú."
             locked={!canEditFeaturedProducts}
@@ -5612,6 +5630,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<DollarSign size={22} />}
             title="Tasa y moneda"
+            id="sec-tasa-moneda"
             defaultCollapsed
             description="Las tasas automáticas se leen directo del BCV y se actualizan solas todos los días. En Manual, usa la tasa que fijes aquí (el carrito le dice al cliente cuál está activa)."
           >
@@ -5664,6 +5683,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<CookingPot size={22} />}
             title="Flujo de caja y cocina"
+            id="sec-caja-cocina"
             description="Cómo avanza un pedido en tu operación: con cocina, mixto, o todo desde caja (marcar Listo directo). Los botones de la caja cambian según el modo."
           >
             <div className="grid gap-3 lg:grid-cols-3">
@@ -5696,6 +5716,7 @@ export default function BusinessConfigPage() {
           <SectionCard
             icon={<SlidersHorizontal size={22} />}
             title="Vista y operación"
+            id="sec-vista-operacion"
             defaultCollapsed
             description="Preferencias internas para adaptar la pantalla al modo de trabajo del negocio."
           >
@@ -5809,6 +5830,80 @@ function isValidRif(value: string): boolean {
   return /^[VEJPGCvejpgc]-?\d{8}-?\d$/.test(value.trim());
 }
 
+// Índice de secciones de Configuración, agrupado por temas. Cada enlace
+// dispara "config-open-section" para expandir la sección y hacer scroll.
+const CONFIG_SECTION_GROUPS: { group: string; items: { id: string; label: string }[] }[] = [
+  {
+    group: "Tu negocio",
+    items: [
+      { id: "sec-datos-basicos", label: "Datos básicos" },
+      { id: "sec-tipo-negocio", label: "Tipo de negocio" },
+      { id: "sec-fiscal", label: "Facturación fiscal" },
+      { id: "sec-colores", label: "Colores" },
+    ],
+  },
+  {
+    group: "Sedes y operación",
+    items: [
+      { id: "sec-sedes", label: "Sedes" },
+      { id: "sec-envio-distancia", label: "Envío por distancia" },
+      { id: "sec-mesas-qr", label: "Mesas y QR" },
+      { id: "sec-modulos", label: "Módulos" },
+      { id: "sec-caja-cocina", label: "Caja y cocina" },
+      { id: "sec-vista-operacion", label: "Vista y operación" },
+    ],
+  },
+  {
+    group: "Página pública",
+    items: [
+      { id: "sec-productos", label: "Productos del menú" },
+      { id: "sec-info-publica", label: "Información pública" },
+      { id: "sec-promocion", label: "Promoción" },
+      { id: "sec-destacados", label: "Destacados" },
+      { id: "sec-tasa-moneda", label: "Tasa y moneda" },
+    ],
+  },
+  {
+    group: "Sistema",
+    items: [{ id: "sec-plan", label: "Plan activo" }],
+  },
+];
+
+function ConfigSectionIndex() {
+  return (
+    <nav className="mt-4 rounded-[1.6rem] border-2 border-[var(--brand-primary)]/25 bg-white p-4">
+      <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+        Ir directo a…
+      </p>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {CONFIG_SECTION_GROUPS.map((group) => (
+          <div key={group.group}>
+            <p className="text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/50">
+              {group.group}
+            </p>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {group.items.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() =>
+                    window.dispatchEvent(
+                      new CustomEvent("config-open-section", { detail: item.id }),
+                    )
+                  }
+                  className="rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-[0.66rem] font-black uppercase tracking-[0.06em] text-[var(--brand-ink-2)]/80 transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </nav>
+  );
+}
+
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-2">
@@ -5858,6 +5953,7 @@ function SectionCard({
   locked,
   lockedText,
   defaultCollapsed = false,
+  id,
 }: {
   icon: ReactNode;
   title: string;
@@ -5866,11 +5962,33 @@ function SectionCard({
   locked?: boolean;
   lockedText?: string;
   defaultCollapsed?: boolean;
+  id?: string;
 }) {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
 
+  // Índice de secciones (Parte B, 2026-07-25): al navegar desde el índice la
+  // sección se EXPANDE y se hace scroll hasta ella (un ancla sobre una
+  // sección minimizada solo mostraba el encabezado).
+  useEffect(() => {
+    if (!id) return;
+
+    const openFromIndex = (event: Event) => {
+      if ((event as CustomEvent<string>).detail !== id) return;
+      setIsCollapsed(false);
+      window.setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 60);
+    };
+
+    window.addEventListener("config-open-section", openFromIndex);
+    return () => window.removeEventListener("config-open-section", openFromIndex);
+  }, [id]);
+
   return (
-    <section className="rounded-[1.6rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+    <section
+      id={id}
+      className="scroll-mt-24 rounded-[1.6rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]"
+    >
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] text-[var(--brand-ink)]">
