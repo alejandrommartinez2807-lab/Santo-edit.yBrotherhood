@@ -164,6 +164,31 @@ archivos de test nuevos) + `next build` antes de commitear.**
   lectura). Rutas aisladas y `noindex`: **la página pública real quedó intacta**
   (cero cambios en `src/app/page.tsx` ni en componentes públicos).
 
+## Turno nocturno (migraciones ya aplicadas por el dueño) — commits 31622e3..664e3b0
+- **Tasa BCV**: el parser dejaba de reconocer tasas de 6+ dígitos (>99.999 Bs,
+  escenario realista) y con separador de miles el match quedaba truncado — el
+  sistema caía para siempre al fallback sin avisar. Corregido + test.
+- **H9**: la herencia del origen de envío entre sedes ya no es muda — la API
+  reporta `inherited` y Configuración muestra el aviso ("esta sede cotiza
+  desde otra sucursal").
+- **H6**: el auto-avance a Entregado (último producto entregado) deja
+  bitácora y push al cliente como las demás puertas.
+- **H7**: si la cuenta se cierra en la ventana del attach, el pedido queda
+  suelto con nota visible para caja (antes 500 → el cliente reintentaba y
+  DUPLICABA el pedido).
+- **H15/H22**: el flujo público valida que la sede pedida exista y esté
+  activa (id viejo en el navegador creaba pedidos invisibles); cachés de sede
+  con TTL de 60 s (desactivar la sede principal ya no exige redeploy).
+- **B5/B6/B4**: borrar una compra borra sus abonos (quedaban huérfanos
+  restando en cierres); no se puede bajar el total por debajo de lo abonado;
+  las columnas payables de `supplier_purchases` se sincronizan al abonar.
+- **Alertas de inventario**: botones "Registrar compra" y "Copiar faltantes"
+  (lista con cantidades sugeridas lista para WhatsApp al proveedor).
+- **A8**: eliminado `canLocalAccessUseBranch` (código muerto); fechas de
+  Comprobantes en hora Caracas.
+- Rama respaldada en origin y fusionada a `brotherhood-publico` (SIN tocar
+  `main`: producción no se despliega hasta que revises).
+
 ## PENDIENTE (justificado — no se ocultó nada)
 1. **A1-auth**: la contraseña de rol sigue en `localStorage` viajando por
    header (estructural; migrar el panel 100% a Supabase Auth requiere
@@ -176,9 +201,9 @@ archivos de test nuevos) + `next build` antes de commitear.**
    optimización grande (paginación + mover despachos a cron), no un bug.
 4. **A2-inventario**: variaciones/adicionales aún no descuentan inventario
    propio (falta el campo de vínculo en el editor; cambio de esquema+UI grande).
-5. **B3/B4/B7**: compra de proveedor no genera gasto automático (riesgo de
-   doble conteo con el gasto manual — requiere decidir el flujo contigo);
-   columnas payables muertas en `supplier_purchases`; tipos text vs uuid.
+5. **B3/B7**: compra de proveedor no genera gasto automático (riesgo de doble
+   conteo con el gasto manual — requiere decidir el flujo contigo); tipos
+   text vs uuid en `supplier_purchase_payments` (migración de datos).
 6. Rate limiting distribuido (Upstash/Redis) — hoy es por instancia.
 7. Subrecetas siguen sin "producir" (decorativas); reportes `deliveryRevenue`
    suma el total del pedido, no solo el envío.
