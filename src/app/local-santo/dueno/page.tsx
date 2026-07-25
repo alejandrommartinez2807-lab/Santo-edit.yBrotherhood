@@ -35,6 +35,7 @@ import type {
   SavedDayClose,
   SupplierPurchase,
 } from "@/lib/orders"
+import { getOrderTotals } from "@/lib/localOrderMoney"
 import OwnerCancellationCodes from "@/components/local/OwnerCancellationCodes"
 
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
@@ -259,80 +260,9 @@ function getDisplayTableNumber(order: LocalOrder) {
   return order.tableNumber || "Sin ubicación"
 }
 
-function getOrderDeliveryCost(order: LocalOrder) {
-  const savedCost = Number(order.deliveryCostUSD || 0)
-
-  if (savedCost > 0) return savedCost
-  if (!isDeliveryOrder(order)) return 0
-
-  const normalizedZone = String(order.deliveryZone || order.tableNumber || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-
-  if (normalizedZone.includes("trigalena")) return 2
-  if (normalizedZone.includes("centro")) return 1
-  if (normalizedZone.includes("prebo")) return 2.5
-  if (normalizedZone.includes("naguanagua")) return 3
-  if (normalizedZone.includes("samanes")) return 3
-  if (normalizedZone.includes("san diego")) return 4
-
-  return 0
-}
-
-function getOrderTotals(order: LocalOrder) {
-  const exchangeRate = Number(order.exchangeRate || 0)
-  const deliveryCostUSD = getOrderDeliveryCost(order)
-
-  const itemTotals = Array.isArray(order.items)
-    ? order.items.reduce(
-        (totals, item) => {
-          const subtotal = Number(item.price || 0) * Number(item.quantity || 0)
-
-          if (isComboItem(item)) {
-            totals.totalCombosUSD += subtotal
-          } else {
-            totals.totalRegularUSD += subtotal
-          }
-
-          return totals
-        },
-        {
-          totalCombosUSD: 0,
-          totalRegularUSD: 0,
-        }
-      )
-    : {
-        totalCombosUSD: 0,
-        totalRegularUSD: 0,
-      }
-
-  const hasReadableItems = Array.isArray(order.items) && order.items.length > 0
-
-  const totalCombosUSD = hasReadableItems
-    ? itemTotals.totalCombosUSD
-    : Number(order.totalCombosUSD ?? 0)
-
-  const totalRegularUSD = hasReadableItems
-    ? itemTotals.totalRegularUSD
-    : Number(order.totalRegularUSD ?? 0)
-
-  const totalRegularVES = hasReadableItems
-    ? totalRegularUSD * exchangeRate
-    : Number(order.totalRegularVES ?? order.totalVES ?? totalRegularUSD * exchangeRate)
-
-  const totalBeforeDeliveryUSD = totalCombosUSD + totalRegularUSD
-  const totalUSD = totalBeforeDeliveryUSD + deliveryCostUSD
-
-  return {
-    totalUSD: roundMoney(totalUSD),
-    totalCombosUSD: roundMoney(totalCombosUSD),
-    totalRegularUSD: roundMoney(totalRegularUSD),
-    totalRegularVES: roundMoney(totalRegularVES),
-    deliveryCostUSD: roundMoney(deliveryCostUSD),
-    totalBeforeDeliveryUSD: roundMoney(totalBeforeDeliveryUSD),
-  }
-}
+// Totales: SIEMPRE la fuente única de lib/localOrderMoney (auditoría
+// 2026-07-24, H8). Este panel tenía su propia copia con la tabla FIJA de
+// zonas de Valencia — el dueño veía un envío inventado distinto al de caja.
 
 function calculatePaymentStatus(
   receivedEquivalentUSD: number,

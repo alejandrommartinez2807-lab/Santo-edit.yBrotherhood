@@ -32,6 +32,8 @@ import {
   isStaffConfirmationItemConfirmed,
   isStaffConfirmationItemRequired,
 } from "@/lib/localOrderHelpers"
+import { getOrderTotals as getCanonicalOrderTotals } from "@/lib/localOrderMoney"
+import type { LocalOrder as CanonicalLocalOrder } from "@/types/localOrders"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
 
 type ProductPaymentMode = "divisa" | "mixto"
@@ -195,76 +197,14 @@ function getDisplayTableNumber(order: LocalOrder) {
   return cleanZone || cleanTableNumber || "Delivery"
 }
 
-function getOrderDeliveryCost(order: LocalOrder) {
-  const savedCost = Number(order.deliveryCostUSD || 0)
-
-  if (savedCost > 0) return savedCost
-
-  const normalizedZone = String(order.deliveryZone || order.tableNumber || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-
-  if (normalizedZone.includes("trigalena")) return 2
-  if (normalizedZone.includes("centro")) return 1
-  if (normalizedZone.includes("prebo")) return 2.5
-  if (normalizedZone.includes("naguanagua")) return 3
-  if (normalizedZone.includes("samanes")) return 3
-  if (normalizedZone.includes("san diego")) return 4
-
-  return 0
-}
-
+// Totales: SIEMPRE la fuente \u00fanica de lib/localOrderMoney (auditor\u00eda
+// 2026-07-24, H8). Esta pantalla ten\u00eda su propia copia con la tabla FIJA de
+// zonas de Valencia ($1\u2013$4 seg\u00fan la zona) \u2014 el repartidor
+// ve\u00eda un env\u00edo inventado distinto al de caja para el mismo pedido, y adem\u00e1s
+// sin el guard de "solo pedidos delivery". El cast es seguro: el LocalOrder
+// local solo difiere en campos opcionales tipados m\u00e1s laxos.
 function getOrderTotals(order: LocalOrder) {
-  const exchangeRate = Number(order.exchangeRate || 0)
-  const deliveryCostUSD = getOrderDeliveryCost(order)
-
-  const itemTotals = order.items.reduce(
-    (totals, item) => {
-      const subtotal = Number(item.price || 0) * Number(item.quantity || 0)
-
-      if (isComboItem(item)) {
-        totals.totalCombosUSD += subtotal
-      } else {
-        totals.totalRegularUSD += subtotal
-      }
-
-      return totals
-    },
-    {
-      totalCombosUSD: 0,
-      totalRegularUSD: 0,
-    }
-  )
-
-  const hasReadableItems = Array.isArray(order.items) && order.items.length > 0
-
-  const savedCombosUSD = Number(order.totalCombosUSD ?? 0)
-  const savedRegularUSD = Number(order.totalRegularUSD ?? 0)
-
-  const totalCombosUSD = hasReadableItems
-    ? itemTotals.totalCombosUSD
-    : savedCombosUSD
-
-  const totalRegularUSD = hasReadableItems
-    ? itemTotals.totalRegularUSD
-    : savedRegularUSD
-
-  const totalRegularVES = hasReadableItems
-    ? totalRegularUSD * exchangeRate
-    : Number(order.totalRegularVES ?? order.totalVES ?? totalRegularUSD * exchangeRate)
-
-  const totalBeforeDeliveryUSD = totalCombosUSD + totalRegularUSD
-  const totalUSD = totalBeforeDeliveryUSD + deliveryCostUSD
-
-  return {
-    totalUSD: roundMoney(totalUSD),
-    totalCombosUSD: roundMoney(totalCombosUSD),
-    totalRegularUSD: roundMoney(totalRegularUSD),
-    totalRegularVES: roundMoney(totalRegularVES),
-    deliveryCostUSD: roundMoney(deliveryCostUSD),
-    totalBeforeDeliveryUSD: roundMoney(totalBeforeDeliveryUSD),
-  }
+  return getCanonicalOrderTotals(order as unknown as CanonicalLocalOrder)
 }
 
 function calculatePaymentStatus(

@@ -10,7 +10,14 @@ import {
   type LocalPlanKey,
   type LocalPlanMode,
 } from "@/lib/localPlans"
-import { formatMoneyForInput, parseMoneyInput, roundMoney } from "@/lib/localOrderMoney"
+import {
+  formatMoneyForInput,
+  getOrderTotals as getCanonicalOrderTotals,
+  parseMoneyInput,
+  roundMoney,
+} from "@/lib/localOrderMoney"
+import { getOrderDeliveryCost as getCanonicalOrderDeliveryCost } from "@/lib/localOrderHelpers"
+import type { LocalOrder as CanonicalLocalOrder } from "@/types/localOrders"
 import { getOrderPaymentLegs } from "@/lib/orderPaymentLegs"
 import type { LocalTable } from "@/lib/orders"
 import type { OpenAccount, OrderFiscalSnapshot } from "@/types/localOrders"
@@ -929,78 +936,17 @@ export function getDisplayTableNumber(order: LocalOrder) {
   return order.tableNumber || "Sin ubicación"
 }
 
-export function getOrderDeliveryCost(order: LocalOrder) {
-  const savedCost = Number(order.deliveryCostUSD || 0)
-
-  if (savedCost > 0) return savedCost
-
-  if (!isDeliveryOrder(order)) return 0
-
-  const normalizedZone = String(order.deliveryZone || order.tableNumber || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-
-  if (normalizedZone.includes("trigalena")) return 2
-  if (normalizedZone.includes("centro")) return 1
-  if (normalizedZone.includes("prebo")) return 2.5
-  if (normalizedZone.includes("naguanagua")) return 3
-  if (normalizedZone.includes("samanes")) return 3
-  if (normalizedZone.includes("san diego")) return 4
-
-  return 0
+// Totales y costo de envío: SIEMPRE la fuente única de lib/localOrderMoney
+// (auditoría 2026-07-24, H8). Este archivo tenía su propia copia con la tabla
+// FIJA de zonas de Valencia — el panel principal sumaba un envío distinto al
+// de caja para el mismo pedido. El cast es seguro: el LocalOrder local solo
+// difiere en campos opcionales tipados más laxos.
+export function getOrderTotals(order: LocalOrder) {
+  return getCanonicalOrderTotals(order as unknown as CanonicalLocalOrder)
 }
 
-export function getOrderTotals(order: LocalOrder) {
-  const exchangeRate = Number(order.exchangeRate || 0)
-  const deliveryCostUSD = getOrderDeliveryCost(order)
-
-  const itemTotals = order.items.reduce(
-    (totals, item) => {
-      const subtotal = Number(item.price || 0) * Number(item.quantity || 0)
-
-      if (isComboItem(item)) {
-        totals.totalCombosUSD += subtotal
-      } else {
-        totals.totalRegularUSD += subtotal
-      }
-
-      return totals
-    },
-    {
-      totalCombosUSD: 0,
-      totalRegularUSD: 0,
-    }
-  )
-
-  const hasReadableItems = Array.isArray(order.items) && order.items.length > 0
-
-  const savedCombosUSD = Number(order.totalCombosUSD ?? 0)
-  const savedRegularUSD = Number(order.totalRegularUSD ?? 0)
-
-  const totalCombosUSD = hasReadableItems
-    ? itemTotals.totalCombosUSD
-    : savedCombosUSD
-
-  const totalRegularUSD = hasReadableItems
-    ? itemTotals.totalRegularUSD
-    : savedRegularUSD
-
-  const totalRegularVES = hasReadableItems
-    ? totalRegularUSD * exchangeRate
-    : Number(order.totalRegularVES ?? order.totalVES ?? totalRegularUSD * exchangeRate)
-
-  const totalBeforeDeliveryUSD = totalCombosUSD + totalRegularUSD
-  const totalUSD = totalBeforeDeliveryUSD + deliveryCostUSD
-
-  return {
-    totalUSD,
-    totalCombosUSD,
-    totalRegularUSD,
-    totalRegularVES,
-    deliveryCostUSD,
-    totalBeforeDeliveryUSD,
-  }
+export function getOrderDeliveryCost(order: LocalOrder) {
+  return getCanonicalOrderDeliveryCost(order as unknown as CanonicalLocalOrder)
 }
 
 // Aritmética de dinero compartida: la implementación vive en localOrderMoney.
