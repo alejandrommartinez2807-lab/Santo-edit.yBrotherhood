@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getStripe, getPaymentCurrency } from "@/lib/stripe"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
+import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -10,6 +11,21 @@ function cleanText(v: unknown) {
 }
 
 export async function POST(request: NextRequest) {
+  // Blindaje A4 (2026-07-24): era la única ruta mutante sin rate limit ni
+  // guard de origen — cualquiera con un orderId creaba sesiones de Stripe
+  // ilimitadas y podía sondear qué pedidos existen.
+  const guardResponse = enforceApiMutationGuards(request, {
+    id: "api-payments-checkout-post",
+    limit: 20,
+    windowMs: 60_000,
+    envMaxBytes: "PUBLIC_API_MUTATION_MAX_BYTES",
+    maxBytes: 10_000,
+    rateLimitMessage:
+      "Demasiados intentos de pago. Espera unos segundos e intenta nuevamente.",
+  })
+
+  if (guardResponse) return guardResponse
+
   const stripe = getStripe()
   if (!stripe) {
     return NextResponse.json(
@@ -35,6 +51,20 @@ export async function POST(request: NextRequest) {
   if (!order) return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 })
 
   const o = order as Record<string, unknown>
+
+  // Estado del pedido (A4): estas columnas ya se consultaban pero no se
+  // usaban — se podía iniciar el pago de un pedido anulado o ya pagado.
+  if (cleanText(o.status) === "Cancelado") {
+    return NextResponse.json(
+      { error: "Este pedido está anulado: no se puede pagar" },
+      { status: 409 },
+    )
+  }
+
+  if (cleanText(o.payment_status) === "Pagado") {
+    return NextResponse.json({ error: "Este pedido ya está pagado" }, { status: 409 })
+  }
+
   const pending = Number(o.payment_pending_usd ?? 0)
   const total = Number(o.total_usd ?? 0)
   const amountUSD = pending > 0 ? pending : total

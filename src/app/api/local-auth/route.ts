@@ -49,9 +49,13 @@ function readModuleKey(request: NextRequest): LocalModuleKey {
 }
 
 async function handleLocalAuth(request: NextRequest) {
+  // 20/min (antes 60): esta ruta valida la CONTRASEÑA de rol — el límite alto
+  // hacía viable un brute-force, y además el contador vive en RAM por
+  // instancia (serverless lo multiplica). La navegación normal del panel hace
+  // ~1 llamada por cambio de módulo, muy por debajo del límite (A5).
   const rateLimitResponse = enforceRateLimit(request, {
     id: "api-local-auth",
-    limit: 60,
+    limit: 20,
     windowMs: 60_000,
     message: "Demasiados intentos de acceso. Espera unos segundos e intenta nuevamente.",
   })
