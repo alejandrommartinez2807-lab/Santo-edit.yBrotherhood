@@ -299,7 +299,7 @@ export function OpenAccountsPanel({
   // necesita recargarse aquí.
   async function refreshAccountsAfterAction() {
     if (!hasExternalAccounts || viewMode === "all") {
-      await refreshAccountsAfterAction();
+      await loadOpenAccounts(true, viewMode);
     }
   }
 

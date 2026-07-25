@@ -46,3 +46,24 @@ export function canRoleUpdateStatus(role: LocalRole, status: string): boolean {
 
   return false
 }
+
+// Máquina de estados del pedido (H1, 2026-07-24). Hasta ahora el servidor
+// aceptaba cualquier transición: un pedido ANULADO (con inventario devuelto y
+// motivo estampado) podía "revivir" a Listo/Entregado y volver a cobrarse.
+// Reglas: Cancelado es TERMINAL; Entregado solo puede reabrirse a Listo (botón
+// "No entregado") o anularse; los saltos hacia adelante siguen permitidos
+// porque el flujo sin cocina (kitchenFlowMode direct/mixed) los usa.
+const ORDER_STATUS_TRANSITIONS: Record<string, string[]> = {
+  Nuevo: ["Preparando", "Listo", "Entregado", "Cancelado"],
+  Preparando: ["Listo", "Entregado", "Cancelado"],
+  Listo: ["Preparando", "Entregado", "Cancelado"],
+  Entregado: ["Listo", "Cancelado"],
+  Cancelado: [],
+}
+
+export function canTransitionOrderStatus(from: string, to: string): boolean {
+  const allowed = ORDER_STATUS_TRANSITIONS[from]
+  // Estado legado/desconocido en la BD: no bloquear la operación del negocio.
+  if (!allowed) return true
+  return allowed.includes(to)
+}

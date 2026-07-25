@@ -35,3 +35,10 @@ export async function closeOpenAccount(
 ) {
   return openAccountStore.closeOpenAccount(accountId, input, branchId)
 }
+
+export async function getOpenAccountStatus(
+  accountId: string,
+  branchId?: string | null,
+) {
+  return openAccountStore.getOpenAccountStatus(accountId, branchId)
+}

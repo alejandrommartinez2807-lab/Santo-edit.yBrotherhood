@@ -169,6 +169,7 @@ export {
   attachOrderToOpenAccount,
   closeOpenAccount,
   createOpenAccount,
+  getOpenAccountStatus,
   getOpenAccounts,
 } from "./ordersOpenAccounts"
 

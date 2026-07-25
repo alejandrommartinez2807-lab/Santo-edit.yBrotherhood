@@ -205,7 +205,13 @@ export async function GET(request: NextRequest) {
       return moduleCheck.response
     }
 
-    if (!canLocalAccessUseModule(access.access, moduleKey)) {
+    // H3 (2026-07-24): un mesonero con permisos custom limitados a
+    // "openAccounts" (el guard real de su pantalla) también puede LEER
+    // pedidos; antes recibía 403 y su pantalla quedaba vacía sin explicación.
+    const waiterFallback =
+      access.role === "waiter" && canLocalAccessUseModule(access.access, "openAccounts")
+
+    if (!canLocalAccessUseModule(access.access, moduleKey) && !waiterFallback) {
       return forbiddenResponse("Este usuario no tiene permiso para este módulo")
     }
 

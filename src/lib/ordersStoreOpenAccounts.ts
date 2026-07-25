@@ -279,6 +279,24 @@ export async function attachOrderToOpenAccount(
   }
 }
 
+// Estado actual de una cuenta sin cargar sus pedidos (guard barato para las
+// acciones del PATCH: cerrar/entregar/cobrar sobre una cuenta que ya no está
+// Abierta). Devuelve null si la cuenta no existe en esa sucursal.
+export async function getOpenAccountStatus(
+  accountId: string,
+  branchId?: string | null,
+): Promise<OpenAccountStatus | null> {
+  const supabase = getSupabaseAdmin()
+
+  let query = supabase.from("open_accounts").select("id, status").eq("id", accountId)
+  if (branchId) query = query.eq("branch_id", branchId)
+  const { data, error } = await query.maybeSingle()
+  if (error) throw new Error(error.message)
+  if (!data) return null
+
+  return normalizeOpenAccountStatus((data as Row).status) || "Abierta"
+}
+
 export async function closeOpenAccount(
   accountId: string,
   input: UpdateOpenAccountInput = {},

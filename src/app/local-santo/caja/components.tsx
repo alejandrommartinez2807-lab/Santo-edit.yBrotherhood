@@ -455,9 +455,11 @@ export function CashOrderCard({
         </div>
 
         <div className="grid gap-2 sm:grid-cols-2">
-          <button type="button" onClick={onOpenPayment} className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]">
-            <CreditCard size={17} /> Registrar cobro
-          </button>
+          {order.status !== "Cancelado" && (
+            <button type="button" onClick={onOpenPayment} className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]">
+              <CreditCard size={17} /> Registrar cobro
+            </button>
+          )}
 
           {order.status === "Nuevo" && hasPendingStaffConfirmation && (
             <div className="rounded-full border-2 border-yellow-500 bg-[var(--brand-accent-100)] px-4 py-2 text-center text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-amber)]">

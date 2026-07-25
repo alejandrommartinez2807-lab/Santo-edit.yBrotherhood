@@ -6,7 +6,7 @@ import {
   type CreateOpenAccountInput,
   type OpenAccountStatus,
 } from "@/lib/orders"
-import { getRequestAccess, type LocalRole } from "@/lib/localAccess"
+import { canLocalAccessUseModule, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 
@@ -36,6 +36,17 @@ function checkRole(request: NextRequest, allowedRoles: LocalRole[]) {
 
   if (!allowedRoles.includes(access.role)) {
     return { ok: false as const, response: forbiddenResponse(), role: access.role, roleLabel: access.roleLabel }
+  }
+
+  // Guard H18 (2026-07-24): respetar los permisos POR USUARIO (permissionsMode
+  // "custom"), igual que /api/orders e inventario.
+  if (!canLocalAccessUseModule(access, "openAccounts")) {
+    return {
+      ok: false as const,
+      response: forbiddenResponse("Tu usuario no tiene habilitado el módulo de cuentas abiertas"),
+      role: access.role,
+      roleLabel: access.roleLabel,
+    }
   }
 
   return { ok: true as const, response: null, role: access.role, roleLabel: access.roleLabel }

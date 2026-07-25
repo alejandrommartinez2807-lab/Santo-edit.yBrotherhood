@@ -3,13 +3,19 @@ import {
   attachOrderToOpenAccount,
   closeOpenAccount,
   getBusinessConfig,
+  getOpenAccountStatus,
   getOpenAccounts,
   getOrders,
   updateOrderPayment,
   updateOrderStatus,
   type OrderStatus,
 } from "@/lib/orders";
-import { getLocalAccessAuditActor, getRequestAccess, type LocalRole } from "@/lib/localAccess";
+import {
+  canLocalAccessUseModule,
+  getLocalAccessAuditActor,
+  getRequestAccess,
+  type LocalRole,
+} from "@/lib/localAccess";
 import { getModulePlanAccess } from "@/lib/localPlans";
 import { canRoleUpdateStatus } from "@/lib/orderStatusPermissions";
 import { resolveBranchId } from "@/lib/branch";
@@ -61,6 +67,20 @@ function checkRole(request: NextRequest, allowedRoles: LocalRole[]) {
     return {
       ok: false as const,
       response: forbiddenResponse(),
+      role: access.role,
+      roleLabel: access.roleLabel,
+    };
+  }
+
+  // Guard H18 (2026-07-24): respetar los permisos POR USUARIO (permissionsMode
+  // "custom"). Era la única superficie mutable del POS sin este chequeo: un
+  // cajero con el módulo de cuentas quitado seguía cobrando/cerrando por API.
+  if (!canLocalAccessUseModule(access, "openAccounts")) {
+    return {
+      ok: false as const,
+      response: forbiddenResponse(
+        "Tu usuario no tiene habilitado el módulo de cuentas abiertas",
+      ),
       role: access.role,
       roleLabel: access.roleLabel,
     };
@@ -287,6 +307,33 @@ export async function PATCH(
     const body = (await request.json()) as Record<string, unknown>;
     const action = cleanText(body.action);
 
+    // Guard H4 (2026-07-24): completa el R4 — cerrar, marcar entregas o cobrar
+    // también exigen que la cuenta siga Abierta (antes solo attachOrder lo
+    // validaba y un "close" repetido pisaba closed_at/closed_by en silencio).
+    if (action === "updateOrderStatus" || action === "payAccount" || action === "close") {
+      const accountStatus = await getOpenAccountStatus(cleanAccountId, branchId);
+
+      if (!accountStatus) {
+        return NextResponse.json(
+          { error: "No se encontró la cuenta abierta" },
+          { status: 404 },
+        );
+      }
+
+      if (accountStatus !== "Abierta") {
+        return NextResponse.json(
+          {
+            error:
+              action === "close"
+                ? "Esta cuenta ya está cerrada."
+                : "Esta cuenta ya está cerrada: cobra o ajusta cada pedido directamente desde caja.",
+            conflict: true,
+          },
+          { status: 409 },
+        );
+      }
+    }
+
     if (action === "attachOrder") {
       const orderId = cleanText(body.orderId);
 
@@ -477,8 +524,14 @@ export async function PATCH(
           {
             amountReceivedUSD: roundMoney(currentAmountUSD + addUSD),
             amountReceivedVES: roundMoney(currentAmountVES + addVES),
-            paymentMethodUSD,
-            paymentMethodVES,
+            // El método solo se estampa en la moneda que este cobro realmente
+            // tocó; si no, se conserva el que ya tenía el pedido (antes un
+            // cobro 100% en Bs le escribía también el método USD = reporte de
+            // pago falso en ese pedido).
+            paymentMethodUSD:
+              addUSD > 0 ? paymentMethodUSD : cleanText(order.paymentMethodUSD),
+            paymentMethodVES:
+              addVES > 0 ? paymentMethodVES : cleanText(order.paymentMethodVES),
             deliveryPaymentIn,
             paymentNote,
             chargedBy: { id: actor.id, name: actor.label, role: actor.role },

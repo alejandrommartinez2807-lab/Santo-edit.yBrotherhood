@@ -460,7 +460,14 @@ export async function PATCH(
       return moduleCheck.response
     }
 
-    if (!canLocalAccessUseModule(access, moduleKey)) {
+    // H3 (2026-07-24): el mesonero puede venir configurado con el módulo
+    // "openAccounts" (el guard real de su pantalla) en permisos custom;
+    // cualquiera de los dos habilita esta acción. Antes solo se aceptaba
+    // mainPanel y ese mesonero recibía 403.
+    const waiterFallback =
+      access.role === "waiter" && canLocalAccessUseModule(access, "openAccounts")
+
+    if (!canLocalAccessUseModule(access, moduleKey) && !waiterFallback) {
       return forbiddenResponse("Este usuario no tiene permiso para este módulo")
     }
 

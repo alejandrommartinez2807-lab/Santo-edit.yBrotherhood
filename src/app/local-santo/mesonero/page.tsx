@@ -350,6 +350,15 @@ function MesoneroContent() {
       setMessage("Ingresa la clave del local para marcar el pedido.");
       return;
     }
+    // H2 (2026-07-24): confirmación antes de entregar — el botón está a un
+    // toque bajo la lista de productos y marcaba entregado sin preguntar.
+    if (
+      !window.confirm(
+        `¿Marcar el pedido de ${order.customerName || "la mesa"} como ENTREGADO?`,
+      )
+    ) {
+      return;
+    }
     setConfirmingOrderId(order.id);
     setMessage(null);
     try {
@@ -873,7 +882,10 @@ function MesoneroContent() {
                       </div>
                     )}
 
-                    {order.status !== "Entregado" && (
+                    {/* H2 (2026-07-24): solo se puede entregar un pedido LISTO —
+                        antes el botón salía también en Nuevo/Preparando y un
+                        toque "entregaba" algo que cocina aún preparaba. */}
+                    {order.status === "Listo" && (
                       <button
                         type="button"
                         onClick={() => void markOrderDelivered(order)}

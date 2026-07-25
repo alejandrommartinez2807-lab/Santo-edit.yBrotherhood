@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
+import { canTransitionOrderStatus } from "@/lib/orderStatusPermissions"
 import { isMissingColumnError } from "@/lib/ordersStoreMappers"
 import { OrderActionConflictError } from "@/lib/orderConflicts"
 import type { LocalOrder, OrderStatus } from "@/types/localOrders"
@@ -31,6 +32,17 @@ export async function updateOrderStatusInStore(
   if (currentStatus === status) {
     throw new OrderActionConflictError(
       `Este pedido ya está como "${status}": otro usuario lo marcó primero. La lista se actualizará sola.`,
+    )
+  }
+
+  // Máquina de estados (H1): Cancelado es terminal — un pedido anulado ya
+  // devolvió inventario y no puede revivir para cobrarse; Entregado solo se
+  // reabre a Listo o se anula.
+  if (!canTransitionOrderStatus(currentStatus, status)) {
+    throw new Error(
+      currentStatus === "Cancelado"
+        ? "Este pedido está ANULADO y no puede cambiar de estado."
+        : `Un pedido "${currentStatus}" no puede pasar directo a "${status}".`,
     )
   }
 
@@ -80,14 +92,16 @@ export async function updateOrderStatusInStore(
     }
   }
 
-  if (currentStatus === "Entregado" && status !== "Entregado") {
+  if (currentStatus === "Entregado" && status !== "Entregado" && status !== "Cancelado") {
     // REABRIR un pedido (Entregado → Listo/otro, botón "No entregado"): se
     // des-marca la entrega de todos los ítems para que no quede "3/3
     // entregados" en un pedido que ya NO está entregado (auditoría 2026-07-24,
-    // P2b). Sin migración 0026 se omite en silencio.
+    // P2b). También delivered_by (quedaba "entregado por Juan" sin fecha). Un
+    // Entregado → Cancelado NO borra el rastro de quién entregó (auditoría
+    // H5). Sin migración 0026 se omite en silencio.
     const { error: reopenError } = await supabase
       .from("order_items")
-      .update({ delivered_at: null })
+      .update({ delivered_at: null, delivered_by: null })
       .eq("order_id", orderId)
     if (reopenError && !isMissingColumnError(reopenError)) {
       throw new Error(reopenError.message)
