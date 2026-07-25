@@ -79,8 +79,15 @@ function ComprasPageContent() {
   const [error, setError] = useState("")
   const [busy, setBusy] = useState(false)
 
-  // Filtro del listado por proveedor ("" = todos).
+  // Filtro del listado por proveedor ("" = todos). Acepta ?supplierId= en la
+  // URL para llegar filtrado desde la ficha de Proveedores.
   const [filterSupplier, setFilterSupplier] = useState("")
+
+  useEffect(() => {
+    // Tras hidratar (evita mismatch SSR): filtro inicial desde la URL.
+    const fromUrl = new URLSearchParams(window.location.search).get("supplierId")
+    if (fromUrl) setFilterSupplier(fromUrl)
+  }, [])
 
   // Formulario de nueva compra.
   const [supplierId, setSupplierId] = useState("")

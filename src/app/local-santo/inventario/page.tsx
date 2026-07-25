@@ -752,7 +752,10 @@ function InventoryPageContent() {
   const [newQuickItemCategory, setNewQuickItemCategory] = useState("Materia prima")
   const [newQuickItemUnit, setNewQuickItemUnit] = useState("unidades")
   const [areQuickItemsVisible, setAreQuickItemsVisible] = useState(false)
-  const [activeInventoryModule, setActiveInventoryModule] = useState<InventoryModuleKey>("movimientos")
+  // Se abre en la VISTA RÁPIDA (qué hay / qué falta de un vistazo) — antes
+  // aterrizaba en Movimientos, que es consulta técnica (pedido del dueño /
+  // super prompt A3, 2026-07-24).
+  const [activeInventoryModule, setActiveInventoryModule] = useState<InventoryModuleKey>("cantidades")
   // Vista "Solo cantidades": búsqueda propia, sin tocar los filtros de insumos.
   const [quantitiesSearchText, setQuantitiesSearchText] = useState("")
   // Transferencia entre sedes (surtir eventos/ferias desde esta sede).
