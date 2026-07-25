@@ -37,19 +37,20 @@ describe("branch access for staff", () => {
     expect(isBranchAllowedForStaffAccess("norte", access)).toBe(false)
   })
 
-  it("mantiene compatibilidad para usuarios sin asignación y deja al dueño ver todo", () => {
-    const legacy = getStaffBranchAccessFromRequest(requestWith({ "x-staff-role": "cashier" }))
+  it("fail-closed (R3): usuario sin sede asignada queda restringido; el dueño ve todo", () => {
+    // Blindaje R3 (2026-07-24): antes un usuario NO privilegiado sin sedes
+    // asignadas veía TODAS las sedes (fail-open). Ahora queda restringido; en
+    // operaciones resolveBranchId lo clampa a la sede por defecto (no lo bloquea).
+    const sinAsignar = getStaffBranchAccessFromRequest(requestWith({ "x-staff-role": "cashier" }))
     const owner = getStaffBranchAccessFromRequest(
       requestWith({ "x-staff-role": "owner", "x-staff-branch-ids": "centro" }),
     )
 
-    expect(legacy?.unrestricted).toBe(true)
+    expect(sinAsignar?.unrestricted).toBe(false)
     expect(owner?.unrestricted).toBe(true)
-    expect(filterBranchesForStaffAccess(branches, legacy).map((branch) => branch.id)).toEqual([
-      "centro",
-      "este",
-      "norte",
-    ])
+    expect(filterBranchesForStaffAccess(branches, sinAsignar).map((branch) => branch.id)).toEqual(
+      [],
+    )
     expect(filterBranchesForStaffAccess(branches, owner).map((branch) => branch.id)).toEqual([
       "centro",
       "este",
