@@ -51,12 +51,17 @@ export function parseVenezuelanNumber(value: string) {
 }
 
 function extractFirstValidRateFromText(text: string) {
-  const matches = [...text.matchAll(/(\d{1,5}(?:[.,]\d{4,12}))/g)]
+  // Hasta 9 dígitos enteros y tope de 1.000 millones (auditoría 2026-07-24):
+  // el patrón anterior (\d{1,5} y < 100000) dejaba de reconocer la tasa al
+  // pasar de 99.999 Bs — escenario realista en Venezuela — y el sistema caía
+  // para siempre al fallback/DolarApi sin avisar. También acepta separadores
+  // de miles tipo "1.234.567,89".
+  const matches = [...text.matchAll(/(\d{1,3}(?:\.\d{3})+,\d{4,12}|\d{1,9}(?:[.,]\d{4,12}))/g)]
 
   for (const match of matches) {
     const parsed = parseVenezuelanNumber(match[1])
 
-    if (parsed && parsed > 50 && parsed < 100000) {
+    if (parsed && parsed > 50 && parsed < 1_000_000_000) {
       return parsed
     }
   }

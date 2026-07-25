@@ -1,7 +1,9 @@
-import { cleanText, getOrderStaffConfirmationSummary } from "@/lib/localOrderHelpers"
+import { cleanText, getDisplayOrderNumber, getOrderStaffConfirmationSummary } from "@/lib/localOrderHelpers"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { isMissingColumnError } from "@/lib/ordersStoreMappers"
 import { OrderActionConflictError } from "@/lib/orderConflicts"
+import { sendOrderMilestonePush } from "@/lib/orderPushNotifications"
+import { writeAuditLog } from "@/lib/audit"
 import type { LocalOrder, OrderItem } from "@/types/localOrders"
 
 type LoadOrderWithItems = (
@@ -180,12 +182,36 @@ export async function setOrderItemDeliveredInStore(
     order.items.length > 0 &&
     order.items.every((item) => Boolean(item.deliveredAt))
   ) {
-    const { error: advanceError } = await supabase
+    const { data: advancedRows, error: advanceError } = await supabase
       .from("orders")
       .update({ status: "Entregado" })
       .eq("id", orderId)
       .eq("status", "Listo")
-    if (!advanceError) {
+      .select("id")
+    if (!advanceError && advancedRows?.length) {
+      // H6 (2026-07-24): el auto-avance deja el MISMO rastro que el cambio de
+      // estado normal — antes el pedido "se entregaba solo" sin bitácora ni
+      // push al cliente (las otras puertas sí lo hacen).
+      await writeAuditLog({
+        action: "order.status.updated",
+        branchId: branchId ?? null,
+        entityType: "order",
+        entityId: orderId,
+        actor: {
+          id: "",
+          label: cleanText(input.deliveredBy) || "Entrega por producto",
+          role: "staff",
+        },
+        metadata: { status: "Entregado", auto: "todos los productos entregados" },
+      })
+
+      const orderLabel = getDisplayOrderNumber(order) || orderId
+      await sendOrderMilestonePush(
+        orderId,
+        "Pedido entregado 🙌",
+        `Tu pedido ${orderLabel} fue entregado. ¡Gracias por tu compra!`,
+      )
+
       return loadOrderWithItems(orderId, branchId)
     }
   }

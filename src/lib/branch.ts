@@ -5,7 +5,41 @@ import { getLocalAccessFromPassword } from "@/lib/localAccess"
 // sucursal elegida en el header x-branch-id; si no, se usa la primera activa.
 // Toda la operación (pedidos, inventario, caja) se filtra por esta sucursal.
 
+// Cachés de proceso con TTL (H22, 2026-07-24): antes cachedDefaultId vivía
+// para siempre — si el dueño desactivaba o reordenaba la sede principal, las
+// instancias vivas seguían resolviendo a la vieja hasta el próximo deploy.
+const BRANCH_CACHE_TTL_MS = 60_000
+
 let cachedDefaultId: string | null = null
+let cachedDefaultIdAt = 0
+
+let cachedActiveBranchIds: Set<string> | null = null
+let cachedActiveBranchIdsAt = 0
+
+// ¿La sede existe y está activa? (H15): el flujo PÚBLICO aceptaba cualquier
+// x-branch-id — un id viejo guardado en el navegador (sede desactivada o
+// evento finalizado) creaba pedidos invisibles para la operación diaria.
+// Ante un error de BD se responde true (no cambiar la sede de un cliente
+// legítimo por un hipo transitorio).
+async function isActiveBranchId(branchId: string): Promise<boolean> {
+  try {
+    const now = Date.now()
+
+    if (!cachedActiveBranchIds || now - cachedActiveBranchIdsAt > BRANCH_CACHE_TTL_MS) {
+      const supabase = getSupabaseAdmin()
+      const { data, error } = await supabase.from("branches").select("id").eq("is_active", true)
+      if (error) return true
+      cachedActiveBranchIds = new Set(
+        (data ?? []).map((row) => String((row as { id?: unknown }).id ?? "")),
+      )
+      cachedActiveBranchIdsAt = now
+    }
+
+    return cachedActiveBranchIds.has(branchId)
+  } catch {
+    return true
+  }
+}
 
 export type BranchRecord = {
   id: string
@@ -140,7 +174,9 @@ function getAllowedBranchIds(access: AccessLike | null | undefined) {
 }
 
 export async function getDefaultBranchId(): Promise<string | null> {
-  if (cachedDefaultId) return cachedDefaultId
+  if (cachedDefaultId && Date.now() - cachedDefaultIdAt < BRANCH_CACHE_TTL_MS) {
+    return cachedDefaultId
+  }
 
   const supabase = getSupabaseAdmin()
   const { data, error } = await supabase
@@ -159,6 +195,7 @@ export async function getDefaultBranchId(): Promise<string | null> {
   }
 
   cachedDefaultId = (data as { id?: string } | null)?.id ?? null
+  cachedDefaultIdAt = Date.now()
   return cachedDefaultId
 }
 
@@ -184,8 +221,13 @@ export async function resolveBranchId(request: HeaderBag): Promise<string | null
   // usuarios individuales (Supabase Auth) con su sede asignada, no le afecta.
   if (!staffAccess) {
     // Petición PÚBLICA (sin contraseña ni Bearer): el cliente elige su sede al
-    // pedir; se respeta la sede solicitada. NO se toca el flujo público.
-    if (!hasPassword) return requested || getDefaultBranchId()
+    // pedir; se respeta la sede solicitada SI existe y está activa (H15 — un
+    // id viejo guardado en el navegador caía en una sede desactivada y el
+    // pedido quedaba invisible). Si no, sede por defecto.
+    if (!hasPassword) {
+      if (requested && (await isActiveBranchId(requested))) return requested
+      return getDefaultBranchId()
+    }
 
     // Modo contraseña del PANEL: dueño/soporte sin restricción; cualquier otro
     // rol con contraseña compartida queda acotado a la sede por defecto.

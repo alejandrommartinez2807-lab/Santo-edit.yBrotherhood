@@ -61,4 +61,14 @@ describe("bcvRates", () => {
     expect(parseVenezuelanNumber("no-numero")).toBeNull()
     expect(parseVenezuelanNumber("-5,10")).toBeNull()
   })
+
+  it("sigue reconociendo tasas de 6+ dígitos y con separador de miles (regresión)", () => {
+    // Antes el patrón (\d{1,5} y tope 100000) dejaba de reconocer la tasa al
+    // pasar de 99.999 Bs y el sistema caía para siempre al fallback sin avisar.
+    const bigPlain = '<div id="dolar"><strong> USD </strong> 104383,20000000 </div>'
+    expect(extractBcvUsdRate(bigPlain)).toBe(104383.2)
+
+    const bigThousands = '<div id="dolar"><strong> USD </strong> 1.104.383,2000 </div>'
+    expect(extractBcvUsdRate(bigThousands)).toBe(1104383.2)
+  })
 })

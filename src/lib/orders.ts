@@ -132,6 +132,7 @@ export {
 
 export {
   getDeliveryDistanceSettings,
+  getDeliveryDistanceSettingsWithMeta,
   saveDeliveryDistanceSettings,
 } from "./ordersStoreDeliveryDistance"
 

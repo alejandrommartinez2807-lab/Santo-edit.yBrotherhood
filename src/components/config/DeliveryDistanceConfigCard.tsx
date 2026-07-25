@@ -70,6 +70,9 @@ export default function DeliveryDistanceConfigCard({
   canEdit: boolean;
 }) {
   const [isLoading, setIsLoading] = useState(true);
+  // H9: la sede seleccionada NO tiene config propia y hereda la de otra —
+  // antes esta herencia era muda y parecía "configurada".
+  const [isInherited, setIsInherited] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [originMapsUrl, setOriginMapsUrl] = useState("");
@@ -166,6 +169,7 @@ export default function DeliveryDistanceConfigCard({
         String(settings.roadFactor || DEFAULT_DELIVERY_DISTANCE_SETTINGS.roadFactor),
       );
       setTierDrafts(tiersToDrafts(Array.isArray(settings.tiers) ? settings.tiers : []));
+      setIsInherited(data.inherited === true);
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -216,6 +220,8 @@ export default function DeliveryDistanceConfigCard({
       setEnabled(settings.enabled === true);
       setHasOrigin(settings.originLat !== null && settings.originLng !== null);
       setTierDrafts(tiersToDrafts(Array.isArray(settings.tiers) ? settings.tiers : []));
+      // Al guardar, la sede ya tiene fila propia: deja de heredar.
+      setIsInherited(false);
       const sedeName =
         branches.find((branch) => branch.id === selectedBranchId)?.name || "";
       const sedeLabel = sedeName ? ` de ${sedeName}` : "";
@@ -285,6 +291,13 @@ export default function DeliveryDistanceConfigCard({
               </option>
             ))}
           </select>
+          {isInherited && !isLoading && (
+            <p className="mt-2 rounded-2xl border-2 border-yellow-400 bg-yellow-50 px-4 py-2.5 text-[0.7rem] font-black leading-5 text-yellow-800">
+              ⚠️ Esta sede NO tiene su propio origen de envío: está usando la
+              configuración de otra sucursal (cotiza las distancias desde allá).
+              Guarda aquí su ubicación y rangos para que cobre bien el delivery.
+            </p>
+          )}
           <p className="mt-1.5 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
             Cada sede cotiza con su propio local y sus rangos. Si una sede no
             tiene esto configurado, usa el de la sucursal principal hasta que

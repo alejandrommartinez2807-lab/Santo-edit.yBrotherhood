@@ -32,9 +32,18 @@ function rowToSettings(row: SettingsRow): DeliveryDistanceSettings {
   })
 }
 
-export async function getDeliveryDistanceSettings(
+export type DeliveryDistanceSettingsMeta = {
+  settings: DeliveryDistanceSettings
+  // La sede NO tiene fila propia y está usando la config de otra (H9,
+  // auditoría 2026-07-24): antes esta herencia era MUDA y el dueño veía
+  // "San Diego configurado" cuando en realidad cotizaba desde Valencia.
+  inherited: boolean
+  inheritedFromBranchId: string | null
+}
+
+export async function getDeliveryDistanceSettingsWithMeta(
   branchId?: string | null,
-): Promise<DeliveryDistanceSettings> {
+): Promise<DeliveryDistanceSettingsMeta> {
   const supabase = getSupabaseAdmin()
 
   // branch-exempt: tabla de configuración pequeña (una fila por sede); se trae
@@ -49,19 +58,44 @@ export async function getDeliveryDistanceSettings(
   const ownRow = cleanBranchId
     ? rows.find((row) => String(row.branch_id || "") === cleanBranchId)
     : undefined
-  if (ownRow) return rowToSettings(ownRow)
+  if (ownRow) {
+    return { settings: rowToSettings(ownRow), inherited: false, inheritedFromBranchId: null }
+  }
 
   // Sede sin configuración propia: hereda la de la sucursal principal.
   const defaultBranchId = await getDefaultBranchId()
   const mainRow = defaultBranchId
     ? rows.find((row) => String(row.branch_id || "") === defaultBranchId)
     : undefined
-  if (mainRow) return rowToSettings(mainRow)
+  if (mainRow) {
+    return {
+      settings: rowToSettings(mainRow),
+      inherited: Boolean(cleanBranchId && cleanBranchId !== defaultBranchId),
+      inheritedFromBranchId:
+        cleanBranchId && cleanBranchId !== defaultBranchId ? defaultBranchId : null,
+    }
+  }
 
   const globalRow = rows.find((row) => !row.branch_id)
-  if (globalRow) return rowToSettings(globalRow)
+  if (globalRow) {
+    return {
+      settings: rowToSettings(globalRow),
+      inherited: Boolean(cleanBranchId),
+      inheritedFromBranchId: null,
+    }
+  }
 
-  return normalizeDeliveryDistanceSettings(null)
+  return {
+    settings: normalizeDeliveryDistanceSettings(null),
+    inherited: false,
+    inheritedFromBranchId: null,
+  }
+}
+
+export async function getDeliveryDistanceSettings(
+  branchId?: string | null,
+): Promise<DeliveryDistanceSettings> {
+  return (await getDeliveryDistanceSettingsWithMeta(branchId)).settings
 }
 
 export async function saveDeliveryDistanceSettings(

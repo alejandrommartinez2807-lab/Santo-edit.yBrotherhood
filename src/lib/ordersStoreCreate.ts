@@ -1,5 +1,6 @@
 import { randomBytes } from "crypto"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
+import { captureError } from "@/lib/monitoring"
 import {
   cleanText,
   getOrderStaffConfirmationSummary,
@@ -159,9 +160,30 @@ export async function createOrderInStore(
     if (itemsError) throw new Error(itemsError.message)
   }
 
-  // Asociar a cuenta abierta si corresponde
+  // Asociar a cuenta abierta si corresponde. H7 (auditoría 2026-07-24): el
+  // pedido YA está insertado — si el attach falla (la cuenta se cerró en la
+  // ventana entre la validación y aquí, más probable desde el guard R4), un
+  // 500 hacía que el cliente reintentara y DUPLICARA el pedido. El pedido
+  // queda suelto con una nota visible para que caja lo cobre directo.
   if (cleanText(input.openAccountId)) {
-    await attachOrderToOpenAccount(cleanText(input.openAccountId), orderId, branchId)
+    try {
+      await attachOrderToOpenAccount(cleanText(input.openAccountId), orderId, branchId)
+    } catch (attachError) {
+      captureError(attachError, { route: "ordersStoreCreate", action: "attachOpenAccount" })
+
+      const warning =
+        "⚠️ La cuenta de la mesa se cerró mientras se registraba este pedido: quedó SUELTO, cóbralo directo en caja."
+      let noteQuery = supabase
+        .from("orders")
+        .update({
+          customer_note: [cleanText(input.customerNote), warning]
+            .filter(Boolean)
+            .join(" | "),
+        })
+        .eq("id", orderId)
+      if (branchId) noteQuery = noteQuery.eq("branch_id", branchId)
+      await noteQuery
+    }
   }
 
   return loadOrderWithItems(orderId, branchId)

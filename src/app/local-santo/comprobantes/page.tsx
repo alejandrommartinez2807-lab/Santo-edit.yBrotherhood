@@ -106,6 +106,9 @@ function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("es-VE", {
     dateStyle: "short",
     timeStyle: "short",
+    // Hora del negocio (auditoría 2026-07-24): sin timeZone, en un navegador/
+    // servidor en UTC las horas salían +4h respecto a Caracas.
+    timeZone: "America/Caracas",
   }).format(date)
 }
 

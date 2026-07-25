@@ -327,15 +327,6 @@ export function getLocalAccessAllowedModules(
   return getAllowedModulesForLocalRole(access.role)
 }
 
-export function canLocalAccessUseBranch(
-  access: LocalAccessResult,
-  branchId: string | null | undefined,
-) {
-  if (!access.ok || !branchId) return true
-  if (access.allBranches !== false) return true
-  return (access.allowedBranchIds || []).includes(branchId)
-}
-
 // Acceso unificado para las rutas API. Confía en el rol reenviado por el
 // middleware (header x-staff-role, YA verificado contra Supabase Auth y que el
 // middleware limpia de cualquier valor enviado por el cliente). Si no hay token

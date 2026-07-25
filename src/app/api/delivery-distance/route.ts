@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getBusinessConfig, getDeliveryDistanceSettings, saveDeliveryDistanceSettings } from "@/lib/orders"
+import {
+  getBusinessConfig,
+  getDeliveryDistanceSettingsWithMeta,
+  saveDeliveryDistanceSettings,
+} from "@/lib/orders"
 import {
   isShortMapsLink,
   normalizeDeliveryDistanceSettings,
@@ -54,9 +58,16 @@ export async function GET(request: NextRequest) {
     const access = checkRole(request, ["owner", "support"])
     if (!access.ok) return access.response
 
-    const settings = await getDeliveryDistanceSettings(await resolveBranchId(request))
+    const meta = await getDeliveryDistanceSettingsWithMeta(await resolveBranchId(request))
 
-    return NextResponse.json({ ok: true, settings })
+    // inherited: la sede NO tiene origen propio y cotiza con la config de otra
+    // (H9) — el panel lo muestra como aviso para que el dueño lo sepa.
+    return NextResponse.json({
+      ok: true,
+      settings: meta.settings,
+      inherited: meta.inherited,
+      inheritedFromBranchId: meta.inheritedFromBranchId,
+    })
   } catch (error) {
     return NextResponse.json(
       {
