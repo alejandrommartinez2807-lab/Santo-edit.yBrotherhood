@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
+import { getLocalAccessFromPassword } from "@/lib/localAccess"
 
 // Resolución de la sucursal "actual" de una petición. El cliente envía la
 // sucursal elegida en el header x-branch-id; si no, se usa la primera activa.
@@ -154,23 +155,48 @@ export async function getDefaultBranchId(): Promise<string | null> {
 }
 
 export async function resolveBranchId(request: HeaderBag): Promise<string | null> {
-  // Acceso por sede del staff (null en modo contraseña/.env = sin restricción).
   const staffAccess = getStaffBranchAccessFromRequest(request)
   const requested = getExplicitBranchIdFromRequest(request)
 
+  // Blindaje R2 (2026-07-24): MODO CONTRASEÑA (.env). El middleware no setea
+  // x-staff-role, así que staffAccess es null. El DUEÑO (rol owner/support por
+  // contraseña) sigue SIN restricción — NUNCA se bloquea. Pero cualquier otro
+  // rol que use una contraseña COMPARTIDA queda acotado a la sede por defecto:
+  // no puede operar otra sucursal por esa puerta trasera. El personal real usa
+  // usuarios individuales (Supabase Auth) con su sede asignada, no le afecta.
+  if (!staffAccess) {
+    const hasPassword = Boolean(
+      cleanText(request.headers.get("x-local-password")) ||
+        cleanText(request.headers.get("x-admin-password")),
+    )
+    // Petición PÚBLICA (sin contraseña ni Bearer): el cliente elige su sede al
+    // pedir; se respeta la sede solicitada. NO se toca el flujo público.
+    if (!hasPassword) return requested || getDefaultBranchId()
+
+    // Modo contraseña del PANEL: dueño/soporte sin restricción; cualquier otro
+    // rol con contraseña compartida queda acotado a la sede por defecto.
+    const role = getPasswordRole(request)
+    const privileged = role === "owner" || role === "support"
+    if (!privileged) return getDefaultBranchId()
+    return requested || getDefaultBranchId()
+  }
+
   if (requested) {
     // Un usuario restringido que pida una sede que NO es suya se "clampa" a su
-    // primera sede permitida: nunca opera ni lee datos de otra sucursal, aunque
-    // manipule el header x-branch-id. owner/support (unrestricted) pasan igual.
+    // primera sede permitida (nunca lee/opera otra sucursal aunque manipule el
+    // header). owner/support (unrestricted) pasan igual.
     if (isBranchAllowedForStaffAccess(requested, staffAccess)) return requested
-    if (staffAccess && !staffAccess.unrestricted && staffAccess.branchIds.length) {
+    if (!staffAccess.unrestricted && staffAccess.branchIds.length) {
       return staffAccess.branchIds[0]
     }
+    // Blindaje R3: restringido SIN sedes asignadas → sede por defecto, nunca la
+    // pedida (antes caía a `return requested` = fail-open).
+    if (!staffAccess.unrestricted) return getDefaultBranchId()
     return requested
   }
 
   // Sin sede explícita: el staff restringido cae a su primera sede asignada.
-  if (staffAccess && !staffAccess.unrestricted && staffAccess.branchIds.length) {
+  if (!staffAccess.unrestricted && staffAccess.branchIds.length) {
     return staffAccess.branchIds[0]
   }
   return getDefaultBranchId()
@@ -319,8 +345,24 @@ export function getStaffBranchAccessFromRequest(request: HeaderBag): StaffBranch
   return {
     role,
     branchIds,
-    unrestricted: privilegedRole || branchIds.length === 0,
+    // Blindaje R3 (2026-07-24): SIN sedes asignadas ya NO es "sin restricción"
+    // (antes un usuario sin config veía todas las sedes = fail-open). Solo
+    // dueño/soporte pasan sin restricción; el resto se clampa a la sede por
+    // defecto en resolveBranchId. Los usuarios reales ya tienen sede asignada.
+    unrestricted: privilegedRole,
   }
+}
+
+// Rol de un login por CONTRASEÑA (.env) — el middleware no setea x-staff-role
+// en ese modo, así que lo derivamos de la clave para poder blindar la sede.
+function getPasswordRole(request: HeaderBag): string | null {
+  const headers = request.headers
+  const password =
+    cleanText(headers.get("x-local-password")) ||
+    cleanText(headers.get("x-admin-password"))
+  if (!password) return null
+  const access = getLocalAccessFromPassword(password)
+  return access.ok ? String(access.role || "").toLowerCase() : null
 }
 
 export function filterBranchesForStaffAccess<T extends { id?: unknown }>(
