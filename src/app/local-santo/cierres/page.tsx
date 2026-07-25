@@ -1313,6 +1313,54 @@ function CloseDetailModal({
           </div>
         </DetailToggleSection>
 
+        {(() => {
+          // Sección dedicada de ANULACIONES del día (pedido del dueño): el
+          // dueño ve de un vistazo qué se canceló, por qué y cuánto, sin buscar
+          // dentro de la lista completa. No cuentan como venta (aditivo).
+          const canceledOrders = close.orders.filter(
+            (order) => order.status === "Cancelado",
+          )
+          if (canceledOrders.length === 0) return null
+          const canceledTotal = canceledOrders.reduce(
+            (sum, order) => sum + Number(order.totalUSD || 0),
+            0,
+          )
+          return (
+            <DetailToggleSection
+              title="Pedidos cancelados del día"
+              description="Anulaciones con su motivo y monto. NO cuentan como venta; son solo para control."
+              badge={`${canceledOrders.length} · ${formatUSD(canceledTotal)}`}
+            >
+              <div className="space-y-2">
+                {canceledOrders.map((order) => (
+                  <div
+                    key={`cancel-${order.id}`}
+                    className="rounded-2xl border border-red-300 bg-red-50 p-3"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-base font-black leading-none text-red-700">
+                        {order.displayNumber || order.id}
+                      </p>
+                      <span className="text-xs font-bold text-red-900/70">
+                        {order.customerName}
+                        {order.orderType ? ` · ${order.orderType}` : ""}
+                        {order.createdAt ? ` · ${formatDate(order.createdAt)}` : ""}
+                        {order.registeredBy ? ` · Registró: ${order.registeredBy}` : ""}
+                      </span>
+                      <p className="ml-auto text-base font-black text-red-700">
+                        {formatUSD(order.totalUSD)}
+                      </p>
+                    </div>
+                    <p className="mt-1.5 text-xs font-bold leading-4 text-red-800">
+                      Motivo: {order.cancelReason || "(sin motivo registrado)"}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </DetailToggleSection>
+          )
+        })()}
+
         {close.orders.length > 0 && (
           <DetailToggleSection
             title="Pedidos del día (uno por uno)"

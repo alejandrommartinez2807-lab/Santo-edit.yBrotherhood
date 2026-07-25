@@ -121,12 +121,19 @@ export async function clearOrdersInStore(
   branchId?: string | null,
 ): Promise<{ ok: boolean; deleted: number; message: string }> {
   const supabase = getSupabaseAdmin()
+  // Red de seguridad R2 (auditoría 2026-07-24): NO borrar los pedidos atados a
+  // una cuenta AÚN "Abierta" — perderían su pendiente y la cuenta quedaría
+  // huérfana. Se conservan hasta que la cuenta se cierre. Los de cuentas ya
+  // Cerradas/Canceladas y los sueltos sí se limpian.
+  const keepOpenAccounts = "open_account_status.is.null,open_account_status.neq.Abierta"
   let countQ = supabase.from("orders").select("id", { count: "exact", head: true })
   if (branchId) countQ = countQ.eq("branch_id", branchId)
+  countQ = countQ.or(keepOpenAccounts)
   const { count } = await countQ
   // Borra SOLO los pedidos de esta sucursal (order_items cae por cascade).
   let delQ = supabase.from("orders").delete()
   delQ = branchId ? delQ.eq("branch_id", branchId) : delQ.neq("id", "")
+  delQ = delQ.or(keepOpenAccounts)
   const { error } = await delQ
   if (error) throw new Error(error.message)
   return {

@@ -2130,6 +2130,20 @@ export default function PedidosPage() {
       })
     }
 
+    // Cuentas abiertas sin cerrar (fix R2 2026-07-24): reiniciar con cuentas
+    // ABIERTAS dejaba dinero pendiente sin rastro. Ahora los pedidos de esas
+    // cuentas NO se borran (red de seguridad en clearOrdersInStore), pero hay
+    // que avisar para que caja las cierre (cobre o cancele) antes de reiniciar.
+    if (activeOpenAccounts.length > 0) {
+      reviewItems.push({
+        title: "Cuentas abiertas sin cerrar",
+        description:
+          "Hay cuentas de mesa todavía ABIERTAS. Ciérralas (cobra o cancela) antes de reiniciar. Sus pedidos NO se borran al reiniciar (quedan protegidos), pero su pendiente sigue abierto hasta que cierres la cuenta.",
+        value: `${activeOpenAccounts.length} cuenta(s)`,
+        tone: "danger",
+      })
+    }
+
     if (totals.realPendingUSD > 0) {
       reviewItems.push({
         title: "Pendiente de cobro",
@@ -2234,7 +2248,7 @@ export default function PedidosPage() {
     }
 
     return reviewItems
-  }, [dayExpenseTotals, dayStats])
+  }, [dayExpenseTotals, dayStats, activeOpenAccounts])
 
   const hasCloseReviewWarnings = closeReviewItems.some(
     (item) => item.tone === "danger" || item.tone === "warning"
