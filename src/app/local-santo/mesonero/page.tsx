@@ -340,6 +340,43 @@ function MesoneroContent() {
     }
   }
 
+  // Marcar un pedido local como ENTREGADO desde la pantalla del mesonero
+  // (auditoría P1 2026-07-24): antes solo se podía completar dentro de una
+  // cuenta abierta; un pedido local suelto quedaba "Listo" indefinido. El
+  // servidor estampa la entrega de todos sus ítems.
+  async function markOrderDelivered(order: LocalOrder) {
+    const cleanPassword = adminPassword.trim();
+    if (!cleanPassword) {
+      setMessage("Ingresa la clave del local para marcar el pedido.");
+      return;
+    }
+    setConfirmingOrderId(order.id);
+    setMessage(null);
+    try {
+      const response = await fetch(`/api/orders/${encodeURIComponent(order.id)}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": cleanPassword,
+        },
+        cache: "no-store",
+        body: JSON.stringify({ status: "Entregado" }),
+      });
+      const data = await readApiResponse(response);
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudo marcar el pedido como entregado");
+      }
+      await loadOrders(cleanPassword, true);
+      setMessage("Pedido marcado como entregado.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "No se pudo marcar el pedido como entregado",
+      );
+    } finally {
+      setConfirmingOrderId(null);
+    }
+  }
+
   async function resetStaffItems(order: LocalOrder) {
     const cleanPassword = adminPassword.trim();
 
@@ -834,6 +871,22 @@ function MesoneroContent() {
                           ))}
                         </div>
                       </div>
+                    )}
+
+                    {order.status !== "Entregado" && (
+                      <button
+                        type="button"
+                        onClick={() => void markOrderDelivered(order)}
+                        disabled={confirmingOrderId === order.id}
+                        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-emerald-600 bg-emerald-600 px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-white shadow-[0_4px_0_rgba(0,0,0,0.10)] transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        {confirmingOrderId === order.id ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <CheckCircle2 size={16} />
+                        )}
+                        Marcar entregado
+                      </button>
                     )}
 
                     <div className="mt-3 grid gap-2 sm:grid-cols-3">

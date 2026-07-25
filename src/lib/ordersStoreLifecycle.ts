@@ -80,6 +80,20 @@ export async function updateOrderStatusInStore(
     }
   }
 
+  if (currentStatus === "Entregado" && status !== "Entregado") {
+    // REABRIR un pedido (Entregado → Listo/otro, botón "No entregado"): se
+    // des-marca la entrega de todos los ítems para que no quede "3/3
+    // entregados" en un pedido que ya NO está entregado (auditoría 2026-07-24,
+    // P2b). Sin migración 0026 se omite en silencio.
+    const { error: reopenError } = await supabase
+      .from("order_items")
+      .update({ delivered_at: null })
+      .eq("order_id", orderId)
+    if (reopenError && !isMissingColumnError(reopenError)) {
+      throw new Error(reopenError.message)
+    }
+  }
+
   return loadOrderWithItems(orderId, branchId)
 }
 
