@@ -432,7 +432,10 @@ export function buildInventoryHealthReport(input: {
   inventoryItems: InventoryCostInput[]
   recipes: InventoryRecipeInput[]
 }): InventoryHealthReport {
-  const lowStockItems = input.inventoryItems
+  // Mismo criterio que el push de reposición (inventoryRestockAlerts): un
+  // insumo AGOTADO cuenta aunque no tenga stock mínimo configurado — antes el
+  // dashboard no lo mostraba mientras el push sí avisaba (auditoría C2).
+  const allLowStockItems = input.inventoryItems
     .filter((item) => item.isActive !== false)
     .map((item) => ({
       id: String(item.id || ""),
@@ -441,13 +444,18 @@ export function buildInventoryHealthReport(input: {
       minimumStock: money(item.minimumStock),
       unit: String(item.unit || "unidades"),
     }))
-    .filter((item) => item.minimumStock > 0 && item.quantity <= item.minimumStock)
+    .filter(
+      (item) =>
+        item.quantity <= 0 ||
+        (item.minimumStock > 0 && item.quantity <= item.minimumStock),
+    )
     .sort((a, b) => (a.quantity / Math.max(1, a.minimumStock)) - (b.quantity / Math.max(1, b.minimumStock)))
-    .slice(0, 10)
 
   return {
-    lowStockCount: lowStockItems.length,
-    lowStockItems,
+    // El contador es el TOTAL real; la lista se recorta a 10 para la UI
+    // (antes se contaba después del slice y "25 bajo mínimo" decía 10 — C1).
+    lowStockCount: allLowStockItems.length,
+    lowStockItems: allLowStockItems.slice(0, 10),
     inactiveRecipes: input.recipes.filter((recipe) => recipe.isActive === false).length,
     activeRecipes: input.recipes.filter((recipe) => recipe.isActive !== false).length,
   }

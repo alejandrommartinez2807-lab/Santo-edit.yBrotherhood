@@ -73,4 +73,27 @@ describe("reportAnalytics", () => {
     expect(alerts.some((a) => a.title.includes("margen bajo"))).toBe(true)
     expect(alerts.some((a) => a.title.includes("bajo mínimo"))).toBe(true)
   })
+
+  it("lowStockCount cuenta TODOS los insumos bajos (no se topa en 10) e incluye agotados sin mínimo", () => {
+    // Regresión C1+C2 (2026-07-24): el contador se calculaba después del
+    // slice(0,10) — con 25 insumos bajos el dueño veía "10". Y un insumo
+    // agotado sin stock mínimo configurado no contaba, aunque el push de
+    // reposición sí avisaba de él.
+    const manyLow = Array.from({ length: 25 }, (_, i) => ({
+      id: `low-${i}`,
+      name: `Insumo ${i}`,
+      quantity: 1,
+      minimumStock: 5,
+      unit: "kg",
+    }))
+    const outWithoutMinimum = { id: "out", name: "Agotado", quantity: 0, minimumStock: 0, unit: "kg" }
+
+    const report = buildInventoryHealthReport({
+      inventoryItems: [...manyLow, outWithoutMinimum],
+      recipes: [],
+    })
+
+    expect(report.lowStockCount).toBe(26)
+    expect(report.lowStockItems.length).toBe(10)
+  })
 })

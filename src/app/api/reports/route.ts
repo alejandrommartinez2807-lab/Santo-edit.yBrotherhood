@@ -30,6 +30,8 @@ function getRequestPassword(request: NextRequest) {
   )
 }
 
+class InvalidRangeError extends Error {}
+
 function num(v: unknown) {
   const n = Number(v)
   return Number.isFinite(n) ? n : 0
@@ -50,9 +52,18 @@ function resolveRange(request: NextRequest): { fromISO: string; toISO: string | 
   const now = new Date()
 
   if (fromParam) {
+    // Fechas inválidas: antes new Date("basura").toISOString() lanzaba
+    // RangeError y el GET (sin try/catch) devolvía un 500 crudo.
+    const from = new Date(fromParam)
+    const to = toParam ? new Date(toParam) : null
+
+    if (Number.isNaN(from.getTime()) || (to && Number.isNaN(to.getTime()))) {
+      throw new InvalidRangeError("Rango de fechas inválido (usa formato ISO, ej. 2026-07-24)")
+    }
+
     return {
-      fromISO: new Date(fromParam).toISOString(),
-      toISO: toParam ? new Date(toParam).toISOString() : null,
+      fromISO: from.toISOString(),
+      toISO: to ? to.toISOString() : null,
       label: "Personalizado",
     }
   }
@@ -90,7 +101,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Sin permiso para ver reportes" }, { status: 403 })
   }
 
-  const { fromISO, toISO, label } = resolveRange(request)
+  let range: { fromISO: string; toISO: string | null; label: string }
+  try {
+    range = resolveRange(request)
+  } catch (error) {
+    if (error instanceof InvalidRangeError) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+    throw error
+  }
+  const { fromISO, toISO, label } = range
   const supabase = getSupabaseAdmin()
 
   // Alcance: ?scope=all = consolidado (todas las sucursales); si no, la
@@ -102,7 +122,7 @@ export async function GET(request: NextRequest) {
   const branchId = consolidated ? null : await resolveBranchId(request)
 
   const SELECT_COLS =
-    "id, created_at, status, order_type, total_usd, payment_status, payment_received_equiv_usd, payment_pending_usd, payment_method_usd, payment_method_ves, delivery_cost_usd, is_training"
+    "id, created_at, status, order_type, total_usd, payment_status, payment_received_equiv_usd, payment_pending_usd, payment_method_usd, payment_method_ves, amount_received_usd, amount_received_ves, exchange_rate, delivery_cost_usd, is_training"
 
   let query = supabase
     .from("orders")
@@ -153,8 +173,8 @@ export async function GET(request: NextRequest) {
   const byPayment: Record<string, number> = {}
   const byHour: number[] = Array.from({ length: 24 }, () => 0)
   const byDayMap = new Map<string, { date: string; orders: number; totalUSD: number }>()
-  // Métodos de pago reales (efectivo, Zelle, pago móvil…). Un pedido puede usar
-  // método en divisas y en bolívares a la vez: cuenta en ambos.
+  // Métodos de pago reales (efectivo, Zelle, pago móvil…). Un pedido mixto
+  // aparece en ambos métodos, pero cada uno suma SOLO lo cobrado en su moneda.
   const byMethod: Record<string, { count: number; totalUSD: number }> = {}
   let deliveryOrders = 0
   let deliveryRevenueUSD = 0
@@ -175,12 +195,32 @@ export async function GET(request: NextRequest) {
     const pay = String(o.payment_status || "Pendiente")
     byPayment[pay] = (byPayment[pay] || 0) + 1
 
-    for (const method of [String(o.payment_method_usd || ""), String(o.payment_method_ves || "")]) {
-      const m = method.trim()
-      if (!m) continue
-      byMethod[m] = byMethod[m] || { count: 0, totalUSD: 0 }
-      byMethod[m].count += 1
-      byMethod[m].totalUSD += t
+    // Por método se reparte lo REALMENTE cobrado en cada moneda (auditoría
+    // 2026-07-24): antes se sumaba el TOTAL del pedido a AMBOS métodos y un
+    // pedido mixto Zelle+pago móvil contaba doble (Σ byMethod ≠ total).
+    const receivedUSD = num(o.amount_received_usd)
+    const receivedVES = num(o.amount_received_ves)
+    const rate = num(o.exchange_rate)
+    const methodUSD = String(o.payment_method_usd || "").trim()
+    const methodVES = String(o.payment_method_ves || "").trim()
+    const legs: { method: string; amountUSD: number }[] = []
+
+    if (methodUSD && receivedUSD > 0) {
+      legs.push({ method: methodUSD, amountUSD: receivedUSD })
+    }
+    if (methodVES && receivedVES > 0 && rate > 0) {
+      legs.push({ method: methodVES, amountUSD: receivedVES / rate })
+    }
+    // Pedido con método marcado pero sin montos por pata (datos viejos): se
+    // atribuye una sola vez lo cobrado equivalente, sin duplicar.
+    if (!legs.length && (methodUSD || methodVES)) {
+      legs.push({ method: methodUSD || methodVES, amountUSD: num(o.payment_received_equiv_usd) })
+    }
+
+    for (const leg of legs) {
+      byMethod[leg.method] = byMethod[leg.method] || { count: 0, totalUSD: 0 }
+      byMethod[leg.method].count += 1
+      byMethod[leg.method].totalUSD += leg.amountUSD
     }
 
     const dCost = num(o.delivery_cost_usd)
@@ -212,10 +252,21 @@ export async function GET(request: NextRequest) {
   const ids = orders.map((o) => (o as { id: string }).id)
   const topProducts: { name: string; quantity: number; totalUSD: number }[] = []
   if (ids.length) {
-    const { data: itemRows } = await supabase
-      .from("order_items")
-      .select("name, quantity, price, order_id")
-      .in("order_id", ids)
+    // En rangos grandes el .in() con cientos de ids reventaba la URL de
+    // PostgREST y el error se descartaba: topProducts quedaba [] en silencio
+    // (auditoría 2026-07-24). Se trocea y se propaga el error.
+    const itemRows: unknown[] = []
+    const CHUNK = 150
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const { data: chunkRows, error: itemsError } = await supabase
+        .from("order_items")
+        .select("name, quantity, price, order_id")
+        .in("order_id", ids.slice(i, i + CHUNK))
+      if (itemsError) {
+        return NextResponse.json({ error: itemsError.message }, { status: 500 })
+      }
+      itemRows.push(...(chunkRows ?? []))
+    }
     const map = new Map<string, { name: string; quantity: number; totalUSD: number }>()
     for (const raw of itemRows ?? []) {
       const it = raw as Record<string, unknown>
@@ -286,14 +337,25 @@ export async function GET(request: NextRequest) {
   } | null = null
   if (suppliersOn) {
     const purchases = await getSupplierPurchases(branchId)
+    // Las DEUDAS (payables) son estado actual y no se filtran por fecha; las
+    // COMPRAS del resumen sí respetan el rango pedido — antes "Compras
+    // registradas" bajo "Resumen de hoy" era el histórico completo (C3).
+    const fromDay = fromISO.slice(0, 10)
+    const toDay = (toISO ?? new Date().toISOString()).slice(0, 10)
+    const purchasesInRange = purchases.filter((purchase) => {
+      const day = String(purchase.purchaseDate || "").slice(0, 10)
+      return day >= fromDay && day <= toDay
+    })
+    const purchasesInRangeReport = buildSupplierPayablesReport(purchasesInRange)
+
     supplierPayables = buildSupplierPayablesReport(purchases)
     supplierPurchases = {
       summary: {
-        purchases: supplierPayables.summary.purchases,
-        totalUSD: supplierPayables.summary.totalUSD,
-        totalVES: supplierPayables.summary.totalVES,
+        purchases: purchasesInRangeReport.summary.purchases,
+        totalUSD: purchasesInRangeReport.summary.totalUSD,
+        totalVES: purchasesInRangeReport.summary.totalVES,
       },
-      bySupplier: supplierPayables.bySupplier,
+      bySupplier: purchasesInRangeReport.bySupplier,
     }
   }
 
