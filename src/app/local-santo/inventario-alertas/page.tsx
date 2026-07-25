@@ -560,6 +560,7 @@ function InventoryAlertsPageContent() {
   const [menuProducts, setMenuProducts] = useState<MenuProduct[]>([]);
   const [searchText, setSearchText] = useState("");
   const [filter, setFilter] = useState<"all" | AlertLevel>("all");
+  const [copyMessage, setCopyMessage] = useState("");
 
   const alerts = useMemo(
     () => buildInventoryAlerts(inventory, recipes, menuProducts),
@@ -590,6 +591,37 @@ function InventoryAlertsPageContent() {
     0,
   );
   const recentMovements = movements.slice(0, 12);
+
+  // Lista de FALTANTES lista para pegar en WhatsApp al proveedor (mejora A3
+  // del super prompt): agotados + stock bajo con su cantidad sugerida.
+  async function copyShoppingList() {
+    const shoppingAlerts = alerts.filter(
+      (alert) => alert.level === "critical" || alert.level === "warning",
+    );
+
+    if (!shoppingAlerts.length) {
+      setCopyMessage("No hay faltantes que copiar 🎉");
+      window.setTimeout(() => setCopyMessage(""), 4000);
+      return;
+    }
+
+    const lines = [
+      "🛒 Lista de reposición:",
+      ...shoppingAlerts.map((alert) => {
+        const suggested = normalizeNumber(alert.suggestedQuantity);
+        const qty = suggested > 0 ? ` — comprar ${suggested} ${alert.unit || ""}`.trimEnd() : "";
+        return `• ${alert.itemName || "Insumo"} (quedan ${normalizeNumber(alert.quantity)} ${alert.unit || ""})${qty}`;
+      }),
+    ];
+
+    try {
+      await navigator.clipboard.writeText(lines.join("\n"));
+      setCopyMessage(`Lista copiada (${shoppingAlerts.length} insumo(s)) — pégala en WhatsApp.`);
+    } catch {
+      setCopyMessage("No se pudo copiar (permiso del navegador).");
+    }
+    window.setTimeout(() => setCopyMessage(""), 5000);
+  }
   const recipeCoverage = menuProducts.length
     ? Math.round(
         (menuProducts.filter((product) => findRecipeForProduct(recipes, product)).length /
@@ -772,6 +804,24 @@ function InventoryAlertsPageContent() {
                   <PackageCheck size={16} />
                   Abrir inventario
                 </a>
+                <a
+                  href="/local-santo/compras"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                >
+                  Registrar compra
+                </a>
+                <button
+                  type="button"
+                  onClick={() => void copyShoppingList()}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                >
+                  Copiar faltantes
+                </button>
+                {copyMessage && (
+                  <p className="text-[0.7rem] font-black leading-4 text-green-700 sm:col-span-2 lg:col-span-1">
+                    {copyMessage}
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={() => loadData(password)}
