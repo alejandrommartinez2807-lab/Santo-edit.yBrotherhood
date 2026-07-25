@@ -125,9 +125,18 @@ export async function updateOrderDeliveryReportInStore(
       delivery_reported_by: "Delivery",
     })
     .eq("id", orderId)
+    // H19 (2026-07-24): solo un pedido LISTO puede reportar entrega — antes
+    // esto solo lo validaba la UI y cualquier estado (incluso Cancelado)
+    // contaminaba el filtro "Delivery por confirmar" de caja.
+    .eq("status", "Listo")
   if (branchId) query = query.eq("branch_id", branchId)
-  const { error } = await query
+  const { data: updatedRows, error } = await query.select("id")
   if (error) throw new Error(error.message)
+  if (!updatedRows?.length) {
+    throw new Error(
+      "Solo se puede reportar la entrega de un pedido LISTO. Refresca la lista e intenta de nuevo.",
+    )
+  }
   return loadOrderWithItems(orderId, branchId)
 }
 

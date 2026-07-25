@@ -305,8 +305,12 @@ export async function markOrderSurveySent(
   channel: string,
 ): Promise<boolean> {
   const supabase = getSupabaseAdmin()
-  // branch-exempt: update puntual por id único.
-  const { error } = await supabase
+  // branch-exempt: update puntual por id único. Devuelve true SOLO si esta
+  // llamada ganó la marca (0 filas = otro proceso la puso primero): así el
+  // auto-envío puede reclamar el pedido ANTES de mandar el WhatsApp y dos
+  // instancias serverless ya no le escriben dos veces al mismo cliente
+  // (auditoría 2026-07-24).
+  const { data, error } = await supabase
     .from("orders")
     .update({
       survey_sent_at: new Date().toISOString(),
@@ -314,11 +318,23 @@ export async function markOrderSurveySent(
     })
     .eq("id", orderId)
     .is("survey_sent_at", null)
+    .select("id")
 
   if (error) {
     if (isMissingColumnError(error)) return false
     throw new Error(error.message)
   }
 
-  return true
+  return (data?.length ?? 0) > 0
+}
+
+// Suelta la marca si el envío falló tras reclamarla (mejor esfuerzo): el
+// próximo barrido lo reintenta.
+export async function releaseOrderSurveyClaim(orderId: string): Promise<void> {
+  const supabase = getSupabaseAdmin()
+  // branch-exempt: update puntual por id único.
+  await supabase
+    .from("orders")
+    .update({ survey_sent_at: null, survey_sent_channel: "" })
+    .eq("id", orderId)
 }

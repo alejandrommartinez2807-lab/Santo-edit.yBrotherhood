@@ -3,7 +3,7 @@ import { getBusinessConfig } from "@/lib/orders"
 import { getSiteUrl } from "@/lib/siteUrl"
 import { captureError } from "@/lib/monitoring"
 import { isMissingColumnError } from "@/lib/ordersStoreMappers"
-import { markOrderSurveySent } from "@/lib/surveys"
+import { markOrderSurveySent, releaseOrderSurveyClaim } from "@/lib/surveys"
 import {
   getSurveyButtonTemplateName,
   getSurveyFlowTemplateName,
@@ -128,6 +128,21 @@ export async function dispatchPostSaleSurveys(): Promise<SurveyDispatchResult> {
           ? `#${String(seq).padStart(2, "0")}`
           : ""
 
+    const channelLabel = useFlow
+      ? "auto-flow"
+      : useButtons
+        ? "auto-buttons"
+        : useTemplate
+          ? "auto-template"
+          : "auto-whatsapp"
+
+    // RECLAMAR antes de enviar (auditoría 2026-07-24): con varias instancias
+    // serverless, dos barridos podían tomar el mismo lote y el cliente recibía
+    // la encuesta dos veces — la marca llegaba después del envío. Solo la
+    // instancia que gana la marca envía; si el envío falla, se suelta.
+    const claimed = await markOrderSurveySent(orderId, channelLabel)
+    if (!claimed) continue
+
     const body = customMessage
       ? [customMessage, "", `Califícanos aquí (1 minuto): ${surveyUrl}`].join("\n")
       : [
@@ -157,22 +172,14 @@ export async function dispatchPostSaleSurveys(): Promise<SurveyDispatchResult> {
           : await sendWhatsAppBusinessText(phone, body)
 
     if (result.ok) {
-      await markOrderSurveySent(
-        orderId,
-        useFlow
-          ? "auto-flow"
-          : useButtons
-            ? "auto-buttons"
-            : useTemplate
-              ? "auto-template"
-              : "auto-whatsapp",
-      )
       sent += 1
     } else {
       captureError(new Error(result.error || "Fallo al enviar encuesta"), {
         route: "lib/surveyAutoSend",
         action: "send",
       })
+      // El envío falló tras reclamar: se suelta la marca para reintentar luego.
+      await releaseOrderSurveyClaim(orderId).catch(() => {})
     }
   }
 
