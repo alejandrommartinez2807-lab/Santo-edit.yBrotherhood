@@ -3,6 +3,10 @@ import type { ProductPaymentMode } from "@/types/localOrders"
 import { decodeDataUrlImage, sanitizeUploadedImageFileName } from "@/lib/dataUrlImages"
 import { getSupabaseAdmin } from "./supabaseServer"
 
+function cleanId(value: unknown): string {
+  return String(value ?? "").trim()
+}
+
 export type MenuProductType =
   | "normal"
   | "variations"
@@ -399,9 +403,51 @@ export async function saveMenuProduct(
   branchId?: string | null,
 ): Promise<{ menuProduct: MenuProduct }> {
   const supabase = getSupabaseAdmin()
-  const productId =
-    Number(input.id) > 0 ? Math.round(Number(input.id)) : Date.now()
+  const isUpdate = Number(input.id) > 0
+  const productId = isUpdate ? Math.round(Number(input.id)) : Date.now()
   const normalized = normalizeMenuProduct({ ...input, id: productId })
+
+  // Al ACTUALIZAR: (1) guardia de sede — el upsert no filtraba por branch_id y
+  // un manager de la sede B podía sobrescribir/robarse un producto de la sede A
+  // enviando su id (auditoría 2026-07-24); (2) se conserva la config existente
+  // para toda clave estructurada que el cliente NO envió (el editor simple no
+  // manda combos/variaciones avanzadas y antes el guardado las vaciaba).
+  let existingConfig: Record<string, unknown> | null = null
+
+  if (isUpdate) {
+    const { data: existingRow, error: existingError } = await supabase
+      .from("menu_products")
+      .select("id, branch_id, config")
+      .eq("id", productId)
+      .maybeSingle()
+
+    if (existingError) {
+      throw new Error(existingError.message || "No se pudo verificar el producto del menú")
+    }
+
+    if (existingRow) {
+      const existingBranch = cleanId((existingRow as Record<string, unknown>).branch_id)
+      const targetBranch = cleanId(branchId)
+
+      if (existingBranch && targetBranch && existingBranch !== targetBranch) {
+        throw new Error("Ese producto pertenece a otra sucursal")
+      }
+
+      const rawConfig = (existingRow as Record<string, unknown>).config
+      existingConfig =
+        rawConfig && typeof rawConfig === "object" && !Array.isArray(rawConfig)
+          ? (rawConfig as Record<string, unknown>)
+          : null
+    }
+  }
+
+  // Clave enviada por el cliente ⇒ manda lo normalizado; clave AUSENTE en un
+  // update ⇒ se conserva lo guardado (nada de vaciar config por omisión).
+  const configValue = (key: string, normalizedValue: unknown, fallback: unknown) => {
+    const provided = (input as Record<string, unknown>)[key] !== undefined
+    if (!provided && existingConfig) return existingConfig[key] ?? fallback
+    return normalizedValue ?? fallback
+  }
 
   const row = {
     id: productId,
@@ -417,18 +463,30 @@ export async function saveMenuProduct(
     is_active: normalized.isActive,
     sort_order: normalized.sortOrder,
     config: {
-      variations: normalized.variations ?? [],
-      addons: normalized.addons ?? [],
-      includedIngredients: normalized.includedIngredients ?? [],
-      removableIngredients: normalized.removableIngredients ?? [],
-      comboItems: normalized.comboItems ?? [],
-      selectionRules: normalized.selectionRules ?? {},
-      preparationMinutes: normalized.preparationMinutes ?? 0,
+      variations: configValue("variations", normalized.variations, []),
+      addons: configValue("addons", normalized.addons, []),
+      includedIngredients: configValue(
+        "includedIngredients",
+        normalized.includedIngredients,
+        [],
+      ),
+      removableIngredients: configValue(
+        "removableIngredients",
+        normalized.removableIngredients,
+        [],
+      ),
+      comboItems: configValue("comboItems", normalized.comboItems, []),
+      selectionRules: configValue("selectionRules", normalized.selectionRules, {}),
+      preparationMinutes: configValue(
+        "preparationMinutes",
+        normalized.preparationMinutes,
+        0,
+      ),
       requiresWaiterConfirmation: normalized.requiresWaiterConfirmation === true,
       inventoryDiscountEnabled: normalized.inventoryDiscountEnabled !== false,
       isFeatured: normalized.isFeatured === true,
-      premiumSummary: normalized.premiumSummary ?? "",
-      ivaRate: normalized.ivaRate ?? null,
+      premiumSummary: configValue("premiumSummary", normalized.premiumSummary, ""),
+      ivaRate: configValue("ivaRate", normalized.ivaRate ?? null, null),
     },
   }
 

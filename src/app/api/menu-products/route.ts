@@ -7,7 +7,7 @@ import {
   saveMenuProduct,
   type MenuProduct,
 } from "@/lib/orders"
-import { getRequestAccess, type LocalRole } from "@/lib/localAccess"
+import { canLocalAccessUseModule, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { normalizeMenuProductInput, normalizeProductIds } from "@/lib/menuProductInput"
 import { resolveBranchId } from "@/lib/branch"
 
@@ -51,6 +51,16 @@ function checkRole(request: NextRequest, allowedRoles: LocalRole[]) {
     return {
       ok: false as const,
       response: forbiddenResponse(),
+      role: access.role,
+    }
+  }
+
+  // Auditoría 2026-07-24: apagar "Menú" en Configuración solo escondía la UI;
+  // la API seguía abierta. Ahora se respetan los permisos por usuario.
+  if (!canLocalAccessUseModule(access, "menuProducts")) {
+    return {
+      ok: false as const,
+      response: forbiddenResponse("Tu usuario no tiene habilitado el módulo del menú"),
       role: access.role,
     }
   }

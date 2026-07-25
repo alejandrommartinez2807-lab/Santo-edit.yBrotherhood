@@ -422,6 +422,16 @@ function normalizeMenuProduct(value: unknown): MenuProduct | null {
     addons: normalizeUnknownArray(source.addons),
     includedIngredients: normalizeUnknownArray(source.includedIngredients),
     removableIngredients: normalizeUnknownArray(source.removableIngredients),
+    // Fix crítico (auditoría 2026-07-24): este normalizador NO copiaba
+    // comboItems ni ivaRate — abrir y guardar cualquier combo BORRABA sus
+    // artículos y reseteaba el IVA propio del producto sin tocar nada.
+    comboItems: normalizeUnknownArray(source.comboItems),
+    ivaRate: (() => {
+      const raw = (source as { ivaRate?: unknown }).ivaRate
+      if (raw == null || raw === "") return null
+      const parsed = Number(raw)
+      return Number.isFinite(parsed) && parsed >= 0 ? parsed : null
+    })(),
     selectionRules:
       source.selectionRules && typeof source.selectionRules === "object"
         ? source.selectionRules
@@ -597,6 +607,18 @@ export default function LocalMenuPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const imageInputRef = useRef<HTMLInputElement | null>(null)
+  // Snapshot del texto simple al cargar un producto para editar: en modo
+  // SIMPLE (sin módulo avanzado) solo se envían al guardar las estructuras
+  // cuyo texto realmente cambió — las demás las conserva el servidor. Antes
+  // se reconstruía TODO desde texto plano y un guardado destruía precios de
+  // variación, grupos y vínculos de inventario (auditoría 2026-07-24).
+  const simpleTextSnapshotRef = useRef<{
+    productId: string
+    variationText: string
+    addonRowsJson: string
+    includedIngredientsText: string
+    removableIngredientsText: string
+  } | null>(null)
   // Opciones avanzadas fusionadas (lote v6 fase B): estado estructurado del
   // producto en edición + disponibilidad del módulo advancedMenu por plan.
   const [advancedForm, setAdvancedForm] = useState<AdvancedForm>(ADVANCED_EMPTY_FORM)
@@ -1127,18 +1149,54 @@ export default function LocalMenuPage() {
             inventoryDiscountEnabled: form.inventoryDiscountEnabled,
           }),
         }
-      : {
-          variations: buildVariationGroupsFromText(form.variationText),
-          addons: buildAddonsFromRows(form.addonRows),
-          includedIngredients: buildIngredientsFromText(form.includedIngredientsText, "included"),
-          removableIngredients: buildIngredientsFromText(form.removableIngredientsText, "removable"),
-          // Conserva las reglas del Menú avanzado y pisa solo min/máx.
-          selectionRules: {
-            ...form.selectionRulesBase,
-            minAddons: normalizePositiveInteger(form.minAddons) || undefined,
-            maxAddons: normalizePositiveInteger(form.maxAddons) || undefined,
-          },
-        }
+      : (() => {
+          // Modo SIMPLE: solo viajan las estructuras cuyo texto cambió desde
+          // que se cargó el producto; el resto (incluidos los combos, que este
+          // modo ni edita) lo conserva el servidor. El texto plano solo sabe
+          // de nombres: mandarlo sin cambios destruía precios de variación,
+          // grupos y vínculos de inventario guardados por el módulo avanzado.
+          const snapshot = simpleTextSnapshotRef.current
+          const sameProduct = Boolean(form.id) && snapshot?.productId === form.id
+          const variationsChanged =
+            !sameProduct || form.variationText !== snapshot?.variationText
+          const addonsChanged =
+            !sameProduct || JSON.stringify(form.addonRows) !== snapshot?.addonRowsJson
+          const includedChanged =
+            !sameProduct ||
+            form.includedIngredientsText !== snapshot?.includedIngredientsText
+          const removableChanged =
+            !sameProduct ||
+            form.removableIngredientsText !== snapshot?.removableIngredientsText
+
+          return {
+            ...(variationsChanged
+              ? { variations: buildVariationGroupsFromText(form.variationText) }
+              : {}),
+            ...(addonsChanged ? { addons: buildAddonsFromRows(form.addonRows) } : {}),
+            ...(includedChanged
+              ? {
+                  includedIngredients: buildIngredientsFromText(
+                    form.includedIngredientsText,
+                    "included",
+                  ),
+                }
+              : {}),
+            ...(removableChanged
+              ? {
+                  removableIngredients: buildIngredientsFromText(
+                    form.removableIngredientsText,
+                    "removable",
+                  ),
+                }
+              : {}),
+            // Conserva las reglas del Menú avanzado y pisa solo min/máx.
+            selectionRules: {
+              ...form.selectionRulesBase,
+              minAddons: normalizePositiveInteger(form.minAddons) || undefined,
+              maxAddons: normalizePositiveInteger(form.maxAddons) || undefined,
+            },
+          }
+        })()
 
     const input = customInput || {
       id: form.id ? Number(form.id) : undefined,
@@ -1364,7 +1422,15 @@ export default function LocalMenuPage() {
   }
 
   function editProduct(product: MenuProduct, options: { expandAdvanced?: boolean } = {}) {
-    setForm(buildFormFromProduct(product, categoryOptions))
+    const loadedForm = buildFormFromProduct(product, categoryOptions)
+    simpleTextSnapshotRef.current = {
+      productId: loadedForm.id,
+      variationText: loadedForm.variationText,
+      addonRowsJson: JSON.stringify(loadedForm.addonRows),
+      includedIngredientsText: loadedForm.includedIngredientsText,
+      removableIngredientsText: loadedForm.removableIngredientsText,
+    }
+    setForm(loadedForm)
     // La config estructurada del producto (variaciones/extras/combos) se carga
     // junto con lo básico: un solo formulario, un solo Guardar.
     setAdvancedForm(buildAdvancedFormFromProduct(product))
