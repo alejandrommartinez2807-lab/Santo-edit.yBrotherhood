@@ -953,6 +953,24 @@ export function getRangeReport(dayCloses: SavedDayClose[]) {
   const ordersByRegistrar = combineSummaryItems(
     dayCloses.flatMap((close) => close.ordersByRegistrar)
   )
+  // Anulados del RANGO con su motivo (auditoría 2026-07-24): la vista general
+  // solo mostraba el NÚMERO de cancelados; el detalle con motivo existía solo
+  // en la vista diaria de cada cierre.
+  const canceledOrders = dayCloses.flatMap((close) =>
+    (close.orders || [])
+      .filter((order) => order.status === "Cancelado")
+      .map((order) => ({
+        closeId: close.id,
+        closeLabel: close.dateLabel || close.id,
+        branchId: close.branchId ?? null,
+        displayNumber: order.displayNumber,
+        customerName: order.customerName,
+        totalUSD: order.totalUSD,
+        cancelReason: order.cancelReason || "",
+        createdAt: order.createdAt,
+      })),
+  )
+
   const allExpenses = dayCloses.flatMap((close) => close.expenses)
   const expensesByCategory = combineExpensesByField(allExpenses, "category")
   const expensesByMethod = combineExpensesByField(allExpenses, "method")
@@ -1035,6 +1053,7 @@ export function getRangeReport(dayCloses: SavedDayClose[]) {
       totalUSD: toNumber(inventoryExpenses.totalUSD),
       totalVES: toNumber(inventoryExpenses.totalVES),
     },
+    canceledOrders,
     operationalTotals,
   }
 }
@@ -1290,9 +1309,15 @@ export function escapeCsvValue(value: unknown) {
   return text
 }
 
-export function buildDayClosesCsv(dayCloses: SavedDayClose[]) {
+export function buildDayClosesCsv(
+  dayCloses: SavedDayClose[],
+  branchNames: Record<string, string> = {},
+) {
   const headers = [
     "ID cierre",
+    // Columna de sede (auditoría 2026-07-24): en el modo consolidado el CSV
+    // mezclaba las 2 sedes sin forma de distinguirlas (el .xlsx sí la lleva).
+    "Sede",
     "Fecha guardado",
     "Fecha cierre",
     "Estado visual",
@@ -1340,6 +1365,9 @@ export function buildDayClosesCsv(dayCloses: SavedDayClose[]) {
 
     return [
     close.id,
+    close.branchId
+      ? branchNames[close.branchId] || close.branchId
+      : "Sin sede registrada",
     formatDate(close.createdAt),
     getCloseTitle(close),
     getClosePaymentState(close).label,

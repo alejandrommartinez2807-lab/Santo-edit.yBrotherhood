@@ -2,7 +2,11 @@
 // Excel real .xlsx (SheetJS). Las librerías se cargan DINÁMICAMENTE al usarlas
 // para no engordar el bundle del panel. Incluyen SEDE y el detalle de
 // pedidos CANCELADOS (auditoría/pedido del dueño 2026-07-24).
-import type { SavedDayClose } from "@/app/local-santo/cierres/domain"
+import {
+  getCloseNetAfterPurchasesUSD,
+  getCloseNetEstimatedUSD,
+  type SavedDayClose,
+} from "@/app/local-santo/cierres/domain"
 
 function money(value: number | undefined) {
   return `$${Number(value || 0).toFixed(2)}`
@@ -25,7 +29,10 @@ function summaryRows(close: SavedDayClose, branchName: string) {
     ["Total vendido", money(close.totalSoldUSD)],
     ["Cobrado real", money(close.realCollectedUSD)],
     ["Gastos", money(close.expensesTotalUSD)],
-    ["Neto estimado", money(close.netEstimatedUSD)],
+    // Con el fallback de la UI: los cierres viejos sin el campo guardado
+    // exportaban "Neto $0.00" (auditoría 2026-07-24, P1 #15).
+    ["Neto estimado", money(getCloseNetEstimatedUSD(close))],
+    ["Neto después de compras", money(getCloseNetAfterPurchasesUSD(close))],
   ]
 }
 
@@ -150,7 +157,8 @@ export async function exportDayClosesToXlsx(
       Number(c.totalSoldUSD || 0),
       Number(c.realCollectedUSD || 0),
       Number(c.expensesTotalUSD || 0),
-      Number(c.netEstimatedUSD || 0),
+      // Mismo fallback que la UI (cierres viejos exportaban Neto 0).
+      Number(getCloseNetEstimatedUSD(c) || 0),
     ]),
   ]
   const wb = XLSX.utils.book_new()

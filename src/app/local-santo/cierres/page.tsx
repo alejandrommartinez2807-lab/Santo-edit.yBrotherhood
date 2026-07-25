@@ -66,8 +66,12 @@ import { downloadExcelFriendlyCsv, downloadTextFile } from "./downloads"
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
 const VIEW_MODE_STORAGE_KEY = "santo_perrito_closes_view_mode"
 
-function downloadDayClosesCsv(dayCloses: SavedDayClose[], fileNameBase: string) {
-  const csv = buildDayClosesCsv(dayCloses)
+function downloadDayClosesCsv(
+  dayCloses: SavedDayClose[],
+  fileNameBase: string,
+  branchNames: Record<string, string> = {},
+) {
+  const csv = buildDayClosesCsv(dayCloses, branchNames)
   const fileName = `${createSafeFileName(fileNameBase)}.csv`
 
   downloadExcelFriendlyCsv(fileName, csv)
@@ -446,7 +450,7 @@ function DayClosesPageContent() {
       ? `cierres-santo-perrito-filtrados-${searchText.trim()}-${rangeLabel}`
       : `cierres-santo-perrito-${paymentFilter}-${rangeLabel}`
 
-    downloadDayClosesCsv(filteredDayCloses, fileLabel)
+    downloadDayClosesCsv(filteredDayCloses, fileLabel, branchNames)
   }
 
   function applyTodayRange() {
@@ -583,30 +587,34 @@ function DayClosesPageContent() {
                 </p>
               </div>
 
+              {/* La cabecera respeta los FILTROS activos (auditoría 2026-07-24):
+                  antes mostraba los totales de TODO lo cargado mientras las
+                  métricas de abajo usaban lo filtrado — dos "Cobrado total"
+                  distintos en la misma pantalla. */}
               <div className="grid gap-2 sm:grid-cols-2 lg:w-[620px]">
-                <MetricCard label="Cierres" value={totals.cierres} />
+                <MetricCard label="Cierres" value={filteredTotals.cierres} />
                 <MetricCard
                   label="Cobrado total"
-                  value={formatUSD(totals.realCollectedUSD)}
+                  value={formatUSD(filteredTotals.realCollectedUSD)}
                 />
                 <MetricCard
                   label="Gastos total"
-                  value={formatUSD(totals.expensesTotalUSD)}
+                  value={formatUSD(filteredTotals.expensesTotalUSD)}
                   tone="yellow"
                 />
                 <MetricCard
                   label="Neto estimado"
-                  value={formatUSD(totals.netEstimatedUSD)}
-                  tone={totals.netEstimatedUSD < 0 ? "yellow" : "soft"}
+                  value={formatUSD(filteredTotals.netEstimatedUSD)}
+                  tone={filteredTotals.netEstimatedUSD < 0 ? "yellow" : "soft"}
                 />
                 <MetricCard
                   label="Pendiente total"
-                  value={formatUSD(totals.realPendingUSD)}
+                  value={formatUSD(filteredTotals.realPendingUSD)}
                   tone="yellow"
                 />
                 <MetricCard
                   label="Bolívares recibidos"
-                  value={`Bs ${formatVES(totals.realVES)}`}
+                  value={`Bs ${formatVES(filteredTotals.realVES)}`}
                   tone="soft"
                 />
               </div>
@@ -892,6 +900,7 @@ function DayClosesPageContent() {
           confirmationText={clearHistoryConfirmation}
           isClearing={isClearingHistory}
           closesCount={dayCloses.length}
+          consolidatedView={showAllBranches}
           onChangeConfirmation={setClearHistoryConfirmation}
           onConfirm={clearDayClosesHistory}
           onClose={() => {
@@ -909,6 +918,7 @@ function ClearHistoryModal({
   confirmationText,
   isClearing,
   closesCount,
+  consolidatedView,
   onChangeConfirmation,
   onConfirm,
   onClose,
@@ -916,6 +926,7 @@ function ClearHistoryModal({
   confirmationText: string
   isClearing: boolean
   closesCount: number
+  consolidatedView: boolean
   onChangeConfirmation: (value: string) => void
   onConfirm: () => void
   onClose: () => void
@@ -960,8 +971,14 @@ function ClearHistoryModal({
             Acción delicada
           </p>
           <p className="mt-2 text-sm font-bold leading-6">
-            Esto borrará todos los cierres guardados del historial. No borra pedidos activos, gastos, configuración, zonas delivery ni productos. Usa esta acción solo cuando necesites reiniciar el historial operativo del negocio.
+            Esto borrará los cierres guardados de la <strong>SEDE ACTIVA</strong> (nunca los de otras sucursales). No borra pedidos activos, gastos, configuración, zonas delivery ni productos. Usa esta acción solo cuando necesites reiniciar el historial operativo del negocio.
           </p>
+          {consolidatedView && (
+            <p className="mt-2 text-sm font-black leading-6">
+              ⚠️ Estás viendo TODAS las sedes, pero el borrado solo afecta a la
+              sede activa del panel. Los cierres de la otra sede seguirán aquí.
+            </p>
+          )}
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -2221,6 +2238,39 @@ function RangeReport({
           <InfoBox label="Pedidos pagados" value={String(totals.paidOrders)} />
           <InfoBox label="Pedidos pendientes" value={String(totals.pendingPaymentOrders)} />
         </div>
+
+        {/* Anulados del rango CON MOTIVO (antes solo estaba el número; el
+            detalle vivía únicamente en la vista diaria de cada cierre). */}
+        {report.canceledOrders.length > 0 && (
+          <div className="rounded-2xl border-2 border-red-200 bg-red-50/60 p-4">
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-red-700">
+              Pedidos anulados del rango · {report.canceledOrders.length}
+            </p>
+            <div className="mt-3 space-y-2">
+              {report.canceledOrders.map((canceled, index) => (
+                <div
+                  key={`${canceled.closeId}-${canceled.displayNumber}-${index}`}
+                  className="rounded-xl border border-red-200 bg-white px-3 py-2"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-black text-[var(--brand-ink-3)]">
+                      {canceled.displayNumber || "Pedido"} · {canceled.customerName}
+                    </p>
+                    <p className="text-sm font-black text-red-600">
+                      {formatUSD(canceled.totalUSD)}
+                    </p>
+                  </div>
+                  <p className="mt-0.5 text-[0.7rem] font-bold text-[var(--brand-ink-2)]/60">
+                    {canceled.closeLabel}
+                  </p>
+                  <p className="mt-1 text-xs font-bold text-red-700">
+                    Motivo: {canceled.cancelReason || "(sin motivo registrado)"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="grid gap-3 xl:grid-cols-4">
           <HighlightBox
