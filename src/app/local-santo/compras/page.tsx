@@ -343,7 +343,7 @@ function ComprasPageContent() {
   async function remove(p: Purchase) {
     if (
       !window.confirm(
-        `¿Eliminar la compra de "${p.supplierName}" del ${p.purchaseDate} por ${usd(p.totalUSD)}? Esta acción no se puede deshacer.`,
+        `¿Eliminar la compra de "${p.supplierName}" del ${p.purchaseDate} por ${usd(p.totalUSD)}? Se eliminan también sus abonos registrados. El stock que sumó NO se revierte. Esta acción no se puede deshacer.`,
       )
     )
       return

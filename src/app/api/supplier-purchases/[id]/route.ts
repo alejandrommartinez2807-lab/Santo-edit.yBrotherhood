@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { deleteSupplierPurchase, updateSupplierPurchase } from "@/lib/orders"
+import { getSupplierPurchaseById } from "@/lib/ordersSupplierPurchases"
 import { resolveBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 import { writeAuditLog } from "@/lib/audit"
@@ -61,6 +62,28 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     if (body.note !== undefined) patch.note = cleanText(body.note)
 
     const branchId = await resolveBranchId(request)
+
+    // B6 (auditoría 2026-07-24): bajar el total por debajo de lo YA abonado
+    // dejaba un sobrepago invisible (el pendiente se clampa a 0).
+    if (patch.totalUSD !== undefined || patch.totalVES !== undefined) {
+      const current = await getSupplierPurchaseById(id, branchId)
+      if (!current) {
+        return NextResponse.json({ error: "Compra no encontrada" }, { status: 404 })
+      }
+      if (patch.totalUSD !== undefined && patch.totalUSD < current.paidUSD - 0.01) {
+        return NextResponse.json(
+          { error: `El total USD no puede ser menor a lo ya abonado ($${current.paidUSD.toFixed(2)})` },
+          { status: 400 },
+        )
+      }
+      if (patch.totalVES !== undefined && patch.totalVES < current.paidVES - 0.01) {
+        return NextResponse.json(
+          { error: `El total Bs no puede ser menor a lo ya abonado (Bs ${current.paidVES.toFixed(2)})` },
+          { status: 400 },
+        )
+      }
+    }
+
     const updated = await updateSupplierPurchase(id, patch, branchId)
     if (!updated) {
       return NextResponse.json({ error: "Compra no encontrada" }, { status: 404 })

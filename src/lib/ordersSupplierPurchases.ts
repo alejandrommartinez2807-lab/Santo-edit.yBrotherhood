@@ -1,5 +1,6 @@
 import type { SupplierPurchase } from "@/types/localOrders"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
+import { captureError } from "@/lib/monitoring"
 import { cleanText } from "@/lib/localOrderHelpers"
 import { num } from "./ordersStoreMappers"
 
@@ -225,6 +226,33 @@ export async function saveSupplierPurchasePayment(
   const payment = mapSupplierPurchasePayment(data as PaymentRow)
   // Devolvemos la compra recalculada (pagado/pendiente/estado) tras el abono.
   const updatedPurchase = (await purchaseStore.getSupplierPurchaseById(purchaseId, branchId)) ?? purchase
+
+  // B4 (auditoría 2026-07-24): reflejar el estado en las columnas de
+  // supplier_purchases — existían desde la migración 0014 pero NUNCA se
+  // escribían: en la BD toda compra pagada seguía diciendo 'Pendiente' y
+  // cualquier consulta SQL directa/backup/reporte externo mentía. Mejor
+  // esfuerzo: la app sigue derivando de los abonos (fuente de verdad).
+  try {
+    let statusQuery = supabase
+      .from("supplier_purchases")
+      .update({
+        paid_usd: updatedPurchase.paidUSD,
+        paid_ves: updatedPurchase.paidVES,
+        payment_status: updatedPurchase.paymentStatus,
+        last_payment_at: new Date().toISOString(),
+      })
+      .eq("id", purchaseId)
+    if (branchId) statusQuery = statusQuery.eq("branch_id", branchId)
+    const { error: statusError } = await statusQuery
+    if (statusError) {
+      captureError(new Error(`payables columns no actualizadas: ${statusError.message}`), {
+        route: "lib/ordersSupplierPurchases",
+        action: "syncPayableColumns",
+      })
+    }
+  } catch (syncError) {
+    captureError(syncError, { route: "lib/ordersSupplierPurchases", action: "syncPayableColumns" })
+  }
 
   return { payment, purchase: updatedPurchase }
 }

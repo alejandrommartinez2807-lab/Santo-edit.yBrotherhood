@@ -333,5 +333,14 @@ export async function deleteSupplierPurchase(
   if (branchId) deleteQuery = deleteQuery.eq("branch_id", branchId)
   const { error } = await deleteQuery
   if (error) throw new Error(error.message)
+
+  // B5 (auditoría 2026-07-24): sus abonos también se borran — no hay FK que
+  // cascadee y quedaban huérfanos RESTANDO en los cierres de días pasados
+  // para una compra que ya no existe.
+  let paymentsQuery = supabase.from("supplier_purchase_payments").delete().eq("purchase_id", id)
+  if (branchId) paymentsQuery = paymentsQuery.eq("branch_id", branchId)
+  const { error: paymentsError } = await paymentsQuery
+  if (paymentsError) throw new Error(paymentsError.message)
+
   return { ok: true }
 }
