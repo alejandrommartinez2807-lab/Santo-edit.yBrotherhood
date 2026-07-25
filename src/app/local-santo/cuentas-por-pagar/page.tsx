@@ -152,23 +152,33 @@ function CuentasPorPagarContent() {
   const pending = useMemo(() => purchases.filter(isPending), [purchases])
 
   const totals = useMemo(() => {
+    // Los bolívares se suman aparte (B2, 2026-07-24): antes una compra
+    // íntegra en Bs mostraba "Total por pagar $0.00" y la deuda era invisible.
     return pending.reduce(
       (acc, p) => {
         acc.pendingUSD += p.pendingUSD
+        acc.pendingVES += p.pendingVES
         if (p.isOverdue) {
           acc.overdueUSD += p.pendingUSD
+          acc.overdueVES += p.pendingVES
           acc.overdueCount += 1
         }
         return acc
       },
-      { pendingUSD: 0, overdueUSD: 0, overdueCount: 0 },
+      { pendingUSD: 0, pendingVES: 0, overdueUSD: 0, overdueVES: 0, overdueCount: 0 },
     )
   }, [pending])
 
   const groups = useMemo(() => {
     const bySupplier = new Map<
       string,
-      { name: string; items: Purchase[]; pendingUSD: number; overdueUSD: number }
+      {
+        name: string
+        items: Purchase[]
+        pendingUSD: number
+        pendingVES: number
+        overdueUSD: number
+      }
     >()
     for (const p of pending) {
       const key = p.supplierId || p.supplierName || "—"
@@ -176,10 +186,12 @@ function CuentasPorPagarContent() {
         name: p.supplierName || "—",
         items: [],
         pendingUSD: 0,
+        pendingVES: 0,
         overdueUSD: 0,
       }
       group.items.push(p)
       group.pendingUSD += p.pendingUSD
+      group.pendingVES += p.pendingVES
       if (p.isOverdue) group.overdueUSD += p.pendingUSD
       bySupplier.set(key, group)
     }
@@ -239,12 +251,20 @@ function CuentasPorPagarContent() {
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
               <SummaryCard
                 label="Total por pagar"
-                value={usd(totals.pendingUSD)}
+                value={
+                  totals.pendingVES > 0.01
+                    ? `${usd(totals.pendingUSD)} + Bs ${totals.pendingVES.toFixed(2)}`
+                    : usd(totals.pendingUSD)
+                }
                 hint={`${pending.length} compra(s) pendiente(s)`}
               />
               <SummaryCard
                 label="Vencido"
-                value={usd(totals.overdueUSD)}
+                value={
+                  totals.overdueVES > 0.01
+                    ? `${usd(totals.overdueUSD)} + Bs ${totals.overdueVES.toFixed(2)}`
+                    : usd(totals.overdueUSD)
+                }
                 hint={`${totals.overdueCount} vencida(s)`}
                 tone={totals.overdueCount > 0 ? "warning" : "soft"}
               />
@@ -277,7 +297,10 @@ function CuentasPorPagarContent() {
                       </p>
                       <div className="text-right">
                         <p className="text-sm font-black text-red-600">
-                          {usd(group.pendingUSD)} por pagar
+                          {group.pendingVES > 0.01
+                            ? `${usd(group.pendingUSD)} + Bs ${group.pendingVES.toFixed(2)}`
+                            : usd(group.pendingUSD)}{" "}
+                          por pagar
                         </p>
                         {group.overdueUSD > 0 && (
                           <p className="text-[0.68rem] font-black uppercase tracking-[0.06em] text-red-600">

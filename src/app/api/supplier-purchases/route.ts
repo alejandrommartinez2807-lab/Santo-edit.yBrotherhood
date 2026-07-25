@@ -118,15 +118,35 @@ export async function POST(request: NextRequest) {
       inventoryUnit = item.unit
     }
 
+    // Validación B8 (2026-07-24): una compra sin monto entraba igual y
+    // contaminaba el conteo de compras registradas.
+    const totalUSDInput = normalizeAmount(body.totalUSD)
+    const totalVESInput = normalizeAmount(body.totalVES)
+    if (totalUSDInput <= 0 && totalVESInput <= 0) {
+      return NextResponse.json(
+        { error: "Indica el monto de la compra (USD o Bs) mayor a cero" },
+        { status: 400 },
+      )
+    }
+
+    const purchaseDateInput = normalizeDate(body.purchaseDate)
+    const dueDateInput = optionalDate(body.dueDate)
+    if (dueDateInput && dueDateInput < purchaseDateInput) {
+      return NextResponse.json(
+        { error: "La fecha de vencimiento no puede ser anterior a la compra" },
+        { status: 400 },
+      )
+    }
+
     const purchase = await saveSupplierPurchase(
       {
         supplierId,
         supplierName: supplier.name,
-        purchaseDate: normalizeDate(body.purchaseDate),
-        dueDate: optionalDate(body.dueDate),
+        purchaseDate: purchaseDateInput,
+        dueDate: dueDateInput,
         documentNumber: cleanText(body.documentNumber),
-        totalUSD: normalizeAmount(body.totalUSD),
-        totalVES: normalizeAmount(body.totalVES),
+        totalUSD: totalUSDInput,
+        totalVES: totalVESInput,
         note: cleanText(body.note),
         inventoryItemId: inventoryItemId || null,
         inventoryItemName,

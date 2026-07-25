@@ -354,8 +354,18 @@ function ComprasPageContent() {
     }
   }
 
+  // Ambas monedas (B2, 2026-07-24): antes el historial de compras en Bs
+  // reportaba $0.00 porque solo se sumaba totalUSD.
   const totalShown = useMemo(
-    () => purchases.reduce((sum, p) => sum + (p.totalUSD || 0), 0),
+    () =>
+      purchases.reduce(
+        (acc, p) => {
+          acc.usd += p.totalUSD || 0
+          acc.ves += p.totalVES || 0
+          return acc
+        },
+        { usd: 0, ves: 0 },
+      ),
     [purchases],
   )
 
@@ -566,7 +576,10 @@ function ComprasPageContent() {
               </label>
               {!loading && purchases.length > 0 && (
                 <span className="text-sm font-bold text-[var(--brand-ink-2)]/70">
-                  {purchases.length} compra{purchases.length === 1 ? "" : "s"} · {usd(totalShown)}
+                  {purchases.length} compra{purchases.length === 1 ? "" : "s"} ·{" "}
+                  {totalShown.ves > 0.01
+                    ? `${usd(totalShown.usd)} + Bs ${totalShown.ves.toFixed(2)}`
+                    : usd(totalShown.usd)}
                 </span>
               )}
             </div>

@@ -36,13 +36,15 @@ export function calculateSupplierPayableTotals(input: {
   const pendingUSD = Math.max(0, money(totalUSD - paidUSD))
   const pendingVES = Math.max(0, money(totalVES - paidVES))
 
-  // Para compras en divisas, el estado se decide por USD. Para compras solo en
-  // bolívares, se decide por VES. Si no hay monto cargado, queda pendiente.
-  const totalForStatus = totalUSD > 0 ? totalUSD : totalVES
-  const paidForStatus = totalUSD > 0 ? paidUSD : paidVES
+  // "Pagado" exige AMBAS monedas saldadas (B1, 2026-07-24): antes una compra
+  // mixta de $50 + Bs 1.000 pasaba a Pagado al abonar solo los $50, y la deuda
+  // en bolívares desaparecía de Cuentas por pagar.
+  const hasTotal = totalUSD > 0 || totalVES > 0
+  const usdSettled = totalUSD <= 0 || paidUSD >= totalUSD - 0.01
+  const vesSettled = totalVES <= 0 || paidVES >= totalVES - 0.01
 
   let status: SupplierPaymentStatus = "Pendiente"
-  if (totalForStatus > 0 && paidForStatus >= totalForStatus - 0.01) {
+  if (hasTotal && usdSettled && vesSettled) {
     status = "Pagado"
   } else if (paidUSD > 0 || paidVES > 0) {
     status = "Parcial"
