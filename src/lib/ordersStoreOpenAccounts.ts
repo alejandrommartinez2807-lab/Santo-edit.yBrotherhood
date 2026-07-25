@@ -242,6 +242,14 @@ export async function attachOrderToOpenAccount(
 
   const account = accountRow as Row
 
+  // Guard R4 (auditoría 2026-07-24): NO se pueden sumar pedidos a una cuenta ya
+  // Cerrada/Cancelada (antes el server lo permitía; solo la UI lo evitaba).
+  if (cleanText(account.status) !== "Abierta") {
+    throw new Error(
+      "Esta cuenta ya está cerrada: no se le pueden sumar más pedidos.",
+    )
+  }
+
   let orderQuery = supabase
     .from("orders")
     .update({
