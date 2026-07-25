@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest"
 import {
+  filterBranchesForAccess,
   filterBranchesForStaffAccess,
+  getExplicitBranchIdFromRequest,
   getStaffBranchAccessFromRequest,
   isBranchAllowedForStaffAccess,
   resolveBranchId,
@@ -86,5 +88,96 @@ describe("resolveBranchId · enforcement de sede en operaciones", () => {
       requestWith({ "x-staff-role": "owner", "x-branch-id": "norte" }),
     )
     expect(branch).toBe("norte")
+  })
+
+  it("H10: staff con 'todas las sedes' verificado por el middleware opera la sede que pida", async () => {
+    // Regresión H10 (2026-07-24): un encargado con allBranches:true (branchIds
+    // vacío) quedaba clavado a la sede por defecto mientras el selector le
+    // mostraba todas — operaba la sede equivocada sin aviso.
+    const access = getStaffBranchAccessFromRequest(
+      requestWith({ "x-staff-role": "manager", "x-staff-all-branches": "true" }),
+    )
+    expect(access?.unrestricted).toBe(true)
+
+    const branch = await resolveBranchId(
+      requestWith({
+        "x-staff-role": "manager",
+        "x-staff-all-branches": "true",
+        "x-branch-id": "norte",
+      }),
+    )
+    expect(branch).toBe("norte")
+  })
+
+  it("H10: el flag solo cuenta si es exactamente 'true' (fail-closed)", () => {
+    const access = getStaffBranchAccessFromRequest(
+      requestWith({ "x-staff-role": "manager", "x-staff-all-branches": "false" }),
+    )
+    expect(access?.unrestricted).toBe(false)
+  })
+})
+
+describe("filterBranchesForAccess · listado de sedes según el acceso (R3b)", () => {
+  it("restringido con sedes asignadas ve solo las suyas", () => {
+    const visible = filterBranchesForAccess(branches, {
+      ok: true,
+      role: "cashier",
+      allBranches: false,
+      allowedBranchIds: ["centro"],
+    })
+    expect(visible.map((branch) => branch.id)).toEqual(["centro"])
+  })
+
+  it("fail-closed (R3b): allBranches=false sin sedes asignadas NO ve ninguna", () => {
+    // Regresión R3b (2026-07-24): este caso devolvía TODAS las sedes (el mismo
+    // fail-open que R3 cerró en getStaffBranchAccessFromRequest). Es la función
+    // que usa /api/branches de verdad.
+    const visible = filterBranchesForAccess(branches, {
+      ok: true,
+      role: "cashier",
+      allBranches: false,
+      allowedBranchIds: [],
+    })
+    expect(visible).toEqual([])
+  })
+
+  it("acceso legacy sin bandera allBranches conserva el comportamiento (compatibilidad)", () => {
+    const visible = filterBranchesForAccess(branches, { ok: true, role: "cashier" })
+    expect(visible.map((branch) => branch.id)).toEqual(["centro", "este", "norte"])
+  })
+
+  it("owner y support ven todas las sedes", () => {
+    for (const role of ["owner", "support"]) {
+      const visible = filterBranchesForAccess(branches, { ok: true, role, allBranches: false })
+      expect(visible.map((branch) => branch.id)).toEqual(["centro", "este", "norte"])
+    }
+  })
+})
+
+describe("A7 · el Referer solo elige sede en el flujo público", () => {
+  const refererHeaders = { referer: "https://brotherhood-xi.vercel.app/?branch=norte" }
+
+  it("petición pública sin header usa el ?branch= del Referer (QR por sucursal)", async () => {
+    const branch = await resolveBranchId(requestWith({ ...refererHeaders }))
+    expect(branch).toBe("norte")
+  })
+
+  it("sesión de staff ignora el Referer: la sede solo viene del header explícito", async () => {
+    const branch = await resolveBranchId(
+      requestWith({
+        ...refererHeaders,
+        "x-staff-role": "cashier",
+        "x-staff-branch-ids": "centro,este",
+      }),
+    )
+    expect(branch).toBe("centro")
+  })
+
+  it("getExplicitBranchIdFromRequest respeta la opción allowRefererFallback", () => {
+    const request = requestWith({ ...refererHeaders })
+    expect(getExplicitBranchIdFromRequest(request)).toBe("norte")
+    expect(
+      getExplicitBranchIdFromRequest(request, { allowRefererFallback: false }),
+    ).toBeNull()
   })
 })

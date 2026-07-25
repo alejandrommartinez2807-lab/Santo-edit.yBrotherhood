@@ -23,6 +23,7 @@ type UnknownRecord = Record<string, unknown>
 type AccessLike = {
   ok?: boolean
   role?: string | null
+  allBranches?: unknown
   branchId?: unknown
   branchIds?: unknown
   allowedBranchId?: unknown
@@ -142,7 +143,7 @@ export async function getDefaultBranchId(): Promise<string | null> {
   if (cachedDefaultId) return cachedDefaultId
 
   const supabase = getSupabaseAdmin()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("branches")
     .select("id")
     .eq("is_active", true)
@@ -150,13 +151,30 @@ export async function getDefaultBranchId(): Promise<string | null> {
     .limit(1)
     .maybeSingle()
 
+  // Blindaje H12 (2026-07-24): un error aquí devolvía null y TODAS las queries
+  // con `if (branchId)` perdían el filtro de sede (fail-open a datos mezclados).
+  // Preferimos un 500 ruidoso. `null` queda solo para "no hay sedes activas".
+  if (error) {
+    throw new Error(error.message || "No se pudo resolver la sucursal por defecto")
+  }
+
   cachedDefaultId = (data as { id?: string } | null)?.id ?? null
   return cachedDefaultId
 }
 
 export async function resolveBranchId(request: HeaderBag): Promise<string | null> {
   const staffAccess = getStaffBranchAccessFromRequest(request)
-  const requested = getExplicitBranchIdFromRequest(request)
+  const hasPassword = Boolean(
+    cleanText(request.headers.get("x-local-password")) ||
+      cleanText(request.headers.get("x-admin-password")),
+  )
+  // Blindaje A7 (2026-07-24): el fallback por Referer (?branch= en la URL de la
+  // página) solo alimenta al flujo PÚBLICO (QR por sucursal). Para sesiones de
+  // staff o modo contraseña la sede solo puede venir del header explícito: un
+  // enlace externo no debe poder cambiar la sede de un panel autenticado.
+  const requested = getExplicitBranchIdFromRequest(request, {
+    allowRefererFallback: !staffAccess && !hasPassword,
+  })
 
   // Blindaje R2 (2026-07-24): MODO CONTRASEÑA (.env). El middleware no setea
   // x-staff-role, así que staffAccess es null. El DUEÑO (rol owner/support por
@@ -165,10 +183,6 @@ export async function resolveBranchId(request: HeaderBag): Promise<string | null
   // no puede operar otra sucursal por esa puerta trasera. El personal real usa
   // usuarios individuales (Supabase Auth) con su sede asignada, no le afecta.
   if (!staffAccess) {
-    const hasPassword = Boolean(
-      cleanText(request.headers.get("x-local-password")) ||
-        cleanText(request.headers.get("x-admin-password")),
-    )
     // Petición PÚBLICA (sin contraseña ni Bearer): el cliente elige su sede al
     // pedir; se respeta la sede solicitada. NO se toca el flujo público.
     if (!hasPassword) return requested || getDefaultBranchId()
@@ -232,7 +246,10 @@ export async function resolveScopedBranchId(
   return resolveBranchId(request)
 }
 
-export function getExplicitBranchIdFromRequest(request: HeaderBag): string | null {
+export function getExplicitBranchIdFromRequest(
+  request: HeaderBag,
+  options?: { allowRefererFallback?: boolean },
+): string | null {
   const headers = request.headers
   const fromHeader = cleanText(
     headers.get("x-branch-id") ||
@@ -241,6 +258,7 @@ export function getExplicitBranchIdFromRequest(request: HeaderBag): string | nul
   )
 
   if (fromHeader) return fromHeader
+  if (options?.allowRefererFallback === false) return null
 
   const rawUrl = cleanText(headers.get("referer") || headers.get("referrer"))
   if (!rawUrl) return null
@@ -316,7 +334,13 @@ export function filterBranchesForAccess<T extends { id?: unknown }>(
   if (!access || access.role === "owner" || access.role === "support") return branches
 
   const allowedBranchIds = getAllowedBranchIds(access)
-  if (allowedBranchIds.size === 0) return branches
+  if (allowedBranchIds.size === 0) {
+    // Blindaje R3b (2026-07-24): un usuario marcado explícitamente como
+    // "sin acceso a todas las sedes" y sin sedes asignadas NO ve ninguna
+    // (antes veía todas = fail-open, el mismo patrón que cerró R3). Los
+    // accesos sin la bandera (contraseña legacy) conservan el comportamiento.
+    return access.allBranches === false ? [] : branches
+  }
 
   return branches.filter((branch) => allowedBranchIds.has(cleanText(branch.id)))
 }
@@ -342,14 +366,22 @@ export function getStaffBranchAccessFromRequest(request: HeaderBag): StaffBranch
 
   const privilegedRole = role === "owner" || role === "support"
 
+  // Blindaje H10 (2026-07-24): el middleware emite x-staff-all-branches solo
+  // tras verificar el Bearer (y borra el que mande el cliente), así que es
+  // confiable. Sin honrarlo, un encargado con "todas las sedes" (branchIds
+  // vacío) quedaba clavado a la sede por defecto mientras el selector le
+  // mostraba ambas: operaba la sede equivocada sin ningún aviso.
+  const allBranches =
+    cleanText(headers.get("x-staff-all-branches")).toLowerCase() === "true"
+
   return {
     role,
     branchIds,
     // Blindaje R3 (2026-07-24): SIN sedes asignadas ya NO es "sin restricción"
     // (antes un usuario sin config veía todas las sedes = fail-open). Solo
-    // dueño/soporte pasan sin restricción; el resto se clampa a la sede por
-    // defecto en resolveBranchId. Los usuarios reales ya tienen sede asignada.
-    unrestricted: privilegedRole,
+    // dueño/soporte, o un usuario con "todas las sedes" verificado por el
+    // middleware, pasan sin restricción; el resto se clampa a su sede.
+    unrestricted: privilegedRole || allBranches,
   }
 }
 
