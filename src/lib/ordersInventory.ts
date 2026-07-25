@@ -257,9 +257,9 @@ export async function getInventoryMovements(branchId?: string | null) {
 
 // Aplica el consumo calculado de un pedido: descuenta stock y registra un
 // movimiento por cada insumo. En modo simulación (dryRun) no toca la base;
-// devuelve el plan para poder auditarlo/loguear. Es idempotente-friendly solo a
-// nivel de "mejor esfuerzo": el llamador debe envolverlo para que un fallo aquí
-// nunca tumbe el pedido ya creado.
+// devuelve el plan para poder auditarlo/loguear. Con orderId es IDEMPOTENTE:
+// si el consumo de ese pedido ya se aplicó, no vuelve a descontar (antes un
+// reintento idempotente de createOrder drenaba el stock dos veces — A1).
 export async function applyInventoryConsumption(
   lines: ConsumptionLine[],
   branchId?: string | null,
@@ -271,12 +271,31 @@ export async function applyInventoryConsumption(
   if (!lines.length) return { dryRun, applied }
 
   const supabase = getSupabaseAdmin()
+  const cleanOrderId = String(options.orderId || "").trim()
 
-  // Stock actual de los insumos afectados (una sola consulta).
+  // Guardia de idempotencia (A1, 2026-07-24): mismo patrón que la reversión.
+  // createOrder puede devolver un pedido EXISTENTE (client_order_id repetido o
+  // carrera 23505) y el llamador volvía a descontar todo su consumo.
+  if (!dryRun && cleanOrderId) {
+    let appliedQuery = supabase
+      .from("inventory_movements")
+      .select("id", { head: true, count: "exact" })
+      .eq("movement_type", "Consumo")
+      .eq("note", `Pedido ${cleanOrderId}`)
+    if (branchId) appliedQuery = appliedQuery.eq("branch_id", branchId)
+    const { count: alreadyAppliedCount, error: appliedError } = await appliedQuery
+    if (appliedError) throw new Error(appliedError.message)
+    if ((alreadyAppliedCount ?? 0) > 0) return { dryRun, applied }
+  }
+
+  // Stock actual de los insumos afectados (una sola consulta). El error ya no
+  // se descarta: antes una lectura fallida dejaba el mapa vacío y la venta
+  // pasaba SIN descontar nada, sin log ni alerta (A3).
   const itemIds = [...new Set(lines.map((line) => line.itemId))]
   let query = supabase.from("inventory_items").select("id, name, quantity, unit").in("id", itemIds)
   if (branchId) query = query.eq("branch_id", branchId)
-  const { data: rows } = await query
+  const { data: rows, error: stockError } = await query
+  if (stockError) throw new Error(stockError.message)
 
   const stockById = new Map<string, { name: string; quantity: number; unit: string }>()
   for (const raw of rows ?? []) {
@@ -290,43 +309,95 @@ export async function applyInventoryConsumption(
 
   const reason = options.reason || "Consumo automático por pedido"
   const dateLabel = new Date().toLocaleString("es-VE", { timeZone: "America/Caracas" })
+  const failures: string[] = []
 
   for (const line of lines) {
     const stock = stockById.get(line.itemId)
-    if (!stock) continue // el insumo no existe en esta sucursal: se ignora.
-
-    const previousQuantity = stock.quantity
-    // No dejamos stock negativo: se descuenta hasta 0 como máximo.
-    const moved = Math.min(previousQuantity, line.quantity)
-    const finalQuantity = Math.round((previousQuantity - moved + Number.EPSILON) * 10000) / 10000
-
-    if (!dryRun && moved > 0) {
-      await supabase
-        .from("inventory_items")
-        .update({ quantity: finalQuantity, updated_at: new Date().toISOString() })
-        .eq("id", line.itemId)
-
-      await supabase.from("inventory_movements").insert({
-        id: `mov-${Date.now()}-${randomSuffix()}`,
-        branch_id: branchId ?? null,
-        date_label: dateLabel,
-        item_id: line.itemId,
-        item_name: stock.name || line.itemName,
-        movement_type: "Consumo",
-        previous_quantity: previousQuantity,
-        quantity_moved: -moved,
-        final_quantity: finalQuantity,
-        unit: stock.unit || line.unit,
-        reason,
-        related_expense: false,
-        expense_id: "",
-        // El pedido queda vinculado en la nota: permite REVERTIR el consumo
-        // si el pedido se anula sin haberse preparado (pedido del dueño).
-        note: options.orderId ? `Pedido ${options.orderId}` : "",
-      })
+    if (!stock) {
+      // Receta apuntando a un insumo que no existe en esta sucursal: antes se
+      // ignoraba en silencio para siempre (A5); ahora queda registrado.
+      failures.push(`insumo ${line.itemName || line.itemId} no existe en la sucursal`)
+      continue
     }
 
-    applied.push({ ...line, quantity: moved })
+    let previousQuantity = stock.quantity
+
+    if (!dryRun) {
+      // Lock optimista contra el "lost update" (A3): el UPDATE exige que el
+      // stock siga siendo el leído; si otro pedido lo movió, se relee y se
+      // reintenta una vez con el valor fresco.
+      let updated = false
+
+      for (let attempt = 0; attempt < 2 && !updated; attempt += 1) {
+        const moved = Math.min(previousQuantity, line.quantity)
+        if (moved <= 0) break
+
+        const finalQuantity =
+          Math.round((previousQuantity - moved + Number.EPSILON) * 10000) / 10000
+
+        const { data: updatedRows, error: updateError } = await supabase
+          .from("inventory_items")
+          .update({ quantity: finalQuantity, updated_at: new Date().toISOString() })
+          .eq("id", line.itemId)
+          .eq("quantity", previousQuantity)
+          .select("id")
+
+        if (updateError) throw new Error(updateError.message)
+
+        if (updatedRows?.length) {
+          const shortage =
+            line.quantity > moved
+              ? Math.round((line.quantity - moved + Number.EPSILON) * 10000) / 10000
+              : 0
+
+          const { error: movementError } = await supabase.from("inventory_movements").insert({
+            id: `mov-${Date.now()}-${randomSuffix()}`,
+            branch_id: branchId ?? null,
+            date_label: dateLabel,
+            item_id: line.itemId,
+            item_name: stock.name || line.itemName,
+            movement_type: "Consumo",
+            previous_quantity: previousQuantity,
+            quantity_moved: -moved,
+            final_quantity: finalQuantity,
+            unit: stock.unit || line.unit,
+            // El faltante queda en el motivo (antes se clampaba a 0 sin rastro).
+            reason: shortage > 0 ? `${reason} (faltaron ${shortage} ${stock.unit || line.unit})` : reason,
+            related_expense: false,
+            expense_id: "",
+            // El pedido queda vinculado en la nota: permite REVERTIR el consumo
+            // si el pedido se anula sin haberse preparado (pedido del dueño).
+            note: cleanOrderId ? `Pedido ${cleanOrderId}` : "",
+          })
+          if (movementError) throw new Error(movementError.message)
+
+          applied.push({ ...line, quantity: moved })
+          updated = true
+          break
+        }
+
+        // Perdimos la carrera: releer el stock actual y reintentar una vez.
+        let rereadQuery = supabase
+          .from("inventory_items")
+          .select("quantity")
+          .eq("id", line.itemId)
+        if (branchId) rereadQuery = rereadQuery.eq("branch_id", branchId)
+        const { data: freshRows, error: rereadError } = await rereadQuery.limit(1)
+        if (rereadError) throw new Error(rereadError.message)
+        previousQuantity = Number((freshRows?.[0] as { quantity?: unknown })?.quantity ?? 0) || 0
+      }
+
+      if (!updated && Math.min(previousQuantity, line.quantity) > 0) {
+        failures.push(`no se pudo descontar ${line.itemName || line.itemId} (conflicto de stock)`)
+      }
+    } else {
+      const moved = Math.min(previousQuantity, line.quantity)
+      applied.push({ ...line, quantity: moved })
+    }
+  }
+
+  if (failures.length) {
+    throw new Error(`Consumo de inventario incompleto: ${failures.join("; ")}`)
   }
 
   return { dryRun, applied }
@@ -345,18 +416,22 @@ export async function revertInventoryConsumptionForOrder(
 
   const supabase = getSupabaseAdmin()
 
-  // Idempotencia: si este pedido YA se revirtió (hay movimientos "Ajuste"
-  // con su nota de reversión), no se vuelve a sumar stock — reejecutar la
-  // reversión (reintento del API, ciclo de estados) duplicaría insumos.
+  // Idempotencia POR INSUMO (A4, 2026-07-24): antes la guardia era global —
+  // si la reversión caía a mitad del bucle, un reintento veía "ya hay un
+  // Ajuste de este pedido" y los insumos restantes no se devolvían nunca.
+  // Ahora se salta solo lo YA revertido y se completa el resto.
   let revertedQuery = supabase
     .from("inventory_movements")
-    .select("id", { head: true, count: "exact" })
+    .select("item_id")
     .eq("movement_type", "Ajuste")
     .eq("note", `Reversión pedido ${cleanOrderId}`)
   if (branchId) revertedQuery = revertedQuery.eq("branch_id", branchId)
-  const { count: alreadyRevertedCount } = await revertedQuery
+  const { data: revertedRows, error: revertedError } = await revertedQuery
+  if (revertedError) throw new Error(revertedError.message)
 
-  if ((alreadyRevertedCount ?? 0) > 0) return { reverted: 0 }
+  const alreadyRevertedItemIds = new Set(
+    (revertedRows ?? []).map((row) => String((row as Record<string, unknown>).item_id || "")),
+  )
 
   let query = supabase
     .from("inventory_movements")
@@ -364,9 +439,14 @@ export async function revertInventoryConsumptionForOrder(
     .eq("movement_type", "Consumo")
     .eq("note", `Pedido ${cleanOrderId}`)
   if (branchId) query = query.eq("branch_id", branchId)
-  const { data: movements } = await query
+  const { data: allMovements, error: movementsError } = await query
+  if (movementsError) throw new Error(movementsError.message)
 
-  if (!movements?.length) return { reverted: 0 }
+  const movements = (allMovements ?? []).filter(
+    (raw) => !alreadyRevertedItemIds.has(String((raw as Record<string, unknown>).item_id || "")),
+  )
+
+  if (!movements.length) return { reverted: 0 }
 
   const dateLabel = new Date().toLocaleString("es-VE", { timeZone: "America/Caracas" })
   let reverted = 0
@@ -390,12 +470,13 @@ export async function revertInventoryConsumptionForOrder(
     const finalQuantity =
       Math.round((previousQuantity + quantityBack + Number.EPSILON) * 10000) / 10000
 
-    await supabase
+    const { error: updateError } = await supabase
       .from("inventory_items")
       .update({ quantity: finalQuantity, updated_at: new Date().toISOString() })
       .eq("id", itemId)
+    if (updateError) throw new Error(updateError.message)
 
-    await supabase.from("inventory_movements").insert({
+    const { error: insertError } = await supabase.from("inventory_movements").insert({
       id: `mov-${Date.now()}-${randomSuffix()}`,
       branch_id: branchId ?? null,
       date_label: dateLabel,
@@ -411,6 +492,7 @@ export async function revertInventoryConsumptionForOrder(
       expense_id: "",
       note: `Reversión pedido ${cleanOrderId}`,
     })
+    if (insertError) throw new Error(insertError.message)
 
     reverted += 1
   }
@@ -436,6 +518,23 @@ export async function saveInventoryRecipe(input: SaveInventoryRecipeInput, branc
   const supabase = getSupabaseAdmin()
   const recipeId = cleanText(input.id) || `rec-${Date.now()}-${randomSuffix()}`
   const normalized = normalizeInventoryRecipe({ ...input, id: recipeId })
+
+  // Guardia de sede (I1, 2026-07-24): el upsert reasignaba branch_id — con el
+  // id de una receta de la sede A, un guardado desde la sede B se la "robaba"
+  // y le pisaba el contenido en silencio.
+  if (cleanText(input.id)) {
+    const { data: existingRow, error: existingError } = await supabase
+      .from("inventory_recipes")
+      .select("id, branch_id")
+      .eq("id", recipeId)
+      .maybeSingle()
+    if (existingError) throw new Error(existingError.message)
+
+    const existingBranch = cleanText((existingRow as Record<string, unknown> | null)?.branch_id)
+    if (existingRow && existingBranch && branchId && existingBranch !== branchId) {
+      throw new Error("Esa receta pertenece a otra sucursal")
+    }
+  }
 
   const { data, error } = await supabase
     .from("inventory_recipes")
@@ -493,11 +592,21 @@ export async function saveInventoryItem(input: SaveInventoryItemInput, branchId?
   // Cantidad anterior (para registrar el movimiento si cambia el stock)
   let previousQuantity = 0
   if (!isNew) {
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from("inventory_items")
-      .select("quantity")
+      .select("quantity, branch_id")
       .eq("id", itemId)
       .maybeSingle()
+    if (existingError) throw new Error(existingError.message)
+
+    // Guardia de sede (I1, 2026-07-24): el upsert reasignaba branch_id — con
+    // el id de un insumo de la sede A, un POST desde la sede B movía la fila
+    // de sucursal y le sobrescribía el stock.
+    const existingBranch = cleanText((existing as Record<string, unknown> | null)?.branch_id)
+    if (existing && existingBranch && branchId && existingBranch !== branchId) {
+      throw new Error("Ese insumo pertenece a otra sucursal")
+    }
+
     previousQuantity = Number((existing as Record<string, unknown>)?.quantity ?? 0) || 0
   }
 

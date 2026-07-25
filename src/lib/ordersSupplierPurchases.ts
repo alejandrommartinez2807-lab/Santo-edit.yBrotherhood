@@ -214,6 +214,8 @@ export async function saveSupplierPurchasePayment(
 
   const { data, error } = await supabase
     .from("supplier_purchase_payments")
+    // branch-exempt: `payload` (construido arriba) incluye branch_id — el
+    // insert queda scopeado a la sucursal del abono.
     .insert(payload)
     .select("*")
     .single()

@@ -33,6 +33,9 @@ const SCOPED_TABLES = [
   "tables",
   "suppliers",
   "supplier_purchases",
+  "supplier_purchase_payments",
+  "subrecipes",
+  "survey_responses",
   "reservations",
 ]
 
