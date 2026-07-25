@@ -21,6 +21,11 @@ import {
   X,
 } from "lucide-react"
 import { formatUSD, formatVES } from "@/utils/formatCurrency"
+import {
+  exportCloseToPdf,
+  exportCloseToXlsx,
+  exportDayClosesToXlsx,
+} from "@/app/local-santo/cierres/exportRich"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
 import CurrentBranchBanner from "@/components/local/CurrentBranchBanner"
 import {
@@ -528,6 +533,22 @@ function DayClosesPageContent() {
 
                   <button
                     type="button"
+                    onClick={() =>
+                      void exportDayClosesToXlsx(
+                        filteredDayCloses,
+                        (branchId) =>
+                          (branchId && branchNames[branchId]) || "Sede sin nombre",
+                      )
+                    }
+                    disabled={!filteredDayCloses.length}
+                    className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
+                  >
+                    <Download size={16} />
+                    Excel (.xlsx)
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => setIsGuideOpen(true)}
                     className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
                   >
@@ -851,6 +872,11 @@ function DayClosesPageContent() {
           onClose={() => setSelectedClose(null)}
           onCopy={() => copySummary(selectedClose)}
           viewMode={reportViewMode}
+          branchLabel={
+            selectedClose.branchId
+              ? branchNames[selectedClose.branchId] || "Sede sin nombre"
+              : ""
+          }
         />
       )}
 
@@ -1171,11 +1197,13 @@ function CloseDetailModal({
   onClose,
   onCopy,
   viewMode,
+  branchLabel = "",
 }: {
   close: SavedDayClose
   onClose: () => void
   onCopy: () => void
   viewMode: ReportViewMode
+  branchLabel?: string
 }) {
   const paymentState = getClosePaymentState(close)
   const closeAlerts = getSingleCloseAlerts(close)
@@ -1232,6 +1260,24 @@ function CloseDetailModal({
           >
             <FileText size={17} />
             Excel completo
+          </button>
+
+          <button
+            type="button"
+            onClick={() => void exportCloseToPdf(close, branchLabel)}
+            className="flex items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] outline-none transition hover:bg-[var(--brand-accent-100)] focus-visible:ring-4 focus-visible:ring-[var(--brand-accent)]/70"
+          >
+            <FileText size={17} />
+            PDF
+          </button>
+
+          <button
+            type="button"
+            onClick={() => void exportCloseToXlsx(close, branchLabel)}
+            className="flex items-center justify-center gap-3 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] outline-none transition hover:bg-[var(--brand-accent-100)] focus-visible:ring-4 focus-visible:ring-[var(--brand-accent)]/70"
+          >
+            <FileText size={17} />
+            Excel (.xlsx)
           </button>
 
           <button
