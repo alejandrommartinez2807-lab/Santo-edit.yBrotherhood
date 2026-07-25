@@ -200,6 +200,9 @@ function AuditoriaPageContent() {
   const [actorFilter, setActorFilter] = useState("")
   const [fromDate, setFromDate] = useState("")
   const [toDate, setToDate] = useState("")
+  // Por defecto la bitácora es de la SEDE activa; este toggle consolida las
+  // dos sedes (antes siempre venían mezcladas sin poder distinguirlas).
+  const [allBranches, setAllBranches] = useState(false)
 
   const loadLogs = useCallback(async () => {
     setLoading(true)
@@ -209,6 +212,7 @@ function AuditoriaPageContent() {
       if (actionFilter) params.set("action", actionFilter)
       if (fromDate) params.set("fromDate", fromDate)
       if (toDate) params.set("toDate", toDate)
+      if (allBranches) params.set("scope", "all")
       params.set("limit", "500")
 
       const res = await fetch(`/api/audit-logs?${params.toString()}`, {
@@ -228,7 +232,7 @@ function AuditoriaPageContent() {
     } finally {
       setLoading(false)
     }
-  }, [actionFilter, fromDate, toDate])
+  }, [actionFilter, fromDate, toDate, allBranches])
 
   useEffect(() => {
     // Difiere la carga un tick para no hacer setState síncrono en el efecto.
@@ -450,6 +454,15 @@ function AuditoriaPageContent() {
                     onChange={(e) => setToDate(e.target.value)}
                     className={inputClass}
                   />
+                </label>
+                <label className="flex items-end gap-2 pb-2 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)]">
+                  <input
+                    type="checkbox"
+                    checked={allBranches}
+                    onChange={(e) => setAllBranches(e.target.checked)}
+                    className="h-4 w-4 accent-[var(--brand-primary)]"
+                  />
+                  Todas las sedes
                 </label>
               </div>
 

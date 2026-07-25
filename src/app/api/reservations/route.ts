@@ -6,6 +6,7 @@ import {
   type SaveReservationInput,
 } from "@/lib/orders"
 import { resolveBranchId } from "@/lib/branch"
+import { getLocalTablesForBranch } from "@/lib/branchLocalTables"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 import {
   findReservationConflict,
@@ -53,10 +54,14 @@ export async function GET(request: NextRequest) {
       await resolveBranchId(request)
     )
 
-    // Mesas activas de la configuración: el selector de la página las necesita
-    // y roles como mesonero no pueden leer /api/business-config.
+    // Mesas activas de la SEDE (H13): el selector de la página las necesita
+    // y roles como mesonero no pueden leer /api/business-config. Antes se
+    // listaban las mesas GLOBALES aunque la sede tuviera las suyas.
     const tables = normalizeLocalTablesConfig(
-      (access.businessConfig as unknown as Record<string, unknown>).localTables,
+      await getLocalTablesForBranch(
+        await resolveBranchId(request),
+        (access.businessConfig as unknown as Record<string, unknown>).localTables,
+      ),
       []
     ).filter((table) => table.isActive !== false)
 
@@ -116,9 +121,12 @@ export async function POST(request: NextRequest) {
 
     const branchId = await resolveBranchId(request)
 
-    // La mesa debe existir y estar activa en la configuración del negocio.
+    // La mesa debe existir y estar activa en la SEDE (H13; antes global).
     const tables = normalizeLocalTablesConfig(
-      (access.businessConfig as unknown as Record<string, unknown>).localTables,
+      await getLocalTablesForBranch(
+        branchId,
+        (access.businessConfig as unknown as Record<string, unknown>).localTables,
+      ),
       []
     )
     const table = tables.find((item) => item.id === reservationInput.tableId)

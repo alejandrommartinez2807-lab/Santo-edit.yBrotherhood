@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer";
 import { AUDIT_ACTION_LABELS, type AuditAction } from "@/lib/auditActions";
+import { captureError } from "@/lib/monitoring";
 
 export { AUDIT_ACTION_LABELS, type AuditAction };
 
@@ -103,11 +104,20 @@ export async function getAuditLogs(query: AuditLogQuery = {}): Promise<AuditLogE
   const entityType = cleanText(query.entityType);
   if (entityType) request = request.eq("entity_type", entityType);
 
+  // Límites en hora de Caracas (UTC-4 fijo, sin DST): antes se filtraba en
+  // UTC y los eventos de 20:00–23:59 hora local caían al día siguiente — el
+  // preset "Hoy" perdía las últimas 4 horas de la jornada mientras la UI
+  // agrupa por día Caracas (auditoría 2026-07-24).
   const fromDate = cleanText(query.fromDate);
-  if (fromDate) request = request.gte("created_at", fromDate);
+  if (fromDate) {
+    request = request.gte(
+      "created_at",
+      /^\d{4}-\d{2}-\d{2}$/.test(fromDate) ? `${fromDate}T00:00:00.000-04:00` : fromDate,
+    );
+  }
 
   const toDate = cleanText(query.toDate);
-  if (toDate) request = request.lte("created_at", `${toDate}T23:59:59.999Z`);
+  if (toDate) request = request.lte("created_at", `${toDate}T23:59:59.999-04:00`);
 
   const { data, error } = await request;
   if (error) throw new Error(error.message);
@@ -135,12 +145,15 @@ export async function writeAuditLog(input: AuditLogInput) {
       created_at: new Date().toISOString(),
     });
 
-    if (error && process.env.NODE_ENV !== "production") {
-      console.warn("[audit] No se pudo guardar audit_logs:", error.message);
+    if (error) {
+      // En producción esto era invisible (solo console.warn en dev): si la
+      // bitácora se rompe, nadie se enteraba (auditoría 2026-07-24).
+      captureError(new Error(`audit_logs no guardado: ${error.message}`), {
+        route: "lib/audit",
+        action: input.action,
+      });
     }
   } catch (error) {
-    if (process.env.NODE_ENV !== "production") {
-      console.warn("[audit] Audit log omitido:", error);
-    }
+    captureError(error, { route: "lib/audit", action: input.action });
   }
 }

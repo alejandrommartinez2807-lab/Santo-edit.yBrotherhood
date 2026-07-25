@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getRequestAccess } from "@/lib/localAccess"
 import { enforceApiReadGuards } from "@/lib/apiReadGuards"
 import { getAuditLogs } from "@/lib/audit"
+import { resolveBranchId } from "@/lib/branch"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -37,8 +38,14 @@ export async function GET(request: NextRequest) {
     }
 
     const params = request.nextUrl.searchParams
+    // Sede (auditoría 2026-07-24): antes el branchId venía SOLO del query y la
+    // UI nunca lo mandaba — la bitácora mezclaba las 2 sedes sin distinguir.
+    // Por defecto se usa la sede activa del panel; ?scope=all consolida.
+    const consolidated = params.get("scope") === "all"
     const logs = await getAuditLogs({
-      branchId: params.get("branchId"),
+      branchId: consolidated
+        ? null
+        : params.get("branchId") || (await resolveBranchId(request)),
       action: params.get("action"),
       entityType: params.get("entityType"),
       fromDate: params.get("fromDate"),

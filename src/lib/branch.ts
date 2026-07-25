@@ -602,13 +602,28 @@ export function copyBranchConfigInRawBusinessConfig(
   if (!sourceId || !targetId) return raw
 
   const branchConfigs = getBranchConfigsFromRawBusinessConfig(raw)
-  const sourceConfig = branchConfigs[sourceId] || {}
+  const sourceConfig = { ...(branchConfigs[sourceId] || {}) } as Record<string, unknown>
+
+  // La IDENTIDAD de la sede no se copia (auditoría 2026-07-24): copiar la
+  // config desde una sede-feria marcaba la destino como evento y su fecha de
+  // fin heredada hacía que autoFinalizeExpiredEvents la DESACTIVARA sola.
+  delete sourceConfig.isEvent
+  delete sourceConfig.eventEndDate
+
+  const targetConfig = (branchConfigs[targetId] || {}) as Record<string, unknown>
 
   return {
     ...raw,
     branchConfigs: {
       ...branchConfigs,
-      [targetId]: normalizeBranchScopedConfig({ ...sourceConfig }),
+      [targetId]: normalizeBranchScopedConfig({
+        ...sourceConfig,
+        // La marca de evento propia de la sede destino (si la tenía) se conserva.
+        ...(targetConfig.isEvent !== undefined ? { isEvent: targetConfig.isEvent } : {}),
+        ...(targetConfig.eventEndDate !== undefined
+          ? { eventEndDate: targetConfig.eventEndDate }
+          : {}),
+      }),
     },
   }
 }

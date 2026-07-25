@@ -128,4 +128,30 @@ describe("branch scoped business config", () => {
       mainWhatsapp: "584120000000",
     });
   });
+
+  it("copiar config NO arrastra la marca de evento (la sede destino conservaría la suya)", () => {
+    // Regresión 2026-07-24: copiar desde una sede-feria convertía a la destino
+    // en evento y su eventEndDate heredada hacía que autoFinalizeExpiredEvents
+    // la desactivara sola.
+    const raw = {
+      branchConfigs: {
+        feria: {
+          publicName: "Feria",
+          isEvent: true,
+          eventEndDate: "2026-07-01",
+        },
+        este: { isEvent: true, eventEndDate: "2026-12-31" },
+      },
+    };
+
+    const copiedToNormal = copyBranchConfigInRawBusinessConfig(raw, "feria", "centro");
+    expect(getBranchConfig(copiedToNormal, "centro")).toEqual({ publicName: "Feria" });
+
+    const copiedToEvent = copyBranchConfigInRawBusinessConfig(raw, "feria", "este");
+    expect(getBranchConfig(copiedToEvent, "este")).toMatchObject({
+      publicName: "Feria",
+      isEvent: true,
+      eventEndDate: "2026-12-31",
+    });
+  });
 });

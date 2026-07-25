@@ -44,6 +44,11 @@ type PaymentProof = {
   proofImageUrl: string
   proofFileId: string
   proofFileName: string
+  // Segunda captura de un pago MIXTO (migración 0030): sin estos campos el
+  // revisor confirmaba viendo solo una de las dos patas (auditoría 2026-07-24).
+  proofImageUrl2?: string
+  proofFileId2?: string
+  proofFileName2?: string
   status: PaymentProofStatus
   reviewedBy: string
   reviewedAt: string
@@ -458,6 +463,29 @@ export default function PaymentProofsPage() {
                           <div className="flex h-72 items-center justify-center rounded-[1.25rem] border-2 border-dashed border-[var(--brand-primary)]/30 bg-white text-center text-sm font-black text-[var(--brand-primary)]/60">
                             Sin imagen
                           </div>
+                        )}
+                        {/* Segunda captura de un pago MIXTO (0030): sin esto el
+                            revisor confirmaba viendo solo una de las dos patas. */}
+                        {proof.proofImageUrl2 && (
+                          <a
+                            href={proof.proofImageUrl2}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="group mt-3 block"
+                          >
+                            <Image
+                              src={proof.proofImageUrl2}
+                              alt={`Segunda captura ${proof.id}`}
+                              width={640}
+                              height={288}
+                              unoptimized
+                              className="h-40 w-full rounded-[1.25rem] border-2 border-[var(--brand-primary)]/25 object-cover transition group-hover:scale-[1.01]"
+                            />
+                            <span className="mt-2 inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)]/60 bg-white px-4 py-1.5 text-[0.66rem] font-black uppercase text-[var(--brand-primary)]">
+                              <Eye size={13} />
+                              2ª captura (pago mixto)
+                            </span>
+                          </a>
                         )}
                       </div>
 

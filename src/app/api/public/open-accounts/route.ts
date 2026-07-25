@@ -7,6 +7,7 @@ import {
 } from "@/lib/orders"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
+import { getLocalTablesForBranch } from "@/lib/branchLocalTables"
 import {
   cleanPublicTableText,
   findOpenAccountForPublicTable,
@@ -101,8 +102,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Mesas de la SEDE del QR (H13): antes se validaba contra las globales.
+    const branchId = await resolveBranchId(request)
     const tables = getActivePublicLocalTables(
-      normalizeLocalTablesConfig(config.localTables, [])
+      normalizeLocalTablesConfig(await getLocalTablesForBranch(branchId, config.localTables), [])
     )
     const resolvedTable = resolvePublicLocalTable(requestedTable, tables)
 
@@ -116,16 +119,30 @@ export async function POST(request: NextRequest) {
     const tableName = resolvedTable?.name || requestedTable
 
     // Si ya hay una cuenta abierta en esta mesa, la reutilizamos (idempotente)
-    const branchId = await resolveBranchId(request)
     const openAccounts = await getOpenAccounts({ status: "Abierta" }, branchId)
     const existing = findOpenAccountForPublicTable(openAccounts, tableName)
+
+    // Proyección mínima (H16, privacidad): antes se devolvía la cuenta
+    // COMPLETA — cualquiera que escaneara el QR de una mesa ocupada veía el
+    // teléfono y el consumo del comensal anterior.
+    const toPublicAccount = (account: {
+      id: string
+      tableNumber: string
+      status: string
+      createdAt?: string
+    }) => ({
+      id: account.id,
+      tableNumber: account.tableNumber,
+      status: account.status,
+      createdAt: account.createdAt,
+    })
 
     if (existing) {
       return noStoreResponse({
         ok: true,
         alreadyOpen: true,
         tableName,
-        openAccount: existing,
+        openAccount: toPublicAccount(existing),
       })
     }
 
@@ -140,7 +157,7 @@ export async function POST(request: NextRequest) {
     )
 
     return noStoreResponse(
-      { ok: true, alreadyOpen: false, tableName, openAccount },
+      { ok: true, alreadyOpen: false, tableName, openAccount: toPublicAccount(openAccount) },
       { status: 201 }
     )
   } catch (error) {

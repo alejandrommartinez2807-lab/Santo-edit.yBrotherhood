@@ -11,6 +11,7 @@ import {
   getReservationNow,
 } from "@/lib/reservationConflicts"
 import { resolveBranchId } from "@/lib/branch"
+import { getLocalTablesForBranch } from "@/lib/branchLocalTables"
 import {
   cleanPublicTableText,
   getActivePublicLocalTables,
@@ -64,8 +65,13 @@ export async function GET(request: NextRequest) {
     const businessConfig = await getBusinessConfig()
     const config = businessConfig as unknown as Record<string, unknown>
     const openAccountsAccess = getModulePlanAccess(config, "openAccounts")
+    // Mesas de la SEDE del QR (H13): antes se validaba contra las globales.
+    const branchIdForTables = await resolveBranchId(request)
     const tables = getActivePublicLocalTables(
-      normalizeLocalTablesConfig(config.localTables, [])
+      normalizeLocalTablesConfig(
+        await getLocalTablesForBranch(branchIdForTables, config.localTables),
+        []
+      )
     )
     const resolvedTable = resolvePublicLocalTable(requestedTable, tables)
 

@@ -7,6 +7,7 @@ import {
 } from "@/lib/orders"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
+import { getLocalTablesForBranch } from "@/lib/branchLocalTables"
 import {
   findReservationConflict,
   getReservationNow,
@@ -54,13 +55,16 @@ function addMinutesToTime(time: string, minutesToAdd: number) {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`
 }
 
-async function getReservationsAvailability() {
+async function getReservationsAvailability(branchId?: string | null) {
   const businessConfig = await getBusinessConfig()
   const config = businessConfig as unknown as Record<string, unknown>
   const access = getModulePlanAccess(config, "reservations")
-  const tables = normalizeLocalTablesConfig(config.localTables, []).filter(
-    (table) => table.isActive !== false && cleanText(table.id),
-  )
+  // Mesas de la SEDE solicitada (H13): antes el cliente reservaba contra las
+  // mesas globales y podía recibir una mesa inexistente en su sede.
+  const tables = normalizeLocalTablesConfig(
+    await getLocalTablesForBranch(branchId ?? null, config.localTables),
+    [],
+  ).filter((table) => table.isActive !== false && cleanText(table.id))
 
   return {
     enabled: access.includedInPlan && access.effectiveEnabled && tables.length > 0,
@@ -79,7 +83,7 @@ export async function GET(request: NextRequest) {
   if (rateLimitResponse) return rateLimitResponse
 
   try {
-    const { enabled } = await getReservationsAvailability()
+    const { enabled } = await getReservationsAvailability(await resolveBranchId(request))
 
     return noStoreResponse({ ok: true, enabled })
   } catch (error) {
@@ -103,7 +107,8 @@ export async function POST(request: NextRequest) {
   if (rateLimitResponse) return rateLimitResponse
 
   try {
-    const { enabled, tables } = await getReservationsAvailability()
+    const branchIdForTables = await resolveBranchId(request)
+    const { enabled, tables } = await getReservationsAvailability(branchIdForTables)
 
     if (!enabled) {
       return noStoreResponse(
