@@ -11,7 +11,7 @@ import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import {
   computePendingElectronicUSD,
-  getRequiredReportUSD,
+  getEnforceableReportUSD,
   isCashReportedMethod,
 } from "@/lib/orderPaymentLegs"
 import { writeAuditLog } from "@/lib/audit"
@@ -302,18 +302,22 @@ export async function POST(request: NextRequest) {
 
       if (activeProof && !incomingIsCash) {
         const exchangeRate = Number(order.exchangeRate || 0)
+        const activeProofInputs = activeProofs.map((proof) => ({
+          method: proof.reportedMethod,
+          amountUSD: Number(proof.amountReportedUSD || 0),
+          amountVES: Number(proof.amountReportedVES || 0),
+        }))
         const pendingElectronicUSD = computePendingElectronicUSD({
-          requiredUSD: getRequiredReportUSD({
+          // Misma regla que la pantalla del cliente (fuente única): sin patas
+          // identificables y con solo efectivo reportado no se exige nada.
+          requiredUSD: getEnforceableReportUSD({
             paymentMethod: order.paymentMethod,
             totalUSD: Number(order.totalUSD || order.totalPrice || 0),
             exchangeRate,
+            activeProofs: activeProofInputs,
           }),
           exchangeRate,
-          proofs: activeProofs.map((proof) => ({
-            method: proof.reportedMethod,
-            amountUSD: Number(proof.amountReportedUSD || 0),
-            amountVES: Number(proof.amountReportedVES || 0),
-          })),
+          proofs: activeProofInputs,
         })
         if (pendingElectronicUSD > 0) activeProof = undefined
       }

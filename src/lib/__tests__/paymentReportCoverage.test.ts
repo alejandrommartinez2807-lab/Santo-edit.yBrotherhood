@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest"
 import {
   buildExpectedPayments,
   computePendingElectronicUSD,
+  getEnforceableReportUSD,
   getOrderPaymentLegs,
   getRequiredReportUSD,
   isCashReportedMethod,
@@ -260,6 +261,82 @@ describe("cobertura según el ORDEN en que llegan los comprobantes", () => {
       proofs: [pagoMovilProof(1000)],
     })
     expect(pending).toBeGreaterThan(0)
+  })
+})
+
+// Problema 1 (dueño, 2026-07-26): paga "Efectivo en divisas", sube la foto de
+// los billetes, la ve EN REVISIÓN... y justo debajo la pantalla le vuelve a
+// pedir el método, una captura y "Enviar comprobante". Pasa cuando el pedido
+// no dice con qué se pagó: ahí se exige el TOTAL como si fuera electrónico y
+// la foto del efectivo NUNCA cuenta, así que la exigencia no se puede cumplir
+// jamás.
+describe("guarda del método desconocido (Problema 1)", () => {
+  const unknownOrder = { paymentMethod: "", totalUSD: 24.5, exchangeRate: RATE }
+
+  it("sin método y con la foto del efectivo: no se puede exigir nada", () => {
+    expect(
+      getEnforceableReportUSD({ ...unknownOrder, activeProofs: [cashPhotoProof] }),
+    ).toBe(0)
+  })
+
+  it('"Por confirmar" se comporta igual que sin método', () => {
+    expect(
+      getEnforceableReportUSD({
+        ...unknownOrder,
+        paymentMethod: "Por confirmar",
+        activeProofs: [cashPhotoProof],
+      }),
+    ).toBe(0)
+  })
+
+  it("sin método y SIN comprobantes: se sigue exigiendo el total", () => {
+    expect(getEnforceableReportUSD({ ...unknownOrder, activeProofs: [] })).toBe(24.5)
+  })
+
+  it("sin método pero con un reporte ELECTRÓNICO a medias: se sigue exigiendo", () => {
+    // La guarda solo suelta cuando todo lo activo es efectivo; un abono
+    // electrónico incompleto se sigue persiguiendo.
+    expect(
+      getEnforceableReportUSD({ ...unknownOrder, activeProofs: [zelleProof(5)] }),
+    ).toBe(24.5)
+  })
+
+  it("mixto identificable: la foto del efectivo NO suelta la pata electrónica", () => {
+    const required = getEnforceableReportUSD({
+      paymentMethod: MIXTO_CASH,
+      totalUSD: 40,
+      exchangeRate: RATE,
+      activeProofs: [cashPhotoProof],
+    })
+    expect(required).toBeCloseTo(3320.47 / RATE, 2)
+    expect(
+      computePendingElectronicUSD({
+        requiredUSD: required,
+        exchangeRate: RATE,
+        proofs: [cashPhotoProof],
+      }),
+    ).toBeGreaterThan(0)
+  })
+
+  it("efectivo puro identificable: 0 con comprobante y 0 sin él", () => {
+    const order = {
+      paymentMethod: "Efectivo en divisas",
+      totalUSD: 24.5,
+      exchangeRate: RATE,
+    }
+    expect(getEnforceableReportUSD({ ...order, activeProofs: [] })).toBe(0)
+    expect(getEnforceableReportUSD({ ...order, activeProofs: [cashPhotoProof] })).toBe(0)
+  })
+
+  it("método electrónico normal: la guarda no lo toca", () => {
+    expect(
+      getEnforceableReportUSD({
+        paymentMethod: "Pago móvil",
+        totalUSD: 24.5,
+        exchangeRate: RATE,
+        activeProofs: [],
+      }),
+    ).toBeCloseTo(24.5, 2)
   })
 })
 

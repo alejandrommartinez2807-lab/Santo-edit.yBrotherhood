@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { isElectronicPaymentMethod } from "@/lib/paymentOptions"
 import {
   computePendingElectronicUSD,
-  getRequiredReportUSD,
+  getEnforceableReportUSD,
   isCashReportedMethod,
 } from "@/lib/orderPaymentLegs"
 import { maybeAutoCancelUnpaidOrder } from "@/lib/unpaidAutoCancel"
@@ -168,11 +168,6 @@ export async function GET(request: NextRequest) {
         .eq("order_id", orderId)
 
       const exchangeRate = Number(orderRecord.exchange_rate || 0)
-      const requiredReportUSD = getRequiredReportUSD({
-        paymentMethod: orderRecord.payment_method,
-        totalUSD: Number(orderRecord.total_usd || 0),
-        exchangeRate,
-      })
 
       let hasActiveProof = false
       const activeProofInputs: { method: unknown; amountUSD: number; amountVES: number }[] = []
@@ -196,6 +191,16 @@ export async function GET(request: NextRequest) {
           amountVES: Number(proof.amount_reported_ves || 0),
         })
       }
+
+      // Con los comprobantes ya leídos: un pedido sin método identificable al
+      // que solo llegó la foto de unos billetes NO puede quedar "incompleto"
+      // para siempre (misma guarda que la pantalla de pago del cliente).
+      const requiredReportUSD = getEnforceableReportUSD({
+        paymentMethod: orderRecord.payment_method,
+        totalUSD: Number(orderRecord.total_usd || 0),
+        exchangeRate,
+        activeProofs: activeProofInputs,
+      })
 
       pendingReportUSD = computePendingElectronicUSD({
         requiredUSD: requiredReportUSD,

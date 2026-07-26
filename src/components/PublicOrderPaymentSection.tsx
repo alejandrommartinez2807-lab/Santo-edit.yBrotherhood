@@ -429,6 +429,12 @@ export default function PublicOrderPaymentSection({
     (proof) =>
       proof.status === "Comprobante enviado" || proof.status === "En revisión",
   );
+  // El cliente YA MANDÓ algo (enviado, en revisión o ya revisado por caja).
+  // Las compuertas de esta pantalla miran esto y no solo lo "pendiente": con
+  // un pago en efectivo, en cuanto caja confirmaba la foto de los billetes el
+  // comprobante dejaba de estar pendiente y la sección volvía a ofrecer
+  // "Reportar mi pago" por un dinero que ya estaba resuelto (2026-07-26).
+  const hasActiveProof = activeProofs.length > 0;
   const needsCorrection = (info?.proofs || []).some(
     (proof) => proof.status === "Necesita corrección",
   );
@@ -458,7 +464,7 @@ export default function PublicOrderPaymentSection({
   // con método electrónico, lo decide el servidor): en mesa o efectivo el
   // cliente paga al final y el contador sería una amenaza falsa.
   const paymentPendingReminder =
-    !hasConfirmedPayment && !hasPendingProof && info?.autoCancelApplies === true;
+    !hasConfirmedPayment && !hasActiveProof && info?.autoCancelApplies === true;
   const elapsedMinutes = (() => {
     if (!info?.createdAt) return 0;
     const createdAt = new Date(info.createdAt);
@@ -993,17 +999,26 @@ export default function PublicOrderPaymentSection({
           de ESA pata — un solo mensaje, sin banner aparte (dueño 2026-07-23). */}
       {!hasConfirmedPayment &&
         !awaitingProofSync &&
-        (!hasPendingProof || needsCorrection || !reportCovered) &&
+        (!hasActiveProof || needsCorrection || !reportCovered) &&
         (() => {
-          const isPartialPending = hasPendingProof && !reportCovered;
+          const isPartialPending = hasActiveProof && !reportCovered;
           // Reparto de patas + qué cifra manda en pantalla. Vive en
           // orderPaymentLegs (con test propio) porque la versión que estaba
           // aquí quedó inalcanzable y nadie lo notó.
           const legsPlan = planPaymentHero(info?.expectedPayments || []);
           const electronicLegs = legsPlan.electronicLegs;
+          // Métodos del PEDIDO (los manda el servidor). chosenMethods vive en
+          // el localStorage del teléfono que pidió: abriendo el link en otro
+          // navegador llegaba vacío y un pedido en efectivo terminaba
+          // mostrando los datos de Zelle + pago móvil + transferencia.
+          const serverMethods = (info?.expectedPayments || []).map(
+            (payment) => payment.method,
+          );
           const cardMethods = isPartialPending && electronicLegs.length
             ? electronicLegs.map((payment) => payment.method)
-            : chosenMethods;
+            : serverMethods.length
+              ? serverMethods
+              : chosenMethods;
 
           const filtered = cardMethods.length
             ? Object.fromEntries(
@@ -1018,9 +1033,10 @@ export default function PublicOrderPaymentSection({
           // sin saber dónde pagar. Pero NO aplica al efectivo: ahí no hay datos
           // que mostrar y salían los del banco de TODOS los métodos (pagando en
           // efectivo el cliente veía Zelle + pago móvil + transferencia, 2026-07-26).
-          const onlyCashChosen =
-            cardMethods.length > 0 &&
-            cardMethods.every((methodName) => isCashReportedMethod(methodName));
+          const onlyCashChosen = serverMethods.length
+            ? legsPlan.kind === "solo-efectivo"
+            : cardMethods.length > 0 &&
+              cardMethods.every((methodName) => isCashReportedMethod(methodName));
           const visibleDetails = Object.keys(filtered).length
             ? filtered
             : onlyCashChosen
@@ -1085,10 +1101,10 @@ export default function PublicOrderPaymentSection({
                           de abajo ya dice "Ver datos de Pago móvil" y la fila
                           del método lo repite — el nombre salía tres veces y el
                           título se partía en dos líneas (2026-07-26). */}
-                      {chosenMethods.length > 1 && (
+                      {cardMethods.length > 1 && (
                         <span className="text-[var(--brand-ink-2)]/45">
                           {" "}
-                          ({chosenMethods.join(" + ")})
+                          ({cardMethods.join(" + ")})
                         </span>
                       )}
                     </>
@@ -1224,10 +1240,13 @@ export default function PublicOrderPaymentSection({
         </div>
       )}
 
-      {hasPendingProof && !hasConfirmedPayment && reportCovered ? (
+      {hasActiveProof && !hasConfirmedPayment && reportCovered ? (
         <p className="mt-3 text-[0.72rem] font-bold leading-5 text-[var(--brand-ink-2)]/60">
-          Tu pago ya fue reportado y está en revisión: no hace falta enviarlo
-          otra vez. Aquí verás cuando quede confirmado.
+          {hasPendingProof
+            ? "Tu pago ya fue reportado y está en revisión: no hace falta enviarlo otra vez. Aquí verás cuando quede confirmado."
+            : // Sin nada pendiente y sin cobro electrónico confirmado: caja ya
+              // revisó la foto del efectivo. Decir "en revisión" ahí era falso.
+              "El negocio ya revisó tu comprobante: no hace falta enviarlo otra vez."}
         </p>
       ) : null}
 
@@ -1257,14 +1276,14 @@ export default function PublicOrderPaymentSection({
           desaparecía justo al abrirlo, así que el cliente veía "Paso 1" y
           después nada — la numeración se rompía donde más hacía falta
           (2026-07-26). */}
-      {!hasConfirmedPayment && !awaitingProofSync && !hasPendingProof ? (
+      {!hasConfirmedPayment && !awaitingProofSync && !hasActiveProof ? (
         <span className="mt-4 inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
           Paso 2
         </span>
       ) : null}
 
       {!hasConfirmedPayment && !awaitingProofSync && !isFormOpen ? (
-        hasPendingProof && !needsCorrection && reportCovered ? (
+        hasActiveProof && !needsCorrection && reportCovered ? (
           requiredElectronicUSD <= 0 ? null : (
           // Reportado y en revisión: nada que hacer. Solo un enlace discreto
           // por si adjuntó la captura equivocada. En efectivo PURO ni eso:
@@ -1294,7 +1313,7 @@ export default function PublicOrderPaymentSection({
             <ImagePlus size={15} />
             {needsCorrection
               ? "Enviar otro comprobante"
-              : hasPendingProof && !reportCovered
+              : hasActiveProof && !reportCovered
                 ? "Reportar lo que falta del pago"
                 : "Reportar mi pago"}
           </button>

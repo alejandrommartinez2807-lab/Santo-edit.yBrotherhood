@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { getPaymentProofs } from "@/lib/orders"
 import { isElectronicPaymentMethod } from "@/lib/paymentOptions"
-import { buildExpectedPayments, getRequiredReportUSD } from "@/lib/orderPaymentLegs"
+import { buildExpectedPayments, getEnforceableReportUSD } from "@/lib/orderPaymentLegs"
 import { maybeAutoCancelUnpaidOrder } from "@/lib/unpaidAutoCancel"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
@@ -105,7 +105,15 @@ export async function GET(request: NextRequest) {
       exchangeRate: Number(order.exchange_rate || 0),
     }
     const expectedPayments = buildExpectedPayments(legsInput)
-    const requiredReportUSD = getRequiredReportUSD(legsInput)
+    // Con los comprobantes a la vista: si el pedido no dice con qué se pagó y
+    // lo único que llegó es la foto de unos billetes, no se puede exigir el
+    // total por vía electrónica (esa exigencia no se puede satisfacer nunca).
+    const requiredReportUSD = getEnforceableReportUSD({
+      ...legsInput,
+      activeProofs: proofs
+        .filter((proof) => proof.status !== "Rechazado")
+        .map((proof) => ({ method: proof.reportedMethod })),
+    })
 
     return noStoreResponse({
       ok: true,

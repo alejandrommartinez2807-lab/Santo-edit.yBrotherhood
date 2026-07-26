@@ -197,3 +197,40 @@ export function getRequiredReportUSD(input: {
 
   return sumLegsUSD(electronicLegs, input.exchangeRate)
 }
+
+// Lo que de verdad se le puede EXIGIR al cliente, ya sabiendo qué comprobantes
+// mandó. Igual que getRequiredReportUSD salvo en un caso:
+//
+// Cuando el método del pedido no deja identificar las patas (payment_method
+// vacío o "Por confirmar") se exige el TOTAL como si todo fuera electrónico.
+// Si lo único que llegó es la foto de unos billetes, esa exigencia es
+// IMPOSIBLE de cumplir: el efectivo nunca cuenta como pago electrónico, a
+// propósito. El cliente pagaba en efectivo, mandaba su foto, la veía "en
+// revisión" y la pantalla le seguía pidiendo la captura debajo — para siempre
+// (callejón sin salida que reportó el dueño el 2026-07-26).
+//
+// Lo que NO cambia: con patas identificables manda getRequiredReportUSD tal
+// cual (un mixto sigue exigiendo su pata electrónica aunque la foto del
+// efectivo llegue primero), y sin comprobantes se sigue exigiendo el total.
+// Un reporte electrónico incompleto tampoco se perdona: solo se suelta la
+// exigencia si TODO lo activo es efectivo.
+export function getEnforceableReportUSD(input: {
+  paymentMethod: unknown
+  totalUSD: number
+  exchangeRate: number
+  // Comprobantes ACTIVOS del pedido (sin los rechazados).
+  activeProofs: { method: unknown }[]
+}): number {
+  const legs = getOrderPaymentLegs(input)
+  const proofs = input.activeProofs || []
+
+  if (
+    legs.length === 0 &&
+    proofs.length > 0 &&
+    proofs.every((proof) => isCashReportedMethod(proof.method))
+  ) {
+    return 0
+  }
+
+  return getRequiredReportUSD(input)
+}
