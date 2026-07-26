@@ -3188,30 +3188,11 @@ export default function BusinessConfigPage() {
                 </span>
               </label>
 
-              {/* Permitir 2 capturas en el reporte de pago mixto (F8). */}
-              <label className="mt-3 flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  checked={businessConfig.publicMixedSecondProofEnabled}
-                  onChange={(e) =>
-                    setBusinessConfig((c) => ({
-                      ...c,
-                      publicMixedSecondProofEnabled: e.target.checked,
-                    }))
-                  }
-                  className="mt-0.5 h-5 w-5 accent-[var(--brand-primary)]"
-                />
-                <span>
-                  <span className="block text-sm font-black uppercase tracking-[0.06em] text-[var(--brand-ink)]">
-                    Permitir 2 capturas en pago mixto
-                  </span>
-                  <span className="mt-0.5 block text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
-                    Solo en pago mixto, el cliente puede subir dos comprobantes
-                    (por ejemplo uno del pago móvil y otro del Zelle), uno por
-                    cada parte del pago. Apagado: una sola captura.
-                  </span>
-                </span>
-              </label>
+              {/* El interruptor "Permitir 2 capturas en pago mixto" se retiró
+                  el 2026-07-26: en pago mixto cada pata manda AHORA su propio
+                  comprobante (fila propia, con su referencia y su imagen) y las
+                  dos son obligatorias. Dejarlo habría sido un control muerto que
+                  ofrecía apagar algo que ya no se puede apagar. */}
 
               <label className="mt-3 flex items-start gap-3">
                 <input

@@ -265,13 +265,10 @@ export async function POST(request: NextRequest) {
 
     const branchId = await resolveBranchId(request)
     const body = (await request.json()) as PublicProofBody
-    // Segunda captura solo si el dueño la dejó habilitada (pago mixto).
-    const proofsConfig = await getBusinessConfig()
-    if ((proofsConfig as Record<string, unknown>).publicMixedSecondProofEnabled === false) {
-      body.dataUrl2 = ""
-      body.fileName2 = ""
-      body.mimeType2 = ""
-    }
+    // (Antes aquí se borraba la segunda captura según publicMixedSecondProofEnabled.
+    // Desde 2026-07-26 el pago mixto manda un comprobante POR PATA, cada uno con
+    // SU imagen, así que el flujo público ya no envía dataUrl2 y la bandera
+    // quedó obsoleta. Las columnas de 0030 siguen soportadas por compatibilidad.)
     const input = normalizeCreatePaymentProofInput(body)
     const orders = await getOrders(branchId)
     const order = orders.find((item) => item.id === input.orderId)

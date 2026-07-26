@@ -382,10 +382,12 @@ export default function CartDrawer({
   const [validationAlert, setValidationAlert] = useState<string | null>(null);
   // Modo "pago antes de registrar": captura o referencia adjuntada EN el
   // checkout (métodos electrónicos). Se reporta sola al crear el pedido.
-  const [checkoutProofDataUrl, setCheckoutProofDataUrl] = useState("");
-  const [checkoutProofFileName, setCheckoutProofFileName] = useState("");
-  const [checkoutProofMimeType, setCheckoutProofMimeType] = useState("");
-  const [checkoutProofReference, setCheckoutProofReference] = useState("");
+  // UNA POR PATA: con pago mixto (pago móvil + Zelle) cada pago lleva su
+  // evidencia y las dos son obligatorias — antes había un solo campo para
+  // los dos y caja se quedaba sin cómo verificar la otra mitad.
+  const [checkoutProofByLeg, setCheckoutProofByLeg] = useState<
+    Record<string, { dataUrl: string; fileName: string; mimeType: string; reference: string }>
+  >({});
   const [checkoutProofError, setCheckoutProofError] = useState<string | null>(null);
   // Foto de los billetes en divisas con adjunto PROPIO: en pago mixto puede
   // convivir con la captura electrónica de la otra pata (dos archivos).
@@ -1184,9 +1186,64 @@ export default function CartDrawer({
     isPaymentProofPublicAvailable &&
     (isDeliveryOrder || isTakeawayOrder) &&
     selectedPaymentMethods.some(isElectronicPaymentMethod);
-  const checkoutProofDigits = checkoutProofReference.replace(/[^0-9]/g, "");
+  // Patas ELECTRÓNICAS que deben traer comprobante antes de registrar. En
+  // mixto son dos (la del efectivo va por la foto de los billetes, aparte).
+  const singleCheckoutMethod =
+    !isMixedPayment && selectedPaymentMethods.length === 1
+      ? selectedPaymentMethods[0]
+      : "";
+  const singleCheckoutIsVes = singleCheckoutMethod
+    ? isVesPaymentMethod(singleCheckoutMethod)
+    : false;
+  const checkoutProofLegs: {
+    key: string;
+    method: string;
+    amountUSD: number;
+    amountVES: number;
+  }[] = isMixedPayment
+    ? [
+        isElectronicPaymentMethod(mixedBsMethod)
+          ? {
+              key: "ves",
+              method: mixedBsMethod.trim(),
+              amountUSD: 0,
+              amountVES: mixedBsValue,
+            }
+          : null,
+        isElectronicPaymentMethod(mixedUsdMethod)
+          ? {
+              key: "usd",
+              method: mixedUsdMethod.trim(),
+              amountUSD: mixedUsdValue,
+              amountVES: 0,
+            }
+          : null,
+      ].filter((leg): leg is NonNullable<typeof leg> => leg !== null)
+    : singleCheckoutMethod && isElectronicPaymentMethod(singleCheckoutMethod)
+      ? [
+          {
+            key: "unico",
+            method: singleCheckoutMethod,
+            amountUSD: singleCheckoutIsVes ? 0 : totalUSD,
+            amountVES: singleCheckoutIsVes ? Math.round(totalVES * 100) / 100 : 0,
+          },
+        ]
+      : [];
+  const checkoutLegHasProof = (legKey: string) => {
+    const evidence = checkoutProofByLeg[legKey];
+    if (!evidence) return false;
+    return (
+      Boolean(evidence.dataUrl) ||
+      evidence.reference.replace(/[^0-9]/g, "").length >= 6
+    );
+  };
+  // TODAS las patas: con dos métodos, una sola captura ya no alcanza.
   const hasCheckoutProof =
-    Boolean(checkoutProofDataUrl) || checkoutProofDigits.length >= 6;
+    checkoutProofLegs.length > 0 &&
+    checkoutProofLegs.every((leg) => checkoutLegHasProof(leg.key));
+  const firstMissingProofLeg = checkoutProofLegs.find(
+    (leg) => !checkoutLegHasProof(leg.key),
+  );
 
   // Foto obligatoria de las divisas en efectivo (F8, configurable): con efectivo
   // EN DIVISAS y destino (pick up/delivery), el cliente sube una foto de los
@@ -1270,8 +1327,14 @@ export default function CartDrawer({
           },
         ]),
     {
-      label: "la captura o la referencia completa de tu pago",
-      targetId: "checkout-comprobante",
+      // Con dos patas, el aviso dice CUÁL falta y el scroll lleva a ESA.
+      label:
+        checkoutProofLegs.length > 1 && firstMissingProofLeg
+          ? `la captura o la referencia de ${firstMissingProofLeg.method}`
+          : "la captura o la referencia completa de tu pago",
+      targetId: firstMissingProofLeg
+        ? `checkout-comprobante-${firstMissingProofLeg.key}`
+        : "checkout-comprobante",
       missing: requiresProofBeforeRegister && !hasCheckoutProof,
     },
     {
@@ -1541,13 +1604,28 @@ export default function CartDrawer({
 
   // Comprobante EN el checkout (modo "pago antes de registrar"): sin captura
   // o referencia completa no se puede registrar con métodos electrónicos.
-  async function handleCheckoutProofFile(file: File | undefined) {
+  const EMPTY_CHECKOUT_PROOF = {
+    dataUrl: "",
+    fileName: "",
+    mimeType: "",
+    reference: "",
+  };
+
+  function updateCheckoutProofLeg(
+    legKey: string,
+    patch: Partial<{ dataUrl: string; fileName: string; mimeType: string; reference: string }>,
+  ) {
+    setCheckoutProofByLeg((current) => ({
+      ...current,
+      [legKey]: { ...EMPTY_CHECKOUT_PROOF, ...current[legKey], ...patch },
+    }));
+  }
+
+  async function handleCheckoutProofFile(legKey: string, file: File | undefined) {
     setCheckoutProofError(null);
 
     if (!file) {
-      setCheckoutProofDataUrl("");
-      setCheckoutProofFileName("");
-      setCheckoutProofMimeType("");
+      updateCheckoutProofLeg(legKey, { dataUrl: "", fileName: "", mimeType: "" });
       return;
     }
 
@@ -1555,13 +1633,13 @@ export default function CartDrawer({
       const image = await readImageFileForUpload(file, {
         fallbackName: "comprobante",
       });
-      setCheckoutProofDataUrl(image.dataUrl);
-      setCheckoutProofFileName(image.fileName);
-      setCheckoutProofMimeType(image.mimeType);
+      updateCheckoutProofLeg(legKey, {
+        dataUrl: image.dataUrl,
+        fileName: image.fileName,
+        mimeType: image.mimeType,
+      });
     } catch (error) {
-      setCheckoutProofDataUrl("");
-      setCheckoutProofFileName("");
-      setCheckoutProofMimeType("");
+      updateCheckoutProofLeg(legKey, { dataUrl: "", fileName: "", mimeType: "" });
       setCheckoutProofError(
         error instanceof Error
           ? error.message
@@ -1645,6 +1723,8 @@ export default function CartDrawer({
   function renderCheckoutProofSection() {
     if (!requiresProofBeforeRegister) return null;
 
+    const isMultiLeg = checkoutProofLegs.length > 1;
+
     return (
       <div
         id="checkout-comprobante"
@@ -1652,40 +1732,89 @@ export default function CartDrawer({
       >
         <p className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.12em] text-amber-800">
           <AlertTriangle size={17} className="shrink-0" />
-          Falta tu comprobante
+          {isMultiLeg ? "Faltan tus comprobantes" : "Falta tu comprobante"}
         </p>
         <p className="mt-1.5 text-[0.85rem] font-black leading-5 text-amber-900">
-          Cancela (paga) con los datos de arriba y adjunta AQUÍ la captura o
-          escribe la referencia completa. Sin eso no se puede registrar el
-          pedido (así lo configuró el negocio).
+          {isMultiLeg
+            ? "Cancela (paga) con los datos de arriba y adjunta AQUÍ la captura (o la referencia completa) de CADA pago. Sin las dos no se puede registrar el pedido (así lo configuró el negocio)."
+            : "Cancela (paga) con los datos de arriba y adjunta AQUÍ la captura o escribe la referencia completa. Sin eso no se puede registrar el pedido (así lo configuró el negocio)."}
         </p>
 
-        <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-amber-500/70 bg-white px-4 py-4 text-sm font-bold text-amber-900/80 transition hover:border-amber-600">
-          <ImagePlus size={17} />
-          {checkoutProofFileName || "Toca para adjuntar la captura"}
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(event) =>
-              void handleCheckoutProofFile(event.target.files?.[0])
-            }
-          />
-        </label>
+        {/* Un bloque por pata: con pago mixto, una sola captura no puede
+            respaldar dos pagos distintos (dueño 2026-07-26). */}
+        {checkoutProofLegs.map((leg, legIndex) => {
+          const evidence = checkoutProofByLeg[leg.key] || EMPTY_CHECKOUT_PROOF;
+          const legReady = checkoutLegHasProof(leg.key);
 
-        {/* Mismo separador que la pantalla de reportar pago: que las dos vías
-            se lean como alternativas y no como dos requisitos (2026-07-26). */}
-        <p className="mt-2 text-center text-[0.74rem] font-bold lowercase text-amber-900/45">
-          o
-        </p>
+          return (
+            <div
+              key={leg.key}
+              id={`checkout-comprobante-${leg.key}`}
+              className={
+                isMultiLeg
+                  ? "mt-3 rounded-2xl border border-amber-500/60 bg-white/70 px-3 py-3"
+                  : "mt-3"
+              }
+            >
+              {isMultiLeg ? (
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[0.8rem] font-black text-amber-900">
+                    Pago {legIndex + 1} de {checkoutProofLegs.length}:{" "}
+                    {leg.method}
+                    <span className="text-amber-900/60">
+                      {" "}
+                      {leg.amountVES > 0
+                        ? `Bs ${formatVES(leg.amountVES)}`
+                        : leg.amountUSD > 0
+                          ? formatUSD(leg.amountUSD)
+                          : ""}
+                    </span>
+                  </p>
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[0.6rem] font-black uppercase tracking-[0.08em] ${
+                      legReady
+                        ? "bg-green-600/15 text-green-700"
+                        : "bg-amber-500/20 text-amber-800"
+                    }`}
+                  >
+                    {legReady ? <CheckCircle2 size={12} /> : null}
+                    {legReady ? "Listo" : "Falta"}
+                  </span>
+                </div>
+              ) : null}
 
-        <input
-          value={checkoutProofReference}
-          onChange={(event) => setCheckoutProofReference(event.target.value)}
-          inputMode="numeric"
-          placeholder="Escribe la referencia completa (todos los dígitos)"
-          className="mt-1 w-full rounded-2xl border border-amber-500/50 bg-white px-4 py-3 text-sm font-bold text-amber-950 outline-none placeholder:text-amber-900/40 focus:border-amber-600"
-        />
+              <label className="mt-2 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-amber-500/70 bg-white px-4 py-4 text-sm font-bold text-amber-900/80 transition hover:border-amber-600">
+                <ImagePlus size={17} />
+                {evidence.fileName || "Toca para adjuntar la captura"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) =>
+                    void handleCheckoutProofFile(leg.key, event.target.files?.[0])
+                  }
+                />
+              </label>
+
+              {/* Mismo separador que la pantalla de reportar pago: que las dos
+                  vías se lean como alternativas y no como dos requisitos
+                  (2026-07-26). */}
+              <p className="mt-2 text-center text-[0.74rem] font-bold lowercase text-amber-900/45">
+                o
+              </p>
+
+              <input
+                value={evidence.reference}
+                onChange={(event) =>
+                  updateCheckoutProofLeg(leg.key, { reference: event.target.value })
+                }
+                inputMode="numeric"
+                placeholder="Escribe la referencia completa (todos los dígitos)"
+                className="mt-1 w-full rounded-2xl border border-amber-500/50 bg-white px-4 py-3 text-sm font-bold text-amber-950 outline-none placeholder:text-amber-900/40 focus:border-amber-600"
+              />
+            </div>
+          );
+        })}
 
         {checkoutProofError ? (
           <p className="mt-2 text-[0.75rem] font-bold leading-4 text-red-600">
@@ -2351,76 +2480,58 @@ export default function CartDrawer({
   // Modo "pago antes de registrar": el comprobante adjuntado en el checkout
   // se reporta solo al crear el pedido (best-effort: si falla, la
   // confirmación deja el reporte manual a un toque).
-  async function submitCheckoutProofForOrder(orderId: string) {
+  async function submitCheckoutProofForOrder(
+    orderId: string,
+    legs: typeof checkoutProofLegs,
+    evidenceByLeg: typeof checkoutProofByLeg,
+  ) {
     try {
-      const singleMethod =
-        selectedPaymentMethods.length === 1 ? selectedPaymentMethods[0] : "";
-      const singleIsVes = singleMethod ? isVesPaymentMethod(singleMethod) : false;
-      // Pago mixto: el comprobante reporta SOLO las patas electrónicas (la
-      // parte en efectivo se entrega al retirar/recibir; reportarla haría que
-      // caja marque cobrado el total con un clic sin haber recibido el cash).
-      const mixedUsdIsElectronic =
-        isMixedPayment && isElectronicPaymentMethod(mixedUsdMethod);
-      const mixedBsIsElectronic =
-        isMixedPayment && isElectronicPaymentMethod(mixedBsMethod);
-      const amountReportedUSD = isMixedPayment
-        ? mixedUsdIsElectronic
-          ? mixedUsdValue
-          : 0
-        : singleIsVes
-          ? 0
-          : totalUSD;
-      const amountReportedVES = isMixedPayment
-        ? mixedBsIsElectronic
-          ? mixedBsValue
-          : 0
-        : singleIsVes
-          ? Math.round(totalVES * 100) / 100
-          : 0;
-      const mixedCashPart = isMixedPayment
-        ? [
-            !mixedUsdIsElectronic && mixedUsdValue > 0
-              ? `${mixedUsdMethod || "Efectivo"} ${formatUSD(mixedUsdValue)} se paga al entregar`
-              : "",
-            !mixedBsIsElectronic && mixedBsValue > 0
-              ? `${mixedBsMethod || "Efectivo"} Bs ${formatVES(mixedBsValue)} se paga al entregar`
-              : "",
-          ]
-            .filter(Boolean)
-            .join(" · ")
-        : "";
-      const reportedMethod = isMixedPayment
-        ? `${effectivePaymentMethod}${mixedCashPart ? ` · ${mixedCashPart}` : ""}`
-        : singleMethod
-          ? `${singleMethod} (${singleIsVes ? `Bs ${formatVES(amountReportedVES)}` : formatUSD(amountReportedUSD)})`
-          : effectivePaymentMethod;
+      // UN comprobante POR PATA (secuencial). Antes viajaba uno solo con las
+      // cifras SUMADAS de las dos patas y una única captura/referencia: caja
+      // no tenía cómo verificar la segunda mitad. La parte en efectivo no
+      // viaja aquí (va por la foto de los billetes): reportarla haría que caja
+      // marcara cobrado con un clic un dinero que aún no recibió.
+      for (const leg of legs) {
+        const evidence = evidenceByLeg[leg.key];
+        if (!evidence) continue;
 
-      const response = await fetch("/api/payment-proofs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          orderId,
-          reportedMethod,
-          amountReportedUSD,
-          amountReportedVES,
-          paymentReference: checkoutProofReference.trim(),
-          customerNote: "Comprobante adjuntado al registrar el pedido",
-          dataUrl: checkoutProofDataUrl,
-          fileName: checkoutProofFileName,
-          mimeType: checkoutProofMimeType,
-          confirmDuplicate: false,
-        }),
-      });
+        const amountLabel =
+          leg.amountVES > 0
+            ? `Bs ${formatVES(leg.amountVES)}`
+            : leg.amountUSD > 0
+              ? formatUSD(leg.amountUSD)
+              : "";
 
-      if (response.ok) {
-        setLastOrderProofReported(true);
-        setProofSyncSignal((current) => current + 1);
-      } else {
-        // Si el envío automático falla, la confirmación muestra el flujo de
-        // reporte manual (advertencia grande + formulario abierto).
-        setLastOrderUsedCheckoutProof(false);
-        setShowPostRegisterPaymentModal(true);
+        const response = await fetch("/api/payment-proofs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId,
+            reportedMethod: amountLabel
+              ? `${leg.method} (${amountLabel})`
+              : leg.method,
+            amountReportedUSD: leg.amountUSD,
+            amountReportedVES: leg.amountVES,
+            paymentReference: evidence.reference.trim(),
+            customerNote: "Comprobante adjuntado al registrar el pedido",
+            dataUrl: evidence.dataUrl,
+            fileName: evidence.fileName,
+            mimeType: evidence.mimeType,
+            confirmDuplicate: false,
+          }),
+        });
+
+        if (!response.ok) {
+          // Si el envío automático falla, la confirmación muestra el flujo de
+          // reporte manual (advertencia grande + formulario abierto).
+          setLastOrderUsedCheckoutProof(false);
+          setShowPostRegisterPaymentModal(true);
+          return;
+        }
       }
+
+      setLastOrderProofReported(true);
+      setProofSyncSignal((current) => current + 1);
     } catch {
       setLastOrderUsedCheckoutProof(false);
       setShowPostRegisterPaymentModal(true);
@@ -2699,6 +2810,10 @@ export default function CartDrawer({
 
       setLastOrderProofReported(false);
       const usedCheckoutProof = requiresProofBeforeRegister && hasCheckoutProof;
+      // Copia de las patas y su evidencia ANTES de limpiar el formulario: el
+      // envío es best-effort y sigue corriendo cuando el checkout ya se vació.
+      const proofLegsToSend = checkoutProofLegs.map((leg) => ({ ...leg }));
+      const proofEvidenceToSend = { ...checkoutProofByLeg };
       const usedCashDivisaPhoto = requiresCashDivisaPhoto && hasCashDivisaPhoto;
       setLastOrderUsedCheckoutProof(usedCheckoutProof || usedCashDivisaPhoto);
       // SOLO la captura ELECTRÓNICA cubre lo reportable. La foto de los
@@ -2708,7 +2823,7 @@ export default function CartDrawer({
       // En mixto pueden viajar los DOS: la captura electrónica de una pata y
       // la foto de los billetes de la otra (cada una reporta su monto).
       if (usedCheckoutProof) {
-        void submitCheckoutProofForOrder(orderId);
+        void submitCheckoutProofForOrder(orderId, proofLegsToSend, proofEvidenceToSend);
       }
       if (usedCashDivisaPhoto) {
         void submitCashDivisaPhotoForOrder(orderId);
@@ -2733,10 +2848,7 @@ export default function CartDrawer({
       setMixedUsdMethod("");
       setMixedUsdAmount("");
       setMixedUsdGivenAmount("");
-      setCheckoutProofDataUrl("");
-      setCheckoutProofFileName("");
-      setCheckoutProofMimeType("");
-      setCheckoutProofReference("");
+      setCheckoutProofByLeg({});
       setCheckoutProofError(null);
       setDivisaPhotoDataUrl("");
       setDivisaPhotoFileName("");

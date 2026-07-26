@@ -93,6 +93,10 @@ export const SIMPLE_BUSINESS_CONFIG_FIELDS: readonly SimpleConfigField[] = [
   // Permitir DOS capturas en el reporte de pago MIXTO (una por cada pata, ej.
   // pago móvil + Zelle). Solo aparece en mixto; apagable. Requiere la migración
   // 0030 (2ª imagen del comprobante); sin ella se ignora la segunda captura.
+  // OBSOLETO desde 2026-07-26: el pago mixto manda un comprobante POR PATA
+  // (fila propia con su referencia y su imagen), así que ya no hay "segunda
+  // captura" que permitir o prohibir. El campo se conserva para no romper las
+  // configuraciones guardadas; no lo lee nadie y su interruptor se retiró.
   { key: "publicMixedSecondProofEnabled", type: "boolean", default: true },
   // Anulación automática de pedidos SIN pago reportado tras X minutos
   // (0 = apagada). Solo aplica a Para llevar/Delivery no confirmados por caja.

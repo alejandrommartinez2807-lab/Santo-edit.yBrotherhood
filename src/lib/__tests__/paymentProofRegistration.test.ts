@@ -49,14 +49,36 @@ describe("verificación de comprobantes · buildPaymentFromProof", () => {
     if (mixto.ok) expect(mixto.payment.deliveryPaymentIn).toBe("Mixto")
   })
 
-  it("NO pisa un cobro ya registrado (updateOrderPayment reemplaza montos)", () => {
+  // Hasta el 2026-07-26 CUALQUIER cobro previo bloqueaba el registro. Desde
+  // la decisión del dueño sobre el pago mixto, un comprobante puede rellenar
+  // la moneda que está en CERO (la otra pata), pero nunca pisar la que ya
+  // tiene dinero — que es lo que este test protegía de verdad.
+  it("NO pisa un cobro ya registrado en LA MISMA moneda", () => {
     const decision = buildPaymentFromProof(PROOF_PAGO_MOVIL, {
-      amountReceivedUSD: 5,
-      amountReceivedVES: 0,
+      amountReceivedUSD: 0,
+      amountReceivedVES: 1000,
     })
 
     expect(decision.ok).toBe(false)
-    if (!decision.ok) expect(decision.reason).toContain("ya tiene un cobro")
+    if (!decision.ok) expect(decision.reason).toContain("ya tiene cobrado")
+  })
+
+  it("rellena la moneda libre sin tocar la que ya estaba cobrada", () => {
+    const decision = buildPaymentFromProof(PROOF_PAGO_MOVIL, {
+      amountReceivedUSD: 5,
+      amountReceivedVES: 0,
+      paymentMethodUSD: "Zelle",
+      paymentMethodVES: "",
+    })
+
+    expect(decision.ok).toBe(true)
+    if (!decision.ok) return
+
+    // Los $5 de la primera pata siguen ahí, con su método.
+    expect(decision.payment.amountReceivedUSD).toBe(5)
+    expect(decision.payment.paymentMethodUSD).toBe("Zelle")
+    expect(decision.payment.amountReceivedVES).toBe(3650)
+    expect(decision.payment.deliveryPaymentIn).toBe("Mixto")
   })
 
   it("sin montos reportados o sin pedido, se salta con motivo claro", () => {

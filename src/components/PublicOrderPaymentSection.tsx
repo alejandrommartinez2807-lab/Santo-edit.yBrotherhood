@@ -119,18 +119,36 @@ import {
   isCashReportedMethod,
   planPaymentHero,
 } from "@/lib/orderPaymentLegs";
+import { planPaymentReport } from "@/lib/paymentReportEvidence";
 import { readImageFileForUpload } from "@/lib/clientImage";
 
 type PaymentEntry = {
   method: string;
   amountUSD: string;
   amountVES: string;
+  // Evidencia PROPIA de esta pata. Antes había UNA captura y UNA referencia
+  // para todo el reporte: en "Pago móvil + Zelle" una sola captura daba por
+  // reportadas las dos patas y caja se quedaba sin cómo verificar la otra
+  // (pedido del dueño 2026-07-26). Ahora cada pago lleva la suya y las dos
+  // son obligatorias.
+  dataUrl: string;
+  fileName: string;
+  mimeType: string;
+  reference: string;
+  // La referencia vive detrás de una casilla (casi nadie la usa: la mayoría
+  // solo adjunta la captura).
+  wantsReference: boolean;
 };
 
 const EMPTY_PAYMENT_ENTRY: PaymentEntry = {
   method: "",
   amountUSD: "",
   amountVES: "",
+  dataUrl: "",
+  fileName: "",
+  mimeType: "",
+  reference: "",
+  wantsReference: false,
 };
 
 // Total del "Paso 1" en la moneda de los métodos elegidos al pedir: solo Bs si
@@ -239,24 +257,16 @@ export default function PublicOrderPaymentSection({
   // otro, indica cuánto fue en cada uno. Se precarga con lo que eligió al
   // pedir (editable si al final pagó distinto).
   const [payments, setPayments] = useState<PaymentEntry[]>([EMPTY_PAYMENT_ENTRY]);
-  const [reference, setReference] = useState("");
   const [customerNote, setCustomerNote] = useState("");
   // La nota es opcional y casi nadie la usa: vive detrás de una casilla.
   const [wantsNote, setWantsNote] = useState(false);
-  // Igual la referencia: la mayoría solo adjunta la captura.
-  const [wantsReference, setWantsReference] = useState(false);
   // true entre "reporte enviado OK" y "la info ya lo trae": evita pintar el
   // estado anterior un instante (flash de versión vieja).
   const [syncingAfterReport, setSyncingAfterReport] = useState(false);
-  const [dataUrl, setDataUrl] = useState("");
-  const [fileName, setFileName] = useState("");
-  const [mimeType, setMimeType] = useState("");
-  // Segunda captura (solo pago mixto: una por cada pata). El dueño puede
-  // apagarla desde Configuración (publicMixedSecondProofEnabled).
-  const [allowSecondProof, setAllowSecondProof] = useState(true);
-  const [dataUrl2, setDataUrl2] = useState("");
-  const [fileName2, setFileName2] = useState("");
-  const [mimeType2, setMimeType2] = useState("");
+  // Patas que YA entraron en este envío. El reporte manda un comprobante por
+  // pata (secuencial): si la segunda falla — o el servidor pide confirmar un
+  // duplicado — al reintentar no se puede volver a mandar la primera.
+  const sentLegKeysRef = useRef<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -319,7 +329,6 @@ export default function PublicOrderPaymentSection({
         if (cancelled) return;
         const config = data?.businessConfig || data?.config || {};
         setIsProofsEnabled(config.paymentProofsEnabled !== false);
-        setAllowSecondProof(config.publicMixedSecondProofEnabled !== false);
         setAllowMethodChange(config.publicPaymentMethodChangeEnabled !== false);
         setAutoCancelMinutes(
           Math.max(0, Math.round(Number(config.publicUnpaidAutoCancelMinutes) || 0)),
@@ -457,6 +466,13 @@ export default function PublicOrderPaymentSection({
     requiredElectronicUSD <= 0 || pendingElectronicUSD <= 0;
   // Reporte de pago MIXTO: más de un método (una captura por cada pata).
   const isMixedReport = payments.length > 1;
+  // El servidor mandó las patas del pedido (más de una): el reparto ya está
+  // decidido y el cliente no puede agregarle ni quitarle métodos al reporte.
+  const serverSentLegs = (info?.expectedPayments || []).length > 1;
+  // Los chips "Paso 1"/"Paso 2" de esta sección chocan con los del checkout,
+  // donde significan otra cosa ("¿cuánto pagas en bolívares?" / "¿cuánto en
+  // divisas?"). En mixto manda la numeración por pago ("Pago 1 de 2").
+  const showStepChips = !serverSentLegs && !isMixedReport;
 
   // Minutos desde que se registró el pedido (para el recordatorio escalonado
   // 5/10/15/20 min y el contador de anulación automática). SOLO aplica a los
@@ -579,13 +595,12 @@ export default function PublicOrderPaymentSection({
     }
   }, [paymentPendingReminder, elapsedMinutes, autoCancelMinutes]);
 
-  async function handleFileChange(file: File | undefined) {
+  // Captura de UNA pata (cada pago tiene la suya).
+  async function handleEntryFileChange(index: number, file: File | undefined) {
     setFormError(null);
 
     if (!file) {
-      setDataUrl("");
-      setFileName("");
-      setMimeType("");
+      updatePaymentEntry(index, { dataUrl: "", fileName: "", mimeType: "" });
       return;
     }
 
@@ -596,13 +611,13 @@ export default function PublicOrderPaymentSection({
       const image = await readImageFileForUpload(file, {
         fallbackName: "comprobante",
       });
-      setDataUrl(image.dataUrl);
-      setFileName(image.fileName);
-      setMimeType(image.mimeType);
+      updatePaymentEntry(index, {
+        dataUrl: image.dataUrl,
+        fileName: image.fileName,
+        mimeType: image.mimeType,
+      });
     } catch (error) {
-      setDataUrl("");
-      setFileName("");
-      setMimeType("");
+      updatePaymentEntry(index, { dataUrl: "", fileName: "", mimeType: "" });
       setFormError(
         error instanceof Error
           ? error.message
@@ -611,48 +626,18 @@ export default function PublicOrderPaymentSection({
     }
   }
 
-  // Segunda captura del pago mixto (una por cada pata).
-  async function handleFileChange2(file: File | undefined) {
-    setFormError(null);
-
-    if (!file) {
-      setDataUrl2("");
-      setFileName2("");
-      setMimeType2("");
-      return;
-    }
-
-    try {
-      const image = await readImageFileForUpload(file, {
-        fallbackName: "comprobante-2",
-      });
-      setDataUrl2(image.dataUrl);
-      setFileName2(image.fileName);
-      setMimeType2(image.mimeType);
-    } catch (error) {
-      setDataUrl2("");
-      setFileName2("");
-      setMimeType2("");
-      setFormError(
-        error instanceof Error
-          ? error.message
-          : "No se pudo leer la segunda imagen del comprobante.",
-      );
-    }
-  }
-
   // Monto prellenado en LA MONEDA del método: pago móvil/punto → Bs (con la
   // tasa del pedido); Zelle/efectivo divisas → $.
   function buildPrefilledEntry(methodName: string, amountUSDToCover: number): PaymentEntry {
     if (amountUSDToCover <= 0) {
-      return { method: methodName, amountUSD: "", amountVES: "" };
+      return { ...EMPTY_PAYMENT_ENTRY, method: methodName };
     }
 
     const rate = Number(info?.exchangeRate || 0);
     if (isVesPaymentMethod(methodName) && rate > 0) {
       return {
+        ...EMPTY_PAYMENT_ENTRY,
         method: methodName,
-        amountUSD: "",
         amountVES: toVesInputAmount(
           Math.round(amountUSDToCover * rate * 100) / 100,
         ),
@@ -660,10 +645,27 @@ export default function PublicOrderPaymentSection({
     }
 
     return {
+      ...EMPTY_PAYMENT_ENTRY,
       method: methodName,
       amountUSD: amountUSDToCover.toFixed(2),
-      amountVES: "",
     };
+  }
+
+  // ¿Esta pata YA tiene su comprobante? El reporte manda uno por pata, así que
+  // "Pago móvil (Bs 1.660,20)" cubre la pata "Pago móvil". Sirve para no
+  // volver a pedir (ni a mandar) lo que ya entró cuando el envío se cortó a la
+  // mitad y el cliente vuelve por el link días después.
+  function isLegAlreadyReported(methodName: string): boolean {
+    const normalized = methodName.trim().toLowerCase();
+    if (!normalized) return false;
+
+    return activeProofs.some((proof) => {
+      if (isCashReportedMethod(proof.reportedMethod)) return false;
+      return String(proof.reportedMethod || "")
+        .trim()
+        .toLowerCase()
+        .startsWith(normalized);
+    });
   }
 
   // Precarga del formulario: un bloque por método elegido al pedir, CON su
@@ -677,7 +679,15 @@ export default function PublicOrderPaymentSection({
     // negocio todavía no recibió.
     const expected = (info?.expectedPayments || []).filter((leg) => !leg.isCash);
     if (expected.length > 0) {
-      return expected.map((leg) => ({
+      // Las patas que ya tienen comprobante NO se vuelven a pedir: tras un
+      // envío a medias (pata 1 sí, pata 2 no) el formulario abre directo en lo
+      // que falta. Si ya están todas (el cliente entró por "¿enviaste la
+      // captura equivocada?"), se muestran todas.
+      const pending = expected.filter((leg) => !isLegAlreadyReported(leg.method));
+      const legs = pending.length > 0 ? pending : expected;
+
+      return legs.map((leg) => ({
+        ...EMPTY_PAYMENT_ENTRY,
         method: leg.method,
         amountUSD: leg.currency === "USD" ? leg.amount.toFixed(2) : "",
         amountVES: leg.currency === "VES" ? toVesInputAmount(leg.amount) : "",
@@ -697,7 +707,10 @@ export default function PublicOrderPaymentSection({
 
     // Varios métodos sin patas del servidor: montos vacíos para que el cliente
     // reparta a mano (el servidor casi siempre manda las patas ya calculadas).
-    return chosen.map((methodName) => ({ method: methodName, amountUSD: "", amountVES: "" }));
+    return chosen.map((methodName) => ({
+      ...EMPTY_PAYMENT_ENTRY,
+      method: methodName,
+    }));
   }
 
   // (El botón "Completar lo que falta" se retiró: los montos ya llegan
@@ -727,7 +740,6 @@ export default function PublicOrderPaymentSection({
   }
 
   async function submitProof(confirmDuplicate = false, confirmPartial = false) {
-    const hasProofOrReference = Boolean(dataUrl) || reference.trim().length > 0;
     // Lo que corresponde reportar por vía electrónica: la(s) pata(s) que
     // eligió el cliente (en mixto, la parte en efectivo se entrega en mano).
     const requiredBaseUSD = Number(info?.requiredReportUSD ?? info?.totalUSD ?? 0);
@@ -736,84 +748,76 @@ export default function PublicOrderPaymentSection({
     const rateForAssume = Number(info?.exchangeRate || 0);
 
     let entries = payments
-      .map((entry) => ({
+      .map((entry, index) => ({
+        index,
         method: entry.method.trim(),
         usd: normalizeMoneyInput(entry.amountUSD),
         ves: normalizeMoneyInput(entry.amountVES),
+        dataUrl: entry.dataUrl,
+        fileName: entry.fileName,
+        mimeType: entry.mimeType,
+        reference: entry.reference.trim(),
       }))
       .filter((entry) => entry.method || entry.usd > 0 || entry.ves > 0);
-
-    let reportedUSD = entries.reduce((total, entry) => total + entry.usd, 0);
-    let reportedVES = entries.reduce((total, entry) => total + entry.ves, 0);
 
     // Captura/referencia SIN monto escrito: si el cliente solo adjuntó su
     // comprobante (caso común, sobre todo de tercera edad), asumimos que pagó
     // el TOTAL del pedido con el método preseleccionado, en su moneda. Así la
     // captura sola + método siempre pasa (pedido del dueño 2026-07-22) en vez
-    // de trabar el envío pidiendo el monto.
+    // de trabar el envío pidiendo el monto. Solo con UNA pata: con dos, los
+    // montos vienen precargados y adivinar el reparto sería inventar dinero.
+    const onlyEntry = entries.length === 1 ? entries[0] : null;
     if (
-      reportedUSD <= 0 &&
-      reportedVES <= 0 &&
-      hasProofOrReference &&
+      onlyEntry &&
+      onlyEntry.usd <= 0 &&
+      onlyEntry.ves <= 0 &&
+      (onlyEntry.dataUrl || onlyEntry.reference) &&
       totalUSDForAssume > 0
     ) {
       const assumedMethod =
-        entries[0]?.method || payments[0]?.method?.trim() || chosenMethods[0] || "";
-      if (isVesPaymentMethod(assumedMethod) && rateForAssume > 0) {
-        entries = [
-          {
-            method: assumedMethod,
-            usd: 0,
-            ves: Math.round(totalUSDForAssume * rateForAssume * 100) / 100,
-          },
-        ];
-      } else {
-        entries = [{ method: assumedMethod, usd: totalUSDForAssume, ves: 0 }];
-      }
-      reportedUSD = entries[0].usd;
-      reportedVES = entries[0].ves;
+        onlyEntry.method || payments[0]?.method?.trim() || chosenMethods[0] || "";
+      const assumedIsVes = isVesPaymentMethod(assumedMethod) && rateForAssume > 0;
+      entries = [
+        {
+          ...onlyEntry,
+          method: assumedMethod,
+          usd: assumedIsVes ? 0 : totalUSDForAssume,
+          ves: assumedIsVes
+            ? Math.round(totalUSDForAssume * rateForAssume * 100) / 100
+            : 0,
+        },
+      ];
     }
 
-    // Resumen por método para caja: "Zelle ($10.00) + Pago móvil (Bs 500,00)".
-    const reportedMethod = entries
-      .map((entry) => {
-        const parts: string[] = [];
-        if (entry.usd > 0) parts.push(formatUSD(entry.usd));
-        if (entry.ves > 0) parts.push(`Bs ${formatVES(entry.ves)}`);
-        if (!entry.method) return parts.join(" + ");
-        return parts.length ? `${entry.method} (${parts.join(" + ")})` : entry.method;
-      })
-      .filter(Boolean)
-      .join(" + ");
+    // EVIDENCIA POR PATA (pedido del dueño 2026-07-26): cada pago necesita SU
+    // captura o SU referencia. Antes una sola captura daba por reportado todo
+    // el mixto y caja no tenía cómo verificar la otra mitad. La regla vive en
+    // paymentReportEvidence, con tests: esta pantalla no tenía ninguno.
+    const plan = planPaymentReport(entries);
+    const electronicEntries = plan.electronicLegs;
+    const isMultiLeg = electronicEntries.length > 1;
+    const legName = (method: string) => method || "tu pago";
 
-    // La captura es lo ideal, pero la referencia de la operación alcanza para
-    // que caja verifique el pago.
-    //
-    // La SEGUNDA captura también cuenta: en pago mixto, quien adjuntaba solo la
-    // del segundo método recibía "Adjunta la captura del pago" con una captura
-    // ya puesta y no tenía salida (2026-07-26). Se cuenta únicamente si de
-    // verdad va a viajar — mismo condicional que el envío más abajo — para no
-    // dejar pasar un reporte sin comprobante.
-    const sendsSecondProof = isMixedReport && allowSecondProof && Boolean(dataUrl2);
-    if (!dataUrl && !sendsSecondProof && !reference.trim()) {
-      setFormError("Adjunta la captura del pago o escribe la referencia completa de la operación.");
-      return;
-    }
-
-    // Referencia completa: con 3-4 dígitos caja no puede ubicar la operación
-    // en el banco (pedido del dueño 2026-07-21).
-    const referenceDigits = reference.replace(/[^0-9]/g, "");
-    if (reference.trim() && referenceDigits.length < 6) {
+    if (plan.problem) {
+      const { kind, method } = plan.problem;
       setFormError(
-        "Escribe la referencia completa de la operación (todos los dígitos, no solo los últimos).",
+        kind === "solo-efectivo"
+          ? "El efectivo se entrega en persona: no se reporta con captura. Si pagaste algo por transferencia, indícalo arriba."
+          : kind === "sin-monto"
+            ? "Indica el monto que pagaste (en $ o en Bs)."
+            : kind === "falta-evidencia"
+              ? isMultiLeg
+                ? `Falta la captura o la referencia de ${legName(method)}. Cada pago necesita la suya.`
+                : "Adjunta la captura del pago o escribe la referencia completa de la operación."
+              : isMultiLeg
+                ? `La referencia de ${legName(method)} está incompleta: escribe todos los dígitos de la operación.`
+                : "Escribe la referencia completa de la operación (todos los dígitos, no solo los últimos).",
       );
       return;
     }
 
-    if (reportedUSD <= 0 && reportedVES <= 0) {
-      setFormError("Indica el monto que pagaste (en $ o en Bs).");
-      return;
-    }
+    const reportedUSD = electronicEntries.reduce((total, entry) => total + entry.usd, 0);
+    const reportedVES = electronicEntries.reduce((total, entry) => total + entry.ves, 0);
 
     // Cobertura OBLIGATORIA (lote v6.1, pedido del dueño): lo reportado debe
     // cubrir completo lo que corresponde pagar por vía electrónica — el total
@@ -857,43 +861,66 @@ export default function PublicOrderPaymentSection({
       // aunque el cliente abra el link en otro teléfono.
       if (info?.branchId) headers["x-branch-id"] = info.branchId;
 
-      const response = await fetch("/api/payment-proofs", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          orderId,
-          reportedMethod,
-          amountReportedUSD: reportedUSD,
-          amountReportedVES: reportedVES,
-          paymentReference: reference,
-          customerNote,
-          dataUrl,
-          fileName,
-          mimeType,
-          // Segunda captura solo en pago mixto (2+ métodos) y si el dueño la
-          // dejó habilitada.
-          dataUrl2: isMixedReport && allowSecondProof ? dataUrl2 : "",
-          fileName2: isMixedReport && allowSecondProof ? fileName2 : "",
-          mimeType2: isMixedReport && allowSecondProof ? mimeType2 : "",
-          confirmDuplicate,
-        }),
-      });
-      const data = await response.json();
+      // UN COMPROBANTE POR PATA, secuencial. `payment_proofs` admite varias
+      // filas por pedido y cada una lleva SU referencia y SU imagen, así que
+      // caja ve la evidencia de cada pago sin abrir la base de datos. Va en
+      // serie (no en paralelo) porque el anti-duplicado del servidor mira lo
+      // que falta por cubrir: con las dos a la vez, la segunda vería el pedido
+      // como si la primera no existiera.
+      for (const entry of electronicEntries) {
+        const legKey = `${entry.index}|${entry.method}`;
+        if (sentLegKeysRef.current.has(legKey)) continue;
 
-      if (response.status === 409 && data.duplicate) {
-        setDuplicateWarning(
-          data.error ||
-            "Ya reportaste un pago para este pedido. ¿Quieres enviar otro de todas formas?",
-        );
-        return;
-      }
+        const amountParts: string[] = [];
+        if (entry.usd > 0) amountParts.push(formatUSD(entry.usd));
+        if (entry.ves > 0) amountParts.push(`Bs ${formatVES(entry.ves)}`);
+        const reportedMethod = entry.method
+          ? amountParts.length
+            ? `${entry.method} (${amountParts.join(" + ")})`
+            : entry.method
+          : amountParts.join(" + ");
 
-      if (!response.ok) {
-        throw new Error(data.error || "No se pudo enviar el comprobante");
+        const response = await fetch("/api/payment-proofs", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            orderId,
+            reportedMethod,
+            amountReportedUSD: entry.usd,
+            amountReportedVES: entry.ves,
+            paymentReference: entry.reference,
+            customerNote,
+            dataUrl: entry.dataUrl,
+            fileName: entry.fileName,
+            mimeType: entry.mimeType,
+            confirmDuplicate,
+          }),
+        });
+        const data = await response.json();
+
+        if (response.status === 409 && data.duplicate) {
+          setDuplicateWarning(
+            data.error ||
+              "Ya reportaste un pago para este pedido. ¿Quieres enviar otro de todas formas?",
+          );
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            isMultiLeg
+              ? `${data.error || "No se pudo enviar el comprobante"} Quedó pendiente ${legName(entry.method)}: vuelve a intentarlo.`
+              : data.error || "No se pudo enviar el comprobante",
+          );
+        }
+
+        sentLegKeysRef.current.add(legKey);
       }
 
       setSuccessMessage(
-        "¡Pago reportado! Caja lo revisará y aquí verás cuando quede confirmado.",
+        isMultiLeg
+          ? "¡Los dos pagos quedaron reportados! Caja los revisará y aquí verás cuando queden confirmados."
+          : "¡Pago reportado! Caja lo revisará y aquí verás cuando quede confirmado.",
       );
       onReported?.();
       // Mientras la info se recarga con el reporte nuevo, la sección muestra
@@ -903,14 +930,8 @@ export default function PublicOrderPaymentSection({
       setIsFormOpen(false);
       setPayments([EMPTY_PAYMENT_ENTRY]);
       setCoverageWarning(null);
-      setReference("");
       setCustomerNote("");
-      setDataUrl("");
-      setFileName("");
-      setMimeType("");
-      setDataUrl2("");
-      setFileName2("");
-      setMimeType2("");
+      sentLegKeysRef.current = new Set();
       await loadInfo();
     } catch (error) {
       setFormError(
@@ -1075,7 +1096,7 @@ export default function PublicOrderPaymentSection({
                   : "border-[var(--brand-border)] bg-[var(--brand-cream)]/40"
               }`}
             >
-              {!isPartialPending ? (
+              {!isPartialPending && showStepChips ? (
                 <span className="inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
                   Paso 1
                 </span>
@@ -1084,7 +1105,7 @@ export default function PublicOrderPaymentSection({
                 className={`text-sm font-black uppercase tracking-[0.12em] ${
                   isPartialPending
                     ? "text-amber-500"
-                    : "mt-2 text-[var(--brand-primary)]"
+                    : `${showStepChips ? "mt-2 " : ""}text-[var(--brand-primary)]`
                 }`}
               >
                 {isPartialPending
@@ -1185,9 +1206,28 @@ export default function PublicOrderPaymentSection({
                   );
                 })()
               ) : null}
-              {hasDetails ? (
+              {/* Con el formulario ABIERTO en mixto, los datos viven dentro de
+                  la tarjeta de cada pago: repetirlos aquí duplicaba la pantalla
+                  entera. Cerrado (o con un solo método) siguen aquí. */}
+              {hasDetails && !(isFormOpen && isMixedReport) ? (
                 <div className="mt-2">
-                  <PaymentMethodDetailsList details={visibleDetails} />
+                  {/* Con VARIOS métodos se pinta una lista por método: así cada
+                      uno se auto-abre (la regla de auto-abrir de
+                      PaymentMethodDetailsList mira que haya UNA entrada). Con
+                      los dos juntos quedaban los dos cerrados y el cliente no
+                      veía dónde pagar sin tocar nada (2026-07-26). */}
+                  {Object.keys(visibleDetails).length > 1 ? (
+                    <div className="space-y-2">
+                      {Object.entries(visibleDetails).map(([methodName, value]) => (
+                        <PaymentMethodDetailsList
+                          key={methodName}
+                          details={{ [methodName]: value }}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <PaymentMethodDetailsList details={visibleDetails} />
+                  )}
                 </div>
               ) : null}
             </div>
@@ -1276,10 +1316,18 @@ export default function PublicOrderPaymentSection({
           desaparecía justo al abrirlo, así que el cliente veía "Paso 1" y
           después nada — la numeración se rompía donde más hacía falta
           (2026-07-26). */}
-      {!hasConfirmedPayment && !awaitingProofSync && !hasActiveProof ? (
-        <span className="mt-4 inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
-          Paso 2
-        </span>
+      {showStepChips && !hasConfirmedPayment && !awaitingProofSync && !hasActiveProof ? (
+        <div className="mt-4">
+          <span className="inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
+            Paso 2
+          </span>
+          {/* La pastilla nunca va sola: con el formulario auto-abierto quedaba
+              un "Paso 2" naranja flotando encima del primer campo, sin decir
+              de qué paso se trataba (2026-07-26). */}
+          <p className="mt-1.5 text-sm font-black text-[var(--brand-ink-3)]">
+            {isFormOpen ? "Cuéntanos cómo pagaste" : "Repórtalo aquí"}
+          </p>
+        </div>
       ) : null}
 
       {!hasConfirmedPayment && !awaitingProofSync && !isFormOpen ? (
@@ -1324,7 +1372,8 @@ export default function PublicOrderPaymentSection({
         <div className="mt-4 space-y-3 text-left">
           {/* Cambió el método respecto a lo que eligió al pedir: se puede
               (si el dueño lo permite), con la condición de cubrir el total. */}
-          {chosenMethods.length > 0 &&
+          {!serverSentLegs &&
+          chosenMethods.length > 0 &&
           payments.some(
             (entry) => entry.method && !chosenMethods.includes(entry.method),
           ) ? (
@@ -1339,18 +1388,29 @@ export default function PublicOrderPaymentSection({
               key={`payment-entry-${index}`}
               className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/25 p-3"
             >
-              <div className="flex items-center justify-between gap-2">
-                <label className="text-[0.78rem] font-bold text-[var(--brand-ink-2)]/75">
-                  {payments.length > 1
-                    ? `Método ${index + 1}`
-                    : "Método de pago"}
-                </label>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                {/* En mixto, cada pago es su propia tarjeta numerada: antes
+                    había UN bloque de método, UN bloque de captura y un parche
+                    suelto para la segunda — que además quedaba FUERA de la
+                    tarjeta agrupadora, sin borde ni fondo (2026-07-26). */}
+                {isMixedReport ? (
+                  <span className="inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
+                    Pago {index + 1} de {payments.length}
+                  </span>
+                ) : (
+                  <label className="text-[0.78rem] font-bold text-[var(--brand-ink-2)]/75">
+                    Método de pago
+                  </label>
+                )}
                 {/* "Quitar" solo si el dueño permite tocar los métodos — la
                     MISMA condición que el botón de agregar más abajo. Antes
                     salía siempre: con los métodos fijados, la fila decía "el
                     que elegiste al pedir" y al lado ofrecía borrarlo, así que
-                    el cliente podía dejar el reporte sin una pata (2026-07-26). */}
+                    el cliente podía dejar el reporte sin una pata (2026-07-26).
+                    Con las patas que manda el SERVIDOR tampoco se ofrece:
+                    quitarle una al reporte deja el pedido a medio pagar. */}
                 {payments.length > 1 &&
+                  !serverSentLegs &&
                   (allowMethodChange || chosenMethods.length === 0) && (
                     <button
                       type="button"
@@ -1478,112 +1538,137 @@ export default function PublicOrderPaymentSection({
               {/* El botón "Completar lo que falta" se retiró: el monto ya
                   viene precargado con la pata exacta y no se puede pagar
                   menos — era un botón de más (dueño 2026-07-23). */}
+
+              {/* Los datos para pagar de ESTE método, DENTRO de su tarjeta y
+                  abiertos: con dos métodos, PaymentMethodDetailsList los deja
+                  cerrados (con uno se auto-abre), así que el cliente tenía que
+                  adivinar que ahí estaban los datos. Pasándole un solo método
+                  se auto-abre sin tocarle la regla. */}
+              {isMixedReport && (paymentMethodDetails[entry.method] || "").trim() ? (
+                <div className="mt-2">
+                  <PaymentMethodDetailsList
+                    details={{ [entry.method]: paymentMethodDetails[entry.method] }}
+                  />
+                </div>
+              ) : null}
+
+              {/* EVIDENCIA DE ESTA PATA. Antes vivía fuera, una sola para todo
+                  el reporte: en "Pago móvil + Zelle" bastaba una captura para
+                  darlo todo por reportado y caja se quedaba sin cómo verificar
+                  la otra mitad (dueño 2026-07-26). Adjuntar va primero porque
+                  es lo que hace casi todo el mundo. */}
+              {(() => {
+                const entryIsCash = isCashReportedMethod(entry.method);
+                if (entryIsCash) {
+                  return (
+                    <p className="mt-3 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/40 px-3 py-2.5 text-[0.75rem] font-bold leading-4 text-[var(--brand-ink-2)]/70">
+                      Este pago es en efectivo: lo entregas al recibir tu pedido,
+                      no hace falta comprobante.
+                    </p>
+                  );
+                }
+
+                const hasEvidence =
+                  Boolean(entry.dataUrl) || entry.reference.trim().length > 0;
+
+                return (
+                  <div className="mt-3 rounded-2xl border-2 border-[var(--brand-primary)]/30 bg-[var(--brand-cream)]/40 p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-[0.8rem] font-black text-[var(--brand-ink-3)]">
+                        {isMixedReport
+                          ? `Comprobante de ${entry.method || `este pago`}`
+                          : "Haz una de las dos para enviar"}
+                      </p>
+                      {/* Cuál falta se ve ANTES de tocar Enviar, no después
+                          en un error rojo. */}
+                      {isMixedReport ? (
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[0.6rem] font-black uppercase tracking-[0.1em] ${
+                            hasEvidence
+                              ? "border-green-600 bg-green-600/15 text-green-500"
+                              : "border-amber-500 bg-amber-500/10 text-amber-500"
+                          }`}
+                        >
+                          {hasEvidence ? <CheckCircle2 size={12} /> : null}
+                          {hasEvidence ? "Listo" : "Falta"}
+                        </span>
+                      ) : null}
+                    </div>
+                    {isMixedReport ? (
+                      <p className="mt-1 text-[0.7rem] font-bold leading-4 text-[var(--brand-ink-2)]/60">
+                        Obligatorio: la captura o la referencia de ESTE pago.
+                      </p>
+                    ) : null}
+
+                    <label className="mt-2.5 flex min-h-[52px] cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/50 bg-white px-4 py-4 text-sm font-bold text-[#1a1a1a]/80 transition hover:border-[var(--brand-primary)]">
+                      <ImagePlus size={17} />
+                      {entry.fileName || "Toca para adjuntar la captura"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(event) =>
+                          void handleEntryFileChange(index, event.target.files?.[0])
+                        }
+                      />
+                    </label>
+
+                    {/* En minúscula a propósito: en mayúscula una "O" sola se
+                        lee como un cero. */}
+                    <p className="mt-2.5 text-center text-[0.74rem] font-bold lowercase text-[var(--brand-ink-2)]/45">
+                      o
+                    </p>
+
+                    {/* Área de toque de 44px (la casilla de 20px quedaba por
+                        debajo del mínimo recomendado en teléfono). */}
+                    <label className="mt-1 flex min-h-[44px] cursor-pointer items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={entry.wantsReference}
+                        onChange={(event) =>
+                          updatePaymentEntry(index, {
+                            wantsReference: event.target.checked,
+                            ...(event.target.checked ? {} : { reference: "" }),
+                          })
+                        }
+                        className="h-6 w-6 shrink-0 accent-[var(--brand-primary)]"
+                      />
+                      <span className="text-[0.82rem] font-bold text-[var(--brand-ink-2)]/85">
+                        Escribir la referencia
+                      </span>
+                    </label>
+                    {entry.wantsReference ? (
+                      <input
+                        value={entry.reference}
+                        onChange={(event) =>
+                          updatePaymentEntry(index, { reference: event.target.value })
+                        }
+                        inputMode="numeric"
+                        placeholder="Todos los dígitos de la operación"
+                        className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
+                      />
+                    ) : null}
+                  </div>
+                );
+              })()}
             </div>
           ))}
 
-          {payments.length < 3 && (allowMethodChange || chosenMethods.length === 0) && (
-            <button
-              type="button"
-              onClick={() =>
-                setPayments((current) => [...current, { ...EMPTY_PAYMENT_ENTRY }])
-              }
-              className="w-full rounded-full border-2 border-dashed border-[var(--brand-border)] px-4 py-2.5 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/60 transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
-            >
-              + Pagué con otro método también
-            </button>
-          )}
-
-          {/* El requisito real dicho UNA vez y en positivo. Antes cada etiqueta
-              se declaraba opcional apoyándose en la otra ("referencia (si no
-              adjuntas captura)" + "captura (opcional si pones la referencia)"):
-              las dos se leían como opcionales, el cliente le daba a enviar y se
-              comía el error rojo. La validación NO cambió — sigue exigiendo una
-              de las dos, solo ahora se entiende antes (2026-07-26). Adjuntar va
-              primero porque es lo que hace casi todo el mundo (dueño
-              2026-07-23). */}
-          <div className="rounded-2xl border-2 border-[var(--brand-primary)]/30 bg-[var(--brand-cream)]/25 p-3">
-            {/* En mixto hay una captura por pata (la segunda va debajo), así que
-                "una de las dos" sería mentira: el requisito real es al menos un
-                comprobante o la referencia. */}
-            <p className="text-[0.8rem] font-black text-[var(--brand-ink-3)]">
-              {isMixedReport && allowSecondProof
-                ? "Adjunta al menos una captura o escribe la referencia"
-                : "Haz una de las dos para enviar"}
-            </p>
-
-            <div className="mt-2.5">
-              <label className="text-[0.78rem] font-bold text-[var(--brand-ink-2)]/75">
-                {isMixedReport && allowSecondProof
-                  ? "Captura del primer pago"
-                  : "Adjunta la captura del pago"}
-              </label>
-              <label className="mt-1.5 flex min-h-[52px] cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/50 bg-white px-4 py-4 text-sm font-bold text-[#1a1a1a]/80 transition hover:border-[var(--brand-primary)]">
-                <ImagePlus size={17} />
-                {fileName || "Toca para adjuntar la imagen"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(event) => void handleFileChange(event.target.files?.[0])}
-                />
-              </label>
-            </div>
-
-            {/* En minúscula a propósito: en mayúscula una "O" sola se lee como
-                un cero. */}
-            <p className="mt-2.5 text-center text-[0.74rem] font-bold lowercase text-[var(--brand-ink-2)]/45">
-              o
-            </p>
-
-            {/* Área de toque de 44px (la casilla de 20px quedaba por debajo del
-                mínimo recomendado en teléfono). */}
-            <label className="mt-1 flex min-h-[44px] cursor-pointer items-center gap-3">
-              <input
-                type="checkbox"
-                checked={wantsReference}
-                onChange={(event) => {
-                  setWantsReference(event.target.checked);
-                  if (!event.target.checked) setReference("");
-                }}
-                className="h-6 w-6 shrink-0 accent-[var(--brand-primary)]"
-              />
-              <span className="text-[0.82rem] font-bold text-[var(--brand-ink-2)]/85">
-                Escribir la referencia
-              </span>
-            </label>
-            {wantsReference ? (
-              <input
-                value={reference}
-                onChange={(event) => setReference(event.target.value)}
-                placeholder="Todos los dígitos de la operación"
-                className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
-              />
-            ) : null}
-          </div>
-
-          {/* Segunda captura: solo en pago mixto (una por cada pata, ej. pago
-              móvil + Zelle) y si el dueño la dejó habilitada. */}
-          {isMixedReport && allowSecondProof ? (
-            <div>
-              <label className="text-[0.78rem] font-bold text-[var(--brand-ink-2)]/75">
-                Captura del segundo pago (opcional)
-              </label>
-              <label className="mt-1.5 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/50 bg-white px-4 py-4 text-sm font-bold text-[#1a1a1a]/80 transition hover:border-[var(--brand-primary)]">
-                <ImagePlus size={17} />
-                {fileName2 || "Toca para adjuntar la segunda imagen"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(event) => void handleFileChange2(event.target.files?.[0])}
-                />
-              </label>
-              <p className="mt-1.5 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/60">
-                Pagaste con dos métodos: adjunta una captura por cada uno (por
-                ejemplo, una del pago móvil y otra del Zelle).
-              </p>
-            </div>
-          ) : null}
+          {/* Con las patas que manda el servidor no se ofrece agregar otro
+              método: el reparto ya está decidido en el pedido. */}
+          {payments.length < 3 &&
+            !serverSentLegs &&
+            (allowMethodChange || chosenMethods.length === 0) && (
+              <button
+                type="button"
+                onClick={() =>
+                  setPayments((current) => [...current, { ...EMPTY_PAYMENT_ENTRY }])
+                }
+                className="w-full rounded-full border-2 border-dashed border-[var(--brand-border)] px-4 py-2.5 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/60 transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+              >
+                + Pagué con otro método también
+              </button>
+            )}
 
           {/* La nota vive detrás de una casilla (mismo patrón que el punto de
               referencia del delivery): menos campos a la vista. */}
