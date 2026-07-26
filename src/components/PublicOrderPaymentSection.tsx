@@ -248,8 +248,10 @@ export default function PublicOrderPaymentSection({
   // Anulación automática sin pago (minutos, 0 = apagada): para el contador
   // visible y los recordatorios escalonados.
   const [autoCancelMinutes, setAutoCancelMinutes] = useState(0);
-  // Tick por minuto: refresca el recordatorio "llevas X min sin reportar".
-  const [reminderTick, setReminderTick] = useState(0);
+  // Reloj del recordatorio "llevas X min sin reportar", en estado y movido por
+  // un intervalo. Leer Date.now() AL RENDERIZAR es impuro: dos renders del
+  // mismo estado daban números distintos.
+  const [nowMs, setNowMs] = useState(0);
   const firedRemindersRef = useRef<Set<number>>(new Set());
 
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -364,62 +366,10 @@ export default function PublicOrderPaymentSection({
     };
   }, [loadInfo, orderId]);
 
-  // Apertura automática del formulario (una sola vez) cuando el pago sigue
-  // pendiente: la confirmación del carrito lo pide con autoOpenForm.
-  const autoOpenedRef = useRef(false);
-
-  useEffect(() => {
-    // Se abre aunque `info` no haya cargado (null): reportar pago no debe
-    // depender de que /order-payment responda. Si ya hay pago/comprobante, no
-    // se abre (pero eso solo se sabe con info).
-    if (!autoOpenForm || autoOpenedRef.current || isLoading) return;
-
-    const proofs = info?.proofs || [];
-    const hasActiveProof = proofs.some(
-      (proof) => proof.status !== "Rechazado",
-    );
-
-    if (info?.paymentRegistered || hasActiveProof) return;
-
-    autoOpenedRef.current = true;
-    // Diferido un tick para no hacer setState síncrono dentro del efecto.
-    const timer = setTimeout(() => {
-      setIsFormOpen(true);
-      setPayments(buildInitialPayments());
-    }, 0);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al cargar la info
-  }, [autoOpenForm, isLoading, info, chosenMethods]);
-
-  // El botón "Reportar pago" de la confirmación abre este formulario (en vez de
-  // mandar al cliente a otra página). Cada subida de forceOpenSignal lo abre y
-  // precarga. Se ignora el valor inicial 0 (no abrir al montar).
-  useEffect(() => {
-    if (!forceOpenSignal) return;
-    // Diferido un tick para no hacer setState síncrono dentro del efecto.
-    const timer = setTimeout(() => {
-      setSuccessMessage(null);
-      setIsFormOpen(true);
-      setPayments(buildInitialPayments());
-    }, 0);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo reaccionar a la señal
-  }, [forceOpenSignal]);
-
-  // Si el formulario se abrió ANTES de que /order-payment respondiera (caso
-  // típico: "Reportar pago" apenas registrado el pedido), los montos quedaban
-  // vacíos aunque el método sí apareciera. Al llegar la info se precargan
-  // solos — únicamente si el cliente no ha escrito ningún monto.
-  useEffect(() => {
-    if (!isFormOpen || !info) return;
-    const hasAmounts = payments.some(
-      (entry) => entry.amountUSD.trim() !== "" || entry.amountVES.trim() !== "",
-    );
-    if (hasAmounts) return;
-    const timer = setTimeout(() => setPayments(buildInitialPayments()), 0);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reprecarga solo al llegar la info
-  }, [isFormOpen, info]);
+  // (Los tres efectos que PRECARGAN el formulario viven más abajo, después de
+  // buildInitialPayments: llamarla desde aquí arriba es leer una función antes
+  // de declararla y el lint de React lo marca — la precarga podría quedarse
+  // con una versión vieja de los datos.)
 
   const activeProofs = (info?.proofs || []).filter(
     (proof) => proof.status !== "Rechazado",
@@ -482,22 +432,24 @@ export default function PublicOrderPaymentSection({
   const paymentPendingReminder =
     !hasConfirmedPayment && !hasActiveProof && info?.autoCancelApplies === true;
   const elapsedMinutes = (() => {
-    if (!info?.createdAt) return 0;
+    if (!info?.createdAt || nowMs <= 0) return 0;
     const createdAt = new Date(info.createdAt);
     if (Number.isNaN(createdAt.getTime())) return 0;
-    // reminderTick fuerza el recálculo cada minuto.
-    void reminderTick;
-    return Math.max(0, Math.floor((Date.now() - createdAt.getTime()) / 60_000));
+    return Math.max(0, Math.floor((nowMs - createdAt.getTime()) / 60_000));
   })();
 
   useEffect(() => {
     if (!paymentPendingReminder || !info?.createdAt) return;
 
-    const timer = window.setInterval(() => {
-      setReminderTick((tick) => tick + 1);
-    }, 60_000);
+    // La primera lectura va diferida un tick (setState síncrono dentro del
+    // efecto lo prohíbe el lint), y de ahí en adelante una por minuto.
+    const first = window.setTimeout(() => setNowMs(Date.now()), 0);
+    const timer = window.setInterval(() => setNowMs(Date.now()), 60_000);
 
-    return () => window.clearInterval(timer);
+    return () => {
+      window.clearTimeout(first);
+      window.clearInterval(timer);
+    };
   }, [paymentPendingReminder, info?.createdAt]);
 
   // Refresco periódico del estado de pago: si caja confirma (o el pedido se
@@ -713,6 +665,58 @@ export default function PublicOrderPaymentSection({
     }));
   }
 
+  // Apertura automática del formulario (una sola vez) cuando el pago sigue
+  // pendiente: la confirmación del carrito lo pide con autoOpenForm.
+  const autoOpenedRef = useRef(false);
+
+  useEffect(() => {
+    // Se abre aunque `info` no haya cargado (null): reportar pago no debe
+    // depender de que /order-payment responda. Si ya hay pago/comprobante, no
+    // se abre (pero eso solo se sabe con info).
+    if (!autoOpenForm || autoOpenedRef.current || isLoading) return;
+
+    if (info?.paymentRegistered || activeProofs.length > 0) return;
+
+    autoOpenedRef.current = true;
+    // Diferido un tick para no hacer setState síncrono dentro del efecto.
+    const timer = setTimeout(() => {
+      setIsFormOpen(true);
+      setPayments(buildInitialPayments());
+    }, 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al cargar la info
+  }, [autoOpenForm, isLoading, info, chosenMethods]);
+
+  // El botón "Reportar pago" de la confirmación abre este formulario (en vez de
+  // mandar al cliente a otra página). Cada subida de forceOpenSignal lo abre y
+  // precarga. Se ignora el valor inicial 0 (no abrir al montar).
+  useEffect(() => {
+    if (!forceOpenSignal) return;
+    // Diferido un tick para no hacer setState síncrono dentro del efecto.
+    const timer = setTimeout(() => {
+      setSuccessMessage(null);
+      setIsFormOpen(true);
+      setPayments(buildInitialPayments());
+    }, 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo reaccionar a la señal
+  }, [forceOpenSignal]);
+
+  // Si el formulario se abrió ANTES de que /order-payment respondiera (caso
+  // típico: "Reportar pago" apenas registrado el pedido), los montos quedaban
+  // vacíos aunque el método sí apareciera. Al llegar la info se precargan
+  // solos — únicamente si el cliente no ha escrito ningún monto.
+  useEffect(() => {
+    if (!isFormOpen || !info) return;
+    const hasAmounts = payments.some(
+      (entry) => entry.amountUSD.trim() !== "" || entry.amountVES.trim() !== "",
+    );
+    if (hasAmounts) return;
+    const timer = setTimeout(() => setPayments(buildInitialPayments()), 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reprecarga solo al llegar la info
+  }, [isFormOpen, info]);
+
   // (El botón "Completar lo que falta" se retiró: los montos ya llegan
   // precargados con la pata exacta — dueño 2026-07-23. Con él se fue
   // getCoveredUSDExcept(), que solo lo usaba ese botón.)
@@ -742,7 +746,13 @@ export default function PublicOrderPaymentSection({
   async function submitProof(confirmDuplicate = false, confirmPartial = false) {
     // Lo que corresponde reportar por vía electrónica: la(s) pata(s) que
     // eligió el cliente (en mixto, la parte en efectivo se entrega en mano).
-    const requiredBaseUSD = Number(info?.requiredReportUSD ?? info?.totalUSD ?? 0);
+    // Ojo: lo que FALTA, no el total. Con la pata 1 ya enviada el formulario
+    // abre solo con la pata 2, así que exigir otra vez el total del pedido
+    // dejaba el envío de esa segunda pata bloqueado para siempre.
+    const requiredBaseUSD =
+      pendingElectronicUSD > 0
+        ? pendingElectronicUSD
+        : Number(info?.requiredReportUSD ?? info?.totalUSD ?? 0);
     const totalUSDForAssume =
       requiredBaseUSD > 0 ? requiredBaseUSD : Number(info?.totalUSD || 0);
     const rateForAssume = Number(info?.exchangeRate || 0);
@@ -1028,6 +1038,14 @@ export default function PublicOrderPaymentSection({
           // aquí quedó inalcanzable y nadie lo notó.
           const legsPlan = planPaymentHero(info?.expectedPayments || []);
           const electronicLegs = legsPlan.electronicLegs;
+          // Con una pata ya reportada, "falta registrar la parte de X" solo
+          // puede nombrar (y sumar) las que FALTAN: si no, tras enviar el pago
+          // móvil el aviso seguía pidiendo "Pago móvil + Zelle" con los dos
+          // montos, como si no hubiera llegado nada.
+          const missingLegsRaw = electronicLegs.filter(
+            (leg) => !isLegAlreadyReported(leg.method),
+          );
+          const missingLegs = missingLegsRaw.length ? missingLegsRaw : electronicLegs;
           // Métodos del PEDIDO (los manda el servidor). chosenMethods vive en
           // el localStorage del teléfono que pidió: abriendo el link en otro
           // navegador llegaba vacío y un pedido en efectivo terminaba
@@ -1035,8 +1053,8 @@ export default function PublicOrderPaymentSection({
           const serverMethods = (info?.expectedPayments || []).map(
             (payment) => payment.method,
           );
-          const cardMethods = isPartialPending && electronicLegs.length
-            ? electronicLegs.map((payment) => payment.method)
+          const cardMethods = isPartialPending && missingLegs.length
+            ? missingLegs.map((payment) => payment.method)
             : serverMethods.length
               ? serverMethods
               : chosenMethods;
@@ -1066,7 +1084,6 @@ export default function PublicOrderPaymentSection({
 
           // Patas en efectivo: se entregan en mano, NO se transfieren.
           const cashLegs = legsPlan.cashLegs;
-          const hasElectronicLeg = electronicLegs.length > 0;
           const legsLabel = (legs: ExpectedPayment[]) =>
             legs
               .map((payment) =>
@@ -1078,8 +1095,14 @@ export default function PublicOrderPaymentSection({
 
           const hasDetails = Object.keys(visibleDetails).length > 0;
           const showsAmount = isPartialPending
-            ? hasElectronicLeg
+            ? missingLegs.length > 0
             : (info?.totalUSD ?? 0) > 0;
+          // Lo único que llegó es la foto de unos billetes: solo ahí se puede
+          // decir "foto recibida". Con una pata electrónica ya reportada, ese
+          // texto sería falso.
+          const onlyCashProofs =
+            activeProofs.length > 0 &&
+            activeProofs.every((proof) => isCashReportedMethod(proof.reportedMethod));
 
           // Antes bastaba con NO tener datos de pago para matar la tarjeta
           // entera. Con el efectivo (que no tiene datos que mostrar) eso se
@@ -1109,8 +1132,8 @@ export default function PublicOrderPaymentSection({
                 }`}
               >
                 {isPartialPending
-                  ? `📸 Foto recibida · falta registrar la parte de ${
-                      electronicLegs.map((payment) => payment.method).join(" + ") ||
+                  ? `${onlyCashProofs ? "📸 Foto recibida" : "✅ Recibimos tu primer pago"} · falta registrar la parte de ${
+                      missingLegs.map((payment) => payment.method).join(" + ") ||
                       "tu pago electrónico"
                     }`
                   : (
@@ -1131,18 +1154,12 @@ export default function PublicOrderPaymentSection({
                     </>
                   )}
               </p>
-              {isPartialPending && electronicLegs.length ? (
+              {isPartialPending && missingLegs.length ? (
                 <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/85">
                   Monto a reportar:{" "}
                   {/* La cantidad BRILLA sobre el resto (dueño 2026-07-23). */}
                   <span className="text-[1.1rem] font-black text-amber-300 [text-shadow:0_0_14px_rgba(251,191,36,0.6)]">
-                    {electronicLegs
-                      .map((payment) =>
-                        payment.currency === "VES"
-                          ? `Bs ${formatVES(payment.amount)}`
-                          : formatUSD(payment.amount),
-                      )
-                      .join(" + ")}
+                    {legsLabel(missingLegs)}
                   </span>
                 </p>
               ) : !isPartialPending && (info?.totalUSD ?? 0) > 0 ? (
