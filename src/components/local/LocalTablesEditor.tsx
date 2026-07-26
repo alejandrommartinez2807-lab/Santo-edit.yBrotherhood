@@ -46,6 +46,24 @@ export function normalizeTableKey(value: string) {
     .toLowerCase();
 }
 
+// Mesas OCUPADAS (cuenta abierta o pedidos activos) que desaparecerían al
+// guardar: o las renombraron o las quitaron. Como pedidos, cuentas y QR se
+// relacionan por el NOMBRE de la mesa, dejarlas ir deja esa cuenta colgando de
+// un nombre que ya no existe. Devuelve los nombres afectados (vacío = seguro).
+export function getBusyTablesLost(
+  loadedNames: string[],
+  nextNames: string[],
+  busyNames: string[],
+): string[] {
+  const busy = new Set(busyNames.map(normalizeTableKey).filter(Boolean));
+  const next = new Set(nextNames.map(normalizeTableKey).filter(Boolean));
+
+  return loadedNames.filter((name) => {
+    const key = normalizeTableKey(name);
+    return Boolean(key) && busy.has(key) && !next.has(key);
+  });
+}
+
 function getOwnerPassword() {
   if (typeof window === "undefined") return "";
   try {
@@ -112,11 +130,17 @@ export default function LocalTablesEditor({
   branchId,
   branchName,
   hasMultipleBranches,
+  busyTableNames = [],
   onSaved,
 }: {
   branchId: string | null;
   branchName: string;
   hasMultipleBranches: boolean;
+  // Mesas de ESTA sede con cuenta abierta o pedidos activos ahora mismo.
+  // Todo (pedidos, cuentas y QR) se relaciona por el NOMBRE de la mesa, así
+  // que renombrarla o quitarla mientras está ocupada deja su cuenta huérfana:
+  // el mapa ya no la encuentra y caja no la ve en esa mesa.
+  busyTableNames?: string[];
   onSaved?: () => void;
 }) {
   const [loading, setLoading] = useState(false);
@@ -130,6 +154,8 @@ export default function LocalTablesEditor({
   // sede hasta que se toque "Volver a las generales". Hay que decirlo.
   const [savedOwnTables, setSavedOwnTables] = useState(false);
   const [tables, setTables] = useState<EditableTable[]>([]);
+  // Nombres tal como estaban al cargar: sirven para detectar renombres.
+  const [loadedNames, setLoadedNames] = useState<string[]>([]);
   const [globalTables, setGlobalTables] = useState<EditableTable[]>([]);
   const [canEdit, setCanEdit] = useState(true);
   // Descarta respuestas viejas si el dueño cambia de sede a mitad de carga:
@@ -180,7 +206,9 @@ export default function LocalTablesEditor({
       setGlobalTables(global);
       setOwnTables(hasOwn);
       setSavedOwnTables(hasOwn);
-      setTables(hasOwn ? toEditableTables(branchOwn) : global);
+      const inUse = hasOwn ? toEditableTables(branchOwn) : global;
+      setTables(inUse);
+      setLoadedNames(inUse.map((table) => table.name));
     } catch (loadError) {
       if (seq !== seqRef.current) return;
       setError(loadError instanceof Error ? loadError.message : "No se pudieron cargar las mesas");
@@ -242,6 +270,22 @@ export default function LocalTablesEditor({
         return;
       }
       names.add(key);
+    }
+
+    // Guarda de mesas OCUPADAS: si una mesa con cuenta abierta o pedidos
+    // activos desaparece de la lista (renombrada o quitada), su cuenta queda
+    // colgando de un nombre que ya no existe. Se bloquea y se explica.
+    const gone = getBusyTablesLost(
+      loadedNames,
+      cleaned.map((table) => table.name),
+      busyTableNames,
+    );
+
+    if (gone.length) {
+      setError(
+        `No se puede guardar: ${gone.join(", ")} ${gone.length === 1 ? "tiene" : "tienen"} cuenta abierta o pedidos activos ahora mismo. Todo se relaciona por el nombre de la mesa, así que al renombrarla o quitarla esa cuenta quedaría colgando. Ciérrala en Caja primero y vuelve.`,
+      );
+      return;
     }
 
     setSaving(true);
@@ -393,6 +437,14 @@ export default function LocalTablesEditor({
             {ownTables
               ? `Al guardar, estas mesas quedan SOLO en ${branchName || "esta sede"}. Las demás sucursales no cambian.`
               : "Ojo: al guardar cambias las mesas GENERALES del negocio, o sea las de todas las sedes que no tengan mesas propias."}
+          </p>
+
+          {/* Duda típica del dueño: si las dos sedes comparten los nombres de
+              mesa, ¿se le mezclan las cuentas? No. */}
+          <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+            Aunque dos sedes tengan mesas con el mismo nombre, <strong>no se
+            mezclan</strong>: cada sucursal tiene su propio QR, sus propios
+            pedidos y sus propias cuentas abiertas.
           </p>
 
           {!ownTables && savedOwnTables ? (

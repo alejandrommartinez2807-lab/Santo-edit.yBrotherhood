@@ -24,6 +24,27 @@ function isApiRequest(url: string): boolean {
   return false
 }
 
+function isPublicApiRequest(url: string): boolean {
+  if (url.startsWith("/api/public/")) return true
+  if (
+    typeof window !== "undefined" &&
+    url.startsWith(window.location.origin + "/api/public/")
+  ) {
+    return true
+  }
+  return false
+}
+
+// Sede del QR: /mesa/<mesa>?branch=<sede> y /?mesa=…&branch=<sede>.
+function getBranchIdFromUrl(): string {
+  if (typeof window === "undefined") return ""
+  try {
+    return String(new URLSearchParams(window.location.search).get("branch") || "").trim()
+  } catch {
+    return ""
+  }
+}
+
 function installAuthFetchBridge() {
   if (typeof window === "undefined") return
   if (window.__authBridgeInstalled) return
@@ -60,8 +81,18 @@ function installAuthFetchBridge() {
         }
 
         // Sucursal elegida por el staff → scopea toda la operación.
+        //
+        // En el flujo PÚBLICO manda el ?branch= del QR (2026-07-25): el cliente
+        // que ya había pedido en otra sede tenía esa sede guardada en su
+        // teléfono, y este puente la adjuntaba a las primeras llamadas del QR
+        // nuevo — menú, mesas y estado de la mesa se resolvían contra la sede
+        // EQUIVOCADA hasta que el selector terminaba de cargar y la corregía.
+        // Se limita a /api/public/* a propósito: en los paneles autenticados la
+        // sede sigue mandándola el selector, nunca un enlace de fuera
+        // (blindaje A7).
         if (!headers.has("x-branch-id")) {
-          const branchId = getSelectedBranchId()
+          const branchId =
+            (isPublicApiRequest(url) ? getBranchIdFromUrl() : "") || getSelectedBranchId()
           if (branchId) {
             headers.set("x-branch-id", branchId)
             touched = true

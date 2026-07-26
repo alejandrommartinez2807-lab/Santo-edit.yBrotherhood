@@ -2,7 +2,7 @@ import { getBranchConfig } from "@/lib/branch"
 import { getRawBusinessConfig } from "@/lib/orders"
 
 // Mesas EFECTIVAS de una sede (H13, auditoría 2026-07-24): el override por
-// sede (branchConfigs[id].localTables, editable en Sucursales) pisa las mesas
+// sede (branchConfigs[id].localTables, editable en "Mesas y QR") pisa las mesas
 // globales — la misma regla que ya aplicaba /api/public/business-config. Las
 // rutas públicas de mesa y las reservas validaban contra las mesas GLOBALES:
 // con 2 sedes, el QR de "Mesa 5" de San Diego respondía "Mesa no encontrada"

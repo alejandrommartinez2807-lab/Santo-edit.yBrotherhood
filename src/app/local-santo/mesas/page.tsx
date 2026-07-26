@@ -138,6 +138,21 @@ function MesasContent() {
     [activeTables, activeLocalOrders, activeOpenAccounts],
   );
   const freeTableCount = Math.max(activeTables.length - occupiedTableCount, 0);
+  // Mesas de ESTA sede que ahora mismo tienen cuenta abierta o pedidos activos:
+  // el editor las usa para no dejar renombrarlas ni quitarlas (todo se
+  // relaciona por el nombre de la mesa).
+  const busyTableNames = useMemo(() => {
+    const names = new Set<string>();
+    activeLocalOrders.forEach((order) => {
+      const name = String(order.tableNumber || "").trim();
+      if (name) names.add(name);
+    });
+    activeOpenAccounts.forEach((account) => {
+      const name = String(account.tableNumber || "").trim();
+      if (name) names.add(name);
+    });
+    return [...names];
+  }, [activeLocalOrders, activeOpenAccounts]);
   const selectedTableKey = normalizeLocalTableText(selectedTableName);
   const selectedTableOrders = useMemo(
     () =>
@@ -395,6 +410,7 @@ function MesasContent() {
           branchId={selectedBranchId}
           branchName={branches.find((branch) => branch.id === selectedBranchId)?.name || ""}
           hasMultipleBranches={branches.length > 1}
+          busyTableNames={busyTableNames}
           onSaved={() => void loadTablesAndOrders()}
         />
 
