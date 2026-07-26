@@ -98,6 +98,45 @@ export function getOrderPaymentLegs(input: {
   return [{ method: raw, currency: "USD", amount: totalUSD, isCash: isCashMethod(raw) }]
 }
 
+// Patas que viajan al cliente en /api/public/order-payment. Incluye LAS DE
+// EFECTIVO a propósito: el cliente necesita saber que existen para no
+// transferir también esa parte. La ruta llama a esta función (y no a
+// getOrderPaymentLegs con un .filter) porque ese filtro dejó muerta la única
+// rama que avisaba "el resto lo entregas en efectivo": el cliente veía
+// "TIENES QUE PAGAR $10" en un mixto donde solo $5 iban por pago móvil y
+// transfería el doble (2026-07-26). Quien quite el efectivo de aquí rompe el
+// test de esta función.
+export function buildExpectedPayments(input: {
+  paymentMethod: unknown
+  totalUSD: number
+  exchangeRate: number
+}): OrderPaymentLeg[] {
+  return getOrderPaymentLegs(input)
+}
+
+// Qué cifra tiene que gritar la pantalla de pago del cliente:
+//   - "mixto-con-efectivo": parte se transfiere y parte se entrega en mano →
+//     el monto grande es SOLO lo electrónico.
+//   - "solo-efectivo": no hay nada que transferir.
+//   - "total": método(s) electrónico(s) → el total del pedido, como siempre.
+export type PaymentHeroPlan = {
+  kind: "mixto-con-efectivo" | "solo-efectivo" | "total"
+  cashLegs: OrderPaymentLeg[]
+  electronicLegs: OrderPaymentLeg[]
+}
+
+export function planPaymentHero(legs: OrderPaymentLeg[]): PaymentHeroPlan {
+  const cashLegs = legs.filter((leg) => leg.isCash)
+  const electronicLegs = legs.filter((leg) => !leg.isCash)
+
+  if (cashLegs.length > 0 && electronicLegs.length > 0) {
+    return { kind: "mixto-con-efectivo", cashLegs, electronicLegs }
+  }
+  if (cashLegs.length > 0) return { kind: "solo-efectivo", cashLegs, electronicLegs }
+
+  return { kind: "total", cashLegs, electronicLegs }
+}
+
 // Equivalente en USD de una lista de patas.
 export function sumLegsUSD(legs: OrderPaymentLeg[], exchangeRate: number): number {
   const rate = Number(exchangeRate) || 0

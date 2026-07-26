@@ -36,6 +36,10 @@ type ExpectedPayment = {
   method: string;
   currency: "USD" | "VES";
   amount: number;
+  // La pata se entrega EN MANO (efectivo): no se transfiere ni se reporta con
+  // captura. Lo decide el servidor y viaja explícito para que el monto grande
+  // de esta pantalla nunca le pida al cliente transferir el total.
+  isCash: boolean;
 };
 
 type OrderPaymentInfo = {
@@ -113,6 +117,7 @@ import { isVesPaymentMethod } from "@/lib/paymentOptions";
 import {
   computePendingElectronicUSD,
   isCashReportedMethod,
+  planPaymentHero,
 } from "@/lib/orderPaymentLegs";
 import { readImageFileForUpload } from "@/lib/clientImage";
 
@@ -285,6 +290,12 @@ export default function PublicOrderPaymentSection({
                   method: String(leg.method || "").trim(),
                   currency: leg.currency === "VES" ? ("VES" as const) : ("USD" as const),
                   amount: Number(leg.amount || 0),
+                  // Respaldo por si la respuesta viene de un servidor viejo que
+                  // aún no mandaba la bandera.
+                  isCash:
+                    typeof leg.isCash === "boolean"
+                      ? leg.isCash
+                      : isCashReportedMethod(leg.method),
                 }))
                 .filter((leg: ExpectedPayment) => leg.method && leg.amount > 0)
             : [],
@@ -655,7 +666,10 @@ export default function PublicOrderPaymentSection({
   // también en mixto); si aún no cargaron, se usan los métodos guardados en
   // el dispositivo y el total.
   function buildInitialPayments(): PaymentEntry[] {
-    const expected = info?.expectedPayments || [];
+    // Solo las patas que se TRANSFIEREN: la de efectivo se entrega en mano y
+    // precargarla aquí haría que el reporte declarara pagado un dinero que el
+    // negocio todavía no recibió.
+    const expected = (info?.expectedPayments || []).filter((leg) => !leg.isCash);
     if (expected.length > 0) {
       return expected.map((leg) => ({
         method: leg.method,
@@ -982,9 +996,11 @@ export default function PublicOrderPaymentSection({
         (!hasPendingProof || needsCorrection || !reportCovered) &&
         (() => {
           const isPartialPending = hasPendingProof && !reportCovered;
-          const electronicLegs = (info?.expectedPayments || []).filter(
-            (payment) => !isCashReportedMethod(payment.method),
-          );
+          // Reparto de patas + qué cifra manda en pantalla. Vive en
+          // orderPaymentLegs (con test propio) porque la versión que estaba
+          // aquí quedó inalcanzable y nadie lo notó.
+          const legsPlan = planPaymentHero(info?.expectedPayments || []);
+          const electronicLegs = legsPlan.electronicLegs;
           const cardMethods = isPartialPending && electronicLegs.length
             ? electronicLegs.map((payment) => payment.method)
             : chosenMethods;
@@ -1012,10 +1028,7 @@ export default function PublicOrderPaymentSection({
               : paymentMethodDetails;
 
           // Patas en efectivo: se entregan en mano, NO se transfieren.
-          const cashLegs = (info?.expectedPayments || []).filter((payment) =>
-            isCashReportedMethod(payment.method),
-          );
-          const hasCashLeg = cashLegs.length > 0;
+          const cashLegs = legsPlan.cashLegs;
           const hasElectronicLeg = electronicLegs.length > 0;
           const legsLabel = (legs: ExpectedPayment[]) =>
             legs
@@ -1119,22 +1132,25 @@ export default function PublicOrderPaymentSection({
                   // pedido; este es imperativo, así que en un mixto
                   // efectivo + pago móvil el cliente leía "TIENES QUE PAGAR
                   // Bs 3.640" cuando por pago móvil solo van Bs 1.820 — y
-                  // transfería el doble (2026-07-26).
-                  const mixtoConEfectivo = hasCashLeg && hasElectronicLeg;
-
-                  const eyebrow = mixtoConEfectivo
-                    ? "Tienes que transferir ahora"
-                    : hasCashLeg
-                      ? "Pagas en efectivo"
-                      : "Tienes que pagar";
-                  const main = mixtoConEfectivo
-                    ? legsLabel(electronicLegs)
-                    : total.main;
-                  const secondary = mixtoConEfectivo
-                    ? `El resto (${legsLabel(cashLegs)}) lo entregas en efectivo, no lo transfieras.`
-                    : hasCashLeg
-                      ? "Lo entregas en efectivo al recibir tu pedido."
-                      : total.secondary;
+                  // transfería el doble (2026-07-26). Este reparto lo decide
+                  // planPaymentHero: la versión anterior miraba unas patas que
+                  // el servidor ya había filtrado, así que NUNCA se ejecutaba.
+                  const eyebrow =
+                    legsPlan.kind === "mixto-con-efectivo"
+                      ? "Tienes que transferir ahora"
+                      : legsPlan.kind === "solo-efectivo"
+                        ? "Pagas en efectivo"
+                        : "Tienes que pagar";
+                  const main =
+                    legsPlan.kind === "mixto-con-efectivo"
+                      ? legsLabel(electronicLegs)
+                      : total.main;
+                  const secondary =
+                    legsPlan.kind === "mixto-con-efectivo"
+                      ? `El resto (${legsLabel(cashLegs)}) lo entregas en efectivo, no lo transfieras.`
+                      : legsPlan.kind === "solo-efectivo"
+                        ? "Lo entregas en efectivo al recibir tu pedido."
+                        : total.secondary;
 
                   return (
                     <div className="mt-2">

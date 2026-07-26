@@ -4,10 +4,12 @@
 // (efectivo) NUNCA cubre lo electrónico ni registra cobro.
 import { describe, expect, it } from "vitest"
 import {
+  buildExpectedPayments,
   computePendingElectronicUSD,
   getOrderPaymentLegs,
   getRequiredReportUSD,
   isCashReportedMethod,
+  planPaymentHero,
 } from "@/lib/orderPaymentLegs"
 import { buildPaymentFromProof } from "@/lib/paymentProofRegistration"
 
@@ -107,6 +109,83 @@ describe("cuánto se DEBE reportar (solo lo electrónico)", () => {
         exchangeRate: RATE,
       }),
     ).toBe(0)
+  })
+})
+
+// Regresión del 2026-07-26: la pantalla del cliente decía "TIENES QUE PAGAR
+// $40.00" en un mixto donde solo Bs 3.320,47 se transfieren y €20 se entregan
+// en mano. La rama que lo evitaba miraba las patas en efectivo... que el
+// servidor ya había filtrado antes de mandarlas, así que no se ejecutaba nunca.
+// Estos tests ejercitan las DOS mitades: que las patas en efectivo VIAJEN y
+// que el monto grande salga de ellas.
+describe("qué cifra se le grita al cliente (Problema 0)", () => {
+  it("las patas que viajan al cliente INCLUYEN el efectivo", () => {
+    const legs = buildExpectedPayments({
+      paymentMethod: MIXTO_CASH,
+      totalUSD: 40,
+      exchangeRate: RATE,
+    })
+    expect(legs).toHaveLength(2)
+    expect(legs.some((leg) => leg.isCash)).toBe(true)
+  })
+
+  it("mixto efectivo + pago móvil: el monto grande es SOLO la pata electrónica", () => {
+    const plan = planPaymentHero(
+      buildExpectedPayments({
+        paymentMethod: MIXTO_CASH,
+        totalUSD: 40,
+        exchangeRate: RATE,
+      }),
+    )
+    expect(plan.kind).toBe("mixto-con-efectivo")
+    expect(plan.electronicLegs).toHaveLength(1)
+    expect(plan.electronicLegs[0]).toMatchObject({ method: "Pago móvil", amount: 3320.47 })
+    expect(plan.cashLegs).toHaveLength(1)
+    expect(plan.cashLegs[0]).toMatchObject({ method: "Efectivo en divisas", amount: 20 })
+  })
+
+  it("efectivo puro: no hay nada que transferir", () => {
+    const plan = planPaymentHero(
+      buildExpectedPayments({
+        paymentMethod: "Efectivo en divisas",
+        totalUSD: 24.5,
+        exchangeRate: RATE,
+      }),
+    )
+    expect(plan.kind).toBe("solo-efectivo")
+    expect(plan.electronicLegs).toHaveLength(0)
+  })
+
+  it("mixto de dos patas electrónicas: manda el total, no hay efectivo", () => {
+    const plan = planPaymentHero(
+      buildExpectedPayments({
+        paymentMethod: MIXTO_ELECTRONICO,
+        totalUSD: 24.5,
+        exchangeRate: RATE,
+      }),
+    )
+    expect(plan.kind).toBe("total")
+    expect(plan.cashLegs).toHaveLength(0)
+    expect(plan.electronicLegs).toHaveLength(2)
+  })
+
+  it("método único electrónico: manda el total", () => {
+    const plan = planPaymentHero(
+      buildExpectedPayments({
+        paymentMethod: "Pago móvil",
+        totalUSD: 24.5,
+        exchangeRate: RATE,
+      }),
+    )
+    expect(plan.kind).toBe("total")
+  })
+
+  it("sin método identificable no se inventa efectivo", () => {
+    expect(planPaymentHero(buildExpectedPayments({
+      paymentMethod: "",
+      totalUSD: 24.5,
+      exchangeRate: RATE,
+    })).kind).toBe("total")
   })
 })
 

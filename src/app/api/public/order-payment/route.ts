@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { getPaymentProofs } from "@/lib/orders"
 import { isElectronicPaymentMethod } from "@/lib/paymentOptions"
-import { getOrderPaymentLegs, getRequiredReportUSD } from "@/lib/orderPaymentLegs"
+import { buildExpectedPayments, getRequiredReportUSD } from "@/lib/orderPaymentLegs"
 import { maybeAutoCancelUnpaidOrder } from "@/lib/unpaidAutoCancel"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
@@ -96,13 +96,15 @@ export async function GET(request: NextRequest) {
 
     // Patas de pago que eligió el cliente al pedir (lote v6.1): el reporte se
     // precarga con método Y MONTO por pata, y valida que lo reportado cubra
-    // lo requerido (las patas en efectivo se entregan en mano, no se reportan).
+    // lo requerido. Las patas en efectivo VIAJAN con su bandera isCash (no se
+    // filtran aquí): el cliente las muestra como "esto lo entregas en mano" y
+    // así el monto grande no puede pedirle que transfiera el total.
     const legsInput = {
       paymentMethod: order.payment_method,
       totalUSD: Number(order.total_usd || 0),
       exchangeRate: Number(order.exchange_rate || 0),
     }
-    const expectedPayments = getOrderPaymentLegs(legsInput).filter((leg) => !leg.isCash)
+    const expectedPayments = buildExpectedPayments(legsInput)
     const requiredReportUSD = getRequiredReportUSD(legsInput)
 
     return noStoreResponse({
