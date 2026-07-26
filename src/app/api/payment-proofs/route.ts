@@ -237,7 +237,13 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const rateLimitResponse = enforceRateLimit(request, {
     id: "api-payment-proofs-post",
-    limit: 6,
+    // Sube de 6 a 10 porque desde 2026-07-26 un reporte de pago MIXTO son DOS
+    // peticiones (una por pata), no una: con 6, un cliente que se equivoca dos
+    // veces se quedaba fuera con "Demasiados comprobantes enviados" — el
+    // mismo callejón sin salida que este lote vino a matar. La ventana y el
+    // resto de las defensas (mismo origen, tamaño máximo, anti-duplicado) no
+    // cambian: sigue siendo el mismo número de REPORTES por dos minutos.
+    limit: 10,
     windowMs: 120_000,
     message: "Demasiados comprobantes enviados. Espera un momento e intenta nuevamente.",
   })

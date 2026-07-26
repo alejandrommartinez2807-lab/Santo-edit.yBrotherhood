@@ -949,6 +949,13 @@ export default function PublicOrderPaymentSection({
           ? error.message
           : "No se pudo enviar el comprobante",
       );
+      // Si una pata SÍ entró antes del fallo, refrescamos ya: la pantalla
+      // necesita saberlo para no volver a pedir su captura si el cliente
+      // cierra y reabre el formulario (el sondeo normal tarda hasta 45s y en
+      // ese hueco el reporte quedaba trabado pidiendo algo ya enviado).
+      if (sentLegKeysRef.current.size > 0) {
+        await loadInfo();
+      }
     } finally {
       setIsSubmitting(false);
       setSyncingAfterReport(false);
