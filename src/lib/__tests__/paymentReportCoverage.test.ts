@@ -385,7 +385,7 @@ describe("confirmar comprobantes registra (o no) el cobro", () => {
     }
   })
 
-  it("con cobro previo no se pisa nada", () => {
+  it("con cobro previo EN LA MISMA MONEDA no se pisa nada", () => {
     const decision = buildPaymentFromProof(
       {
         reportedMethod: "Pago móvil",
@@ -393,7 +393,94 @@ describe("confirmar comprobantes registra (o no) el cobro", () => {
         amountReportedVES: 100,
         paymentReference: "",
       },
-      { amountReceivedUSD: 5, amountReceivedVES: 0 },
+      { amountReceivedUSD: 0, amountReceivedVES: 3320.47 },
+    )
+    expect(decision.ok).toBe(false)
+    if (!decision.ok) expect(decision.reason).toContain("3.320,47")
+  })
+})
+
+// Mixto de dos patas electrónicas: llegan DOS comprobantes. Confirmar el
+// segundo se rechazaba entero ("ya tiene un cobro registrado") y había que
+// cuadrarlo a mano en cada pedido. Decisión del dueño (2026-07-26): sumar,
+// pero solo cuando la moneda de la pata que llega está libre.
+describe("segunda pata del mixto: sumar solo si no colisiona", () => {
+  const pagoMovilCobrado = {
+    amountReceivedUSD: 0,
+    amountReceivedVES: 1660.2,
+    paymentMethodUSD: "",
+    paymentMethodVES: "Pago móvil",
+    paymentNote: "Cobro verificado por comprobante · Ref 111111",
+  }
+
+  it("Zelle en $ sobre un pago móvil en Bs: SE SUMA y conserva la primera pata", () => {
+    const decision = buildPaymentFromProof(
+      {
+        reportedMethod: "Zelle",
+        amountReportedUSD: 14.5,
+        amountReportedVES: 0,
+        paymentReference: "222222",
+      },
+      pagoMovilCobrado,
+    )
+    expect(decision.ok).toBe(true)
+    if (decision.ok) {
+      expect(decision.payment.amountReceivedVES).toBe(1660.2)
+      expect(decision.payment.amountReceivedUSD).toBe(14.5)
+      expect(decision.payment.paymentMethodVES).toBe("Pago móvil")
+      expect(decision.payment.paymentMethodUSD).toBe("Zelle")
+      expect(decision.payment.deliveryPaymentIn).toBe("Mixto")
+      // La nota conserva la referencia de la primera pata y suma la segunda.
+      expect(decision.payment.paymentNote).toContain("111111")
+      expect(decision.payment.paymentNote).toContain("222222")
+    }
+  })
+
+  it("dos patas en la MISMA moneda (pago móvil + transferencia): no se toca el dinero", () => {
+    const decision = buildPaymentFromProof(
+      {
+        reportedMethod: "Transferencia",
+        amountReportedUSD: 0,
+        amountReportedVES: 1660.2,
+        paymentReference: "222222",
+      },
+      pagoMovilCobrado,
+    )
+    expect(decision.ok).toBe(false)
+    if (!decision.ok) expect(decision.reason).toContain("Caja")
+  })
+
+  it("confirmar DOS VECES el mismo comprobante no duplica el cobro", () => {
+    const zelle = {
+      reportedMethod: "Zelle",
+      amountReportedUSD: 14.5,
+      amountReportedVES: 0,
+      paymentReference: "222222",
+    }
+    const first = buildPaymentFromProof(zelle, pagoMovilCobrado)
+    expect(first.ok).toBe(true)
+    if (!first.ok) return
+
+    // El estado del pedido después de la primera confirmación.
+    const second = buildPaymentFromProof(zelle, {
+      amountReceivedUSD: first.payment.amountReceivedUSD,
+      amountReceivedVES: first.payment.amountReceivedVES,
+      paymentMethodUSD: first.payment.paymentMethodUSD,
+      paymentMethodVES: first.payment.paymentMethodVES,
+      paymentNote: first.payment.paymentNote,
+    })
+    expect(second.ok).toBe(false)
+  })
+
+  it("la foto del efectivo sigue sin registrar cobro aunque haya una pata cobrada", () => {
+    const decision = buildPaymentFromProof(
+      {
+        reportedMethod: cashPhotoProof.method,
+        amountReportedUSD: 20,
+        amountReportedVES: 0,
+        paymentReference: "",
+      },
+      pagoMovilCobrado,
     )
     expect(decision.ok).toBe(false)
   })

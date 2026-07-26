@@ -108,9 +108,14 @@ async function getOrderPaymentSnapshot(
   if (!orderId) return null
 
   const supabase = getSupabaseAdmin()
+  // Los métodos y la nota viajan porque el cobro se REESCRIBE completo: al
+  // sumar la segunda pata de un mixto hay que devolver también lo que ya
+  // estaba, o el método de la primera se perdería.
   let query = supabase
     .from("orders")
-    .select("amount_received_usd, amount_received_ves")
+    .select(
+      "amount_received_usd, amount_received_ves, payment_method_usd, payment_method_ves, payment_note",
+    )
     .eq("id", orderId)
   if (branchId) query = query.eq("branch_id", branchId)
   const { data, error } = await query.maybeSingle()
@@ -123,6 +128,9 @@ async function getOrderPaymentSnapshot(
   return {
     amountReceivedUSD: Number(row.amount_received_usd || 0),
     amountReceivedVES: Number(row.amount_received_ves || 0),
+    paymentMethodUSD: String(row.payment_method_usd || ""),
+    paymentMethodVES: String(row.payment_method_ves || ""),
+    paymentNote: String(row.payment_note || ""),
   }
 }
 
