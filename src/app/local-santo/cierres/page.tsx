@@ -395,7 +395,8 @@ function DayClosesPageContent() {
     })
   }, [dayCloses, endDate, paymentFilter, searchText, startDate])
 
-  const totals = useMemo(() => getDayCloseTotals(dayCloses), [dayCloses])
+  // (No hay un `totals` del consolidado sin filtrar: la vista siempre muestra
+  // los totales del rango filtrado — el de arriba quedó sin uso y se retiró.)
   const filteredTotals = useMemo(
     () => getDayCloseTotals(filteredDayCloses),
     [filteredDayCloses]

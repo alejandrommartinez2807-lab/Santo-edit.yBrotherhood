@@ -16,6 +16,16 @@ export default function PaymentMethodDetailsList({
   );
   const [openMethod, setOpenMethod] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  // true en cuanto el cliente abre o cierra algo a mano: desde ahí manda él.
+  const [touched, setTouched] = useState(false);
+
+  // Con UN SOLO método los datos vienen abiertos: son LO que el cliente necesita
+  // para pagar y estaban escondidos detrás de un toque en el "Paso 1". Con
+  // varios se dejan cerrados (si no, la lista se vuelve un muro). Se resuelve
+  // por derivación y no con useState inicial porque `details` llega de un fetch:
+  // al montar puede venir vacío y el valor inicial se quedaría en null.
+  const effectiveOpen =
+    touched || entries.length !== 1 ? openMethod : entries[0][0];
 
   if (!entries.length) return null;
 
@@ -48,7 +58,7 @@ export default function PaymentMethodDetailsList({
   return (
     <div className="space-y-2">
       {entries.map(([method, value]) => {
-        const isOpen = openMethod === method;
+        const isOpen = effectiveOpen === method;
         const lines = value.split("\n").filter((line) => line.trim());
 
         return (
@@ -58,11 +68,17 @@ export default function PaymentMethodDetailsList({
           >
             <button
               type="button"
-              onClick={() => setOpenMethod(isOpen ? null : method)}
+              onClick={() => {
+                setTouched(true);
+                setOpenMethod(isOpen ? null : method);
+              }}
               className="flex w-full items-center justify-between gap-2 px-4 py-3.5 text-left"
             >
+              {/* El rótulo sigue al estado: con los datos ya abiertos (caso
+                  normal desde que se abren solos con un método) decir "Ver
+                  datos" invitaba a tocar y los escondía. */}
               <span className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-                Ver datos de {method}
+                {isOpen ? "Ocultar" : "Ver"} datos de {method}
               </span>
               <ChevronDown
                 size={17}

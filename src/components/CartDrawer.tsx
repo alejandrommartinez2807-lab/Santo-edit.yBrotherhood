@@ -1673,12 +1673,18 @@ export default function CartDrawer({
           />
         </label>
 
+        {/* Mismo separador que la pantalla de reportar pago: que las dos vías
+            se lean como alternativas y no como dos requisitos (2026-07-26). */}
+        <p className="mt-2 text-center text-[0.74rem] font-bold lowercase text-amber-900/45">
+          o
+        </p>
+
         <input
           value={checkoutProofReference}
           onChange={(event) => setCheckoutProofReference(event.target.value)}
           inputMode="numeric"
-          placeholder="O escribe la referencia completa (todos los dígitos)"
-          className="mt-2 w-full rounded-2xl border border-amber-500/50 bg-white px-4 py-3 text-sm font-bold text-amber-950 outline-none placeholder:text-amber-900/40 focus:border-amber-600"
+          placeholder="Escribe la referencia completa (todos los dígitos)"
+          className="mt-1 w-full rounded-2xl border border-amber-500/50 bg-white px-4 py-3 text-sm font-bold text-amber-950 outline-none placeholder:text-amber-900/40 focus:border-amber-600"
         />
 
         {checkoutProofError ? (
@@ -3339,13 +3345,19 @@ export default function CartDrawer({
                 </button>
 
                 <h3 className="min-w-0 flex-1 truncate text-lg font-black uppercase leading-none text-[var(--brand-primary)] sm:text-xl">
-                  {lastOrderPaymentPending
-                    ? "Pedido sin pagar"
-                    : lastCreatedOrder
-                      ? "Pedido confirmado"
-                      : isSubmittingOrder
-                        ? "Enviando pedido"
-                        : "Confirma tu pedido"}
+                  {/* Cancelado va primero: si no, el encabezado decía "Pedido
+                      confirmado" mientras el cuerpo decía "Pedido cancelado"
+                      (la misma contradicción del ✓, un nivel más arriba —
+                      2026-07-26). */}
+                  {lastOrderCancelled
+                    ? "Pedido cancelado"
+                    : lastOrderPaymentPending
+                      ? "Pedido sin pagar"
+                      : lastCreatedOrder
+                        ? "Pedido confirmado"
+                        : isSubmittingOrder
+                          ? "Enviando pedido"
+                          : "Confirma tu pedido"}
                 </h3>
 
                 <button
@@ -3375,8 +3387,19 @@ export default function CartDrawer({
               <div className="space-y-5 px-6 py-7">
                 <div className="text-center">
                   {/* El check grande SOLO cuando no falta nada: con el reporte
-                      a medias también va la alerta (dueño 2026-07-23). */}
-                  {lastOrderPaymentPending || lastOrderReportIncomplete ? (
+                      a medias también va la alerta (dueño 2026-07-23).
+                      Cancelado va PRIMERO y en rojo: al anularse solo por falta
+                      de pago, needsPaymentReport() devuelve false y esto caía
+                      en el check verde — el cliente leía "Pedido cancelado"
+                      con un ✓ arriba y creía que todo iba bien (dueño
+                      2026-07-26). Sin pulso: no hay nada que reportar ya. */}
+                  {lastOrderCancelled ? (
+                    <AlertTriangle
+                      size={58}
+                      className="mx-auto text-red-500"
+                      strokeWidth={2.2}
+                    />
+                  ) : lastOrderPaymentPending || lastOrderReportIncomplete ? (
                     <AlertTriangle
                       size={58}
                       className="mx-auto animate-pulse text-amber-500"
@@ -3393,7 +3416,15 @@ export default function CartDrawer({
                   {/* Con el reporte a medias NO puede decir "¡Pedido enviado!"
                       arriba: la gente lee eso y se va sin subir la otra parte
                       (dueño 2026-07-23). */}
-                  <p className="mt-5 text-sm font-black uppercase tracking-[0.24em] text-[var(--brand-primary)]">
+                  {/* El rótulo también en rojo al cancelarse: en naranja de
+                      marca se leía igual que un estado normal. */}
+                  <p
+                    className={`mt-5 text-sm font-black uppercase tracking-[0.24em] ${
+                      lastOrderCancelled
+                        ? "text-red-500"
+                        : "text-[var(--brand-primary)]"
+                    }`}
+                  >
                     {lastOrderCancelled
                       ? "Pedido cancelado"
                       : lastOrderAttachedToOpenAccount
@@ -3883,17 +3914,13 @@ export default function CartDrawer({
                       ))}
                     </div>
 
-                    <input
-                      value={tableNumber}
-                      onChange={(event) => {
-                        setTableNumber(event.target.value);
-                        if (qrTableNotice?.status === "invalid") {
-                          setQrTableNotice(null);
-                        }
-                      }}
-                      placeholder="O escribe otra ubicación..."
-                      className="mt-3 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
-                    />
+                    {/* Se quitó el campo libre "O escribe otra ubicación...":
+                        el cliente escribía ubicaciones que no existen como mesa
+                        y el pedido entraba sin poder ubicarlo. Las mesas las
+                        define el dueño y quickPlaces nunca viene vacío
+                        (getActivePublicLocalTableNames cae a
+                        DEFAULT_QUICK_PLACES), así que siempre hay al menos un
+                        botón que elegir (dueño 2026-07-26). */}
 
                     {isLoadingTableAccountNotice && tableNumber.trim() ? (
                       <div className="mt-3 rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">

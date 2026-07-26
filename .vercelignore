@@ -1,0 +1,43 @@
+# Qué NO se sube al desplegar con `npx vercel --prod`.
+#
+# IMPORTANTE: cuando este archivo existe, Vercel lo usa EN LUGAR de .gitignore.
+# Por eso aquí se repiten las entradas sensibles (.env*, backups): si se quitan,
+# vuelven a viajar.
+#
+# El motivo de crearlo: los proyectos de OTROS clientes viven en worktrees de
+# git dentro de .claude/worktrees/ (clínica, ferretería, hotel, condominios,
+# demos… ~18 GB y 300.000+ archivos). Están ignorados en .git/info/exclude, que
+# es LOCAL y que Vercel no lee, así que sin este archivo el deploy de este
+# negocio podía subir el código de todos los demás.
+
+# Herramientas y worktrees de otros clientes
+.claude/
+
+# Secretos: las variables las pone el panel de Vercel, no un archivo subido
+.env
+.env.*
+!.env.example
+*.pem
+
+# Dependencias y builds (Vercel los genera de su lado)
+node_modules/
+.next/
+out/
+build/
+coverage/
+*.tsbuildinfo
+
+# Git y metadatos
+.git/
+.vercel
+.vercel-*-backup/
+
+# Backups y artefactos locales
+*.zip
+.git-desconectado-original/
+src/**/*.bak-*
+scripts/fix-*.mjs
+scripts/_*.mjs
+
+# Notas de desarrollo que no hacen falta en el servidor
+*.log

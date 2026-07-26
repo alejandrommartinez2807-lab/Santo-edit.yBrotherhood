@@ -97,13 +97,12 @@ function proofStatusChip(status: string) {
   };
 }
 
-function normalizeMoneyInput(value: string) {
-  const rawValue = value.trim().replace(/\s/g, "").replace(",", ".");
-  const numberValue = Number(rawValue);
-
-  if (!Number.isFinite(numberValue) || numberValue < 0) return 0;
-  return Math.round((numberValue + Number.EPSILON) * 100) / 100;
-}
+// Parser y formateador de montos: viven en @/lib/publicMoneyInput con tests
+// propios (el de aquí no entendía separador de miles y "9.648,99" daba 0).
+import {
+  parsePublicMoneyInput as normalizeMoneyInput,
+  toVesInputAmount,
+} from "@/lib/publicMoneyInput";
 
 import PaymentMethodDetailsList from "@/components/PaymentMethodDetailsList";
 import { readRecentPublicOrders } from "@/components/recentPublicOrders";
@@ -131,10 +130,14 @@ const EMPTY_PAYMENT_ENTRY: PaymentEntry = {
 
 // Total del "Paso 1" en la moneda de los métodos elegidos al pedir: solo Bs si
 // todos son en bolívares, solo $ si todos son en divisas, ambos si hay mezcla.
+// Va PARTIDO en dos: `main` es el monto que el cliente debe pagar (se pinta
+// grande, como el "Tienes que pagar" del checkout) y `secondary` la referencia
+// en la otra moneda, chica debajo. Antes todo iba en una línea de 14px peso 700
+// y el dinero pesaba menos que etiquetas como "AGREGAR UNA NOTA" (2026-07-26).
 function formatChosenTotal(
   info: { totalUSD: number; exchangeRate: number },
   chosenMethods: string[],
-) {
+): { main: string; secondary: string } {
   const vesChosen = chosenMethods.some((methodName) => isVesPaymentMethod(methodName));
   const usdChosen = chosenMethods.some((methodName) => !isVesPaymentMethod(methodName));
   const totalVES = info.totalUSD * info.exchangeRate;
@@ -143,10 +146,21 @@ function formatChosenTotal(
   // Siempre con la referencia en dólares al lado (pedido del dueño: que el
   // pago móvil también se entienda en $).
   if (canShowVES && !usdChosen)
-    return `Bs ${formatVES(totalVES)} (≈ ${formatUSD(info.totalUSD)})`;
-  if (canShowVES && usdChosen) return `${formatUSD(info.totalUSD)} · Bs ${formatVES(totalVES)}`;
-  return formatUSD(info.totalUSD);
+    return {
+      main: `Bs ${formatVES(totalVES)}`,
+      secondary: `≈ ${formatUSD(info.totalUSD)} · tasa del pedido`,
+    };
+  if (canShowVES && usdChosen)
+    // Mixto: el cliente paga parte en $ y parte en Bs, así que NO va "si pagas
+    // en bolívares" (daba a entender uno u otro). El equivalente del total es
+    // cierto en cualquier reparto.
+    return {
+      main: formatUSD(info.totalUSD),
+      secondary: `equivale a Bs ${formatVES(totalVES)}`,
+    };
+  return { main: formatUSD(info.totalUSD), secondary: "" };
 }
+
 
 export default function PublicOrderPaymentSection({
   orderId,
@@ -245,6 +259,8 @@ export default function PublicOrderPaymentSection({
   // Aviso suave cuando lo reportado no cubre el total: se puede enviar igual
   // (abonos parciales existen), pero que sea a propósito y no un error.
   const [coverageWarning, setCoverageWarning] = useState<string | null>(null);
+  // Contenedor de los mensajes de error/aviso, para traerlos a la vista.
+  const messagesRef = useRef<HTMLDivElement | null>(null);
 
   const loadInfo = useCallback(async () => {
     try {
@@ -422,11 +438,6 @@ export default function PublicOrderPaymentSection({
   // true = lo electrónico exigible ya está cubierto por comprobantes.
   const reportCovered =
     requiredElectronicUSD <= 0 || pendingElectronicUSD <= 0;
-  // Nombre(s) de la(s) pata(s) electrónica(s) pendiente(s), para los CTAs.
-  const pendingElectronicLabel = (info?.expectedPayments || [])
-    .filter((payment) => !isCashReportedMethod(payment.method))
-    .map((payment) => payment.method)
-    .join(" + ");
   // Reporte de pago MIXTO: más de un método (una captura por cada pata).
   const isMixedReport = payments.length > 1;
 
@@ -474,9 +485,27 @@ export default function PublicOrderPaymentSection({
   // Recarga inmediata cuando el checkout termina de subir un comprobante
   // (foto de billetes / captura): sin esto, el cliente veía por hasta 45s el
   // estado ANTERIOR a su envío (parecía "una versión vieja de la página").
+  // Trae el mensaje a la vista en cuanto aparece. Con la fila de botones pegada
+  // abajo, el cliente puede enviar desde cualquier punto del formulario y el
+  // mensaje quedaba fuera del viewport: se veía como que el botón no respondía.
+  useEffect(() => {
+    if (!formError && !duplicateWarning && !coverageWarning) return;
+    const node = messagesRef.current;
+    if (!node) return;
+    const timer = setTimeout(() => {
+      node.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [formError, duplicateWarning, coverageWarning]);
+
   useEffect(() => {
     if (!refreshSignal) return;
-    void loadInfo();
+    // Diferido un tick para no hacer setState síncrono dentro del efecto
+    // (react-hooks/set-state-in-effect), igual que los demás de este archivo.
+    const timer = setTimeout(() => {
+      void loadInfo();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [refreshSignal, loadInfo]);
 
   // El checkout dice que subió un comprobante pero la info aún no lo trae:
@@ -607,7 +636,9 @@ export default function PublicOrderPaymentSection({
       return {
         method: methodName,
         amountUSD: "",
-        amountVES: (Math.round(amountUSDToCover * rate * 100) / 100).toFixed(2),
+        amountVES: toVesInputAmount(
+          Math.round(amountUSDToCover * rate * 100) / 100,
+        ),
       };
     }
 
@@ -629,7 +660,7 @@ export default function PublicOrderPaymentSection({
       return expected.map((leg) => ({
         method: leg.method,
         amountUSD: leg.currency === "USD" ? leg.amount.toFixed(2) : "",
-        amountVES: leg.currency === "VES" ? leg.amount.toFixed(2) : "",
+        amountVES: leg.currency === "VES" ? toVesInputAmount(leg.amount) : "",
       }));
     }
 
@@ -644,24 +675,14 @@ export default function PublicOrderPaymentSection({
       return [buildPrefilledEntry(chosen[0], totalUSD)];
     }
 
-    // Varios métodos sin patas del servidor: montos vacíos para repartir
-    // (el botón "Completar" ayuda con el faltante).
+    // Varios métodos sin patas del servidor: montos vacíos para que el cliente
+    // reparta a mano (el servidor casi siempre manda las patas ya calculadas).
     return chosen.map((methodName) => ({ method: methodName, amountUSD: "", amountVES: "" }));
   }
 
-  // USD equivalente ya cargado en los demás bloques (para "Completar").
-  function getCoveredUSDExcept(excludeIndex: number) {
-    const rate = Number(info?.exchangeRate || 0);
-    return payments.reduce((total, entry, index) => {
-      if (index === excludeIndex) return total;
-      const usd = normalizeMoneyInput(entry.amountUSD);
-      const ves = normalizeMoneyInput(entry.amountVES);
-      return total + usd + (rate > 0 ? ves / rate : 0);
-    }, 0);
-  }
-
   // (El botón "Completar lo que falta" se retiró: los montos ya llegan
-  // precargados con la pata exacta — dueño 2026-07-23.)
+  // precargados con la pata exacta — dueño 2026-07-23. Con él se fue
+  // getCoveredUSDExcept(), que solo lo usaba ese botón.)
 
   function updatePaymentEntry(index: number, patch: Partial<PaymentEntry>) {
     setPayments((current) =>
@@ -673,7 +694,7 @@ export default function PublicOrderPaymentSection({
 
   // Cambia el método de un bloque y limpia el monto en la moneda que ya no
   // aplica (bolívares → borra $, divisas → borra Bs), para no reportar un monto
-  // en la moneda equivocada. El botón "Completar lo que falta" rellena el resto.
+  // en la moneda equivocada.
   function changePaymentEntryMethod(index: number, nextMethod: string) {
     setPayments((current) =>
       current.map((entry, entryIndex) => {
@@ -747,7 +768,14 @@ export default function PublicOrderPaymentSection({
 
     // La captura es lo ideal, pero la referencia de la operación alcanza para
     // que caja verifique el pago.
-    if (!dataUrl && !reference.trim()) {
+    //
+    // La SEGUNDA captura también cuenta: en pago mixto, quien adjuntaba solo la
+    // del segundo método recibía "Adjunta la captura del pago" con una captura
+    // ya puesta y no tenía salida (2026-07-26). Se cuenta únicamente si de
+    // verdad va a viajar — mismo condicional que el envío más abajo — para no
+    // dejar pasar un reporte sin comprobante.
+    const sendsSecondProof = isMixedReport && allowSecondProof && Boolean(dataUrl2);
+    if (!dataUrl && !sendsSecondProof && !reference.trim()) {
       setFormError("Adjunta la captura del pago o escribe la referencia completa de la operación.");
       return;
     }
@@ -782,7 +810,7 @@ export default function PublicOrderPaymentSection({
         setFormError(
           `El monto no cubre lo que corresponde pagar: faltan ${formatUSD(missingUSD)}${
             rate > 0 ? ` (Bs ${formatVES(missingUSD * rate)})` : ""
-          } para completar ${formatUSD(requiredBaseUSD)}. Toca "Completar" o corrige el monto: no se puede enviar incompleto.`,
+          } para completar ${formatUSD(requiredBaseUSD)}. Corrige el monto de arriba: no se puede enviar incompleto.`,
         );
         return;
       }
@@ -968,11 +996,46 @@ export default function PublicOrderPaymentSection({
                 ),
               )
             : paymentMethodDetails;
+          // Mostrar TODOS los métodos cuando el filtro queda vacío es una red de
+          // seguridad a propósito: si el nombre elegido no coincide exacto con la
+          // clave configurada (acentos, mayúsculas), sin ella el cliente se queda
+          // sin saber dónde pagar. Pero NO aplica al efectivo: ahí no hay datos
+          // que mostrar y salían los del banco de TODOS los métodos (pagando en
+          // efectivo el cliente veía Zelle + pago móvil + transferencia, 2026-07-26).
+          const onlyCashChosen =
+            cardMethods.length > 0 &&
+            cardMethods.every((methodName) => isCashReportedMethod(methodName));
           const visibleDetails = Object.keys(filtered).length
             ? filtered
-            : paymentMethodDetails;
+            : onlyCashChosen
+              ? {}
+              : paymentMethodDetails;
 
-          if (!Object.keys(visibleDetails).length) return null;
+          // Patas en efectivo: se entregan en mano, NO se transfieren.
+          const cashLegs = (info?.expectedPayments || []).filter((payment) =>
+            isCashReportedMethod(payment.method),
+          );
+          const hasCashLeg = cashLegs.length > 0;
+          const hasElectronicLeg = electronicLegs.length > 0;
+          const legsLabel = (legs: ExpectedPayment[]) =>
+            legs
+              .map((payment) =>
+                payment.currency === "VES"
+                  ? `Bs ${formatVES(payment.amount)}`
+                  : formatUSD(payment.amount),
+              )
+              .join(" + ");
+
+          const hasDetails = Object.keys(visibleDetails).length > 0;
+          const showsAmount = isPartialPending
+            ? hasElectronicLeg
+            : (info?.totalUSD ?? 0) > 0;
+
+          // Antes bastaba con NO tener datos de pago para matar la tarjeta
+          // entera. Con el efectivo (que no tiene datos que mostrar) eso se
+          // llevaba también el monto y dejaba un "Paso 2" huérfano: el cliente
+          // ya no veía cuánto debe en ningún lado (2026-07-26).
+          if (!hasDetails && !showsAmount) return null;
 
           return (
             <div
@@ -1002,8 +1065,14 @@ export default function PublicOrderPaymentSection({
                     }`
                   : (
                     <>
-                      Paga con estos datos
-                      {chosenMethods.length > 0 && (
+                      {/* Sin datos que mostrar (efectivo) "Paga con estos datos"
+                          era una promesa vacía. */}
+                      {hasDetails ? "Paga con estos datos" : "Tu pago es en efectivo"}
+                      {/* El método solo si hay VARIOS: con uno, el desplegable
+                          de abajo ya dice "Ver datos de Pago móvil" y la fila
+                          del método lo repite — el nombre salía tres veces y el
+                          título se partía en dos líneas (2026-07-26). */}
+                      {chosenMethods.length > 1 && (
                         <span className="text-[var(--brand-ink-2)]/45">
                           {" "}
                           ({chosenMethods.join(" + ")})
@@ -1027,17 +1096,68 @@ export default function PublicOrderPaymentSection({
                   </span>
                 </p>
               ) : !isPartialPending && (info?.totalUSD ?? 0) > 0 ? (
-                <p className="mt-1 text-sm font-bold text-[var(--brand-ink-2)]/75">
-                  Total a pagar:{" "}
-                  {formatChosenTotal(
+                (() => {
+                  // El monto manda: mismo patrón que "Tienes que pagar lo
+                  // siguiente" del checkout (text-2xl en naranja de marca), para
+                  // que los dos pasos del flujo se vean igual.
+                  // La moneda sale de las patas del SERVIDOR cuando existen.
+                  // Derivarla solo de chosenMethods (que vive en el
+                  // localStorage del teléfono que pidió) hacía que al abrir el
+                  // link del pedido en otro navegador —o tras limpiar datos— un
+                  // pedido en bolívares mostrara "$25.00" y ninguna cifra en Bs
+                  // (2026-07-26).
+                  const methodsForCurrency = (info?.expectedPayments || []).length
+                    ? (info?.expectedPayments || []).map((payment) => payment.method)
+                    : chosenMethods;
+                  const total = formatChosenTotal(
                     info ?? { totalUSD: 0, exchangeRate: 0 },
-                    chosenMethods,
-                  )}
-                </p>
+                    methodsForCurrency,
+                  );
+
+                  // Con parte en efectivo el héroe NO puede ser el total del
+                  // pedido. El rótulo viejo ("Total a pagar") ataba la cifra al
+                  // pedido; este es imperativo, así que en un mixto
+                  // efectivo + pago móvil el cliente leía "TIENES QUE PAGAR
+                  // Bs 3.640" cuando por pago móvil solo van Bs 1.820 — y
+                  // transfería el doble (2026-07-26).
+                  const mixtoConEfectivo = hasCashLeg && hasElectronicLeg;
+
+                  const eyebrow = mixtoConEfectivo
+                    ? "Tienes que transferir ahora"
+                    : hasCashLeg
+                      ? "Pagas en efectivo"
+                      : "Tienes que pagar";
+                  const main = mixtoConEfectivo
+                    ? legsLabel(electronicLegs)
+                    : total.main;
+                  const secondary = mixtoConEfectivo
+                    ? `El resto (${legsLabel(cashLegs)}) lo entregas en efectivo, no lo transfieras.`
+                    : hasCashLeg
+                      ? "Lo entregas en efectivo al recibir tu pedido."
+                      : total.secondary;
+
+                  return (
+                    <div className="mt-2">
+                      <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/55">
+                        {eyebrow}
+                      </p>
+                      <p className="mt-0.5 text-2xl font-black leading-none text-[var(--brand-primary)]">
+                        {main}
+                      </p>
+                      {secondary ? (
+                        <p className="mt-1 text-[0.72rem] font-bold text-[var(--brand-ink-2)]/55">
+                          {secondary}
+                        </p>
+                      ) : null}
+                    </div>
+                  );
+                })()
               ) : null}
-              <div className="mt-2">
-                <PaymentMethodDetailsList details={visibleDetails} />
-              </div>
+              {hasDetails ? (
+                <div className="mt-2">
+                  <PaymentMethodDetailsList details={visibleDetails} />
+                </div>
+              ) : null}
             </div>
           );
         })()}
@@ -1116,8 +1236,12 @@ export default function PublicOrderPaymentSection({
       )}
 
       {/* El chip "Paso 2" solo en el flujo fresco: con la pata pendiente ya
-          hay un solo mensaje + un solo botón (sin numerar pasos de más). */}
-      {!hasConfirmedPayment && !awaitingProofSync && !isFormOpen && !hasPendingProof ? (
+          hay un solo mensaje + un solo botón (sin numerar pasos de más).
+          Sigue puesto con el formulario ABIERTO: antes llevaba !isFormOpen y
+          desaparecía justo al abrirlo, así que el cliente veía "Paso 1" y
+          después nada — la numeración se rompía donde más hacía falta
+          (2026-07-26). */}
+      {!hasConfirmedPayment && !awaitingProofSync && !hasPendingProof ? (
         <span className="mt-4 inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
           Paso 2
         </span>
@@ -1181,41 +1305,66 @@ export default function PublicOrderPaymentSection({
               className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/25 p-3"
             >
               <div className="flex items-center justify-between gap-2">
-                <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                <label className="text-[0.78rem] font-bold text-[var(--brand-ink-2)]/75">
                   {payments.length > 1
                     ? `Método ${index + 1}`
-                    : "Indicaste que ibas a pagar con este método"}
+                    : "Método de pago"}
                 </label>
-                {payments.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setPayments((current) =>
-                        current.filter((_, entryIndex) => entryIndex !== index),
-                      )
-                    }
-                    className="text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/50 transition hover:text-red-400"
-                  >
-                    Quitar
-                  </button>
-                )}
+                {/* "Quitar" solo si el dueño permite tocar los métodos — la
+                    MISMA condición que el botón de agregar más abajo. Antes
+                    salía siempre: con los métodos fijados, la fila decía "el
+                    que elegiste al pedir" y al lado ofrecía borrarlo, así que
+                    el cliente podía dejar el reporte sin una pata (2026-07-26). */}
+                {payments.length > 1 &&
+                  (allowMethodChange || chosenMethods.length === 0) && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPayments((current) =>
+                          current.filter((_, entryIndex) => entryIndex !== index),
+                        )
+                      }
+                      className="text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/50 transition hover:text-red-400"
+                    >
+                      Quitar
+                    </button>
+                  )}
               </div>
-              <select
-                value={entry.method}
-                onChange={(event) => changePaymentEntryMethod(index, event.target.value)}
-                disabled={!allowMethodChange && chosenMethods.length > 0}
-                className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)] disabled:opacity-60"
-              >
-                <option value="">Selecciona el método</option>
-                {!paymentMethods.includes(entry.method) && entry.method ? (
-                  <option value={entry.method}>{entry.method}</option>
-                ) : null}
-                {paymentMethods.map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
+
+              {/* Método fijado por el dueño: antes se pintaba un <select>
+                  deshabilitado CONSERVANDO su flecha ˅ — un control muerto que
+                  invitaba a tocarlo y no hacía nada, y por eso la pantalla se
+                  sentía rota. Ahora es texto plano que dice por qué está fijo
+                  (2026-07-26). Cuando SÍ se puede cambiar, sigue el select. */}
+              {!allowMethodChange && chosenMethods.length > 0 ? (
+                // Una sola fila: es un dato de lectura, no merece tres líneas
+                // (con los datos de pago ya abiertos arriba, cada línea de más
+                // empuja el botón de enviar fuera de pantalla).
+                <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/50 px-4 py-2.5">
+                  <p className="text-sm font-black text-[var(--brand-ink-3)]">
+                    {entry.method || "Por confirmar"}
+                  </p>
+                  <p className="text-[0.7rem] font-bold text-[var(--brand-ink-2)]/55">
+                    — el que elegiste al pedir
+                  </p>
+                </div>
+              ) : (
+                <select
+                  value={entry.method}
+                  onChange={(event) => changePaymentEntryMethod(index, event.target.value)}
+                  className="mt-1.5 w-full rounded-2xl border-2 border-[var(--brand-primary)]/40 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
+                >
+                  <option value="">Selecciona el método</option>
+                  {!paymentMethods.includes(entry.method) && entry.method ? (
+                    <option value={entry.method}>{entry.method}</option>
+                  ) : null}
+                  {paymentMethods.map((item) => (
+                    <option key={item} value={item}>
+                      {item}
+                    </option>
+                  ))}
+                </select>
+              )}
 
               {(() => {
                 // Muestra el monto en la moneda del método: bolívares → solo Bs,
@@ -1229,8 +1378,8 @@ export default function PublicOrderPaymentSection({
                   <div className={`mt-2 grid gap-2 ${methodChosen ? "grid-cols-1" : "grid-cols-2"}`}>
                     {showUSD && (
                       <div>
-                        <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-                          Monto $
+                        <label className="text-[0.78rem] font-bold text-[var(--brand-ink-2)]/75">
+                          Monto en $
                         </label>
                         <input
                           value={entry.amountUSD}
@@ -1245,8 +1394,8 @@ export default function PublicOrderPaymentSection({
                     )}
                     {showVES && (
                       <div>
-                        <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-                          Monto Bs
+                        <label className="text-[0.78rem] font-bold text-[var(--brand-ink-2)]/75">
+                          Monto en Bs
                         </label>
                         <input
                           value={entry.amountVES}
@@ -1260,9 +1409,25 @@ export default function PublicOrderPaymentSection({
                         {(() => {
                           // El monto en Bs también en dólares, con la tasa
                           // del pedido (pago móvil "en dólares" a la vista).
+                          // Pero SOLO si el cliente cambió el monto: con el
+                          // precargado, el "Tienes que pagar" de arriba ya lo
+                          // dice y el mismo número salía cuatro veces en la
+                          // misma pantalla, en tres formatos (2026-07-26).
                           const rate = Number(info?.exchangeRate || 0);
                           const ves = normalizeMoneyInput(entry.amountVES);
                           if (rate <= 0 || ves <= 0) return null;
+
+                          const expectedVES = (info?.expectedPayments || []).find(
+                            (leg) =>
+                              leg.currency === "VES" && leg.method === entry.method,
+                          )?.amount;
+                          if (
+                            typeof expectedVES === "number" &&
+                            Math.abs(expectedVES - ves) < 0.01
+                          ) {
+                            return null;
+                          }
+
                           return (
                             <p className="mt-1 text-[0.68rem] font-bold text-[var(--brand-ink-2)]/60">
                               ≈ {formatUSD(ves / rate)} en dólares (tasa del pedido)
@@ -1293,10 +1458,51 @@ export default function PublicOrderPaymentSection({
             </button>
           )}
 
-          {/* La mayoría solo adjunta la captura: la referencia vive detrás de
-              una casilla, como la nota (dueño 2026-07-23). */}
-          <div>
-            <label className="flex cursor-pointer items-center gap-2.5">
+          {/* El requisito real dicho UNA vez y en positivo. Antes cada etiqueta
+              se declaraba opcional apoyándose en la otra ("referencia (si no
+              adjuntas captura)" + "captura (opcional si pones la referencia)"):
+              las dos se leían como opcionales, el cliente le daba a enviar y se
+              comía el error rojo. La validación NO cambió — sigue exigiendo una
+              de las dos, solo ahora se entiende antes (2026-07-26). Adjuntar va
+              primero porque es lo que hace casi todo el mundo (dueño
+              2026-07-23). */}
+          <div className="rounded-2xl border-2 border-[var(--brand-primary)]/30 bg-[var(--brand-cream)]/25 p-3">
+            {/* En mixto hay una captura por pata (la segunda va debajo), así que
+                "una de las dos" sería mentira: el requisito real es al menos un
+                comprobante o la referencia. */}
+            <p className="text-[0.8rem] font-black text-[var(--brand-ink-3)]">
+              {isMixedReport && allowSecondProof
+                ? "Adjunta al menos una captura o escribe la referencia"
+                : "Haz una de las dos para enviar"}
+            </p>
+
+            <div className="mt-2.5">
+              <label className="text-[0.78rem] font-bold text-[var(--brand-ink-2)]/75">
+                {isMixedReport && allowSecondProof
+                  ? "Captura del primer pago"
+                  : "Adjunta la captura del pago"}
+              </label>
+              <label className="mt-1.5 flex min-h-[52px] cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/50 bg-white px-4 py-4 text-sm font-bold text-[#1a1a1a]/80 transition hover:border-[var(--brand-primary)]">
+                <ImagePlus size={17} />
+                {fileName || "Toca para adjuntar la imagen"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(event) => void handleFileChange(event.target.files?.[0])}
+                />
+              </label>
+            </div>
+
+            {/* En minúscula a propósito: en mayúscula una "O" sola se lee como
+                un cero. */}
+            <p className="mt-2.5 text-center text-[0.74rem] font-bold lowercase text-[var(--brand-ink-2)]/45">
+              o
+            </p>
+
+            {/* Área de toque de 44px (la casilla de 20px quedaba por debajo del
+                mínimo recomendado en teléfono). */}
+            <label className="mt-1 flex min-h-[44px] cursor-pointer items-center gap-3">
               <input
                 type="checkbox"
                 checked={wantsReference}
@@ -1304,10 +1510,10 @@ export default function PublicOrderPaymentSection({
                   setWantsReference(event.target.checked);
                   if (!event.target.checked) setReference("");
                 }}
-                className="h-5 w-5 shrink-0 accent-[var(--brand-primary)]"
+                className="h-6 w-6 shrink-0 accent-[var(--brand-primary)]"
               />
-              <span className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-                Escribir la referencia (si no adjuntas captura)
+              <span className="text-[0.82rem] font-bold text-[var(--brand-ink-2)]/85">
+                Escribir la referencia
               </span>
             </label>
             {wantsReference ? (
@@ -1320,30 +1526,12 @@ export default function PublicOrderPaymentSection({
             ) : null}
           </div>
 
-          <div>
-            <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-              {isMixedReport && allowSecondProof
-                ? "Captura del PRIMER pago (opcional si pones la referencia)"
-                : "Captura del pago (opcional si pones la referencia)"}
-            </label>
-            <label className="mt-1.5 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/50 bg-white px-4 py-4 text-sm font-bold text-[#1a1a1a]/80 transition hover:border-[var(--brand-primary)]">
-              <ImagePlus size={17} />
-              {fileName || "Toca para adjuntar la imagen"}
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(event) => void handleFileChange(event.target.files?.[0])}
-              />
-            </label>
-          </div>
-
           {/* Segunda captura: solo en pago mixto (una por cada pata, ej. pago
               móvil + Zelle) y si el dueño la dejó habilitada. */}
           {isMixedReport && allowSecondProof ? (
             <div>
-              <label className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-                Captura del SEGUNDO pago (opcional)
+              <label className="text-[0.78rem] font-bold text-[var(--brand-ink-2)]/75">
+                Captura del segundo pago (opcional)
               </label>
               <label className="mt-1.5 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/50 bg-white px-4 py-4 text-sm font-bold text-[#1a1a1a]/80 transition hover:border-[var(--brand-primary)]">
                 <ImagePlus size={17} />
@@ -1365,7 +1553,7 @@ export default function PublicOrderPaymentSection({
           {/* La nota vive detrás de una casilla (mismo patrón que el punto de
               referencia del delivery): menos campos a la vista. */}
           <div>
-            <label className="flex cursor-pointer items-center gap-2.5">
+            <label className="flex min-h-[44px] cursor-pointer items-center gap-3">
               <input
                 type="checkbox"
                 checked={wantsNote}
@@ -1373,10 +1561,10 @@ export default function PublicOrderPaymentSection({
                   setWantsNote(event.target.checked);
                   if (!event.target.checked) setCustomerNote("");
                 }}
-                className="h-5 w-5 shrink-0 accent-[var(--brand-primary)]"
+                className="h-6 w-6 shrink-0 accent-[var(--brand-primary)]"
               />
-              <span className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-                Agregar una nota
+              <span className="text-[0.82rem] font-bold text-[var(--brand-ink-2)]/85">
+                Agregar una nota (opcional)
               </span>
             </label>
             {wantsNote ? (
@@ -1389,14 +1577,25 @@ export default function PublicOrderPaymentSection({
             ) : null}
           </div>
 
+          {/* Los tres mensajes van juntos y con ref: la fila de botones quedó
+              pegada abajo, así que el cliente puede enviar desde media pantalla
+              y estos se pintaban al FINAL del formulario (~1250px), fuera de
+              vista. Sin nada visible parecía que el botón no hacía nada — y en
+              el caso del duplicado o del monto de más, el botón que aparece aquí
+              es la ÚNICA forma de completar el envío (2026-07-26). */}
+          {(formError || duplicateWarning || coverageWarning) && (
+          <div ref={messagesRef} className="space-y-3">
           {formError && (
-            <p className="rounded-2xl border-2 border-red-500/50 bg-red-500/10 px-4 py-3 text-sm font-bold leading-5 text-red-400">
+            <p
+              role="alert"
+              className="rounded-2xl border-2 border-red-500/50 bg-red-500/10 px-4 py-3 text-sm font-bold leading-5 text-red-400"
+            >
               {formError}
             </p>
           )}
 
           {duplicateWarning && (
-            <div className="rounded-2xl border-2 border-yellow-500/60 bg-yellow-500/10 px-4 py-3">
+            <div role="alert" className="rounded-2xl border-2 border-yellow-500/60 bg-yellow-500/10 px-4 py-3">
               <p className="text-sm font-bold leading-5 text-yellow-500">
                 {duplicateWarning}
               </p>
@@ -1412,7 +1611,7 @@ export default function PublicOrderPaymentSection({
           )}
 
           {coverageWarning && (
-            <div className="rounded-2xl border-2 border-yellow-500/60 bg-yellow-500/10 px-4 py-3">
+            <div role="alert" className="rounded-2xl border-2 border-yellow-500/60 bg-yellow-500/10 px-4 py-3">
               <p className="text-sm font-bold leading-5 text-yellow-500">
                 {coverageWarning}
               </p>
@@ -1426,8 +1625,15 @@ export default function PublicOrderPaymentSection({
               </button>
             </div>
           )}
+          </div>
+          )}
 
-          <div className="flex gap-2">
+          {/* Fila de acciones pegada al borde inferior mientras se hace scroll:
+              con los datos de pago abiertos el formulario mide ~1250px y
+              "Enviar comprobante" quedaba fuera de pantalla — el cliente pagaba
+              y no encontraba cómo enviar (2026-07-26). Fondo opaco para que el
+              contenido no se lea por detrás. */}
+          <div className="sticky bottom-0 z-10 flex gap-2 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-12px_26px_-14px_rgba(0,0,0,0.5)]">
             <button
               type="button"
               disabled={isSubmitting}

@@ -85,7 +85,14 @@ function ComprasPageContent() {
 
   useEffect(() => {
     // Tras hidratar (evita mismatch SSR): filtro inicial desde la URL.
+    // El setState va SÍNCRONO a propósito: al diferirlo un tick, su timer y el
+    // de loadPurchases(filterSupplier) (más abajo) quedan los dos encolados y el
+    // de la carga SIN filtrar puede ganar, así que /compras?supplierId=X abría
+    // con el filtro puesto pero la lista completa. Síncrono, React re-renderiza
+    // antes de que corra ese timer y el cleanup lo cancela: una sola consulta,
+    // ya filtrada.
     const fromUrl = new URLSearchParams(window.location.search).get("supplierId")
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- lectura única de la URL al hidratar; diferirla causa una carrera con la carga del listado
     if (fromUrl) setFilterSupplier(fromUrl)
   }, [])
 
