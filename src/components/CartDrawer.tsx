@@ -33,6 +33,7 @@ import {
   isElectronicPaymentMethod,
   isVesPaymentMethod,
 } from "@/lib/paymentOptions";
+import { needsPaymentReport } from "@/lib/publicOrderPaymentFlow";
 import { usePublicCurrencySymbol } from "@/hooks/usePublicCurrencySymbol";
 
 import {
@@ -2676,13 +2677,15 @@ export default function CartDrawer({
       //   solo (el cliente no repite nada).
       // - Modo normal: si el pago queda pendiente, la confirmación abre con
       //   la advertencia grande + ventana emergente recordándolo.
-      const orderNeedsPrepayReport =
-        !attachedToOpenAccount &&
-        (orderType === "Para llevar" || orderType === "Delivery") &&
-        publicConfig.publicPrepayNoticeEnabled &&
-        isPaymentProofPublicAvailable &&
-        // Solo electrónicos (pago móvil, Zelle, transferencia…); en efectivo no.
-        selectedPaymentMethods.some(isElectronicPaymentMethod);
+      // Mismo criterio que la advertencia de la confirmación (helper único):
+      // pick up y delivery se comportan igual y no depende de interruptores
+      // de textos (fix 2026-07-25).
+      const orderNeedsPrepayReport = needsPaymentReport({
+        orderType,
+        paymentMethods: selectedPaymentMethods,
+        attachedToOpenAccount,
+        proofsEnabled: isPaymentProofPublicAvailable,
+      });
 
       setLastOrderProofReported(false);
       const usedCheckoutProof = requiresProofBeforeRegister && hasCheckoutProof;
@@ -2942,20 +2945,19 @@ export default function CartDrawer({
     !lastOrderPaymentConfirmed &&
     Number(createdOrderLive.payment?.pendingReportUSD || 0) > 0 &&
     (lastOrderProofReported || lastOrderPaymentReportedLive);
-  const lastOrderPaymentPending =
-    lastOrderCanReportPayment &&
-    !lastOrderProofReported &&
-    !lastOrderPaymentReportedLive &&
-    !lastOrderCancelled &&
-    !lastCreatedOrder?.offline &&
-    isPaymentProofPublicAvailable &&
-    // Solo métodos ELECTRÓNICOS piden reporte de pago: en efectivo se paga al
-    // recibir/retirar, así que no debe salir "Falta tu pago / reporta captura".
-    (lastCreatedOrder?.paymentMethods || []).some(isElectronicPaymentMethod) &&
-    (publicConfig.publicPrepayNoticeEnabled ||
-      publicConfig.publicPaymentBeforeRegisterEnabled) &&
-    (lastCreatedOrder?.orderType === "Para llevar" ||
-      lastCreatedOrder?.orderType === "Delivery");
+  // Criterio único compartido con la ventana emergente post-registro: pick up
+  // y delivery avisan igual, y no depende de los interruptores de textos del
+  // dueño (fix 2026-07-25 — en pick up salía "¡Pedido enviado!" y "Ver el
+  // avance" aunque el cliente no hubiera reportado nada).
+  const lastOrderPaymentPending = needsPaymentReport({
+    orderType: lastCreatedOrder?.orderType,
+    paymentMethods: lastCreatedOrder?.paymentMethods || [],
+    attachedToOpenAccount: lastOrderAttachedToOpenAccount,
+    offline: Boolean(lastCreatedOrder?.offline),
+    cancelled: lastOrderCancelled,
+    proofsEnabled: isPaymentProofPublicAvailable,
+    alreadyReported: lastOrderProofReported || lastOrderPaymentReportedLive,
+  });
   // Defaults alineados al tema oscuro Brotherhood (rediseño); la config del
   // dueño (business_config) sigue mandando si trae valores propios.
   const productCardStyle = {

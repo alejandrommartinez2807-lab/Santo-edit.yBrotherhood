@@ -41,8 +41,7 @@ import {
 import { getOrderPaymentLegs } from "@/lib/orderPaymentLegs"
 import {
   ADMIN_STORAGE_KEY,
-  CASH_FILTERS,
-  DELIVERY_PAYMENT_OPTIONS,
+  CASH_FILTERS,
   EMPTY_PAYMENT_FORM,
   PAYMENT_METHOD_USD_OPTIONS,
   PAYMENT_METHOD_VES_OPTIONS,
@@ -67,8 +66,7 @@ import {
   parseMoneyInput,
   readApiResponse,
   roundMoney,
-  type CashFilter,
-  type DeliveryPaymentIn,
+  type CashFilter,
   type KitchenFlowMode,
   type LocalOrder,
   type OrderStatus,
@@ -130,9 +128,6 @@ function CajaPageContent() {
     message: "",
     reviewUrl: "",
   })
-  // "Delivery pagado en" del modal de cobro: el dueño puede apagarlo en
-  // Configuración si no le interesa registrar ese dato (2026-07-23).
-  const [deliveryPaymentInEnabled, setDeliveryPaymentInEnabled] = useState(true)
 
   const pendingStatusRef = useRef<Map<string, OrderStatus>>(new Map())
   const isLoggedIn = adminPassword.length > 0
@@ -170,9 +165,6 @@ function CajaPageContent() {
         message: String(businessConfig.postSaleSurveyMessage || ""),
         reviewUrl: String(businessConfig.googleReviewUrl || ""),
       })
-      setDeliveryPaymentInEnabled(
-        businessConfig.cashierDeliveryPaymentInEnabled !== false
-      )
     } catch {
       setLocalTables(DEFAULT_LOCAL_TABLES)
     }
@@ -1237,13 +1229,11 @@ function CajaPageContent() {
               <SelectBox label="Método en bolívares" value={paymentForm.paymentMethodVES} onChange={(value) => updatePaymentForm("paymentMethodVES", value)} options={PAYMENT_METHOD_VES_OPTIONS} emptyLabel="Sin registrar" />
             </div>
 
-            {/* Solo en pedidos DE DELIVERY (en pick up/mesa la palabra
-                "Delivery" confundía) y solo si el dueño no lo apagó en
-                Configuración. El costo del delivery se sigue viendo en
-                público, reportes y cierres aunque esto esté oculto. */}
-            {deliveryPaymentInEnabled && selectedPaymentOrder && isDeliveryOrder(selectedPaymentOrder) ? (
-              <SelectBox label="Delivery pagado en" value={paymentForm.deliveryPaymentIn} onChange={(value) => updatePaymentForm("deliveryPaymentIn", value as DeliveryPaymentIn)} options={DELIVERY_PAYMENT_OPTIONS} />
-            ) : null}
+            {/* "Delivery pagado en" se retiró del cobro (dueño 2026-07-25):
+                el paso ya no existe en el carrito y preguntarlo aquí solo
+                alargaba el cobro. El costo del delivery se sigue viendo en
+                público, reportes y cierres, y los cobros viejos conservan su
+                dato (el campo sigue en la BD y en el API). */}
 
             {/* El cliente eligió una pata electrónica (Pago móvil/Zelle…) y
                 NO ha subido captura ni referencia: avisar ANTES de registrar

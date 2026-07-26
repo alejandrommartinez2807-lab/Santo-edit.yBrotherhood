@@ -48,6 +48,14 @@ export async function GET(request: NextRequest) {
       if (branchConfig.googleMapsUrl) {
         scopedConfig = { ...scopedConfig, googleMapsUrl: branchConfig.googleMapsUrl }
       }
+      // Reseñas e Instagram POR SEDE (2026-07-25): cada local tiene su ficha de
+      // Google y su cuenta. Sin valor propio se hereda el general del negocio.
+      if (branchConfig.googleReviewUrl) {
+        scopedConfig = { ...scopedConfig, googleReviewUrl: branchConfig.googleReviewUrl }
+      }
+      if (branchConfig.instagramUrl) {
+        scopedConfig = { ...scopedConfig, instagramUrl: branchConfig.instagramUrl }
+      }
       if (branchConfig.address) scopedConfig = { ...scopedConfig, address: branchConfig.address }
       if (branchConfig.zone) scopedConfig = { ...scopedConfig, zone: branchConfig.zone }
     }

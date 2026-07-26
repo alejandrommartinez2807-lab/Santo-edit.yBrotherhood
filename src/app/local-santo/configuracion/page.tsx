@@ -40,8 +40,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   Store,
-  Table2,
-  Trash2,
+  Table2,
   Truck,
   UploadCloud,
   XCircle,
@@ -1536,18 +1535,6 @@ export default function BusinessConfigPage() {
   const deliveryAccess = getModulePlanAccess(businessConfig, "delivery");
   const canEditDeliveryZones =
     accessRole === "owner" && deliveryAccess.effectiveEnabled;
-  const activeLocalTables = useMemo(
-    () =>
-      normalizeLocalTablesForMap(
-        businessConfig.localTables,
-        DEFAULT_CONFIG_LOCAL_TABLES,
-      ).filter((table) => table.isActive !== false),
-    [businessConfig.localTables],
-  );
-  const inactiveLocalTablesCount = Math.max(
-    0,
-    businessConfig.localTables.length - activeLocalTables.length,
-  );
   const advancedPublicAccess = getModulePlanAccess(
     businessConfig,
     "advancedPublicConfig",
@@ -1571,8 +1558,6 @@ export default function BusinessConfigPage() {
     "menuProducts",
   );
   const canEditMenuProducts = menuProductsAccess.effectiveEnabled;
-  const tablesAccess = getModulePlanAccess(businessConfig, "tables");
-  const canEditTables = tablesAccess.includedInPlan;
   const featuredProductsAccess = getModulePlanAccess(
     businessConfig,
     "featuredProducts",
@@ -1767,93 +1752,9 @@ export default function BusinessConfigPage() {
     setSuccessMessage(null);
   }
 
-  function updateLocalTableConfig(
-    tableIndex: number,
-    patch: Partial<LocalTableMapItem>,
-  ) {
-    if (!canEditTables) return;
-
-    setBusinessConfig((current) => {
-      const tables = [
-        ...(current.localTables.length
-          ? current.localTables
-          : DEFAULT_CONFIG_LOCAL_TABLES),
-      ];
-      const currentTable = tables[tableIndex];
-
-      if (!currentTable) return current;
-
-      tables[tableIndex] = {
-        ...currentTable,
-        ...patch,
-      };
-
-      return {
-        ...current,
-        localTables: tables,
-      };
-    });
-    setSuccessMessage(null);
-  }
-
-  function addLocalTableConfig() {
-    if (!canEditTables) return;
-
-    setBusinessConfig((current) => {
-      const tables = [
-        ...(current.localTables.length
-          ? current.localTables
-          : DEFAULT_CONFIG_LOCAL_TABLES),
-      ];
-      const nextNumber = tables.length + 1;
-
-      return {
-        ...current,
-        localTables: [
-          ...tables,
-          {
-            id: `mesa-${nextNumber}`,
-            name: `Mesa ${nextNumber}`,
-            area: "Principal",
-            sortOrder: nextNumber,
-            isActive: true,
-            note: "",
-          },
-        ],
-      };
-    });
-    setSuccessMessage(null);
-  }
-
-  function removeLocalTableConfig(tableIndex: number) {
-    if (!canEditTables) return;
-
-    setBusinessConfig((current) => {
-      const tables = current.localTables.length
-        ? current.localTables
-        : DEFAULT_CONFIG_LOCAL_TABLES;
-
-      if (tables.length <= 1) {
-        return current;
-      }
-
-      return {
-        ...current,
-        localTables: tables.filter((_, index) => index !== tableIndex),
-      };
-    });
-    setSuccessMessage(null);
-  }
-
-  function restoreDefaultLocalTables() {
-    if (!canEditTables) return;
-
-    setBusinessConfig((current) => ({
-      ...current,
-      localTables: DEFAULT_CONFIG_LOCAL_TABLES,
-    }));
-    setSuccessMessage(null);
-  }
+  // Las mesas ya NO se editan desde Configuración (dueño 2026-07-25): crear,
+  // renombrar, ordenar y activar mesas vive en el módulo "Mesas y QR", con su
+  // selector de sede. Aquí solo queda el acceso directo.
 
   async function loadAvailableProducts(quiet = false) {
     if (!quiet) {
@@ -2445,8 +2346,15 @@ export default function BusinessConfigPage() {
           "Content-Type": "application/json",
           "x-admin-password": cleanPassword,
         },
+        // Las mesas ya no se editan aquí: se excluyen del guardado para que
+        // Configuración NUNCA pise lo que el dueño acabe de cambiar en el
+        // módulo "Mesas y QR" con una copia vieja en pantalla (2026-07-25).
         body: JSON.stringify({
-          businessConfig,
+          businessConfig: (() => {
+            const { localTables: _ignoredTables, ...rest } = businessConfig;
+            void _ignoredTables;
+            return rest;
+          })(),
         }),
       });
 
@@ -2741,8 +2649,23 @@ export default function BusinessConfigPage() {
             icon={<Store size={22} />}
             title="Datos básicos"
             id="sec-datos-basicos"
-            description="Información principal del negocio. Estos datos se pueden ajustar en todos los planes."
+            description="Información GENERAL del negocio (la misma para todas las sedes). Lo que cambia de una sucursal a otra —WhatsApp, dirección, Maps, reseñas, Instagram, tasa— se edita en Sucursales."
           >
+            <div className="mb-4 rounded-[1.3rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+              <p className="text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
+                ¿Buscas el WhatsApp, la dirección, el link de Maps, las reseñas
+                o el Instagram de una sede? Están en{" "}
+                <strong>Sucursales → Configuración por sede</strong>.
+              </p>
+              <Link
+                href="/local-santo/sucursales"
+                className="mt-3 inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+              >
+                <Building2 size={16} />
+                Configurar por sede
+              </Link>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <TextInput
                 label="Nombre del negocio"
@@ -2759,16 +2682,11 @@ export default function BusinessConfigPage() {
                 placeholder="Menú y pedidos"
               />
               <TextInput
-                label="WhatsApp principal"
+                label="WhatsApp general (respaldo)"
                 value={businessConfig.mainWhatsapp}
                 onChange={(value) => updateConfig("mainWhatsapp", value)}
                 placeholder="Ej: 58412xxxxxxx"
-              />
-              <TextInput
-                label="WhatsApp delivery"
-                value={businessConfig.deliveryWhatsapp}
-                onChange={(value) => updateConfig("deliveryWhatsapp", value)}
-                placeholder="Ej: 58412xxxxxxx"
+                helper="Cada sede tiene su propio WhatsApp en Sucursales. Este solo se usa para la sede que no tenga número propio."
               />
               <TextInput
                 label="Nombre de ubicación en pedidos"
@@ -4268,161 +4186,39 @@ export default function BusinessConfigPage() {
           </SectionCard>
         </section>
 
+        {/* Mesas y QR: la creación/edición se mudó a su propio módulo
+            (pedido del dueño 2026-07-25). Configuración queda solo con lo
+            general del negocio; aquí vive el acceso directo. */}
         <section className="mt-4">
           <SectionCard
             icon={<Table2 size={22} />}
             title="Mesas y QR"
             id="sec-mesas-qr"
             defaultCollapsed
-            description="Edita las mesas reales que aparecen en el carrito público, el panel de mesas y las tarjetas QR por mesa."
-            locked={!canEditTables}
-            lockedText={`Disponible desde ${tablesAccess.minimumPlanLabel}. La lista se muestra para revisión, pero solo se guarda si el plan incluye mesas.`}
+            description="Las mesas y sus códigos QR se crean y se editan en su propio módulo, sede por sede."
           >
-            <div className={`grid gap-4 ${!canEditTables ? "opacity-65" : ""}`}>
-              <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
-                <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
-                  <div className="flex flex-wrap gap-2">
-                    <span className="rounded-full bg-white px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-                      {activeLocalTables.length} activas
-                    </span>
-                    <span className="rounded-full bg-white px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-                      {inactiveLocalTablesCount} inactivas
-                    </span>
-                    <span className="rounded-full bg-white px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-                      {businessConfig.localTables.length ||
-                        DEFAULT_CONFIG_LOCAL_TABLES.length}{" "}
-                      registradas
-                    </span>
-                  </div>
-
-                  <p className="mt-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
-                    Estos nombres son los que verá el cliente al pedir desde
-                    mesa y los que usa el sistema para relacionar pedidos,
-                    cuentas abiertas y QR. Para ocultar una mesa sin perderla,
-                    déjala inactiva.
-                  </p>
-                </div>
-
-                <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
-                  <button
-                    type="button"
-                    onClick={addLocalTableConfig}
-                    disabled={!canEditTables}
-                    className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <Plus size={16} />
-                    Agregar mesa
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={restoreDefaultLocalTables}
-                    disabled={!canEditTables}
-                    className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <RefreshCw size={16} />
-                    Restaurar base
-                  </button>
-
-                  <Link
-                    href="/local-santo/mesas"
-                    className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
-                  >
-                    <Table2 size={16} />
-                    Ver QR
-                  </Link>
-                </div>
+            <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div className="rounded-[1.4rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+                <p className="text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
+                  Crear mesas, renombrarlas, cambiarles el área o el orden,
+                  dejarlas inactivas e imprimir sus QR se hace en
+                  <strong> Mesas y QR</strong>. Ahí eliges la sede y decides si
+                  usa las mesas generales del negocio o las suyas propias.
+                </p>
+                <p className="mt-2 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
+                  Mesero, caja, las cuentas abiertas y los QR por sede siguen
+                  funcionando igual: lo que relaciona todo es el nombre de la
+                  mesa, y ese no cambia al mover el editor de sitio.
+                </p>
               </div>
 
-              <div className="grid gap-3">
-                {(businessConfig.localTables.length
-                  ? businessConfig.localTables
-                  : DEFAULT_CONFIG_LOCAL_TABLES
-                ).map((table, index, tableList) => (
-                  <div
-                    key={`${table.id || table.name || "mesa"}-${index}`}
-                    className="rounded-[1.3rem] border-2 border-[var(--brand-primary)]/20 bg-white p-4"
-                  >
-                    <div className="grid gap-3 lg:grid-cols-[1.15fr_0.9fr_120px_auto] lg:items-end">
-                      <TextInput
-                        label="Nombre de mesa"
-                        value={table.name || ""}
-                        onChange={(value) =>
-                          updateLocalTableConfig(index, { name: value })
-                        }
-                        placeholder="Mesa 1"
-                        disabled={!canEditTables}
-                      />
-
-                      <TextInput
-                        label="Área"
-                        value={table.area || "Principal"}
-                        onChange={(value) =>
-                          updateLocalTableConfig(index, { area: value })
-                        }
-                        placeholder="Principal, terraza, barra..."
-                        disabled={!canEditTables}
-                      />
-
-                      <TextInput
-                        label="Orden"
-                        type="number"
-                        value={Number(table.sortOrder || index + 1)}
-                        onChange={(value) =>
-                          updateLocalTableConfig(index, {
-                            sortOrder:
-                              Number.isFinite(Number(value)) &&
-                              Number(value) > 0
-                                ? Math.round(Number(value))
-                                : index + 1,
-                          })
-                        }
-                        placeholder="1"
-                        disabled={!canEditTables}
-                      />
-
-                      <button
-                        type="button"
-                        onClick={() => removeLocalTableConfig(index)}
-                        disabled={!canEditTables || tableList.length <= 1}
-                        className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-4 py-3 text-[0.65rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        <Trash2 size={15} />
-                        Quitar
-                      </button>
-                    </div>
-
-                    <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
-                      <TextInput
-                        label="Nota interna"
-                        value={table.note || ""}
-                        onChange={(value) =>
-                          updateLocalTableConfig(index, { note: value })
-                        }
-                        placeholder="Opcional: cerca de caja, terraza, reservada..."
-                        disabled={!canEditTables}
-                      />
-
-                      <label className="flex items-center gap-3 rounded-2xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] px-4 py-3">
-                        <input
-                          type="checkbox"
-                          checked={table.isActive !== false}
-                          disabled={!canEditTables}
-                          onChange={(event) =>
-                            updateLocalTableConfig(index, {
-                              isActive: event.target.checked,
-                            })
-                          }
-                          className="h-5 w-5 accent-[var(--brand-primary)] disabled:cursor-not-allowed"
-                        />
-                        <span className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-                          Mesa activa
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <Link
+                href="/local-santo/mesas"
+                className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+              >
+                <Table2 size={16} />
+                Abrir Mesas y QR
+              </Link>
             </div>
           </SectionCard>
         </section>
@@ -4678,14 +4474,16 @@ export default function BusinessConfigPage() {
                     label="Etiqueta del total"
                     value={businessConfig.publicCartTotalLabel}
                     onChange={(value) => updateConfig("publicCartTotalLabel", value)}
-                    placeholder="Total a cobrar"
+                    placeholder="Tienes que pagar lo siguiente:"
+                    helper="Encabezado del recuadro de pago del carrito. Vacío = la frase de siempre."
                     disabled={!canEditAdvancedPublic}
                   />
                   <TextInput
                     label="Texto bajo el total"
                     value={businessConfig.publicCartTotalHint}
                     onChange={(value) => updateConfig("publicCartTotalHint", value)}
-                    placeholder="Total general en divisas"
+                    placeholder="Opcional: aclaratoria bajo los montos"
+                    helper="Línea extra debajo de los montos del carrito. Vacío = no aparece nada."
                     disabled={!canEditAdvancedPublic}
                   />
                   <TextInput
@@ -5133,27 +4931,30 @@ export default function BusinessConfigPage() {
                 placeholder="Abrir ubicación"
                 disabled={!canEditAdvancedPublic}
               />
-              <TextInput
-                label="Link de Google Maps"
-                value={businessConfig.googleMapsUrl}
-                onChange={(value) => updateConfig("googleMapsUrl", value)}
-                placeholder="https://maps.google.com/..."
-                disabled={!canEditAdvancedPublic}
-              />
-              <TextInput
-                label="Link de reseñas de Google"
-                value={businessConfig.googleReviewUrl}
-                onChange={(value) => updateConfig("googleReviewUrl", value)}
-                placeholder="https://g.page/r/.../review"
-                disabled={!canEditAdvancedPublic}
-              />
-              <TextInput
-                label="Instagram"
-                value={businessConfig.instagramUrl}
-                onChange={(value) => updateConfig("instagramUrl", value)}
-                placeholder="https://www.instagram.com/..."
-                disabled={!canEditAdvancedPublic}
-              />
+              {/* Google Maps, reseñas e Instagram se mudaron a Sucursales
+                  (dueño 2026-07-25): con dos sedes, un solo link global no
+                  sirve — cada local tiene su ficha y su cuenta. Lo que se
+                  configura por sede manda; lo que quede vacío hereda lo que
+                  ya estaba guardado como general. */}
+              <div className="rounded-[1.3rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+                  Ubicación, reseñas e Instagram
+                </p>
+                <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
+                  Ahora se configuran <strong>por sede</strong> en Sucursales →
+                  “Configuración por sede”: link de Google Maps, link de reseñas
+                  de Google e Instagram de cada local. Así el cliente que entra
+                  por el QR de una sede ve la ubicación, las reseñas y la cuenta
+                  de ESA sede.
+                </p>
+                <Link
+                  href="/local-santo/sucursales"
+                  className="mt-3 inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)]"
+                >
+                  <Building2 size={16} />
+                  Configurar por sede
+                </Link>
+              </div>
             </div>
           </SectionCard>
         </section>
@@ -5697,17 +5498,11 @@ export default function BusinessConfigPage() {
                 />
               ))}
             </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <ToggleRow
-                label="Preguntar en qué se pagó el delivery"
-                description="Muestra el selector “Delivery pagado en” al registrar cobros. Si no te interesa ese dato, apágalo: el costo del delivery se sigue viendo en la página pública, reportes y cierres."
-                checked={businessConfig.cashierDeliveryPaymentInEnabled}
-                onChange={(value) =>
-                  updateConfig("cashierDeliveryPaymentInEnabled", value)
-                }
-                icon={<Truck size={18} />}
-              />
-            </div>
+            {/* Se retiró "Preguntar en qué se pagó el delivery" (dueño
+                2026-07-25): ese paso ya no existe ni en caja ni en el carrito,
+                así que el interruptor solo confundía apareciendo encendido.
+                El costo del delivery se sigue viendo en público, reportes y
+                cierres, y los cobros ya registrados no se tocan. */}
             <p className="mt-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
               Recuerda presionar “Guardar cambios” al final de la página. La caja toma el modo nuevo al recargar.
             </p>

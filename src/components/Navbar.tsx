@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import Image from "next/image"
 import { MapPin, MessageCircle, Search, ShoppingCart } from "lucide-react"
 import { BRAND } from "@/lib/brand"
+import PublicWhatsappButton from "@/components/PublicWhatsappButton"
 import {
   DEFAULT_PUBLIC_NAV_BUTTONS,
   normalizePublicNavButtons,
@@ -468,18 +469,14 @@ export default function Navbar({ totalItems, onOpenCart }: NavbarProps) {
           ) : null}
 
           {/* WhatsApp también en el teléfono: acción clave del negocio y
-              llena el espacio vacío de la fila (dueño 2026-07-23). */}
-          {whatsappUrl ? (
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Abrir WhatsApp"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
-            >
-              <MessageCircle size={20} strokeWidth={2.2} />
-            </a>
-          ) : null}
+              llena el espacio vacío de la fila (dueño 2026-07-23). Con más de
+              una sede pregunta primero a cuál escribir (dueño 2026-07-25). */}
+          <PublicWhatsappButton
+            message={`Hola ${businessConfig.businessName || BRAND.name}! Quiero hacer un pedido.`}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface)] text-[var(--brand-ink)] transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+          >
+            <MessageCircle size={20} strokeWidth={2.2} />
+          </PublicWhatsappButton>
 
           {/* Lupa junto al carrito: baja al buscador del menú y lo enfoca
               para encontrar un producto sin recorrer toda la página. */}

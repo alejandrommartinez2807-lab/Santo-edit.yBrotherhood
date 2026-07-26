@@ -1,10 +1,9 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Copy, Loader2, Plus, Save, Settings2, Trash2 } from "lucide-react"
+import Link from "next/link"
+import { Copy, Loader2, Save, Settings2, Table2 } from "lucide-react"
 import { authHeaders, type Branch } from "./shared"
-
-type BranchTable = { name: string; area: string }
 
 type BranchScopedConfig = {
   mainWhatsapp?: string
@@ -13,7 +12,7 @@ type BranchScopedConfig = {
   zone?: string
   googleMapsUrl?: string
   googleReviewUrl?: string
-  localTables?: { name?: string; area?: string }[]
+  instagramUrl?: string
   exchangeRateMode?: "automatic" | "automaticEur" | "manual"
   manualExchangeRate?: number
 }
@@ -21,12 +20,11 @@ type BranchScopedConfig = {
 // "" = heredar lo definido en Configuración → "Tasa y moneda".
 type BranchRateMode = "" | "automatic" | "automaticEur" | "manual"
 
-const EMPTY_TABLE: BranchTable = { name: "", area: "" }
-
-// Sección "Configuración por sede": edita los campos que pisan la config
-// global SOLO para la sucursal elegida (mesas propias y whatsapps), usando
-// PATCH /api/branches/[id]/config. Sin mesas propias, la sede usa las mesas
-// globales de Configuración; los QR (?branch=) leen esto en el flujo público.
+// Sección "Configuración por sede": TODO lo que cambia de una sucursal a otra
+// (WhatsApp, dirección, Maps, reseñas, Instagram y tasa) vive aquí, no en
+// Configuración — que quedó solo para lo general del negocio (2026-07-25).
+// Las mesas y sus QR se crean y editan en el módulo "Mesas y QR", con su
+// propio selector de sede. Guarda con PATCH /api/branches/[id]/config.
 export default function BranchConfigPanel({ branches }: { branches: Branch[] }) {
   const active = branches.filter((b) => b.is_active)
 
@@ -42,8 +40,7 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
   const [zone, setZone] = useState("")
   const [googleMapsUrl, setGoogleMapsUrl] = useState("")
   const [googleReviewUrl, setGoogleReviewUrl] = useState("")
-  const [useOwnTables, setUseOwnTables] = useState(false)
-  const [tables, setTables] = useState<BranchTable[]>([])
+  const [instagramUrl, setInstagramUrl] = useState("")
   const [copyFrom, setCopyFrom] = useState("")
   const [rateMode, setRateMode] = useState<BranchRateMode>("")
   const [manualRate, setManualRate] = useState("")
@@ -61,6 +58,7 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
     setZone(config.zone || "")
     setGoogleMapsUrl(config.googleMapsUrl || "")
     setGoogleReviewUrl(config.googleReviewUrl || "")
+    setInstagramUrl(config.instagramUrl || "")
     setRateMode(
       config.exchangeRateMode === "automatic" ||
         config.exchangeRateMode === "automaticEur" ||
@@ -70,15 +68,6 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
     )
     setManualRate(
       Number(config.manualExchangeRate) > 0 ? String(config.manualExchangeRate) : "",
-    )
-    const ownTables = Array.isArray(config.localTables)
-    setUseOwnTables(ownTables)
-    setTables(
-      ownTables && config.localTables!.length
-        ? config.localTables!.map((t) => ({ name: t.name || "", area: t.area || "" }))
-        : ownTables
-          ? [{ ...EMPTY_TABLE }]
-          : [],
     )
   }, [])
 
@@ -116,11 +105,6 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
 
   if (active.length === 0) return null
 
-  const cleanedTables = tables
-    .map((t) => ({ name: t.name.trim(), area: t.area.trim() }))
-    .filter((t) => t.name)
-  const tablesInvalid = useOwnTables && cleanedTables.length === 0
-
   async function patchConfig(body: Record<string, unknown>, successFallback: string) {
     setSaving(true)
     setError("")
@@ -147,10 +131,6 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
     rateMode === "manual" && (!Number.isFinite(manualRateValue) || manualRateValue <= 0)
 
   function save() {
-    if (tablesInvalid) {
-      setError("Agrega al menos una mesa con nombre, o vuelve a usar las mesas globales.")
-      return
-    }
     if (manualRateInvalid) {
       setError("Pon la tasa manual de esta sede (Bs por dólar), o elige otra opción de tasa.")
       return
@@ -164,7 +144,7 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
           zone: zone.trim() || null,
           googleMapsUrl: googleMapsUrl.trim() || null,
           googleReviewUrl: googleReviewUrl.trim() || null,
-          localTables: useOwnTables ? cleanedTables.map((t) => (t.area ? t : { name: t.name })) : null,
+          instagramUrl: instagramUrl.trim() || null,
           exchangeRateMode: rateMode || null,
           manualExchangeRate: rateMode === "manual" ? manualRateValue : null,
         },
@@ -178,15 +158,11 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
     if (!source || !selectedBranch || source.id === selectedBranch.id) return
     if (
       !window.confirm(
-        `¿Copiar la configuración de "${source.name}" a "${selectedBranch.name}"?\n\nSe reemplaza TODA la configuración propia de "${selectedBranch.name}" (mesas, whatsapps, tasa y textos públicos).`,
+        `¿Copiar la configuración de "${source.name}" a "${selectedBranch.name}"?\n\nSe reemplaza TODA la configuración propia de "${selectedBranch.name}" (WhatsApp, dirección, Maps, reseñas, Instagram, tasa y mesas propias).`,
       )
     )
       return
     patchConfig({ copyFromBranchId: copyFrom }, "Configuración copiada a la sede.")
-  }
-
-  function updateTable(index: number, patch: Partial<BranchTable>) {
-    setTables((current) => current.map((t, i) => (i === index ? { ...t, ...patch } : t)))
   }
 
   const inputClass =
@@ -200,9 +176,11 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
         <Settings2 size={16} /> Configuración por sede
       </h2>
       <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
-        Mesas y WhatsApp propios de cada sucursal. Lo que definas aquí pisa lo
-        global solo para esa sede; los QR de mesa y el menú público con ?branch=
-        usan estos valores.
+        Todo lo que cambia de una sede a otra se edita aquí: WhatsApp,
+        dirección, Google Maps, reseñas, Instagram y tasa. Lo que dejes vacío
+        usa el dato general del negocio. El menú público con ?branch= y los QR
+        de esa sede leen estos valores. Las mesas y sus QR se crean en el
+        módulo “Mesas y QR”.
       </p>
 
       <div className="mt-4">
@@ -319,7 +297,23 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
               <p className="mt-1 text-xs font-bold leading-4 text-[var(--brand-ink-2)]/60">
                 El botón “Reseñas” de la página pública deja elegir la sede y
                 abre ESTE link (en Google Maps: tu ficha → Reseñas →
-                compartir). Sin link, la sede no aparece en ese selector.
+                compartir). Sin link, la sede usa su ficha de Maps.
+              </p>
+            </div>
+            <div className="sm:col-span-2">
+              <label className={labelClass} htmlFor="branch-config-instagram">
+                Instagram de la sede
+              </label>
+              <input
+                id="branch-config-instagram"
+                value={instagramUrl}
+                onChange={(e) => setInstagramUrl(e.target.value)}
+                placeholder="https://www.instagram.com/… (vacío = usa el del negocio)"
+                className={`mt-1 ${inputClass}`}
+              />
+              <p className="mt-1 text-xs font-bold leading-4 text-[var(--brand-ink-2)]/60">
+                Si esta sucursal tiene su propia cuenta, ponla aquí: el cliente
+                que entra con el QR o eligiendo esta sede verá esta cuenta.
               </p>
             </div>
           </div>
@@ -377,92 +371,29 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
             ) : null}
           </div>
 
-          <div className="mt-5">
-            <p className={labelClass}>Mesas de esta sede</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setUseOwnTables(false)
-                  setTables([])
-                }}
-                className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${
-                  !useOwnTables
-                    ? "border-green-600/30 bg-green-50 text-green-700"
-                    : "border-[var(--brand-primary)]/25 bg-white text-[#1a1a1a]/60"
-                }`}
-              >
-                Usar mesas globales
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setUseOwnTables(true)
-                  setTables((current) => (current.length ? current : [{ ...EMPTY_TABLE }]))
-                }}
-                className={`rounded-full border-2 px-3 py-1.5 text-xs font-black uppercase ${
-                  useOwnTables
-                    ? "border-green-600/30 bg-green-50 text-green-700"
-                    : "border-[var(--brand-primary)]/25 bg-white text-[#1a1a1a]/60"
-                }`}
-              >
-                Mesas propias
-              </button>
-            </div>
-
-            {useOwnTables ? (
-              <div className="mt-3 space-y-2">
-                {tables.map((table, index) => (
-                  <div key={index} className="flex flex-wrap items-center gap-2">
-                    <input
-                      value={table.name}
-                      onChange={(e) => updateTable(index, { name: e.target.value })}
-                      placeholder={`Mesa ${index + 1}`}
-                      aria-label={`Nombre de la mesa ${index + 1}`}
-                      className={`min-w-0 flex-1 ${inputClass}`}
-                    />
-                    <input
-                      value={table.area}
-                      onChange={(e) => updateTable(index, { area: e.target.value })}
-                      placeholder="Área (opcional)"
-                      aria-label={`Área de la mesa ${index + 1}`}
-                      className={`min-w-0 flex-1 ${inputClass}`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setTables((current) => current.filter((_, i) => i !== index))}
-                      title="Quitar mesa"
-                      className="inline-flex items-center justify-center rounded-full border-2 border-red-200 bg-white p-2 text-red-600"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => setTables((current) => [...current, { ...EMPTY_TABLE }])}
-                  className="inline-flex items-center gap-1 rounded-full border-2 border-[var(--brand-primary)]/25 bg-white px-3 py-1.5 text-xs font-black uppercase text-[var(--brand-primary)]"
-                >
-                  <Plus size={14} /> Agregar mesa
-                </button>
-                {tablesInvalid ? (
-                  <p className="text-xs font-bold text-red-600">
-                    Agrega al menos una mesa con nombre, o vuelve a usar las mesas globales.
-                  </p>
-                ) : null}
-              </div>
-            ) : (
-              <p className="mt-2 text-xs font-bold text-[var(--brand-ink-2)]/65">
-                Esta sede usa las mesas globales definidas en Configuración.
-              </p>
-            )}
+          {/* Las mesas de la sede se crean y editan en su propio módulo
+              (pedido del dueño 2026-07-25: creación y configuración de mesas y
+              QR en un solo lugar). Aquí solo queda el acceso directo. */}
+          <div className="mt-5 rounded-xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+            <p className={labelClass}>Mesas y QR de esta sede</p>
+            <p className="mt-1 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/65">
+              Se crean, se editan y se imprimen en el módulo “Mesas y QR”, que
+              tiene su propio selector de sede. Así no hay dos sitios donde
+              tocar lo mismo.
+            </p>
+            <Link
+              href="/local-santo/mesas"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-xl border-2 border-[var(--brand-primary)] bg-white px-4 py-2 text-xs font-black uppercase text-[var(--brand-primary)]"
+            >
+              <Table2 size={15} /> Abrir Mesas y QR
+            </Link>
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={save}
-              disabled={saving || tablesInvalid}
+              disabled={saving}
               className="inline-flex items-center gap-1 rounded-xl bg-[var(--brand-primary)] px-4 py-2.5 text-sm font-black uppercase text-white disabled:opacity-50"
             >
               {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}

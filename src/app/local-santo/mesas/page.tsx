@@ -11,6 +11,7 @@ import {
   type StaffBranch,
 } from "@/lib/branchClient";
 import { LocalTableQrLinksPanel } from "@/components/local/LocalTableQrLinksPanel";
+import LocalTablesEditor from "@/components/local/LocalTablesEditor";
 import {
   DEFAULT_LOCAL_TABLES,
   LocalTablesMap,
@@ -322,8 +323,8 @@ function MesasContent() {
                     ))}
                   </select>
                   <p className="mt-1.5 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
-                    Las mesas y los QR de abajo son de esta sede. Cada sucursal
-                    tiene sus propias mesas (se editan en Sucursales).
+                    Las mesas y los QR de abajo son de esta sede. Aquí mismo las
+                    creas y las editas, sin pasar por Configuración.
                   </p>
                 </div>
               ) : null}
@@ -387,6 +388,15 @@ function MesasContent() {
             </p>
           )}
         </section>
+
+        {/* Crear/editar mesas vive aquí (dueño 2026-07-25): un solo lugar para
+            mesas y QR, con el selector de sede de arriba. */}
+        <LocalTablesEditor
+          branchId={selectedBranchId}
+          branchName={branches.find((branch) => branch.id === selectedBranchId)?.name || ""}
+          hasMultipleBranches={branches.length > 1}
+          onSaved={() => void loadTablesAndOrders()}
+        />
 
         <LocalTablesMap
           tables={activeTables}

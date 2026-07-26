@@ -458,7 +458,16 @@ export function isBranchAllowedForStaffAccess(
   return access.branchIds.includes(cleanText(branchId))
 }
 
-export type BranchScopedTable = { name: string; area?: string }
+// Mesa propia de una sede. Desde 2026-07-25 guarda los MISMOS campos que la
+// mesa global (orden, activa, nota): el editor único vive en el módulo
+// "Mesas y QR" y no debe degradar la mesa por estar en una sucursal.
+export type BranchScopedTable = {
+  name: string
+  area?: string
+  sortOrder?: number
+  isActive?: boolean
+  note?: string
+}
 
 export type BranchScopedConfig = {
   publicName?: string
@@ -468,6 +477,9 @@ export type BranchScopedConfig = {
   // Link de reseñas de Google DE ESTA SEDE (cada local tiene su ficha):
   // alimenta el botón "Reseñas" del Hero con selector de sede.
   googleReviewUrl?: string
+  // Instagram DE ESTA SEDE (2026-07-25): cada local suele tener su cuenta.
+  // Sin valor propio, la página pública usa el Instagram general.
+  instagramUrl?: string
   estimatedTimeText?: string
   mainWhatsapp?: string
   deliveryWhatsapp?: string
@@ -493,6 +505,7 @@ const BRANCH_SCOPED_TEXT_FIELDS = [
   "zone",
   "googleMapsUrl",
   "googleReviewUrl",
+  "instagramUrl",
   "estimatedTimeText",
   "mainWhatsapp",
   "deliveryWhatsapp",
@@ -500,6 +513,30 @@ const BRANCH_SCOPED_TEXT_FIELDS = [
 ] as const
 
 const BRANCH_SCOPED_BOOLEAN_FIELDS = ["ordersPaused", "temporarilyClosed", "isEvent"] as const
+
+// Campos opcionales de una mesa de sede: solo se guardan los que vienen (una
+// mesa sin nota/orden/activa sigue siendo `{ name, area }`, como antes).
+function withOptionalTableFields(
+  table: BranchScopedTable,
+  source: UnknownRecord,
+  index: number,
+): BranchScopedTable {
+  const area = cleanText(source.area)
+  if (area) table.area = area
+
+  const sortOrder = Number(source.sortOrder ?? source.sort_order)
+  if (Number.isFinite(sortOrder) && sortOrder > 0) table.sortOrder = Math.round(sortOrder)
+  else if ("sortOrder" in source || "sort_order" in source) table.sortOrder = index + 1
+
+  if ("isActive" in source || "is_active" in source) {
+    table.isActive = normalizeBoolean(source.isActive ?? source.is_active, true)
+  }
+
+  const note = cleanText(source.note)
+  if (note) table.note = note
+
+  return table
+}
 
 function normalizeBranchScopedTables(value: unknown): BranchScopedTable[] {
   const rawList = Array.isArray(value)
@@ -509,12 +546,11 @@ function normalizeBranchScopedTables(value: unknown): BranchScopedTable[] {
       : []
 
   return rawList
-    .map((rawTable): BranchScopedTable | null => {
+    .map((rawTable, index): BranchScopedTable | null => {
       if (isRecord(rawTable)) {
         const name = cleanText(rawTable.name)
         if (!name) return null
-        const area = cleanText(rawTable.area)
-        return area ? { name, area } : { name }
+        return withOptionalTableFields({ name }, rawTable, index)
       }
 
       const [namePart, areaPart] = String(rawTable || "").split("|")
@@ -691,8 +727,10 @@ export function buildSafePublicBranch(
     zone: branchConfig.zone,
     googleMapsUrl: branchConfig.googleMapsUrl,
     googleReviewUrl: branchConfig.googleReviewUrl,
+    instagramUrl: branchConfig.instagramUrl,
     estimatedTimeText: branchConfig.estimatedTimeText,
     mainWhatsapp: branchConfig.mainWhatsapp,
+    deliveryWhatsapp: branchConfig.deliveryWhatsapp,
     config: branchConfig,
     branchConfig,
   }

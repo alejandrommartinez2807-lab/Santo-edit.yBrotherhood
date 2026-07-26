@@ -470,8 +470,12 @@ export function CartSummaryFooter({
         {/* Redacción para tercera edad (pedido del dueño): en vez de
             "Total / desglose" se dice en cristiano CUÁNTO se paga y en qué
             moneda. Los montos son el mismo cálculo. */}
+        {/* Este encabezado y la nota de abajo SÍ son editables desde
+            Configuración → "Etiqueta del total" / "Texto bajo el total"
+            (auditoría 2026-07-25: estaban en la configuración pero no se
+            usaban en ningún lado). Vacíos = la redacción de siempre. */}
         <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-          Tienes que pagar lo siguiente:
+          {publicConfig.publicCartTotalLabel || "Tienes que pagar lo siguiente:"}
         </p>
 
         {exchangeRate > 0 && totalVES > 0 ? (
@@ -499,6 +503,12 @@ export function CartSummaryFooter({
             </span>
           </p>
         )}
+
+        {publicConfig.publicCartTotalHint ? (
+          <p className="mt-1 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/65">
+            {publicConfig.publicCartTotalHint}
+          </p>
+        ) : null}
 
         <button
           type="button"

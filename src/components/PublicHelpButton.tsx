@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react"
 import { BRAND } from "@/lib/brand"
+import PublicWhatsappButton from "@/components/PublicWhatsappButton"
 
 // Botón de ayuda flotante del menú público (pedido del dueño 2026-07-21):
 // abre una ventana con la GUÍA COMPLETA de cómo pedir y cómo funciona cada
@@ -93,7 +94,6 @@ export function PublicHelpGuide({
   open: boolean
   onClose: () => void
 }) {
-  const [whatsapp, setWhatsapp] = useState("")
   const [businessName, setBusinessName] = useState("")
 
   useEffect(() => {
@@ -104,16 +104,11 @@ export function PublicHelpGuide({
       .then((data) => {
         if (cancelled) return
         const config = data?.businessConfig || data?.config || {}
-        const phone = String(
-          config.mainWhatsapp || config.deliveryWhatsapp || BRAND.whatsapp || "",
-        ).replace(/[^0-9]/g, "")
-        setWhatsapp(phone)
         setBusinessName(String(config.businessName || "").trim())
       })
       .catch(() => {
-        if (!cancelled) {
-          setWhatsapp(String(BRAND.whatsapp || "").replace(/[^0-9]/g, ""))
-        }
+        // Sin config el mensaje usa el nombre de marca; el botón no depende
+        // de esta llamada (los números los resuelve PublicWhatsappButton).
       })
 
     return () => {
@@ -121,11 +116,7 @@ export function PublicHelpGuide({
     }
   }, [])
 
-  const helpHref = whatsapp
-    ? `https://wa.me/${whatsapp}?text=${encodeURIComponent(
-        `Hola ${businessName || BRAND.name}! No entendí algo de la página, ¿me ayudan?`,
-      )}`
-    : ""
+  const helpMessage = `Hola ${businessName || BRAND.name}! No entendí algo de la página, ¿me ayudan?`
 
   if (!open) return null
 
@@ -160,17 +151,17 @@ export function PublicHelpGuide({
                 </button>
               </div>
 
-              {helpHref ? (
-                <a
-                  href={helpHref}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:bg-[var(--brand-accent)] active:scale-[0.98]"
-                >
-                  <MessageCircle size={16} />
-                  ¿No entendiste algo? Escríbenos
-                </a>
-              ) : null}
+              {/* Con dos sedes, "Escríbenos" abre primero el selector de sede
+                  (dueño 2026-07-25): cada local tiene su WhatsApp. */}
+              <PublicWhatsappButton
+                message={helpMessage}
+                chooserTitle="¿A cuál sede le escribes?"
+                chooserDescription="Elige el local que te queda mejor y te respondemos por su WhatsApp."
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:bg-[var(--brand-accent)] active:scale-[0.98]"
+              >
+                <MessageCircle size={16} />
+                ¿No entendiste algo? Escríbenos
+              </PublicWhatsappButton>
             </div>
 
             <div className="space-y-4 overflow-y-auto px-5 py-4">

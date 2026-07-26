@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { Home, MapPin, Menu, MessageCircle, ShoppingCart } from "lucide-react"
+import PublicWhatsappButton from "@/components/PublicWhatsappButton"
 
 type MobilePublicActionBarProps = {
   totalItems: number
@@ -130,15 +131,11 @@ export default function MobilePublicActionBar({
         </a>
 
         {whatsappUrl ? (
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noreferrer"
-            className={actionClass}
-          >
+          // Con dos sedes pregunta a cuál escribir (dueño 2026-07-25).
+          <PublicWhatsappButton message="Hola! Quiero hacer un pedido." className={actionClass}>
             <MessageCircle size={18} />
             Pedir
-          </a>
+          </PublicWhatsappButton>
         ) : config.googleMapsUrl ? (
           <a
             href={config.googleMapsUrl}
