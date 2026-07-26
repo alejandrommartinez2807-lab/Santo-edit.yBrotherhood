@@ -136,7 +136,13 @@ export function BranchWhatsappChooser({
     <div
       // Por encima del carrito/checkout y de la guía de ayuda (z-[130]).
       className="fixed inset-0 z-[140] flex items-end justify-center bg-black/80 px-3 py-4 backdrop-blur-sm sm:items-center"
-      onClick={onClose}
+      // stopPropagation: el selector puede vivir DENTRO de la guía de ayuda,
+      // cuyo fondo también cierra al hacer clic. Sin esto, tocar fuera del
+      // selector cerraba las dos ventanas de golpe.
+      onClick={(event) => {
+        event.stopPropagation()
+        onClose()
+      }}
     >
       <div
         className="w-full max-w-sm rounded-[1.6rem] border border-[var(--brand-border)] bg-[var(--brand-surface)] p-5 shadow-2xl shadow-black/60"

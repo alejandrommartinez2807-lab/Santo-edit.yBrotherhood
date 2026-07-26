@@ -71,9 +71,14 @@ Además del menú/inventario, cada sede puede tener su propia **ficha pública**
 
 - Nombre público de la sede, dirección y zona.
 - Tiempo estimado de entrega.
-- WhatsApp principal y de delivery.
+- WhatsApp principal y de delivery de esa sede.
+- Link de Google Maps, link de reseñas de Google e **Instagram** de esa sede.
+- Tasa de cambio propia (o heredar la del negocio).
 - Pausar pedidos / cierre temporal (solo esa sede).
-- **Mesas del local** (lista de mesas de esa sede).
+
+> **Las mesas ya NO se editan aquí** (desde 2026-07-25): se crean y se editan
+> en **Local → Mesas y QR**, que tiene su propio selector de sede y deja
+> elegir si la sucursal usa las mesas generales del negocio o unas propias.
 
 Esto se edita en **Local → Sucursales → (elegir sede) → Configuración de la sede**.
 Ahí también puedes **copiar la configuración de otra sede** para no empezar de cero.
@@ -90,7 +95,8 @@ inventario ni el menú de la otra. Prepárala así:
 
 2. **Configurar su ficha pública** (opcional pero recomendado)
    En Sucursales elige la sede → *Configuración de la sede* → nombre público,
-   dirección, WhatsApp, tiempo estimado, **mesas**.
+   dirección, WhatsApp, Maps/reseñas/Instagram y tiempo estimado.
+   Las **mesas** de esa sede se crean aparte, en **Mesas y QR**.
    Truco: usa **"Copiar configuración de otra sede"** si es parecida.
 
 3. **Seleccionar la sede en el banner del panel de pedidos**
@@ -109,7 +115,9 @@ inventario ni el menú de la otra. Prepárala así:
    Proveedores → agrega los de esta sede. Luego Compras registra entradas/pagos.
 
 7. **Zonas de delivery, mesas y caja**
-   Delivery → zonas y costos de esta sede. Caja/cierres funcionarán por separado.
+   Delivery → zonas y costos de esta sede. Mesas y QR → crea las mesas de la
+   sede (generales o propias) e imprime sus códigos. Caja/cierres funcionarán
+   por separado.
 
 8. **Asignar al personal de esa sede**
    Usuarios → edita cada persona → asígnale la(s) sede(s) donde trabaja.

@@ -114,6 +114,10 @@ export default function LocalTablesEditor({
   const [okMsg, setOkMsg] = useState("");
   // ¿La sede tiene mesas PROPIAS? false = hereda las generales del negocio.
   const [ownTables, setOwnTables] = useState(false);
+  // Lo que está GUARDADO hoy (distinto de lo elegido en pantalla): si la sede
+  // ya tiene mesas propias, editar "las generales" no cambia nada en ESTA
+  // sede hasta que se toque "Volver a las generales". Hay que decirlo.
+  const [savedOwnTables, setSavedOwnTables] = useState(false);
   const [tables, setTables] = useState<EditableTable[]>([]);
   const [globalTables, setGlobalTables] = useState<EditableTable[]>([]);
   const [canEdit, setCanEdit] = useState(true);
@@ -156,6 +160,7 @@ export default function LocalTablesEditor({
       setCanEdit(true);
       setGlobalTables(global);
       setOwnTables(hasOwn);
+      setSavedOwnTables(hasOwn);
       setTables(hasOwn ? toEditableTables(branchOwn) : global);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "No se pudieron cargar las mesas");
@@ -238,6 +243,29 @@ export default function LocalTablesEditor({
 
       const data = await readJson(response);
       if (!response.ok) throw new Error(data.error || "No se pudieron guardar las mesas");
+
+      // El servidor ignora las mesas si el plan no incluye el módulo: en ese
+      // caso NO se puede decir "guardadas" (el dueño volvería y estarían como
+      // antes sin entender por qué).
+      const savedList = ownTables
+        ? data.branchConfig?.localTables
+        : data.businessConfig?.localTables;
+      // Comparación por nombres ORDENADOS: el servidor devuelve las mesas
+      // ordenadas por su número de orden, que no tiene por qué coincidir con
+      // el orden de las filas en pantalla.
+      const sortedNames = (list: { name: string }[]) =>
+        list
+          .map((table) => table.name.trim().toLowerCase())
+          .sort()
+          .join("|");
+      const savedNames = sortedNames(toEditableTables(savedList));
+      const sentNames = sortedNames(cleaned);
+      if (Array.isArray(savedList) && savedNames !== sentNames) {
+        setError(
+          "El servidor no guardó las mesas: tu plan no incluye el módulo de Mesas. Actívalo o pide el cambio de plan.",
+        );
+        return;
+      }
 
       setOkMsg(
         ownTables
@@ -346,10 +374,21 @@ export default function LocalTablesEditor({
               ? `Al guardar, estas mesas quedan SOLO en ${branchName || "esta sede"}. Las demás sucursales no cambian.`
               : "Ojo: al guardar cambias las mesas GENERALES del negocio, o sea las de todas las sedes que no tengan mesas propias."}
           </p>
+
+          {!ownTables && savedOwnTables ? (
+            // Trampa fácil de caer: la sede tiene mesas propias guardadas, así
+            // que editar las generales NO se va a ver en ella hasta soltar el
+            // override con "Volver a las generales".
+            <p className="mt-2 rounded-xl border-2 border-amber-500 bg-amber-50 px-3 py-2 text-xs font-black leading-5 text-amber-800">
+              ⚠️ {branchName || "Esta sede"} todavía tiene mesas propias
+              guardadas: lo que cambies aquí NO se le va a ver hasta que toques
+              “Volver a las generales”.
+            </p>
+          ) : null}
         </div>
       ) : null}
 
-      {loading ? (
+      {loading || !branchId ? (
         <p className="mt-4 inline-flex items-center gap-2 text-sm font-bold">
           <Loader2 className="animate-spin" size={16} /> Cargando mesas…
         </p>

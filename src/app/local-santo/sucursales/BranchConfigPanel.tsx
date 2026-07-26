@@ -6,6 +6,8 @@ import { Copy, Loader2, Save, Settings2, Table2 } from "lucide-react"
 import { authHeaders, type Branch } from "./shared"
 
 type BranchScopedConfig = {
+  publicName?: string
+  estimatedTimeText?: string
   mainWhatsapp?: string
   deliveryWhatsapp?: string
   address?: string
@@ -34,6 +36,8 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
   const [error, setError] = useState("")
   const [okMsg, setOkMsg] = useState("")
 
+  const [publicName, setPublicName] = useState("")
+  const [estimatedTimeText, setEstimatedTimeText] = useState("")
   const [mainWhatsapp, setMainWhatsapp] = useState("")
   const [deliveryWhatsapp, setDeliveryWhatsapp] = useState("")
   const [address, setAddress] = useState("")
@@ -52,6 +56,8 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
   const selectedBranch = active.find((b) => b.id === selectedId) || null
 
   const applyConfig = useCallback((config: BranchScopedConfig) => {
+    setPublicName(config.publicName || "")
+    setEstimatedTimeText(config.estimatedTimeText || "")
     setMainWhatsapp(config.mainWhatsapp || "")
     setDeliveryWhatsapp(config.deliveryWhatsapp || "")
     setAddress(config.address || "")
@@ -138,6 +144,8 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
     patchConfig(
       {
         branchConfig: {
+          publicName: publicName.trim() || null,
+          estimatedTimeText: estimatedTimeText.trim() || null,
           mainWhatsapp: mainWhatsapp.trim() || null,
           deliveryWhatsapp: deliveryWhatsapp.trim() || null,
           address: address.trim() || null,
@@ -211,6 +219,39 @@ export default function BranchConfigPanel({ branches }: { branches: Branch[] }) 
       ) : (
         <>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className={labelClass} htmlFor="branch-config-public-name">
+                Nombre público de la sede
+              </label>
+              <input
+                id="branch-config-public-name"
+                value={publicName}
+                onChange={(e) => setPublicName(e.target.value)}
+                placeholder="Vacío = usa el nombre interno de la sede"
+                className={`mt-1 ${inputClass}`}
+              />
+              <p className="mt-1 text-xs font-bold leading-4 text-[var(--brand-ink-2)]/60">
+                Es el nombre que el cliente ve al elegir sede y en “Nuestros
+                locales”. Sirve para poner algo más claro que el nombre interno
+                (ej: “San Diego” en vez de “Sede 2”).
+              </p>
+            </div>
+            <div>
+              <label className={labelClass} htmlFor="branch-config-eta">
+                Tiempo estimado de entrega
+              </label>
+              <input
+                id="branch-config-eta"
+                value={estimatedTimeText}
+                onChange={(e) => setEstimatedTimeText(e.target.value)}
+                placeholder="Ej: 30-45 min"
+                className={`mt-1 ${inputClass}`}
+              />
+              <p className="mt-1 text-xs font-bold leading-4 text-[var(--brand-ink-2)]/60">
+                Se muestra al cliente cuando elige esta sede. Vacío = no se
+                muestra ningún tiempo.
+              </p>
+            </div>
             <div>
               <label className={labelClass} htmlFor="branch-config-main-wa">
                 WhatsApp principal de la sede
