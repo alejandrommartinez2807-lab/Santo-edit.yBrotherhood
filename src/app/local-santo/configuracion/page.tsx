@@ -2689,6 +2689,13 @@ export default function BusinessConfigPage() {
                 helper="Cada sede tiene su propio WhatsApp en Sucursales. Este solo se usa para la sede que no tenga número propio."
               />
               <TextInput
+                label="WhatsApp de delivery general (respaldo)"
+                value={businessConfig.deliveryWhatsapp}
+                onChange={(value) => updateConfig("deliveryWhatsapp", value)}
+                placeholder="Ej: 58412xxxxxxx"
+                helper="Igual que el anterior, pero para pedidos a domicilio. Cada sede puede tener el suyo en Sucursales."
+              />
+              <TextInput
                 label="Nombre de ubicación en pedidos"
                 value={businessConfig.locationLabel}
                 onChange={(value) => updateConfig("locationLabel", value)}

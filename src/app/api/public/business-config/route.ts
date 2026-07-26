@@ -1,6 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { getBusinessConfig, getRawBusinessConfig } from "@/lib/orders"
-import { getBranchConfig, getExplicitBranchIdFromRequest } from "@/lib/branch"
+import {
+  getBranchConfig,
+  getDefaultBranchId,
+  getExplicitBranchIdFromRequest,
+} from "@/lib/branch"
 import { buildPublicBusinessConfigResponse } from "@/lib/publicBusinessConfigResponse"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
@@ -28,10 +32,17 @@ export async function GET(request: NextRequest) {
     // Sede solicitada: header x-branch-id (lo adjunta AuthBridge en cada fetch)
     // o ?branch= en la URL. Si la sede tiene configuración propia, sus campos
     // públicos (mesas, whatsapps) pisan los globales.
+    // Sin sede explícita (visitante que aún no elige, o llegó sin QR) se usa la
+    // sede PRINCIPAL. Antes se caía a los valores globales, que en un negocio
+    // configurado por sede están vacíos: el botón de ubicación, el de WhatsApp
+    // y el de reseñas simplemente desaparecían hasta elegir sede (2026-07-25).
+    // Un fallo de BD aquí no puede tumbar la configuración pública: se sigue
+    // con lo global.
     const branchId =
       getExplicitBranchIdFromRequest(request) ||
       request.nextUrl.searchParams.get("branch") ||
-      request.nextUrl.searchParams.get("branchId")
+      request.nextUrl.searchParams.get("branchId") ||
+      (await getDefaultBranchId().catch(() => null))
     let scopedConfig: Record<string, unknown> = businessConfig as Record<string, unknown>
 
     if (branchId) {

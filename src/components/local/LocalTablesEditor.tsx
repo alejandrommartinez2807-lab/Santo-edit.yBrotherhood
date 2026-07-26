@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Plus, Save, Table2, Trash2 } from "lucide-react";
 
 // Editor ÚNICO de mesas (pedido del dueño 2026-07-25): crear, renombrar,
@@ -34,6 +34,17 @@ type RawTable = {
   isActive?: unknown;
   note?: unknown;
 };
+
+// Comparación de nombres de mesa igual a la del servidor: sin acentos, sin
+// mayúsculas y sin espacios de sobra. El servidor descarta mesas repetidas con
+// ese criterio, así que el editor tiene que usar el mismo para avisar antes.
+export function normalizeTableKey(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .trim()
+    .toLowerCase();
+}
 
 function getOwnerPassword() {
   if (typeof window === "undefined") return "";
@@ -121,10 +132,16 @@ export default function LocalTablesEditor({
   const [tables, setTables] = useState<EditableTable[]>([]);
   const [globalTables, setGlobalTables] = useState<EditableTable[]>([]);
   const [canEdit, setCanEdit] = useState(true);
+  // Descarta respuestas viejas si el dueño cambia de sede a mitad de carga:
+  // sin esto, la respuesta lenta de la sede anterior podía pintar SUS mesas
+  // sobre la sede nueva y un "Guardar" las escribiría en la sucursal
+  // equivocada. Mismo blindaje que ya tenía el panel de Sucursales.
+  const seqRef = useRef(0);
 
   const load = useCallback(async () => {
     if (!branchId) return;
 
+    const seq = ++seqRef.current;
     setLoading(true);
     setError("");
     setOkMsg("");
@@ -142,8 +159,8 @@ export default function LocalTablesEditor({
       // (el resto del módulo — mapa, estado y QR — sigue funcionando igual).
       if (globalResponse.status === 401 || globalResponse.status === 403 ||
           branchResponse.status === 401 || branchResponse.status === 403) {
+        if (seq !== seqRef.current) return;
         setCanEdit(false);
-        setLoading(false);
         return;
       }
 
@@ -157,15 +174,18 @@ export default function LocalTablesEditor({
       const branchOwn = branchData.branchConfig?.localTables;
       const hasOwn = Array.isArray(branchOwn);
 
+      if (seq !== seqRef.current) return;
+
       setCanEdit(true);
       setGlobalTables(global);
       setOwnTables(hasOwn);
       setSavedOwnTables(hasOwn);
       setTables(hasOwn ? toEditableTables(branchOwn) : global);
     } catch (loadError) {
+      if (seq !== seqRef.current) return;
       setError(loadError instanceof Error ? loadError.message : "No se pudieron cargar las mesas");
     } finally {
-      setLoading(false);
+      if (seq === seqRef.current) setLoading(false);
     }
   }, [branchId]);
 
@@ -216,7 +236,7 @@ export default function LocalTablesEditor({
 
     const names = new Set<string>();
     for (const table of cleaned) {
-      const key = table.name.toLowerCase();
+      const key = normalizeTableKey(table.name);
       if (names.has(key)) {
         setError(`Hay dos mesas con el mismo nombre (“${table.name}”). Los pedidos y las cuentas se relacionan por el nombre, así que deben ser distintos.`);
         return;
@@ -255,7 +275,7 @@ export default function LocalTablesEditor({
       // el orden de las filas en pantalla.
       const sortedNames = (list: { name: string }[]) =>
         list
-          .map((table) => table.name.trim().toLowerCase())
+          .map((table) => normalizeTableKey(table.name))
           .sort()
           .join("|");
       const savedNames = sortedNames(toEditableTables(savedList));

@@ -50,6 +50,20 @@ describe("needsPaymentReport", () => {
     ).toBe(true)
   })
 
+  // Regresión: en mixto, la FOTO DE LOS BILLETES no puede dar el pago por
+  // reportado — la pata de Pago móvil sigue sin captura y hay que pedirla.
+  // Solo el comprobante electrónico marca `alreadyReported`.
+  it("la foto del efectivo no tapa el aviso de la pata electrónica", () => {
+    expect(
+      needsPaymentReport({
+        orderType: "Para llevar",
+        paymentMethods: ["Efectivo divisas", "Pago móvil"],
+        proofsEnabled: true,
+        alreadyReported: false,
+      }),
+    ).toBe(true)
+  })
+
   it("no pide reporte si ya reportó, si se anuló, si quedó offline o si es cuenta abierta", () => {
     expect(needsPaymentReport({ ...base, orderType: "Para llevar", alreadyReported: true })).toBe(false)
     expect(needsPaymentReport({ ...base, orderType: "Para llevar", cancelled: true })).toBe(false)

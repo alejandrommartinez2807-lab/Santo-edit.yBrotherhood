@@ -410,6 +410,10 @@ export default function CartDrawer({
   // auto-abrir el formulario manual mientras tanto (evita duplicados).
   const [lastOrderUsedCheckoutProof, setLastOrderUsedCheckoutProof] =
     useState(false);
+  // Igual que el anterior pero SOLO para la captura/referencia electrónica: es
+  // la única que cubre lo reportable (la foto de los billetes no).
+  const [lastOrderUsedElectronicProof, setLastOrderUsedElectronicProof] =
+    useState(false);
   const [showPostRegisterPaymentModal, setShowPostRegisterPaymentModal] =
     useState(false);
   const [customerNote, setCustomerNote] = useState("");
@@ -2691,6 +2695,10 @@ export default function CartDrawer({
       const usedCheckoutProof = requiresProofBeforeRegister && hasCheckoutProof;
       const usedCashDivisaPhoto = requiresCashDivisaPhoto && hasCashDivisaPhoto;
       setLastOrderUsedCheckoutProof(usedCheckoutProof || usedCashDivisaPhoto);
+      // SOLO la captura ELECTRÓNICA cubre lo reportable. La foto de los
+      // billetes no: en un mixto (efectivo + pago móvil) daría el pago por
+      // reportado y nadie pediría la referencia de la pata electrónica.
+      setLastOrderUsedElectronicProof(usedCheckoutProof);
       // En mixto pueden viajar los DOS: la captura electrónica de una pata y
       // la foto de los billetes de la otra (cada una reporta su monto).
       if (usedCheckoutProof) {
@@ -2956,7 +2964,14 @@ export default function CartDrawer({
     offline: Boolean(lastCreatedOrder?.offline),
     cancelled: lastOrderCancelled,
     proofsEnabled: isPaymentProofPublicAvailable,
-    alreadyReported: lastOrderProofReported || lastOrderPaymentReportedLive,
+    // El comprobante adjuntado EN el checkout (modo "pago antes de registrar")
+    // cuenta como reportado desde el primer render: si no, el cliente que ya
+    // pagó y subió su captura veía "Pedido sin pagar" durante los segundos que
+    // tarda la subida.
+    alreadyReported:
+      lastOrderProofReported ||
+      lastOrderPaymentReportedLive ||
+      lastOrderUsedElectronicProof,
   });
   // Defaults alineados al tema oscuro Brotherhood (rediseño); la config del
   // dueño (business_config) sigue mandando si trae valores propios.
