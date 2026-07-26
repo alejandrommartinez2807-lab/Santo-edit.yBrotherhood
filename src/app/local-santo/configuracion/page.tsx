@@ -340,8 +340,9 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicCartEmptyTitle: "Tu carrito está vacío",
   publicCartEmptyText: "Agrega productos del menú para preparar tu pedido.",
   publicCartEmptyButtonText: "Ver menú",
-  publicCartTotalLabel: "Total a cobrar",
-  publicCartTotalHint: "Total general en divisas",
+  // Vacíos = el carrito usa su redacción propia (ver cartDrawerParts).
+  publicCartTotalLabel: "",
+  publicCartTotalHint: "",
   publicCartLocalOrderButtonText: "Registrar pedido local",
   publicCartWhatsappButtonText: "Enviar por WhatsApp",
   publicDivisaGroupTitle: "Combos",

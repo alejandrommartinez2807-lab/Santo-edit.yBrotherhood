@@ -341,10 +341,8 @@ export function buildPublicBusinessConfigResponse(
       "Agrega productos del menú para preparar tu pedido.",
     publicCartEmptyButtonText:
       cleanText(config.publicCartEmptyButtonText) || "Ver menú",
-    publicCartTotalLabel:
-      cleanText(config.publicCartTotalLabel) || "Total a cobrar",
-    publicCartTotalHint:
-      cleanText(config.publicCartTotalHint) || "Total general en divisas",
+    publicCartTotalLabel: cleanText(config.publicCartTotalLabel),
+    publicCartTotalHint: cleanText(config.publicCartTotalHint),
     publicCartLocalOrderButtonText:
       cleanText(config.publicCartLocalOrderButtonText) || "Registrar pedido local",
     publicCartWhatsappButtonText:

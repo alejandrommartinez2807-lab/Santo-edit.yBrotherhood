@@ -9,6 +9,27 @@ import {
 import { BRAND } from "@/lib/brand"
 
 describe("publicBusinessConfigResponse", () => {
+  // Regresión 2026-07-25: estos dos campos NO pueden traer un texto por
+  // defecto. El encabezado real del recuadro de pago vive en el carrito
+  // (redacción en cristiano pedida por el dueño); un default aquí lo pisaba
+  // con el "Total a cobrar" del diseño viejo apenas se conectaron.
+  it("no inventa textos para el total del carrito (vacío = redacción del carrito)", () => {
+    const response = buildPublicBusinessConfigResponse({})
+
+    expect(response.publicCartTotalLabel).toBe("")
+    expect(response.publicCartTotalHint).toBe("")
+  })
+
+  it("respeta el texto del total que sí configura el dueño", () => {
+    const response = buildPublicBusinessConfigResponse({
+      publicCartTotalLabel: "Esto es lo que pagas",
+      publicCartTotalHint: "Precios con IVA",
+    })
+
+    expect(response.publicCartTotalLabel).toBe("Esto es lo que pagas")
+    expect(response.publicCartTotalHint).toBe("Precios con IVA")
+  })
+
   it("usa defaults seguros para textos base", () => {
     const response = buildPublicBusinessConfigResponse({})
 

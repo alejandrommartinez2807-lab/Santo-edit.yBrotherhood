@@ -308,8 +308,14 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicCartEmptyTitle: "Tu carrito está vacío",
   publicCartEmptyText: "Agrega productos del menú para preparar tu pedido.",
   publicCartEmptyButtonText: "Ver menú",
-  publicCartTotalLabel: "Total a cobrar",
-  publicCartTotalHint: "Total general en divisas",
+  // Encabezado del recuadro de pago del carrito y línea extra bajo los montos.
+  // VACÍOS por defecto a propósito: el texto real vive en el carrito
+  // (cartDrawerParts, redacción en cristiano pedida por el dueño para clientes
+  // mayores) y estos campos solo sirven para pisarlo. Antes traían "Total a
+  // cobrar" / "Total general en divisas" del diseño viejo y, al conectarlos,
+  // resucitaban ese texto encima del rediseño (2026-07-25).
+  publicCartTotalLabel: "",
+  publicCartTotalHint: "",
   publicCartLocalOrderButtonText: "Registrar pedido local",
   publicCartWhatsappButtonText: "Enviar por WhatsApp",
   publicDivisaGroupTitle: "Combos",
