@@ -3,27 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Bell, BellRing, CheckCircle2, Loader2 } from "lucide-react";
 
-export type PublicOrderItem = {
-  name: string;
-  quantity: number;
-  selectionSummary: string;
-  subtotalUSD: number;
-};
+// Los tipos y la regla de "esto pertenece a ESTE pedido" viven en el lib para
+// poder probarlos sin DOM. Se re-exportan para no cambiar los importadores.
+import {
+  EMPTY_POLLED_ORDER,
+  selectPolledOrderState,
+  type PolledOrderState,
+  type PublicOrderItem,
+  type PublicOrderPaymentInfo,
+} from "@/lib/publicOrderStatusState";
 
-// Estado del pago que viaja junto al estado del pedido (lote v6): permite
-// mostrar "Esperando pago" → "Pagado" en vivo cuando caja registra el cobro.
-export type PublicOrderPaymentInfo = {
-  // El pedido se paga en caja (Pick up/Delivery con método elegido): la línea
-  // muestra "Esperando pago" aunque el método sea efectivo.
-  expected: boolean;
-  // Además admite reporte con captura/referencia (solo métodos electrónicos).
-  reportable: boolean;
-  reported: boolean;
-  confirmed: boolean;
-  // USD equivalentes de la parte ELECTRÓNICA aún sin comprobante (en mixto,
-  // la foto de los billetes no cubre la pata de Pago móvil/Zelle).
-  pendingReportUSD: number;
-};
+export type { PublicOrderItem, PublicOrderPaymentInfo };
 
 type PublicOrderStatus = {
   status: string;
@@ -35,6 +25,7 @@ type PublicOrderStatus = {
 
 const POLL_INTERVAL_MS = 10_000;
 const FINAL_STATUSES = new Set(["Entregado", "Cancelado"]);
+
 
 // Botón de avisos reactivado (pedido del dueño 2026-07-23): el cliente que
 // lo toca recibe push en cada hito del pedido (entró a cocina, pagado, listo,
@@ -50,12 +41,21 @@ function canUseNotifications() {
 // Estado del pedido en vivo (polling contra /api/public/order-status). Lo usan
 // la confirmación del carrito y la página pública /pedido/[id].
 export function usePublicOrderStatus(orderId: string) {
-  const [status, setStatus] = useState("");
-  const [displayNumber, setDisplayNumber] = useState("");
-  const [items, setItems] = useState<PublicOrderItem[]>([]);
-  const [cancelReason, setCancelReason] = useState("");
-  const [payment, setPayment] = useState<PublicOrderPaymentInfo | null>(null);
-  const [notFound, setNotFound] = useState(false);
+  // Todo el estado sondeado va junto y ETIQUETADO con el pedido al que
+  // pertenece. Antes eran useState sueltos que NADIE limpiaba al cambiar de
+  // pedido: el efecto volvía a sondear, pero hasta que llegaba la primera
+  // respuesta la pantalla seguía mostrando lo del pedido ANTERIOR. Con la
+  // anulación automática eso salía carísimo — al pedido recién hecho le
+  // aparecía el número del viejo y la alerta roja de "Pedido cancelado / Ya NO
+  // pagues este pedido" (dueño 2026-07-26). Derivándolo es imposible pintar
+  // datos de otro pedido, y sin setState dentro del efecto.
+  const [polled, setPolled] = useState<PolledOrderState>({
+    forOrderId: "",
+    ...EMPTY_POLLED_ORDER,
+  });
+
+  const { status, displayNumber, items, cancelReason, payment, notFound } =
+    selectPolledOrderState(polled, orderId);
 
   useEffect(() => {
     if (!orderId) return;
@@ -72,30 +72,38 @@ export function usePublicOrderStatus(orderId: string) {
         const data = (await response.json()) as Partial<PublicOrderStatus> & { ok?: boolean };
 
         if (!cancelled && response.ok && data.ok) {
-          setStatus(String(data.status || ""));
-          setDisplayNumber(String(data.displayNumber || ""));
-          setItems(Array.isArray(data.items) ? data.items : []);
-          setCancelReason(String(data.cancelReason || ""));
-          setPayment(
-            data.payment && typeof data.payment === "object"
-              ? {
-                  // Respuestas viejas (sin "expected") degradan a reportable.
-                  expected:
-                    data.payment.expected === true ||
-                    data.payment.reportable === true,
-                  reportable: data.payment.reportable === true,
-                  reported: data.payment.reported === true,
-                  confirmed: data.payment.confirmed === true,
-                  pendingReportUSD: Number(data.payment.pendingReportUSD || 0),
-                }
-              : null,
-          );
-          setNotFound(false);
+          setPolled({
+            // Etiquetado con el pedido de ESTA consulta: si el id ya cambió, el
+            // valor derivado lo descarta en vez de pintarlo sobre el nuevo.
+            forOrderId: orderId,
+            status: String(data.status || ""),
+            displayNumber: String(data.displayNumber || ""),
+            items: Array.isArray(data.items) ? data.items : [],
+            cancelReason: String(data.cancelReason || ""),
+            payment:
+              data.payment && typeof data.payment === "object"
+                ? {
+                    // Respuestas viejas (sin "expected") degradan a reportable.
+                    expected:
+                      data.payment.expected === true ||
+                      data.payment.reportable === true,
+                    reportable: data.payment.reportable === true,
+                    reported: data.payment.reported === true,
+                    confirmed: data.payment.confirmed === true,
+                    pendingReportUSD: Number(data.payment.pendingReportUSD || 0),
+                  }
+                : null,
+            notFound: false,
+          });
         }
 
         // 404/400: el pedido no existe (o el link está mal). Dejar de sondear.
         if (!cancelled && (response.status === 404 || response.status === 400)) {
-          setNotFound(true);
+          setPolled({
+            forOrderId: orderId,
+            ...EMPTY_POLLED_ORDER,
+            notFound: true,
+          });
           return;
         }
       } catch {
@@ -143,8 +151,20 @@ export function useOrderReadyAlert({
 }) {
   const previousStatus = useRef("");
   const alreadyAnnounced = useRef(false);
+  // A qué pedido pertenece la memoria de los dos refs de arriba.
+  const memoryForOrder = useRef("");
 
   useEffect(() => {
+    // Cambió el pedido: la memoria de "ya avisé" es POR pedido. Sin esto, el
+    // segundo pedido de la misma sesión NO vibraba al quedar listo (el primero
+    // ya había gastado alreadyAnnounced), y arrastraba el "Cancelado" del
+    // anterior como estado previo (2026-07-26).
+    if (memoryForOrder.current !== orderId) {
+      memoryForOrder.current = orderId;
+      previousStatus.current = "";
+      alreadyAnnounced.current = false;
+    }
+
     // Cancelación: vibración + notificación (si el cliente activó avisos)
     // la primera vez que el pedido pasa a "Cancelado".
     if (status === "Cancelado" && previousStatus.current !== "Cancelado") {
