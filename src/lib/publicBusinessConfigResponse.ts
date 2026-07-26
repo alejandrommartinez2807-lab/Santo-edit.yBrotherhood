@@ -414,7 +414,7 @@ export function buildPublicBusinessConfigResponse(
     splitBillEnabled: splitBillAccess.effectiveEnabled,
     kitchenFlowMode: normalizeKitchenFlowMode(config.kitchenFlowMode),
     // Config operativa de caja: mostrar u ocultar "Delivery pagado en".
-    cashierDeliveryPaymentInEnabled: config.cashierDeliveryPaymentInEnabled !== false,
+    cashierDeliveryPaymentInEnabled: config.cashierDeliveryPaymentInEnabled === true,
     publicPaymentMethodChangeEnabled: config.publicPaymentMethodChangeEnabled !== false,
     localTables: normalizePublicLocalTables(config.localTables),
     promotionActive: promotionCanShow,

@@ -346,7 +346,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   publicPaymentBeforeRegisterEnabled: false,
   publicCashDivisaPhotoRequired: false,
   publicMixedSecondProofEnabled: true,
-  cashierDeliveryPaymentInEnabled: true,
+  cashierDeliveryPaymentInEnabled: false,
   publicUnpaidAutoCancelMinutes: 0,
   promotionPopupEnabled: false,
   cancellationApprovalRequired: false,

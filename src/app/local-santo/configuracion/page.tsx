@@ -40,7 +40,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   Store,
-  Table2,
+  Table2,
   Truck,
   UploadCloud,
   XCircle,
@@ -451,7 +451,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   filtersOpenByDefault: false,
   allowCloseWithPendingOrders: true,
   allowCloseWithPendingPayments: true,
-  cashierDeliveryPaymentInEnabled: true,
+  cashierDeliveryPaymentInEnabled: false,
   kitchenFlowMode: "kitchen",
   publicPaymentMethodChangeEnabled: true,
 };
@@ -5498,11 +5498,17 @@ export default function BusinessConfigPage() {
                 />
               ))}
             </div>
-            {/* Se retiró "Preguntar en qué se pagó el delivery" (dueño
-                2026-07-25): ese paso ya no existe ni en caja ni en el carrito,
-                así que el interruptor solo confundía apareciendo encendido.
-                El costo del delivery se sigue viendo en público, reportes y
-                cierres, y los cobros ya registrados no se tocan. */}
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <ToggleRow
+                label="Preguntar en qué se pagó el delivery"
+                description="Muestra el selector “Delivery pagado en” al cobrar un pedido de delivery. Si no te interesa ese dato, apágalo: el costo del delivery se sigue viendo en la página pública, reportes y cierres."
+                checked={businessConfig.cashierDeliveryPaymentInEnabled}
+                onChange={(value) =>
+                  updateConfig("cashierDeliveryPaymentInEnabled", value)
+                }
+                icon={<Truck size={18} />}
+              />
+            </div>
             <p className="mt-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/60">
               Recuerda presionar “Guardar cambios” al final de la página. La caja toma el modo nuevo al recargar.
             </p>

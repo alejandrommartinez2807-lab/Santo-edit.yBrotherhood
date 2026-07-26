@@ -101,7 +101,7 @@ export const SIMPLE_BUSINESS_CONFIG_FIELDS: readonly SimpleConfigField[] = [
   // 2026-07-23): si al negocio no le interesa registrar en qué moneda se pagó
   // el delivery, lo apaga y el selector desaparece del modal de cobro. Los
   // costos de delivery se siguen viendo en el público, reportes y cierres.
-  { key: "cashierDeliveryPaymentInEnabled", type: "boolean", default: true },
+  { key: "cashierDeliveryPaymentInEnabled", type: "boolean", default: false },
   // La promoción del dueño también como ventana emergente al entrar (además
   // de la sección); se recuerda el cierre por contenido para no insistir.
   { key: "promotionPopupEnabled", type: "boolean", default: false },
