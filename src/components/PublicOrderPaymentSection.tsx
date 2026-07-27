@@ -198,6 +198,7 @@ export default function PublicOrderPaymentSection({
   refreshSignal = 0,
   expectProofPending = false,
   uploadingProofs = false,
+  livePaymentConfirmed = false,
 }: {
   orderId: string;
   // Abre el formulario de reporte de una vez (confirmación con pago
@@ -235,6 +236,11 @@ export default function PublicOrderPaymentSection({
   // serie): con la primera pata ya registrada y la segunda en vuelo, la
   // sección no puede acusar todavía que "falta registrar la parte de X".
   uploadingProofs?: boolean;
+  // true cuando el poll del seguimiento (10s) ya vio el pago confirmado: la
+  // sección recarga su info AL INSTANTE en vez de esperar su propio ciclo —
+  // el "En revisión" se quedaba pegado hasta 45s tras el cobro de caja y el
+  // cliente terminaba refrescando a mano (dueño 2026-07-26).
+  livePaymentConfirmed?: boolean;
 }) {
   usePublicCurrencySymbol();
   const [info, setInfo] = useState<OrderPaymentInfo | null>(null);
@@ -475,17 +481,33 @@ export default function PublicOrderPaymentSection({
   // Refresco periódico del estado de pago: si caja confirma (o el pedido se
   // anula) mientras el cliente tiene la página abierta, el banner y el
   // contador se apagan solos en vez de quedarse congelados en el primer
-  // snapshot.
+  // snapshot. Con un comprobante esperando revisión el ciclo baja a 15s:
+  // es justo el momento en que caja está por confirmar y 45s se sentían
+  // como "no se actualiza" (dueño 2026-07-26).
   useEffect(() => {
     if (isLoading || !info || hasConfirmedPayment) return;
     if (info.orderStatus === "Cancelado") return;
 
-    const timer = window.setInterval(() => {
-      void loadInfo();
-    }, 45_000);
+    const timer = window.setInterval(
+      () => {
+        void loadInfo();
+      },
+      hasPendingProof ? 15_000 : 45_000,
+    );
 
     return () => window.clearInterval(timer);
-  }, [isLoading, info, hasConfirmedPayment, loadInfo]);
+  }, [isLoading, info, hasConfirmedPayment, hasPendingProof, loadInfo]);
+
+  // El poll del seguimiento (cada 10s) ve el cobro de caja ANTES que el
+  // refresco de esta sección: cuando avisa, la info se recarga de una para
+  // que los chips "En revisión" pasen a "Confirmado" sin refrescar la página.
+  useEffect(() => {
+    if (!livePaymentConfirmed || isLoading || hasConfirmedPayment) return;
+    const timer = setTimeout(() => {
+      void loadInfo();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [livePaymentConfirmed, isLoading, hasConfirmedPayment, loadInfo]);
 
   // Recarga inmediata cuando el checkout termina de subir un comprobante
   // (foto de billetes / captura): sin esto, el cliente veía por hasta 45s el

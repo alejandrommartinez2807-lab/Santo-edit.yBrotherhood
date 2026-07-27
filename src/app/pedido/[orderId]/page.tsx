@@ -471,6 +471,7 @@ export default function PedidoSeguimientoPage({
               proofsEnabled={paymentProofsEnabled}
               autoOpenForm={needsPaymentReport}
               forceOpenSignal={openReportSignal}
+              livePaymentConfirmed={paymentConfirmed}
             />
           </div>
         ) : null}

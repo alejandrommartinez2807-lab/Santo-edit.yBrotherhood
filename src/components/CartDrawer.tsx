@@ -1348,6 +1348,28 @@ export default function CartDrawer({
       targetId: "checkout-divisa-foto",
       missing: requiresCashDivisaPhoto && !hasCashDivisaPhoto,
     },
+    // Efectivo EN DIVISAS: decir con cuánto se paga es OBLIGATORIO (pedido
+    // del dueño 2026-07-26) — sin eso caja no puede tener el vuelto listo y
+    // el mostrador termina negociando billetes. Solo divisas: en Bs sigue
+    // siendo opcional. Además debe CUBRIR el total (con menos no hay pago).
+    {
+      label: "indicar con cuánto vas a pagar tu efectivo en divisas",
+      targetId: "checkout-vuelto",
+      missing:
+        (isDeliveryOrder || isTakeawayOrder) &&
+        isCashDivisaMethod &&
+        (cashGivenValue <= 0 || cashGivenValue < totalUSD),
+    },
+    {
+      label: "indicar con qué billete pagas la parte en efectivo del mixto",
+      targetId: "checkout-pago-mixto",
+      missing:
+        (isDeliveryOrder || isTakeawayOrder) &&
+        isMixedDivisaCash &&
+        isMixedPaymentComplete &&
+        (normalizeFormMoney(mixedUsdGivenAmount) <= 0 ||
+          normalizeFormMoney(mixedUsdGivenAmount) < mixedUsdValue),
+    },
   ].filter((check) => check.missing);
 
   const canRegisterLocalOrder =
@@ -1914,9 +1936,17 @@ export default function CartDrawer({
       : [5, 10, 20, 50, 100];
 
     return (
-      <div className="rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] px-4 py-4">
+      <div
+        id="checkout-vuelto"
+        className="rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-cream)] px-4 py-4"
+      >
         <p className="text-sm font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
           ¿Con cuánto vas a pagar?
+          {!cashIsVes ? (
+            <span className="ml-1.5 text-[0.62rem] text-[var(--brand-ink-2)]/55">
+              (obligatorio)
+            </span>
+          ) : null}
         </p>
         <p className="mt-1 text-[0.72rem] font-bold leading-4 text-[var(--brand-ink-2)]/70">
           Toca el billete con el que vas a pagar (o escribe el monto abajo) y
@@ -1986,7 +2016,11 @@ export default function CartDrawer({
           return (
             <p className="mt-2 rounded-xl border border-[var(--brand-primary)]/50 bg-white px-3 py-2 text-[0.72rem] font-black leading-4 text-[#1a1a1a]">
               {change > 0
-                ? `Tu vuelto será ${cashIsVes ? `Bs ${formatVES(change)}` : formatUSD(change)}.`
+                ? `Tu vuelto será ${cashIsVes ? `Bs ${formatVES(change)}` : formatUSD(change)}.${
+                    cashIsVes
+                      ? ""
+                      : " El personal se comunicará contigo para coordinar tu vuelto."
+                  }`
                 : "Pago exacto: sin vuelto."}
             </p>
           );
@@ -2120,7 +2154,7 @@ export default function CartDrawer({
             <div className="mt-2">
               <p className="text-[0.68rem] font-black uppercase tracking-[0.08em] text-[var(--brand-ink-3)]">
                 ¿Con qué billete pagas esa parte?{" "}
-                <span className="text-[var(--brand-ink-2)]/50">(opcional)</span>
+                <span className="text-[var(--brand-ink-2)]/50">(obligatorio)</span>
               </p>
               {/* Una sola fila de 5 iguales: el de $100 se caía a una segunda
                   línea (reporte del dueño 2026-07-23). */}
@@ -2179,7 +2213,7 @@ export default function CartDrawer({
                 return (
                   <p className="mt-2 rounded-xl border border-[var(--brand-primary)]/50 bg-white px-3 py-2 text-[0.72rem] font-black leading-4 text-[#1a1a1a]">
                     {change > 0
-                      ? `Pagas la parte en efectivo con ${formatUSD(given)}: tu vuelto será ${formatUSD(change)}.`
+                      ? `Pagas la parte en efectivo con ${formatUSD(given)}: tu vuelto será ${formatUSD(change)}. El personal se comunicará contigo para coordinarlo.`
                       : "Pago exacto en la parte de efectivo: sin vuelto."}
                   </p>
                 );
@@ -3811,6 +3845,7 @@ export default function CartDrawer({
                         lastOrderUsedCheckoutProof && !lastOrderPaymentConfirmed
                       }
                       uploadingProofs={isUploadingCheckoutProofs}
+                      livePaymentConfirmed={lastOrderPaymentConfirmed}
                       onReported={() => {
                         setLastOrderProofReported(true);
                         setShowPostRegisterPaymentModal(false);
