@@ -9,6 +9,24 @@
       "autoPort": true
     },
     {
+      "name": "vitrina-prod",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd /d C:\\Users\\maye2\\vitrina-demos && npx next start -p 3410"],
+      "port": 3410
+    },
+    {
+      "name": "mordisco",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd /d C:\\Users\\maye2\\mordisco && npx next start -p 3414"],
+      "port": 3414
+    },
+    {
+      "name": "vitrina",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "C:/Users/maye2/vitrina-demos", "--", "-p", "3400"],
+      "port": 3400
+    },
+    {
       "name": "santo-edit",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],

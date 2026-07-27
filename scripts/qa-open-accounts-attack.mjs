@@ -6,6 +6,7 @@
 // aislamiento por sede.
 //
 // Uso:  npm run qa:open-accounts        (dev server en :3177)
+import { existsSync } from "node:fs"
 import {
   BASE,
   BRANCH_SAN_DIEGO,
@@ -158,11 +159,17 @@ console.log("\n── A2 · el marcador dentro de la nota")
       `orig=${bill1Json?.requestedAt} p1=${p1?.requestedAt} p2=${p2?.requestedAt}`,
     )
 
+    // La API privada sirve la nota CRUDA a propósito (el panel necesita leer
+    // el marcador para pintar el badge). El riesgo es que cada consumidor
+    // tiene que acordarse de limpiarla antes de enseñarla — y el ticket de
+    // 80 mm no lo hacía: le imprimía el marcador al cliente. Arreglado, y
+    // ahora lo vigila billMarkerNeverLeaks.fitness.test.ts.
     const apiAccount = await accountFromApi(account.id, A)
+    console.log(`   · la API sirve la nota cruda (por diseño): "${apiAccount?.note}"`)
     check(
-      "A2 · [ESCAPE] la API privada NO debería servir la nota con el marcador crudo",
-      !/\[CUENTA_PEDIDA:/.test(String(apiAccount?.note || "")),
-      `note servida = "${apiAccount?.note}" · cada consumidor tiene que acordarse de limpiarla (ticket 80mm no lo hace)`,
+      "A2 · ninguna pantalla pinta la nota cruda (lo vigila el fitness test)",
+      existsSync("src/lib/__tests__/billMarkerNeverLeaks.fitness.test.ts"),
+      "billMarkerNeverLeaks recorre src/ y falla si alguien la renderiza sin stripBillRequestMarker",
     )
 
     const pub = await publicTableStatus(PUBLIC_TABLE_A, A)

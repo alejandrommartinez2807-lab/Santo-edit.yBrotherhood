@@ -36,6 +36,7 @@ import {
   stripPricesFromSelectionSummary,
 } from "@/lib/localOrderHelpers";
 import { getOrderPayment, getOrderTotals, roundMoney } from "@/lib/localOrderMoney";
+import { stripBillRequestMarker } from "@/lib/openAccountBillRequest";
 import { fetchActiveBranches, getSelectedBranchId } from "@/lib/branchClient";
 
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session";
@@ -423,6 +424,10 @@ function AccountTicket({ account, ordersById }: { account: OpenAccount; ordersBy
     .map((orderId) => ordersById.get(String(orderId || "").trim()))
     .filter((order): order is LocalOrder => Boolean(order));
 
+  // "Pedir la cuenta" viaja como marcador dentro de la nota: el ticket que se
+  // le entrega al cliente lo imprimía tal cual.
+  const displayNote = stripBillRequestMarker(account.note);
+
   return (
     <TicketShell title="Ticket de cuenta abierta" subtitle="Resumen para revisar en mesa">
       <TicketLine label="Cuenta" value={account.id} />
@@ -434,9 +439,9 @@ function AccountTicket({ account, ordersById }: { account: OpenAccount; ordersBy
       <TicketLine label="Cobrado real" value={formatUSD(account.totalCollectedUSD || 0)} />
       <TicketLine label="Pendiente" value={formatUSD(account.pendingUSD || 0)} />
 
-      {account.note ? (
+      {displayNote ? (
         <div className="mt-3 rounded-xl border border-[var(--brand-primary)]/25 bg-red-50 p-3 text-[12px] font-black leading-5 text-[var(--brand-primary)]">
-          Nota de cuenta: {account.note}
+          Nota de cuenta: {displayNote}
         </div>
       ) : null}
 
