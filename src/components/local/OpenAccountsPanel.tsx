@@ -129,6 +129,14 @@ export function OpenAccountsPanel({
   const [closeAfterAccountPayment, setCloseAfterAccountPayment] =
     useState(false);
   const [splitOpen, setSplitOpen] = useState(false);
+  // Modal propio de cierre (reemplaza el window.confirm nativo): guarda la
+  // cuenta y su pendiente para decidir entre cerrar, cobrar primero o
+  // marcarla Cancelada (cerrada SIN cobrar).
+  const [closeModal, setCloseModal] = useState<{
+    account: OpenAccount;
+    accountOrders: OpenAccountOrderSummary[];
+    pendingUSD: number;
+  } | null>(null);
 
   const hasExternalAccounts = Array.isArray(externalOpenAccounts);
 
@@ -514,7 +522,10 @@ export function OpenAccountsPanel({
     }
   }
 
-  async function closeAccount(
+  // Paso 1 del cierre: abrir el modal propio con el pendiente a la vista
+  // (antes era un window.confirm nativo, el único diálogo sin estilo del
+  // panel, y la gente cerraba cuentas con dinero pendiente sin darse cuenta).
+  function requestCloseAccount(
     account: OpenAccount,
     accountOrders: OpenAccountOrderSummary[],
   ) {
@@ -527,28 +538,37 @@ export function OpenAccountsPanel({
       return;
 
     const totals = getComputedAccountTotals(account, accountOrders);
-    const hasPending = Number(totals.pendingUSD || 0) > 0.01;
-    const confirmed = window.confirm(
-      hasPending
-        ? `Esta cuenta todavía tiene ${formatUSD(totals.pendingUSD)} pendiente. Cerrar la cuenta no registra cobro ni cambia estados de pago. ¿Quieres cerrarla igualmente?`
-        : "Cerrar la cuenta no registra cobro adicional. ¿Confirmas el cierre?",
-    );
+    setCloseModal({
+      account,
+      accountOrders,
+      pendingUSD: Number(totals.pendingUSD || 0),
+    });
+    setMessage(null);
+  }
 
-    if (!confirmed) return;
+  // Paso 2: cierre confirmado desde el modal. "Cerrada" = cierre normal;
+  // "Cancelada" = quedó claro que ese dinero NO se va a cobrar.
+  async function confirmCloseAccount(closeStatus: "Cerrada" | "Cancelada") {
+    const target = closeModal;
+    if (!target || isSaving) return;
 
     setIsSaving(true);
     setMessage(null);
 
     try {
       const response = await fetch(
-        `/api/open-accounts/${encodeURIComponent(account.id)}`,
+        `/api/open-accounts/${encodeURIComponent(target.account.id)}`,
         {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             "x-admin-password": adminPassword,
           },
-          body: JSON.stringify({ action: "close", closedBy: closeRoleLabel }),
+          body: JSON.stringify({
+            action: "close",
+            closeStatus,
+            closedBy: closeRoleLabel,
+          }),
         },
       );
       const data = await readApiResponse(response);
@@ -559,8 +579,11 @@ export function OpenAccountsPanel({
         );
       }
 
+      setCloseModal(null);
       setMessage(
-        "Cuenta cerrada correctamente. Los cobros reales no fueron modificados.",
+        closeStatus === "Cancelada"
+          ? `Cuenta de ${target.account.tableNumber} marcada como Cancelada: quedó registrado que no se cobró.`
+          : "Cuenta cerrada correctamente. Los cobros reales no fueron modificados.",
       );
       await refreshAccountsAfterAction();
       onOrdersShouldRefresh?.();
@@ -580,7 +603,9 @@ export function OpenAccountsPanel({
     const totals = getComputedAccountTotals(account, accountOrders);
 
     setPaymentAccountId(account.id);
-    setCloseAfterAccountPayment(false);
+    // El camino normal es "cobrar Y cerrar": la casilla arranca activada y
+    // caja la desmarca solo si la cuenta debe seguir abierta.
+    setCloseAfterAccountPayment(true);
     setSplitOpen(false);
     setAccountPaymentForm({
       ...EMPTY_ACCOUNT_PAYMENT_FORM,
@@ -654,12 +679,21 @@ export function OpenAccountsPanel({
         unusedUSD > 0.01 || unusedVES > 0.01
           ? ` Quedó un excedente no aplicado: ${formatUSD(unusedUSD)}${unusedVES > 0.01 ? ` / Bs ${unusedVES.toFixed(2)}` : ""}.`
           : "";
+      // El candado del servidor detectó otro cobro simultáneo: se aplicó lo
+      // que se pudo y caja debe mirar el pendiente fresco antes de repetir.
+      const conflictMessage = data.conflictNotice
+        ? ` ${String(data.conflictNotice)}`
+        : "";
+      const closedMessage =
+        data.openAccount?.status === "Cerrada"
+          ? " La cuenta quedó pagada y CERRADA."
+          : "";
 
       setPaymentAccountId("");
       setAccountPaymentForm(EMPTY_ACCOUNT_PAYMENT_FORM);
       setCloseAfterAccountPayment(false);
       setMessage(
-        `Cobro aplicado a la cuenta de ${account.tableNumber}.${unusedMessage}`,
+        `Cobro aplicado a la cuenta de ${account.tableNumber}.${closedMessage}${unusedMessage}${conflictMessage}`,
       );
       await refreshAccountsAfterAction();
       onOrdersShouldRefresh?.();
@@ -1274,28 +1308,47 @@ export function OpenAccountsPanel({
                       <CreditCard size={15} />
                       Asociar pedido
                     </button>
-                    {canRegisterPayments && (
+                    {/* UNA acción primaria según el estado del dinero: con
+                        pendiente manda "Cobrar y cerrar" (el cobro trae el
+                        auto-cierre activado); sin pendiente, "Cerrar cuenta".
+                        Cerrar sin cobrar queda como camino secundario y pasa
+                        por el modal que lo dice sin rodeos. */}
+                    {canRegisterPayments && totals.pendingUSD > 0.01 && (
                       <button
                         type="button"
                         onClick={() =>
                           openAccountPayment(account, accountOrders)
                         }
-                        disabled={isSaving || totals.pendingUSD <= 0.01}
+                        disabled={isSaving}
                         className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)] disabled:opacity-50"
                       >
                         <CreditCard size={15} />
-                        Cobrar cuenta
+                        Cobrar y cerrar
                       </button>
                     )}
-                    {canCloseAccounts && (
+                    {canCloseAccounts && totals.pendingUSD <= 0.01 && (
                       <button
                         type="button"
-                        onClick={() => closeAccount(account, accountOrders)}
+                        onClick={() =>
+                          requestCloseAccount(account, accountOrders)
+                        }
                         disabled={isSaving}
                         className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border-2 border-green-700 bg-green-100 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-green-800 transition hover:bg-green-200 disabled:opacity-50"
                       >
                         <CheckCircle2 size={15} />
                         Cerrar cuenta
+                      </button>
+                    )}
+                    {canCloseAccounts && totals.pendingUSD > 0.01 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          requestCloseAccount(account, accountOrders)
+                        }
+                        disabled={isSaving}
+                        className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/50 transition hover:text-[var(--brand-ink-2)] disabled:opacity-50"
+                      >
+                        Cerrar sin cobrar
                       </button>
                     )}
                   </div>
@@ -1513,6 +1566,94 @@ export function OpenAccountsPanel({
       </div>
         </>
       )}
+
+      {/* Modal de cierre (reemplaza el window.confirm): con dinero pendiente
+          la salida recomendada es cobrar primero; cerrar sin cobrar y marcar
+          Cancelada quedan como decisiones explícitas, no como un "Aceptar"
+          apurado. */}
+      {closeModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-[1.6rem] border-2 border-[var(--brand-border)] bg-white p-5 shadow-xl">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+              Cerrar cuenta · {closeModal.account.tableNumber}
+            </p>
+
+            {closeModal.pendingUSD > 0.01 ? (
+              <>
+                <p className="mt-3 rounded-2xl border-2 border-amber-500 bg-amber-500/10 px-4 py-3 text-sm font-black leading-5 text-amber-700">
+                  Esta cuenta todavía tiene {formatUSD(closeModal.pendingUSD)}{" "}
+                  pendiente. Cerrarla NO registra ningún cobro.
+                </p>
+
+                <button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={() => {
+                    const target = closeModal;
+                    setCloseModal(null);
+                    if (canRegisterPayments && target) {
+                      openAccountPayment(target.account, target.accountOrders);
+                    }
+                  }}
+                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)] disabled:opacity-50"
+                >
+                  <CreditCard size={15} />
+                  Mejor cobrar primero
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={() => confirmCloseAccount("Cerrada")}
+                  className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-green-700 bg-green-100 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-green-800 transition hover:bg-green-200 disabled:opacity-50"
+                >
+                  <CheckCircle2 size={15} />
+                  Ya se cobró por fuera: cerrar igual
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={() => confirmCloseAccount("Cancelada")}
+                  className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-red-500 bg-red-500/10 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-red-600 transition hover:bg-red-500/20 disabled:opacity-50"
+                >
+                  No se va a cobrar: marcar Cancelada
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="mt-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
+                  Todo el consumo está cobrado. La cuenta pasa al historial y
+                  la mesa queda libre para una cuenta nueva.
+                </p>
+
+                <button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={() => confirmCloseAccount("Cerrada")}
+                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-green-700 bg-green-100 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-green-800 transition hover:bg-green-200 disabled:opacity-50"
+                >
+                  {isSaving ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <CheckCircle2 size={15} />
+                  )}
+                  Cerrar cuenta
+                </button>
+              </>
+            )}
+
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() => setCloseModal(null)}
+              className="mt-3 w-full rounded-full px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/50 transition hover:text-[var(--brand-ink-2)]"
+            >
+              Volver sin cerrar
+            </button>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

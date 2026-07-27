@@ -6,6 +6,7 @@ import {
   getOpenAccountStatus,
   getOpenAccounts,
   getOrders,
+  OrderPaymentConflictError,
   updateOrderPayment,
   updateOrderStatus,
   type OrderStatus,
@@ -480,47 +481,58 @@ export async function PATCH(
       let remainingUSD = amountReceivedUSD;
       let remainingVES = amountReceivedVES;
       const updatedOrders = [];
+      const actor = getLocalAccessAuditActor(access.access);
+      // Dos cobros de la misma cuenta a la vez (riesgo R6): el reparto FIFO
+      // leía los montos y REESCRIBÍA — el segundo cobro pisaba el dinero del
+      // primero. Cada escritura va ahora con el candado optimista de
+      // updateOrderPayment (expectedPrevious): si otro cobro tocó el pedido
+      // entremedio, se relee SOLO ese pedido y se reintenta una vez.
+      let conflictNotice = "";
 
-      for (const order of accountOrders) {
-        let pendingUSD = getOrderPendingUSD(order);
+      // Reparte lo disponible sobre UN pedido usando los montos del snapshot
+      // `source` y lo escribe exigiendo que sigan vigentes. Devuelve null si
+      // a este pedido no le toca dinero.
+      const chargeOrder = async (
+        source: (typeof accountOrders)[number],
+        availableUSD: number,
+        availableVES: number,
+      ) => {
+        let pendingUSD = getOrderPendingUSD(source);
 
-        if (pendingUSD <= 0.01) continue;
+        if (pendingUSD <= 0.01) return null;
 
         const currentAmountUSD = roundMoney(
-          order.amountReceivedUSD ?? order.payment?.amountReceivedUSD ?? 0,
+          source.amountReceivedUSD ?? source.payment?.amountReceivedUSD ?? 0,
         );
         const currentAmountVES = roundMoney(
-          order.amountReceivedVES ?? order.payment?.amountReceivedVES ?? 0,
+          source.amountReceivedVES ?? source.payment?.amountReceivedVES ?? 0,
         );
-        const exchangeRate = Number(order.exchangeRate || 0);
+        const exchangeRate = Number(source.exchangeRate || 0);
         let addUSD = 0;
         let addVES = 0;
 
-        if (remainingUSD > 0 && pendingUSD > 0) {
-          addUSD = roundMoney(Math.min(remainingUSD, pendingUSD));
-          remainingUSD = roundMoney(Math.max(remainingUSD - addUSD, 0));
+        if (availableUSD > 0 && pendingUSD > 0) {
+          addUSD = roundMoney(Math.min(availableUSD, pendingUSD));
           pendingUSD = roundMoney(Math.max(pendingUSD - addUSD, 0));
         }
 
-        if (remainingVES > 0 && pendingUSD > 0 && exchangeRate > 0) {
-          const remainingVESEquivalentUSD = roundMoney(
-            remainingVES / exchangeRate,
+        if (availableVES > 0 && pendingUSD > 0 && exchangeRate > 0) {
+          const availableVESEquivalentUSD = roundMoney(
+            availableVES / exchangeRate,
           );
           const addVESEquivalentUSD = roundMoney(
-            Math.min(remainingVESEquivalentUSD, pendingUSD),
+            Math.min(availableVESEquivalentUSD, pendingUSD),
           );
           addVES = roundMoney(addVESEquivalentUSD * exchangeRate);
-          remainingVES = roundMoney(Math.max(remainingVES - addVES, 0));
           pendingUSD = roundMoney(
             Math.max(pendingUSD - addVESEquivalentUSD, 0),
           );
         }
 
-        if (addUSD <= 0 && addVES <= 0) continue;
+        if (addUSD <= 0 && addVES <= 0) return null;
 
-        const actor = getLocalAccessAuditActor(access.access);
         const updatedOrder = await updateOrderPayment(
-          order.id,
+          source.id,
           {
             amountReceivedUSD: roundMoney(currentAmountUSD + addUSD),
             amountReceivedVES: roundMoney(currentAmountVES + addVES),
@@ -529,22 +541,67 @@ export async function PATCH(
             // cobro 100% en Bs le escribía también el método USD = reporte de
             // pago falso en ese pedido).
             paymentMethodUSD:
-              addUSD > 0 ? paymentMethodUSD : cleanText(order.paymentMethodUSD),
+              addUSD > 0
+                ? paymentMethodUSD
+                : cleanText(source.paymentMethodUSD),
             paymentMethodVES:
-              addVES > 0 ? paymentMethodVES : cleanText(order.paymentMethodVES),
+              addVES > 0
+                ? paymentMethodVES
+                : cleanText(source.paymentMethodVES),
             deliveryPaymentIn,
             paymentNote,
             chargedBy: { id: actor.id, name: actor.label, role: actor.role },
+            expectedPrevious: {
+              amountReceivedUSD: currentAmountUSD,
+              amountReceivedVES: currentAmountVES,
+            },
           },
           branchId,
         );
 
-        updatedOrders.push(updatedOrder);
+        return { updatedOrder, usedUSD: addUSD, usedVES: addVES };
+      };
 
+      for (const order of accountOrders) {
         if (remainingUSD <= 0.01 && remainingVES <= 0.01) break;
+
+        let result;
+        try {
+          result = await chargeOrder(order, remainingUSD, remainingVES);
+        } catch (chargeError) {
+          if (!(chargeError instanceof OrderPaymentConflictError)) {
+            throw chargeError;
+          }
+          // Chocó: montos frescos de ESTE pedido y un solo reintento.
+          const freshOrders = await getOrders(branchId);
+          const freshOrder = freshOrders.find((item) => item.id === order.id);
+          if (!freshOrder || freshOrder.status === "Cancelado") continue;
+          try {
+            result = await chargeOrder(freshOrder, remainingUSD, remainingVES);
+          } catch (retryError) {
+            if (!(retryError instanceof OrderPaymentConflictError)) {
+              throw retryError;
+            }
+            conflictNotice =
+              "Otro cobro de esta cuenta entró al mismo tiempo: revisa el pendiente actualizado antes de volver a cobrar.";
+            break;
+          }
+        }
+
+        if (!result) continue;
+
+        updatedOrders.push(result.updatedOrder);
+        remainingUSD = roundMoney(Math.max(remainingUSD - result.usedUSD, 0));
+        remainingVES = roundMoney(Math.max(remainingVES - result.usedVES, 0));
       }
 
       if (updatedOrders.length === 0) {
+        if (conflictNotice) {
+          return NextResponse.json(
+            { error: conflictNotice, conflict: true },
+            { status: 409 },
+          );
+        }
         return NextResponse.json(
           { error: "No había pendiente suficiente para aplicar este cobro" },
           { status: 400 },
@@ -599,6 +656,8 @@ export async function PATCH(
         updatedOrders,
         unusedAmountUSD: remainingUSD,
         unusedAmountVES: remainingVES,
+        // Cobro aplicado a medias por una carrera: la UI se lo dice a caja.
+        ...(conflictNotice ? { conflictNotice } : {}),
       });
     }
 
@@ -609,9 +668,16 @@ export async function PATCH(
         );
       }
 
+      // "Cancelada": la cuenta se cierra SIN cobrarse (el estado existía en
+      // la BD pero ninguna pantalla podía ponerlo). Cualquier otro valor
+      // degrada a "Cerrada", el cierre normal.
+      const closeStatus =
+        cleanText(body.closeStatus) === "Cancelada" ? "Cancelada" : "Cerrada";
+
       const openAccount = await closeOpenAccount(
         cleanAccountId,
         {
+          status: closeStatus,
           closedBy:
             cleanText(body.closedBy) ||
             getLocalAccessAuditActor(access.access).label ||
@@ -627,6 +693,7 @@ export async function PATCH(
         entityId: cleanAccountId,
         actor: getLocalAccessAuditActor(access.access),
         request,
+        metadata: { closeStatus },
       });
 
       return NextResponse.json({ ok: true, openAccount });
