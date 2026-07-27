@@ -114,7 +114,7 @@ async function getOrderPaymentSnapshot(
   let query = supabase
     .from("orders")
     .select(
-      "amount_received_usd, amount_received_ves, payment_method_usd, payment_method_ves, payment_note",
+      "amount_received_usd, amount_received_ves, payment_method_usd, payment_method_ves, payment_note, total_usd, exchange_rate",
     )
     .eq("id", orderId)
   if (branchId) query = query.eq("branch_id", branchId)
@@ -131,6 +131,8 @@ async function getOrderPaymentSnapshot(
     paymentMethodUSD: String(row.payment_method_usd || ""),
     paymentMethodVES: String(row.payment_method_ves || ""),
     paymentNote: String(row.payment_note || ""),
+    totalUSD: Number(row.total_usd || 0),
+    exchangeRate: Number(row.exchange_rate || 0),
   }
 }
 

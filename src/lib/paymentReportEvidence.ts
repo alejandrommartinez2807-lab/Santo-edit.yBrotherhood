@@ -47,6 +47,16 @@ function referenceDigits(leg: ReportLeg): number {
   return leg.reference.replace(/[^0-9]/g, "").length
 }
 
+// ¿La evidencia de esta pata alcanza para enviar? La usa el sello "Listo" de
+// cada tarjeta: tiene que decir exactamente lo mismo que la validación. Con
+// `hasEvidence` a secas, escribir "4821" pintaba el sello VERDE y después el
+// envío lo rechazaba por referencia incompleta — justo el error rojo que el
+// sello prometía evitar.
+export function isLegEvidenceComplete(leg: ReportLeg): boolean {
+  if (leg.dataUrl) return true
+  return leg.reference.trim().length > 0 && referenceDigits(leg) >= MIN_REFERENCE_DIGITS
+}
+
 // Genérica para que quien la llame conserve sus propios campos (el formulario
 // arrastra el índice y el nombre del archivo en cada pata).
 export function planPaymentReport<T extends ReportLeg>(legs: T[]): PaymentReportPlan<T> {

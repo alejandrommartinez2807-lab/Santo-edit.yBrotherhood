@@ -3,7 +3,11 @@
 // mixto "Pago móvil + Zelle" con una sola captura el pago se daba por
 // reportado completo y caja no tenía cómo verificar la otra mitad.
 import { describe, expect, it } from "vitest"
-import { planPaymentReport, type ReportLeg } from "@/lib/paymentReportEvidence"
+import {
+  isLegEvidenceComplete,
+  planPaymentReport,
+  type ReportLeg,
+} from "@/lib/paymentReportEvidence"
 
 const leg = (patch: Partial<ReportLeg> = {}): ReportLeg => ({
   method: "Pago móvil",
@@ -126,6 +130,34 @@ describe("método único: no se endurece", () => {
     expect(planPaymentReport([pagoMovil({ reference: "4821" })]).problem?.kind).toBe(
       "referencia-corta",
     )
+  })
+})
+
+// El sello "Listo" de cada tarjeta usa esto. Tiene que decir EXACTAMENTE lo
+// mismo que la validación: con "4821" el sello se ponía verde y después el
+// envío lo rechazaba por referencia incompleta — el error rojo que el sello
+// prometía evitar (2026-07-26).
+describe("el sello Listo dice lo mismo que la validación", () => {
+  it("una referencia de 4 dígitos NO está lista", () => {
+    expect(isLegEvidenceComplete(pagoMovil({ reference: "4821" }))).toBe(false)
+    expect(planPaymentReport([pagoMovil({ reference: "4821" })]).problem?.kind).toBe(
+      "referencia-corta",
+    )
+  })
+
+  it("una referencia completa sí", () => {
+    expect(isLegEvidenceComplete(pagoMovil({ reference: "123456" }))).toBe(true)
+    expect(planPaymentReport([pagoMovil({ reference: "123456" })]).problem).toBeNull()
+  })
+
+  it("la captura sola siempre está lista", () => {
+    expect(
+      isLegEvidenceComplete(pagoMovil({ dataUrl: "data:image/jpeg;base64,AAA" })),
+    ).toBe(true)
+  })
+
+  it("sin nada, no está lista", () => {
+    expect(isLegEvidenceComplete(pagoMovil())).toBe(false)
   })
 })
 

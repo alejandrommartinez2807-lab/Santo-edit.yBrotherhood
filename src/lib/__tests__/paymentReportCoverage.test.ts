@@ -411,6 +411,8 @@ describe("segunda pata del mixto: sumar solo si no colisiona", () => {
     paymentMethodUSD: "",
     paymentMethodVES: "Pago móvil",
     paymentNote: "Cobro verificado por comprobante · Ref 111111",
+    totalUSD: 24.5,
+    exchangeRate: RATE,
   }
 
   it("Zelle en $ sobre un pago móvil en Bs: SE SUMA y conserva la primera pata", () => {
@@ -470,6 +472,38 @@ describe("segunda pata del mixto: sumar solo si no colisiona", () => {
       paymentNote: first.payment.paymentNote,
     })
     expect(second.ok).toBe(false)
+  })
+
+  // El techo que la suma no puede pasar: pedido de $24.50 con la pata en Bs ya
+  // cobrada, y llega un comprobante en $ por el TOTAL (el cliente pagó aparte
+  // en efectivo y caja ya lo registró, o el comprobante es viejo). Antes de la
+  // suma, cualquier cobro previo lo bloqueaba; sin techo, el pedido cerraría
+  // con casi el doble de lo que vale.
+  it("no suma por encima de lo que vale el pedido", () => {
+    const decision = buildPaymentFromProof(
+      {
+        reportedMethod: "Zelle",
+        amountReportedUSD: 24.5,
+        amountReportedVES: 0,
+        paymentReference: "222222",
+      },
+      pagoMovilCobrado,
+    )
+    expect(decision.ok).toBe(false)
+    if (!decision.ok) expect(decision.reason).toContain("más dinero del que vale")
+  })
+
+  it("sin el total del pedido no se inventa un techo (sigue sumando)", () => {
+    const decision = buildPaymentFromProof(
+      {
+        reportedMethod: "Zelle",
+        amountReportedUSD: 14.5,
+        amountReportedVES: 0,
+        paymentReference: "222222",
+      },
+      { ...pagoMovilCobrado, totalUSD: 0, exchangeRate: 0 },
+    )
+    expect(decision.ok).toBe(true)
   })
 
   it("la foto del efectivo sigue sin registrar cobro aunque haya una pata cobrada", () => {

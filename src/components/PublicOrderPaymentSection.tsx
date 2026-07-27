@@ -119,7 +119,10 @@ import {
   isCashReportedMethod,
   planPaymentHero,
 } from "@/lib/orderPaymentLegs";
-import { planPaymentReport } from "@/lib/paymentReportEvidence";
+import {
+  isLegEvidenceComplete,
+  planPaymentReport,
+} from "@/lib/paymentReportEvidence";
 import { readImageFileForUpload } from "@/lib/clientImage";
 
 type PaymentEntry = {
@@ -194,6 +197,7 @@ export default function PublicOrderPaymentSection({
   showTrackingLink = false,
   refreshSignal = 0,
   expectProofPending = false,
+  uploadingProofs = false,
 }: {
   orderId: string;
   // Abre el formulario de reporte de una vez (confirmación con pago
@@ -227,6 +231,10 @@ export default function PublicOrderPaymentSection({
   // no lo trae, se muestra "registrando tu comprobante" en vez del estado
   // genérico viejo.
   expectProofPending?: boolean;
+  // true MIENTRAS el checkout está subiendo comprobantes (uno por pata, en
+  // serie): con la primera pata ya registrada y la segunda en vuelo, la
+  // sección no puede acusar todavía que "falta registrar la parte de X".
+  uploadingProofs?: boolean;
 }) {
   usePublicCurrencySymbol();
   const [info, setInfo] = useState<OrderPaymentInfo | null>(null);
@@ -269,6 +277,9 @@ export default function PublicOrderPaymentSection({
   // pata (secuencial): si la segunda falla — o el servidor pide confirmar un
   // duplicado — al reintentar no se puede volver a mandar la primera.
   const sentLegKeysRef = useRef<Set<string>>(new Set());
+  // El cliente ya tocó el formulario: desde ese momento NADA lo repisa (el
+  // sondeo periódico le borraba la captura y la referencia).
+  const formTouchedRef = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -419,6 +430,15 @@ export default function PublicOrderPaymentSection({
   // El servidor mandó las patas del pedido (más de una): el reparto ya está
   // decidido y el cliente no puede agregarle ni quitarle métodos al reporte.
   const serverSentLegs = (info?.expectedPayments || []).length > 1;
+  // Pedido 100% en efectivo: NO hay nada que reportar por aquí (el dinero se
+  // entrega en mano). Ofrecerle "Reportar mi pago" abría un formulario que
+  // siempre respondía "el efectivo se entrega en persona" — un botón que solo
+  // podía terminar en error rojo. Se exige que la info HAYA cargado con patas:
+  // sin ellas (fetch caído, método desconocido) el reporte sigue disponible,
+  // porque reportar el pago nunca puede ser un callejón sin salida.
+  const orderIsCashOnly =
+    (info?.expectedPayments || []).length > 0 &&
+    (info?.expectedPayments || []).every((leg) => leg.isCash);
   // Los chips "Paso 1"/"Paso 2" de esta sección chocan con los del checkout,
   // donde significan otra cosa ("¿cuánto pagas en bolívares?" / "¿cuánto en
   // divisas?"). En mixto manda la numeración por pago ("Pago 1 de 2").
@@ -496,9 +516,16 @@ export default function PublicOrderPaymentSection({
   // El checkout dice que subió un comprobante pero la info aún no lo trae:
   // ventana de sincronización (subida en curso o consulta por refrescar).
   // syncingAfterReport cubre lo mismo para el reporte MANUAL recién enviado.
+  // `uploadingProofs`: el checkout sube UN comprobante POR PATA, en serie. Sin
+  // esa señal, en cuanto aterrizaba la primera se apagaba el "registrando…" y
+  // —con la segunda todavía subiendo desde ese mismo teléfono— aparecía la
+  // alerta ámbar "falta registrar la parte de Zelle" mientras arriba decía que
+  // el pedido ya estaba recibido (2026-07-26). Se apaga cuando las subidas
+  // terminan, así que si una falla de verdad la alerta sí sale.
   const awaitingProofSync =
     syncingAfterReport ||
-    (expectProofPending && !hasConfirmedPayment && activeProofs.length === 0);
+    (expectProofPending && !hasConfirmedPayment && activeProofs.length === 0) ||
+    (uploadingProofs && !hasConfirmedPayment && !reportCovered);
 
   // Mientras dura esa ventana, sondeo corto para engancharlo apenas exista.
   useEffect(() => {
@@ -620,6 +647,17 @@ export default function PublicOrderPaymentSection({
     });
   }
 
+  // ¿Esta pata del formulario ya se envió? Vale tanto lo que confirma el
+  // servidor (isLegAlreadyReported) como lo que entró en este mismo envío
+  // antes de que fallara la siguiente (sentLegKeysRef, por si la info aún no
+  // se refrescó).
+  function isLegSent(methodName: string, index: number): boolean {
+    return (
+      isLegAlreadyReported(methodName) ||
+      sentLegKeysRef.current.has(`${index}|${methodName.trim()}`)
+    );
+  }
+
   // Precarga del formulario: un bloque por método elegido al pedir, CON su
   // monto (lote v6.1). La fuente preferida son las patas que calcula el
   // servidor desde el pedido (expectedPayments: método + monto por pata,
@@ -631,14 +669,11 @@ export default function PublicOrderPaymentSection({
     // negocio todavía no recibió.
     const expected = (info?.expectedPayments || []).filter((leg) => !leg.isCash);
     if (expected.length > 0) {
-      // Las patas que ya tienen comprobante NO se vuelven a pedir: tras un
-      // envío a medias (pata 1 sí, pata 2 no) el formulario abre directo en lo
-      // que falta. Si ya están todas (el cliente entró por "¿enviaste la
-      // captura equivocada?"), se muestran todas.
-      const pending = expected.filter((leg) => !isLegAlreadyReported(leg.method));
-      const legs = pending.length > 0 ? pending : expected;
-
-      return legs.map((leg) => ({
+      // Se muestran TODAS las patas, también las que ya tienen comprobante:
+      // esas se pintan como "Ya enviado" y no se vuelven a mandar. Ocultarlas
+      // dejaba "Pago 1 de 1" en un pedido de dos y, si el cliente cambiaba la
+      // captura de la que ya entró, el envío la descartaba en silencio.
+      return expected.map((leg) => ({
         ...EMPTY_PAYMENT_ENTRY,
         method: leg.method,
         amountUSD: leg.currency === "USD" ? leg.amount.toFixed(2) : "",
@@ -696,6 +731,7 @@ export default function PublicOrderPaymentSection({
     const timer = setTimeout(() => {
       setSuccessMessage(null);
       setIsFormOpen(true);
+      formTouchedRef.current = false;
       setPayments(buildInitialPayments());
     }, 0);
     return () => clearTimeout(timer);
@@ -708,10 +744,20 @@ export default function PublicOrderPaymentSection({
   // solos — únicamente si el cliente no ha escrito ningún monto.
   useEffect(() => {
     if (!isFormOpen || !info) return;
-    const hasAmounts = payments.some(
-      (entry) => entry.amountUSD.trim() !== "" || entry.amountVES.trim() !== "",
+    // NUNCA por encima de lo que el cliente ya escribió o adjuntó. `info` es un
+    // objeto nuevo en cada sondeo (45s, o 4s mientras se sincroniza), así que
+    // este efecto se dispara solo cada tanto: desde que la evidencia vive
+    // DENTRO de payments, reconstruirlo le borraba la captura ya comprimida y
+    // la referencia a media escritura, sin un solo aviso (2026-07-26).
+    if (formTouchedRef.current) return;
+    const hasAnyInput = payments.some(
+      (entry) =>
+        entry.amountUSD.trim() !== "" ||
+        entry.amountVES.trim() !== "" ||
+        entry.dataUrl !== "" ||
+        entry.reference.trim() !== "",
     );
-    if (hasAmounts) return;
+    if (hasAnyInput) return;
     const timer = setTimeout(() => setPayments(buildInitialPayments()), 0);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reprecarga solo al llegar la info
@@ -722,6 +768,7 @@ export default function PublicOrderPaymentSection({
   // getCoveredUSDExcept(), que solo lo usaba ese botón.)
 
   function updatePaymentEntry(index: number, patch: Partial<PaymentEntry>) {
+    formTouchedRef.current = true;
     setPayments((current) =>
       current.map((entry, entryIndex) =>
         entryIndex === index ? { ...entry, ...patch } : entry,
@@ -733,6 +780,7 @@ export default function PublicOrderPaymentSection({
   // aplica (bolívares → borra $, divisas → borra Bs), para no reportar un monto
   // en la moneda equivocada.
   function changePaymentEntryMethod(index: number, nextMethod: string) {
+    formTouchedRef.current = true;
     setPayments((current) =>
       current.map((entry, entryIndex) => {
         if (entryIndex !== index) return entry;
@@ -757,7 +805,7 @@ export default function PublicOrderPaymentSection({
       requiredBaseUSD > 0 ? requiredBaseUSD : Number(info?.totalUSD || 0);
     const rateForAssume = Number(info?.exchangeRate || 0);
 
-    let entries = payments
+    const allEntries = payments
       .map((entry, index) => ({
         index,
         method: entry.method.trim(),
@@ -769,6 +817,18 @@ export default function PublicOrderPaymentSection({
         reference: entry.reference.trim(),
       }))
       .filter((entry) => entry.method || entry.usd > 0 || entry.ves > 0);
+
+    // Las patas que YA entraron salen del envío completo: ni se les exige
+    // evidencia otra vez ni su dinero cuenta en la cobertura. Sin esto, tras
+    // un envío a medias el reintento sumaba las dos patas contra lo que
+    // faltaba de UNA y se bloqueaba con "estás reportando de MÁS" (los dos
+    // números del mensaje eran hasta el mismo). Si TODAS estuvieran enviadas
+    // (el cliente entró por "¿enviaste la captura equivocada?") no se filtra
+    // nada: ahí sí se reenvía a propósito y el servidor pide confirmar.
+    const pendingEntries = allEntries.filter(
+      (entry) => !isLegSent(entry.method, entry.index),
+    );
+    let entries = pendingEntries.length > 0 ? pendingEntries : allEntries;
 
     // Captura/referencia SIN monto escrito: si el cliente solo adjuntó su
     // comprobante (caso común, sobre todo de tercera edad), asumimos que pagó
@@ -879,7 +939,6 @@ export default function PublicOrderPaymentSection({
       // como si la primera no existiera.
       for (const entry of electronicEntries) {
         const legKey = `${entry.index}|${entry.method}`;
-        if (sentLegKeysRef.current.has(legKey)) continue;
 
         const amountParts: string[] = [];
         if (entry.usd > 0) amountParts.push(formatUSD(entry.usd));
@@ -938,6 +997,7 @@ export default function PublicOrderPaymentSection({
       // dueño 2026-07-23 v2).
       setSyncingAfterReport(true);
       setIsFormOpen(false);
+      formTouchedRef.current = false;
       setPayments([EMPTY_PAYMENT_ENTRY]);
       setCoverageWarning(null);
       setCustomerNote("");
@@ -974,6 +1034,15 @@ export default function PublicOrderPaymentSection({
   // Pedido anulado: nunca pedirle plata a un pedido muerto (el padre muestra
   // el aviso rojo de cancelación).
   if (info && info.orderStatus === "Cancelado") return null;
+
+  // Patas del formulario que ya entraron: se pintan "Ya enviado" y no se les
+  // vuelve a pedir evidencia. Si están TODAS es un reenvío a propósito
+  // ("¿enviaste la captura equivocada?"), y ahí sí se piden de nuevo.
+  // Solo lo que confirma el SERVIDOR: los refs no se leen al renderizar (y
+  // tras un envío a medias se recarga la info al instante, así que la tarjeta
+  // se entera igual de rápido).
+  const sentLegFlags = payments.map((entry) => isLegAlreadyReported(entry.method));
+  const allLegsSent = sentLegFlags.length > 0 && sentLegFlags.every(Boolean);
 
   return (
     <div className="mt-4 rounded-[2rem] border-4 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-6">
@@ -1211,7 +1280,13 @@ export default function PublicOrderPaymentSection({
                       ? `El resto (${legsLabel(cashLegs)}) lo entregas en efectivo, no lo transfieras.`
                       : legsPlan.kind === "solo-efectivo"
                         ? "Lo entregas en efectivo al recibir tu pedido."
-                        : total.secondary;
+                        : // Dos patas electrónicas: el total es correcto (todo
+                          // se transfiere), pero sin el reparto la tarjeta no
+                          // dice cuánto va por cada método y el cliente tiene
+                          // que adivinarlo.
+                          electronicLegs.length > 1
+                          ? `Repartido así: ${legsLabel(electronicLegs)}`
+                          : total.secondary;
 
                   return (
                     <div className="mt-2">
@@ -1304,7 +1379,12 @@ export default function PublicOrderPaymentSection({
         </div>
       )}
 
-      {hasActiveProof && !hasConfirmedPayment && reportCovered ? (
+      {/* !needsCorrection: "Necesita corrección" NO es un estado pendiente
+          pero SÍ es activo, así que al pasar la compuerta de hasPendingProof a
+          hasActiveProof este texto empezó a salir justo cuando el negocio
+          exige otro comprobante — "no hace falta enviarlo otra vez" encima del
+          botón "Enviar otro comprobante" (2026-07-26). */}
+      {hasActiveProof && !hasConfirmedPayment && !needsCorrection && reportCovered ? (
         <p className="mt-3 text-[0.72rem] font-bold leading-5 text-[var(--brand-ink-2)]/60">
           {hasPendingProof
             ? "Tu pago ya fue reportado y está en revisión: no hace falta enviarlo otra vez. Aquí verás cuando quede confirmado."
@@ -1340,7 +1420,11 @@ export default function PublicOrderPaymentSection({
           desaparecía justo al abrirlo, así que el cliente veía "Paso 1" y
           después nada — la numeración se rompía donde más hacía falta
           (2026-07-26). */}
-      {showStepChips && !hasConfirmedPayment && !awaitingProofSync && !hasActiveProof ? (
+      {showStepChips &&
+      !orderIsCashOnly &&
+      !hasConfirmedPayment &&
+      !awaitingProofSync &&
+      !hasActiveProof ? (
         <div className="mt-4">
           <span className="inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
             Paso 2
@@ -1354,7 +1438,7 @@ export default function PublicOrderPaymentSection({
         </div>
       ) : null}
 
-      {!hasConfirmedPayment && !awaitingProofSync && !isFormOpen ? (
+      {!hasConfirmedPayment && !awaitingProofSync && !isFormOpen && !orderIsCashOnly ? (
         hasActiveProof && !needsCorrection && reportCovered ? (
           requiredElectronicUSD <= 0 ? null : (
           // Reportado y en revisión: nada que hacer. Solo un enlace discreto
@@ -1365,6 +1449,7 @@ export default function PublicOrderPaymentSection({
             onClick={() => {
               setIsFormOpen(true);
               setSuccessMessage(null);
+              formTouchedRef.current = false;
               setPayments(buildInitialPayments());
             }}
             className="mt-3 w-full rounded-full px-4 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/45 transition hover:text-[var(--brand-ink-2)]"
@@ -1378,6 +1463,7 @@ export default function PublicOrderPaymentSection({
             onClick={() => {
               setIsFormOpen(true);
               setSuccessMessage(null);
+              formTouchedRef.current = false;
               setPayments(buildInitialPayments());
             }}
             className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90"
@@ -1592,8 +1678,29 @@ export default function PublicOrderPaymentSection({
                   );
                 }
 
-                const hasEvidence =
-                  Boolean(entry.dataUrl) || entry.reference.trim().length > 0;
+                // Esta pata YA entró (envío a medias que se reintenta): se
+                // dice, y no se le pide evidencia otra vez. Antes el
+                // formulario la mostraba como si faltara y el envío la
+                // descartaba en silencio.
+                if (!allLegsSent && sentLegFlags[index]) {
+                  return (
+                    <p className="mt-3 inline-flex w-full items-center gap-2 rounded-2xl border-2 border-green-600 bg-green-600/10 px-3 py-2.5 text-[0.75rem] font-bold leading-4 text-green-500">
+                      <CheckCircle2 size={15} className="shrink-0" />
+                      Este pago ya lo recibimos: no hace falta enviarlo otra vez.
+                    </p>
+                  );
+                }
+
+                // MISMA regla que la validación del envío: con "4821" el sello
+                // se ponía verde y después el envío lo rechazaba por
+                // referencia incompleta (2026-07-26).
+                const hasEvidence = isLegEvidenceComplete({
+                  method: entry.method,
+                  usd: 0,
+                  ves: 0,
+                  dataUrl: entry.dataUrl,
+                  reference: entry.reference,
+                });
 
                 return (
                   <div className="mt-3 rounded-2xl border-2 border-[var(--brand-primary)]/30 bg-[var(--brand-cream)]/40 p-3">
@@ -1625,8 +1732,16 @@ export default function PublicOrderPaymentSection({
                     ) : null}
 
                     <label className="mt-2.5 flex min-h-[52px] cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--brand-primary)]/50 bg-white px-4 py-4 text-sm font-bold text-[#1a1a1a]/80 transition hover:border-[var(--brand-primary)]">
-                      <ImagePlus size={17} />
-                      {entry.fileName || "Toca para adjuntar la captura"}
+                      <ImagePlus size={17} className="shrink-0" />
+                      {/* min-w-0 + break-all: con la tarjeta de evidencia
+                          DENTRO de la del pago quedan ~170px útiles a 375px, y
+                          un nombre de Android sin espacios
+                          ("Screenshot_20260726-183045_Banesco.jpg") no puede
+                          encogerse solo — se salía del recuadro y metía scroll
+                          horizontal en toda la página. */}
+                      <span className="min-w-0 break-all text-center">
+                        {entry.fileName || "Toca para adjuntar la captura"}
+                      </span>
                       <input
                         type="file"
                         accept="image/*"

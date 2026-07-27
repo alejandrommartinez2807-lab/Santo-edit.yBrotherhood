@@ -389,6 +389,10 @@ export default function CartDrawer({
     Record<string, { dataUrl: string; fileName: string; mimeType: string; reference: string }>
   >({});
   const [checkoutProofError, setCheckoutProofError] = useState<string | null>(null);
+  // true mientras los comprobantes del checkout se están subiendo (uno por
+  // pata, en serie): la confirmación no puede acusar "falta registrar la parte
+  // de X" con esa pata todavía en vuelo.
+  const [isUploadingCheckoutProofs, setIsUploadingCheckoutProofs] = useState(false);
   // Foto de los billetes en divisas con adjunto PROPIO: en pago mixto puede
   // convivir con la captura electrónica de la otra pata (dos archivos).
   const [divisaPhotoDataUrl, setDivisaPhotoDataUrl] = useState("");
@@ -1784,8 +1788,12 @@ export default function CartDrawer({
               ) : null}
 
               <label className="mt-2 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-amber-500/70 bg-white px-4 py-4 text-sm font-bold text-amber-900/80 transition hover:border-amber-600">
-                <ImagePlus size={17} />
-                {evidence.fileName || "Toca para adjuntar la captura"}
+                <ImagePlus size={17} className="shrink-0" />
+                {/* Los nombres de captura de Android no llevan espacios y no
+                    se encogen solos: sin esto desbordan la tarjeta a 375px. */}
+                <span className="min-w-0 break-all text-center">
+                  {evidence.fileName || "Toca para adjuntar la captura"}
+                </span>
                 <input
                   type="file"
                   accept="image/*"
@@ -2822,11 +2830,29 @@ export default function CartDrawer({
       setLastOrderUsedElectronicProof(usedCheckoutProof);
       // En mixto pueden viajar los DOS: la captura electrónica de una pata y
       // la foto de los billetes de la otra (cada una reporta su monto).
-      if (usedCheckoutProof) {
-        void submitCheckoutProofForOrder(orderId, proofLegsToSend, proofEvidenceToSend);
-      }
-      if (usedCashDivisaPhoto) {
-        void submitCashDivisaPhotoForOrder(orderId);
+      // En SERIE y con una bandera de "subiendo": son varias peticiones (una
+      // por pata electrónica, más la foto de los billetes). En paralelo, la
+      // segunda evaluaba el anti-duplicado sin ver a la primera; y sin la
+      // bandera, la confirmación acusaba "falta registrar la parte de X"
+      // mientras esa pata todavía estaba subiendo desde el mismo teléfono.
+      if (usedCheckoutProof || usedCashDivisaPhoto) {
+        setIsUploadingCheckoutProofs(true);
+        void (async () => {
+          try {
+            if (usedCheckoutProof) {
+              await submitCheckoutProofForOrder(
+                orderId,
+                proofLegsToSend,
+                proofEvidenceToSend,
+              );
+            }
+            if (usedCashDivisaPhoto) {
+              await submitCashDivisaPhotoForOrder(orderId);
+            }
+          } finally {
+            setIsUploadingCheckoutProofs(false);
+          }
+        })();
       }
       if (!usedCheckoutProof && !usedCashDivisaPhoto && orderNeedsPrepayReport) {
         setShowPostRegisterPaymentModal(true);
@@ -3779,6 +3805,7 @@ export default function CartDrawer({
                       expectProofPending={
                         lastOrderUsedCheckoutProof && !lastOrderPaymentConfirmed
                       }
+                      uploadingProofs={isUploadingCheckoutProofs}
                       onReported={() => {
                         setLastOrderProofReported(true);
                         setShowPostRegisterPaymentModal(false);

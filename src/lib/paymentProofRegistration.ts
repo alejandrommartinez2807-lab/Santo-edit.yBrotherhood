@@ -39,6 +39,11 @@ export type OrderPaymentSnapshot = {
   paymentMethodUSD?: string
   paymentMethodVES?: string
   paymentNote?: string
+  // Total del pedido y tasa: el techo de la suma. Sin ellos no se puede
+  // distinguir "esta es la 2ª pata que faltaba" de "este comprobante repite
+  // un dinero que caja ya cobró por otra vía".
+  totalUSD?: number
+  exchangeRate?: number
 }
 
 export type ProofPaymentDecision =
@@ -130,6 +135,29 @@ export function buildPaymentFromProof(
   // devolverlo completo o el cobro anterior se perdería).
   const nextUSD = toMoney(currentUSD + amountUSD)
   const nextVES = toMoney(currentVES + amountVES)
+
+  // TECHO DE LA SUMA: nunca por encima de lo que vale el pedido. Antes de la
+  // segunda pata, CUALQUIER cobro previo bloqueaba el registro automático, así
+  // que este caso no existía: el pedido de $10 en pago móvil que el cliente
+  // termina pagando en efectivo (caja registra $10 en divisas) y cuyo
+  // comprobante viejo en Bs alguien confirma después, se sumaba encima y el
+  // pedido cerraba con $20 recibidos. Solo aplica al SUMAR: un primer
+  // comprobante que reporta de más se sigue registrando como antes.
+  if (isMergingSecondLeg) {
+    const totalOrderUSD = toMoney(currentPayment.totalUSD)
+    const rate = Number(currentPayment.exchangeRate || 0)
+
+    if (totalOrderUSD > 0) {
+      const nextEquivalentUSD = nextUSD + (rate > 0 ? nextVES / rate : 0)
+
+      if (nextEquivalentUSD > totalOrderUSD + 0.05) {
+        return {
+          ok: false,
+          reason: `Sumar este comprobante dejaría el pedido con más dinero del que vale (${formatUSD(nextEquivalentUSD)} sobre un total de ${formatUSD(totalOrderUSD)}). No se toca: revisa en Caja si ese pago ya entró por otra vía.`,
+        }
+      }
+    }
+  }
   const previousNote = String(currentPayment.paymentNote || "").trim()
   const proofNote = isMergingSecondLeg
     ? `Segunda parte del pago mixto verificada por comprobante${reference ? ` · Ref ${reference}` : ""}`
