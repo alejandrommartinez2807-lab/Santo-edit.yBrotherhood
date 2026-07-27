@@ -18,7 +18,8 @@
     "e2e:business-complexity": "node scripts/business-complexity-e2e.mjs",
     "e2e:order-idempotency": "node scripts/order-idempotency-e2e.mjs",
     "qa:db-state": "node scripts/qa-db-state.mjs",
-    "qa:open-accounts": "node scripts/qa-open-accounts-attack.mjs"
+    "qa:open-accounts": "node scripts/qa-open-accounts-attack.mjs",
+    "qa:isolation": "node scripts/qa-branch-isolation.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
