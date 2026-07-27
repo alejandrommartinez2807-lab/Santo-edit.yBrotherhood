@@ -510,6 +510,7 @@ export default function CartDrawer({
     status: createdOrderLive.status,
     displayNumber: createdOrderLive.displayNumber,
     notifyEnabled: false,
+    isDelivery: lastCreatedOrder?.orderType === "Delivery",
   });
 
   const canRegisterOrdersInPanel = doesPlanAllowLocalOrders(
@@ -913,8 +914,9 @@ export default function CartDrawer({
   }, [isOpen, isPublicDeliveryAvailable, branchSelection.selectedBranchId]);
 
   // Al abrir el carrito se refrescan los pedidos recientes del dispositivo y
-  // se consulta su estado: los que el local ya marcó listos/entregados (o
-  // canceló) se eliminan de la lista, y los activos muestran su avance.
+  // se consulta su estado: los listos/entregados siguen una hora a la vista
+  // (por si el cliente los quiere revisar) y después salen; los cancelados
+  // salen de una, y los activos muestran su avance.
   useEffect(() => {
     if (!isOpen) return;
 
@@ -3331,8 +3333,8 @@ export default function CartDrawer({
 
           {/* Pedidos hechos desde este dispositivo (últimos 7 días): el
               cliente vuelve al seguimiento y puede reportar su pago aunque
-              haya cerrado la página de confirmación. Los que el local ya
-              marcó listos/entregados salen solos de la lista. */}
+              haya cerrado la página de confirmación. Los listos/entregados
+              se quedan una hora a la vista y después salen solos. */}
           {recentPublicOrders.length > 0 && (
             <div className="mx-5 mb-4 mt-8 rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4">
               <p className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
@@ -3340,7 +3342,8 @@ export default function CartDrawer({
               </p>
               <p className="mt-1 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
                 Toca tu pedido para ver cómo va o enviar tu comprobante de
-                pago. Al entregarse, sale solo de esta lista.
+                pago. Los listos o entregados se quedan un rato aquí y luego
+                salen solos.
               </p>
               <div className="mt-3 space-y-2">
                 {recentPublicOrders.map((recentOrder) => {
@@ -3673,7 +3676,9 @@ export default function CartDrawer({
                       </p>
                     ) : createdOrderLive.status === "Listo" ? (
                       <p className="mt-4 rounded-2xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase leading-tight text-black">
-                        ¡Listo! Pasa a retirarlo indicando tu número.
+                        {lastCreatedOrder?.orderType === "Delivery"
+                          ? "¡Listo! El delivery se comunicará con usted para entregarlo."
+                          : "¡Listo! Pasa a retirarlo indicando tu número."}
                       </p>
                     ) : createdOrderLive.status === "Entregado" ? (
                       <p className="mt-4 rounded-2xl border border-green-600 bg-green-600/15 px-4 py-3 text-sm font-black text-green-700">

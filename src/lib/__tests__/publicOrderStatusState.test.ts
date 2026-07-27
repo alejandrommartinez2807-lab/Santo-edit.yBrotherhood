@@ -9,6 +9,7 @@ const pedidoCancelado: PolledOrderState = {
   forOrderId: "pedido-viejo",
   status: "Cancelado",
   displayNumber: "#40-s",
+  orderType: "Para llevar",
   items: [{ name: "Smash burger", quantity: 1, selectionSummary: "", subtotalUSD: 11 }],
   cancelReason: "Sin pago a los 5 minutos",
   payment: {

@@ -10,11 +10,17 @@ export type RecentPublicOrder = {
   // Métodos de pago que eligió el cliente al pedir: la página de seguimiento
   // los usa para volver a mostrar los datos de pago correctos.
   paymentMethods?: string[];
+  // Cuándo ESTE dispositivo vio el pedido Listo/Entregado por primera vez:
+  // desde ahí corre la hora de gracia antes de salir de "Tus pedidos".
+  finishedAt?: string;
 };
 
 const STORAGE_KEY = "santo_public_recent_orders_v1";
 const MAX_ORDERS = 5;
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+// Un pedido Listo/Entregado NO sale de la lista al instante: se queda 1 hora
+// por si el cliente quiere revisarlo (pedido del dueño 2026-07-26).
+const FINISHED_GRACE_MS = 60 * 60 * 1000;
 
 export function readRecentPublicOrders(): RecentPublicOrder[] {
   if (typeof window === "undefined") return [];
@@ -38,13 +44,17 @@ export function readRecentPublicOrders(): RecentPublicOrder[] {
           paymentMethods: Array.isArray(record.paymentMethods)
             ? record.paymentMethods.map((item) => String(item || "").trim()).filter(Boolean)
             : [],
+          ...(record.finishedAt ? { finishedAt: String(record.finishedAt) } : {}),
         };
       })
       .filter(
         (order) =>
           order.id &&
           Number.isFinite(Date.parse(order.createdAt)) &&
-          Date.parse(order.createdAt) >= cutoff,
+          Date.parse(order.createdAt) >= cutoff &&
+          // Terminado hace más de la hora de gracia: ya no le sirve al
+          // cliente ni offline — sale aunque nadie vuelva a sondear.
+          !isFinishedGraceOver(order.finishedAt),
       )
       .slice(0, MAX_ORDERS);
   } catch {
@@ -52,13 +62,39 @@ export function readRecentPublicOrders(): RecentPublicOrder[] {
   }
 }
 
-// Pedidos que ya no le sirven al cliente: cuando el local los marca
-// listos/entregados (o los cancela) salen de la lista.
-export const RECENT_ORDER_HIDDEN_STATUSES = new Set([
-  "Listo",
-  "Entregado",
-  "Cancelado",
-]);
+// Cancelado sale de la lista al instante (no hay nada que revisar ahí que el
+// seguimiento no diga). Listo/Entregado NO: se quedan la hora de gracia.
+export const RECENT_ORDER_HIDDEN_STATUSES = new Set(["Cancelado"]);
+
+// Estados terminales "buenos": arrancan la hora de gracia la primera vez que
+// este dispositivo los ve.
+const RECENT_ORDER_FINISHED_STATUSES = new Set(["Listo", "Entregado"]);
+
+function isFinishedGraceOver(finishedAt: string | undefined): boolean {
+  if (!finishedAt) return false;
+  const finishedMs = Date.parse(finishedAt);
+  // Marca ilegible: mejor tratarla como vencida a dejar el pedido pegado.
+  if (!Number.isFinite(finishedMs)) return true;
+  return Date.now() - finishedMs >= FINISHED_GRACE_MS;
+}
+
+// Estampa finishedAt = ahora en los pedidos indicados (solo si no la tienen):
+// desde ahí corre la hora de gracia de "Tus pedidos".
+function stampRecentOrdersFinished(ids: string[]) {
+  if (typeof window === "undefined" || ids.length === 0) return;
+
+  try {
+    const now = new Date().toISOString();
+    const next = readRecentPublicOrders().map((entry) =>
+      ids.includes(entry.id) && !entry.finishedAt
+        ? { ...entry, finishedAt: now }
+        : entry,
+    );
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // Sin almacenamiento el flujo sigue normal.
+  }
+}
 
 export type RecentOrderLiveInfo = {
   status: string;
@@ -70,10 +106,12 @@ export type RecentOrderLiveInfo = {
 
 // Consulta el estado en vivo de cada pedido guardado. Devuelve el avance de
 // los activos (número visible + estado) y los ids ya terminados para podarlos.
+// Listo/Entregado siguen contando como activos durante la hora de gracia
+// (con su estado a la vista); pasada la hora entran en finishedIds.
 // Los que fallan por red se dejan como están: mejor listar de más que perder
 // el camino de vuelta al pedido.
 export async function fetchRecentOrdersLiveInfo(
-  orders: { id: string }[],
+  orders: { id: string; finishedAt?: string }[],
 ): Promise<{
   live: Record<string, RecentOrderLiveInfo>;
   finishedIds: string[];
@@ -122,26 +160,43 @@ export async function fetchRecentOrdersLiveInfo(
 
   const live: Record<string, RecentOrderLiveInfo> = {};
   const finishedIds: string[] = [];
+  const toStamp: string[] = [];
+  const finishedAtById = new Map(
+    orders.map((order) => [order.id, order.finishedAt]),
+  );
 
   for (const result of results) {
     if (!result) continue;
 
     if (result.status === "__gone__" || RECENT_ORDER_HIDDEN_STATUSES.has(result.status)) {
       finishedIds.push(result.id);
-    } else {
-      live[result.id] = {
-        status: result.status,
-        displayNumber: result.displayNumber,
-        payment: result.payment,
-      };
+      continue;
     }
+
+    if (RECENT_ORDER_FINISHED_STATUSES.has(result.status)) {
+      const finishedAt = finishedAtById.get(result.id);
+      if (finishedAt && isFinishedGraceOver(finishedAt)) {
+        finishedIds.push(result.id);
+        continue;
+      }
+      // Primera vez que este dispositivo lo ve terminado: arranca la hora.
+      if (!finishedAt) toStamp.push(result.id);
+    }
+
+    live[result.id] = {
+      status: result.status,
+      displayNumber: result.displayNumber,
+      payment: result.payment,
+    };
   }
+
+  stampRecentOrdersFinished(toStamp);
 
   return { live, finishedIds };
 }
 
-// Cuando el local marca el pedido como listo/entregado (o lo cancela), deja
-// de aparecer en "Pedidos recientes": ya no le hace falta al cliente.
+// Saca de "Pedidos recientes" los que ya no le hacen falta al cliente
+// (cancelados, borrados del día, o terminados con la hora de gracia vencida).
 export function removeRecentPublicOrders(ids: string[]) {
   if (typeof window === "undefined" || ids.length === 0) return;
 

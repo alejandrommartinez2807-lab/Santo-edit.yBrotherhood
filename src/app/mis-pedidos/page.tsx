@@ -25,6 +25,8 @@ import { readPublicCustomerProfile } from "@/components/publicCustomerProfile";
 // barra superior; los pedidos entregados/cancelados salen solos de la lista.
 
 function getStatusLabel(status: string) {
+  if (status === "Entregado") return "Entregado";
+  if (status === "Listo") return "¡Listo!";
   if (status === "Preparando") return "En preparación";
   return "Recibido";
 }
@@ -154,8 +156,8 @@ export default function MisPedidosPage() {
 
           <p className="mt-3 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
             Aquí están los pedidos en curso que hiciste desde este teléfono.
-            Toca uno para ver cómo va o enviar tu comprobante. Al entregarse,
-            sale solo de la lista.
+            Toca uno para ver cómo va o enviar tu comprobante. Los listos o
+            entregados se quedan un rato aquí y luego salen solos.
           </p>
 
           {isLoading ? (

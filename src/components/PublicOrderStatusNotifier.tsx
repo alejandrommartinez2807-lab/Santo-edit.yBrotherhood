@@ -18,6 +18,7 @@ export type { PublicOrderItem, PublicOrderPaymentInfo };
 type PublicOrderStatus = {
   status: string;
   displayNumber: string;
+  orderType?: string;
   items: PublicOrderItem[];
   cancelReason?: string;
   payment?: PublicOrderPaymentInfo;
@@ -54,7 +55,7 @@ export function usePublicOrderStatus(orderId: string) {
     ...EMPTY_POLLED_ORDER,
   });
 
-  const { status, displayNumber, items, cancelReason, payment, notFound } =
+  const { status, displayNumber, orderType, items, cancelReason, payment, notFound } =
     selectPolledOrderState(polled, orderId);
 
   useEffect(() => {
@@ -78,6 +79,7 @@ export function usePublicOrderStatus(orderId: string) {
             forOrderId: orderId,
             status: String(data.status || ""),
             displayNumber: String(data.displayNumber || ""),
+            orderType: String(data.orderType || ""),
             items: Array.isArray(data.items) ? data.items : [],
             cancelReason: String(data.cancelReason || ""),
             payment:
@@ -128,6 +130,7 @@ export function usePublicOrderStatus(orderId: string) {
   return {
     status,
     displayNumber,
+    orderType,
     items,
     cancelReason,
     payment,
@@ -143,11 +146,15 @@ export function useOrderReadyAlert({
   status,
   displayNumber,
   notifyEnabled,
+  isDelivery = false,
 }: {
   orderId: string;
   status: string;
   displayNumber: string;
   notifyEnabled: boolean;
+  // Delivery: el cliente NO pasa a retirar — el aviso dice que el delivery
+  // se comunicará con él para entregarlo.
+  isDelivery?: boolean;
 }) {
   const previousStatus = useRef("");
   const alreadyAnnounced = useRef(false);
@@ -222,7 +229,9 @@ export function useOrderReadyAlert({
 
     const title = "¡Tu pedido está listo!";
     const options = {
-      body: `Pasa a retirar tu pedido ${displayNumber || orderId} en el mostrador.`,
+      body: isDelivery
+        ? `Tu pedido ${displayNumber || orderId} está listo. El delivery se comunicará con usted para entregarlo.`
+        : `Pasa a retirar tu pedido ${displayNumber || orderId} en el mostrador.`,
       icon: "/icon-192.png",
     };
 
@@ -235,7 +244,7 @@ export function useOrderReadyAlert({
           // Algunos navegadores móviles bloquean Notification directa; el banner cubre.
         }
       });
-  }, [status, notifyEnabled, displayNumber, orderId]);
+  }, [status, notifyEnabled, displayNumber, orderId, isDelivery]);
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {
@@ -305,11 +314,18 @@ export async function subscribeToPushForOrder(orderId: string): Promise<boolean>
 // lo pide, dispara notificación del navegador + vibración al pasar a "Listo".
 // El aviso con la página cerrada lo cubre el staff con el botón de WhatsApp.
 export default function PublicOrderStatusNotifier({ orderId }: { orderId: string }) {
-  const { status, displayNumber, cancelReason } = usePublicOrderStatus(orderId);
+  const { status, displayNumber, orderType, cancelReason } = usePublicOrderStatus(orderId);
   const [notifyEnabled, setNotifyEnabled] = useState(false);
   const [notifyBlocked, setNotifyBlocked] = useState(false);
+  const isDeliveryOrder = orderType === "Delivery";
 
-  useOrderReadyAlert({ orderId, status, displayNumber, notifyEnabled });
+  useOrderReadyAlert({
+    orderId,
+    status,
+    displayNumber,
+    notifyEnabled,
+    isDelivery: isDeliveryOrder,
+  });
 
   async function enableNotifications() {
     const granted = await requestNotificationPermission();
@@ -357,7 +373,11 @@ export default function PublicOrderStatusNotifier({ orderId }: { orderId: string
         <p className="mt-2 text-lg font-black uppercase leading-tight">
           ¡Tu pedido {displayNumber} está listo!
         </p>
-        <p className="mt-1 text-sm font-bold">Pasa a retirarlo indicando tu número.</p>
+        <p className="mt-1 text-sm font-bold">
+          {isDeliveryOrder
+            ? "El delivery se comunicará con usted para entregarlo."
+            : "Pasa a retirarlo indicando tu número."}
+        </p>
       </div>
     );
   }

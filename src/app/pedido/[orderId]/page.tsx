@@ -59,8 +59,10 @@ export default function PedidoSeguimientoPage({
 }) {
   const { orderId: rawOrderId } = use(params);
   const orderId = decodeURIComponent(String(rawOrderId || "")).trim().toLowerCase();
-  const { status, displayNumber, items, cancelReason, payment, notFound } =
+  const { status, displayNumber, orderType, items, cancelReason, payment, notFound } =
     usePublicOrderStatus(orderId);
+  // Delivery: en "Listo" NO se le pide pasar a retirar — el delivery se lo lleva.
+  const isDeliveryOrder = orderType === "Delivery";
   // Señal para abrir el formulario de reporte de pago desde el CTA de arriba
   // (mismo mecanismo que la confirmación del carrito).
   const [openReportSignal, setOpenReportSignal] = useState(0);
@@ -87,7 +89,13 @@ export default function PedidoSeguimientoPage({
     boolean | undefined
   >(undefined);
 
-  useOrderReadyAlert({ orderId, status, displayNumber, notifyEnabled });
+  useOrderReadyAlert({
+    orderId,
+    status,
+    displayNumber,
+    notifyEnabled,
+    isDelivery: isDeliveryOrder,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -352,7 +360,9 @@ export default function PedidoSeguimientoPage({
 
                   {isReady && !isDelivered ? (
                     <p className="mt-6 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-4 text-base font-black uppercase leading-tight text-black">
-                      ¡Listo! Pasa a retirarlo indicando tu número.
+                      {isDeliveryOrder
+                        ? "¡Listo! El delivery se comunicará con usted para entregarlo."
+                        : "¡Listo! Pasa a retirarlo indicando tu número."}
                     </p>
                   ) : null}
 

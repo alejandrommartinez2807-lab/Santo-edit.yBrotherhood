@@ -662,7 +662,9 @@ export async function PATCH(
     if (status === "Listo") {
       // Aviso web push al cliente suscrito. Nunca lanza: un fallo de push no
       // puede tumbar el cambio de estado de caja/cocina.
-      await sendOrderReadyPush(orderId, getDisplayOrderNumber(order))
+      await sendOrderReadyPush(orderId, getDisplayOrderNumber(order), {
+        isDelivery: order.orderType === "Delivery",
+      })
     }
 
     // Hitos intermedios también avisan (pedido del dueño 2026-07-23): que el

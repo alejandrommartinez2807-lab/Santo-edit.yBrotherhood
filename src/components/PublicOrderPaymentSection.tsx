@@ -1336,7 +1336,19 @@ export default function PublicOrderPaymentSection({
       {(info?.proofs?.length ?? 0) > 0 && (
         <div className="mt-4 space-y-2">
           {(info?.proofs ?? []).map((proof, index) => {
-            const chip = proofStatusChip(proof.status);
+            // Caja puede registrar el cobro SIN pasar por el comprobante
+            // (desde el avance del pedido o su panel): el proof se queda en
+            // "En revisión" en la BD, pero decírselo al cliente cuando el
+            // pago ya está cobrado era falso. Con el pago confirmado, los
+            // pendientes se muestran como confirmados.
+            const isPendingProofStatus =
+              proof.status === "Comprobante enviado" ||
+              proof.status === "En revisión";
+            const chip = proofStatusChip(
+              hasConfirmedPayment && isPendingProofStatus
+                ? "Confirmado por caja"
+                : proof.status,
+            );
             return (
               <div
                 key={`${proof.createdAt}-${index}`}

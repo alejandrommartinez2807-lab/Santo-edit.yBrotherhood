@@ -218,6 +218,9 @@ export async function GET(request: NextRequest) {
       orderId: String(data.id || orderId),
       displayNumber,
       status,
+      // Tipo de pedido: el seguimiento lo usa para que el "¡Listo!" de un
+      // delivery NO diga "pasa a retirarlo" (el delivery se lo lleva).
+      orderType,
       items,
       payment: {
         expected: awaitsCashierPayment,

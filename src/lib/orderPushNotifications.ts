@@ -135,7 +135,12 @@ async function sendPushToSubscriptionRows(
 // Notifica "pedido listo" a todas las suscripciones del pedido y limpia las
 // vencidas (410/404). Nunca lanza: se llama desde el cambio de estado y un
 // fallo de push no puede tumbar la operación de caja/cocina.
-export async function sendOrderReadyPush(orderId: string, displayNumber: string): Promise<void> {
+export async function sendOrderReadyPush(
+  orderId: string,
+  displayNumber: string,
+  // Delivery: el cliente no retira en mostrador — el delivery se comunica con él.
+  options?: { isDelivery?: boolean },
+): Promise<void> {
   if (!isPushConfigured()) return
 
   try {
@@ -151,7 +156,9 @@ export async function sendOrderReadyPush(orderId: string, displayNumber: string)
 
     const payload = JSON.stringify({
       title: "¡Tu pedido está listo!",
-      body: `Pasa a retirar tu pedido ${displayNumber || orderId} en el mostrador.`,
+      body: options?.isDelivery
+        ? `Tu pedido ${displayNumber || orderId} está listo. El delivery se comunicará con usted para entregarlo.`
+        : `Pasa a retirar tu pedido ${displayNumber || orderId} en el mostrador.`,
       url: `/pedido/${orderId}`,
     })
 

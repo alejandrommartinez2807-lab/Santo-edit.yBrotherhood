@@ -29,6 +29,9 @@ export type PolledOrderState = {
   forOrderId: string;
   status: string;
   displayNumber: string;
+  // "Delivery" | "Para llevar" | "Comer aquí" | "": decide el texto de
+  // "¡Listo!" (retirar en mostrador vs. el delivery se comunica contigo).
+  orderType: string;
   items: PublicOrderItem[];
   cancelReason: string;
   payment: PublicOrderPaymentInfo | null;
@@ -41,6 +44,7 @@ export type PolledOrderState = {
 export const EMPTY_POLLED_ORDER: Omit<PolledOrderState, "forOrderId"> = {
   status: "",
   displayNumber: "",
+  orderType: "",
   items: [],
   cancelReason: "",
   payment: null,
