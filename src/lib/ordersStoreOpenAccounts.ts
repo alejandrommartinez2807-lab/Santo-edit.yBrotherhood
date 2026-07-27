@@ -17,6 +17,11 @@ import {
   orderRowToLocalOrder,
   type Row,
 } from "./ordersStoreMappers"
+import {
+  addBillRequestMarker,
+  getBillRequestedAt,
+  stripBillRequestMarker,
+} from "@/lib/openAccountBillRequest"
 
 async function loadOrderWithItems(
   orderId: string,
@@ -69,17 +74,26 @@ function openAccountRowToOpenAccount(row: Row, orders: OpenAccountOrderSummary[]
   }
 }
 
-async function loadAccountOrderSummaries(
-  accountId: string,
+// Pedidos de VARIAS cuentas en dos queries (una de pedidos + una de items).
+// Antes getOpenAccounts hacía 2 queries POR cuenta en un bucle secuencial, y
+// caja + mesonero lo sondean cada 2.5s: con 10 mesas abiertas eran ~20
+// consultas por tick por pantalla.
+async function loadOrderSummariesByAccount(
+  accountIds: string[],
   branchId?: string | null,
-): Promise<OpenAccountOrderSummary[]> {
+): Promise<Map<string, OpenAccountOrderSummary[]>> {
+  const byAccount = new Map<string, OpenAccountOrderSummary[]>()
+  const cleanIds = accountIds.map((id) => cleanText(id)).filter(Boolean)
+  for (const id of cleanIds) byAccount.set(id, [])
+  if (cleanIds.length === 0) return byAccount
+
   const supabase = getSupabaseAdmin()
   let query = supabase
     .from("orders")
     .select(
-      "id, seq, branch_seq, branch_code, customer_name, table_number, order_type, status, payment_status, total_usd, total_ves, exchange_rate, payment_received_equiv_usd, payment_pending_usd, created_at, items_text"
+      "id, open_account_id, seq, branch_seq, branch_code, customer_name, table_number, order_type, status, payment_status, total_usd, total_ves, exchange_rate, payment_received_equiv_usd, payment_pending_usd, created_at, items_text"
     )
-    .eq("open_account_id", accountId)
+    .in("open_account_id", cleanIds)
   if (branchId) query = query.eq("branch_id", branchId)
   const { data } = await query.order("created_at", { ascending: true })
 
@@ -107,7 +121,27 @@ async function loadAccountOrderSummaries(
     }
   }
 
-  return orderRows.map((raw: Row) => {
+  for (const raw of orderRows) {
+    const accountId = cleanText(raw.open_account_id)
+    const bucket = byAccount.get(accountId)
+    if (bucket) bucket.push(mapOrderRowToSummary(raw, itemsByOrderId))
+  }
+
+  return byAccount
+}
+
+async function loadAccountOrderSummaries(
+  accountId: string,
+  branchId?: string | null,
+): Promise<OpenAccountOrderSummary[]> {
+  const byAccount = await loadOrderSummariesByAccount([accountId], branchId)
+  return byAccount.get(cleanText(accountId)) ?? []
+}
+
+function mapOrderRowToSummary(
+  raw: Row,
+  itemsByOrderId: Map<string, ReturnType<typeof itemRowToOrderItem>[]>,
+): OpenAccountOrderSummary {
     const row = raw
     const id = cleanText(row.id)
     const seq = num(row.seq)
@@ -139,7 +173,6 @@ async function loadAccountOrderSummaries(
       itemsText: cleanText(row.items_text),
       items,
     }
-  })
 }
 
 export async function recomputeOpenAccountTotals(
@@ -169,7 +202,7 @@ export async function recomputeOpenAccountTotals(
 }
 
 export async function getOpenAccounts(
-  options: { status?: OpenAccountStatus | "all" } = {},
+  options: { status?: OpenAccountStatus | "all"; id?: string } = {},
   branchId?: string | null,
 ): Promise<OpenAccount[]> {
   const supabase = getSupabaseAdmin()
@@ -178,18 +211,23 @@ export async function getOpenAccounts(
   if (options.status && options.status !== "all") {
     query = query.eq("status", options.status)
   }
+  // Refresco puntual de UNA cuenta (tras cobrar/entregar): antes se traían
+  // TODAS las cuentas históricas de la sede solo para encontrar una.
+  if (cleanText(options.id)) query = query.eq("id", cleanText(options.id))
   if (branchId) query = query.eq("branch_id", branchId)
 
   const { data, error } = await query
   if (error) throw new Error(error.message)
 
-  const accounts: OpenAccount[] = []
-  for (const raw of data ?? []) {
-    const row = raw as Row
-    const orders = await loadAccountOrderSummaries(cleanText(row.id), branchId)
-    accounts.push(openAccountRowToOpenAccount(row, orders))
-  }
-  return accounts
+  const rows = (data ?? []) as Row[]
+  const ordersByAccount = await loadOrderSummariesByAccount(
+    rows.map((row) => cleanText(row.id)),
+    branchId,
+  )
+
+  return rows.map((row) =>
+    openAccountRowToOpenAccount(row, ordersByAccount.get(cleanText(row.id)) ?? []),
+  )
 }
 
 export async function createOpenAccount(
@@ -198,19 +236,23 @@ export async function createOpenAccount(
 ): Promise<OpenAccount> {
   const supabase = getSupabaseAdmin()
 
-  const { data, error } = await supabase
-    .from("open_accounts")
-    .insert({
-      branch_id: branchId ?? null,
-      table_number: cleanText(input.tableNumber),
-      customer_name: cleanText(input.customerName),
-      customer_phone: cleanText(input.customerPhone) || null,
-      note: cleanText(input.note) || null,
-      opened_by: cleanText(input.openedBy) || null,
-      status: "Abierta",
-    })
-    .select("*")
-    .single()
+  const insertAccount = (tableId: string | null) =>
+    supabase
+      // branch-exempt: INSERT — la sede viaja DENTRO de la fila
+      // (buildOpenAccountInsertRow pone branch_id), no como filtro.
+      .from("open_accounts")
+      .insert(buildOpenAccountInsertRow(input, branchId, tableId))
+      .select("*")
+      .single()
+
+  let { data, error } = await insertAccount(cleanText(input.tableId) || null)
+
+  // table_id referencia a `tables`: si la config de mesas divergió de esa
+  // tabla (mesa nueva sin fila), la FK falla — la cuenta vale igual sin el
+  // vínculo, así que se reintenta sin él en vez de tumbar la apertura.
+  if (error && error.code === "23503") {
+    ;({ data, error } = await insertAccount(null))
+  }
 
   if (error) {
     // El índice único parcial impide dos cuentas "Abierta" en la misma mesa
@@ -221,6 +263,27 @@ export async function createOpenAccount(
   }
 
   return openAccountRowToOpenAccount(data as Row, [])
+}
+
+function buildOpenAccountInsertRow(
+  input: CreateOpenAccountInput,
+  branchId: string | null | undefined,
+  tableId: string | null,
+) {
+  return {
+      branch_id: branchId ?? null,
+      table_number: cleanText(input.tableNumber),
+      // La columna existía desde 0001 pero NUNCA se escribía: toda la
+      // resolución cuenta↔mesa iba por texto y renombrar la mesa la
+      // desconectaba. Guardarla no cambia la resolución actual, pero deja el
+      // dato firme para dejar de depender del nombre.
+      table_id: tableId,
+      customer_name: cleanText(input.customerName),
+      customer_phone: cleanText(input.customerPhone) || null,
+      note: cleanText(input.note) || null,
+      opened_by: cleanText(input.openedBy) || null,
+      status: "Abierta",
+  }
 }
 
 export async function attachOrderToOpenAccount(
@@ -279,6 +342,53 @@ export async function attachOrderToOpenAccount(
   }
 }
 
+// "Pedir la cuenta": pone o quita el marcador en la nota de la cuenta.
+// Devuelve null si la cuenta no existe o ya no está Abierta; si ya estaba
+// pedida, alreadyRequested=true y se conserva la hora original.
+export async function setOpenAccountBillRequested(
+  accountId: string,
+  requested: boolean,
+  branchId?: string | null,
+): Promise<{ alreadyRequested: boolean; requestedAt: string } | null> {
+  const supabase = getSupabaseAdmin()
+
+  let query = supabase
+    .from("open_accounts")
+    .select("id, status, note")
+    .eq("id", accountId)
+  if (branchId) query = query.eq("branch_id", branchId)
+  const { data, error } = await query.maybeSingle()
+  if (error) throw new Error(error.message)
+  if (!data || cleanText((data as Row).status) !== "Abierta") return null
+
+  const currentNote = cleanText((data as Row).note)
+  const currentStamp = getBillRequestedAt(currentNote)
+
+  if (requested && currentStamp) {
+    return { alreadyRequested: true, requestedAt: currentStamp }
+  }
+
+  // Quitar una petición que no existe: nada que escribir.
+  if (!requested && currentNote === stripBillRequestMarker(currentNote)) {
+    return { alreadyRequested: false, requestedAt: "" }
+  }
+
+  const now = new Date().toISOString()
+  const nextNote = requested
+    ? addBillRequestMarker(currentNote, now)
+    : stripBillRequestMarker(currentNote)
+
+  let updateQuery = supabase
+    .from("open_accounts")
+    .update({ note: nextNote || null })
+    .eq("id", accountId)
+  if (branchId) updateQuery = updateQuery.eq("branch_id", branchId)
+  const { error: updateError } = await updateQuery
+  if (updateError) throw new Error(updateError.message)
+
+  return { alreadyRequested: false, requestedAt: requested ? now : "" }
+}
+
 // Estado actual de una cuenta sin cargar sus pedidos (guard barato para las
 // acciones del PATCH: cerrar/entregar/cobrar sobre una cuenta que ya no está
 // Abierta). Devuelve null si la cuenta no existe en esa sucursal.
@@ -313,6 +423,21 @@ export async function closeOpenAccount(
   if (input.customerName !== undefined) patch.customer_name = cleanText(input.customerName)
   if (input.customerPhone !== undefined) patch.customer_phone = cleanText(input.customerPhone) || null
   if (input.note !== undefined) patch.note = cleanText(input.note) || null
+
+  // Cerrar la cuenta atiende la petición de cuenta pendiente: el marcador
+  // no debe sobrevivir en el historial.
+  if (patch.note === undefined) {
+    let noteQuery = supabase
+      .from("open_accounts")
+      .select("note")
+      .eq("id", accountId)
+    if (branchId) noteQuery = noteQuery.eq("branch_id", branchId)
+    const { data: noteRow } = await noteQuery.maybeSingle()
+    const currentNote = cleanText((noteRow as Row | null)?.note)
+    if (getBillRequestedAt(currentNote) || currentNote !== stripBillRequestMarker(currentNote)) {
+      patch.note = stripBillRequestMarker(currentNote) || null
+    }
+  }
 
   let accountUpdateQuery = supabase
     .from("open_accounts")

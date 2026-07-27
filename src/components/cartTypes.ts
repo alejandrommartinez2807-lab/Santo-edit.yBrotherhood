@@ -209,6 +209,9 @@ export type PublicOpenAccountSummary = {
   pendingUSD: number;
   createdAt?: string;
   updatedAt?: string;
+  // ISO de cuándo el cliente pidió la cuenta ("" = no pedida): lo devuelve
+  // table-account-status y alimenta el botón "Pedir la cuenta".
+  billRequestedAt?: string;
   orders: PublicOpenAccountOrderSummary[];
 };
 

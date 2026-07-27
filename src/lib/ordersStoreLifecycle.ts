@@ -2,6 +2,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { canTransitionOrderStatus } from "@/lib/orderStatusPermissions"
 import { isMissingColumnError } from "@/lib/ordersStoreMappers"
 import { OrderActionConflictError } from "@/lib/orderConflicts"
+import { recomputeOpenAccountTotals } from "@/lib/ordersStoreOpenAccounts"
 import type { LocalOrder, OrderStatus } from "@/types/localOrders"
 
 type LoadOrderWithItems = (
@@ -108,7 +109,20 @@ export async function updateOrderStatusInStore(
     }
   }
 
-  return loadOrderWithItems(orderId, branchId)
+  const order = await loadOrderWithItems(orderId, branchId)
+
+  // Cancelar un pedido de una cuenta abierta dejaba los totales cacheados
+  // (total/pendiente) inflados hasta la siguiente acción sobre la cuenta —
+  // el recálculo excluye cancelados (R3), pero nadie lo disparaba aquí. Un
+  // fallo del recálculo no tumba la anulación: el próximo attach/cobro lo
+  // corrige igual.
+  if (status === "Cancelado" && order.openAccountId) {
+    await recomputeOpenAccountTotals(order.openAccountId, branchId).catch(
+      () => {},
+    )
+  }
+
+  return order
 }
 
 export async function updateOrderDeliveryReportInStore(

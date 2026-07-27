@@ -177,6 +177,7 @@ export {
   createOpenAccount,
   getOpenAccountStatus,
   getOpenAccounts,
+  setOpenAccountBillRequested,
 } from "./ordersOpenAccounts"
 
 export {

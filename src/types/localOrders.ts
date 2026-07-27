@@ -369,6 +369,9 @@ export type OpenAccount = {
 
 export type CreateOpenAccountInput = {
   tableNumber: string
+  // Id de la mesa configurada ("mesa-1"), si el nombre resolvió contra la
+  // config: vincula la cuenta a la mesa por id y no solo por texto.
+  tableId?: string
   customerName: string
   customerPhone?: string
   note?: string

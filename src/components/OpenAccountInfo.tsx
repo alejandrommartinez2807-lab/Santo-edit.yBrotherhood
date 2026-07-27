@@ -5,6 +5,7 @@ import PublicBranchPicker, {
   usePublicBranchSelection,
 } from "@/components/PublicBranchPicker";
 import {
+  ConciergeBell,
   Loader2,
   QrCode,
   Search,
@@ -278,6 +279,7 @@ function normalizeLookupResponse(value: unknown): AccountLookupState {
     pendingUSD: Number(accountSource.pendingUSD || 0) || 0,
     createdAt: cleanText(accountSource.createdAt) || undefined,
     updatedAt: cleanText(accountSource.updatedAt) || undefined,
+    billRequestedAt: cleanText(accountSource.billRequestedAt) || undefined,
     orders,
   };
 
@@ -296,6 +298,8 @@ export default function OpenAccountInfo() {
   const [selectedTable, setSelectedTable] = useState("");
   const [lookupState, setLookupState] = useState<AccountLookupState>(EMPTY_LOOKUP);
   const [isLookupLoading, setIsLookupLoading] = useState(false);
+  const [isRequestingBill, setIsRequestingBill] = useState(false);
+  const [billRequestError, setBillRequestError] = useState<string | null>(null);
   // Sede elegida por el cliente (Fase 3): las mesas y sus cuentas son por sede.
   const branchSelection = usePublicBranchSelection();
   const needsBranchSelection = branchSelection.needsSelection;
@@ -382,6 +386,67 @@ export default function OpenAccountInfo() {
       });
     } finally {
       setIsLookupLoading(false);
+    }
+  }
+
+  // Con la cuenta a la vista, se refresca sola cada 15s (antes había que
+  // tocar "Actualizar cuenta" a mano para ver los consumos nuevos o si la
+  // petición de cuenta fue atendida). Silencioso: un fallo de red deja lo
+  // último que se vio.
+  const lookupTableName = lookupState.status === "open" ? lookupState.tableName : "";
+  useEffect(() => {
+    if (!lookupTableName) return;
+
+    const timer = window.setInterval(async () => {
+      try {
+        const response = await fetch(
+          `/api/public/table-account-status?mesa=${encodeURIComponent(lookupTableName)}`,
+          { cache: "no-store" },
+        );
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data?.ok === false) return;
+        setLookupState(normalizeLookupResponse(data));
+      } catch {
+        // Silencioso: el próximo tick lo intenta de nuevo.
+      }
+    }, 15_000);
+
+    return () => window.clearInterval(timer);
+  }, [lookupTableName]);
+
+  // "Pedir la cuenta": avisa a caja/mesonero sin que nadie levante la mano.
+  async function handleRequestBill() {
+    if (lookupState.status !== "open" || isRequestingBill) return;
+    const account = lookupState.account;
+
+    try {
+      setIsRequestingBill(true);
+
+      const response = await fetch("/api/public/open-accounts/request-bill", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mesa: account.tableNumber }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || data?.ok === false) {
+        throw new Error(data?.error || "No se pudo avisar al personal.");
+      }
+
+      setLookupState({
+        ...lookupState,
+        account: {
+          ...account,
+          billRequestedAt:
+            cleanText(data.requestedAt) || new Date().toISOString(),
+        },
+      });
+    } catch (error) {
+      setBillRequestError(
+        error instanceof Error ? error.message : "No se pudo avisar al personal.",
+      );
+    } finally {
+      setIsRequestingBill(false);
     }
   }
 
@@ -507,6 +572,40 @@ export default function OpenAccountInfo() {
                       Pendiente {formatUSD(lookupState.account.pendingUSD)}
                     </span>
                   </div>
+
+                  {/* Pedir la cuenta: el aviso llega al panel de caja y
+                      mesonero (badge + push). Ya pedida: se muestra desde
+                      cuándo, y el estado se apaga solo cuando la atienden. */}
+                  {lookupState.account.billRequestedAt ? (
+                    <p className="rounded-2xl border border-green-600 bg-green-600/15 px-4 py-3 text-sm font-black leading-5 text-green-400">
+                      ✅ Cuenta pedida
+                      {formatAccountDate(lookupState.account.billRequestedAt)
+                        ? ` a las ${formatAccountDate(lookupState.account.billRequestedAt)}`
+                        : ""}
+                      . El personal viene en camino.
+                    </p>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleRequestBill}
+                        disabled={isRequestingBill}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-black transition hover:scale-[1.01] disabled:opacity-60"
+                      >
+                        {isRequestingBill ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <ConciergeBell size={16} />
+                        )}
+                        Pedir la cuenta
+                      </button>
+                      {billRequestError ? (
+                        <p className="rounded-2xl border border-red-500/50 bg-red-500/10 px-4 py-2 text-xs font-bold leading-5 text-red-400">
+                          {billRequestError}
+                        </p>
+                      ) : null}
+                    </>
+                  )}
 
                   {lookupState.account.orders.length > 0 ? (
                     <div className="space-y-2">

@@ -149,6 +149,7 @@ export async function POST(request: NextRequest) {
     const openAccount = await createOpenAccount(
       {
         tableNumber: tableName,
+        tableId: resolvedTable?.id || undefined,
         customerName: customerName || tableName,
         customerPhone: customerPhone || undefined,
         openedBy: "Cliente (QR)",

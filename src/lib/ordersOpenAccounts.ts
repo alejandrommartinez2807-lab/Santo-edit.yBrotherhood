@@ -7,7 +7,7 @@ import type {
 import * as openAccountStore from "./ordersStoreOpenAccounts"
 
 export async function getOpenAccounts(
-  options: { status?: OpenAccountStatus | "all" } = {},
+  options: { status?: OpenAccountStatus | "all"; id?: string } = {},
   branchId?: string | null,
 ) {
   return openAccountStore.getOpenAccounts(options, branchId)
@@ -41,4 +41,12 @@ export async function getOpenAccountStatus(
   branchId?: string | null,
 ) {
   return openAccountStore.getOpenAccountStatus(accountId, branchId)
+}
+
+export async function setOpenAccountBillRequested(
+  accountId: string,
+  requested: boolean,
+  branchId?: string | null,
+) {
+  return openAccountStore.setOpenAccountBillRequested(accountId, requested, branchId)
 }

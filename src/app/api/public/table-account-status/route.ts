@@ -12,6 +12,7 @@ import {
 } from "@/lib/reservationConflicts"
 import { resolveBranchId } from "@/lib/branch"
 import { getLocalTablesForBranch } from "@/lib/branchLocalTables"
+import { getBillRequestedAt } from "@/lib/openAccountBillRequest"
 import {
   cleanPublicTableText,
   getActivePublicLocalTables,
@@ -153,6 +154,8 @@ export async function GET(request: NextRequest) {
             tableNumber: openAccount.tableNumber,
             customerName: openAccount.customerName,
             status: openAccount.status,
+            // "" = nadie ha pedido la cuenta; ISO = desde cuándo está pedida.
+            billRequestedAt: getBillRequestedAt(openAccount.note),
             totalEstimatedUSD: openAccount.totalEstimatedUSD,
             totalCollectedUSD: openAccount.totalCollectedUSD,
             pendingUSD: openAccount.pendingUSD,

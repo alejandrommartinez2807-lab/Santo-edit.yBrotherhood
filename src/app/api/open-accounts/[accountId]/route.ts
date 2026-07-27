@@ -7,6 +7,7 @@ import {
   getOpenAccounts,
   getOrders,
   OrderPaymentConflictError,
+  setOpenAccountBillRequested,
   updateOrderPayment,
   updateOrderStatus,
   type OrderStatus,
@@ -248,7 +249,10 @@ export async function GET(
     const { accountId } = await context.params;
     const cleanAccountId = cleanText(accountId);
     const branchId = await resolveBranchId(request);
-    const openAccounts = await getOpenAccounts({ status: "all" }, branchId);
+    const openAccounts = await getOpenAccounts(
+      { status: "all", id: cleanAccountId },
+      branchId,
+    );
     const openAccount = openAccounts.find(
       (account) => account.id === cleanAccountId,
     );
@@ -417,7 +421,7 @@ export async function PATCH(
 
       const order = await updateOrderStatus(orderId, status, branchId);
       const refreshedAccounts = await getOpenAccounts(
-        { status: "all" },
+        { status: "all", id: cleanAccountId },
         branchId,
       );
       const openAccount = refreshedAccounts.find(
@@ -608,8 +612,13 @@ export async function PATCH(
         );
       }
 
+      // Cobrar ES atender la petición de cuenta: el badge se apaga solo.
+      await setOpenAccountBillRequested(cleanAccountId, false, branchId).catch(
+        () => {},
+      );
+
       const refreshedAccounts = await getOpenAccounts(
-        { status: "all" },
+        { status: "all", id: cleanAccountId },
         branchId,
       );
       let openAccount = refreshedAccounts.find(
@@ -658,6 +667,24 @@ export async function PATCH(
         unusedAmountVES: remainingVES,
         // Cobro aplicado a medias por una carrera: la UI se lo dice a caja.
         ...(conflictNotice ? { conflictNotice } : {}),
+      });
+    }
+
+    // El mesonero también puede marcar la petición de cuenta como atendida
+    // (fue a la mesa): apaga el badge sin tocar cobros ni estados.
+    if (action === "clearBillRequest") {
+      await setOpenAccountBillRequested(cleanAccountId, false, branchId);
+
+      const refreshedAccounts = await getOpenAccounts(
+        { status: "all", id: cleanAccountId },
+        branchId,
+      );
+
+      return NextResponse.json({
+        ok: true,
+        openAccount: refreshedAccounts.find(
+          (account) => account.id === cleanAccountId,
+        ),
       });
     }
 

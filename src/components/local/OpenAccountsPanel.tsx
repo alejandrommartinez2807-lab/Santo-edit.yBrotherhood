@@ -18,6 +18,10 @@ import {
 import { formatUSD } from "@/utils/formatCurrency";
 import { usePersistedToggle } from "@/hooks/usePersistedToggle";
 import { getSelectedBranchId } from "@/lib/branchClient";
+import {
+  getBillRequestedAt,
+  stripBillRequestMarker,
+} from "@/lib/openAccountBillRequest";
 import type {
   LocalOrder,
   OpenAccount,
@@ -114,8 +118,23 @@ export function OpenAccountsPanel({
     false,
   );
   const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  // Guardado POR ÁMBITO (id de cuenta o "create"): una acción en curso solo
+  // congela SU tarjeta — antes un isSaving global deshabilitaba los botones
+  // de TODAS las mesas a la vez y caja no podía atender dos cuentas seguidas.
+  const [savingScopes, setSavingScopes] = useState<Record<string, boolean>>({});
+  const isScopeSaving = (scope: string) => Boolean(savingScopes[scope]);
+  const startSaving = (scope: string) =>
+    setSavingScopes((current) => ({ ...current, [scope]: true }));
+  const stopSaving = (scope: string) =>
+    setSavingScopes((current) => ({ ...current, [scope]: false }));
+  const [message, setMessageState] = useState<string | null>(null);
+  // true = el último mensaje es un éxito (verde); false = advertencia/error.
+  // Antes TODO salía en el naranja de advertencia, hasta los éxitos.
+  const [messageIsSuccess, setMessageIsSuccess] = useState(false);
+  function showMessage(text: string | null, ok = false) {
+    setMessageState(text);
+    setMessageIsSuccess(ok);
+  }
   const [form, setForm] = useState<CreateAccountForm>(EMPTY_CREATE_FORM);
   const [selectedOrderByAccount, setSelectedOrderByAccount] = useState<
     Record<string, string>
@@ -138,6 +157,7 @@ export function OpenAccountsPanel({
     accountOrders: OpenAccountOrderSummary[];
     pendingUSD: number;
   } | null>(null);
+  const isModalSaving = closeModal ? isScopeSaving(closeModal.account.id) : false;
 
   const hasExternalAccounts = Array.isArray(externalOpenAccounts);
 
@@ -156,10 +176,17 @@ export function OpenAccountsPanel({
     [accountsSource],
   );
 
-  const visibleAccounts = useMemo(
-    () => (viewMode === "all" ? accountsSource : activeAccounts),
-    [accountsSource, activeAccounts, viewMode],
-  );
+  const visibleAccounts = useMemo(() => {
+    const base = viewMode === "all" ? accountsSource : activeAccounts;
+    // Las mesas que PIDIERON la cuenta van primero: es la cola de atención.
+    return [...base].sort((first, second) => {
+      const firstRequested =
+        first.status === "Abierta" && getBillRequestedAt(first.note) ? 1 : 0;
+      const secondRequested =
+        second.status === "Abierta" && getBillRequestedAt(second.note) ? 1 : 0;
+      return secondRequested - firstRequested;
+    });
+  }, [accountsSource, activeAccounts, viewMode]);
 
   const eligibleOrders = useMemo(
     () => orders.filter(isEligibleOrderForOpenAccount),
@@ -258,7 +285,7 @@ export function OpenAccountsPanel({
     if (!adminPassword) return;
 
     if (!silent) setIsLoading(true);
-    setMessage(null);
+    showMessage(null);
 
     try {
       const statusParam = requestedViewMode === "all" ? "all" : "Abierta";
@@ -284,7 +311,7 @@ export function OpenAccountsPanel({
         Array.isArray(data.openAccounts) ? data.openAccounts : [],
       );
     } catch (error) {
-      setMessage(
+      showMessage(
         error instanceof Error
           ? error.message
           : "No se pudieron cargar las cuentas abiertas",
@@ -313,18 +340,18 @@ export function OpenAccountsPanel({
   }
 
   async function createOpenAccount() {
-    if (!canManage || isSaving) return;
+    if (!canManage || isScopeSaving("create")) return;
 
     const tableNumber = form.tableNumber.trim();
     const customerName = form.customerName.trim() || tableNumber;
 
     if (!tableNumber) {
-      setMessage("Indica la mesa o ubicación para abrir la cuenta.");
+      showMessage("Indica la mesa o ubicación para abrir la cuenta.");
       return;
     }
 
-    setIsSaving(true);
-    setMessage(null);
+    startSaving("create");
+    showMessage(null);
 
     try {
       const response = await fetch("/api/open-accounts", {
@@ -353,30 +380,30 @@ export function OpenAccountsPanel({
         ...current,
         [data.openAccount?.id || ""]: true,
       }));
-      setMessage("Cuenta abierta correctamente.");
+      showMessage("Cuenta abierta correctamente.", true);
       await refreshAccountsAfterAction();
       onOrdersShouldRefresh?.();
     } catch (error) {
-      setMessage(
+      showMessage(
         error instanceof Error ? error.message : "No se pudo abrir la cuenta",
       );
     } finally {
-      setIsSaving(false);
+      stopSaving("create");
     }
   }
 
   async function attachOrder(accountId: string) {
-    if (!canManage || isSaving) return;
+    if (!canManage || isScopeSaving(accountId)) return;
 
     const orderId = selectedOrderByAccount[accountId];
 
     if (!orderId) {
-      setMessage("Selecciona un pedido local para asociar a la cuenta.");
+      showMessage("Selecciona un pedido local para asociar a la cuenta.");
       return;
     }
 
-    setIsSaving(true);
-    setMessage(null);
+    startSaving(accountId);
+    showMessage(null);
 
     try {
       const response = await fetch(
@@ -400,15 +427,15 @@ export function OpenAccountsPanel({
 
       setSelectedOrderByAccount((current) => ({ ...current, [accountId]: "" }));
       setExpandedAccounts((current) => ({ ...current, [accountId]: true }));
-      setMessage("Pedido asociado a la cuenta abierta.");
+      showMessage("Pedido asociado a la cuenta abierta.", true);
       await refreshAccountsAfterAction();
       onOrdersShouldRefresh?.();
     } catch (error) {
-      setMessage(
+      showMessage(
         error instanceof Error ? error.message : "No se pudo asociar el pedido",
       );
     } finally {
-      setIsSaving(false);
+      stopSaving(accountId);
     }
   }
 
@@ -417,10 +444,10 @@ export function OpenAccountsPanel({
     orderId: string,
     status: "Listo" | "Entregado",
   ) {
-    if (!canManage || isSaving) return;
+    if (!canManage || isScopeSaving(accountId)) return;
 
-    setIsSaving(true);
-    setMessage(null);
+    startSaving(accountId);
+    showMessage(null);
 
     try {
       const response = await fetch(
@@ -447,21 +474,22 @@ export function OpenAccountsPanel({
       }
 
       setExpandedAccounts((current) => ({ ...current, [accountId]: true }));
-      setMessage(
+      showMessage(
         status === "Entregado"
           ? "Pedido marcado como entregado en la cuenta."
           : "Pedido reabierto como listo/no entregado.",
+        true,
       );
       await refreshAccountsAfterAction();
       onOrdersShouldRefresh?.();
     } catch (error) {
-      setMessage(
+      showMessage(
         error instanceof Error
           ? error.message
           : "No se pudo actualizar la entrega",
       );
     } finally {
-      setIsSaving(false);
+      stopSaving(accountId);
     }
   }
 
@@ -473,10 +501,10 @@ export function OpenAccountsPanel({
     item: { cartLineId?: string; id: number; name: string },
     delivered: boolean,
   ) {
-    if (!canManage || isSaving) return;
+    if (!canManage || isScopeSaving(accountId)) return;
 
-    setIsSaving(true);
-    setMessage(null);
+    startSaving(accountId);
+    showMessage(null);
 
     try {
       const response = await fetch(
@@ -505,21 +533,63 @@ export function OpenAccountsPanel({
       }
 
       setExpandedAccounts((current) => ({ ...current, [accountId]: true }));
-      setMessage(
+      showMessage(
         delivered
           ? `"${item.name}" marcado como entregado.`
           : `"${item.name}" vuelve a pendiente por entregar.`,
+        true,
       );
       await refreshAccountsAfterAction();
       onOrdersShouldRefresh?.();
     } catch (error) {
-      setMessage(
+      showMessage(
         error instanceof Error
           ? error.message
           : "No se pudo marcar el producto",
       );
     } finally {
-      setIsSaving(false);
+      stopSaving(accountId);
+    }
+  }
+
+  // El mesonero/caja fue a la mesa: apaga el badge "piden la cuenta" sin
+  // tocar cobros ni estados (también se apaga solo al cobrar o cerrar).
+  async function clearBillRequest(accountId: string) {
+    if (!canManage || isScopeSaving(accountId)) return;
+
+    startSaving(accountId);
+    showMessage(null);
+
+    try {
+      const response = await fetch(
+        `/api/open-accounts/${encodeURIComponent(accountId)}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-password": adminPassword,
+          },
+          body: JSON.stringify({ action: "clearBillRequest" }),
+        },
+      );
+      const data = await readApiResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || data.message || "No se pudo marcar la petición como atendida",
+        );
+      }
+
+      showMessage("Petición de cuenta marcada como atendida.", true);
+      await refreshAccountsAfterAction();
+    } catch (error) {
+      showMessage(
+        error instanceof Error
+          ? error.message
+          : "No se pudo marcar la petición como atendida",
+      );
+    } finally {
+      stopSaving(accountId);
     }
   }
 
@@ -545,7 +615,7 @@ export function OpenAccountsPanel({
     if (
       !canManage ||
       !canCloseAccounts ||
-      isSaving ||
+      isScopeSaving(account.id) ||
       account.status !== "Abierta"
     )
       return;
@@ -556,17 +626,17 @@ export function OpenAccountsPanel({
       accountOrders,
       pendingUSD: Number(totals.pendingUSD || 0),
     });
-    setMessage(null);
+    showMessage(null);
   }
 
   // Paso 2: cierre confirmado desde el modal. "Cerrada" = cierre normal;
   // "Cancelada" = quedó claro que ese dinero NO se va a cobrar.
   async function confirmCloseAccount(closeStatus: "Cerrada" | "Cancelada") {
     const target = closeModal;
-    if (!target || isSaving) return;
+    if (!target || isScopeSaving(target.account.id)) return;
 
-    setIsSaving(true);
-    setMessage(null);
+    startSaving(target.account.id);
+    showMessage(null);
 
     try {
       const response = await fetch(
@@ -593,19 +663,20 @@ export function OpenAccountsPanel({
       }
 
       setCloseModal(null);
-      setMessage(
+      showMessage(
         closeStatus === "Cancelada"
           ? `Cuenta de ${target.account.tableNumber} marcada como Cancelada: quedó registrado que no se cobró.`
           : "Cuenta cerrada correctamente. Los cobros reales no fueron modificados.",
+        true,
       );
       await refreshAccountsAfterAction();
       onOrdersShouldRefresh?.();
     } catch (error) {
-      setMessage(
+      showMessage(
         error instanceof Error ? error.message : "No se pudo cerrar la cuenta",
       );
     } finally {
-      setIsSaving(false);
+      stopSaving(target.account.id);
     }
   }
 
@@ -626,7 +697,7 @@ export function OpenAccountsPanel({
       paymentNote: `Cobro de cuenta abierta ${account.tableNumber}`.trim(),
     });
     setExpandedAccounts((current) => ({ ...current, [account.id]: true }));
-    setMessage(null);
+    showMessage(null);
   }
 
   function updateAccountPaymentForm<K extends keyof AccountPaymentForm>(
@@ -634,12 +705,12 @@ export function OpenAccountsPanel({
     value: AccountPaymentForm[K],
   ) {
     setAccountPaymentForm((current) => ({ ...current, [field]: value }));
-    setMessage(null);
+    showMessage(null);
   }
 
 
   async function saveAccountPayment(account: OpenAccount) {
-    if (!canRegisterPayments || isSaving) return;
+    if (!canRegisterPayments || isScopeSaving(account.id)) return;
 
     const amountReceivedUSD = parseMoneyInput(
       accountPaymentForm.amountReceivedUSD,
@@ -649,12 +720,12 @@ export function OpenAccountsPanel({
     );
 
     if (amountReceivedUSD <= 0 && amountReceivedVES <= 0) {
-      setMessage("Indica el monto recibido para cobrar la cuenta.");
+      showMessage("Indica el monto recibido para cobrar la cuenta.");
       return;
     }
 
-    setIsSaving(true);
-    setMessage(null);
+    startSaving(account.id);
+    showMessage(null);
 
     try {
       const response = await fetch(
@@ -705,17 +776,19 @@ export function OpenAccountsPanel({
       setPaymentAccountId("");
       setAccountPaymentForm(EMPTY_ACCOUNT_PAYMENT_FORM);
       setCloseAfterAccountPayment(false);
-      setMessage(
+      showMessage(
         `Cobro aplicado a la cuenta de ${account.tableNumber}.${closedMessage}${unusedMessage}${conflictMessage}`,
+        // El cobro con carrera detectada NO es un éxito limpio: naranja.
+        !conflictMessage,
       );
       await refreshAccountsAfterAction();
       onOrdersShouldRefresh?.();
     } catch (error) {
-      setMessage(
+      showMessage(
         error instanceof Error ? error.message : "No se pudo cobrar la cuenta",
       );
     } finally {
-      setIsSaving(false);
+      stopSaving(account.id);
     }
   }
 
@@ -801,7 +874,13 @@ export function OpenAccountsPanel({
       </div>
 
       {message && (
-        <div className="mt-4 rounded-2xl border-2 border-orange-300 bg-orange-50 p-3 text-sm font-bold text-orange-900">
+        <div
+          className={`mt-4 rounded-2xl border-2 p-3 text-sm font-bold ${
+            messageIsSuccess
+              ? "border-green-600 bg-green-50 text-green-800"
+              : "border-orange-300 bg-orange-50 text-orange-900"
+          }`}
+        >
           {message}
         </div>
       )}
@@ -898,10 +977,10 @@ export function OpenAccountsPanel({
           <button
             type="button"
             onClick={createOpenAccount}
-            disabled={isSaving || !form.tableNumber.trim()}
+            disabled={isScopeSaving("create") || !form.tableNumber.trim()}
             className="inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)] disabled:opacity-50"
           >
-            {isSaving ? (
+            {isScopeSaving("create") ? (
               <Loader2 size={16} className="animate-spin" />
             ) : (
               <Plus size={16} />
@@ -1004,6 +1083,13 @@ export function OpenAccountsPanel({
               (order) => !isSameTable(account, order),
             );
             const isClosed = account.status !== "Abierta";
+            const isCardSaving = isScopeSaving(account.id);
+            // El cliente pidió la cuenta desde su teléfono: badge + primero
+            // en la lista. La nota siempre se muestra SIN el marcador.
+            const billRequestedAt = isClosed
+              ? ""
+              : getBillRequestedAt(account.note);
+            const displayNote = stripBillRequestMarker(account.note || "");
             const operationalTone = getAccountOperationalTone(
               totals,
               accountOrders,
@@ -1033,6 +1119,21 @@ export function OpenAccountsPanel({
                       >
                         {formatAccountStatusLabel(account.status)}
                       </span>
+                      {billRequestedAt ? (
+                        <span className="inline-flex animate-pulse items-center gap-1.5 rounded-full border-2 border-red-500 bg-red-500/10 px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.12em] text-red-600">
+                          🔔 Piden la cuenta · {formatAccountDate(billRequestedAt)}
+                        </span>
+                      ) : null}
+                      {billRequestedAt && canManage ? (
+                        <button
+                          type="button"
+                          onClick={() => clearBillRequest(account.id)}
+                          disabled={isCardSaving}
+                          className="rounded-full border border-[var(--brand-border)] bg-white px-2.5 py-1 text-[0.6rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/60 transition hover:text-[var(--brand-ink-2)] disabled:opacity-50"
+                        >
+                          Atendida
+                        </button>
+                      ) : null}
                     </div>
                     <h3 className="mt-1 text-xl font-black text-[var(--brand-ink-2)]">
                       {account.customerName || "Cuenta local"}
@@ -1043,9 +1144,9 @@ export function OpenAccountsPanel({
                         : ""}
                       Abierta {formatAccountDate(account.createdAt)}
                     </p>
-                    {account.note && (
+                    {displayNote && (
                       <p className="mt-2 rounded-2xl bg-[var(--brand-cream)] px-3 py-2 text-xs font-bold text-[var(--brand-ink-2)]/75">
-                        {account.note}
+                        {displayNote}
                       </p>
                     )}
                     {isClosed && account.closedAt && (
@@ -1056,58 +1157,45 @@ export function OpenAccountsPanel({
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-center lg:w-[320px] lg:shrink-0">
+                  {/* Un vistazo = una decisión: el PENDIENTE manda (es lo que
+                      caja resuelve) y el resto va en una línea compacta.
+                      Antes eran 5 MiniStats por tarjeta. */}
+                  <div className="text-center lg:w-[220px] lg:shrink-0">
                     <MiniStat
-                      label="Pedidos"
-                      value={accountOrders.length}
-                      small
+                      label="Pendiente"
+                      value={formatUSD(totals.pendingUSD)}
+                      tone={totals.pendingUSD > 0 ? "warning" : "success"}
                     />
-                    <MiniStat
-                      label="Entregados"
-                      value={deliveryStats.delivered}
-                      small
-                      tone={deliveryStats.delivered > 0 ? "success" : "default"}
-                    />
-                    <MiniStat
-                      label="Listos"
-                      value={deliveryStats.ready}
-                      small
-                      tone={deliveryStats.ready > 0 ? "warning" : "default"}
-                    />
-                    <MiniStat
-                      label="Por cobrar"
-                      value={pendingOrdersCount}
-                      small
-                      tone={pendingOrdersCount > 0 ? "warning" : "success"}
-                    />
-                    <div className="col-span-2">
-                      <MiniStat
-                        label="Pendiente"
-                        value={formatUSD(totals.pendingUSD)}
-                        small
-                        tone={totals.pendingUSD > 0 ? "warning" : "success"}
-                      />
-                    </div>
+                    <p className="mt-1.5 text-[0.68rem] font-bold text-[var(--brand-ink-2)]/60">
+                      {accountOrders.length}{" "}
+                      {accountOrders.length === 1 ? "pedido" : "pedidos"} ·{" "}
+                      {deliveryStats.delivered} entregados
+                      {deliveryStats.ready > 0
+                        ? ` · ${deliveryStats.ready} listos`
+                        : ""}
+                      {pendingOrdersCount > 0
+                        ? ` · ${pendingOrdersCount} por cobrar`
+                        : ""}
+                    </p>
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-2 lg:grid-cols-2">
-                  <div
-                    className={`rounded-2xl border-2 px-3 py-2 text-xs font-bold leading-5 ${operationalTone.className}`}
-                  >
+                {/* Una sola caja de tono (dinero manda) con el estado de
+                    entrega como chip al lado — antes eran dos párrafos. */}
+                <div
+                  className={`mt-4 rounded-2xl border-2 px-3 py-2 text-xs font-bold leading-5 ${operationalTone.className}`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="font-black uppercase tracking-[0.12em]">
                       {operationalTone.label}
                     </p>
-                    <p className="mt-1">{operationalTone.text}</p>
-                  </div>
-                  <div
-                    className={`rounded-2xl border-2 px-3 py-2 text-xs font-bold leading-5 ${deliveryTone.className}`}
-                  >
-                    <p className="font-black uppercase tracking-[0.12em]">
+                    <span
+                      className={`rounded-full border px-2.5 py-0.5 text-[0.6rem] font-black uppercase tracking-[0.1em] ${deliveryTone.className}`}
+                    >
                       {deliveryTone.label}
-                    </p>
-                    <p className="mt-1">{deliveryTone.text}</p>
+                    </span>
                   </div>
+                  <p className="mt-1">{operationalTone.text}</p>
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
@@ -1156,10 +1244,11 @@ export function OpenAccountsPanel({
                               {order.paymentStatus}
                             </span>
                           </div>
-                          <div className="mt-2 grid gap-2 sm:grid-cols-4">
-                            <OrderPill label="Cocina" value={order.status} />
+                          {/* "Cocina" y "Entrega" eran el MISMO order.status
+                              pintado dos veces: queda una sola pill. */}
+                          <div className="mt-2 grid gap-2 sm:grid-cols-3">
                             <OrderPill
-                              label="Entrega"
+                              label="Estado"
                               value={getOrderDeliveryLabel(order.status)}
                               tone={getOrderDeliveryTone(order.status)}
                             />
@@ -1177,7 +1266,7 @@ export function OpenAccountsPanel({
                           </div>
                           <OrderItemsPreview
                             order={order}
-                            isTogglingDelivered={isSaving}
+                            isTogglingDelivered={isCardSaving}
                             onToggleItemDelivered={
                               canManage && !isClosed && order.status !== "Cancelado"
                                 ? (item, delivered) =>
@@ -1204,7 +1293,7 @@ export function OpenAccountsPanel({
                                       "Entregado",
                                     )
                                   }
-                                  disabled={isSaving}
+                                  disabled={isCardSaving}
                                   className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-green-700 bg-green-100 px-3 py-2 text-[0.65rem] font-black uppercase tracking-[0.10em] text-green-800 transition hover:bg-green-200 disabled:opacity-50"
                                 >
                                   <CheckCircle2 size={14} />
@@ -1220,7 +1309,7 @@ export function OpenAccountsPanel({
                                       "Listo",
                                     )
                                   }
-                                  disabled={isSaving}
+                                  disabled={isCardSaving}
                                   className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-yellow-500 bg-yellow-50 px-3 py-2 text-[0.65rem] font-black uppercase tracking-[0.10em] text-[var(--brand-ink)] transition hover:bg-yellow-100 disabled:opacity-50"
                                 >
                                   <RefreshCw size={14} />
@@ -1326,7 +1415,7 @@ export function OpenAccountsPanel({
                     <button
                       type="button"
                       onClick={() => attachOrder(account.id)}
-                      disabled={isSaving || !selectedOrderByAccount[account.id]}
+                      disabled={isCardSaving || !selectedOrderByAccount[account.id]}
                       className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
                     >
                       <CreditCard size={15} />
@@ -1343,7 +1432,7 @@ export function OpenAccountsPanel({
                         onClick={() =>
                           openAccountPayment(account, accountOrders)
                         }
-                        disabled={isSaving}
+                        disabled={isCardSaving}
                         className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)] disabled:opacity-50"
                       >
                         <CreditCard size={15} />
@@ -1356,7 +1445,7 @@ export function OpenAccountsPanel({
                         onClick={() =>
                           requestCloseAccount(account, accountOrders)
                         }
-                        disabled={isSaving}
+                        disabled={isCardSaving}
                         className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border-2 border-green-700 bg-green-100 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-green-800 transition hover:bg-green-200 disabled:opacity-50"
                       >
                         <CheckCircle2 size={15} />
@@ -1369,7 +1458,7 @@ export function OpenAccountsPanel({
                         onClick={() =>
                           requestCloseAccount(account, accountOrders)
                         }
-                        disabled={isSaving}
+                        disabled={isCardSaving}
                         className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/50 transition hover:text-[var(--brand-ink-2)] disabled:opacity-50"
                       >
                         Cerrar sin cobrar
@@ -1571,10 +1660,10 @@ export function OpenAccountsPanel({
                       <button
                         type="button"
                         onClick={() => saveAccountPayment(account)}
-                        disabled={isSaving}
+                        disabled={isCardSaving}
                         className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white transition hover:bg-[var(--brand-primary-dark)] disabled:opacity-50"
                       >
-                        {isSaving ? (
+                        {isCardSaving ? (
                           <Loader2 size={16} className="animate-spin" />
                         ) : (
                           <CreditCard size={16} />
@@ -1611,7 +1700,7 @@ export function OpenAccountsPanel({
 
                 <button
                   type="button"
-                  disabled={isSaving}
+                  disabled={isModalSaving}
                   onClick={() => {
                     const target = closeModal;
                     setCloseModal(null);
@@ -1627,7 +1716,7 @@ export function OpenAccountsPanel({
 
                 <button
                   type="button"
-                  disabled={isSaving}
+                  disabled={isModalSaving}
                   onClick={() => confirmCloseAccount("Cerrada")}
                   className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-green-700 bg-green-100 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-green-800 transition hover:bg-green-200 disabled:opacity-50"
                 >
@@ -1637,7 +1726,7 @@ export function OpenAccountsPanel({
 
                 <button
                   type="button"
-                  disabled={isSaving}
+                  disabled={isModalSaving}
                   onClick={() => confirmCloseAccount("Cancelada")}
                   className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-red-500 bg-red-500/10 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-red-600 transition hover:bg-red-500/20 disabled:opacity-50"
                 >
@@ -1653,11 +1742,11 @@ export function OpenAccountsPanel({
 
                 <button
                   type="button"
-                  disabled={isSaving}
+                  disabled={isModalSaving}
                   onClick={() => confirmCloseAccount("Cerrada")}
                   className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-green-700 bg-green-100 px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-green-800 transition hover:bg-green-200 disabled:opacity-50"
                 >
-                  {isSaving ? (
+                  {isModalSaving ? (
                     <Loader2 size={15} className="animate-spin" />
                   ) : (
                     <CheckCircle2 size={15} />
@@ -1669,7 +1758,7 @@ export function OpenAccountsPanel({
 
             <button
               type="button"
-              disabled={isSaving}
+              disabled={isModalSaving}
               onClick={() => setCloseModal(null)}
               className="mt-3 w-full rounded-full px-4 py-2 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/50 transition hover:text-[var(--brand-ink-2)]"
             >

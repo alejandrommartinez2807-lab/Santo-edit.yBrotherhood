@@ -9,6 +9,12 @@ import {
 import { canLocalAccessUseModule, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
+import { getLocalTablesForBranch } from "@/lib/branchLocalTables"
+import { normalizeLocalTablesConfig } from "@/lib/orders"
+import {
+  getActivePublicLocalTables,
+  resolvePublicLocalTable,
+} from "@/lib/publicLocalTableAccounts"
 
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 
@@ -157,7 +163,25 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as Record<string, unknown>
     const input = normalizeCreateInput(body, access.roleLabel || "Local")
-    const openAccount = await createOpenAccount(input, await resolveBranchId(request))
+    const branchId = await resolveBranchId(request)
+
+    // Si la mesa escrita resuelve contra las configuradas de la sede, la
+    // cuenta queda vinculada también por id (table_id) y no solo por texto.
+    try {
+      const config = await getBusinessConfig()
+      const tables = getActivePublicLocalTables(
+        normalizeLocalTablesConfig(
+          await getLocalTablesForBranch(branchId, config.localTables),
+          [],
+        ),
+      )
+      const resolvedTable = resolvePublicLocalTable(input.tableNumber, tables)
+      if (resolvedTable?.id) input.tableId = resolvedTable.id
+    } catch {
+      // Sin config de mesas la cuenta se abre igual, solo por nombre.
+    }
+
+    const openAccount = await createOpenAccount(input, branchId)
 
     return NextResponse.json({ ok: true, openAccount }, { status: 201 })
   } catch (error) {

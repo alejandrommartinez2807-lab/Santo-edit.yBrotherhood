@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { getBusinessConfig, getPaymentProofs } from "@/lib/orders"
+import { recomputeOpenAccountTotals } from "@/lib/ordersStoreOpenAccounts"
 import { revertInventoryConsumptionForOrder } from "@/lib/ordersInventory"
 import { sendOrderCancelledStaffPush } from "@/lib/orderPushNotifications"
 import { writeAuditLog } from "@/lib/audit"
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
     const { data: order, error } = await supabase
       .from("orders")
       .select(
-        "id,branch_id,status,customer_note,customer_name,amount_received_usd,amount_received_ves,seq,branch_seq,branch_code",
+        "id,branch_id,status,customer_note,customer_name,amount_received_usd,amount_received_ves,seq,branch_seq,branch_code,open_account_id",
       )
       .eq("id", orderId)
       .maybeSingle()
@@ -128,6 +129,16 @@ export async function POST(request: NextRequest) {
       orderId,
       String(order.branch_id || "") || null,
     ).catch(() => undefined)
+
+    // Pedido de una cuenta abierta: sus totales cacheados excluyen
+    // cancelados, así que se recalculan de una (si falla, el próximo
+    // attach/cobro de la cuenta lo corrige).
+    if (order.open_account_id) {
+      await recomputeOpenAccountTotals(
+        String(order.open_account_id),
+        String(order.branch_id || "") || null,
+      ).catch(() => undefined)
+    }
 
     await writeAuditLog({
       action: "order.status.updated",
