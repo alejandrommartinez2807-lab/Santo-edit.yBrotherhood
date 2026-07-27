@@ -143,6 +143,12 @@ export function OpenAccountsPanel({
   const [expandedAccounts, setExpandedAccounts] = useState<
     Record<string, boolean>
   >({});
+  // Asociar un pedido YA existente es el camino viejo: sigue estando, pero
+  // plegado. El camino de todos los días es "Agregar pedido", que abre el menú
+  // con la mesa puesta. Antes el selector ocupaba el ancho de cada tarjeta.
+  const [attachOpenAccounts, setAttachOpenAccounts] = useState<
+    Record<string, boolean>
+  >({});
   const [paymentAccountId, setPaymentAccountId] = useState("");
   const [accountPaymentForm, setAccountPaymentForm] =
     useState<AccountPaymentForm>(EMPTY_ACCOUNT_PAYMENT_FORM);
@@ -799,6 +805,13 @@ export function OpenAccountsPanel({
     }));
   }
 
+  function toggleAttachPicker(accountId: string) {
+    setAttachOpenAccounts((current) => ({
+      ...current,
+      [accountId]: !current[accountId],
+    }));
+  }
+
   useEffect(() => {
     // Con cuentas externas no hace falta el fetch propio: la página dueña
     // del sondeo ya mantiene la lista al día.
@@ -1060,6 +1073,17 @@ export function OpenAccountsPanel({
         </div>
       )}
 
+      {/* Cómo funciona el módulo se explica UNA vez, no en cada mesa: antes
+          este párrafo se repetía dentro de cada tarjeta y con 6 mesas abiertas
+          eran 6 tutoriales idénticos ocupando el panel. */}
+      {canManage && visibleAccounts.length > 0 && (
+        <p className="mt-4 text-[0.7rem] font-bold leading-5 text-[var(--brand-ink-2)]/55">
+          {canCloseAccounts
+            ? "Cobrar reparte el monto sobre los pedidos pendientes de la cuenta; cerrar solo la retira de la operación activa."
+            : "Como mesonero puedes abrir cuentas y sumarles pedidos. Los cobros y el cierre los lleva caja."}
+        </p>
+      )}
+
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
         {visibleAccounts.length === 0 ? (
           <div className="rounded-[1.2rem] border-2 border-dashed border-[var(--brand-primary)]/35 bg-white p-5 text-sm font-bold text-[#1a1a1a]/70 xl:col-span-2">
@@ -1214,12 +1238,8 @@ export function OpenAccountsPanel({
                       : `Ver pedidos (${accountOrders.length})`}
                   </button>
 
-                  {suggestedOrders.length > 0 && !isClosed && canManage && (
-                    <span className="inline-flex items-center gap-2 rounded-full border border-yellow-400 bg-yellow-50 px-3 py-2 text-[0.68rem] font-black uppercase tracking-[0.10em] text-[var(--brand-ink)]">
-                      <Link2 size={13} />
-                      {suggestedOrders.length} sugerido(s) por mesa
-                    </span>
-                  )}
+                  {/* El chip de "N sugeridos" se fue: el botón "Asociar uno
+                      existente (N)" de abajo ya lleva la misma cuenta. */}
                 </div>
 
                 {expanded && (
@@ -1324,21 +1344,6 @@ export function OpenAccountsPanel({
                   </div>
                 )}
 
-                {canManage && !isClosed && !canCloseAccounts && (
-                  <div className="mt-4 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-3 text-xs font-bold leading-5 text-[var(--brand-ink-2)]/75">
-                    Mesonero puede abrir cuentas y asociar pedidos. Caja
-                    mantiene el control de cobros y cierre administrativo.
-                  </div>
-                )}
-
-                {canManage && !isClosed && canCloseAccounts && (
-                  <div className="mt-4 rounded-2xl border-2 border-yellow-500 bg-yellow-50 p-3 text-xs font-bold leading-5 text-[var(--brand-ink)]">
-                    Puedes cobrar todos los pedidos de esta cuenta en un solo
-                    paso. Cerrar cuenta solo la retira de operación activa; el
-                    cobro agrupado sí se reparte sobre los pedidos pendientes.
-                  </div>
-                )}
-
                 {canManage && !isClosed && (
                   <div className="mt-4 flex flex-wrap items-stretch gap-2">
                     {/* Camino principal para sumar consumo: el menú se abre
@@ -1352,6 +1357,24 @@ export function OpenAccountsPanel({
                       <Plus size={15} />
                       Agregar pedido
                     </button>
+                    {/* El asociador vive plegado: es el camino de excepción
+                        (un pedido que ya existía sin cuenta). Se abre solo si
+                        hace falta, y así la fila de acciones deja de estar
+                        dominada por un desplegable del ancho de la tarjeta. */}
+                    {!attachOpenAccounts[account.id] && (
+                      <button
+                        type="button"
+                        onClick={() => toggleAttachPicker(account.id)}
+                        className="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-2xl px-3 py-2 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/55 transition hover:text-[var(--brand-primary)]"
+                      >
+                        <Link2 size={13} />
+                        Asociar uno existente
+                        {suggestedOrders.length > 0
+                          ? ` (${suggestedOrders.length})`
+                          : ""}
+                      </button>
+                    )}
+                    {attachOpenAccounts[account.id] && (
                     <select
                       value={selectedOrderByAccount[account.id] || ""}
                       onChange={(event) =>
@@ -1412,15 +1435,18 @@ export function OpenAccountsPanel({
                           </option>
                         )}
                     </select>
-                    <button
-                      type="button"
-                      onClick={() => attachOrder(account.id)}
-                      disabled={isCardSaving || !selectedOrderByAccount[account.id]}
-                      className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
-                    >
-                      <CreditCard size={15} />
-                      Asociar pedido
-                    </button>
+                    )}
+                    {attachOpenAccounts[account.id] && (
+                      <button
+                        type="button"
+                        onClick={() => attachOrder(account.id)}
+                        disabled={isCardSaving || !selectedOrderByAccount[account.id]}
+                        className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+                      >
+                        <CreditCard size={15} />
+                        Asociar pedido
+                      </button>
+                    )}
                     {/* UNA acción primaria según el estado del dinero: con
                         pendiente manda "Cobrar y cerrar" (el cobro trae el
                         auto-cierre activado); sin pendiente, "Cerrar cuenta".
