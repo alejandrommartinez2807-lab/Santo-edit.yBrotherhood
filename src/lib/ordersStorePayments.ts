@@ -18,6 +18,16 @@ type LoadOrderWithItems = (
   branchId?: string | null,
 ) => Promise<LocalOrder>
 
+// Otro cobro entró entre la lectura y la escritura. Se distingue del "pedido
+// anulado" porque quien lo provocó (confirmar un comprobante) puede recalcular
+// con los montos frescos y reintentar.
+export class OrderPaymentConflictError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "OrderPaymentConflictError"
+  }
+}
+
 export async function updateOrderPaymentInStore(
   orderId: string,
   payment: UpdateOrderPaymentInput,
@@ -68,15 +78,35 @@ export async function updateOrderPaymentInStore(
   // Nunca cobrar sobre un pedido ANULADO (la anulación automática o del
   // cliente pudo ganar la carrera con una tarjeta de caja desactualizada):
   // el WHERE lo excluye y 0 filas se reporta como error claro.
+  // Candado optimista (solo si quien llama calculó los montos a partir de una
+  // lectura previa): el UPDATE exige que el pedido siga teniendo esos montos.
+  // Si otro cobro entró entremedio, 0 filas y nadie pisa a nadie.
+  const expectedPrevious = payment.expectedPrevious
+
   const runUpdate = async () => {
     let query = supabase
       .from("orders")
       .update(updateRow)
       .eq("id", orderId)
       .neq("status", "Cancelado")
-      .select("id")
     if (branchId) query = query.eq("branch_id", branchId)
-    return query
+    if (expectedPrevious) {
+      // Las columnas admiten NULL (su default es 0, pero un `.eq(col, 0)` NO
+      // empareja un NULL): sin este `or`, el candado fallaría SIEMPRE en el
+      // primer cobro de un pedido con la columna vacía y no se podría
+      // confirmar ningún comprobante.
+      const lockOn = (column: string, value: number) => {
+        const amount = roundMoney(value)
+        query =
+          amount === 0
+            ? query.or(`${column}.eq.0,${column}.is.null`)
+            : query.eq(column, amount)
+      }
+      lockOn("amount_received_usd", expectedPrevious.amountReceivedUSD)
+      lockOn("amount_received_ves", expectedPrevious.amountReceivedVES)
+    }
+    // El .select() va al final para no cambiar el tipo del encadenado.
+    return query.select("id")
   }
 
   let { data: updatedRows, error } = await runUpdate()
@@ -89,6 +119,24 @@ export async function updateOrderPaymentInStore(
 
   if (error) throw new Error(error.message)
   if (!updatedRows?.length) {
+    // Con el candado puesto, 0 filas tiene DOS causas posibles: el pedido se
+    // anuló, o el cobro cambió entremedio. Se distinguen releyendo, para no
+    // decirle a caja "está anulado" cuando lo que pasó es una carrera.
+    if (expectedPrevious) {
+      const { data: freshRow } = await supabase
+        .from("orders")
+        .select("status")
+        .eq("id", orderId)
+        .maybeSingle()
+      const freshStatus = String((freshRow as Record<string, unknown>)?.status || "")
+
+      if (freshRow && freshStatus !== "Cancelado") {
+        throw new OrderPaymentConflictError(
+          "Otro cobro de este pedido se registró primero. Vuelve a intentarlo con los montos actualizados.",
+        )
+      }
+    }
+
     throw new Error(
       "Este pedido está ANULADO: no se puede registrar un cobro. Refresca la lista de caja.",
     )

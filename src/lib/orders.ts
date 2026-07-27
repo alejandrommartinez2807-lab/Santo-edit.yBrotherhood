@@ -125,6 +125,11 @@ export {
   updateOrderStatus,
 } from "./ordersCore"
 
+// Carrera de cobros: otro registro entró entre la lectura y la escritura. Lo
+// distingue quien calcula montos a partir de una lectura previa (confirmar un
+// comprobante) para recalcular y reintentar en vez de pisar el cobro ajeno.
+export { OrderPaymentConflictError } from "./ordersStorePayments"
+
 export {
   getDeliveryZones,
   saveDeliveryZones,

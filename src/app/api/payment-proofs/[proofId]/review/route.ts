@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import {
   getBusinessConfig,
+  OrderPaymentConflictError,
   reviewPaymentProof,
   updateOrderPayment,
   type PaymentProofStatus,
@@ -191,40 +192,66 @@ export async function PATCH(
     let paymentSkippedReason = ""
 
     if (shouldRegisterPayment) {
-      try {
+      // El cobro se calcula SUMANDO sobre lo que ya tiene el pedido, así que
+      // depende de una lectura previa. Con dos comprobantes del mismo pedido
+      // (el pago mixto ahora manda uno por pata) dos confirmaciones seguidas
+      // podían leer las dos el mismo estado y la segunda pisaba el dinero de
+      // la primera: el pedido perdía una pata y quedaba en "Pago parcial".
+      // El candado optimista (expectedPrevious) lo impide, y aquí se
+      // recalcula con los montos frescos y se reintenta una vez — que es lo
+      // que un humano haría, sin pedírselo.
+      const registerAttempt = async () => {
         const snapshot = await getOrderPaymentSnapshot(paymentProof.orderId, branchId)
         const decision = buildPaymentFromProof(paymentProof, snapshot)
 
-        if (decision.ok) {
-          const order = await updateOrderPayment(
-            paymentProof.orderId,
-            {
-              ...decision.payment,
-              chargedBy: { id: actor.id, name: actor.label, role: actor.role },
-            },
-            branchId,
-          )
+        if (!decision.ok) return { registered: false, reason: decision.reason }
 
-          paymentRegistered = true
-
-          await writeAuditLog({
-            action: "order.payment.updated",
-            branchId,
-            entityType: "order",
-            entityId: paymentProof.orderId,
-            actor,
-            request,
-            metadata: {
-              source: "payment_proof",
-              proofId,
-              amountReceivedUSD: decision.payment.amountReceivedUSD,
-              amountReceivedVES: decision.payment.amountReceivedVES,
-              paymentStatus: order.paymentStatus,
+        const order = await updateOrderPayment(
+          paymentProof.orderId,
+          {
+            ...decision.payment,
+            chargedBy: { id: actor.id, name: actor.label, role: actor.role },
+            expectedPrevious: {
+              amountReceivedUSD: Number(snapshot?.amountReceivedUSD || 0),
+              amountReceivedVES: Number(snapshot?.amountReceivedVES || 0),
             },
-          })
-        } else {
-          paymentSkippedReason = decision.reason
+          },
+          branchId,
+        )
+
+        await writeAuditLog({
+          action: "order.payment.updated",
+          branchId,
+          entityType: "order",
+          entityId: paymentProof.orderId,
+          actor,
+          request,
+          metadata: {
+            source: "payment_proof",
+            proofId,
+            amountReceivedUSD: decision.payment.amountReceivedUSD,
+            amountReceivedVES: decision.payment.amountReceivedVES,
+            paymentStatus: order.paymentStatus,
+          },
+        })
+
+        return { registered: true, reason: "" }
+      }
+
+      try {
+        let outcome: { registered: boolean; reason: string }
+
+        try {
+          outcome = await registerAttempt()
+        } catch (conflictError) {
+          if (!(conflictError instanceof OrderPaymentConflictError)) throw conflictError
+          // Otro cobro entró primero: se recalcula sobre el estado nuevo. Si
+          // vuelve a chocar, se le dice a caja en vez de insistir.
+          outcome = await registerAttempt()
         }
+
+        paymentRegistered = outcome.registered
+        paymentSkippedReason = outcome.reason
       } catch (registerError) {
         paymentSkippedReason =
           registerError instanceof Error

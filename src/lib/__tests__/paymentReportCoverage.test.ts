@@ -506,6 +506,57 @@ describe("segunda pata del mixto: sumar solo si no colisiona", () => {
     expect(decision.ok).toBe(true)
   })
 
+  // Carrera de caja: dos personas confirman las dos patas del mismo pedido en
+  // la misma fracción de segundo y ambas leen el pedido SIN cobro. El candado
+  // optimista rechaza la segunda escritura y la ruta RECALCULA sobre el estado
+  // real: esto comprueba que ese recálculo conserva la pata que ganó.
+  it("tras la carrera, recalcular conserva la pata que se registró primero", () => {
+    const sinCobro = {
+      amountReceivedUSD: 0,
+      amountReceivedVES: 0,
+      totalUSD: 24.5,
+      exchangeRate: RATE,
+    }
+    const zelle = {
+      reportedMethod: "Zelle",
+      amountReportedUSD: 14.5,
+      amountReportedVES: 0,
+      paymentReference: "222222",
+    }
+
+    // Las dos leen lo mismo; la del pago móvil escribe primero.
+    const pagoMovil = buildPaymentFromProof(
+      {
+        reportedMethod: "Pago móvil",
+        amountReportedUSD: 0,
+        amountReportedVES: 1660.2,
+        paymentReference: "111111",
+      },
+      sinCobro,
+    )
+    expect(pagoMovil.ok).toBe(true)
+    expect(buildPaymentFromProof(zelle, sinCobro).ok).toBe(true)
+    if (!pagoMovil.ok) return
+
+    // La de Zelle choca y vuelve a intentarlo con el estado ya escrito.
+    const reintento = buildPaymentFromProof(zelle, {
+      amountReceivedUSD: pagoMovil.payment.amountReceivedUSD,
+      amountReceivedVES: pagoMovil.payment.amountReceivedVES,
+      paymentMethodUSD: pagoMovil.payment.paymentMethodUSD,
+      paymentMethodVES: pagoMovil.payment.paymentMethodVES,
+      paymentNote: pagoMovil.payment.paymentNote,
+      totalUSD: 24.5,
+      exchangeRate: RATE,
+    })
+
+    expect(reintento.ok).toBe(true)
+    if (!reintento.ok) return
+    // Ninguna pata se perdió.
+    expect(reintento.payment.amountReceivedVES).toBe(1660.2)
+    expect(reintento.payment.amountReceivedUSD).toBe(14.5)
+    expect(reintento.payment.paymentMethodVES).toBe("Pago móvil")
+  })
+
   it("la foto del efectivo sigue sin registrar cobro aunque haya una pata cobrada", () => {
     const decision = buildPaymentFromProof(
       {

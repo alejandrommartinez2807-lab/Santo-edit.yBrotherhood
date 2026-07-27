@@ -65,6 +65,18 @@ export type UpdateOrderPaymentInput = {
 
   // Staff que registró el cobro. Lo decide el servidor según la sesión.
   chargedBy?: OrderActorInput
+
+  // Candado optimista para quien CALCULA los montos a partir de una lectura
+  // previa (confirmar un comprobante SUMA sobre lo ya cobrado). Si el pedido
+  // ya no tiene estos montos, otro cobro entró entremedio y este update se
+  // rechaza en vez de pisarlo: `updateOrderPayment` REEMPLAZA los montos, así
+  // que sin el candado la segunda escritura borraba la plata de la primera.
+  // Los cobros que no dependen de una lectura previa (Caja escribe el monto
+  // absoluto que ve el cajero) no lo mandan.
+  expectedPrevious?: {
+    amountReceivedUSD: number
+    amountReceivedVES: number
+  }
 }
 
 export type ConfirmStaffItemsInput = {
