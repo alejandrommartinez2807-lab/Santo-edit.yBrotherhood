@@ -6,6 +6,7 @@ import { sendStaffAlertPush } from "@/lib/orderPushNotifications"
 import {
   cleanPublicTableText,
   findOpenAccountForPublicTable,
+  normalizePublicTableLookup,
 } from "@/lib/publicLocalTableAccounts"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
@@ -29,15 +30,6 @@ function noStoreResponse(data: unknown, init?: ResponseInit) {
 }
 
 export async function POST(request: NextRequest) {
-  const rateLimitResponse = enforceRateLimit(request, {
-    id: "api-public-request-bill-post",
-    limit: 6,
-    windowMs: 60_000,
-    message: "Ya avisamos al personal. Espera un momento, por favor.",
-  })
-
-  if (rateLimitResponse) return rateLimitResponse
-
   const originGuardResponse = enforceSameOriginRequest(
     request,
     undefined,
@@ -57,6 +49,19 @@ export async function POST(request: NextRequest) {
 
   if (sizeLimitResponse) return sizeLimitResponse
 
+  // Tope por IP, generoso: frena a un atacante que invente nombres de mesa,
+  // pero deja pasar al local entero. En un restaurante TODOS los teléfonos
+  // salen por la misma IP (el WiFi del local, o el CGNAT del operador), así
+  // que un límite bajo por IP dejaba sin pedir la cuenta a las demás mesas.
+  const ipLimitResponse = enforceRateLimit(request, {
+    id: "api-public-request-bill-post",
+    limit: 60,
+    windowMs: 60_000,
+    message: "Hay demasiadas solicitudes desde esta conexión. Espera un momento, por favor.",
+  })
+
+  if (ipLimitResponse) return ipLimitResponse
+
   try {
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
     const requestedTable =
@@ -70,6 +75,19 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       )
     }
+
+    // Freno de verdad: POR MESA. Martillar el botón en la Mesa 3 no puede
+    // dejar muda a la Mesa 4. La petición ya es idempotente (repetirla
+    // conserva la hora y no vuelve a mandar push), así que el límite solo
+    // existe para que nadie ametralle al staff con avisos nuevos.
+    const tableLimitResponse = enforceRateLimit(request, {
+      id: `api-public-request-bill-post:${normalizePublicTableLookup(requestedTable)}`,
+      limit: 6,
+      windowMs: 60_000,
+      message: "Ya avisamos al personal. Espera un momento, por favor.",
+    })
+
+    if (tableLimitResponse) return tableLimitResponse
 
     const businessConfig = await getBusinessConfig()
     const config = businessConfig as unknown as Record<string, unknown>

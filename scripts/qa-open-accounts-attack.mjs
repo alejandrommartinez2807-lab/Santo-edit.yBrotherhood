@@ -260,7 +260,7 @@ console.log("\n── A4 · freno y aislamiento de request-bill")
       check(
         "A4 · el freno de una mesa NO deja sin pedir la cuenta a la mesa de al lado",
         other.status !== 429,
-        `status=${other.status} · el límite es 6/min por IP+ruta y en el local todos comparten la IP del WiFi`,
+        `status=${other.status} · el freno es por MESA; el tope por IP (60/min) deja sitio a un local lleno`,
       )
     }
   }
