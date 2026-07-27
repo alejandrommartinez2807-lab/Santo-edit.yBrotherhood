@@ -23,7 +23,9 @@
     "qa:payments": "node scripts/qa-payments-attack.mjs",
     "qa:inventory": "node scripts/qa-inventory-alerts.mjs",
     "qa:roles": "node scripts/qa-roles-proxy.mjs",
-    "qa:branches": "node scripts/qa-branches-qr.mjs"
+    "qa:branches": "node scripts/qa-branches-qr.mjs",
+    "qa:day-close": "node scripts/qa-day-close.mjs",
+    "qa:inventory-deduct": "node scripts/qa-inventory-deduct.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
