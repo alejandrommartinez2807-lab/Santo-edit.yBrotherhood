@@ -97,6 +97,33 @@ export const del = (path, headers) => api("DELETE", path, undefined, headers)
 
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
+// Borra los pedidos de una corrida COMPROBANDO el error (un DELETE que falla
+// en silencio deja datos de prueba en producción y la limpieza canta victoria)
+// y reintentando una vez. Devuelve cuántos borró y cuántos ZZTEST quedan.
+export async function cleanupRunOrders(runPrefix) {
+  let deleted = 0
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const { data: orders } = await supabase.from("orders").select("id").ilike("customer_name", `${runPrefix}%`)
+    const ids = (orders || []).map((order) => order.id)
+    if (!ids.length) break
+
+    const items = await supabase.from("order_items").delete().in("order_id", ids).select("id")
+    if (items.error) console.log(`   · order_items: ${items.error.message}`)
+
+    const result = await supabase.from("orders").delete().in("id", ids).select("id")
+    if (result.error) {
+      console.log(`   · orders: ${result.error.code} ${result.error.message}`)
+      await sleep(1000)
+      continue
+    }
+    deleted += result.data?.length ?? 0
+  }
+
+  const { data: leftovers } = await supabase.from("orders").select("id").ilike("customer_name", "ZZTEST%")
+  return { deleted, leftovers: leftovers?.length ?? 0 }
+}
+
 // POST /api/orders tiene freno de 10/min por IP: los scripts crean muchos más.
 // Reintenta esperando la ventana en vez de dar un falso FALLO.
 export async function postOrderThrottled(body, headers = {}, tries = 8) {

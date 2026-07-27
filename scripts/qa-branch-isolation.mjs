@@ -9,6 +9,7 @@ import {
   BRANCH_VINEDO,
   assertBrotherhood,
   check,
+  cleanupRunOrders,
   del,
   get,
   patch,
@@ -145,7 +146,17 @@ console.log("\n── gastos del día")
   row("Gastos del día", true, aBlind, null, rejected)
 
   // Limpieza de los dos gastos.
-  await supabase.from("day_expenses").delete().ilike("concept", `${RUN}%`)
+  // En day_expenses el concepto vive DENTRO de la columna JSON `data`, no en
+  // una columna propia: filtrar por "concept" borra cero filas en silencio.
+  const { data: gastos } = await supabase.from("day_expenses").select("id, data")
+  const mios = (gastos || []).filter((row) => String(row?.data?.concept || "").startsWith(RUN))
+  if (mios.length) await supabase.from("day_expenses").delete().in("id", mios.map((row) => row.id))
+  const { data: quedan } = await supabase.from("day_expenses").select("id, data")
+  check(
+    "gastos · limpieza verificada (0 gastos ZZTEST)",
+    (quedan || []).every((row) => !String(row?.data?.concept || "").includes("ZZTEST")),
+    `borrados=${mios.length} · quedan ${quedan?.length ?? 0} gastos en la tabla`,
+  )
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -304,14 +315,8 @@ console.log("\n── menú público por sede")
 // ───────────────────────────────────────────────────────────────────────────
 console.log("\n── limpieza")
 {
-  const { data: orders } = await supabase.from("orders").select("id").ilike("customer_name", `${RUN}%`)
-  const ids = (orders || []).map((o) => o.id)
-  if (ids.length) {
-    await supabase.from("order_items").delete().in("order_id", ids)
-    await supabase.from("orders").delete().in("id", ids)
-  }
-  const { data: leftovers } = await supabase.from("orders").select("id").ilike("customer_name", "ZZTEST%")
-  check("limpieza · 0 pedidos ZZTEST sueltos", (leftovers?.length ?? 0) === 0, `borrados=${ids.length} quedan=${leftovers?.length ?? 0}`)
+  const { deleted, leftovers } = await cleanupRunOrders(RUN)
+  check("limpieza · 0 pedidos ZZTEST sueltos", leftovers === 0, `borrados=${deleted} quedan=${leftovers}`)
 }
 
 console.log("\n── MATRIZ DE AISLAMIENTO")

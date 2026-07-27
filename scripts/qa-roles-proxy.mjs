@@ -302,18 +302,21 @@ console.log("\n── limpieza")
   }
   if (accounts?.length) await supabase.from("open_accounts").delete().in("id", accounts.map((a) => a.id))
 
-  // Los usuarios de prueba: perfil + usuario de Auth.
+  // Los usuarios de prueba viven en Supabase Auth (no hay tabla de perfiles):
+  // borrarlos de Auth es lo que los quita del sistema.
   for (const id of staffCreated) {
-    await supabase.from("staff_profiles").delete().eq("id", id)
     await supabase.auth.admin.deleteUser(id).catch(() => {})
   }
 
   const { data: leftoverOrders } = await supabase.from("orders").select("id").ilike("customer_name", "ZZTEST%")
-  const { data: leftoverStaff } = await supabase.from("staff_profiles").select("id").ilike("full_name", "ZZTEST%")
+  const { data: usuarios } = await supabase.auth.admin.listUsers()
+  const zztestUsers = (usuarios?.users || []).filter(
+    (user) => /zztest/i.test(user.email || "") || /zztest/i.test(JSON.stringify(user.user_metadata || {})),
+  )
   check(
     "limpieza · 0 pedidos, 0 cuentas y 0 usuarios ZZTEST",
-    (leftoverOrders?.length ?? 0) === 0 && (leftoverStaff?.length ?? 0) === 0,
-    `pedidos=${leftoverOrders?.length ?? 0} usuarios=${leftoverStaff?.length ?? 0} (borrados ${orderIds.length} pedidos, ${staffCreated.length} usuarios)`,
+    (leftoverOrders?.length ?? 0) === 0 && zztestUsers.length === 0,
+    `pedidos=${leftoverOrders?.length ?? 0} · usuarios ZZTEST en Auth=${zztestUsers.length} de ${usuarios?.users?.length ?? 0} (borrados ${orderIds.length} pedidos, ${staffCreated.length} usuarios)`,
   )
 }
 
