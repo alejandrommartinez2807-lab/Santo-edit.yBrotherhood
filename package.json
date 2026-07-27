@@ -20,7 +20,8 @@
     "qa:db-state": "node scripts/qa-db-state.mjs",
     "qa:open-accounts": "node scripts/qa-open-accounts-attack.mjs",
     "qa:isolation": "node scripts/qa-branch-isolation.mjs",
-    "qa:payments": "node scripts/qa-payments-attack.mjs"
+    "qa:payments": "node scripts/qa-payments-attack.mjs",
+    "qa:inventory": "node scripts/qa-inventory-alerts.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
