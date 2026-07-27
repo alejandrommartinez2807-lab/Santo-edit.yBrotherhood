@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { formatUSD } from "@/utils/formatCurrency";
 import { usePersistedToggle } from "@/hooks/usePersistedToggle";
+import { getSelectedBranchId } from "@/lib/branchClient";
 import type {
   LocalOrder,
   OpenAccount,
@@ -520,6 +521,18 @@ export function OpenAccountsPanel({
     } finally {
       setIsSaving(false);
     }
+  }
+
+  // "Agregar pedido": abre el menú público con la MESA (y la sede) ya
+  // puestas. El carrito detecta la cuenta abierta de esa mesa y el pedido
+  // nace asociado — se acabó el ciclo salir → registrar → volver → buscarlo
+  // en el select. El panel lo trae solo con el sondeo de la página.
+  function openMenuForAccount(account: OpenAccount) {
+    const params = new URLSearchParams();
+    const branchId = getSelectedBranchId();
+    if (branchId) params.set("branch", branchId);
+    params.set("mesa", account.tableNumber);
+    window.open(`/?${params.toString()}#menu`, "_blank", "noopener");
   }
 
   // Paso 1 del cierre: abrir el modal propio con el pendiente a la vista
@@ -1239,6 +1252,17 @@ export function OpenAccountsPanel({
 
                 {canManage && !isClosed && (
                   <div className="mt-4 flex flex-wrap items-stretch gap-2">
+                    {/* Camino principal para sumar consumo: el menú se abre
+                        con la mesa puesta y el pedido llega ya asociado. */}
+                    <button
+                      type="button"
+                      onClick={() => openMenuForAccount(account)}
+                      className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)]"
+                      title="Abre el menú con esta mesa puesta: lo que registres entra solo a esta cuenta"
+                    >
+                      <Plus size={15} />
+                      Agregar pedido
+                    </button>
                     <select
                       value={selectedOrderByAccount[account.id] || ""}
                       onChange={(event) =>
