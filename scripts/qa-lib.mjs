@@ -35,8 +35,13 @@ export const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_
 export const BRANCH_SAN_DIEGO = "3d8a8527-4b0b-4c81-aeb7-0c69454c63f6"
 export const BRANCH_VINEDO = "04fb974d-bd2d-4086-ae9e-c74653309b04"
 
-// El server respondiendo en BASE tiene que ser Brotherhood y hablar con el
-// MISMO Supabase que .env.local. Si no, ningún script debe escribir.
+// Mesas configuradas (globales, heredadas por las dos sedes). Las pruebas que
+// pasan por endpoints PÚBLICOS necesitan un nombre que exista en la config;
+// las de staff aceptan texto libre.
+export const REAL_TABLES = ["Mesa 1", "Mesa 2", "Mesa 3", "Mesa 4", "Barra", "Afuera"]
+
+// El server respondiendo en BASE tiene que ser Brotherhood. Si no, ningún
+// script debe escribir.
 export async function assertBrotherhood() {
   const res = await fetch(BASE + "/", { headers: { accept: "text/html" } })
   const html = await res.text()
@@ -89,3 +94,17 @@ export const get = (path, headers) => api("GET", path, undefined, headers)
 export const post = (path, body, headers) => api("POST", path, body, headers)
 export const patch = (path, body, headers) => api("PATCH", path, body, headers)
 export const del = (path, headers) => api("DELETE", path, undefined, headers)
+
+export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+// POST /api/orders tiene freno de 10/min por IP: los scripts crean muchos más.
+// Reintenta esperando la ventana en vez de dar un falso FALLO.
+export async function postOrderThrottled(body, headers = {}, tries = 8) {
+  for (let attempt = 0; attempt < tries; attempt += 1) {
+    const result = await post("/api/orders", body, headers)
+    if (result.status !== 429) return result
+    const retryAfter = Number(result.res.headers.get("retry-after")) || 12
+    await sleep(Math.min(retryAfter, 62) * 1000 + 500)
+  }
+  return { status: 429, json: null, res: null }
+}
