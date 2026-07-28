@@ -30,6 +30,13 @@ prueba; el sistema está en fase de pruebas. Sedes: San Diego `3d8a8527-…` y V
    - `npm run qa:metodos-cobro` — **métodos de cobro uno a uno + cuenta abierta
      completa (cocina → entregado por producto → cobro FIFO) + desglose por método
      en el cierre y en el historial** (~35)
+   - `npm run qa:dia-completo` — **un día entero de operación** (40): insumos nuevos +
+     recetas, ventas que descuentan inventario (incl. decimales), rush que deja un
+     insumo bajo mínimo, compra a proveedor a mitad del día (movimiento "Compra" +
+     abono parcial), anulación que devuelve stock, pedido pendiente con comprobante,
+     gasto, cierre real al centavo con desglose, historial/consolidado/auditoría y
+     restauración total. Ojo: `POST /api/orders` exige `tableNumber` aunque sea
+     "Para llevar" (400 «Falta la mesa o ubicación» si va vacío).
 4. `npx tsc --noEmit` + `npx vitest run` + `npm run lint` como línea base de código.
 
 ## Qué cubre `qa:metodos-cobro` (scripts/qa-metodos-cobro-cierre.mjs)

@@ -27,7 +27,8 @@
     "qa:day-close": "node scripts/qa-day-close.mjs",
     "qa:inventory-deduct": "node scripts/qa-inventory-deduct.mjs",
     "qa:training": "node scripts/qa-training-mode.mjs",
-    "qa:metodos-cobro": "node scripts/qa-metodos-cobro-cierre.mjs"
+    "qa:metodos-cobro": "node scripts/qa-metodos-cobro-cierre.mjs",
+    "qa:dia-completo": "node scripts/qa-dia-completo.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
