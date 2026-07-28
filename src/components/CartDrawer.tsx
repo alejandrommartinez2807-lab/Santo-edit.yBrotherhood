@@ -3777,14 +3777,46 @@ export default function CartDrawer({
                           : "Reportar pago"}
                       </button>
                     ) : (
-                      <a
-                        href={`/pedido/${encodeURIComponent(lastCreatedOrder.id)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] bg-transparent px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:opacity-80"
-                      >
-                        Ver el avance de mi pedido
-                      </a>
+                      <>
+                        {/* MESA sin cuenta (pedido del dueño 2026-07-28): las
+                            formas de pago y el reporte SÍ viven más abajo en
+                            este mismo modal, pero el cliente ve "¡Pedido
+                            enviado!" y no baja. Este botón lo lleva directo.
+                            El flujo de mesa no cambia (también puede pagar en
+                            persona); pick up y delivery quedan igual. */}
+                        {lastCreatedOrder.orderType === "Comer aquí" &&
+                        !lastOrderAttachedToOpenAccount &&
+                        !lastOrderCancelled &&
+                        isPaymentProofPublicAvailable &&
+                        !lastOrderPaymentReportedLive ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenReportSignal((current) => current + 1);
+                              window.setTimeout(() => {
+                                document
+                                  .getElementById("reporte-pago-seccion")
+                                  ?.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "start",
+                                  });
+                              }, 60);
+                            }}
+                            className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3.5 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition hover:bg-[var(--brand-accent)] active:scale-95"
+                          >
+                            <ImagePlus size={17} />
+                            Reportar mi pago
+                          </button>
+                        ) : null}
+                        <a
+                          href={`/pedido/${encodeURIComponent(lastCreatedOrder.id)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] bg-transparent px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:opacity-80"
+                        >
+                          Ver el avance de mi pedido
+                        </a>
+                      </>
                     )}
 
                     <p className="mt-3 text-[0.7rem] font-bold leading-5 text-[var(--brand-ink-2)]/60">

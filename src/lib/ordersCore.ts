@@ -111,6 +111,9 @@ export type SetOrderItemDeliveredInput = {
   itemName?: string
   delivered: boolean
   deliveredBy?: string
+  // Rol de quien marca (2026-07-28): el mesonero solo puede marcar productos
+  // entregados cuando cocina/caja ya pusieron el pedido LISTO.
+  actorRole?: LocalRole
 }
 
 export async function setOrderItemDelivered(

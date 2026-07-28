@@ -300,6 +300,7 @@ export async function PATCH(
           String(body.deliveredBy || "").trim() ||
           getLocalAccessAuditActor(access).label ||
           getRoleLabel(access.role),
+        actorRole: access.role,
       }, branchId)
 
       await writeAuditLog({

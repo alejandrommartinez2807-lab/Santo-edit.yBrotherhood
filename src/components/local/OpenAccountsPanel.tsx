@@ -1292,7 +1292,15 @@ export function OpenAccountsPanel({
                             order={order}
                             isTogglingDelivered={isCardSaving}
                             onToggleItemDelivered={
-                              canManage && !isClosed && order.status !== "Cancelado"
+                              canManage &&
+                              !isClosed &&
+                              order.status !== "Cancelado" &&
+                              // Mesonero (2026-07-28): tampoco marca productos
+                              // hasta que el pedido esté LISTO (misma regla
+                              // que aplica el servidor).
+                              (!deliverRequiresReady ||
+                                order.status === "Listo" ||
+                                order.status === "Entregado")
                                 ? (item, delivered) =>
                                     toggleAccountItemDelivered(
                                       account.id,

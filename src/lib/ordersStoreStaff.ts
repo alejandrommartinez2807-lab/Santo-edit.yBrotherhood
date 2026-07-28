@@ -5,6 +5,7 @@ import { OrderActionConflictError } from "@/lib/orderConflicts"
 import { sendOrderMilestonePush } from "@/lib/orderPushNotifications"
 import { writeAuditLog } from "@/lib/audit"
 import type { LocalOrder, OrderItem } from "@/types/localOrders"
+import type { LocalRole } from "@/lib/localAccess"
 
 type LoadOrderWithItems = (
   orderId: string,
@@ -70,6 +71,7 @@ export async function setOrderItemDeliveredInStore(
     itemName?: string
     delivered: boolean
     deliveredBy?: string
+    actorRole?: LocalRole
   },
   branchId: string | null | undefined,
   loadOrderWithItems: LoadOrderWithItems,
@@ -77,6 +79,20 @@ export async function setOrderItemDeliveredInStore(
   const supabase = getSupabaseAdmin()
   // Valida que el pedido exista en esta sucursal antes de tocar sus líneas.
   const existingOrder = await loadOrderWithItems(orderId, branchId)
+
+  // Compuerta por rol (2026-07-28): el mesonero tampoco puede adelantar la
+  // entrega PRODUCTO A PRODUCTO — sin esto, en un pedido de una sola línea
+  // marcar ese producto lo dejaba "entregado" en su pantalla aunque cocina
+  // aún lo estuviera preparando. Desmarcar sí se permite (corregir errores).
+  if (
+    input.delivered &&
+    input.actorRole === "waiter" &&
+    (existingOrder.status === "Nuevo" || existingOrder.status === "Preparando")
+  ) {
+    throw new Error(
+      "Cocina o caja deben marcar este pedido como LISTO antes de entregar sus productos.",
+    )
+  }
 
   // Anti doble-acción: si la línea YA está en el estado pedido (otro usuario
   // la marcó primero), se avisa en vez de repetir el marcado.
