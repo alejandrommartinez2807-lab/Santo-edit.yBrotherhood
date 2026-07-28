@@ -79,11 +79,12 @@ export function buildBurgerTemplateVariations(): VariationGroup[] {
     {
       id: randomRowId("grp"),
       // Mismo nombre que usó el dueño en BOMBASTYC (el ranking de ProductCard
-      // lo detecta por la palabra "tipo" y lo pinta de primero).
+      // lo detecta por la palabra "tipo" y lo pinta de primero). Obligatorio
+      // desde el 2026-07-28 (pedido del dueño).
       name: "Escoge tu tipo de hamburguesa",
       type: "single",
-      required: false,
-      minSelections: 0,
+      required: true,
+      minSelections: 1,
       maxSelections: 1,
       values: buildBurgerTypeValues(),
       sortOrder: 1,

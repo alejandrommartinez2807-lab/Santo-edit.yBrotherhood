@@ -82,11 +82,13 @@ const asValues = (names) =>
     sortOrder: index + 1,
   }))
 
+// Obligatorio desde el 2026-07-28 (pedido del dueño): el cliente elige el
+// estilo antes de nada.
 const tipoGroup = () => ({
   name: TIPO_GROUP_NAME,
   type: "single",
-  required: false,
-  minSelections: 0,
+  required: true,
+  minSelections: 1,
   maxSelections: 1,
   values: asValues(BURGER_TYPES),
 })
@@ -132,6 +134,13 @@ function applyTemplate(config) {
   if (!hasGroup(0)) {
     variations.push(tipoGroup())
     changes.push("+tipo")
+  } else {
+    // El grupo tipo ya existe: asegúrate de que sea OBLIGATORIO (2026-07-28).
+    variations = variations.map((group) => {
+      if (groupRank(group?.name) !== 0 || group?.required === true) return group
+      changes.push("tipo→obligatorio")
+      return { ...group, required: true, minSelections: 1, maxSelections: group?.maxSelections || 1 }
+    })
   }
   if (!hasGroup(1)) {
     variations.push(proteinGroup())
