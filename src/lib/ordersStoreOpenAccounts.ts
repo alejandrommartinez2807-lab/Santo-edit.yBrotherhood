@@ -280,7 +280,9 @@ function buildOpenAccountInsertRow(
       table_id: tableId,
       customer_name: cleanText(input.customerName),
       customer_phone: cleanText(input.customerPhone) || null,
-      note: cleanText(input.note) || null,
+      // A3/B-2: una cuenta NUNCA nace con la cuenta ya pedida — el marcador
+      // solo lo estampa request-bill con su propia hora de servidor.
+      note: stripBillRequestMarker(cleanText(input.note)) || null,
       opened_by: cleanText(input.openedBy) || null,
       status: "Abierta",
   }

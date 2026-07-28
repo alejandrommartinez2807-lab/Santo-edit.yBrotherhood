@@ -30,6 +30,11 @@ prueba; el sistema está en fase de pruebas. Sedes: San Diego `3d8a8527-…` y V
    - `npm run qa:metodos-cobro` — **métodos de cobro uno a uno + cuenta abierta
      completa (cocina → entregado por producto → cobro FIFO) + desglose por método
      en el cierre y en el historial** (~35)
+   - `npm run qa:cobros-origen` — **cobros por origen** (16): cuenta de mesa
+     (cobro de cuenta completa FIFO) vs cobro directo, separados en
+     `/api/reports` (`collectionByOrigin`), guardados por el SERVIDOR en el
+     cierre y devueltos intactos por el historial; la fotografía marca cada
+     pedido de cuenta con su `openAccountId`.
    - `npm run qa:dia-completo` — **un día entero de operación** (40): insumos nuevos +
      recetas, ventas que descuentan inventario (incl. decimales), rush que deja un
      insumo bajo mínimo, compra a proveedor a mitad del día (movimiento "Compra" +
@@ -60,8 +65,10 @@ prueba; el sistema está en fase de pruebas. Sedes: San Diego `3d8a8527-…` y V
 
 ## Fallas CONOCIDAS que van a salir (no las reportes como nuevas)
 
-- `qa:open-accounts` A3: staff que escribe la nota puede fingir "cuenta pedida" (B-2, riesgo bajo, decisión pendiente).
 - `qa:branches` S1: ninguna sede tiene WhatsApp configurado (C-1, configuración del dueño, no código).
+- ~~`qa:open-accounts` A3~~: **ARREGLADA 2026-07-28** — el marcador [CUENTA_PEDIDA:…]
+  se limpia de cualquier nota que entre por crear cuenta (API y lib); solo
+  request-bill lo estampa con SU hora. El check ahora debe salir en verde (43/43).
 - ~~`qa:payments` P3~~: **ARREGLADA 2026-07-28** — la regla de los 6 dígitos ya vive
   también en el servidor (`payment-proofs/route.ts` usa `MIN_REFERENCE_DIGITS`);
   el check ahora debe salir en verde.

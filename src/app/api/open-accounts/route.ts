@@ -10,6 +10,7 @@ import { canLocalAccessUseModule, getRequestAccess, type LocalRole } from "@/lib
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import { getLocalTablesForBranch } from "@/lib/branchLocalTables"
+import { stripBillRequestMarker } from "@/lib/openAccountBillRequest"
 import { normalizeLocalTablesConfig } from "@/lib/orders"
 import {
   getActivePublicLocalTables,
@@ -112,7 +113,10 @@ function normalizeCreateInput(body: Record<string, unknown>, openedBy: string): 
     tableNumber,
     customerName,
     customerPhone: cleanText(body.customerPhone),
-    note: cleanText(body.note),
+    // A3/B-2 (QA 2026-07-28): el marcador [CUENTA_PEDIDA:…] solo lo puede
+    // estampar el endpoint request-bill (con SU hora de servidor). Una nota
+    // escrita a mano con el marcador fingía la petición y su hora.
+    note: stripBillRequestMarker(cleanText(body.note)),
     openedBy,
   }
 }
