@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
   const branchId = consolidated ? null : await resolveBranchId(request)
 
   const SELECT_COLS =
-    "id, created_at, status, order_type, total_usd, payment_status, payment_received_equiv_usd, payment_pending_usd, payment_method_usd, payment_method_ves, amount_received_usd, amount_received_ves, exchange_rate, delivery_cost_usd, is_training"
+    "id, created_at, status, order_type, total_usd, payment_status, payment_received_equiv_usd, payment_pending_usd, payment_method_usd, payment_method_ves, amount_received_usd, amount_received_ves, exchange_rate, delivery_cost_usd, is_training, open_account_id"
 
   let query = supabase
     .from("orders")
@@ -179,6 +179,10 @@ export async function GET(request: NextRequest) {
   let deliveryOrders = 0
   let deliveryRevenueUSD = 0
   let deliveryCostUSD = 0
+  // Cobros por ORIGEN: pedidos que vinieron de una cuenta de mesa (el cobro
+  // de la cuenta completa se reparte FIFO entre ellos) vs pedidos directos.
+  const accountOrigin = { orders: 0, totalUSD: 0, collectedUSD: 0, pendingUSD: 0, accounts: new Set<string>() }
+  const directOrigin = { orders: 0, totalUSD: 0, collectedUSD: 0, pendingUSD: 0 }
 
   for (const raw of orders) {
     const o = raw as Record<string, unknown>
@@ -191,6 +195,14 @@ export async function GET(request: NextRequest) {
     byType[type] = byType[type] || { count: 0, totalUSD: 0 }
     byType[type].count += 1
     byType[type].totalUSD += t
+
+    const accountId = String(o.open_account_id || "").trim()
+    const origin = accountId ? accountOrigin : directOrigin
+    origin.orders += 1
+    origin.totalUSD += t
+    origin.collectedUSD += num(o.payment_received_equiv_usd)
+    origin.pendingUSD += num(o.payment_pending_usd)
+    if (accountId) accountOrigin.accounts.add(accountId)
 
     const pay = String(o.payment_status || "Pendiente")
     byPayment[pay] = (byPayment[pay] || 0) + 1
@@ -392,6 +404,23 @@ export async function GET(request: NextRequest) {
       revenueUSD: round2(deliveryRevenueUSD),
       deliveryCostUSD: round2(deliveryCostUSD),
       avgDeliveryUSD: deliveryOrders > 0 ? round2(deliveryCostUSD / deliveryOrders) : 0,
+    },
+    // Cuentas de mesa vs pedidos directos, con lo cobrado y lo pendiente de
+    // cada origen (pedido del dueño 2026-07-28).
+    collectionByOrigin: {
+      openAccounts: {
+        accounts: accountOrigin.accounts.size,
+        orders: accountOrigin.orders,
+        totalUSD: round2(accountOrigin.totalUSD),
+        collectedUSD: round2(accountOrigin.collectedUSD),
+        pendingUSD: round2(accountOrigin.pendingUSD),
+      },
+      direct: {
+        orders: directOrigin.orders,
+        totalUSD: round2(directOrigin.totalUSD),
+        collectedUSD: round2(directOrigin.collectedUSD),
+        pendingUSD: round2(directOrigin.pendingUSD),
+      },
     },
     byPaymentMethod: Object.entries(byMethod)
       .map(([method, v]) => ({ method, count: v.count, totalUSD: round2(v.totalUSD) }))

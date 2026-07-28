@@ -19,6 +19,10 @@ type Report = {
   }
   delivery?: { orders: number; revenueUSD: number; deliveryCostUSD: number; avgDeliveryUSD: number }
   byPaymentMethod?: { method: string; count: number; totalUSD: number }[]
+  collectionByOrigin?: {
+    openAccounts: { accounts: number; orders: number; totalUSD: number; collectedUSD: number; pendingUSD: number }
+    direct: { orders: number; totalUSD: number; collectedUSD: number; pendingUSD: number }
+  }
   byType: { type: string; count: number; totalUSD: number }[]
   byPayment: { status: string; count: number }[]
   byHour: { hour: number; totalUSD: number }[]
@@ -550,6 +554,39 @@ function ReportesPageContent() {
                 />
               </Card>
             </div>
+
+            {/* Cuentas de mesa vs pedidos directos (pedido del dueño 2026-07-28) */}
+            {report.collectionByOrigin &&
+            (report.collectionByOrigin.openAccounts.orders > 0 ||
+              report.collectionByOrigin.direct.orders > 0) ? (
+              <Card title="Cobros por origen: cuentas de mesa vs directos" icon={<Wallet size={16} />}>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {[
+                    {
+                      title: `Cuentas de mesa (${report.collectionByOrigin.openAccounts.accounts} cuenta(s))`,
+                      data: report.collectionByOrigin.openAccounts,
+                    },
+                    { title: "Pedidos directos (sin cuenta)", data: report.collectionByOrigin.direct },
+                  ].map(({ title, data }) => (
+                    <div
+                      key={title}
+                      className="rounded-xl border-2 border-[var(--brand-primary)]/15 bg-[var(--brand-cream)] p-3"
+                    >
+                      <p className="text-[0.6rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]/70">
+                        {title}
+                      </p>
+                      <p className="mt-1 text-lg font-black text-[var(--brand-ink-3)]">
+                        {usd(data.collectedUSD)} cobrado
+                      </p>
+                      <p className="text-xs font-bold text-[var(--brand-ink-2)]/70">
+                        {data.orders} pedido(s) · vendido {usd(data.totalUSD)}
+                        {data.pendingUSD > 0 ? ` · pendiente ${usd(data.pendingUSD)}` : ""}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            ) : null}
 
             {/* Métodos de pago + delivery (avanzado) */}
             <div className="grid gap-6 lg:grid-cols-2">

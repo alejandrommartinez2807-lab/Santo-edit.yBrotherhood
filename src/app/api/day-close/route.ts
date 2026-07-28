@@ -434,6 +434,9 @@ export async function POST(request: NextRequest) {
           receivedEquivalentUSD: payment.receivedEquivalentUSD,
           registeredBy: String(order.registeredByName || "") || undefined,
           ...(cancelReason ? { cancelReason } : {}),
+          ...(String(order.openAccountId || "").trim()
+            ? { openAccountId: String(order.openAccountId || "").trim() }
+            : {}),
           items: (order.items || []).map((item) => ({
             name: String(item.name || "Producto"),
             quantity: Number(item.quantity || 0),
@@ -442,6 +445,43 @@ export async function POST(request: NextRequest) {
           })),
         }
       })
+
+      // Cobros por ORIGEN (pedido del dueño 2026-07-28): cuánto entró vía
+      // cuentas de mesa (cobro de cuenta completa, que la caja reparte FIFO
+      // entre los pedidos de la cuenta) y cuánto por pedidos directos. Lo
+      // calcula el servidor sobre los pedidos reales para que el historial
+      // no dependa de la versión del cliente que cerró.
+      if (canIncludeCashierAudit) {
+        const account = { count: 0, totalUSD: 0 }
+        const direct = { count: 0, totalUSD: 0 }
+        for (const order of realOrders) {
+          if (order.status === "Cancelado") continue
+          const received = getOrderPayment(order).receivedEquivalentUSD
+          if (!(received > 0)) continue
+          if (String(order.openAccountId || "").trim()) {
+            account.count += 1
+            account.totalUSD += received
+          } else {
+            direct.count += 1
+            direct.totalUSD += received
+          }
+        }
+        const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100
+        dayClose.collectionByOrigin = [
+          {
+            // count = pedidos cobrados vía cuenta; las cuentas distintas se
+            // ven en la fotografía pedido por pedido (openAccountId).
+            label: "Cobros de cuentas de mesa",
+            count: account.count,
+            totalUSD: round2(account.totalUSD),
+          },
+          {
+            label: "Cobros directos (sin cuenta)",
+            count: direct.count,
+            totalUSD: round2(direct.totalUSD),
+          },
+        ]
+      }
 
       dayClose.paymentProofs = proofsToday.slice(0, 500).map((proof) => ({
         orderId: proof.orderId,

@@ -66,6 +66,9 @@ export type DayCloseOrder = {
   // Motivo de anulación (solo pedidos Cancelados): se extrae de la nota
   // "ANULADO: …" para que el cierre y el historial lo listen.
   cancelReason?: string
+  // Cuenta abierta de la que vino el pedido (mesa): el historial lo usa para
+  // distinguir un cobro de cuenta completa de un cobro directo.
+  openAccountId?: string
   items: DayCloseOrderItem[]
 }
 
@@ -184,6 +187,10 @@ export type SaveDayCloseInput = {
   // pedidos agrupados por quién los registró (cliente web = sin actor).
   salesBySeller?: DayCloseSummaryItem[]
   ordersByRegistrar?: DayCloseSummaryItem[]
+  // Cobros por ORIGEN: cuenta de mesa (cobro de cuenta completa, repartido
+  // FIFO entre sus pedidos) vs pedido directo. Lo calcula el SERVIDOR al
+  // guardar el cierre a partir de los pedidos reales del día.
+  collectionByOrigin?: DayCloseSummaryItem[]
   productsSold: DayCloseProductSold[]
 
   // Fotografía pedido por pedido + comprobantes del día (las llena el

@@ -1455,6 +1455,11 @@ function CloseDetailModal({
                     >
                       {order.paymentStatus || "Sin pago"}
                     </span>
+                    {order.openAccountId && (
+                      <span className="inline-flex rounded-full bg-sky-100 px-2.5 py-1 text-[0.6rem] font-black uppercase text-sky-700">
+                        Cuenta{order.location ? ` · ${order.location}` : " de mesa"}
+                      </span>
+                    )}
                     <p className="ml-auto text-base font-black text-[var(--brand-ink-3)]">
                       {formatUSD(order.totalUSD)}
                     </p>
@@ -1614,6 +1619,11 @@ function CloseDetailModal({
                 title="Pedidos por registrador"
                 emptyText="Sin registradores guardados."
                 items={close.ordersByRegistrar}
+              />
+              <SummaryList
+                title="Cobros por origen (cuenta de mesa vs directo)"
+                emptyText="Sin desglose por origen (los cierres viejos no lo traen)."
+                items={close.collectionByOrigin}
               />
               <SummaryList
                 title="Cobros por estado"
@@ -2377,6 +2387,11 @@ function RangeReport({
               title="Pedidos por registrador en el rango"
               emptyText="Sin registradores en este rango."
               items={report.ordersByRegistrar}
+            />
+            <SummaryList
+              title="Cobros por origen en el rango (cuentas vs directos)"
+              emptyText="Sin desglose por origen en este rango (cierres viejos)."
+              items={report.collectionByOrigin}
             />
             <SummaryList
               title="Cobros acumulados por estado"

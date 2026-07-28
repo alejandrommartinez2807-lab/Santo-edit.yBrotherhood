@@ -70,6 +70,9 @@ export type DayCloseOrder = {
   registeredBy?: string
   // Motivo de anulación (solo pedidos Cancelados).
   cancelReason?: string
+  // Cuenta abierta (mesa) de la que vino el pedido: distingue el cobro de
+  // cuenta completa del cobro directo. Cierres viejos no lo traen.
+  openAccountId?: string
   items: DayCloseOrderItem[]
 }
 
@@ -162,6 +165,9 @@ export type SavedDayClose = {
   // los registró. Cierres viejos no traen estos campos (quedan vacíos).
   salesBySeller: SummaryItem[]
   ordersByRegistrar: SummaryItem[]
+  // Cobros por origen: cuentas de mesa (cobro de cuenta completa) vs cobros
+  // directos. Lo calcula el servidor al cerrar; cierres viejos no lo traen.
+  collectionByOrigin: SummaryItem[]
   productsSold: ProductSold[]
   // Fotografía pedido por pedido + comprobantes archivados (cierres viejos
   // no traen estos campos: quedan vacíos).
@@ -465,6 +471,7 @@ export function normalizeDayClose(value: unknown): SavedDayClose | null {
     deliveryByPaymentIn: normalizeSummaryArray(close.deliveryByPaymentIn),
     salesBySeller: normalizeSummaryArray(close.salesBySeller),
     ordersByRegistrar: normalizeSummaryArray(close.ordersByRegistrar),
+    collectionByOrigin: normalizeSummaryArray(close.collectionByOrigin),
     productsSold: normalizeProductsSold(close.productsSold),
     orders: normalizeDayCloseOrders(close.orders),
     paymentProofs: normalizeDayCloseProofs(close.paymentProofs),
@@ -511,6 +518,7 @@ function normalizeDayCloseOrders(value: unknown): DayCloseOrder[] {
         receivedEquivalentUSD: toNumber(order.receivedEquivalentUSD),
         registeredBy: toText(order.registeredBy).trim() || undefined,
         cancelReason: toText(order.cancelReason).trim() || undefined,
+        openAccountId: toText(order.openAccountId).trim() || undefined,
         items,
       }
     })
@@ -953,6 +961,9 @@ export function getRangeReport(dayCloses: SavedDayClose[]) {
   const ordersByRegistrar = combineSummaryItems(
     dayCloses.flatMap((close) => close.ordersByRegistrar)
   )
+  const collectionByOrigin = combineSummaryItems(
+    dayCloses.flatMap((close) => close.collectionByOrigin)
+  )
   // Anulados del RANGO con su motivo (auditoría 2026-07-24): la vista general
   // solo mostraba el NÚMERO de cancelados; el detalle con motivo existía solo
   // en la vista diaria de cada cierre.
@@ -1039,6 +1050,7 @@ export function getRangeReport(dayCloses: SavedDayClose[]) {
     salesBySeller,
     topSeller: salesBySeller[0],
     ordersByRegistrar,
+    collectionByOrigin,
     allExpenses,
     expensesByCategory,
     topExpenseCategory: expensesByCategory[0],
@@ -1480,6 +1492,14 @@ export function buildSingleCloseDetailedCsv(close: SavedDayClose) {
     close.ordersByRegistrar,
     ["Registrado por", "Pedidos", "Total USD"],
     "Sin datos de registrador en este cierre.",
+    (item) => [item.label, item.count, item.totalUSD],
+  )
+
+  addSection("COBROS POR ORIGEN (CUENTAS DE MESA VS DIRECTOS)")
+  addSummaryItems(
+    close.collectionByOrigin,
+    ["Origen", "Pedidos", "Total USD"],
+    "Sin desglose por origen (los cierres viejos no lo traen).",
     (item) => [item.label, item.count, item.totalUSD],
   )
 
