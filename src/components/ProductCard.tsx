@@ -245,34 +245,38 @@ function AddonChoice({
       </button>
 
       {selected ? (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-black/40 px-3 py-2">
-          <span className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]">
+        // flex-wrap + tracking normal (2026-07-28): en la cuadrícula de 2
+        // columnas del teléfono la tarjeta mide ~150px y la fila
+        // CANTIDAD − 1 + se desbordaba fuera de la tarjeta (el número y el
+        // "+" quedaban cortados). Si no cabe, los controles bajan de línea.
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-black/40 px-2.5 py-2">
+          <span className="text-[0.68rem] font-black uppercase tracking-normal text-[var(--brand-ink-2)]">
             Cantidad
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1.5">
             <button
               type="button"
               onClick={onDecrease}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)]"
+              className="flex h-7 w-7 items-center justify-center rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)] transition hover:border-[var(--brand-primary)]"
               aria-label={`Bajar cantidad de ${option.name}`}
             >
-              <Minus size={14} />
+              <Minus size={13} />
             </button>
-            <span className="min-w-6 text-center text-sm font-black text-[var(--brand-ink-3)]">
+            <span className="min-w-5 text-center text-sm font-black text-[var(--brand-ink-3)]">
               {quantity}
             </span>
             <button
               type="button"
               onClick={onIncrease}
               disabled={!canIncrease}
-              className={`flex h-8 w-8 items-center justify-center rounded-full border ${
+              className={`flex h-7 w-7 items-center justify-center rounded-full border ${
                 canIncrease
                   ? "border-[var(--brand-primary)] bg-[var(--brand-primary)] text-black"
                   : "cursor-not-allowed border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-ink-2)]/30"
               }`}
               aria-label={`Subir cantidad de ${option.name}`}
             >
-              <Plus size={14} />
+              <Plus size={13} />
             </button>
           </div>
         </div>

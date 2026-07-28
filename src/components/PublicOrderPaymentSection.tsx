@@ -1926,12 +1926,15 @@ export default function PublicOrderPaymentSection({
               "Enviar comprobante" quedaba fuera de pantalla — el cliente pagaba
               y no encontraba cómo enviar (2026-07-26). Fondo opaco para que el
               contenido no se lea por detrás. */}
-          <div className="sticky bottom-0 z-10 flex gap-2 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-12px_26px_-14px_rgba(0,0,0,0.5)]">
+          {/* flex-wrap (2026-07-28): en pantallas angostas los dos botones no
+              caben en una fila y "Cancelar" se salía del contenedor — ahora
+              baja a su propia fila en vez de desbordarse. */}
+          <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-2 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)] p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-12px_26px_-14px_rgba(0,0,0,0.5)]">
             <button
               type="button"
               disabled={isSubmitting}
               onClick={() => submitProof(false)}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-w-0 flex-1 basis-52 items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3 text-xs font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? (
                 <Loader2 size={15} className="animate-spin" />
@@ -1949,7 +1952,7 @@ export default function PublicOrderPaymentSection({
                 setDuplicateWarning(null);
                 setCoverageWarning(null);
               }}
-              className="rounded-full border-2 border-[var(--brand-border)] px-5 py-3 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/60 transition hover:border-[var(--brand-primary)] disabled:opacity-50"
+              className="flex-none rounded-full border-2 border-[var(--brand-border)] px-5 py-3 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/60 transition hover:border-[var(--brand-primary)] disabled:opacity-50"
             >
               Cancelar
             </button>
