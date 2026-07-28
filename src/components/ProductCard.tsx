@@ -119,10 +119,10 @@ function cleanPublicLabel(value: unknown, fallback: string) {
   return text || fallback;
 }
 
-// Orden fijo de los grupos de opciones al personalizar (pedido del dueño):
-// 1) tipo de hamburguesa, 2) proteína, 3) resto, 4) custom fries (van justo
-// antes de los adicionales con costo). Estable: dentro del mismo rango se
-// conserva el orden original del producto.
+// Orden fijo de los grupos de opciones al personalizar (pedido del dueño
+// 2026-07-28): 1) tipo de hamburguesa, 2) proteína, 3) resto, y las custom
+// fries (agregados para las papas) van DE ÚLTIMO, después de los adicionales
+// con costo. Estable: dentro del mismo rango se conserva el orden original.
 function variationGroupRank(name: string) {
   const key = String(name || "")
     .normalize("NFD")
@@ -350,6 +350,73 @@ export default function ProductCard({
     () => orderVariationGroups(readVariationGroups(variations)),
     [variations],
   );
+  // Custom fries al FINAL del personalizador (después de los adicionales con
+  // costo): son el acompañante de las papas, no parte de armar la burger.
+  const mainVariationGroups = useMemo(
+    () => variationGroups.filter((group) => variationGroupRank(group.name || "") !== 3),
+    [variationGroups],
+  );
+  const friesVariationGroups = useMemo(
+    () => variationGroups.filter((group) => variationGroupRank(group.name || "") === 3),
+    [variationGroups],
+  );
+
+  // Un grupo de variaciones del personalizador (se usa en dos lugares: los
+  // grupos principales arriba y las custom fries al final).
+  function renderVariationGroup(group: VariationGroupView) {
+    const groupKeys = selectedVariationKeys[group.key] || [];
+
+    return (
+      <div
+        key={group.key}
+        className="rounded-[1.4rem] border border-[var(--brand-border)] bg-black/30 p-4"
+      >
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="text-sm font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+              {group.name || "Elige presentación"}
+            </p>
+            {group.required ? (
+              <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
+                {group.multiple && group.minSelections > 1
+                  ? `Elige al menos ${group.minSelections}.`
+                  : "Esta selección es obligatoria."}
+              </p>
+            ) : null}
+            {group.multiple && group.maxSelections > 1 ? (
+              <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
+                Elegidos: {groupKeys.length}/{group.maxSelections}
+              </p>
+            ) : null}
+          </div>
+          {group.required ? (
+            <span className="rounded-full bg-[var(--brand-cream)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+              Obligatoria
+            </span>
+          ) : null}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {!group.required && !group.multiple ? (
+            <ChoiceButton
+              label="Base"
+              detail="Sin cambio"
+              selected={groupKeys.length === 0}
+              onClick={() => clearVariationGroup(group)}
+            />
+          ) : null}
+          {group.options.map((option) => (
+            <ChoiceButton
+              key={option.key}
+              label={option.name}
+              detail={option.detail}
+              selected={groupKeys.includes(option.key)}
+              onClick={() => toggleVariationOption(group, option)}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
   const selectableAddons = useMemo(() => flattenAddonOptions(addons), [addons]);
   const selectableRemovableIngredients = useMemo(
     () => flattenIngredientOptions(removableIngredients),
@@ -1048,60 +1115,7 @@ export default function ProductCard({
               </div>
 
               <div className="space-y-4 p-5 sm:p-6">
-                {variationGroups.map((group) => {
-                  const groupKeys = selectedVariationKeys[group.key] || [];
-
-                  return (
-                    <div
-                      key={group.key}
-                      className="rounded-[1.4rem] border border-[var(--brand-border)] bg-black/30 p-4"
-                    >
-                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                          <p className="text-sm font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
-                            {group.name || "Elige presentación"}
-                          </p>
-                          {group.required ? (
-                            <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
-                              {group.multiple && group.minSelections > 1
-                                ? `Elige al menos ${group.minSelections}.`
-                                : "Esta selección es obligatoria."}
-                            </p>
-                          ) : null}
-                          {group.multiple && group.maxSelections > 1 ? (
-                            <p className="mt-1 text-xs font-bold text-[var(--brand-ink-2)]/65">
-                              Elegidos: {groupKeys.length}/{group.maxSelections}
-                            </p>
-                          ) : null}
-                        </div>
-                        {group.required ? (
-                          <span className="rounded-full bg-[var(--brand-cream)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
-                            Obligatoria
-                          </span>
-                        ) : null}
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {!group.required && !group.multiple ? (
-                          <ChoiceButton
-                            label="Base"
-                            detail="Sin cambio"
-                            selected={groupKeys.length === 0}
-                            onClick={() => clearVariationGroup(group)}
-                          />
-                        ) : null}
-                        {group.options.map((option) => (
-                          <ChoiceButton
-                            key={option.key}
-                            label={option.name}
-                            detail={option.detail}
-                            selected={groupKeys.includes(option.key)}
-                            onClick={() => toggleVariationOption(group, option)}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
+                {mainVariationGroups.map((group) => renderVariationGroup(group))}
 
                 {includedAddons.length > 0 && (
                   <div className="rounded-[1.4rem] border border-[var(--brand-border)] bg-black/30 p-4">
@@ -1194,6 +1208,10 @@ export default function ProductCard({
                     ) : null}
                   </div>
                 )}
+
+                {/* Custom fries de ÚLTIMO (pedido del dueño 2026-07-28): son
+                    el agregado para las papas, cierra el personalizador. */}
+                {friesVariationGroups.map((group) => renderVariationGroup(group))}
 
                 {selectableRemovableIngredients.length > 0 && (
                   <div className="rounded-[1.4rem] border border-[var(--brand-border)] bg-black/30 p-4">
