@@ -2666,7 +2666,12 @@ export default function PedidosPage() {
 
   function openPaymentModal(order: LocalOrder) {
     setSelectedPaymentOrder(order)
-    setPaymentForm(createPaymentFormFromOrder(order))
+    setPaymentForm(
+      createPaymentFormFromOrder(
+        order,
+        paymentProofs.filter((proof) => proof.orderId === order.id),
+      ),
+    )
     setPaymentMessage(null)
   }
 

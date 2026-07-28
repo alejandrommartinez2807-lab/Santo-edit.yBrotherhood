@@ -564,7 +564,15 @@ function CajaPageContent() {
 
   function openPaymentModal(order: LocalOrder) {
     setSelectedPaymentOrder(order)
-    setPaymentForm(createPaymentFormFromOrder(order))
+    // Los comprobantes del pedido precargan el modal cuando el cliente no
+    // eligió método al pedir (caso mesa): caja ve el pago móvil/Zelle que el
+    // cliente reportó, con su monto, en vez del formulario en blanco.
+    setPaymentForm(
+      createPaymentFormFromOrder(
+        order,
+        paymentProofs.filter((proof) => proof.orderId === order.id),
+      ),
+    )
     setPaymentMessage(null)
   }
 

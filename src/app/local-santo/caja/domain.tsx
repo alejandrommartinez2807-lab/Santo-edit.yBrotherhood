@@ -565,16 +565,65 @@ export function derivePaymentPrefillFromOrder(order: LocalOrder): {
   }
 }
 
-export function createPaymentFormFromOrder(order: LocalOrder): PaymentForm {
+// Precarga desde lo que el cliente REPORTÓ (comprobantes activos). En los
+// pedidos de MESA el checkout no pide método de pago (se cobra al final), así
+// que derivePaymentPrefillFromOrder no tiene de dónde sacarlo y caja abría el
+// modal en blanco aunque el cliente ya hubiera reportado su pago móvil/Zelle
+// (reporte del dueño 2026-07-28). Suma los comprobantes por moneda.
+export function derivePaymentPrefillFromProofs(proofs: PaymentProof[]): {
+  amountReceivedUSD: string
+  amountReceivedVES: string
+  paymentMethodUSD: string
+  paymentMethodVES: string
+  deliveryPaymentIn: DeliveryPaymentIn
+} | null {
+  const active = proofs.filter(isPaymentProofPending)
+  if (!active.length) return null
+
+  let amountUSD = 0
+  let amountVES = 0
+  let methodUSD = ""
+  let methodVES = ""
+
+  for (const proof of active) {
+    if (proof.amountReportedUSD > 0) {
+      amountUSD += proof.amountReportedUSD
+      if (!methodUSD) methodUSD = normalizePaymentMethodUSD(proof.reportedMethod)
+    }
+    if (proof.amountReportedVES > 0) {
+      amountVES += proof.amountReportedVES
+      if (!methodVES) methodVES = normalizePaymentMethodVES(proof.reportedMethod)
+    }
+  }
+
+  if (amountUSD <= 0 && amountVES <= 0) return null
+
+  return {
+    amountReceivedUSD: amountUSD > 0 ? String(roundMoney(amountUSD)) : "",
+    amountReceivedVES: amountVES > 0 ? String(roundMoney(amountVES)) : "",
+    paymentMethodUSD: methodUSD,
+    paymentMethodVES: methodVES,
+    deliveryPaymentIn:
+      amountUSD > 0 && amountVES > 0 ? "Mixto" : amountVES > 0 ? "Bolívares" : "Divisas",
+  }
+}
+
+export function createPaymentFormFromOrder(
+  order: LocalOrder,
+  proofs: PaymentProof[] = [],
+): PaymentForm {
   const payment = getOrderPayment(order)
   // Sin cobro previo ni métodos guardados: precargar lo que eligió el cliente
-  // (métodos y montos, editable si al final pagó distinto).
+  // (métodos y montos, editable si al final pagó distinto). Si no eligió nada
+  // (mesa), se usa lo que REPORTÓ en su comprobante.
   const nothingRegistered =
     payment.amountReceivedUSD <= 0 &&
     payment.amountReceivedVES <= 0 &&
     !payment.paymentMethodUSD &&
     !payment.paymentMethodVES
-  const prefill = nothingRegistered ? derivePaymentPrefillFromOrder(order) : null
+  const prefill = nothingRegistered
+    ? derivePaymentPrefillFromOrder(order) || derivePaymentPrefillFromProofs(proofs)
+    : null
 
   return {
     amountReceivedUSD:
