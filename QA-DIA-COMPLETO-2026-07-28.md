@@ -21,6 +21,9 @@ Dev server FRESCO en :3177 (arrancado para esta ronda; identidad Brotherhood ver
 Las 3 fallas son exactamente las documentadas como abiertas:
 - **A3** — quien escribe la nota puede fingir "cuenta pedida" (riesgo bajo, decisión pendiente).
 - **P3** — la API acepta referencia de 4 dígitos; la regla de 6 vive solo en el navegador.
+  **→ ARREGLADA el mismo día**: la regla subió al servidor (misma constante
+  `MIN_REFERENCE_DIGITS` del formulario); `qa:payments` re-corrido: **28 OK, 0 fallas**,
+  con los caminos legítimos intactos (solo captura sigue bastando; sin nada sigue 400).
 - **S1** — ninguna sede tiene WhatsApp configurado (configuración del dueño, no código).
 
 ## 2 · Día completo simulado — `npm run qa:dia-completo` (NUEVO)

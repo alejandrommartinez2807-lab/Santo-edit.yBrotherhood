@@ -61,8 +61,10 @@ prueba; el sistema está en fase de pruebas. Sedes: San Diego `3d8a8527-…` y V
 ## Fallas CONOCIDAS que van a salir (no las reportes como nuevas)
 
 - `qa:open-accounts` A3: staff que escribe la nota puede fingir "cuenta pedida" (B-2, riesgo bajo, decisión pendiente).
-- `qa:payments` P3: la API acepta referencia de 4 dígitos; la regla de 6 vive solo en el navegador (P-1, pendiente de subir al servidor).
 - `qa:branches` S1: ninguna sede tiene WhatsApp configurado (C-1, configuración del dueño, no código).
+- ~~`qa:payments` P3~~: **ARREGLADA 2026-07-28** — la regla de los 6 dígitos ya vive
+  también en el servidor (`payment-proofs/route.ts` usa `MIN_REFERENCE_DIGITS`);
+  el check ahora debe salir en verde.
 
 ## Reglas que no se negocian
 

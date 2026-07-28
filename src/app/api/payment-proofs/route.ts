@@ -14,6 +14,7 @@ import {
   getEnforceableReportUSD,
   isCashReportedMethod,
 } from "@/lib/orderPaymentLegs"
+import { MIN_REFERENCE_DIGITS } from "@/lib/paymentReportEvidence"
 import { writeAuditLog } from "@/lib/audit"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
@@ -160,6 +161,16 @@ function normalizeCreatePaymentProofInput(body: PublicProofBody): CreatePaymentP
   // para que caja verifique el pago (transferencias/pago móvil).
   if (!dataUrl && !paymentReference) {
     throw new Error("Adjunta la captura del pago o indica la referencia de la operación")
+  }
+
+  // P-1 (QA 2026-07-26/28): la regla de los 6 dígitos vivía SOLO en el
+  // navegador — pegándole al endpoint se colaba una referencia de 4. Misma
+  // regla canónica del formulario: escrita pero corta se rechaza, con o sin
+  // captura (una referencia truncada no le sirve a caja para verificar).
+  if (paymentReference && paymentReference.replace(/[^0-9]/g, "").length < MIN_REFERENCE_DIGITS) {
+    throw new Error(
+      "Escribe la referencia completa de la operación (todos los dígitos, no solo los últimos)"
+    )
   }
 
   const proofImageMaxBytes = getEnvByteLimit("PAYMENT_PROOF_IMAGE_MAX_BYTES", 5_500_000, {
