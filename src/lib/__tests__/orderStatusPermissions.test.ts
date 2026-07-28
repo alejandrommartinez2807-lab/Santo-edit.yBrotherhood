@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   canRoleUpdateStatus,
   canTransitionOrderStatus,
+  getRoleTransitionError,
 } from "@/lib/orderStatusPermissions"
 
 describe("canRoleUpdateStatus · permiso rol→estado (fuente única)", () => {
@@ -67,5 +68,32 @@ describe("canTransitionOrderStatus · máquina de estados del pedido (H1)", () =
   it("estado legado/desconocido no bloquea la operación", () => {
     expect(canTransitionOrderStatus("", "Listo")).toBe(true)
     expect(canTransitionOrderStatus("Pendiente", "Entregado")).toBe(true)
+  })
+})
+
+describe("getRoleTransitionError · el mesonero solo entrega pedidos LISTOS (2026-07-28)", () => {
+  it("mesonero NO puede entregar un pedido que no está Listo", () => {
+    for (const from of ["Nuevo", "Preparando"]) {
+      const error = getRoleTransitionError("waiter", from, "Entregado")
+      expect(error).toBeTruthy()
+      expect(error).toContain("LISTO")
+    }
+  })
+
+  it("mesonero SÍ entrega un pedido Listo", () => {
+    expect(getRoleTransitionError("waiter", "Listo", "Entregado")).toBeNull()
+  })
+
+  it("mesonero solo pone Listo como des-entregar (Entregado→Listo)", () => {
+    expect(getRoleTransitionError("waiter", "Entregado", "Listo")).toBeNull()
+    expect(getRoleTransitionError("waiter", "Nuevo", "Listo")).toBeTruthy()
+    expect(getRoleTransitionError("waiter", "Preparando", "Listo")).toBeTruthy()
+  })
+
+  it("caja, dueño, cocina y promotor conservan sus saltos (modo sin cocina)", () => {
+    for (const role of ["owner", "manager", "cashier", "kitchen", "promoter"] as const) {
+      expect(getRoleTransitionError(role, "Nuevo", "Entregado")).toBeNull()
+      expect(getRoleTransitionError(role, "Nuevo", "Listo")).toBeNull()
+    }
   })
 })

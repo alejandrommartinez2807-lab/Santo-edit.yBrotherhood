@@ -419,7 +419,7 @@ export async function PATCH(
         );
       }
 
-      const order = await updateOrderStatus(orderId, status, branchId);
+      const order = await updateOrderStatus(orderId, status, branchId, access.role);
       const refreshedAccounts = await getOpenAccounts(
         { status: "all", id: cleanAccountId },
         branchId,

@@ -1,4 +1,5 @@
 import type { OrderStatus } from "@/types/localOrders"
+import type { LocalRole } from "./localAccess"
 import type {
   ConfirmStaffItemsInput,
   CreateOrderInput,
@@ -132,8 +133,9 @@ export async function updateOrderStatus(
   orderId: string,
   status: OrderStatus,
   branchId?: string | null,
+  actorRole?: LocalRole,
 ) {
-  return ordersStore.updateOrderStatus(orderId, status, branchId)
+  return ordersStore.updateOrderStatus(orderId, status, branchId, actorRole)
 }
 
 export async function updateOrderDeliveryReport(

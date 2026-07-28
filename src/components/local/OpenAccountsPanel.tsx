@@ -91,6 +91,9 @@ type OpenAccountsPanelProps = {
   externalOpenAccounts?: OpenAccount[];
   // Permite plegar el panel para que caja recupere espacio en pantalla.
   collapsible?: boolean;
+  // Mesonero (2026-07-28): "Marcar entregado" se deshabilita hasta que
+  // cocina/caja pongan el pedido LISTO (el servidor aplica la misma regla).
+  deliverRequiresReady?: boolean;
   onOrdersShouldRefresh?: () => void;
 };
 
@@ -109,6 +112,7 @@ export function OpenAccountsPanel({
   preferredTableName = "",
   externalOpenAccounts,
   collapsible = false,
+  deliverRequiresReady = false,
   onOrdersShouldRefresh,
 }: OpenAccountsPanelProps) {
   const [openAccounts, setOpenAccounts] = useState<OpenAccount[]>([]);
@@ -1313,11 +1317,21 @@ export function OpenAccountsPanel({
                                       "Entregado",
                                     )
                                   }
-                                  disabled={isCardSaving}
+                                  disabled={
+                                    isCardSaving ||
+                                    (deliverRequiresReady && order.status !== "Listo")
+                                  }
+                                  title={
+                                    deliverRequiresReady && order.status !== "Listo"
+                                      ? "Cocina o caja deben marcar este pedido LISTO antes de entregarlo"
+                                      : undefined
+                                  }
                                   className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-green-700 bg-green-100 px-3 py-2 text-[0.65rem] font-black uppercase tracking-[0.10em] text-green-800 transition hover:bg-green-200 disabled:opacity-50"
                                 >
                                   <CheckCircle2 size={14} />
-                                  Marcar entregado
+                                  {deliverRequiresReady && order.status !== "Listo"
+                                    ? "Esperando LISTO"
+                                    : "Marcar entregado"}
                                 </button>
                               ) : (
                                 <button

@@ -3,6 +3,7 @@ import type {
   OrderStatus,
 } from "@/types/localOrders"
 import type { CreateOrderInput, UpdateOrderPaymentInput } from "./ordersCoreTypes"
+import type { LocalRole } from "./localAccess"
 import { createOrderInStore } from "./ordersStoreCreate"
 import {
   confirmOrderStaffItemsInStore,
@@ -53,8 +54,9 @@ export async function updateOrderStatus(
   orderId: string,
   status: OrderStatus,
   branchId?: string | null,
+  actorRole?: LocalRole,
 ): Promise<LocalOrder> {
-  return updateOrderStatusInStore(orderId, status, branchId, loadOrderWithItems)
+  return updateOrderStatusInStore(orderId, status, branchId, loadOrderWithItems, actorRole)
 }
 
 export async function updateOrderDeliveryReport(

@@ -659,6 +659,7 @@ function MesoneroContent() {
           externalOpenAccounts={openAccounts}
           canManage={true}
           canCloseAccounts={false}
+          deliverRequiresReady
           compact
           title="Cuentas del mesonero"
           description="Abre cuentas para mesas ocupadas y asocia pedidos de consumo local. Mesonero no cobra ni cierra cuentas; caja mantiene el control de pagos reales."

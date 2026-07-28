@@ -47,6 +47,29 @@ export function canRoleUpdateStatus(role: LocalRole, status: string): boolean {
   return false
 }
 
+// Compuerta por ROL sobre la transición (pedido del dueño 2026-07-28): el
+// mesonero ENTREGA solo lo que cocina/caja ya marcaron LISTO — sin esto podía
+// saltar Nuevo→Entregado (la máquina permite saltos porque el modo sin cocina
+// de caja los usa, pero ese privilegio no es del mesonero). "Listo" para el
+// mesonero solo existe como des-entregar (Entregado→Listo).
+export function getRoleTransitionError(
+  role: LocalRole,
+  from: string,
+  to: string,
+): string | null {
+  if (role !== "waiter") return null
+
+  if (to === "Entregado" && from !== "Listo") {
+    return "Cocina o caja deben marcar este pedido como LISTO antes de que el mesonero lo entregue."
+  }
+
+  if (to === "Listo" && from !== "Entregado") {
+    return "El mesonero solo puede devolver a Listo un pedido ya Entregado."
+  }
+
+  return null
+}
+
 // Máquina de estados del pedido (H1, 2026-07-24). Hasta ahora el servidor
 // aceptaba cualquier transición: un pedido ANULADO (con inventario devuelto y
 // motivo estampado) podía "revivir" a Listo/Entregado y volver a cobrarse.

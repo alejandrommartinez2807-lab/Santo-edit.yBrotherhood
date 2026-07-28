@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
-import { canTransitionOrderStatus } from "@/lib/orderStatusPermissions"
+import { canTransitionOrderStatus, getRoleTransitionError } from "@/lib/orderStatusPermissions"
+import type { LocalRole } from "@/lib/localAccess"
 import { isMissingColumnError } from "@/lib/ordersStoreMappers"
 import { OrderActionConflictError } from "@/lib/orderConflicts"
 import { recomputeOpenAccountTotals } from "@/lib/ordersStoreOpenAccounts"
@@ -15,6 +16,7 @@ export async function updateOrderStatusInStore(
   status: OrderStatus,
   branchId: string | null | undefined,
   loadOrderWithItems: LoadOrderWithItems,
+  actorRole?: LocalRole,
 ): Promise<LocalOrder> {
   const supabase = getSupabaseAdmin()
 
@@ -34,6 +36,14 @@ export async function updateOrderStatusInStore(
     throw new OrderActionConflictError(
       `Este pedido ya está como "${status}": otro usuario lo marcó primero. La lista se actualizará sola.`,
     )
+  }
+
+  // Compuerta por rol (2026-07-28): el mesonero solo entrega pedidos LISTOS.
+  // Se valida AQUÍ (dentro del lock optimista) para que las dos puertas —
+  // /api/orders/[id] y /api/open-accounts/[id] — apliquen la misma regla.
+  if (actorRole) {
+    const roleError = getRoleTransitionError(actorRole, currentStatus, status)
+    if (roleError) throw new Error(roleError)
   }
 
   // Máquina de estados (H1): Cancelado es terminal — un pedido anulado ya

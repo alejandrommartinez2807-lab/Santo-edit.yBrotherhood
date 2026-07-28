@@ -595,7 +595,7 @@ export async function PATCH(
       }
     }
 
-    const order = await updateOrderStatus(orderId, status, branchId)
+    const order = await updateOrderStatus(orderId, status, branchId, access.role)
 
     if (status === "Cancelado" && cancelReason) {
       // Inventario del pedido anulado (pedido del dueño): si el trabajador

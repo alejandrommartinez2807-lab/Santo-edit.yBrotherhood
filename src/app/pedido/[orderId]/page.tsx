@@ -309,6 +309,22 @@ export default function PedidoSeguimientoPage({
                       Pago reportado: el local lo está verificando. Apenas lo
                       confirme, tu pedido avanza solo.
                     </p>
+                  ) : orderType === "Comer aquí" &&
+                    !isDelivered &&
+                    !isCancelled &&
+                    paymentProofsEnabled === true ? (
+                    // Mesa (2026-07-28): el flujo principal NO cambia — en mesa
+                    // cobra caja/mesonero en persona. Este botón SECUNDARIO es
+                    // para el cliente que pagó por transferencia/pago móvil
+                    // desde su teléfono y quiere reportarlo sin llamar a nadie.
+                    <button
+                      type="button"
+                      onClick={openPaymentReport}
+                      className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-border)] bg-transparent px-4 py-2.5 text-[0.7rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/70 transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+                    >
+                      <ImagePlus size={15} />
+                      ¿Pagaste por transferencia o pago móvil? Reporta tu pago
+                    </button>
                   ) : null}
 
                   {/* Línea de progreso (con "Esperando pago" delante cuando
