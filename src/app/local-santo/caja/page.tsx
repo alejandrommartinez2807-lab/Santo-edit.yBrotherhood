@@ -429,6 +429,11 @@ function CajaPageContent() {
       window.setTimeout(() => {
         if (pendingStatusRef.current.get(orderId) === status) pendingStatusRef.current.delete(orderId)
         loadOrders(adminPassword, true)
+        // Refresco de las cuentas abiertas (2026-07-28): marcar Listo/Entregado
+        // desde la tarjeta del pedido también cambia lo que muestra la cuenta
+        // de la mesa (estado y productos entregados) — antes la sección de
+        // cuentas se quedaba vieja hasta el próximo refresco manual.
+        loadOpenAccounts(adminPassword, true)
       }, 600)
     } catch (error) {
       pendingStatusRef.current.delete(orderId)
@@ -1028,7 +1033,7 @@ function CajaPageContent() {
           }}
         />
 
-        <section className="sticky top-0 z-30 mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-white p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+        <section className="sticky top-[var(--local-nav-h,0px)] z-30 mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-white p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">

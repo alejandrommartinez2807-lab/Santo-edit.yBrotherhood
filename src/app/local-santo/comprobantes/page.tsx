@@ -384,7 +384,7 @@ export default function PaymentProofsPage() {
             </div>
           </section>
 
-          <section className="sticky top-0 z-20 mt-5 rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+          <section className="sticky top-[var(--local-nav-h,0px)] z-20 mt-5 rounded-[1.5rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
             <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
               <label className="relative block">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--brand-primary)]" size={18} />

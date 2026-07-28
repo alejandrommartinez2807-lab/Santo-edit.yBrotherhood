@@ -5,7 +5,7 @@
 // módulos en la misma pestaña sin volver a iniciar sesión. El dueño ve todo
 // más el acceso rápido al panel general.
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ChevronDown, LayoutGrid, MapPin } from "lucide-react"
 import type { StaffBranch } from "@/lib/branchClient"
 
@@ -77,6 +77,26 @@ export default function LocalModuleNav({
   // Minimizada en escritorio: el dueño puede plegar la nube de módulos cuando
   // está trabajando dentro de uno y recuperar pantalla.
   const [desktopCollapsed, setDesktopCollapsed] = useState(false)
+  const navRef = useRef<HTMLElement | null>(null)
+
+  // Publica la ALTURA REAL de la barra en --local-nav-h (2026-07-28): las
+  // secciones pegajosas de los módulos (Controles de caja, filtros, etc.)
+  // usaban top-0 y esta barra (también sticky top-0, con más z) las tapaba
+  // y los textos se mezclaban. Con la variable, cada sección pega JUSTO
+  // debajo de la barra, mida lo que mida (se pliega/expande/envuelve).
+  useEffect(() => {
+    const el = navRef.current
+    if (!el) return
+    const setVar = () =>
+      document.documentElement.style.setProperty("--local-nav-h", `${el.offsetHeight}px`)
+    setVar()
+    const observer = new ResizeObserver(setVar)
+    observer.observe(el)
+    return () => {
+      observer.disconnect()
+      document.documentElement.style.setProperty("--local-nav-h", "0px")
+    }
+  }, [])
 
   useEffect(() => {
     // Difiere el setState un tick (react-hooks/set-state-in-effect).
@@ -117,7 +137,7 @@ export default function LocalModuleNav({
   const currentEntry = entries.find((entry) => entry.key === currentModuleKey)
 
   return (
-    <nav className="sticky top-0 z-40 border-b-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)]/95 px-3 py-2 backdrop-blur">
+    <nav ref={navRef} className="sticky top-0 z-40 border-b-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)]/95 px-3 py-2 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2">
         <button
           type="button"

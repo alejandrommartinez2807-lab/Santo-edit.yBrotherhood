@@ -4000,7 +4000,7 @@ export default function PedidosPage() {
           </section>
         )}
 
-        <section className="sticky top-0 z-30 mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
+        <section className="sticky top-[var(--local-nav-h,0px)] z-30 mt-4 rounded-[1.4rem] border-2 border-[var(--brand-primary)] bg-[var(--brand-surface-2)] p-3 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.10)]">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">

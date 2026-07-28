@@ -703,7 +703,7 @@ function KitchenItemsPageContent() {
           <MetricCard label="Confirmados" value={totalConfirmedStaffConfirmationLines} />
         </div>
 
-        <section className="sticky top-0 z-30 rounded-[1.75rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.08)]">
+        <section className="sticky top-[var(--local-nav-h,0px)] z-30 rounded-[1.75rem] border-2 border-[var(--brand-primary)] bg-white p-4 shadow-[0_8px_0_rgba(var(--brand-primary-rgb),0.08)]">
           <div className="grid gap-3 xl:grid-cols-[1fr_auto]">
             <label className="flex items-center gap-3 rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] px-4 py-3">
               <Search size={18} className="text-[var(--brand-primary)]" />
