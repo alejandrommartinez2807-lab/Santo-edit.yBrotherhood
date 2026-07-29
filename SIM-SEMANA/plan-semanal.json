@@ -1,0 +1,124 @@
+{
+  "_que_es": "Calendario determinista de la semana simulada (§5 y §10 del guion): plan de pedidos y rotación de personal por día y por sede. Volcado de los objetos PLAN/ROSTERS/SHIFTS de scripts/sim/dias-2-7.mjs y del ROSTER de scripts/sim/dia-1.mjs — el código es la fuente; este archivo es la vista legible que pedía el guion.",
+  "runId": "brotherhood-week-v1",
+  "sedes": { "P": "Principal", "SD": "San Diego" },
+  "mesas": {
+    "P": ["Mesa 1", "Mesa 2", "Mesa 3", "Mesa 4", "Mesa 5", "Mesa 6", "Barra", "Afuera"],
+    "SD": ["SD Mesa 1", "SD Mesa 2", "SD Mesa 3", "SD Mesa 4", "SD Terraza"]
+  },
+  "roles_fijos_toda_la_semana": {
+    "alejandro": "dueño (ambas sedes)",
+    "genesis": "encargada Principal",
+    "luis": "encargado San Diego",
+    "miguel": "soporte/QA",
+    "vanessa": "promotora (solo Día 5, modo evento)",
+    "gustavo": "mesonero refuerzo SD",
+    "wilmer": "repartidor"
+  },
+  "dias": [
+    {
+      "dia": 0,
+      "fecha": "2026-08-02",
+      "nombre": "Fundación",
+      "pedidos": 0,
+      "nota": "Sin operación comercial: creación de sedes, personal, menú, inventario, proveedores, gastos de apertura y cierres técnicos de fundación. Sin turno.",
+      "script": "scripts/sim/dia-0.mjs"
+    },
+    {
+      "dia": 1,
+      "fecha": "2026-08-03",
+      "nombre": "Lunes suave y nacimiento de la operación",
+      "pedidos": 55,
+      "porSede": { "P": 36, "SD": 20 },
+      "nota": "El plan del Día 1 vive en scripts/sim/dia-1.mjs (guionado a mano, no en el objeto PLAN). 55 pedidos + 1 pedido-evidencia del bug del precio (BH-SIM-001).",
+      "roster": ["alejandro", "genesis", "mariafernanda", "jesus", "anthony", "yorgelis", "miguel", "luis", "roxana", "carlosalberto", "daniela"],
+      "personal": {
+        "P": { "caja": "mariafernanda", "cocina": "jesus", "mesas": ["anthony", "yorgelis"], "responsable": "genesis" },
+        "SD": { "caja": "roxana", "cocina": "carlosalberto", "mesas": ["daniela"], "responsable": "luis" }
+      },
+      "script": "scripts/sim/dia-1.mjs + scripts/sim/dia-1-repaso.mjs"
+    },
+    {
+      "dia": 2,
+      "fecha": "2026-08-04",
+      "pedidos": 70,
+      "porSede": { "P": 44, "SD": 26 },
+      "cancelaciones": 5,
+      "canales": { "mesa-cuenta": 14, "mesa": 18, "pickup": 10, "delivery": 10, "qr": 16, "staff": 2 },
+      "roster": ["alejandro", "genesis", "mariafernanda", "kelvin", "jesus", "dubraska", "anthony", "yorgelis", "miguel", "luis", "roxana", "carlosalberto", "daniela", "gustavo"],
+      "personal": {
+        "P": { "caja": "kelvin", "cocina": "dubraska", "mesas": ["yorgelis"], "responsable": "genesis" },
+        "SD": { "caja": "roxana", "cocina": "carlosalberto", "mesas": ["gustavo"], "responsable": "luis" }
+      }
+    },
+    {
+      "dia": 3,
+      "fecha": "2026-08-05",
+      "pedidos": 78,
+      "porSede": { "P": 42, "SD": 36 },
+      "cancelaciones": 4,
+      "canales": { "mesa-cuenta": 8, "mesa": 10, "pickup": 22, "delivery": 22, "qr": 14, "staff": 2 },
+      "roster": ["alejandro", "genesis", "kelvin", "mariafernanda", "dubraska", "jesus", "yorgelis", "anthony", "miguel", "luis", "roxana", "carlosalberto", "daniela", "gustavo"],
+      "personal": {
+        "P": { "caja": "mariafernanda", "cocina": "jesus", "mesas": ["anthony"], "responsable": "genesis" },
+        "SD": { "caja": "roxana", "cocina": "carlosalberto", "mesas": ["daniela"], "responsable": "luis" }
+      }
+    },
+    {
+      "dia": 4,
+      "fecha": "2026-08-06",
+      "pedidos": 72,
+      "porSede": { "P": 45, "SD": 27 },
+      "cancelaciones": 3,
+      "canales": { "mesa-cuenta": 14, "mesa": 14, "pickup": 14, "delivery": 12, "qr": 16, "staff": 2 },
+      "roster": ["alejandro", "genesis", "mariafernanda", "kelvin", "jesus", "dubraska", "anthony", "yorgelis", "miguel", "luis", "roxana", "carlosalberto", "daniela", "gustavo"],
+      "personal": {
+        "P": { "caja": "kelvin", "cocina": "jesus", "mesas": ["yorgelis"], "responsable": "genesis" },
+        "SD": { "caja": "roxana", "cocina": "carlosalberto", "mesas": ["gustavo"], "responsable": "luis" }
+      }
+    },
+    {
+      "dia": 5,
+      "fecha": "2026-08-07",
+      "nombre": "Día pico + modo evento (promotora)",
+      "pedidos": 115,
+      "porSede": { "P": 72, "SD": 43 },
+      "cancelaciones": 8,
+      "canales": { "mesa-cuenta": 28, "mesa": 22, "pickup": 20, "delivery": 18, "qr": 25, "staff": 2 },
+      "roster": ["alejandro", "genesis", "mariafernanda", "kelvin", "jesus", "dubraska", "anthony", "yorgelis", "miguel", "vanessa", "luis", "roxana", "carlosalberto", "daniela", "gustavo"],
+      "personal": {
+        "P": { "caja": "mariafernanda", "cocina": "dubraska", "mesas": ["anthony"], "responsable": "genesis" },
+        "SD": { "caja": "roxana", "cocina": "carlosalberto", "mesas": ["daniela"], "responsable": "luis" }
+      },
+      "nota": "Una cuenta abierta queda SIN cobrar a propósito y cruza al Día 6 (carryAccount en estado.json)."
+    },
+    {
+      "dia": 6,
+      "fecha": "2026-08-08",
+      "nombre": "Día de fallas y anulaciones",
+      "pedidos": 100,
+      "porSede": { "P": 62, "SD": 38 },
+      "cancelaciones": 12,
+      "canales": { "mesa-cuenta": 24, "mesa": 18, "pickup": 18, "delivery": 16, "qr": 22, "staff": 2 },
+      "roster": ["alejandro", "genesis", "kelvin", "mariafernanda", "dubraska", "jesus", "anthony", "yorgelis", "miguel", "luis", "roxana", "carlosalberto", "daniela"],
+      "personal": {
+        "P": { "caja": "kelvin", "cocina": "dubraska", "mesas": ["yorgelis"], "responsable": "genesis" },
+        "SD": { "caja": "roxana", "cocina": "carlosalberto", "mesas": ["daniela"], "responsable": "luis" }
+      }
+    },
+    {
+      "dia": 7,
+      "fecha": "2026-08-09",
+      "nombre": "Domingo corto + reconciliación",
+      "pedidos": 60,
+      "porSede": { "P": 36, "SD": 24 },
+      "cancelaciones": 3,
+      "canales": { "mesa-cuenta": 14, "mesa": 14, "pickup": 10, "delivery": 8, "qr": 12, "staff": 2 },
+      "roster": ["alejandro", "genesis", "mariafernanda", "jesus", "anthony", "miguel", "luis", "roxana", "carlosalberto", "daniela"],
+      "personal": {
+        "P": { "caja": "mariafernanda", "cocina": "jesus", "mesas": ["anthony"], "responsable": "genesis" },
+        "SD": { "caja": "roxana", "cocina": "carlosalberto", "mesas": ["daniela"], "responsable": "luis" }
+      }
+    }
+  ]
+}
