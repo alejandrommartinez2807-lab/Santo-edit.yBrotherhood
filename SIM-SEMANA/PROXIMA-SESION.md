@@ -43,13 +43,38 @@ volver a preguntarlo.**
 - **Inventario**: el pedido ya guarda `inventoryWasUsed` (si los insumos se
   consumieron o volvieron al stock). Hay que exponerlo en la vista de anulados.
 
-### La pregunta que va a salir al implementarlo
+### Cómo se resuelve el dinero ya cobrado (decidido 2026-07-29)
 
-Si el cliente **ya había pagado** y el pedido se anula, el dinero físico está
-en la gaveta salvo que se le devuelva. Al sacarlo del cierre, el arqueo dirá
-menos de lo que hay en efectivo. La regla del dueño asume que **anular implica
-devolver el dinero**. Antes de dar por bueno el cambio, confirmar con él ese
-supuesto y, si hace falta, dejar constancia de la devolución en el pedido.
+Anular ya le hace UNA pregunta al cajero (`window.confirm` en
+`src/app/pedidos/page.tsx:2504` y `src/app/local-santo/caja/page.tsx:374`):
+*"¿Ya se usaron o prepararon los ingredientes?"*. Se añade una **segunda
+pregunta con la misma forma**, y solo cuando el pedido tenga dinero cobrado:
+
+> Este pedido tiene $X cobrados. ¿Le devolviste el dinero al cliente?
+> Aceptar = SÍ, se lo devolví (sale de la caja del día)
+> Cancelar = NO, el dinero se quedó (sigue en la caja del día)
+
+- **Devuelto** → sale del cierre y de los reportes (la regla del dueño).
+  Queda registrado como devolución con monto, autor y fecha.
+- **Se quedó** → sigue contando en el cierre porque está en la gaveta y el
+  arqueo tiene que cuadrar, pero **nunca como venta**: en una línea aparte,
+  "cobrado de pedidos anulados".
+
+### ⚠️ El default es un SUPUESTO, no una confirmación
+
+**El dueño todavía NO ha confirmado** qué hacen en la práctica. Instrucción
+del usuario (2026-07-29): *"por lo menos por el momento ellos devuelven el
+dinero"*. Así que:
+
+- **Por defecto se asume DEVUELTO**: es la opción primaria del diálogo y
+  también lo que se aplica si la anulación llega sin respuesta (API, script,
+  cliente con caché vieja).
+- **Riesgo conocido de ese supuesto**: si en la práctica a veces el cliente se
+  va y el efectivo se queda, el cierre reportará **menos** de lo que hay en la
+  gaveta y la cajera aparecerá con un faltante que parece un descuadre suyo.
+- **Cuando el dueño confirme**, invertir el default es un cambio de una línea.
+  Dejarlo aislado en una constante bien nombrada para que se pueda voltear sin
+  tocar la lógica.
 
 ---
 
