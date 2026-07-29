@@ -97,6 +97,8 @@ async function runDay(dayNumber) {
   const all = []
   // Pedidos nacidos de escenarios adversariales: se cuentan aparte del plan.
   const evidencia = { count: 0 }
+  // Pedidos que quedan sin cobrar a propósito (sujetos de escenarios de pago).
+  const unpaidReserve = []
 
   // ── Cuentas abiertas del día (mesa-cuenta) ──────────────────────────────
   const accountsToday = []
@@ -181,6 +183,9 @@ async function runDay(dayNumber) {
 
       // Algunos quedan para el pool de cancelaciones (no se cobran).
       if (cancelPool.length < plan.cancels && i % 7 === 3) { cancelPool.push({ rec: r.record, crew, stage: cancelPool.length }); continue }
+      // Y otros quedan SIN COBRAR a propósito: son el sujeto de los escenarios
+      // de pago reportado, corrección de método y cuentas que cruzan el día.
+      if (unpaidReserve.length < 4 && i % 11 === 7) { unpaidReserve.push({ rec: r.record, crew }); await kitchenCycle(ctx, r.record, { kitchen: crew.kitchen, waiter: crew.waiter, deliver: true }); continue }
 
       await kitchenCycle(ctx, r.record, {
         kitchen: crew.kitchen,
@@ -228,7 +233,15 @@ async function runDay(dayNumber) {
   check(`${D}-CX-total`, `las ${plan.cancels} cancelaciones del plan se ejecutaron con motivo y autor`, cancelledReal === plan.cancels, `plan=${plan.cancels} real=${cancelledReal}`)
 
   // ── ESCENARIOS OBLIGATORIOS ESPECÍFICOS DEL DÍA ─────────────────────────
-  await daySpecific(ctx, dayNumber, { shift, all, accountsToday, plan, created, D })
+  await daySpecific(ctx, dayNumber, { shift, all, accountsToday, plan, created, D, unpaidReserve })
+
+  // Los que quedaron sin cobrar y ningún escenario usó, se cobran al final
+  // (la caja no cierra el día con pedidos entregados sin cobrar salvo los
+  // que el guion deja a propósito en una cuenta abierta).
+  for (const entry of unpaidReserve) {
+    if (entry.rec.paid > 0 || entry.rec.status === "Cancelado" || entry.used) continue
+    await payOrder(ctx, entry.rec, "efectivo", entry.crew.cashier)
+  }
 
   // ── Gastos + cierre ─────────────────────────────────────────────────────
   const gP = await addExpense(ctx, { branchId: P, by: shift.P.manager, concept: `SIM ${ctx.dayKey} - insumos menores Principal`, amountUSD: 8 + dayNumber, category: "Otros" })
@@ -259,7 +272,7 @@ async function runDay(dayNumber) {
 // ──────────────────────────────────────────────────────────────────────────
 // Escenarios obligatorios por día (los que el guion exige explícitamente)
 // ──────────────────────────────────────────────────────────────────────────
-async function daySpecific(ctx, dayNumber, { shift, all, accountsToday, plan, D }) {
+async function daySpecific(ctx, dayNumber, { shift, all, accountsToday, plan, D, unpaidReserve = [] }) {
   const { P, SD } = ctx
   const st = ctx.state
 
@@ -349,7 +362,9 @@ async function daySpecific(ctx, dayNumber, { shift, all, accountsToday, plan, D 
 
   if (dayNumber === 3) {
     // ── DÍA 3 · pagos reportados, anti-duplicado, QR por sede ────────────
-    const target = all.find((o) => o.branchId === P && o.paid === 0 && o.status !== "Cancelado") || all.find((o) => o.branchId === P)
+    const reserved = unpaidReserve.find((e) => e.rec.branchId === P && !e.rec.paid && !e.used)
+    if (reserved) reserved.used = true
+    const target = reserved?.rec || all.find((o) => o.branchId === P && o.paid === 0 && o.status !== "Cancelado")
     if (target) {
       const proofBody = {
         orderId: target.id, reportedMethod: "Pago móvil", amountReportedUSD: 0,
@@ -362,10 +377,14 @@ async function daySpecific(ctx, dayNumber, { shift, all, accountsToday, plan, D 
       check("D3-DUP-1", "el mismo pago reportado 3 veces (misma pestaña, otra pestaña) no crea 3 comprobantes", (proofs?.length ?? 0) <= 1, `creados=${proofs?.length} respuestas=${first.status}/${again.status}/${otherTab.status}`)
       bumpQuota(st, "pago-reportado")
       bumpQuota(st, "intento-duplicado")
+    } else {
+      check("D3-DUP-1", "había un pedido para probar el reporte de pago duplicado", false, "COBERTURA NO EJECUTADA")
     }
 
     // Monto reportado EQUIVOCADO → caja corrige de forma auditada.
-    const wrongTarget = all.find((o) => o.branchId === SD && o.paid === 0 && o.status !== "Cancelado")
+    const reservedSD = unpaidReserve.find((e) => e.rec.branchId === SD && !e.rec.paid && !e.used)
+    if (reservedSD) reservedSD.used = true
+    const wrongTarget = reservedSD?.rec || all.find((o) => o.branchId === SD && o.paid === 0 && o.status !== "Cancelado")
     if (wrongTarget) {
       await post("/api/payment-proofs", {
         orderId: wrongTarget.id, reportedMethod: "Transferencia", amountReportedUSD: 0,
@@ -376,6 +395,8 @@ async function daySpecific(ctx, dayNumber, { shift, all, accountsToday, plan, D 
       const row = await orderRow(wrongTarget.id)
       check("D3-CORR-1", "caja corrige el monto mal reportado y el pedido queda pagado por su total real", fix.ok && row?.payment_status === "Pagado", `estado=${row?.payment_status} recibido=$${row?.payment_received_equiv_usd} total=$${row?.total_usd}`)
       bumpQuota(st, "correccion-metodo")
+    } else {
+      check("D3-CORR-1", "había un pedido sin pagar en SD para probar la corrección de un monto mal reportado", false, "COBERTURA NO EJECUTADA: todos los pedidos de SD ya estaban cobrados al llegar aquí")
     }
 
     // QR por sede: id de producto de la OTRA sede.

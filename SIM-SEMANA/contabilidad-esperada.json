@@ -245,6 +245,219 @@
           "staff": 32
         }
       }
+    },
+    "dia-3": {
+      "e514be79-bb39-4050-9f27-e6c10249a1cf": {
+        "ordersCreated": 44,
+        "equivalentCustomers": 64,
+        "grossSalesUSD": 459,
+        "collectedUSD": 459,
+        "collectedByMethodUSD": {
+          "Efectivo divisas": {
+            "count": 24,
+            "totalUSD": 263.5
+          },
+          "Zelle": {
+            "count": 4,
+            "totalUSD": 37.5
+          }
+        },
+        "collectedByMethodVES": {
+          "Pago móvil": {
+            "count": 11,
+            "totalVES": 3900,
+            "totalUSD": 97.5
+          },
+          "Transferencia": {
+            "count": 5,
+            "totalVES": 2060,
+            "totalUSD": 51.5
+          },
+          "Punto": {
+            "count": 1,
+            "totalVES": 360,
+            "totalUSD": 9
+          }
+        },
+        "cashUSD": 263.5,
+        "changeGivenUSD": 0,
+        "pendingUSD": 0,
+        "cancellations": 3,
+        "cancelledUSD": 31,
+        "expensesUSD": 11,
+        "purchasesPaidUSD": 0,
+        "bySeller": {
+          "anthony": 474,
+          "público": 16
+        },
+        "byChannel": {
+          "mesa-cuenta": 53.5,
+          "mesa": 100.5,
+          "pickup": 196,
+          "delivery": 124,
+          "qr": 16
+        }
+      },
+      "395e3b33-cda3-4111-8dd5-a5ee52d43cd6": {
+        "ordersCreated": 36,
+        "equivalentCustomers": 53,
+        "grossSalesUSD": 353,
+        "collectedUSD": 353,
+        "collectedByMethodUSD": {
+          "Efectivo divisas": {
+            "count": 17,
+            "totalUSD": 123.5
+          },
+          "Zelle": {
+            "count": 7,
+            "totalUSD": 61.5
+          }
+        },
+        "collectedByMethodVES": {
+          "Pago móvil": {
+            "count": 11,
+            "totalVES": 3000,
+            "totalUSD": 75
+          },
+          "Transferencia": {
+            "count": 4,
+            "totalVES": 2160,
+            "totalUSD": 54
+          },
+          "Punto": {
+            "count": 4,
+            "totalVES": 1560,
+            "totalUSD": 39
+          }
+        },
+        "cashUSD": 123.5,
+        "changeGivenUSD": 0,
+        "pendingUSD": 0,
+        "cancellations": 1,
+        "cancelledUSD": 8.5,
+        "expensesUSD": 8,
+        "purchasesPaidUSD": 0,
+        "bySeller": {
+          "daniela": 180.5,
+          "público": 168.5,
+          "luis": 12.5
+        },
+        "byChannel": {
+          "mesa-cuenta": 21.5,
+          "mesa": 19,
+          "pickup": 43.5,
+          "delivery": 96.5,
+          "qr": 168.5,
+          "staff": 12.5
+        }
+      }
+    },
+    "dia-4": {
+      "e514be79-bb39-4050-9f27-e6c10249a1cf": {
+        "ordersCreated": 49,
+        "equivalentCustomers": 93,
+        "grossSalesUSD": 593.5,
+        "collectedUSD": 593.5,
+        "collectedByMethodUSD": {
+          "Efectivo divisas": {
+            "count": 17,
+            "totalUSD": 211.5
+          },
+          "Zelle": {
+            "count": 5,
+            "totalUSD": 62.5
+          }
+        },
+        "collectedByMethodVES": {
+          "Pago móvil": {
+            "count": 17,
+            "totalVES": 8280,
+            "totalUSD": 207
+          },
+          "Punto": {
+            "count": 7,
+            "totalVES": 3880,
+            "totalUSD": 97
+          },
+          "Transferencia": {
+            "count": 2,
+            "totalVES": 620,
+            "totalUSD": 15.5
+          }
+        },
+        "cashUSD": 211.5,
+        "changeGivenUSD": 0,
+        "pendingUSD": 0,
+        "cancellations": 2,
+        "cancelledUSD": 10,
+        "expensesUSD": 12,
+        "purchasesPaidUSD": 0,
+        "bySeller": {
+          "yorgelis": 540.5,
+          "público": 52.5,
+          "wilmer": 10.5
+        },
+        "byChannel": {
+          "mesa-cuenta": 120.5,
+          "mesa": 153,
+          "pickup": 179,
+          "delivery": 98.5,
+          "qr": 52.5
+        }
+      },
+      "395e3b33-cda3-4111-8dd5-a5ee52d43cd6": {
+        "ordersCreated": 27,
+        "equivalentCustomers": 42,
+        "grossSalesUSD": 318.5,
+        "collectedUSD": 318.5,
+        "collectedByMethodUSD": {
+          "Efectivo divisas": {
+            "count": 18,
+            "totalUSD": 220.5
+          },
+          "Zelle": {
+            "count": 2,
+            "totalUSD": 25
+          }
+        },
+        "collectedByMethodVES": {
+          "Pago móvil": {
+            "count": 9,
+            "totalVES": 2040,
+            "totalUSD": 51
+          },
+          "Punto": {
+            "count": 1,
+            "totalVES": 520,
+            "totalUSD": 13
+          },
+          "Transferencia": {
+            "count": 1,
+            "totalVES": 360,
+            "totalUSD": 9
+          }
+        },
+        "cashUSD": 220.5,
+        "changeGivenUSD": 0,
+        "pendingUSD": 0,
+        "cancellations": 1,
+        "cancelledUSD": 19,
+        "expensesUSD": 9,
+        "purchasesPaidUSD": 0,
+        "bySeller": {
+          "gustavo": 197,
+          "público": 125.5,
+          "luis": 15
+        },
+        "byChannel": {
+          "mesa-cuenta": 89.5,
+          "mesa": 41,
+          "pickup": 28,
+          "delivery": 38.5,
+          "qr": 125.5,
+          "staff": 15
+        }
+      }
     }
   },
   "suppliers": {

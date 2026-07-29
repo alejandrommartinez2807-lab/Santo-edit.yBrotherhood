@@ -2,18 +2,21 @@
   "completedDays": [
     "dia-0",
     "dia-1",
-    "dia-2"
+    "dia-2",
+    "dia-3",
+    "dia-4"
   ],
   "quotas": {
-    "efectivo": 29,
-    "efectivo-cambio": 13,
-    "pagomovil": 14,
-    "mixto": 12,
-    "transferencia": 18,
+    "efectivo": 72,
+    "efectivo-cambio": 33,
+    "pagomovil": 29,
+    "mixto": 45,
+    "transferencia": 30,
     "reintento-seguro": 1,
-    "pago-reportado": 2,
+    "pago-reportado": 3,
     "reportado-bs-formato-ve": 2,
-    "segunda-pata": 6
+    "segunda-pata": 17,
+    "intento-duplicado": 1
   },
   "ids": {
     "principal": "e514be79-bb39-4050-9f27-e6c10249a1cf",
@@ -34,7 +37,8 @@
       "miguel": "d0d7ab85-a859-45fb-8b30-96fc0bbc4441",
       "vanessa": "039c6047-8c3b-4760-9650-4d2fc01a70e8",
       "soporteqa": "a8413da9-2635-4ec2-b762-a04a90f3378a",
-      "gustavo": "9c0fe47d-4c28-4bce-81ea-8fce24806843"
+      "gustavo": "9c0fe47d-4c28-4bce-81ea-8fce24806843",
+      "wilmer": "560d0526-cf59-4f40-aff8-c355f5088ef2"
     },
     "inventory": {
       "e514be79-bb39-4050-9f27-e6c10249a1cf": {
@@ -90,7 +94,10 @@
       "PE-501": "a9e83b21-e19a-43a4-b27c-cef2a9f1355e",
       "BC-88": "fd38d0dc-d16f-4528-9b70-b29fb46ad3f3",
       "EC-77": "26de057a-2b2a-4064-8edc-a83cb26777ab",
-      "VC-33": "1fe1df8c-cb55-4053-9ac5-72492d8408db"
+      "VC-33": "1fe1df8c-cb55-4053-9ac5-72492d8408db",
+      "PE-D4-1": "8de06a91-a14e-4759-bfe0-5094bc1d5721",
+      "FT-D4-2": "89a7c1c8-2362-4706-b6fe-e7a792ed9cd9",
+      "BC-D4-3": "27476dc2-51c0-4ca3-92ec-21001d3eebf4"
     },
     "menu": {
       "e514be79-bb39-4050-9f27-e6c10249a1cf": {
@@ -140,7 +147,11 @@
       "dia-1:Principal": "close-1785298594417-iacad1",
       "dia-1:San Diego": "close-1785298596681-6rp1dc",
       "dia-2:Principal": "close-1785299925186-1cgqqk",
-      "dia-2:San Diego": "close-1785299927996-7rcata"
+      "dia-2:San Diego": "close-1785299927996-7rcata",
+      "dia-3:Principal": "close-1785301149865-x84zw0",
+      "dia-3:San Diego": "close-1785301153307-yffpze",
+      "dia-4:Principal": "close-1785302272820-crsjpp",
+      "dia-4:San Diego": "close-1785302276399-yca9a2"
     }
   },
   "bugs": [],
