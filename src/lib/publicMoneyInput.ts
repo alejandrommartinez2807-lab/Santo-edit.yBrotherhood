@@ -20,7 +20,14 @@
 // quien reporta en divisas. Eso deja "3.632" ambiguo y se lee 3,63: es
 // indecidible sin más contexto y se resuelve igual en todo el sistema.
 export function parsePublicMoneyInput(value: string) {
-  const rawValue = String(value || "").trim().replace(/\s/g, "");
+  const rawValue = String(value || "")
+    .trim()
+    .replace(/\s/g, "")
+    // Prefijo/sufijo de moneda ("Bs 9.648,99", "$10", "250 Bs"): el monto se
+    // MUESTRA con "Bs" y el cliente lo copia tal cual — sin esta limpieza el
+    // reporte salía 0, la misma clase de bug que motivó este parser. Misma
+    // regla en parseMoneyInput (caja) y cleanMoney (/api/payment-proofs).
+    .replace(/^(?:bs\.?|\$|€)+|(?:bs\.?|\$|€)+$/gi, "");
   if (!rawValue) return 0;
 
   const hasComma = rawValue.includes(",");

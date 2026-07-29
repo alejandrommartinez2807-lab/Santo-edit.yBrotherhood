@@ -125,7 +125,13 @@ function cleanText(value: unknown) {
 }
 
 function cleanMoney(value: unknown) {
-  const rawValue = String(value || "").trim().replace(/\s/g, "")
+  const rawValue = String(value || "")
+    .trim()
+    .replace(/\s/g, "")
+    // Prefijo/sufijo de moneda ("Bs 9.648,99", "$10"): misma limpieza que
+    // parsePublicMoneyInput y parseMoneyInput — la regla es UNA en todo el
+    // sistema.
+    .replace(/^(?:bs\.?|\$|€)+|(?:bs\.?|\$|€)+$/gi, "")
   if (!rawValue) return 0
 
   const hasComma = rawValue.includes(",")

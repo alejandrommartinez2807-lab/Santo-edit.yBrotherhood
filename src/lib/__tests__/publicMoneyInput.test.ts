@@ -36,6 +36,54 @@ describe("parsePublicMoneyInput", () => {
     expect(parsePublicMoneyInput("-50")).toBe(0)
   })
 
+  // ── Formatos de la lista del §15 del guion (barrido 2026-07-29) ──────────
+
+  it("ceros y céntimos mínimos", () => {
+    expect(parsePublicMoneyInput("0,00")).toBe(0)
+    expect(parsePublicMoneyInput("0.01")).toBe(0.01)
+    expect(parsePublicMoneyInput("0,01")).toBe(0.01)
+  })
+
+  it("enteros cortos y decimales de un dígito", () => {
+    expect(parsePublicMoneyInput("1")).toBe(1)
+    expect(parsePublicMoneyInput("1,5")).toBe(1.5)
+    expect(parsePublicMoneyInput("1,50")).toBe(1.5)
+  })
+
+  // Ambigüedad documentada en el parser: "3.632" sin más contexto es
+  // indecidible y se lee 3,63 IGUAL en todo el sistema (pantalla y caja).
+  it("'3.632' sin decimales se lee 3,63 (ambigüedad resuelta igual en todo el sistema)", () => {
+    expect(parsePublicMoneyInput("3.632")).toBe(3.63)
+  })
+
+  // El monto a pagar se MUESTRA "Bs 9.648,99": el cliente que lo copia manda
+  // también el "Bs". Antes eso daba 0 — la misma clase de bug que motivó este
+  // parser, pero por el símbolo en vez del punto de miles.
+  it("tolera símbolos de moneda pegados o separados", () => {
+    expect(parsePublicMoneyInput("Bs 9.648,99")).toBe(9648.99)
+    expect(parsePublicMoneyInput("bs. 250,00")).toBe(250)
+    expect(parsePublicMoneyInput("$10")).toBe(10)
+    expect(parsePublicMoneyInput("€6.50")).toBe(6.5)
+    expect(parsePublicMoneyInput("250 Bs")).toBe(250)
+  })
+
+  it("texto mezclado con números sigue siendo basura (0), no un monto a medias", () => {
+    expect(parsePublicMoneyInput("12abc")).toBe(0)
+    expect(parsePublicMoneyInput("1.2.3")).toBe(0)
+    expect(parsePublicMoneyInput("Bs")).toBe(0)
+  })
+
+  it("más de dos decimales se redondea a céntimos", () => {
+    expect(parsePublicMoneyInput("10.123")).toBe(10.12)
+    expect(parsePublicMoneyInput("10.999")).toBe(11)
+    expect(parsePublicMoneyInput("0,005")).toBe(0.01)
+  })
+
+  it("números muy grandes no pierden precisión de céntimos", () => {
+    expect(parsePublicMoneyInput("999.999.999,99")).toBe(999999999.99)
+    expect(parsePublicMoneyInput("123456789012,34")).toBe(123456789012.34)
+  })
+
   it("ignora espacios intercalados", () => {
     expect(parsePublicMoneyInput(" 9 648,99 ")).toBe(9648.99)
   })

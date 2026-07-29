@@ -28,6 +28,9 @@ export function parseMoneyInput(value: string) {
   const rawValue = String(value || "")
     .trim()
     .replace(/\s/g, "")
+    // Prefijo/sufijo de moneda ("Bs 9.648,99", "$10"): misma limpieza que
+    // parsePublicMoneyInput y cleanMoney — la regla es UNA en todo el sistema.
+    .replace(/^(?:bs\.?|\$|€)+|(?:bs\.?|\$|€)+$/gi, "")
 
   if (!rawValue) {
     return 0
