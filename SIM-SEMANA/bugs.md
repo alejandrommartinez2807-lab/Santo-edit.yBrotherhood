@@ -204,3 +204,47 @@ a revisión con el monto `9.648,99` correcto (check D1R-ADV-7 en verde).
 - **Nota**: NO es pérdida de dinero — el dinero está registrado y el cierre lo
   cuenta. Es una **inconsistencia entre reporte y cierre** que confunde al
   dueño.
+
+---
+
+## BH-SIM-006 · CRÍTICO (atrapado ANTES de producción) · El fix del precio rompía TODAS las burgers armables
+
+- **E (Error)**: el guard de BH-SIM-001 rechazaba con 400 cualquier pedido de un
+  producto **armable** (buildable) en el que el cliente eligiera **más de una
+  sección**. Como las 68 burgers de Brotherhood son armables con 3 grupos
+  obligatorios (Tipo / Proteína / Custom fries), fusionar el fix tal cual
+  **habría tumbado el producto principal del negocio**.
+- **Evidencia**: `scripts/sim/probar-armable.mjs` reproduce la estructura real
+  de `scripts/brotherhood-burger-armable-v2.mjs` y pide como pide el carrito
+  real. Antes del fix: 3 de 4 armados legítimos daban 400 con "El menú cambió
+  mientras armabas tu pedido".
+- **C (Causa raíz)**: `src/components/ProductCard.tsx` colapsa todas las
+  secciones elegidas en **una sola** variación con el nombre unido por `" · "`
+  y **sin id** (`"Smash · Mixta · Cheddar"`). Mi guard buscaba ese nombre
+  compuesto entero en el índice de opciones, donde solo estaban las partes
+  sueltas. Mi primera batería de tests solo cubría productos de una sección.
+- **F (Fix)**: `lookupOption()` ahora, si no encuentra el nombre entero y este
+  contiene el separador, lo parte y **suma los deltas reales de cada parte**.
+  Si una sola parte no existe en el menú, el pedido se rechaza igual que antes
+  — la protección no se debilita.
+- **Segundo defecto que destapó la misma prueba**: variaciones y adicionales
+  compartían un solo espacio de nombres. Una opción de Custom Fries llamada
+  "Tocineta" ($2,50) y el adicional "Tocineta" ($1,50) se pisaban, y el total
+  salía $1 más barato. Ahora son dos mapas separados
+  (`variationDeltas` / `addonDeltas`). En el menú real de hoy no colisionan por
+  poco, pero el dueño edita el menú y la plantilla es aditiva.
+- **Tercer detalle**: los nombres de los GRUPOS ya no se indexan como opciones
+  elegibles — antes `"Proteína · Carne"` habría pasado como armado válido.
+- **S (Blindaje)**: 8 casos nuevos en `publicOrderGuards.test.ts` (una
+  sección, dos, tres con recargos, el armado más cargado con adicionales por
+  cantidad, deltas mentirosos, parte inexistente, nombre de grupo, separadores
+  con espaciado irregular). Total del archivo: 20 tests.
+- **V (Verificación)**: `probar-armable.mjs` 8/8 contra el servidor —
+  el cliente honesto paga exacto en los 4 armados, el atacante que manda
+  deltas negativos paga $14,50 en vez de $0,50, y una opción inventada dentro
+  del armado sigue dando 400. Además `regresion-precios.mjs` 6/6: normal,
+  variación, adicionales con cantidad, combo, carrito de 3 líneas y el ítem
+  manual del staff.
+- **Lección**: el riesgo estaba anotado en `TE-TOCA-A-TI.md` como "probar antes
+  de fusionar". Probarlo costó una hora; no probarlo habría costado un día de
+  ventas.

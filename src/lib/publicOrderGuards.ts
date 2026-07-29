@@ -43,28 +43,42 @@ function cleanNumber(value: unknown) {
 type PriceIndexEntry = {
   price: number
   isActive: boolean
-  // clave (id o nombre, normalizados) → delta legítimo de esa opción
-  optionDeltas: Map<string, number>
+  // Espacios de nombres SEPARADOS: una variación y un adicional pueden
+  // llamarse igual ("Tocineta" es opción de Custom Fries a $2,50 y adicional a
+  // $1,50). Con un solo mapa uno pisaba al otro y el total salía mal.
+  variationDeltas: Map<string, number>
+  addonDeltas: Map<string, number>
 }
 
 function normalizeKey(value: unknown) {
   return cleanText(value).toLowerCase()
 }
 
-function collectOptionValues(entry: PriceIndexEntry, values: unknown, priceKey: "priceDelta" | "price" | "extraPrice") {
+function collectOptionValues(
+  target: Map<string, number>,
+  values: unknown,
+  priceKey: "priceDelta" | "price" | "extraPrice",
+) {
   if (!Array.isArray(values)) return
   for (const raw of values) {
     if (!raw || typeof raw !== "object") continue
     const option = raw as Record<string, unknown>
+    const nested = (option as { values?: unknown }).values
+
+    // Un objeto con `values` es un GRUPO ("Escoge tu proteína", "Custom
+    // fries"): solo se indexan sus opciones. El nombre del grupo NO es
+    // elegible — si se registrara, "Proteína · Carne" pasaría como un armado
+    // válido cuando "Proteína" no es algo que el cliente pueda pedir.
+    if (Array.isArray(nested)) {
+      collectOptionValues(target, nested, "priceDelta")
+      continue
+    }
+
     const delta = cleanNumber(option[priceKey])
     const idKey = normalizeKey(option.id)
     const nameKey = normalizeKey(option.name)
-    if (idKey) entry.optionDeltas.set(idKey, delta)
-    if (nameKey) entry.optionDeltas.set(nameKey, delta)
-    // Grupos de variaciones anidados ({ values: [...] })
-    if (Array.isArray((option as { values?: unknown }).values)) {
-      collectOptionValues(entry, (option as { values?: unknown }).values, "priceDelta")
-    }
+    if (idKey) target.set(idKey, delta)
+    if (nameKey) target.set(nameKey, delta)
   }
 }
 
@@ -77,23 +91,43 @@ export function buildProductPriceIndex(menuProducts: MenuProduct[]): Map<number,
     const entry: PriceIndexEntry = {
       price: roundMoney(cleanNumber(record.price)),
       isActive: record.isActive !== false,
-      optionDeltas: new Map(),
+      variationDeltas: new Map(),
+      addonDeltas: new Map(),
     }
-    collectOptionValues(entry, record.variations, "priceDelta")
-    collectOptionValues(entry, record.addons, "price")
-    collectOptionValues(entry, record.includedIngredients, "extraPrice")
-    collectOptionValues(entry, record.removableIngredients, "extraPrice")
+    collectOptionValues(entry.variationDeltas, record.variations, "priceDelta")
+    collectOptionValues(entry.addonDeltas, record.addons, "price")
+    collectOptionValues(entry.addonDeltas, record.includedIngredients, "extraPrice")
+    collectOptionValues(entry.addonDeltas, record.removableIngredients, "extraPrice")
     index.set(id, entry)
   }
   return index
 }
 
-function lookupOption(entry: PriceIndexEntry, option: SelectionOptionLike): number | null {
+// Productos ARMABLES: el carrito (ProductCard.tsx) colapsa TODAS las secciones
+// elegidas en una sola variación, con el nombre unido por " · " y sin id
+// ("Smash · Mixta · Cheddar"). Buscar ese nombre entero nunca acierta, así que
+// se resuelve parte por parte y se suman los deltas REALES del menú. Si una
+// sola parte no existe, el pedido se rechaza igual que antes.
+const COMPOSITE_SEPARATOR = /\s*·\s*/
+
+function lookupOption(deltas: Map<string, number>, option: SelectionOptionLike): number | null {
   const byId = normalizeKey(option.id)
-  if (byId && entry.optionDeltas.has(byId)) return entry.optionDeltas.get(byId) as number
+  if (byId && deltas.has(byId)) return deltas.get(byId) as number
+
   const byName = normalizeKey(option.name)
-  if (byName && entry.optionDeltas.has(byName)) return entry.optionDeltas.get(byName) as number
-  return null
+  if (byName && deltas.has(byName)) return deltas.get(byName) as number
+
+  if (!byName || !COMPOSITE_SEPARATOR.test(byName)) return null
+
+  const parts = byName.split(COMPOSITE_SEPARATOR).filter(Boolean)
+  if (parts.length < 2) return null
+
+  let total = 0
+  for (const part of parts) {
+    if (!deltas.has(part)) return null
+    total = roundMoney(total + (deltas.get(part) as number))
+  }
+  return total
 }
 
 const MENU_CHANGED_ERROR =
@@ -117,14 +151,14 @@ export function repricePublicOrderItems(
 
     const variation = item.selectedVariation
     if (variation && (cleanText(variation.id) || cleanText(variation.name))) {
-      const delta = lookupOption(entry, variation)
+      const delta = lookupOption(entry.variationDeltas, variation)
       if (delta === null) return { ok: false, error: MENU_CHANGED_ERROR }
       unit = roundMoney(unit + delta)
     }
 
     for (const addon of item.selectedAddons || []) {
       if (!addon || !(cleanText(addon.id) || cleanText(addon.name))) continue
-      const delta = lookupOption(entry, addon)
+      const delta = lookupOption(entry.addonDeltas, addon)
       if (delta === null) return { ok: false, error: MENU_CHANGED_ERROR }
       const addonQuantity = Math.max(1, Math.round(cleanNumber(addon.quantity) || 1))
       unit = roundMoney(unit + delta * addonQuantity)

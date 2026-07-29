@@ -122,6 +122,142 @@ describe("repricePublicOrderItems (BH-SIM-001)", () => {
   })
 })
 
+// Productos ARMABLES (buildable) — las 68 burgers de Brotherhood. El carrito
+// (ProductCard.tsx) colapsa TODAS las secciones elegidas en UNA sola variación
+// con el nombre unido por " · " y sin id. La primera versión del guard buscaba
+// ese nombre compuesto entero, no lo encontraba y rechazaba el pedido: habría
+// tumbado el producto principal del negocio. Evidencia: SIM-SEMANA/armable.md.
+const ARMABLE = [
+  {
+    id: 201,
+    name: "Burger Armable",
+    price: 8,
+    isActive: true,
+    productType: "buildable" as const,
+    variations: [
+      {
+        name: "Tipo de preparación",
+        type: "single",
+        values: [
+          { name: "Smash", priceDelta: 0 },
+          { name: "Clásica", priceDelta: 0 },
+          { name: "A la parrilla", priceDelta: 0 },
+        ],
+      },
+      {
+        name: "Proteína",
+        type: "single",
+        values: [
+          { name: "Carne", priceDelta: 0 },
+          { name: "Mixta", priceDelta: 1.5 },
+        ],
+      },
+      {
+        name: "Custom Fries",
+        type: "single",
+        values: [
+          { name: "Cheddar", priceDelta: 2 },
+          { name: "Tocineta", priceDelta: 2.5 },
+        ],
+      },
+    ],
+    addons: [
+      { name: "Tocineta", price: 1.5, maxQuantity: 2 },
+      { name: "Queso americano", price: 1, maxQuantity: 2 },
+    ],
+  },
+] as never[]
+
+function armable(overrides: Record<string, unknown>) {
+  return { id: 201, name: "Burger Armable", price: 8, quantity: 1, ...overrides }
+}
+
+describe("repricePublicOrderItems · productos ARMABLES (BH-SIM-006)", () => {
+  it("una sola sección elegida sigue funcionando", () => {
+    const r = repricePublicOrderItems([armable({ selectedVariation: { name: "Smash", priceDelta: 0 } })], ARMABLE)
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.items[0].price).toBe(8)
+  })
+
+  it("dos secciones colapsadas en un nombre compuesto se resuelven parte por parte", () => {
+    const r = repricePublicOrderItems(
+      [armable({ selectedVariation: { name: "Smash · Carne", priceDelta: 0 } })],
+      ARMABLE,
+    )
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.items[0].price).toBe(8)
+  })
+
+  it("las tres secciones con recargo suman el delta REAL de cada parte", () => {
+    const r = repricePublicOrderItems(
+      [armable({ selectedVariation: { name: "Clásica · Mixta · Cheddar", priceDelta: 99 } })],
+      ARMABLE,
+    )
+    expect(r.ok).toBe(true)
+    // 8 + 0 + 1.5 + 2 = 11.5 (el priceDelta mentiroso de 99 se ignora)
+    if (r.ok) expect(r.items[0].price).toBe(11.5)
+  })
+
+  it("el pedido más cargado: 3 secciones + adicionales con cantidad", () => {
+    const r = repricePublicOrderItems(
+      [
+        armable({
+          selectedVariation: { name: "A la parrilla · Mixta · Tocineta", priceDelta: 0 },
+          selectedAddons: [
+            { name: "Tocineta", priceDelta: 0, quantity: 2 },
+            { name: "Queso americano", priceDelta: 0, quantity: 1 },
+          ],
+        }),
+      ],
+      ARMABLE,
+    )
+    expect(r.ok).toBe(true)
+    // 8 + 1.5 + 2.5 + (1.5×2) + 1 = 16
+    if (r.ok) expect(r.items[0].price).toBe(16)
+  })
+
+  it("deltas mentirosos en un armable NO abaratan el precio", () => {
+    const r = repricePublicOrderItems(
+      [
+        armable({
+          price: 0.5,
+          selectedVariation: { name: "Clásica · Mixta · Cheddar", priceDelta: -7 },
+          selectedAddons: [{ name: "Tocineta", priceDelta: -1, quantity: 2 }],
+        }),
+      ],
+      ARMABLE,
+    )
+    expect(r.ok).toBe(true)
+    // 8 + 1.5 + 2 + (1.5×2) = 14.5
+    if (r.ok) expect(r.items[0].price).toBe(14.5)
+  })
+
+  it("si UNA parte del armado no existe, se rechaza el pedido entero", () => {
+    const r = repricePublicOrderItems(
+      [armable({ selectedVariation: { name: "Smash · Caviar de beluga", priceDelta: 0 } })],
+      ARMABLE,
+    )
+    expect(r.ok).toBe(false)
+  })
+
+  it("el nombre de un GRUPO no cuenta como opción elegible", () => {
+    const r = repricePublicOrderItems(
+      [armable({ selectedVariation: { name: "Proteína · Carne", priceDelta: 0 } })],
+      ARMABLE,
+    )
+    expect(r.ok).toBe(false)
+  })
+
+  it("tolera separadores con espaciado irregular", () => {
+    const r = repricePublicOrderItems(
+      [armable({ selectedVariation: { name: "Smash·Mixta ·  Cheddar", priceDelta: 0 } })],
+      ARMABLE,
+    )
+    expect(r.ok).toBe(true)
+    if (r.ok) expect(r.items[0].price).toBe(11.5)
+  })
+})
+
 describe("resolvePublicExchangeRate (BH-SIM-002)", () => {
   it("con tasa del servidor, la del cliente se ignora", () => {
     expect(resolvePublicExchangeRate(4, 40)).toBe(40)
