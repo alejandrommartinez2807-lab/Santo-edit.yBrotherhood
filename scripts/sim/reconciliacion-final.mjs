@@ -232,18 +232,29 @@ check("REC-16", "las cuotas mínimas de escenarios de pago se cumplieron", incum
 // ── 10 · Escribir los informes ───────────────────────────────────────────
 const fmt = (n) => `$${Number(n).toFixed(2)}`
 const tablaSemanal = `
-| Concepto | Bitácora esperada | Sistema | Diferencia | Estado |
+La columna "Sistema" descuenta los ${evidencia.length} pedidos de DIAGNÓSTICO
+(${fmt(dineroDiagnostico)}) que crearon los scripts de verificación de los bugs: no son
+operación del negocio y se listan al final del informe.
+
+| Concepto | Bitácora esperada | Sistema (sin diagnóstico) | Diferencia | Estado |
 | --- | ---: | ---: | ---: | --- |
-| Pedidos | ${book.orders} | ${live.orders} | ${live.orders - book.orders} | ${Math.abs(live.orders - book.orders) <= evidencia.length + 2 ? "OK (dif = pedidos-evidencia de bugs)" : "REVISAR"} |
+| Pedidos | ${book.orders} | ${live.ordersGuion} | ${live.ordersGuion - book.orders} | ${Math.abs(live.ordersGuion - book.orders) <= 1 ? "OK" : "REVISAR"} |
 | Clientes equivalentes | ${book.customers} | — | — | solo bitácora |
-| Ventas originadas | ${fmt(book.gross)} | ${fmt(live.gross)} | ${fmt(live.gross - book.gross)} | ${Math.abs(live.gross - book.gross) < 0.05 ? "OK" : "REVISAR"} |
-| Dinero cobrado | ${fmt(book.collected)} | ${fmt(live.collected)} | ${fmt(live.collected - book.collected)} | ${Math.abs(live.collected - book.collected) < 0.02 ? "OK" : "REVISAR"} |
-| Efectivo divisas | ${fmt(book.byMethodUSD["Efectivo divisas"] || 0)} | ${fmt(live.cashUSD)} | ${fmt(live.cashUSD - (book.byMethodUSD["Efectivo divisas"] || 0))} | referencia |
+| Ventas originadas | ${fmt(book.gross - ventaAnuladaCobrada)} | ${fmt(live.grossGuion)} | ${fmt(live.grossGuion - (book.gross - ventaAnuladaCobrada))} | ${Math.abs(live.grossGuion - (book.gross - ventaAnuladaCobrada)) < 0.05 ? "OK" : "REVISAR"} |
+| **Dinero cobrado** | **${fmt(book.collected)}** | **${fmt(live.collectedGuion)}** | **${fmt(live.collectedGuion - book.collected)}** | **${Math.abs(live.collectedGuion - book.collected) < 0.02 ? "OK — AL CENTAVO" : "REVISAR"}** |
 | Pendiente al cierre | ${fmt(book.pending)} | — | — | libro |
-| Cancelaciones | ${book.cancels} | ${live.cancels} | ${live.cancels - book.cancels} | ${Math.abs(live.cancels - book.cancels) <= evidencia.length + 2 ? "OK" : "REVISAR"} |
+| Cancelaciones (del guion) | 37 | ${live.cancelsGuion} | ${live.cancelsGuion - 37} | ${live.cancelsGuion === 37 ? "OK" : "REVISAR"} |
 | Gastos | ${fmt(book.expenses)} | — | — | libro |
-| Suma de los 14 cierres | ${fmt(book.collected)} | ${fmt(sumaCierres)} | ${fmt(sumaCierres - book.collected)} | ${Math.abs(sumaCierres - book.collected) < 0.05 ? "OK" : "REVISAR"} |
+| Suma de los ${comerciales.length} cierres | ${fmt(book.collected)} | ${fmt(sumaCierres)} | ${fmt(sumaCierres - book.collected)} | ${Math.abs(sumaCierres - book.collected) < 0.05 ? "OK" : "REVISAR"} |
 | Inventario (36 insumos) | exacto | ${invDiffs.length === 0 ? "exacto" : `${invDiffs.length} difs`} | ${invDiffs.length} | ${invDiffs.length === 0 ? "OK" : "REVISAR"} |
+
+Las dos diferencias que hubo que explicar:
+
+- **Ventas originadas**: el libro incluye ${fmt(ventaAnuladaCobrada)} de un pedido que se
+  vendió, se cobró y luego se anuló. El sistema lo excluye de "ventas" pero
+  mantiene su dinero en el cierre — es el hallazgo **BH-SIM-005**.
+- **Cancelaciones**: el libro anotó ${book.cancels} porque también contó la anulación del
+  pedido-evidencia del bug del precio. Las del guion son 37 = 2+5+4+3+8+12+3.
 `
 
 const porMetodo = `
@@ -266,9 +277,13 @@ ${DAYS.map((d) => `| ${d} | ${book.byDay[d]?.orders ?? 0} | ${fmt(book.byDay[d]?
 const porSede = `
 ### Por sede
 
-| Sede | Pedidos (libro) | Pedidos (sistema) | Cobrado (libro) | Cobrado (sistema) | Cancelaciones |
+| Sede | Pedidos | Cobrado (libro) | Cobrado (sistema) | Diferencia | Cancelaciones |
 | --- | ---: | ---: | ---: | ---: | ---: |
-${["Principal", "San Diego"].map((b) => `| ${b} | ${book.byBranch[b]?.orders ?? 0} | ${live.byBranch[b]?.orders ?? 0} | ${fmt(book.byBranch[b]?.collected ?? 0)} | ${fmt(live.byBranch[b]?.collected ?? 0)} | ${book.byBranch[b]?.cancels ?? 0} |`).join("\n")}
+${["Principal", "San Diego"].map((b) => {
+  const diagB = round(evidencia.filter((o) => (o.branch_id === P ? "Principal" : "San Diego") === b).reduce((s, o) => s + Number(o.payment_received_equiv_usd || 0), 0))
+  const realB = round((live.byBranch[b]?.collected ?? 0) - diagB)
+  return `| ${b} | ${book.byBranch[b]?.orders ?? 0} | ${fmt(book.byBranch[b]?.collected ?? 0)} | ${fmt(realB)} | ${fmt(realB - (book.byBranch[b]?.collected ?? 0))} | ${book.byBranch[b]?.cancels ?? 0} |`
+}).join("\n")}
 `
 
 const cuotas = `

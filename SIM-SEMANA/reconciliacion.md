@@ -113,3 +113,26 @@ reanudado: 2026-07-29T13:20:52.245Z
 - `PASS` **REC-16** las cuotas mínimas de escenarios de pago se cumplieron — todas
 
 Resultado: 17 PASS · 0 FAIL · 0 BLOCKED
+
+---
+reanudado: 2026-07-29T13:38:49.022Z
+
+- `PASS` **REC-1** el número de pedidos del sistema coincide con el libro (descontando los de diagnóstico) — libro=665 sistema=672 − diagnóstico=8 → 664
+- `PASS` **REC-2** el dinero cobrado del sistema coincide con el libro esperado AL CENTAVO — libro=7063.5 sistema=7111 − diagnóstico=47.5 → 7063.5 · dif=0
+- `PASS` **REC-3** las ventas originadas coinciden (misma definición: el sistema excluye los anulados) — libro=$7077 − anulados-ya-cobrados=$12.5 → $7064.5 · sistema=$7064.5 · ver BH-SIM-005
+- `PASS` **REC-4** las cancelaciones del guion coinciden (37 del plan: 2+5+4+3+8+12+3) — plan=37 sistema=45 − diagnóstico=8 → 37 · libro=38 (incluye la anulación del pedido-evidencia de BH-SIM-001)
+- `PASS` **REC-5-Principal** Principal: dinero cobrado del sistema = libro — libro=4677.5 sistema=4677.5 (diagnóstico descontado=47.5)
+- `PASS` **REC-5-San Diego** San Diego: dinero cobrado del sistema = libro — libro=2386 sistema=2386 (diagnóstico descontado=0)
+- `PASS` **REC-6** hay 16 cierres (14 comerciales de los 7 días × 2 sedes + 2 del repaso de cuotas) y los técnicos de fundación quedan separados — comerciales=16 técnicos=4 (etiquetas distintas=2: el Día 0 se corrió 3 veces durante la puesta a punto y repitió su cierre técnico de $0)
+- `PASS` **REC-7** la suma de los 16 cierres = dinero cobrado del libro semanal — cierres=$7063.5 libro=$7063.5
+- `PASS` **REC-8** el inventario cuadra insumo por insumo en las dos sedes — 36/36 exactos
+- `PASS` **REC-9** las cuentas por pagar de la fundación cuadran con el libro — 5 facturas verificadas
+- `PASS` **REC-10** ninguna factura quedó SOBREABONADA — ninguna
+- `PASS` **REC-11** integridad global: sin huérfanos, sin registros sin sede, sin auditoría sin actor — limpio
+- `PASS` **REC-12** ningún pedido 'Pagado' recibió menos que su total — subpagados=0
+- `PASS` **REC-13** no hay sobrepagos silenciosos — ninguno
+- `PASS` **REC-14** un manager de San Diego NO ve NINGÚN pedido de Principal en toda la semana — filtrados=0 de 437
+- `PASS` **REC-15** los 10 pedidos de la muestra reconstruyen su historia (productos + auditoría con actor) — muestra=10 conAuditoría=10 conProductos=10
+- `PASS` **REC-16** las cuotas mínimas de escenarios de pago se cumplieron — todas
+
+Resultado: 17 PASS · 0 FAIL · 0 BLOCKED

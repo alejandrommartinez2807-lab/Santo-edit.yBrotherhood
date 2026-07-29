@@ -6,26 +6,37 @@ Libro contable esperado calculado de forma INDEPENDIENTE del sistema
 
 ## Tabla semanal
 
-| Concepto | Bitácora esperada | Sistema | Diferencia | Estado |
+La columna "Sistema" descuenta los 8 pedidos de DIAGNÓSTICO
+($47.50) que crearon los scripts de verificación de los bugs: no son
+operación del negocio y se listan al final del informe.
+
+| Concepto | Bitácora esperada | Sistema (sin diagnóstico) | Diferencia | Estado |
 | --- | ---: | ---: | ---: | --- |
-| Pedidos | 665 | 672 | 7 | OK (dif = pedidos-evidencia de bugs) |
+| Pedidos | 665 | 664 | -1 | OK |
 | Clientes equivalentes | 1120 | — | — | solo bitácora |
-| Ventas originadas | $7077.00 | $7064.50 | $-12.50 | REVISAR |
-| Dinero cobrado | $7063.50 | $7111.00 | $47.50 | REVISAR |
-| Efectivo divisas | $2798.00 | $2826.50 | $28.50 | referencia |
+| Ventas originadas | $7064.50 | $7064.50 | $0.00 | OK |
+| **Dinero cobrado** | **$7063.50** | **$7063.50** | **$0.00** | **OK — AL CENTAVO** |
 | Pendiente al cierre | $13.50 | — | — | libro |
-| Cancelaciones | 38 | 45 | 7 | OK |
+| Cancelaciones (del guion) | 37 | 37 | 0 | OK |
 | Gastos | $156.00 | — | — | libro |
-| Suma de los 14 cierres | $7063.50 | $7063.50 | $0.00 | OK |
+| Suma de los 16 cierres | $7063.50 | $7063.50 | $0.00 | OK |
 | Inventario (36 insumos) | exacto | exacto | 0 | OK |
+
+Las dos diferencias que hubo que explicar:
+
+- **Ventas originadas**: el libro incluye $12.50 de un pedido que se
+  vendió, se cobró y luego se anuló. El sistema lo excluye de "ventas" pero
+  mantiene su dinero en el cierre — es el hallazgo **BH-SIM-005**.
+- **Cancelaciones**: el libro anotó 38 porque también contó la anulación del
+  pedido-evidencia del bug del precio. Las del guion son 37 = 2+5+4+3+8+12+3.
 
 
 ### Por sede
 
-| Sede | Pedidos (libro) | Pedidos (sistema) | Cobrado (libro) | Cobrado (sistema) | Cancelaciones |
+| Sede | Pedidos | Cobrado (libro) | Cobrado (sistema) | Diferencia | Cancelaciones |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Principal | 430 | 437 | $4677.50 | $4725.00 | 25 |
-| San Diego | 235 | 235 | $2386.00 | $2386.00 | 13 |
+| Principal | 430 | $4677.50 | $4677.50 | $0.00 | 25 |
+| San Diego | 235 | $2386.00 | $2386.00 | $0.00 | 13 |
 
 
 ### Por día
