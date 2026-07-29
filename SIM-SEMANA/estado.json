@@ -1,8 +1,20 @@
 {
   "completedDays": [
-    "dia-0"
+    "dia-0",
+    "dia-1",
+    "dia-2"
   ],
-  "quotas": {},
+  "quotas": {
+    "efectivo": 29,
+    "efectivo-cambio": 13,
+    "pagomovil": 14,
+    "mixto": 12,
+    "transferencia": 18,
+    "reintento-seguro": 1,
+    "pago-reportado": 2,
+    "reportado-bs-formato-ve": 2,
+    "segunda-pata": 6
+  },
   "ids": {
     "principal": "e514be79-bb39-4050-9f27-e6c10249a1cf",
     "sanDiego": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
@@ -123,10 +135,25 @@
       "Mantenimiento menor plancha SD": "exp-1785296441581-wk749n"
     },
     "cierreTecnico": "close-1785296609119-rqtpyx",
-    "cierreTecnicoSD": "close-1785296611328-vumegn"
+    "cierreTecnicoSD": "close-1785296611328-vumegn",
+    "closes": {
+      "dia-1:Principal": "close-1785298594417-iacad1",
+      "dia-1:San Diego": "close-1785298596681-6rp1dc",
+      "dia-2:Principal": "close-1785299925186-1cgqqk",
+      "dia-2:San Diego": "close-1785299927996-7rcata"
+    }
   },
   "bugs": [],
   "commits": [],
   "seed": "brotherhood-week-v1",
-  "rate": 40
+  "rate": 40,
+  "day1": {
+    "openAccountCarry": {
+      "accountId": "5e486912-1443-4ae1-bd77-6f3e6a5e953b",
+      "orderId": "ord-ms5jvpnv-uar0uorrxt",
+      "total": 13.5,
+      "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6"
+    },
+    "priceManipulationOrderId": "ord-ms5k7igt-uz0ogl9bl0"
+  }
 }

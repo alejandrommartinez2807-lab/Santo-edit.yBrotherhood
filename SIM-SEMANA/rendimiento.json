@@ -136,5 +136,339 @@
       "errors": 0,
       "timeouts": 0
     }
+  },
+  "dia-1": {
+    "GET /api/public/products": {
+      "count": 2,
+      "p50": 203,
+      "p95": 632,
+      "max": 632,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/open-accounts": {
+      "count": 5,
+      "p50": 1765,
+      "p95": 1775,
+      "max": 1775,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/orders": {
+      "count": 59,
+      "p50": 4624,
+      "p95": 8352,
+      "max": 11831,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH orders/:id (cocina)": {
+      "count": 98,
+      "p50": 1766,
+      "p95": 2132,
+      "max": 3049,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH orders/:id (entrega)": {
+      "count": 39,
+      "p50": 1837,
+      "p95": 1978,
+      "max": 2144,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH payment": {
+      "count": 32,
+      "p50": 2042,
+      "p95": 2546,
+      "max": 3360,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH open-account pay": {
+      "count": 3,
+      "p50": 10152,
+      "p95": 12230,
+      "max": 12230,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5k76ol-y30vsrjjdx": {
+      "count": 1,
+      "p50": 972,
+      "p95": 972,
+      "max": 972,
+      "errors": 1,
+      "timeouts": 0
+    },
+    "GET /api/orders": {
+      "count": 2,
+      "p50": 176,
+      "p95": 2598,
+      "max": 2598,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "GET /api/reports": {
+      "count": 1,
+      "p50": 728,
+      "p95": 728,
+      "max": 728,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5k7igt-uz0ogl9bl0": {
+      "count": 1,
+      "p50": 5283,
+      "p95": 5283,
+      "max": 5283,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/payment-proofs": {
+      "count": 1,
+      "p50": 300,
+      "p95": 300,
+      "max": 300,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH orders/:id (cancelar)": {
+      "count": 2,
+      "p50": 704,
+      "p95": 2252,
+      "max": 2252,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST day-expenses": {
+      "count": 2,
+      "p50": 1071,
+      "p95": 1090,
+      "max": 1090,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST day-close": {
+      "count": 2,
+      "p50": 636,
+      "p95": 760,
+      "max": 760,
+      "errors": 0,
+      "timeouts": 0
+    }
+  },
+  "dia-1-repaso": {
+    "GET /api/public/products": {
+      "count": 2,
+      "p50": 210,
+      "p95": 780,
+      "max": 780,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/orders": {
+      "count": 5,
+      "p50": 5626,
+      "p95": 5799,
+      "max": 5799,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH orders/:id (cocina)": {
+      "count": 10,
+      "p50": 1802,
+      "p95": 2205,
+      "max": 2205,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH orders/:id (entrega)": {
+      "count": 5,
+      "p50": 747,
+      "p95": 2104,
+      "max": 2104,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH payment": {
+      "count": 5,
+      "p50": 2240,
+      "p95": 2426,
+      "max": 2426,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH orders/:id (cancelar)": {
+      "count": 1,
+      "p50": 5087,
+      "p95": 5087,
+      "max": 5087,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/payment-proofs": {
+      "count": 1,
+      "p50": 2029,
+      "p95": 2029,
+      "max": 2029,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/day-close": {
+      "count": 1,
+      "p50": 840,
+      "p95": 840,
+      "max": 840,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST day-close": {
+      "count": 2,
+      "p50": 1768,
+      "p95": 2349,
+      "max": 2349,
+      "errors": 0,
+      "timeouts": 0
+    }
+  },
+  "dia-2": {
+    "GET /api/public/products": {
+      "count": 2,
+      "p50": 331,
+      "p95": 711,
+      "max": 711,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/open-accounts": {
+      "count": 4,
+      "p50": 1656,
+      "p95": 1786,
+      "max": 1786,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/orders": {
+      "count": 71,
+      "p50": 5624,
+      "p95": 8498,
+      "max": 10399,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH orders/:id (cocina)": {
+      "count": 136,
+      "p50": 1933,
+      "p95": 2379,
+      "max": 3198,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH orders/:id (entrega)": {
+      "count": 57,
+      "p50": 1873,
+      "p95": 2482,
+      "max": 3360,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH open-account pay": {
+      "count": 4,
+      "p50": 9383,
+      "p95": 13826,
+      "max": 13826,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH payment": {
+      "count": 58,
+      "p50": 2217,
+      "p95": 2904,
+      "max": 3130,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH orders/:id (cancelar)": {
+      "count": 5,
+      "p50": 2508,
+      "p95": 7602,
+      "max": 7602,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5l3uhq-iott4lgavl": {
+      "count": 1,
+      "p50": 2147,
+      "p95": 2147,
+      "max": 2147,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "GET /api/orders": {
+      "count": 1,
+      "p50": 3091,
+      "p95": 3091,
+      "max": 3091,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/staff": {
+      "count": 1,
+      "p50": 891,
+      "p95": 891,
+      "max": 891,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5ky6fz-p8ng9bjwv9": {
+      "count": 1,
+      "p50": 1395,
+      "p95": 1395,
+      "max": 1395,
+      "errors": 1,
+      "timeouts": 0
+    },
+    "GET /api/reports": {
+      "count": 1,
+      "p50": 635,
+      "p95": 635,
+      "max": 635,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/inventory": {
+      "count": 1,
+      "p50": 1817,
+      "p95": 1817,
+      "max": 1817,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5kvue0-1sqzxd2u0n": {
+      "count": 3,
+      "p50": 1723,
+      "p95": 2336,
+      "max": 2336,
+      "errors": 1,
+      "timeouts": 0
+    },
+    "POST day-expenses": {
+      "count": 2,
+      "p50": 1086,
+      "p95": 1355,
+      "max": 1355,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST day-close": {
+      "count": 2,
+      "p50": 2302,
+      "p95": 3296,
+      "max": 3296,
+      "errors": 0,
+      "timeouts": 0
+    }
   }
 }
