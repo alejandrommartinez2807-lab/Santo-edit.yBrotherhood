@@ -29,3 +29,20 @@ reanudado: 2026-07-29T15:50:37.162Z
 
 limpieza: 6 pedidos de prueba eliminados
 nota: el pedido A1 (insumos usados) dejó su consumo descontado a propósito; el resto revirtió su inventario al anularse
+
+---
+reanudado: 2026-07-29T16:24:01.451Z
+
+- `PASS` **ANU-1** anulación personal con dinero que SE QUEDÓ: origen/quién/insumos/dinero estructurados — origen=personal motivo=cliente se fue sin esperar por=Alejandro (Dueño)(owner) insumos=true dinero=se_quedo $8
+- `PASS` **ANU-2** la nota del pedido explica que el dinero se quedó en caja (visible sin migración) — nota=o) · Dueño | Ingredientes USADOS: el inventario queda descontado | Dinero cobrado ($8.00) se quedó en caja (no es venta)
+- `PASS` **ANU-3** el dinero cobrado NO se borró del pedido (jamás se pierde información) — recibido=$8 estado=Pagado
+- `PASS` **ANU-4** sin respuesta sobre el dinero: aplica el DEFAULT devuelto (supuesto 2026-07-29) — dinero=devuelto $8
+- `PASS` **ANU-5** insumos sin usar quedan estructurados (false = devueltos al stock) — insumos=false
+- `PASS` **ANU-6** pedido sin cobro: el destino del dinero queda NULL (no aplica), no un valor inventado — dinero=null monto=null
+- `PASS` **ANU-7** cancelación del CLIENTE con motivo: origen cliente + motivo tal cual — origen=cliente motivo=me equivoqué de sede por=Cliente (seguimiento)
+- `PASS` **ANU-8** cliente sin motivo: cancel_reason NULL en la base (la UI dice 'no dejó motivo', la base no inventa) — origen=cliente motivo=null
+- `PASS` **ANU-9** anulación AUTOMÁTICA: origen automatico + Sistema + motivo del sistema + insumos devueltos — estado=Cancelado origen=automatico motivo=Sin pago reportado en 30 min (automático) por=Sistema
+- `PASS` **ANU-10** la configuración de anulación automática vuelve a como estaba — quedó=0 (original=0)
+
+limpieza: 6 pedidos de prueba eliminados
+nota: el pedido A1 (insumos usados) dejó su consumo descontado a propósito; el resto revirtió su inventario al anularse

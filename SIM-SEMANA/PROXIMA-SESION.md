@@ -47,11 +47,11 @@ que faltaba y ahora existe es la línea aparte del dinero que "se quedó".
 
 ## Qué falta (poco y concreto)
 
-1. **Aplicar 0036 en la base de PRUEBA** (`gnyvdlxlrjwbsdctincy`) — la
-   migración se aplicó en producción, pero la base de prueba sigue sin las
-   columnas. Después: `node scripts/sim/probar-anulaciones.mjs` debe dar
-   ANU-1…ANU-10 en verde (hoy: 3 PASS de flujo/nota/config + 7 esperando las
-   columnas; TODO el flujo ya funciona, incluida la automática).
+1. ~~Aplicar 0036 en la base de PRUEBA~~ — **HECHO 2026-07-29**: el usuario
+   la aplicó y `probar-anulaciones.mjs` dio **ANU-1…ANU-10 en 10 PASS · 0
+   FAIL** (los tres orígenes con detalle estructurado completo, default
+   devuelto, NULL donde no aplica, automática incluida). Bitácora en
+   `SIM-SEMANA/anulaciones.md`.
 2. **Deploy de Brotherhood** (`npx vercel --prod` desde `D:/Santo edit`, lo
    corre el usuario) — los 4 commits de esta sesión no están en el vivo.
 3. **Merge del porte a main**: la rama `main-guard-precios` está lista
