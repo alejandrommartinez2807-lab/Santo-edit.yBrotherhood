@@ -31,6 +31,53 @@ volver a preguntarlo.**
    (mínimo 5 caracteres); hay que garantizar que se muestra siempre junto al
    pedido, no solo en Auditoría.
 
+### Los TRES orígenes de una anulación (dato del usuario, 2026-07-29)
+
+Un pedido se puede anular por tres vías y **el motivo NO está garantizado
+igual en las tres**. El dueño tiene que poder distinguirlas de un vistazo:
+
+| Origen | Dónde | Motivo | Qué se guarda hoy |
+| --- | --- | --- | --- |
+| **Automático** | `lib/unpaidAutoCancel.ts:217` | del sistema | `"Sin pago reportado en X min (automático)"` |
+| **Personal** | `PATCH /api/orders/[orderId]` | **obligatorio** (mín. 5 car.) | lo que escribió la persona |
+| **Cliente** | `/api/public/order-cancel:152` | **OPCIONAL** — puede no escribir nada | `reason \|\| "Cancelado por el cliente (sin motivo)"` |
+
+**Lo bueno**: el motivo se guarda en los tres casos, incluido el cliente que no
+escribe nada. Eso ya funciona, no hay que arreglarlo.
+
+**Los tres huecos**:
+
+1. **No hay campo de ORIGEN.** Hoy solo se distingue parseando el texto del
+   motivo ("(automático)", "Cancelado por el cliente"). Se rompe en cuanto
+   alguien reescriba un mensaje. Hace falta un campo estructurado
+   (`automático | personal | cliente`).
+2. **El cierre lee el motivo del sitio equivocado.** `day-close/route.ts:418`
+   hace un regex `/ANULADO:\s*([^|]+)/` sobre `customerNote` (texto libre donde
+   se concatenan otras cosas con `|`) en vez de leer la columna real
+   `cancel_reason`. Si el prefijo cambia o la nota se edita, el historial se
+   queda SIN motivo aunque el dato esté guardado.
+3. **No se guarda QUIÉN anuló.** El pedido tiene `registered_by_*` y
+   `charged_by_*` pero no `cancelled_by_*`. En el historial se ve quién tomó el
+   pedido, no quién lo anuló — ese dato solo vive en `audit_logs`, justo donde
+   el dueño no debería tener que ir a buscarlo.
+
+### Dónde tiene que verse (el recorrido del dueño, tal cual lo describió)
+
+Notificación → **caja** → **cierre de caja** → **historial de cierres**. En las
+cuatro, el pedido anulado debe explicarse solo:
+
+```
+#412 · Anulado automáticamente — sin pago reportado en 30 min
+       $12,50 · insumos devueltos al stock
+#418 · Anulado por Génesis (encargada) — "el cliente se arrepintió, ya
+       estaba en la plancha" · $9,50 · insumos consumidos · dinero devuelto
+#423 · Cancelado por el cliente — no dejó motivo · $6,00 · sin cobrar
+```
+
+⚠️ En el tercer caso, **"no dejó motivo" ES la información**. Nunca un espacio
+en blanco: un hueco vacío parece que el sistema perdió el dato y es justo la
+confusión que hay que evitar.
+
 ### Lo que hay que tocar (verificar antes, no asumir)
 
 - **Cierre de caja** (`/api/day-close`, `lib/ordersDayClose.ts`): el dinero de
