@@ -111,7 +111,7 @@ async function fetchBcvHtml() {
   }
 }
 
-async function getBcvUsdRate(): Promise<ExchangeRateResponse> {
+export async function getBcvUsdRate(): Promise<ExchangeRateResponse> {
   const html = await fetchBcvHtml()
   const rate = extractBcvUsdRate(html)
   const valueDate = extractBcvValueDate(html)
@@ -127,7 +127,7 @@ async function getBcvUsdRate(): Promise<ExchangeRateResponse> {
   }
 }
 
-async function getBcvEurRate(): Promise<ExchangeRateResponse> {
+export async function getBcvEurRate(): Promise<ExchangeRateResponse> {
   const html = await fetchBcvHtml()
   const rate = extractBcvEurRate(html)
   const valueDate = extractBcvValueDate(html)
