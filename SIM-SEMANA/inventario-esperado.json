@@ -1,0 +1,492 @@
+{
+  "items": {
+    "e514be79-bb39-4050-9f27-e6c10249a1cf:inv-1785296280734-d5vsi2": {
+      "name": "Pan de hamburguesa",
+      "unit": "unidades",
+      "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+      "itemId": "inv-1785296280734-d5vsi2",
+      "expected": 600,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 400
+        },
+        {
+          "type": "Compra",
+          "qty": 200
+        }
+      ]
+    },
+    "e514be79-bb39-4050-9f27-e6c10249a1cf:inv-1785296282047-7gi4sc": {
+      "name": "Carne 150g",
+      "unit": "unidades",
+      "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+      "itemId": "inv-1785296282047-7gi4sc",
+      "expected": 500,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 300
+        },
+        {
+          "type": "Compra",
+          "qty": 200
+        }
+      ]
+    },
+    "e514be79-bb39-4050-9f27-e6c10249a1cf:inv-1785296283182-unmnea": {
+      "name": "Pollo desmechado",
+      "unit": "kg",
+      "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+      "itemId": "inv-1785296283182-unmnea",
+      "expected": 40,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 40
+        }
+      ]
+    },
+    "e514be79-bb39-4050-9f27-e6c10249a1cf:inv-1785296284468-i90afw": {
+      "name": "Queso amarillo",
+      "unit": "kg",
+      "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+      "itemId": "inv-1785296284468-i90afw",
+      "expected": 30,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 30
+        }
+      ]
+    },
+    "e514be79-bb39-4050-9f27-e6c10249a1cf:inv-1785296285658-qtpt0n": {
+      "name": "Tocineta",
+      "unit": "kg",
+      "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+      "itemId": "inv-1785296285658-qtpt0n",
+      "expected": 20,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 20
+        }
+      ]
+    },
+    "e514be79-bb39-4050-9f27-e6c10249a1cf:inv-1785296286892-658eae": {
+      "name": "Papas congeladas",
+      "unit": "kg",
+      "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+      "itemId": "inv-1785296286892-658eae",
+      "expected": 120,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 120
+        }
+      ]
+    },
+    "e514be79-bb39-4050-9f27-e6c10249a1cf:inv-1785296288102-pblp0w": {
+      "name": "Aceite",
+      "unit": "litros",
+      "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+      "itemId": "inv-1785296288102-pblp0w",
+      "expected": 60,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 60
+        }
+      ]
+    },
+    "e514be79-bb39-4050-9f27-e6c10249a1cf:inv-1785296289266-3iq7ya": {
+      "name": "Refresco 1.5L",
+      "unit": "unidades",
+      "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+      "itemId": "inv-1785296289266-3iq7ya",
+      "expected": 210,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 150
+        },
+        {
+          "type": "Compra",
+          "qty": 60
+        }
+      ]
+    },
+    "e514be79-bb39-4050-9f27-e6c10249a1cf:inv-1785296290573-v2m9ji": {
+      "name": "Agua mineral",
+      "unit": "unidades",
+      "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+      "itemId": "inv-1785296290573-v2m9ji",
+      "expected": 120,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 120
+        }
+      ]
+    },
+    "e514be79-bb39-4050-9f27-e6c10249a1cf:inv-1785296291851-r1vylp": {
+      "name": "Salsa de tomate",
+      "unit": "kg",
+      "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+      "itemId": "inv-1785296291851-r1vylp",
+      "expected": 25,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 25
+        }
+      ]
+    },
+    "e514be79-bb39-4050-9f27-e6c10249a1cf:inv-1785296293129-3snet0": {
+      "name": "Mayonesa",
+      "unit": "kg",
+      "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+      "itemId": "inv-1785296293129-3snet0",
+      "expected": 25,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 25
+        }
+      ]
+    },
+    "e514be79-bb39-4050-9f27-e6c10249a1cf:inv-1785296294419-5x5omz": {
+      "name": "Mostaza",
+      "unit": "kg",
+      "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+      "itemId": "inv-1785296294419-5x5omz",
+      "expected": 12,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 12
+        }
+      ]
+    },
+    "e514be79-bb39-4050-9f27-e6c10249a1cf:inv-1785296295777-9mu2pl": {
+      "name": "Vegetales frescos",
+      "unit": "kg",
+      "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+      "itemId": "inv-1785296295777-9mu2pl",
+      "expected": 100,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 50
+        },
+        {
+          "type": "Compra",
+          "qty": 50
+        }
+      ]
+    },
+    "e514be79-bb39-4050-9f27-e6c10249a1cf:inv-1785296296884-jijjf9": {
+      "name": "Cebolla",
+      "unit": "kg",
+      "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+      "itemId": "inv-1785296296884-jijjf9",
+      "expected": 40,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 40
+        }
+      ]
+    },
+    "e514be79-bb39-4050-9f27-e6c10249a1cf:inv-1785296297977-3omw14": {
+      "name": "Empaques burger",
+      "unit": "unidades",
+      "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+      "itemId": "inv-1785296297977-3omw14",
+      "expected": 800,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 500
+        },
+        {
+          "type": "Compra",
+          "qty": 300
+        }
+      ]
+    },
+    "e514be79-bb39-4050-9f27-e6c10249a1cf:inv-1785296299094-37l90o": {
+      "name": "Bolsas kraft",
+      "unit": "unidades",
+      "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+      "itemId": "inv-1785296299094-37l90o",
+      "expected": 400,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 400
+        }
+      ]
+    },
+    "e514be79-bb39-4050-9f27-e6c10249a1cf:inv-1785296300400-br1uus": {
+      "name": "Servilletas",
+      "unit": "unidades",
+      "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+      "itemId": "inv-1785296300400-br1uus",
+      "expected": 2000,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 2000
+        }
+      ]
+    },
+    "e514be79-bb39-4050-9f27-e6c10249a1cf:inv-1785296301610-smnqus": {
+      "name": "Hielo",
+      "unit": "kg",
+      "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+      "itemId": "inv-1785296301610-smnqus",
+      "expected": 80,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 80
+        }
+      ]
+    },
+    "395e3b33-cda3-4111-8dd5-a5ee52d43cd6:inv-1785296302788-nr0fxs": {
+      "name": "Pan de hamburguesa",
+      "unit": "unidades",
+      "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
+      "itemId": "inv-1785296302788-nr0fxs",
+      "expected": 240,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 240
+        }
+      ]
+    },
+    "395e3b33-cda3-4111-8dd5-a5ee52d43cd6:inv-1785296304066-3kolp5": {
+      "name": "Carne 150g",
+      "unit": "unidades",
+      "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
+      "itemId": "inv-1785296304066-3kolp5",
+      "expected": 180,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 180
+        }
+      ]
+    },
+    "395e3b33-cda3-4111-8dd5-a5ee52d43cd6:inv-1785296305601-gb711m": {
+      "name": "Pollo desmechado",
+      "unit": "kg",
+      "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
+      "itemId": "inv-1785296305601-gb711m",
+      "expected": 24,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 24
+        }
+      ]
+    },
+    "395e3b33-cda3-4111-8dd5-a5ee52d43cd6:inv-1785296306732-vxcdqd": {
+      "name": "Queso amarillo",
+      "unit": "kg",
+      "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
+      "itemId": "inv-1785296306732-vxcdqd",
+      "expected": 18,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 18
+        }
+      ]
+    },
+    "395e3b33-cda3-4111-8dd5-a5ee52d43cd6:inv-1785296308439-2iyz8z": {
+      "name": "Tocineta",
+      "unit": "kg",
+      "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
+      "itemId": "inv-1785296308439-2iyz8z",
+      "expected": 12,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 12
+        }
+      ]
+    },
+    "395e3b33-cda3-4111-8dd5-a5ee52d43cd6:inv-1785296336953-oynlcg": {
+      "name": "Papas congeladas",
+      "unit": "kg",
+      "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
+      "itemId": "inv-1785296336953-oynlcg",
+      "expected": 72,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 72
+        }
+      ]
+    },
+    "395e3b33-cda3-4111-8dd5-a5ee52d43cd6:inv-1785296342988-o17i60": {
+      "name": "Aceite",
+      "unit": "litros",
+      "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
+      "itemId": "inv-1785296342988-o17i60",
+      "expected": 36,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 36
+        }
+      ]
+    },
+    "395e3b33-cda3-4111-8dd5-a5ee52d43cd6:inv-1785296344530-659cn7": {
+      "name": "Refresco 1.5L",
+      "unit": "unidades",
+      "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
+      "itemId": "inv-1785296344530-659cn7",
+      "expected": 90,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 90
+        }
+      ]
+    },
+    "395e3b33-cda3-4111-8dd5-a5ee52d43cd6:inv-1785296346138-zq35v2": {
+      "name": "Agua mineral",
+      "unit": "unidades",
+      "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
+      "itemId": "inv-1785296346138-zq35v2",
+      "expected": 72,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 72
+        }
+      ]
+    },
+    "395e3b33-cda3-4111-8dd5-a5ee52d43cd6:inv-1785296347640-aml8y4": {
+      "name": "Salsa de tomate",
+      "unit": "kg",
+      "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
+      "itemId": "inv-1785296347640-aml8y4",
+      "expected": 15,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 15
+        }
+      ]
+    },
+    "395e3b33-cda3-4111-8dd5-a5ee52d43cd6:inv-1785296348829-f2ozgx": {
+      "name": "Mayonesa",
+      "unit": "kg",
+      "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
+      "itemId": "inv-1785296348829-f2ozgx",
+      "expected": 15,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 15
+        }
+      ]
+    },
+    "395e3b33-cda3-4111-8dd5-a5ee52d43cd6:inv-1785296349973-rddb32": {
+      "name": "Mostaza",
+      "unit": "kg",
+      "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
+      "itemId": "inv-1785296349973-rddb32",
+      "expected": 7.2,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 7.2
+        }
+      ]
+    },
+    "395e3b33-cda3-4111-8dd5-a5ee52d43cd6:inv-1785296351080-1jslqv": {
+      "name": "Vegetales frescos",
+      "unit": "kg",
+      "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
+      "itemId": "inv-1785296351080-1jslqv",
+      "expected": 30,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 30
+        }
+      ]
+    },
+    "395e3b33-cda3-4111-8dd5-a5ee52d43cd6:inv-1785296352208-dasxzo": {
+      "name": "Cebolla",
+      "unit": "kg",
+      "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
+      "itemId": "inv-1785296352208-dasxzo",
+      "expected": 24,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 24
+        }
+      ]
+    },
+    "395e3b33-cda3-4111-8dd5-a5ee52d43cd6:inv-1785296353341-tmeepv": {
+      "name": "Empaques burger",
+      "unit": "unidades",
+      "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
+      "itemId": "inv-1785296353341-tmeepv",
+      "expected": 300,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 300
+        }
+      ]
+    },
+    "395e3b33-cda3-4111-8dd5-a5ee52d43cd6:inv-1785296354518-wm52bt": {
+      "name": "Bolsas kraft",
+      "unit": "unidades",
+      "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
+      "itemId": "inv-1785296354518-wm52bt",
+      "expected": 240,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 240
+        }
+      ]
+    },
+    "395e3b33-cda3-4111-8dd5-a5ee52d43cd6:inv-1785296355794-5ceh2l": {
+      "name": "Servilletas",
+      "unit": "unidades",
+      "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
+      "itemId": "inv-1785296355794-5ceh2l",
+      "expected": 1200,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 1200
+        }
+      ]
+    },
+    "395e3b33-cda3-4111-8dd5-a5ee52d43cd6:inv-1785296356964-fuh08u": {
+      "name": "Hielo",
+      "unit": "kg",
+      "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
+      "itemId": "inv-1785296356964-fuh08u",
+      "expected": 48,
+      "movements": [
+        {
+          "type": "Carga inicial",
+          "qty": 48
+        }
+      ]
+    }
+  }
+}

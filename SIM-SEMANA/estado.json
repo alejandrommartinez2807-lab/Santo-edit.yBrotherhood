@@ -1,0 +1,132 @@
+{
+  "completedDays": [
+    "dia-0"
+  ],
+  "quotas": {},
+  "ids": {
+    "principal": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+    "sanDiego": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
+    "staff": {
+      "alejandro": "c00447f1-6fab-4324-afa7-530db0ebae11",
+      "genesis": "a54d14ae-ec8f-44c1-9cad-2a06010f9599",
+      "luis": "d7a85862-142b-4a3a-aecf-7ec8e5a3df7a",
+      "mariafernanda": "1ea186d2-8ae9-42e8-879d-f51eb54ca2aa",
+      "kelvin": "ceacbcc2-34e3-40b8-8552-247a394d5f38",
+      "roxana": "f79b25c0-cf24-4077-bc40-fe15339e4205",
+      "jesus": "0764ce2a-4d02-4487-bc43-73f362af67b6",
+      "dubraska": "20bb3f10-f173-4fc9-ab4d-debb9dc4b138",
+      "carlosalberto": "d9b80aba-f3e3-40fd-81a0-4d2ef65d321b",
+      "anthony": "20b38968-1553-4564-ba55-0568c9882546",
+      "yorgelis": "960ce96b-de2d-4473-af69-47c59abdc8f1",
+      "daniela": "4aea5d31-99db-466e-971e-c237833de685",
+      "miguel": "d0d7ab85-a859-45fb-8b30-96fc0bbc4441",
+      "vanessa": "039c6047-8c3b-4760-9650-4d2fc01a70e8",
+      "soporteqa": "a8413da9-2635-4ec2-b762-a04a90f3378a",
+      "gustavo": "9c0fe47d-4c28-4bce-81ea-8fce24806843"
+    },
+    "inventory": {
+      "e514be79-bb39-4050-9f27-e6c10249a1cf": {
+        "Pan de hamburguesa": "inv-1785296280734-d5vsi2",
+        "Carne 150g": "inv-1785296282047-7gi4sc",
+        "Pollo desmechado": "inv-1785296283182-unmnea",
+        "Queso amarillo": "inv-1785296284468-i90afw",
+        "Tocineta": "inv-1785296285658-qtpt0n",
+        "Papas congeladas": "inv-1785296286892-658eae",
+        "Aceite": "inv-1785296288102-pblp0w",
+        "Refresco 1.5L": "inv-1785296289266-3iq7ya",
+        "Agua mineral": "inv-1785296290573-v2m9ji",
+        "Salsa de tomate": "inv-1785296291851-r1vylp",
+        "Mayonesa": "inv-1785296293129-3snet0",
+        "Mostaza": "inv-1785296294419-5x5omz",
+        "Vegetales frescos": "inv-1785296295777-9mu2pl",
+        "Cebolla": "inv-1785296296884-jijjf9",
+        "Empaques burger": "inv-1785296297977-3omw14",
+        "Bolsas kraft": "inv-1785296299094-37l90o",
+        "Servilletas": "inv-1785296300400-br1uus",
+        "Hielo": "inv-1785296301610-smnqus"
+      },
+      "395e3b33-cda3-4111-8dd5-a5ee52d43cd6": {
+        "Pan de hamburguesa": "inv-1785296302788-nr0fxs",
+        "Carne 150g": "inv-1785296304066-3kolp5",
+        "Pollo desmechado": "inv-1785296305601-gb711m",
+        "Queso amarillo": "inv-1785296306732-vxcdqd",
+        "Tocineta": "inv-1785296308439-2iyz8z",
+        "Papas congeladas": "inv-1785296336953-oynlcg",
+        "Aceite": "inv-1785296342988-o17i60",
+        "Refresco 1.5L": "inv-1785296344530-659cn7",
+        "Agua mineral": "inv-1785296346138-zq35v2",
+        "Salsa de tomate": "inv-1785296347640-aml8y4",
+        "Mayonesa": "inv-1785296348829-f2ozgx",
+        "Mostaza": "inv-1785296349973-rddb32",
+        "Vegetales frescos": "inv-1785296351080-1jslqv",
+        "Cebolla": "inv-1785296352208-dasxzo",
+        "Empaques burger": "inv-1785296353341-tmeepv",
+        "Bolsas kraft": "inv-1785296354518-wm52bt",
+        "Servilletas": "inv-1785296355794-5ceh2l",
+        "Hielo": "inv-1785296356964-fuh08u"
+      }
+    },
+    "suppliers": {
+      "Carnes El Toro": "bcad1f15-e6bc-4442-b649-c316ae04f0df",
+      "Panadería La Espiga": "5458dbff-9fff-40b2-92a5-a3d8985047c3",
+      "Bebidas Corocorote": "1f24b5ae-eb0f-4cdf-ae0e-8467f2193e9d",
+      "Empaques Carabobo": "ac49c881-9169-41ed-a177-26b8d6ab961b",
+      "Verduras Doña Chela": "cfc0a8d3-82bd-4015-990f-4efc45d9a222"
+    },
+    "purchases": {
+      "FT-1001": "b2f4fc8d-379d-45c2-8258-fb7eeaaa076d",
+      "PE-501": "a9e83b21-e19a-43a4-b27c-cef2a9f1355e",
+      "BC-88": "fd38d0dc-d16f-4528-9b70-b29fb46ad3f3",
+      "EC-77": "26de057a-2b2a-4064-8edc-a83cb26777ab",
+      "VC-33": "1fe1df8c-cb55-4053-9ac5-72492d8408db"
+    },
+    "menu": {
+      "e514be79-bb39-4050-9f27-e6c10249a1cf": {
+        "Burger Clásica": 202608010001,
+        "Burger Doble Brutal": 202608010002,
+        "Burger de Pollo": 202608010003,
+        "Burger Vegetariana": 202608010004,
+        "Papas Medianas": 202608010005,
+        "Papas Brutales": 202608010006,
+        "Tequeños (6)": 202608010007,
+        "Nuggets (8)": 202608010008,
+        "Salchipapa": 202608010009,
+        "Ensalada de la casa": 202608010010,
+        "Refresco 1.5L": 202608010011,
+        "Agua mineral": 202608010012,
+        "Combo Brutal": 202608010013,
+        "Combo Pareja": 202608010014,
+        "Malta artesanal El Cacri": 202608010015
+      },
+      "395e3b33-cda3-4111-8dd5-a5ee52d43cd6": {
+        "Burger Clásica": 202608010016,
+        "Burger Doble Brutal": 202608010017,
+        "Burger de Pollo": 202608010018,
+        "Burger Vegetariana": 202608010019,
+        "Papas Medianas": 202608010020,
+        "Papas Brutales": 202608010021,
+        "Tequeños (6)": 202608010022,
+        "Nuggets (8)": 202608010023,
+        "Salchipapa": 202608010024,
+        "Ensalada de la casa": 202608010025,
+        "Refresco 1.5L": 202608010026,
+        "Agua mineral": 202608010027,
+        "Combo Brutal": 202608010028,
+        "Combo Pareja": 202608010029,
+        "Patacón San Diego": 202608010030
+      }
+    },
+    "expenses": {
+      "Alquiler local Principal (ficticio)": "exp-1785296438558-8h6sz8",
+      "Limpieza profunda de apertura": "exp-1785296439587-uandt2",
+      "Hielo de arranque": "exp-1785296440589-3rddv5",
+      "Mantenimiento menor plancha SD": "exp-1785296441581-wk749n"
+    },
+    "cierreTecnico": "close-1785296609119-rqtpyx",
+    "cierreTecnicoSD": "close-1785296611328-vumegn"
+  },
+  "bugs": [],
+  "commits": [],
+  "seed": "brotherhood-week-v1",
+  "rate": 40
+}

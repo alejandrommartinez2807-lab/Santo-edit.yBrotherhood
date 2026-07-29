@@ -1,0 +1,140 @@
+{
+  "dia-0": {
+    "GET /api/public/branches": {
+      "count": 1,
+      "p50": 252,
+      "p95": 252,
+      "max": 252,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/business-config": {
+      "count": 1,
+      "p50": 664,
+      "p95": 664,
+      "max": 664,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/branches/:id/config": {
+      "count": 1,
+      "p50": 800,
+      "p95": 800,
+      "max": 800,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/delivery-distance": {
+      "count": 1,
+      "p50": 498,
+      "p95": 498,
+      "max": 498,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "GET /api/public/business-config": {
+      "count": 2,
+      "p50": 377,
+      "p95": 385,
+      "max": 385,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "GET /api/local-auth": {
+      "count": 16,
+      "p50": 1390,
+      "p95": 1615,
+      "max": 1615,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "GET /api/orders": {
+      "count": 2,
+      "p50": 1016,
+      "p95": 2137,
+      "max": 2137,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "GET /api/reports": {
+      "count": 3,
+      "p50": 684,
+      "p95": 1461,
+      "max": 1461,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/staff": {
+      "count": 1,
+      "p50": 593,
+      "p95": 593,
+      "max": 593,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/day-close": {
+      "count": 3,
+      "p50": 1769,
+      "p95": 2505,
+      "max": 2505,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "GET /api/branches": {
+      "count": 1,
+      "p50": 955,
+      "p95": 955,
+      "max": 955,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/inventory": {
+      "count": 1,
+      "p50": 577,
+      "p95": 577,
+      "max": 577,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/suppliers": {
+      "count": 5,
+      "p50": 1346,
+      "p95": 1429,
+      "max": 1429,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/supplier-purchases": {
+      "count": 5,
+      "p50": 2006,
+      "p95": 2241,
+      "max": 2241,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/supplier-purchases/:id/payments": {
+      "count": 3,
+      "p50": 2399,
+      "p95": 3039,
+      "max": 3039,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "GET /api/supplier-purchases": {
+      "count": 1,
+      "p50": 1279,
+      "p95": 1279,
+      "max": 1279,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "GET /api/public/products": {
+      "count": 3,
+      "p50": 193,
+      "p95": 418,
+      "max": 418,
+      "errors": 0,
+      "timeouts": 0
+    }
+  }
+}

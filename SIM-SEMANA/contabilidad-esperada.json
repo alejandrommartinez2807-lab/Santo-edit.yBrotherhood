@@ -1,0 +1,67 @@
+{
+  "days": {
+    "dia-0": {
+      "e514be79-bb39-4050-9f27-e6c10249a1cf": {
+        "ordersCreated": 0,
+        "equivalentCustomers": 0,
+        "grossSalesUSD": 0,
+        "collectedUSD": 0,
+        "collectedByMethodUSD": {},
+        "collectedByMethodVES": {},
+        "cashUSD": 0,
+        "changeGivenUSD": 0,
+        "pendingUSD": 0,
+        "cancellations": 0,
+        "cancelledUSD": 0,
+        "expensesUSD": 402,
+        "purchasesPaidUSD": 0,
+        "bySeller": {},
+        "byChannel": {}
+      },
+      "395e3b33-cda3-4111-8dd5-a5ee52d43cd6": {
+        "ordersCreated": 0,
+        "equivalentCustomers": 0,
+        "grossSalesUSD": 0,
+        "collectedUSD": 0,
+        "collectedByMethodUSD": {},
+        "collectedByMethodVES": {},
+        "cashUSD": 0,
+        "changeGivenUSD": 0,
+        "pendingUSD": 0,
+        "cancellations": 0,
+        "cancelledUSD": 0,
+        "expensesUSD": 25,
+        "purchasesPaidUSD": 0,
+        "bySeller": {},
+        "byChannel": {}
+      }
+    }
+  },
+  "suppliers": {
+    "FT-1001": {
+      "totalUSD": 220,
+      "paidUSD": 0,
+      "pendingUSD": 220
+    },
+    "PE-501": {
+      "totalUSD": 70,
+      "paidUSD": 70,
+      "pendingUSD": 0
+    },
+    "BC-88": {
+      "totalUSD": 96,
+      "paidUSD": 0,
+      "pendingUSD": 96
+    },
+    "EC-77": {
+      "totalUSD": 36,
+      "paidUSD": 36,
+      "pendingUSD": 0
+    },
+    "VC-33": {
+      "totalUSD": 60,
+      "paidUSD": 24,
+      "pendingUSD": 36
+    }
+  }
+}
