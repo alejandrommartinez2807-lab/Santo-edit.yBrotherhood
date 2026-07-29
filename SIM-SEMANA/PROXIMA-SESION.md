@@ -52,12 +52,16 @@ que faltaba y ahora existe es la línea aparte del dinero que "se quedó".
    FAIL** (los tres orígenes con detalle estructurado completo, default
    devuelto, NULL donde no aplica, automática incluida). Bitácora en
    `SIM-SEMANA/anulaciones.md`.
-2. **Deploy de Brotherhood** (`npx vercel --prod` desde `D:/Santo edit`, lo
-   corre el usuario) — los 4 commits de esta sesión no están en el vivo.
-3. **Merge del porte a main**: la rama `main-guard-precios` está lista
-   (1 commit sobre main, build verificado). Fusionar y desplegar Santo
-   Perrito cuando el usuario quiera. Su Supabase NO necesita migración para
-   esto (el guard es solo código).
+2. ~~Deploy de Brotherhood~~ — **HECHO 2026-07-29 tarde**
+   (`dpl_EbZWSRp8UXmkg5nh8knazgqYpuwJ`, Ready): el lote completo de anulaciones
+   +barrido está EN VIVO en `brotherhood-xi.vercel.app` (home 200, tasa EUR
+   846,07 sirviendo). Medición read-only contra producción anexada a
+   `rendimiento-vs-umbrales.md`: p95 ≤ 1 s, los FAIL del dev server eran del
+   entorno. Ramas empujadas a GitHub (`main` y `brotherhood-publico`).
+3. ~~Merge del porte a main~~ — **HECHO**: `main` = `affec30` (fusionado y
+   empujado). El push NO disparó deploy (el proyecto `santo-edit` no tiene
+   conexión git): se publicó manual desde un worktree enlazado con el
+   `project.json` de `.vercel-santoperrito-backup/` — ver resultado abajo.
 4. **El default de anulación sigue siendo SUPUESTO** ("devuelto") — cuando
    el dueño confirme, es una línea en `orderCancellationInfo.ts`
    (`CANCEL_REFUND_DEFAULT`) + actualizar su test.

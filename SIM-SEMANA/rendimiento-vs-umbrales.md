@@ -48,3 +48,23 @@ denegados, conflictos 409 esperados), no fallas de rendimiento.
    pay` (cobro de cuenta completa) es sistemáticamente la operación más
    pesada (reparte FIFO entre pedidos + recalcula totales). Si en producción
    algo va a rozar el umbral, es esto.
+
+## Anexo 2026-07-29 (tarde): medición contra PRODUCCIÓN (solo lecturas)
+
+Tras publicar el lote (`dpl_EbZWSRp8UXmkg5nh8knazgqYpuwJ`), medido contra
+`brotherhood-xi.vercel.app` — 12 muestras por endpoint espaciadas 400 ms,
+SOLO endpoints públicos de lectura (jamás se crean pedidos de prueba en
+producción sin autorización explícita):
+
+| Endpoint | p50 | p95 | Errores | Umbral aplicable | Veredicto |
+| --- | ---: | ---: | ---: | --- | --- |
+| `GET /` (home pública) | 154 ms | 559 ms | 0 | checkout usable ≤ 3 s | **PASS** |
+| `GET /api/public/branches` | 279 ms | 934 ms | 0 | — | **PASS** |
+| `GET /api/public/products` (el menú del checkout) | 273 ms | 430 ms | 0 | checkout usable ≤ 3 s | **PASS** |
+| `GET /api/exchange-rate` | 247 ms | 1.030 ms | 0 | — | PASS (el pico es el refresh del BCV) |
+
+Conclusión: los FAIL del dev server eran del ENTORNO (compilación bajo
+demanda + disco lento), no del código — producción va 10-20× más rápido en
+las rutas medibles. **Sigue sin medirse en producción la ruta de ESCRITURA**
+(crear pedido / cobrar / cerrar): exigiría escribir datos reales; hacerlo
+solo con autorización del usuario, como en las rondas QA.
