@@ -36,6 +36,9 @@ import {
   verifyCancellationCode,
 } from "@/lib/cancellationRequests"
 import { revertInventoryConsumptionForOrder } from "@/lib/ordersInventory"
+import { getOrderPayment } from "@/lib/localOrderMoney"
+import { resolveCancelRefund } from "@/lib/orderCancellationInfo"
+import { applyCancellationDetails } from "@/lib/orderCancellationStore"
 import { sendOwnerOnlyPush } from "@/lib/orderPushNotifications"
 import {
   isWhatsAppBusinessConfigured,
@@ -440,6 +443,12 @@ export async function PATCH(
     const inventoryWasUsed =
       typeof body.inventoryWasUsed === "boolean" ? body.inventoryWasUsed : null
 
+    // ¿Le devolvió el dinero al cliente? Solo aplica si el pedido tenía
+    // dinero cobrado. null = no respondió (API vieja, script): aplica
+    // CANCEL_REFUND_DEFAULT — hoy "devuelto", el supuesto del 2026-07-29.
+    const moneyReturned =
+      typeof body.moneyReturned === "boolean" ? body.moneyReturned : null
+
     // Permisos ANTES del flujo de código del dueño: un rol que no puede
     // anular (cocina, delivery, promotor…) no debe poder crear solicitudes ni
     // dispararle push/WhatsApp al dueño (quedaban solicitudes fantasma).
@@ -621,6 +630,18 @@ export async function PATCH(
               ? `Ingredientes sin usar: se devolvieron ${inventoryRevertedCount} insumos al inventario`
               : "Ingredientes sin usar (sin movimientos vinculados que revertir)"
 
+      // Dinero ya cobrado: la regla del dueño (2026-07-29). Devuelto = sale
+      // del cierre y de los reportes; se quedó = cuenta en el cierre en una
+      // línea aparte (está en la gaveta), nunca como venta.
+      const receivedUSD = getOrderPayment(order).receivedEquivalentUSD
+      const cancelRefund = receivedUSD > 0 ? resolveCancelRefund(moneyReturned) : null
+      const moneyNote =
+        receivedUSD > 0
+          ? cancelRefund === "se_quedo"
+            ? `Dinero cobrado ($${receivedUSD.toFixed(2)}) se quedó en caja (no es venta)`
+            : `Dinero cobrado ($${receivedUSD.toFixed(2)}) devuelto al cliente`
+          : ""
+
       // El motivo viaja en la nota del pedido (sin migración): el staff lo ve
       // en la tarjeta y el cliente en su página de seguimiento (ANULADO: …).
       // El "|" corta lo que ve el cliente: la regex pública captura SOLO el
@@ -633,6 +654,7 @@ export async function PATCH(
         `ANULADO: ${cancelReason}`,
         `Por: ${cancelledByLabel}`,
         inventoryNote,
+        moneyNote,
       ]
         .filter(Boolean)
         .join(" | ")
@@ -651,6 +673,19 @@ export async function PATCH(
       if (!noteError) {
         order.customerNote = nextNote
       }
+
+      // Detalle estructurado (0036): origen personal, quién anuló, insumos y
+      // destino del dinero. Nunca lanza; sin migración se omite.
+      await applyCancellationDetails(orderId, branchId, {
+        origin: "personal",
+        reason: cancelReason,
+        cancelledById: actor.id ? String(actor.id) : undefined,
+        cancelledByName: actor.label || getRoleLabel(access.role),
+        cancelledByRole: String(access.role || ""),
+        inventoryUsed: inventoryWasUsed,
+        refund: cancelRefund,
+        refundUSD: receivedUSD,
+      })
 
       if (usedCancellationRequestId) {
         await markCancellationRequestUsed(usedCancellationRequestId, {
@@ -693,11 +728,21 @@ export async function PATCH(
       // anuló y qué productos llevaba el pedido. Nunca lanza. El dueño puede
       // apagarla completa desde Configuración (cancellationAlertsEnabled).
       const actor = getLocalAccessAuditActor(access)
+      // La notificación también explica el dinero (el recorrido del dueño
+      // empieza aquí): devuelto o quedado en caja, con el monto.
+      const alertReceivedUSD = getOrderPayment(order).receivedEquivalentUSD
+      const alertMoneyNote =
+        alertReceivedUSD > 0
+          ? resolveCancelRefund(moneyReturned) === "se_quedo"
+            ? `$${alertReceivedUSD.toFixed(2)} cobrados se quedaron en caja`
+            : `$${alertReceivedUSD.toFixed(2)} cobrados devueltos al cliente`
+          : ""
       const itemsSummary = [
         (order.items || [])
           .map((item) => `${Math.max(1, Number(item.quantity || 1))}x ${item.name}`)
           .join(", "),
         cancelReason ? `Motivo: ${cancelReason}` : "",
+        alertMoneyNote,
       ]
         .filter(Boolean)
         .join(" · ")
@@ -725,7 +770,9 @@ export async function PATCH(
         ? {
             status,
             cancelReason,
+            cancelOrigin: "personal",
             ...(inventoryWasUsed === null ? {} : { inventoryWasUsed }),
+            ...(moneyReturned === null ? {} : { moneyReturned }),
           }
         : { status },
     })

@@ -171,6 +171,22 @@ export function orderRowToLocalOrder(row: Row, items: OrderItem[]): LocalOrder {
     chargedByName: cleanText(row.charged_by_name) || undefined,
     chargedByRole: cleanText(row.charged_by_role) || undefined,
 
+    // Detalle de anulación (0036): si la migración no está aplicada, el
+    // select("*") no trae las columnas y quedan undefined.
+    cancelOrigin: (cleanText(row.cancel_origin) || undefined) as LocalOrder["cancelOrigin"],
+    cancelReason: cleanText(row.cancel_reason) || undefined,
+    cancelledById: cleanText(row.cancelled_by_id) || undefined,
+    cancelledByName: cleanText(row.cancelled_by_name) || undefined,
+    cancelledByRole: cleanText(row.cancelled_by_role) || undefined,
+    cancelledAt: cleanText(row.cancelled_at) || undefined,
+    cancelInventoryUsed:
+      typeof row.cancel_inventory_used === "boolean"
+        ? row.cancel_inventory_used
+        : undefined,
+    cancelRefund: (cleanText(row.cancel_refund) || undefined) as LocalOrder["cancelRefund"],
+    cancelRefundUSD:
+      row.cancel_refund_usd == null ? undefined : num(row.cancel_refund_usd),
+
     deliveryReportStatus: (row.delivery_report_status as LocalOrder["deliveryReportStatus"]) || undefined,
     deliveryReportedAt: cleanText(row.delivery_reported_at) || undefined,
     deliveryReportedBy: cleanText(row.delivery_reported_by) || undefined,

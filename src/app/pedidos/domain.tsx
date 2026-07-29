@@ -136,6 +136,18 @@ export type LocalOrder = {
   chargedByName?: string
   chargedByRole?: string
 
+  // Detalle estructurado de la anulación (0036); las anulaciones anteriores
+  // a la migración viajan solo en la nota "ANULADO: …".
+  cancelOrigin?: "automatico" | "personal" | "cliente"
+  cancelReason?: string
+  cancelledById?: string
+  cancelledByName?: string
+  cancelledByRole?: string
+  cancelledAt?: string
+  cancelInventoryUsed?: boolean
+  cancelRefund?: "devuelto" | "se_quedo"
+  cancelRefundUSD?: number
+
   payment?: OrderPayment
   paymentStatus?: PaymentStatus
   amountReceivedUSD?: number

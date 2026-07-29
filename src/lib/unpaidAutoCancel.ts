@@ -3,6 +3,8 @@ import { getBusinessConfig, getPaymentProofs } from "@/lib/orders"
 import { isElectronicPaymentMethod } from "@/lib/paymentOptions"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { revertInventoryConsumptionForOrder } from "@/lib/ordersInventory"
+import { clearCancellationDetails } from "@/lib/orderCancellationStore"
+import { isMissingColumnError } from "@/lib/ordersStoreMappers"
 import { sendOrderCancelledStaffPush } from "@/lib/orderPushNotifications"
 import { writeAuditLog } from "@/lib/audit"
 import { captureError } from "@/lib/monitoring"
@@ -159,6 +161,7 @@ export async function maybeAutoCancelUnpaidOrder(
     )
     if (hasActiveProof) return { cancelled: false }
 
+    const cancelReasonText = `Sin pago reportado en ${limitMinutes} min (automático)`
     const reasonNote = `ANULADO: Sin pago reportado en ${limitMinutes} min (anulación automática). Si aún lo quieres, vuelve a pedir o pásate por caja.`
     const nextNote = String(order.customer_note || "").trim()
       ? `${String(order.customer_note).trim()} | ${reasonNote}`
@@ -167,14 +170,36 @@ export async function maybeAutoCancelUnpaidOrder(
     // Lock optimista: solo anula si SIGUE en "Nuevo" Y sigue sin cobro (el
     // cobro de caja no cambia el status, así que el WHERE re-verifica los
     // montos: si caja cobró en la ventana, 0 filas y no se toca).
-    const { data: updatedRows, error: updateError } = await supabase
-      .from("orders")
-      .update({ status: "Cancelado", customer_note: nextNote })
-      .eq("id", orderId)
-      .eq("status", "Nuevo")
-      .eq("amount_received_usd", 0)
-      .eq("amount_received_ves", 0)
-      .select("id")
+    // Detalle estructurado (0036) en el MISMO update: origen automático,
+    // sin dinero (el WHERE lo garantiza) e insumos devueltos (el revert de
+    // inventario de abajo). Sin la migración, el reintento va sin columnas.
+    const buildCancelUpdate = (withDetails: boolean) =>
+      supabase
+        .from("orders")
+        .update(
+          withDetails
+            ? {
+                status: "Cancelado",
+                customer_note: nextNote,
+                cancel_origin: "automatico",
+                cancel_reason: cancelReasonText,
+                cancelled_by_name: "Sistema",
+                cancelled_by_role: "system",
+                cancelled_at: new Date().toISOString(),
+                cancel_inventory_used: false,
+              }
+            : { status: "Cancelado", customer_note: nextNote },
+        )
+        .eq("id", orderId)
+        .eq("status", "Nuevo")
+        .eq("amount_received_usd", 0)
+        .eq("amount_received_ves", 0)
+        .select("id")
+
+    let { data: updatedRows, error: updateError } = await buildCancelUpdate(true)
+    if (updateError && isMissingColumnError(updateError)) {
+      ;({ data: updatedRows, error: updateError } = await buildCancelUpdate(false))
+    }
 
     if (updateError || !updatedRows?.length) return { cancelled: false }
 
@@ -196,6 +221,9 @@ export async function maybeAutoCancelUnpaidOrder(
         })
         .eq("id", orderId)
         .eq("status", "Cancelado")
+      // El pedido revivió: se limpia el detalle de anulación (0036) para que
+      // un pedido vivo no cargue datos de una anulación deshecha.
+      await clearCancellationDetails(orderId, String(order.branch_id || "") || null)
       return { cancelled: false }
     }
 

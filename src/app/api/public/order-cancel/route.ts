@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { getBusinessConfig, getPaymentProofs } from "@/lib/orders"
 import { recomputeOpenAccountTotals } from "@/lib/ordersStoreOpenAccounts"
 import { revertInventoryConsumptionForOrder } from "@/lib/ordersInventory"
+import { isMissingColumnError } from "@/lib/ordersStoreMappers"
 import { sendOrderCancelledStaffPush } from "@/lib/orderPushNotifications"
 import { writeAuditLog } from "@/lib/audit"
 import { enforceRateLimit } from "@/lib/rateLimit"
@@ -103,14 +104,36 @@ export async function POST(request: NextRequest) {
 
     // Lock optimista: solo cancela si SIGUE en "Nuevo" Y sigue sin cobro (el
     // cobro de caja no cambia el status; el WHERE re-verifica los montos).
-    const { data: updatedRows, error: updateError } = await supabase
-      .from("orders")
-      .update({ status: "Cancelado", customer_note: nextNote })
-      .eq("id", orderId)
-      .eq("status", "Nuevo")
-      .eq("amount_received_usd", 0)
-      .eq("amount_received_ves", 0)
-      .select("id")
+    // Detalle estructurado (0036) en el MISMO update: origen cliente, motivo
+    // tal cual lo escribió (NULL si no dejó nada — la UI muestra "no dejó
+    // motivo"), sin dinero e insumos devueltos. Sin migración: sin columnas.
+    const buildCancelUpdate = (withDetails: boolean) =>
+      supabase
+        .from("orders")
+        .update(
+          withDetails
+            ? {
+                status: "Cancelado",
+                customer_note: nextNote,
+                cancel_origin: "cliente",
+                cancel_reason: reason || null,
+                cancelled_by_name: "Cliente (seguimiento)",
+                cancelled_by_role: "public",
+                cancelled_at: new Date().toISOString(),
+                cancel_inventory_used: false,
+              }
+            : { status: "Cancelado", customer_note: nextNote },
+        )
+        .eq("id", orderId)
+        .eq("status", "Nuevo")
+        .eq("amount_received_usd", 0)
+        .eq("amount_received_ves", 0)
+        .select("id")
+
+    let { data: updatedRows, error: updateError } = await buildCancelUpdate(true)
+    if (updateError && isMissingColumnError(updateError)) {
+      ;({ data: updatedRows, error: updateError } = await buildCancelUpdate(false))
+    }
 
     if (updateError) throw new Error(updateError.message)
     if (!updatedRows?.length) {

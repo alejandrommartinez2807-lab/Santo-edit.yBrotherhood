@@ -62,9 +62,40 @@ import {
   type SummaryItem,
 } from "./domain"
 import { downloadExcelFriendlyCsv, downloadTextFile } from "./downloads"
+import {
+  CANCEL_REFUND_DEFAULT,
+  formatCancellationLine,
+} from "@/lib/orderCancellationInfo"
 
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
 const VIEW_MODE_STORAGE_KEY = "santo_perrito_closes_view_mode"
+
+// Línea "Anulado por X — motivo · $ · insumos · dinero" para las vistas de
+// anulados (política 2026-07-29). Cierres viejos sin detalle estructurado
+// caen al motivo solo.
+function cancellationLineFor(order: {
+  cancelReason?: string
+  cancelOrigin?: string
+  cancelledBy?: string
+  cancelledByRole?: string
+  cancelRefund?: string
+  cancelInventoryUsed?: boolean | null
+  receivedEquivalentUSD?: number
+}) {
+  const received = Number(order.receivedEquivalentUSD || 0)
+  return formatCancellationLine({
+    origin: order.cancelOrigin,
+    reason: order.cancelReason,
+    cancelledByName: order.cancelledBy,
+    cancelledByRole: order.cancelledByRole,
+    inventoryUsed:
+      typeof order.cancelInventoryUsed === "boolean"
+        ? order.cancelInventoryUsed
+        : null,
+    refund: received > 0 ? order.cancelRefund || CANCEL_REFUND_DEFAULT : null,
+    receivedLabel: received > 0 ? `${formatUSD(received)} cobrados` : "sin cobrar",
+  })
+}
 
 function downloadDayClosesCsv(
   dayCloses: SavedDayClose[],
@@ -1171,6 +1202,20 @@ function CloseCard({
           <InfoBox label="Gastos" value={formatUSD(close.expensesTotalUSD)} />
           <InfoBox label="Neto estimado" value={formatUSD(getCloseNetEstimatedUSD(close))} />
           <InfoBox label="Pagados" value={String(close.paidOrders)} />
+          {/* Dinero de anulados (política 2026-07-29): línea aparte, nunca
+              dentro de "Cobrado real". */}
+          {close.cancelledKeptUSD > 0 && (
+            <InfoBox
+              label="De anulados, quedó en caja (no es venta)"
+              value={formatUSD(close.cancelledKeptUSD)}
+            />
+          )}
+          {close.cancelledRefundedUSD > 0 && (
+            <InfoBox
+              label="De anulados, devuelto al cliente"
+              value={formatUSD(close.cancelledRefundedUSD)}
+            />
+          )}
           {close.supplierPaymentsEquivalentUSD > 0 && (
             <>
               <InfoBox
@@ -1416,7 +1461,7 @@ function CloseDetailModal({
                       </p>
                     </div>
                     <p className="mt-1.5 text-xs font-bold leading-4 text-red-800">
-                      Motivo: {order.cancelReason || "(sin motivo registrado)"}
+                      {cancellationLineFor(order)}
                     </p>
                   </div>
                 ))}
@@ -1473,11 +1518,13 @@ function CloseDetailModal({
                     {order.registeredBy ? ` · Registró: ${order.registeredBy}` : ""}
                   </p>
 
-                  {/* Motivo de anulación a la vista en el historial de cierres
-                      (pedido del dueño 2026-07-22). */}
-                  {order.status === "Cancelado" && order.cancelReason && (
+                  {/* Anulación a la vista en el historial de cierres (pedido
+                      del dueño 2026-07-22; detalle completo 2026-07-29):
+                      origen, motivo, dinero e insumos — siempre, aunque no
+                      haya motivo ("no dejó motivo" ES la información). */}
+                  {order.status === "Cancelado" && (
                     <p className="mt-1.5 rounded-xl border border-red-300 bg-red-50 px-3 py-1.5 text-xs font-bold leading-4 text-red-700">
-                      Motivo de anulación: {order.cancelReason}
+                      {cancellationLineFor(order)}
                     </p>
                   )}
 
@@ -2275,7 +2322,7 @@ function RangeReport({
                     {canceled.closeLabel}
                   </p>
                   <p className="mt-1 text-xs font-bold text-red-700">
-                    Motivo: {canceled.cancelReason || "(sin motivo registrado)"}
+                    {cancellationLineFor(canceled)}
                   </p>
                 </div>
               ))}

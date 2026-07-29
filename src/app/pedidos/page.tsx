@@ -33,6 +33,12 @@ import {
   Wallet,
 } from "lucide-react"
 import { formatUSD, formatVES } from "@/utils/formatCurrency"
+import {
+  CANCEL_REFUND_DEFAULT,
+  formatCancellationLine,
+  inferCancelOriginFromNote,
+  parseCancelNote,
+} from "@/lib/orderCancellationInfo"
 import { getModulePlanAccess, getShortPlanLabel } from "@/lib/localPlans"
 import type { OpenAccount } from "@/types/localOrders"
 import { FiscalSnapshotView } from "@/components/FiscalBreakdown"
@@ -278,6 +284,9 @@ export default function PedidosPage() {
   const knownOrderStatusRef = useRef<Map<string, OrderStatus>>(new Map())
   const hasLoadedOnceRef = useRef(false)
   const pendingStatusRef = useRef<Map<string, OrderStatus>>(new Map())
+  // Día (dateLabel) cuyo cierre YA se guardó en un intento de reinicio que
+  // falló a medias: el reintento no debe duplicar el cierre (§18).
+  const dayCloseSavedForRef = useRef("")
   const businessConfigRef = useRef<BusinessConfig>(DEFAULT_BUSINESS_CONFIG)
   const soundEnabledRef = useRef(false)
   const audioContextRef = useRef<AudioContext | null>(null)
@@ -1505,6 +1514,30 @@ export default function PedidosPage() {
       (order) => order.status !== "Cancelado"
     )
 
+    // Dinero de pedidos anulados YA COBRADOS (política del dueño 2026-07-29):
+    // "devuelto" sale del cierre (solo se informa); "se quedó" cuenta en el
+    // cierre en una línea aparte — está en la gaveta y el arqueo tiene que
+    // cuadrar — pero NUNCA como venta. Anulaciones sin respuesta guardada
+    // aplican el default (hoy: devuelto, supuesto sin confirmar).
+    const cancelledMoneyTotals = canceledToday.reduce(
+      (acc, order) => {
+        const received = getOrderPayment(order).receivedEquivalentUSD
+        if (received > 0) {
+          if ((order.cancelRefund || CANCEL_REFUND_DEFAULT) === "se_quedo") {
+            acc.keptUSD += received
+            acc.keptCount += 1
+          } else {
+            acc.refundedUSD += received
+            acc.refundedCount += 1
+          }
+        }
+        return acc
+      },
+      { keptUSD: 0, keptCount: 0, refundedUSD: 0, refundedCount: 0 }
+    )
+    cancelledMoneyTotals.keptUSD = roundMoney(cancelledMoneyTotals.keptUSD)
+    cancelledMoneyTotals.refundedUSD = roundMoney(cancelledMoneyTotals.refundedUSD)
+
     const activeToday = ordersToday.filter(shouldShowAsActive)
     const deliveryToday = ordersToday.filter(isDeliveryOrder)
     const deliveredDeliveryToday = deliveredToday.filter(isDeliveryOrder)
@@ -1764,6 +1797,7 @@ export default function PedidosPage() {
       ordersToday,
       deliveredToday,
       canceledToday,
+      cancelledMoneyTotals,
       billableToday,
       activeToday,
       deliveryToday,
@@ -2234,6 +2268,26 @@ export default function PedidosPage() {
       })
     }
 
+    if (dayStats.cancelledMoneyTotals.keptUSD > 0) {
+      reviewItems.push({
+        title: "Dinero de pedidos anulados que se quedó en caja",
+        description:
+          "Está en la gaveta y cuenta para el arqueo, pero NO es venta: va en su propia línea del cierre.",
+        value: formatUSD(dayStats.cancelledMoneyTotals.keptUSD),
+        tone: "warning",
+      })
+    }
+
+    if (dayStats.cancelledMoneyTotals.refundedUSD > 0) {
+      reviewItems.push({
+        title: "Dinero devuelto por anulaciones",
+        description:
+          "Pedidos anulados cuyo dinero se devolvió al cliente: no cuenta en el cierre ni en los reportes.",
+        value: formatUSD(dayStats.cancelledMoneyTotals.refundedUSD),
+        tone: "info",
+      })
+    }
+
     if (
       reviewItems.length === 0 ||
       reviewItems.every((item) => item.tone === "info")
@@ -2291,6 +2345,12 @@ export default function PedidosPage() {
       activeOrders: dayStats.activeToday.length,
       deliveredOrders: dayStats.deliveredToday.length,
       canceledOrders: dayStats.canceledToday.length,
+      // Dinero de anulados (política 2026-07-29): "se quedó" suma en el
+      // cierre en línea aparte (nunca como venta); "devuelto" solo informa.
+      cancelledKeptUSD: dayStats.cancelledMoneyTotals.keptUSD,
+      cancelledKeptCount: dayStats.cancelledMoneyTotals.keptCount,
+      cancelledRefundedUSD: dayStats.cancelledMoneyTotals.refundedUSD,
+      cancelledRefundedCount: dayStats.cancelledMoneyTotals.refundedCount,
       deliveryRegistered: dayStats.deliveryToday.length,
       deliveryDelivered: dayStats.deliveredDeliveryToday.length,
       deliveryActive: dayStats.activeDeliveryToday.length,
@@ -2408,7 +2468,13 @@ export default function PedidosPage() {
 
       const shouldSaveDayClose = dayStats.ordersToday.length > 0 || dayExpenseTotals.count > 0
 
-      if (shouldSaveDayClose) {
+      // Operación a medias (§18): si el cierre se guardó pero el reinicio de
+      // pedidos falló, el REINTENTO no debe guardar un SEGUNDO cierre del
+      // mismo día — quedaban dos cierres con el mismo dinero en el historial.
+      // Se recuerda el día ya cerrado en esta pantalla y se salta el POST.
+      const alreadySavedThisDay = dayCloseSavedForRef.current === dayStats.dateLabel
+
+      if (shouldSaveDayClose && !alreadySavedThisDay) {
         const closeResponse = await fetch("/api/day-close", {
           method: "POST",
           headers: {
@@ -2427,6 +2493,8 @@ export default function PedidosPage() {
             closeData.error || "No se pudo guardar el cierre del día"
           )
         }
+
+        dayCloseSavedForRef.current = dayStats.dateLabel
       }
 
       const response = await fetch("/api/orders", {
@@ -2441,6 +2509,10 @@ export default function PedidosPage() {
       if (!response.ok) {
         throw new Error(data.error || "No se pudieron reiniciar los pedidos")
       }
+
+      // Reinicio completado: el próximo cierre (aunque sea el mismo día,
+      // p. ej. doble turno) vuelve a guardarse normal.
+      dayCloseSavedForRef.current = ""
 
       pendingStatusRef.current = new Map()
       knownOrderIdsRef.current = new Set()
@@ -2485,6 +2557,7 @@ export default function PedidosPage() {
     // alarma al dueño). Sin motivo, no se anula.
     let cancelReason = ""
     let inventoryWasUsed: boolean | null = null
+    let moneyReturned: boolean | null = null
     if (requestedStatus === "Cancelado") {
       const reasonInput = window.prompt(
         "Motivo de la anulación (obligatorio):\nEj: cliente no retiró, error al cargar el pedido…",
@@ -2504,6 +2577,18 @@ export default function PedidosPage() {
       inventoryWasUsed = window.confirm(
         "¿Ya se usaron o prepararon los ingredientes de este pedido?\n\nAceptar = SÍ se usaron (el inventario queda descontado)\nCancelar = NO se usaron (el consumo se devuelve al inventario)"
       )
+
+      // Pedido con dinero YA COBRADO (política del dueño 2026-07-29):
+      // devuelto = sale de la caja del día; se quedó = sigue en la caja del
+      // día en una línea aparte, nunca como venta.
+      const receivedUSD = previousOrder
+        ? getOrderPayment(previousOrder).receivedEquivalentUSD
+        : 0
+      if (receivedUSD > 0) {
+        moneyReturned = window.confirm(
+          `Este pedido tiene ${formatUSD(receivedUSD)} cobrados. ¿Le devolviste el dinero al cliente?\n\nAceptar = SÍ, se lo devolví (sale de la caja del día)\nCancelar = NO, el dinero se quedó (sigue en la caja del día, en una línea aparte)`
+        )
+      }
     }
 
     setErrorMessage(null)
@@ -2537,7 +2622,11 @@ export default function PedidosPage() {
           body: JSON.stringify({
             status: requestedStatus,
             ...(cancelReason
-              ? { cancelReason, inventoryWasUsed }
+              ? {
+                  cancelReason,
+                  inventoryWasUsed,
+                  ...(moneyReturned === null ? {} : { moneyReturned }),
+                }
               : {}),
             ...(cancelCode ? { cancelCode } : {}),
           }),
@@ -4747,6 +4836,66 @@ export default function PedidosPage() {
                   value={String(dayStats.activeToday.length)}
                 />
               </div>
+
+              {/* Anulados a la vista en el cierre (política 2026-07-29): el
+                  dinero devuelto salió de la caja; el que "se quedó" está en
+                  la gaveta en línea aparte — nunca como venta. */}
+              {dayStats.canceledToday.length > 0 && (
+                <div className="mt-3 rounded-[1.4rem] border-2 border-red-400/60 bg-red-500/10 p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-red-300">
+                    Pedidos anulados del día: {dayStats.canceledToday.length}
+                  </p>
+                  <div className="mt-2 grid gap-2 text-sm font-bold text-[var(--brand-ink-2)]/85 sm:grid-cols-2">
+                    <p>
+                      Dinero devuelto a clientes:{" "}
+                      {formatUSD(dayStats.cancelledMoneyTotals.refundedUSD)}
+                      {dayStats.cancelledMoneyTotals.refundedCount > 0
+                        ? ` (${dayStats.cancelledMoneyTotals.refundedCount} pedido(s) — fuera del cierre)`
+                        : ""}
+                    </p>
+                    <p>
+                      Cobrado de pedidos anulados que se quedó en caja:{" "}
+                      {formatUSD(dayStats.cancelledMoneyTotals.keptUSD)}
+                      {dayStats.cancelledMoneyTotals.keptCount > 0
+                        ? ` (${dayStats.cancelledMoneyTotals.keptCount} pedido(s) — en la gaveta, NO es venta)`
+                        : ""}
+                    </p>
+                  </div>
+                  <ul className="mt-2 space-y-1 text-xs font-bold leading-5 text-red-200/90">
+                    {dayStats.canceledToday.map((order) => (
+                      <li key={order.id}>
+                        {getDisplayOrderNumber(order)} ·{" "}
+                        {formatCancellationLine({
+                          origin:
+                            order.cancelOrigin ||
+                            inferCancelOriginFromNote(order.customerNote),
+                          reason:
+                            order.cancelReason ||
+                            parseCancelNote(order.customerNote).reason,
+                          cancelledByName:
+                            order.cancelledByName ||
+                            parseCancelNote(order.customerNote).cancelledBy,
+                          cancelledByRole: order.cancelledByRole,
+                          inventoryUsed:
+                            order.cancelInventoryUsed === undefined
+                              ? null
+                              : order.cancelInventoryUsed,
+                          refund:
+                            getOrderPayment(order).receivedEquivalentUSD > 0
+                              ? order.cancelRefund || CANCEL_REFUND_DEFAULT
+                              : null,
+                          receivedLabel:
+                            getOrderPayment(order).receivedEquivalentUSD > 0
+                              ? formatUSD(
+                                  getOrderPayment(order).receivedEquivalentUSD
+                                )
+                              : "sin cobrar",
+                        })}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
             <div

@@ -357,6 +357,7 @@ function CajaPageContent() {
     // Auditoría y la alarma al dueño). Sin motivo, no se anula.
     let cancelReason = ""
     let inventoryWasUsed: boolean | null = null
+    let moneyReturned: boolean | null = null
     if (status === "Cancelado") {
       const reasonInput = window.prompt(
         "Motivo de la anulación (obligatorio):\nEj: cliente no retiró, error al cargar el pedido…",
@@ -374,6 +375,19 @@ function CajaPageContent() {
       inventoryWasUsed = window.confirm(
         "¿Ya se usaron o prepararon los ingredientes de este pedido?\n\nAceptar = SÍ se usaron (el inventario queda descontado)\nCancelar = NO se usaron (el consumo se devuelve al inventario)"
       )
+
+      // Pedido con dinero YA COBRADO (política del dueño 2026-07-29):
+      // devuelto = sale de la caja del día; se quedó = sigue en la caja del
+      // día en una línea aparte, nunca como venta.
+      const cancelTarget = orders.find((order) => order.id === orderId)
+      const receivedUSD = cancelTarget
+        ? getOrderPayment(cancelTarget).receivedEquivalentUSD
+        : 0
+      if (receivedUSD > 0) {
+        moneyReturned = window.confirm(
+          `Este pedido tiene ${formatUSD(receivedUSD)} cobrados. ¿Le devolviste el dinero al cliente?\n\nAceptar = SÍ, se lo devolví (sale de la caja del día)\nCancelar = NO, el dinero se quedó (sigue en la caja del día, en una línea aparte)`
+        )
+      }
     }
 
     maybeAutoPrintOnStatus(orderId, status)
@@ -398,7 +412,13 @@ function CajaPageContent() {
           },
           body: JSON.stringify({
             status,
-            ...(cancelReason ? { cancelReason, inventoryWasUsed } : {}),
+            ...(cancelReason
+              ? {
+                  cancelReason,
+                  inventoryWasUsed,
+                  ...(moneyReturned === null ? {} : { moneyReturned }),
+                }
+              : {}),
             ...(cancelCode ? { cancelCode } : {}),
           }),
         })

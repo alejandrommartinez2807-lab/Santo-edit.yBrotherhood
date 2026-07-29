@@ -63,9 +63,17 @@ export type DayCloseOrder = {
   totalUSD: number
   receivedEquivalentUSD: number
   registeredBy?: string
-  // Motivo de anulación (solo pedidos Cancelados): se extrae de la nota
-  // "ANULADO: …" para que el cierre y el historial lo listen.
+  // Motivo de anulación (solo pedidos Cancelados): columna 0036 o, en
+  // pedidos anteriores a la migración, extraído de la nota "ANULADO: …".
   cancelReason?: string
+  // Detalle estructurado de la anulación (0036); cierres viejos no lo traen.
+  cancelOrigin?: string
+  cancelledBy?: string
+  cancelledByRole?: string
+  cancelRefund?: string
+  cancelRefundUSD?: number
+  // true = insumos consumidos; false = devueltos; ausente = no se preguntó.
+  cancelInventoryUsed?: boolean
   // Cuenta abierta de la que vino el pedido (mesa): el historial lo usa para
   // distinguir un cobro de cuenta completa de un cobro directo.
   openAccountId?: string
@@ -113,6 +121,13 @@ export type SaveDayCloseInput = {
   activeOrders: number
   deliveredOrders: number
   canceledOrders: number
+  // Dinero de pedidos anulados YA COBRADOS (política 2026-07-29):
+  // "se quedó" está en la gaveta y cuenta para el arqueo en línea aparte
+  // (nunca como venta); "devuelto" salió de la caja y solo se informa.
+  cancelledKeptUSD?: number
+  cancelledKeptCount?: number
+  cancelledRefundedUSD?: number
+  cancelledRefundedCount?: number
   deliveryRegistered: number
   deliveryDelivered: number
   deliveryActive: number

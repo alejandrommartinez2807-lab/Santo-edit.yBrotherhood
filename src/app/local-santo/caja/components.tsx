@@ -23,6 +23,12 @@ import {
   XCircle,
 } from "lucide-react"
 import { formatUSD, formatVES } from "@/utils/formatCurrency"
+import {
+  CANCEL_REFUND_DEFAULT,
+  formatCancellationLine,
+  inferCancelOriginFromNote,
+  parseCancelNote,
+} from "@/lib/orderCancellationInfo"
 import type { OpenAccount, PaymentProof } from "@/types/localOrders"
 import OrderPaymentProofsList from "@/components/OrderPaymentProofsList"
 import {
@@ -113,6 +119,30 @@ export function CashOrderCard({
   // Vuelto/billete indicado por el cliente y nota limpia (lote v6 D.7/D.8).
   const cashPaymentNotes = getOrderCashPaymentNotes(order)
   const customerNoteDisplay = getOrderCustomerNoteForDisplay(order)
+  // Anulación explicada sola (política 2026-07-29): origen, motivo, dinero e
+  // insumos. Anulaciones anteriores a 0036 caen a la nota "ANULADO: …".
+  const cancellationLine =
+    order.status === "Cancelado"
+      ? formatCancellationLine({
+          origin: order.cancelOrigin || inferCancelOriginFromNote(order.customerNote),
+          reason: order.cancelReason || parseCancelNote(order.customerNote).reason,
+          cancelledByName:
+            order.cancelledByName || parseCancelNote(order.customerNote).cancelledBy,
+          cancelledByRole: order.cancelledByRole,
+          inventoryUsed:
+            typeof order.cancelInventoryUsed === "boolean"
+              ? order.cancelInventoryUsed
+              : null,
+          refund:
+            payment.receivedEquivalentUSD > 0
+              ? order.cancelRefund || CANCEL_REFUND_DEFAULT
+              : null,
+          receivedLabel:
+            payment.receivedEquivalentUSD > 0
+              ? `${formatUSD(payment.receivedEquivalentUSD)} cobrados`
+              : "sin cobrar",
+        })
+      : ""
   // Plegada por defecto: la cabecera compacta trae lo esencial (estado, total,
   // pendiente y la acción del momento) para que en una laptop entren varios
   // pedidos por pantalla; el detalle completo se abre solo cuando hace falta.
@@ -376,6 +406,13 @@ export function CashOrderCard({
           <InfoBox label="Cobrado equiv." value={formatUSD(payment.receivedEquivalentUSD)} />
           <InfoBox label="Pendiente de cobro" value={formatUSD(payment.pendingUSD)} />
         </div>
+
+        {cancellationLine && (
+          <div className="rounded-[1.2rem] border-2 border-red-400/70 bg-red-50 p-3">
+            <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-red-700">Anulación</p>
+            <p className="mt-1 break-words text-sm font-bold leading-5 text-red-800">{cancellationLine}</p>
+          </div>
+        )}
 
         {customerNoteDisplay && (
           <div className="rounded-[1.2rem] border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] p-3">

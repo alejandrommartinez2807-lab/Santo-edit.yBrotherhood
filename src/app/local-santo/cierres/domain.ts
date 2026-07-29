@@ -70,6 +70,15 @@ export type DayCloseOrder = {
   registeredBy?: string
   // Motivo de anulación (solo pedidos Cancelados).
   cancelReason?: string
+  // Detalle estructurado de la anulación (0036): origen (automático/
+  // personal/cliente), quién anuló, destino del dinero cobrado y si los
+  // insumos se consumieron. Cierres viejos no lo traen.
+  cancelOrigin?: string
+  cancelledBy?: string
+  cancelledByRole?: string
+  cancelRefund?: string
+  cancelRefundUSD?: number
+  cancelInventoryUsed?: boolean
   // Cuenta abierta (mesa) de la que vino el pedido: distingue el cobro de
   // cuenta completa del cobro directo. Cierres viejos no lo traen.
   openAccountId?: string
@@ -101,6 +110,12 @@ export type SavedDayClose = {
   activeOrders: number
   deliveredOrders: number
   canceledOrders: number
+  // Dinero de anulados (política 2026-07-29): "se quedó" está en la gaveta
+  // en línea aparte (nunca venta); "devuelto" salió de la caja del día.
+  cancelledKeptUSD: number
+  cancelledKeptCount: number
+  cancelledRefundedUSD: number
+  cancelledRefundedCount: number
   deliveryRegistered: number
   deliveryDelivered: number
   deliveryActive: number
@@ -409,6 +424,10 @@ export function normalizeDayClose(value: unknown): SavedDayClose | null {
     activeOrders: toNumber(close.activeOrders),
     deliveredOrders: toNumber(close.deliveredOrders),
     canceledOrders: toNumber(close.canceledOrders),
+    cancelledKeptUSD: toNumber(close.cancelledKeptUSD),
+    cancelledKeptCount: toNumber(close.cancelledKeptCount),
+    cancelledRefundedUSD: toNumber(close.cancelledRefundedUSD),
+    cancelledRefundedCount: toNumber(close.cancelledRefundedCount),
     deliveryRegistered: toNumber(close.deliveryRegistered),
     deliveryDelivered: toNumber(close.deliveryDelivered),
     deliveryActive: toNumber(close.deliveryActive),
@@ -518,6 +537,15 @@ function normalizeDayCloseOrders(value: unknown): DayCloseOrder[] {
         receivedEquivalentUSD: toNumber(order.receivedEquivalentUSD),
         registeredBy: toText(order.registeredBy).trim() || undefined,
         cancelReason: toText(order.cancelReason).trim() || undefined,
+        cancelOrigin: toText(order.cancelOrigin).trim() || undefined,
+        cancelledBy: toText(order.cancelledBy).trim() || undefined,
+        cancelledByRole: toText(order.cancelledByRole).trim() || undefined,
+        cancelRefund: toText(order.cancelRefund).trim() || undefined,
+        cancelRefundUSD: toNumber(order.cancelRefundUSD) || undefined,
+        cancelInventoryUsed:
+          typeof order.cancelInventoryUsed === "boolean"
+            ? order.cancelInventoryUsed
+            : undefined,
         openAccountId: toText(order.openAccountId).trim() || undefined,
         items,
       }
@@ -689,6 +717,8 @@ export function getDayCloseTotals(dayCloses: SavedDayClose[]) {
       totals.realVES += close.realVES
       totals.realVESEquivalentUSD += close.realVESEquivalentUSD
       totals.deliveryCollectedUSD += close.deliveryCollectedUSD
+      totals.cancelledKeptUSD += close.cancelledKeptUSD
+      totals.cancelledRefundedUSD += close.cancelledRefundedUSD
       totals.expensesCount += close.expensesCount
       totals.expensesTotalUSD += close.expensesTotalUSD
       totals.expensesCashUSD += close.expensesCashUSD
@@ -716,6 +746,8 @@ export function getDayCloseTotals(dayCloses: SavedDayClose[]) {
       realVES: 0,
       realVESEquivalentUSD: 0,
       deliveryCollectedUSD: 0,
+      cancelledKeptUSD: 0,
+      cancelledRefundedUSD: 0,
       expensesCount: 0,
       expensesTotalUSD: 0,
       expensesCashUSD: 0,
@@ -978,6 +1010,18 @@ export function getRangeReport(dayCloses: SavedDayClose[]) {
         customerName: order.customerName,
         totalUSD: order.totalUSD,
         cancelReason: order.cancelReason || "",
+        // Detalle 0036 (origen, quién, dinero, insumos): cierres viejos no
+        // lo traen y la vista cae al motivo solo.
+        cancelOrigin: order.cancelOrigin || "",
+        cancelledBy: order.cancelledBy || "",
+        cancelledByRole: order.cancelledByRole || "",
+        cancelRefund: order.cancelRefund || "",
+        cancelRefundUSD: order.cancelRefundUSD || 0,
+        cancelInventoryUsed:
+          typeof order.cancelInventoryUsed === "boolean"
+            ? order.cancelInventoryUsed
+            : null,
+        receivedEquivalentUSD: order.receivedEquivalentUSD,
         createdAt: order.createdAt,
       })),
   )

@@ -47,6 +47,8 @@ function orderRows(close: SavedDayClose) {
   ])
 }
 
+// Detalle 0036 (política 2026-07-29): origen, quién, dinero e insumos.
+// Cierres viejos exportan las columnas nuevas vacías.
 function canceledRows(close: SavedDayClose) {
   return (close.orders || [])
     .filter((o) => o.status === "Cancelado")
@@ -54,9 +56,38 @@ function canceledRows(close: SavedDayClose) {
       o.displayNumber || o.id,
       o.customerName || "",
       o.cancelReason || "(sin motivo)",
+      o.cancelOrigin === "automatico"
+        ? "Automática"
+        : o.cancelOrigin === "cliente"
+          ? "Cliente"
+          : o.cancelOrigin === "personal"
+            ? "Personal"
+            : "",
+      o.cancelledBy || "",
+      o.receivedEquivalentUSD > 0
+        ? o.cancelRefund === "se_quedo"
+          ? `Se quedó en caja (${money(o.receivedEquivalentUSD)})`
+          : `Devuelto (${money(o.receivedEquivalentUSD)})`
+        : "Sin cobrar",
+      o.cancelInventoryUsed === true
+        ? "Consumidos"
+        : o.cancelInventoryUsed === false
+          ? "Devueltos al stock"
+          : "",
       money(o.totalUSD),
     ])
 }
+
+const CANCELED_HEADER = [
+  "#",
+  "Cliente",
+  "Motivo",
+  "Origen",
+  "Quién anuló",
+  "Dinero",
+  "Insumos",
+  "Total",
+]
 
 function safeName(base: string) {
   return base.replace(/[^a-z0-9-_]+/gi, "-").slice(0, 60)
@@ -87,8 +118,8 @@ export async function exportCloseToPdf(close: SavedDayClose, branchName: string)
     autoTable(doc, {
       // @ts-expect-error lastAutoTable lo agrega el plugin
       startY: (doc.lastAutoTable?.finalY || 200) + 18,
-      head: [["Pedidos CANCELADOS del día (no cuentan como venta)", "", "", ""]],
-      body: [["#", "Cliente", "Motivo", "Total"], ...canceled],
+      head: [["Pedidos CANCELADOS del día (no cuentan como venta)", "", "", "", "", "", "", ""]],
+      body: [CANCELED_HEADER, ...canceled],
       theme: "grid",
       headStyles: { fillColor: [200, 40, 40] },
       styles: { fontSize: 8 },
@@ -129,7 +160,7 @@ export async function exportCloseToXlsx(close: SavedDayClose, branchName: string
   if (canceled.length > 0) {
     XLSX.utils.book_append_sheet(
       wb,
-      XLSX.utils.aoa_to_sheet([["#", "Cliente", "Motivo", "Total"], ...canceled]),
+      XLSX.utils.aoa_to_sheet([CANCELED_HEADER, ...canceled]),
       "Cancelados",
     )
   }

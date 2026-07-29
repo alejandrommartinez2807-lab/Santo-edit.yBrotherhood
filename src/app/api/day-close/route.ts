@@ -12,6 +12,11 @@ import {
 import { captureError } from "@/lib/monitoring"
 import { getDisplayOrderNumber } from "@/lib/localOrderHelpers"
 import { getOrderPayment, getOrderTotals } from "@/lib/localOrderMoney"
+import {
+  CANCEL_REFUND_DEFAULT,
+  inferCancelOriginFromNote,
+  parseCancelNote,
+} from "@/lib/orderCancellationInfo"
 import { getLocalAccessAuditActor, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
@@ -241,6 +246,12 @@ export async function POST(request: NextRequest) {
       activeOrders: toNumber(rawDayClose.activeOrders),
       deliveredOrders: toNumber(rawDayClose.deliveredOrders),
       canceledOrders: toNumber(rawDayClose.canceledOrders),
+      // Dinero de anulados (política 2026-07-29): "se quedó" = en la gaveta,
+      // línea aparte del cierre; "devuelto" = fuera del cierre, solo informa.
+      cancelledKeptUSD: toNumber(rawDayClose.cancelledKeptUSD),
+      cancelledKeptCount: toNumber(rawDayClose.cancelledKeptCount),
+      cancelledRefundedUSD: toNumber(rawDayClose.cancelledRefundedUSD),
+      cancelledRefundedCount: toNumber(rawDayClose.cancelledRefundedCount),
       deliveryRegistered: canIncludeDeliveryAudit
         ? toNumber(rawDayClose.deliveryRegistered)
         : 0,
@@ -413,13 +424,25 @@ export async function POST(request: NextRequest) {
       dayClose.orders = realOrders.slice(0, 500).map((order) => {
         const payment = getOrderPayment(order)
         const orderTotals = getOrderTotals(order)
-        // Motivo de anulación: se guarda en la nota como "ANULADO: …". Se
-        // extrae solo ese tramo para el cierre y el historial de cierres.
-        const cancelMatch =
-          order.status === "Cancelado"
-            ? String(order.customerNote || "").match(/ANULADO:\s*([^|]+)/)
-            : null
-        const cancelReason = cancelMatch ? cancelMatch[1].trim() : ""
+        // Detalle de anulación: columnas 0036 primero; pedidos anteriores a
+        // la migración caen a la nota "ANULADO: … | Por: …" (parseCancelNote).
+        const isCancelled = order.status === "Cancelado"
+        const legacyNote = isCancelled
+          ? parseCancelNote(order.customerNote)
+          : { reason: "", cancelledBy: "" }
+        const cancelReason = isCancelled
+          ? String(order.cancelReason || "").trim() || legacyNote.reason
+          : ""
+        const cancelOrigin = isCancelled
+          ? order.cancelOrigin || inferCancelOriginFromNote(order.customerNote)
+          : ""
+        const cancelledBy = isCancelled
+          ? String(order.cancelledByName || "").trim() || legacyNote.cancelledBy
+          : ""
+        const cancelRefund =
+          isCancelled && payment.receivedEquivalentUSD > 0
+            ? order.cancelRefund || CANCEL_REFUND_DEFAULT
+            : ""
 
         return {
           id: order.id,
@@ -434,6 +457,18 @@ export async function POST(request: NextRequest) {
           receivedEquivalentUSD: payment.receivedEquivalentUSD,
           registeredBy: String(order.registeredByName || "") || undefined,
           ...(cancelReason ? { cancelReason } : {}),
+          ...(cancelOrigin ? { cancelOrigin } : {}),
+          ...(cancelledBy ? { cancelledBy } : {}),
+          ...(isCancelled && order.cancelledByRole
+            ? { cancelledByRole: order.cancelledByRole }
+            : {}),
+          ...(cancelRefund ? { cancelRefund } : {}),
+          ...(cancelRefund && payment.receivedEquivalentUSD > 0
+            ? { cancelRefundUSD: payment.receivedEquivalentUSD }
+            : {}),
+          ...(isCancelled && typeof order.cancelInventoryUsed === "boolean"
+            ? { cancelInventoryUsed: order.cancelInventoryUsed }
+            : {}),
           ...(String(order.openAccountId || "").trim()
             ? { openAccountId: String(order.openAccountId || "").trim() }
             : {}),

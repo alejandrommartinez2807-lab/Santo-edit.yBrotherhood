@@ -184,6 +184,18 @@ export type LocalOrder = {
   staffConfirmationPendingCount?: number
   staffConfirmationUpdatedAt?: string
   staffConfirmationUpdatedBy?: string
+
+  // Detalle estructurado de la anulación (0036); las anulaciones anteriores
+  // a la migración viajan solo en la nota "ANULADO: …".
+  cancelOrigin?: "automatico" | "personal" | "cliente"
+  cancelReason?: string
+  cancelledById?: string
+  cancelledByName?: string
+  cancelledByRole?: string
+  cancelledAt?: string
+  cancelInventoryUsed?: boolean
+  cancelRefund?: "devuelto" | "se_quedo"
+  cancelRefundUSD?: number
 }
 
 export const CASH_FILTERS: CashFilter[] = [

@@ -175,6 +175,23 @@ export type LocalOrder = {
   chargedByName?: string
   chargedByRole?: string
 
+  // Detalle estructurado de la anulación (0036). Vacíos en pedidos vivos y
+  // en anulaciones anteriores a la migración (ahí el dato vive en la nota
+  // "ANULADO: …" y se recupera con parseCancelNote).
+  cancelOrigin?: "automatico" | "personal" | "cliente"
+  cancelReason?: string
+  cancelledById?: string
+  cancelledByName?: string
+  cancelledByRole?: string
+  cancelledAt?: string
+  // true = insumos consumidos; false = devueltos al stock; undefined = no
+  // se preguntó.
+  cancelInventoryUsed?: boolean
+  // Qué pasó con el dinero ya cobrado: 'devuelto' | 'se_quedo'. undefined =
+  // sin dinero cobrado o anulación vieja (aplica CANCEL_REFUND_DEFAULT).
+  cancelRefund?: "devuelto" | "se_quedo"
+  cancelRefundUSD?: number
+
   deliveryReportStatus?: DeliveryReportStatus
   deliveryReportedAt?: string
   deliveryReportedBy?: string
