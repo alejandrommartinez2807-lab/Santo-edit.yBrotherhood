@@ -160,6 +160,36 @@ Hay que ejercitarlos de verdad:
 - **Soporte** (§16.17): ticket, estado, asignación, historial, permisos y
   datos sensibles.
 
+## 4-bis. Barrido punto por punto de los prompts (§26 del Maestro)
+
+El Maestro exige repasarlo entero marcando cada punto PASS/FAIL/BLOCKED/
+NOT_APPLICABLE. Se hizo para **§16 (los 22 módulos)** → `informe-por-modulo.md`.
+Estas secciones quedaron **cubiertas a medias** y hay que barrerlas:
+
+- **§9 Reloj de negocio**: se documentó la estrategia (el día comercial lo
+  marcan los cierres, no la fecha) y se probó la cuenta que cruza de día. NO se
+  probó: antes de medianoche / exactamente al cambio de día / después de
+  medianoche, cierre iniciado antes y completado después, ni las zonas horarias
+  del servidor, de la base y del navegador por separado.
+- **§15 Pruebas de dinero**: el parser canónico ya tiene 8 tests que cubren
+  `9.648,99`, `3,632.50`, `1.234.567,89`, cero, vacío, negativos y espacios
+  (`publicMoneyInput.test.ts`). **Faltan** de la lista del prompt: `0,00`,
+  `0.01` / `0,01`, `1`, `1,5`, `1,50`, `3.632` sin decimales, símbolos de
+  moneda, texto inválido, más de dos decimales y números muy grandes. Añadirlos
+  al test existente, no crear otro.
+- **§18 Fallos parciales**: se probó timeout + reintento idempotente, doble
+  cobro simultáneo y corrección de método. NO se probó la familia de
+  "operación a medias": compra que guarda factura pero falla el stock, pago que
+  guarda cabecera pero falla la pata, pedido que se crea pero falla la
+  auditoría, cierre que calcula pero falla la confirmación.
+- **§11.5 / §20 Rendimiento y accesibilidad**: los tiempos se midieron y están
+  en `rendimiento.json`, pero **no se compararon explícitamente** contra los
+  umbrales del prompt (crear pedido p95 ≤ 1,5 s, cobrar ≤ 2 s, etc.). La
+  accesibilidad entera depende de Playwright → hoy `BLOCKED`.
+
+Al terminar, dejar el checklist con el formato que pide el §25 del guion
+(Estado / Evidencia / Comando / Archivo / Registro DB / Test / Commit).
+
 ## 5. Bloqueos que dependen del usuario (no de la sesión)
 
 Siguen abiertos y **no se pueden marcar PASS** sin resolverlos:
