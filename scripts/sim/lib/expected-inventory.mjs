@@ -31,7 +31,18 @@ export function initItem(book, { branchId, itemId, name, unit, quantity }) {
 export function applyMove(book, { branchId, itemId, type, qty }) {
   const item = book.items[keyOf(branchId, itemId)]
   if (!item) throw new Error(`inventario esperado: insumo desconocido ${itemId} en ${branchId}`)
-  item.expected = round3(item.expected + qty)
+  const target = round3(item.expected + qty)
+  // El sistema pone SUELO EN CERO (una nevera no tiene −15 refrescos) y desde
+  // BH-SIM-004 deja el faltante registrado en el movimiento. El libro modela
+  // lo mismo: nunca negativo, y el faltante se acumula aparte para poder
+  // reconciliar cuánto se vendió sin stock.
+  if (target < 0) {
+    item.shortage = round3((item.shortage || 0) + Math.abs(target))
+    item.expected = 0
+    item.movements.push({ type, qty: round3(qty), shortage: round3(Math.abs(target)) })
+    return
+  }
+  item.expected = target
   item.movements.push({ type, qty: round3(qty) })
 }
 

@@ -170,3 +170,37 @@ a revisión con el monto `9.648,99` correcto (check D1R-ADV-7 en verde).
   en cero. Bloquearlo sería un cambio de política de negocio — hay locales que
   quieren seguir vendiendo y ajustar después. Ahora al menos queda registrado.
   Si quieres que se bloquee o que avise a caja, dímelo.
+
+---
+
+## BH-SIM-005 · MEDIO · Anular un pedido YA COBRADO deja el dinero fuera del reporte del dueño
+
+- **E (Observación con impacto contable)**: el pedido `SIM Elena Salazar dia-6#1`
+  se vendió, se cobró ($12,50 en la gaveta) y luego se anuló. Resultado:
+  - la fila conserva `payment_status = "Pagado"` y
+    `payment_received_equiv_usd = 12,50` (el dinero está registrado);
+  - el **cierre de caja** lo cuenta como dinero recibido (correcto: está en la
+    gaveta);
+  - pero el **reporte del dueño** lo excluye por completo — ni en ventas ni en
+    cobrado. Consolidado del reporte: $6.632,50; libro y cierres: $7.063,50.
+- **Impacto**: el dueño que compara "lo que dice el reporte" con "lo que hay en
+  la gaveta" encuentra una diferencia que ningún módulo explica. En la semana
+  hubo **$12,50 de operación real** en esta situación (los otros $47,50 de
+  dinero atrapado en anulados son mis pedidos de diagnóstico, no operación).
+- **C (Causa)**: los reportes filtran `status != "Cancelado"` para TODO,
+  incluido el dinero ya recibido. No existe el concepto de "venta anulada con
+  devolución pendiente" ni una línea de devoluciones.
+- **F (Fix NO aplicado — es una decisión de negocio tuya)**: hay tres caminos
+  y no me corresponde elegirlo:
+  1. **Bloquear** la anulación de un pedido ya cobrado (obligar a un reembolso
+     explícito primero);
+  2. **Mostrarlo como devolución**: el reporte resta el monto en una línea
+     "Devoluciones" en vez de hacerlo desaparecer;
+  3. **Dejarlo como está** y que el cierre mande (hoy el cierre sí lo cuenta).
+  Mi recomendación es la 2: no pierde el rastro y el arqueo cuadra.
+- **S (Blindaje)**: pendiente hasta que elijas la política. El escenario ya
+  está cubierto por el guion (`D6-CX-PAGADO`) y se detecta en la
+  reconciliación semanal.
+- **Nota**: NO es pérdida de dinero — el dinero está registrado y el cierre lo
+  cuenta. Es una **inconsistencia entre reporte y cierre** que confunde al
+  dueño.

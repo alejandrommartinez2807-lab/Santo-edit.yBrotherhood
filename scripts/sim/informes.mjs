@@ -105,7 +105,32 @@ ${Object.entries(state.quotas || {}).map(([k, v]) => `| ${k} | ${v} |`).join("\n
 
 // ── pendientes.md ────────────────────────────────────────────────────────
 const blocked = byState("BLOCKED")
-const failed = byState("FAIL")
+const failedRaw = byState("FAIL")
+
+// Cada FAIL que quedó grabado en una bitácora tiene una resolución. Mostrarlos
+// como "abiertos" sería tan deshonesto como esconderlos: aquí va qué pasó con
+// cada uno. Lo que NO esté en este mapa sigue abierto de verdad.
+const RESUELTOS = {
+  "D1-ADV-5": "BUG REAL BH-SIM-001 → corregido (re-precio desde el menú) + 12 tests. Re-probado en verde cada día como Dn-SEC-4.",
+  "D5-CONC-1": "BUG REAL BH-SIM-003 → corregido (candado optimista propagado, 409 al perdedor) + 5 tests. Re-probado: Q-7 en verde, 5/5 carreras con un solo ganador.",
+  "dia-6-NOCHE-inventario": "BUG REAL BH-SIM-004 → corregido (la venta con stock 0 deja rastro del faltante) + 5 tests. El libro se alineó al suelo en cero; REC-8 cierra con 36/36 exactos.",
+  "dia-7-NOCHE-inventario": "Mismo BH-SIM-004. Resuelto: REC-8 en verde.",
+  "dia-7-NOCHE-integridad": "FALSO POSITIVO de mi verificador: PostgREST corta en 1000 filas y la consulta de order_items venía truncada. Los 5 pedidos SÍ tienen sus líneas. Corregido con paginación; la barrida real da 0 problemas (REC-11).",
+  "D1-CX-1": "FALSO POSITIVO: el mesonero NO puede anular (diseño correcto de canRoleUpdateStatus). Rehecho con la encargada: D1R-CX-1 en verde.",
+  "D1-ADV-7": "FALSO POSITIVO: la referencia que envié tenía menos de 6 dígitos y el escudo P-1 la rechaza bien. Con referencia válida: D1R-ADV-7 en verde.",
+  "D5-EVT-4": "FALSO POSITIVO: la atribución por vendedor vive en el CIERRE (salesBySeller), no en /api/reports. Verificada aparte: se guarda y se relee intacta.",
+  "D0-MENU-2": "Verificado en la primera pasada; en las reanudaciones San Diego ya tenía menú propio y la herencia no se podía re-observar. Evidencia en la bitácora del Día 0.",
+  "D1-PLAN-1": "Los 5 delivery fallaban por falta de paymentMethod (contrato de la API). Rehechos en dia-1-repaso: el Día 1 cierra con sus 55 pedidos.",
+  "D1R-PLAN-1": "Resuelto: 56 = 55 del plan + 1 pedido-evidencia del bug del precio.",
+  "D1-AUDIT-1": "Umbral mal puesto (esperaba 40 filas cuando los cobros por cuenta usan otra acción). Re-verificado: D1R-AUDIT-1, 37/37 con actor real.",
+  "D2-PLAN": "71 = 70 del plan + 1 pedido-evidencia del escenario adversarial de precio. Desde el Día 3 se cuentan aparte.",
+  "D5-PLAN": "122 = 115 del plan + 3 evidencia + 4 ventas de la promotora que exige el propio guion (§17 modo evento).",
+  "D6-CX-total": "11 de 12: una anulación no encontró pedido libre en el pool. Registrado como cobertura incompleta de ESE día; el total semanal de anulaciones del guion cierra en 37/37 (REC-4).",
+  "D6-HUM-1": "Mi prueba usaba un contrato equivocado (PATCH solo con tableNumber). El cambio de mesa real va por el módulo de mesas; queda como cobertura no ejecutada, no como defecto observado.",
+  "D7-CIERRE-1": "Error de secuencia MÍO: el check corría ANTES de los cierres del propio Día 7. La cuenta correcta la da REC-6: 16 cierres comerciales + 2 etiquetas técnicas.",
+}
+const failed = failedRaw.filter((c) => !RESUELTOS[c.id])
+const resueltos = failedRaw.filter((c) => RESUELTOS[c.id])
 writeFileSync(
   "SIM-SEMANA/pendientes.md",
   `# Pendientes y bloqueos
@@ -116,7 +141,17 @@ ${blocked.length ? blocked.map((c) => `- **${c.id}** (${c.day}) — ${c.text}`).
 
 ## FAIL abiertos al cierre de la semana
 
-${failed.length ? failed.map((c) => `- **${c.id}** (${c.day}) — ${c.text}`).join("\n") : "- ninguno (todos los FAIL detectados se corrigieron o se reclasificaron con evidencia)"}
+${failed.length ? failed.map((c) => `- **${c.id}** (${c.day}) — ${c.text}`).join("\n") : "- **ninguno**"}
+
+## FAIL detectados durante la semana y su resolución
+
+Los ${resueltos.length} fallos que quedaron grabados en las bitácoras, con lo que
+pasó con cada uno. **Tres eran bugs REALES del sistema** (corregidos, blindados
+con test y re-verificados); el resto fueron defectos de mi propio guion de
+pruebas — se listan igual porque esconderlos sería tan deshonesto como
+dejarlos pasar por buenos.
+
+${resueltos.map((c) => `- **${c.id}** (${c.day})\n  - lo que se vio: ${c.text}\n  - resolución: ${RESUELTOS[c.id]}`).join("\n")}
 
 ## No cubierto por decisión explícita
 

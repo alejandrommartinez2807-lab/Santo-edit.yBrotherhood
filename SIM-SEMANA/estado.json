@@ -6,22 +6,23 @@
     "dia-3",
     "dia-4",
     "dia-5",
-    "dia-6"
+    "dia-6",
+    "dia-7"
   ],
   "quotas": {
-    "efectivo": 132,
-    "efectivo-cambio": 48,
-    "pagomovil": 49,
-    "mixto": 85,
-    "transferencia": 45,
-    "reintento-seguro": 2,
-    "pago-reportado": 3,
-    "reportado-bs-formato-ve": 2,
-    "segunda-pata": 34,
-    "intento-duplicado": 2,
-    "carrera-dos-cajeros": 1,
-    "cuenta-cobrada-otro-dia": 1,
-    "correccion-metodo": 1
+    "efectivo": 175,
+    "efectivo-cambio": 54,
+    "pagomovil": 90,
+    "mixto": 93,
+    "transferencia": 90,
+    "reintento-seguro": 10,
+    "pago-reportado": 50,
+    "reportado-bs-formato-ve": 22,
+    "segunda-pata": 40,
+    "intento-duplicado": 10,
+    "carrera-dos-cajeros": 6,
+    "cuenta-cobrada-otro-dia": 4,
+    "correccion-metodo": 10
   },
   "ids": {
     "principal": "e514be79-bb39-4050-9f27-e6c10249a1cf",
@@ -160,7 +161,9 @@
       "dia-5:Principal": "close-1785303900110-mi2b89",
       "dia-5:San Diego": "close-1785303903249-56op3j",
       "dia-6:Principal": "close-1785305256817-aseye3",
-      "dia-6:San Diego": "close-1785305259676-9sz0r6"
+      "dia-6:San Diego": "close-1785305259676-9sz0r6",
+      "dia-7:Principal": "close-1785306188626-nhzq6s",
+      "dia-7:San Diego": "close-1785306191806-qelrgy"
     }
   },
   "bugs": [],

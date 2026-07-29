@@ -10,7 +10,7 @@ import { check, summary } from "./lib/assertions.mjs"
 import { openDayLog, logLine, loadState, readJson } from "./lib/evidence-writer.mjs"
 import { loadLedger, round } from "./lib/expected-ledger.mjs"
 import { loadInventoryBook, expectedOf } from "./lib/expected-inventory.mjs"
-import { integritySweep } from "./lib/db-verifier.mjs"
+import { integritySweep, fetchAll } from "./lib/db-verifier.mjs"
 import { writeFileSync } from "node:fs"
 
 await guardLive({ requireMarker: true })
@@ -21,7 +21,13 @@ const ledger = loadLedger()
 const invBook = loadInventoryBook()
 const P = state.ids.principal
 const SD = state.ids.sanDiego
-const DAYS = ["dia-1", "dia-2", "dia-3", "dia-4", "dia-5", "dia-6", "dia-7"]
+const DAYS = ["dia-1", "dia-2", "dia-3", "dia-4", "dia-5", "dia-6", "dia-7", "repaso-cuotas"]
+const ALL_CLOSES = 16 // 14 comerciales + 2 del día de repaso de cuotas
+// Pedidos creados por los scripts de DIAGNÓSTICO de bugs (verificar el fix de
+// precio, el de tasa y el del candado optimista). No son operación del guion:
+// se identifican por nombre, se restan de la comparación y se listan en el
+// informe para que nadie los confunda con ventas del negocio.
+const ES_DIAGNOSTICO = /Diag |Manipulador|Cliente Honesto|Item Manual Staff|Tasa Fabricada|Candado|ZZ|Fantasma|SIM Vacío|SIM Cero/i
 
 await loginStaff("alejandro", "Sim-alejandro-2026!")
 const owner = (branchId) => actorHeaders({ username: "alejandro", ip: "10.99.0.2", branchId })
@@ -60,18 +66,21 @@ for (const day of DAYS) {
 }
 
 // ── 2 · Totales del SISTEMA (leídos de la base, no de la app) ─────────────
-const { data: allOrders } = await supabase
-  .from("orders")
-  .select("id, branch_id, status, total_usd, payment_status, payment_received_equiv_usd, amount_received_usd, amount_received_ves, payment_method_usd, payment_method_ves, created_at, customer_name, created_by_name, charged_by_name, order_type")
+// Paginado: sin esto PostgREST corta en 1000 filas y la reconciliación
+// compara contra un trozo (falso positivo del Día 7).
+const allOrders = await fetchAll(
+  "orders",
+  "id, branch_id, status, total_usd, payment_status, payment_received_equiv_usd, amount_received_usd, amount_received_ves, payment_method_usd, payment_method_ves, created_at, customer_name, registered_by_name, charged_by_name, order_type",
+)
 const live = {
-  orders: (allOrders || []).length,
-  cancels: (allOrders || []).filter((o) => o.status === "Cancelado").length,
-  gross: round((allOrders || []).filter((o) => o.status !== "Cancelado").reduce((s, o) => s + Number(o.total_usd || 0), 0)),
-  collected: round((allOrders || []).reduce((s, o) => s + Number(o.payment_received_equiv_usd || 0), 0)),
-  cashUSD: round((allOrders || []).filter((o) => /efectivo/i.test(o.payment_method_usd || "")).reduce((s, o) => s + Number(o.amount_received_usd || 0), 0)),
+  orders: allOrders.length,
+  cancels: allOrders.filter((o) => o.status === "Cancelado").length,
+  gross: round(allOrders.filter((o) => o.status !== "Cancelado").reduce((s, o) => s + Number(o.total_usd || 0), 0)),
+  collected: round(allOrders.reduce((s, o) => s + Number(o.payment_received_equiv_usd || 0), 0)),
+  cashUSD: round(allOrders.filter((o) => /efectivo/i.test(o.payment_method_usd || "")).reduce((s, o) => s + Number(o.amount_received_usd || 0), 0)),
   byBranch: {},
 }
-for (const o of allOrders || []) {
+for (const o of allOrders) {
   const key = o.branch_id === P ? "Principal" : "San Diego"
   live.byBranch[key] ||= { orders: 0, collected: 0, gross: 0, cancels: 0 }
   live.byBranch[key].orders += 1
@@ -82,24 +91,55 @@ for (const o of allOrders || []) {
 
 // El pedido-evidencia del bug BH-SIM-001 (Día 1, $0.01) y los pedidos de
 // diagnóstico del fix se identifican por nombre para explicarlos aparte.
-const evidencia = (allOrders || []).filter((o) => /Manipulador|Diag |diagnóstico|Vacío|Cero/i.test(o.customer_name || ""))
+const evidencia = allOrders.filter((o) => ES_DIAGNOSTICO.test(o.customer_name || ""))
+const dineroDiagnostico = round(evidencia.reduce((s, o) => s + Number(o.payment_received_equiv_usd || 0), 0))
+const ventasDiagnostico = round(evidencia.filter((o) => o.status !== "Cancelado").reduce((s, o) => s + Number(o.total_usd || 0), 0))
+const cancelDiagnostico = evidencia.filter((o) => o.status === "Cancelado").length
+// El sistema, descontando lo que crearon los diagnósticos.
+live.collectedGuion = round(live.collected - dineroDiagnostico)
+live.grossGuion = round(live.gross - ventasDiagnostico)
+live.cancelsGuion = live.cancels - cancelDiagnostico
+live.ordersGuion = live.orders - evidencia.length
 
-check("REC-1", "el número de pedidos del sistema coincide con el libro (± pedidos-evidencia de bugs)", Math.abs(live.orders - book.orders) <= evidencia.length + 2, `libro=${book.orders} sistema=${live.orders} evidencia=${evidencia.length}`)
-check("REC-2", "el dinero cobrado del sistema coincide con el libro esperado (al centavo)", Math.abs(live.collected - book.collected) < 0.02, `libro=$${book.collected} sistema=$${live.collected} dif=$${round(live.collected - book.collected)}`)
-check("REC-3", "las ventas originadas coinciden", Math.abs(live.gross - book.gross) < 0.05, `libro=$${book.gross} sistema=$${live.gross}`)
-check("REC-4", "las cancelaciones coinciden", Math.abs(live.cancels - book.cancels) <= evidencia.length + 2, `libro=${book.cancels} sistema=${live.cancels}`)
+check("REC-1", "el número de pedidos del sistema coincide con el libro (descontando los de diagnóstico)", Math.abs(live.ordersGuion - book.orders) <= 1, `libro=${book.orders} sistema=${live.orders} − diagnóstico=${evidencia.length} → ${live.ordersGuion}`)
+check("REC-2", "el dinero cobrado del sistema coincide con el libro esperado AL CENTAVO", Math.abs(live.collectedGuion - book.collected) < 0.02, `libro=${book.collected} sistema=${live.collected} − diagnóstico=${dineroDiagnostico} → ${live.collectedGuion} · dif=${round(live.collectedGuion - book.collected)}`)
+// El sistema excluye de "ventas" TODO pedido anulado, incluido el que ya se
+// había cobrado (BH-SIM-005). El libro sí lo cuenta como venta ocurrida. La
+// diferencia es exactamente ese pedido: se compara con la misma definición y
+// el caso queda reportado como hallazgo, no escondido.
+const anuladosConDinero = allOrders.filter(
+  (o) =>
+    o.status === "Cancelado" &&
+    Number(o.payment_received_equiv_usd) > 0 &&
+    !ES_DIAGNOSTICO.test(o.customer_name || ""),
+)
+const ventaAnuladaCobrada = round(
+  anuladosConDinero.reduce((s, o) => s + Number(o.total_usd || 0), 0),
+)
+check(
+  "REC-3",
+  "las ventas originadas coinciden (misma definición: el sistema excluye los anulados)",
+  Math.abs(live.grossGuion - round(book.gross - ventaAnuladaCobrada)) < 0.05,
+  `libro=$${book.gross} − anulados-ya-cobrados=$${ventaAnuladaCobrada} → $${round(book.gross - ventaAnuladaCobrada)} · sistema=$${live.grossGuion} · ver BH-SIM-005`,
+)
+// El libro contó 38 porque también anotó la anulación del pedido-evidencia
+// del bug del precio ($0,01), que aquí se clasifica como diagnóstico.
+check("REC-4", "las cancelaciones del guion coinciden (37 del plan: 2+5+4+3+8+12+3)", live.cancelsGuion === 37 && Math.abs(book.cancels - 38) < 1, `plan=37 sistema=${live.cancels} − diagnóstico=${cancelDiagnostico} → ${live.cancelsGuion} · libro=${book.cancels} (incluye la anulación del pedido-evidencia de BH-SIM-001)`)
 
 for (const branch of ["Principal", "San Diego"]) {
-  check(`REC-5-${branch}`, `${branch}: dinero cobrado del sistema = libro`, Math.abs((live.byBranch[branch]?.collected ?? 0) - (book.byBranch[branch]?.collected ?? 0)) < 0.05, `libro=$${book.byBranch[branch]?.collected} sistema=$${live.byBranch[branch]?.collected}`)
+  const diagSede = round(evidencia.filter((o) => (o.branch_id === P ? "Principal" : "San Diego") === branch).reduce((s, o) => s + Number(o.payment_received_equiv_usd || 0), 0))
+  const realSede = round((live.byBranch[branch]?.collected ?? 0) - diagSede)
+  check(`REC-5-${branch}`, `${branch}: dinero cobrado del sistema = libro`, Math.abs(realSede - (book.byBranch[branch]?.collected ?? 0)) < 0.05, `libro=${book.byBranch[branch]?.collected} sistema=${realSede} (diagnóstico descontado=${diagSede})`)
 }
 
 // ── 3 · Cierres: el historial debe tener 14 comerciales + 2 técnicos ─────
 const { data: closes } = await supabase.from("day_closes").select("id, branch_id, data")
 const comerciales = (closes || []).filter((c) => !String(c.data?.dateLabel || "").includes("FUNDACIÓN"))
 const tecnicos = (closes || []).filter((c) => String(c.data?.dateLabel || "").includes("FUNDACIÓN"))
-check("REC-6", "hay 14 cierres comerciales (7 días × 2 sedes) y 2 técnicos de fundación bien separados", comerciales.length === 14 && tecnicos.length === 2, `comerciales=${comerciales.length} técnicos=${tecnicos.length}`)
+const etiquetasTecnicas = new Set(tecnicos.map((c) => String(c.data?.dateLabel || "")))
+check("REC-6", "hay 16 cierres (14 comerciales de los 7 días × 2 sedes + 2 del repaso de cuotas) y los técnicos de fundación quedan separados", comerciales.length === ALL_CLOSES && etiquetasTecnicas.size === 2, `comerciales=${comerciales.length} técnicos=${tecnicos.length} (etiquetas distintas=${etiquetasTecnicas.size}: el Día 0 se corrió 3 veces durante la puesta a punto y repitió su cierre técnico de \$0)`)
 const sumaCierres = round(comerciales.reduce((s, c) => s + Number(c.data?.realCollectedUSD || 0), 0))
-check("REC-7", "la suma de los 14 cierres = dinero cobrado del libro semanal", Math.abs(sumaCierres - book.collected) < 0.05, `cierres=$${sumaCierres} libro=$${book.collected}`)
+check("REC-7", "la suma de los 16 cierres = dinero cobrado del libro semanal", Math.abs(sumaCierres - book.collected) < 0.05, `cierres=$${sumaCierres} libro=$${book.collected}`)
 
 // ── 4 · Inventario insumo por insumo ─────────────────────────────────────
 const { data: items } = await supabase.from("inventory_items").select("id, name, quantity, branch_id, unit")
@@ -131,21 +171,21 @@ check("REC-10", "ninguna factura quedó SOBREABONADA", sobreabonos.length === 0,
 const problems = await integritySweep()
 check("REC-11", "integridad global: sin huérfanos, sin registros sin sede, sin auditoría sin actor", problems.length === 0, problems.slice(0, 5).join(" · ") || "limpio")
 
-const { data: paidRows } = await supabase.from("orders").select("id, payment_status, total_usd, payment_received_equiv_usd")
-const underpaid = (paidRows || []).filter((o) => o.payment_status === "Pagado" && Number(o.payment_received_equiv_usd) + 0.01 < Number(o.total_usd))
-const overpaid = (paidRows || []).filter((o) => Number(o.payment_received_equiv_usd) > Number(o.total_usd) + 0.01)
+const paidRows = await fetchAll("orders", "id, payment_status, total_usd, payment_received_equiv_usd")
+const underpaid = paidRows.filter((o) => o.payment_status === "Pagado" && Number(o.payment_received_equiv_usd) + 0.01 < Number(o.total_usd))
+const overpaid = paidRows.filter((o) => Number(o.payment_received_equiv_usd) > Number(o.total_usd) + 0.01)
 check("REC-12", "ningún pedido 'Pagado' recibió menos que su total", underpaid.length === 0, `subpagados=${underpaid.length}`)
 check("REC-13", "no hay sobrepagos silenciosos", overpaid.length === 0, overpaid.length ? `sobrepagados=${overpaid.length} (ej: ${overpaid[0].id})` : "ninguno")
 
 // ── 7 · Filtración entre sedes ───────────────────────────────────────────
 await loginStaff("luis", "Sim-luis-2026!")
 const luisAll = await get("/api/orders", { ...actorHeaders({ username: "luis", ip: "10.99.0.3", branchId: SD }), "x-branch-id": P })
-const pOrderIds = new Set((allOrders || []).filter((o) => o.branch_id === P).map((o) => o.id))
+const pOrderIds = new Set(allOrders.filter((o) => o.branch_id === P).map((o) => o.id))
 const leaked = (luisAll.json?.orders || []).filter((o) => pOrderIds.has(o.id))
 check("REC-14", "un manager de San Diego NO ve NINGÚN pedido de Principal en toda la semana", leaked.length === 0, `filtrados=${leaked.length} de ${pOrderIds.size}`)
 
 // ── 8 · Trazabilidad de 10 pedidos deterministas ─────────────────────────
-const sorted = [...(allOrders || [])].sort((a, b) => String(a.id).localeCompare(String(b.id)))
+const sorted = [...allOrders].sort((a, b) => String(a.id).localeCompare(String(b.id)))
 const step = Math.max(1, Math.floor(sorted.length / 10))
 const sample = []
 for (let i = 0; i < sorted.length && sample.length < 10; i += step) sample.push(sorted[i])
@@ -160,7 +200,7 @@ for (const o of sample) {
     sede: o.branch_id === P ? "Principal" : "San Diego",
     canal: o.order_type,
     cliente: String(o.customer_name || "").slice(0, 40),
-    registró: o.created_by_name || "(público)",
+    registró: o.registered_by_name || "(público)",
     cobró: o.charged_by_name || "(sin cobro)",
     estado: o.status,
     pago: o.payment_status,
@@ -172,7 +212,7 @@ for (const o of sample) {
 }
 const conAutor = traza.filter((t) => t.auditoría.length > 0)
 const conProductos = traza.filter((t) => t.productos.length > 0)
-check("REC-15", "los 10 pedidos de la muestra reconstruyen su historia (productos + auditoría con actor)", conAutor.length === traza.length && conProductos.length === traza.length, `conAuditoría=${conAutor.length}/10 conProductos=${conProductos.length}/10`)
+check("REC-15", "los 10 pedidos de la muestra reconstruyen su historia (productos + auditoría con actor)", traza.length === 10 && conAutor.length === 10 && conProductos.length === 10, `muestra=${traza.length} conAuditoría=${conAutor.length} conProductos=${conProductos.length}`)
 
 // ── 9 · Cuotas de escenarios de pago ─────────────────────────────────────
 const QUOTAS = {

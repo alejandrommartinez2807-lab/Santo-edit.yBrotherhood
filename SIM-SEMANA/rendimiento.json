@@ -1094,5 +1094,1185 @@
       "errors": 0,
       "timeouts": 0
     }
+  },
+  "dia-7": {
+    "GET /api/public/products": {
+      "count": 2,
+      "p50": 214,
+      "p95": 581,
+      "max": 581,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/open-accounts": {
+      "count": 5,
+      "p50": 1503,
+      "p95": 1940,
+      "max": 1940,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/orders": {
+      "count": 61,
+      "p50": 5038,
+      "p95": 8477,
+      "max": 15640,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH orders/:id (cocina)": {
+      "count": 118,
+      "p50": 1834,
+      "p95": 3768,
+      "max": 10450,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH orders/:id (entrega)": {
+      "count": 50,
+      "p50": 1833,
+      "p95": 2804,
+      "max": 21875,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH open-account pay": {
+      "count": 5,
+      "p50": 8965,
+      "p95": 10650,
+      "max": 10650,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH payment": {
+      "count": 48,
+      "p50": 2078,
+      "p95": 2646,
+      "max": 27342,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH orders/:id (cancelar)": {
+      "count": 3,
+      "p50": 6542,
+      "p95": 7174,
+      "max": 7174,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5ovs4d-9zqf0sa8sk": {
+      "count": 1,
+      "p50": 1839,
+      "p95": 1839,
+      "max": 1839,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "GET /api/orders": {
+      "count": 1,
+      "p50": 2931,
+      "p95": 2931,
+      "max": 2931,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/staff": {
+      "count": 1,
+      "p50": 923,
+      "p95": 923,
+      "max": 923,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5opf5c-ubogzxrimp": {
+      "count": 1,
+      "p50": 1202,
+      "p95": 1202,
+      "max": 1202,
+      "errors": 1,
+      "timeouts": 0
+    },
+    "GET /api/reports": {
+      "count": 5,
+      "p50": 2500,
+      "p95": 3470,
+      "max": 3470,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "GET /api/day-closes": {
+      "count": 1,
+      "p50": 1945,
+      "p95": 1945,
+      "max": 1945,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST day-expenses": {
+      "count": 2,
+      "p50": 1058,
+      "p95": 1313,
+      "max": 1313,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST day-close": {
+      "count": 2,
+      "p50": 2674,
+      "p95": 3630,
+      "max": 3630,
+      "errors": 0,
+      "timeouts": 0
+    }
+  },
+  "repaso-cuotas": {
+    "GET /api/public/products": {
+      "count": 2,
+      "p50": 282,
+      "p95": 854,
+      "max": 854,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/orders": {
+      "count": 101,
+      "p50": 4209,
+      "p95": 6668,
+      "max": 9598,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pgb84-zpxsym445n": {
+      "count": 3,
+      "p50": 2818,
+      "p95": 3295,
+      "max": 3295,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST payment-proofs": {
+      "count": 47,
+      "p50": 2092,
+      "p95": 3502,
+      "max": 6191,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH proof review": {
+      "count": 47,
+      "p50": 1229,
+      "p95": 1363,
+      "max": 3651,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH payment": {
+      "count": 69,
+      "p50": 2124,
+      "p95": 4289,
+      "max": 5562,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pgxda-v0mvxiugoz": {
+      "count": 3,
+      "p50": 4418,
+      "p95": 5739,
+      "max": 5739,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5phjsc-rria5yjkxv": {
+      "count": 3,
+      "p50": 2701,
+      "p95": 2829,
+      "max": 2829,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5phxx6-e504uhkzxv": {
+      "count": 3,
+      "p50": 1915,
+      "p95": 2386,
+      "max": 2386,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pibpw-64etrnhjbw": {
+      "count": 3,
+      "p50": 2196,
+      "p95": 2951,
+      "max": 2951,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pitae-5xi8w5zyqd": {
+      "count": 3,
+      "p50": 2074,
+      "p95": 2319,
+      "max": 2319,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pj5va-nzaxcz9yln": {
+      "count": 3,
+      "p50": 1851,
+      "p95": 2042,
+      "max": 2042,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pjhav-rt7pnfn9hk": {
+      "count": 3,
+      "p50": 1945,
+      "p95": 2128,
+      "max": 2128,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pjtmm-4oqiwvrfic": {
+      "count": 3,
+      "p50": 1790,
+      "p95": 1963,
+      "max": 1963,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pk53z-36g6g3grfv": {
+      "count": 3,
+      "p50": 1807,
+      "p95": 1868,
+      "max": 1868,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pkgtg-s9sfemjqys": {
+      "count": 3,
+      "p50": 1814,
+      "p95": 1825,
+      "max": 1825,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pksvs-pjnzpqliph": {
+      "count": 3,
+      "p50": 1883,
+      "p95": 1907,
+      "max": 1907,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pl6ok-lshmtm2zmi": {
+      "count": 3,
+      "p50": 1917,
+      "p95": 1928,
+      "max": 1928,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5plhv8-e4rsuiiwzx": {
+      "count": 3,
+      "p50": 1891,
+      "p95": 1924,
+      "max": 1924,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pltfe-bsdecwbzln": {
+      "count": 3,
+      "p50": 1885,
+      "p95": 1901,
+      "max": 1901,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pm5go-oc5btbx3mc": {
+      "count": 3,
+      "p50": 1883,
+      "p95": 2022,
+      "max": 2022,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pmha5-396kk8cnfh": {
+      "count": 3,
+      "p50": 1915,
+      "p95": 1931,
+      "max": 1931,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pmtao-sa4gqvalwo": {
+      "count": 3,
+      "p50": 1955,
+      "p95": 2055,
+      "max": 2055,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pn5bn-7sdrqkffwt": {
+      "count": 3,
+      "p50": 1834,
+      "p95": 1864,
+      "max": 1864,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pnm5v-rfdgiwcpib": {
+      "count": 3,
+      "p50": 1901,
+      "p95": 1915,
+      "max": 1915,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pny3u-tnvabuin7q": {
+      "count": 3,
+      "p50": 2390,
+      "p95": 3041,
+      "max": 3041,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pobg0-xln1lnxraw": {
+      "count": 3,
+      "p50": 1788,
+      "p95": 1970,
+      "max": 1970,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pon81-kij9rhgzqa": {
+      "count": 3,
+      "p50": 1878,
+      "p95": 2060,
+      "max": 2060,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pozqc-nwmof9ra0a": {
+      "count": 3,
+      "p50": 1897,
+      "p95": 1983,
+      "max": 1983,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5ppbef-hybjiluzxu": {
+      "count": 3,
+      "p50": 1918,
+      "p95": 2007,
+      "max": 2007,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5ppnl8-gdguajvgow": {
+      "count": 3,
+      "p50": 1953,
+      "p95": 2078,
+      "max": 2078,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5ppzdl-1tlp3mgpfy": {
+      "count": 3,
+      "p50": 1809,
+      "p95": 1888,
+      "max": 1888,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pqajw-9bet2uc33s": {
+      "count": 3,
+      "p50": 1848,
+      "p95": 2062,
+      "max": 2062,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pqm61-lcqkyah2uh": {
+      "count": 3,
+      "p50": 1824,
+      "p95": 1920,
+      "max": 1920,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pqxd1-0fvuqx3hl7": {
+      "count": 3,
+      "p50": 2012,
+      "p95": 2013,
+      "max": 2013,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pr9ei-asnr7aqwyj": {
+      "count": 3,
+      "p50": 1904,
+      "p95": 1940,
+      "max": 1940,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5prleh-lnotityqyh": {
+      "count": 3,
+      "p50": 1834,
+      "p95": 2104,
+      "max": 2104,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5prxuc-dy6fpcizqf": {
+      "count": 3,
+      "p50": 1922,
+      "p95": 1940,
+      "max": 1940,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5ps99q-nkgrftlssf": {
+      "count": 3,
+      "p50": 1870,
+      "p95": 2090,
+      "max": 2090,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pso3c-izdqukrlks": {
+      "count": 3,
+      "p50": 1970,
+      "p95": 2011,
+      "max": 2011,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pt0dc-zh4l1xqpdo": {
+      "count": 3,
+      "p50": 1909,
+      "p95": 2020,
+      "max": 2020,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5ptc8v-vivhsryp": {
+      "count": 3,
+      "p50": 1897,
+      "p95": 1913,
+      "max": 1913,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5ptni7-hnol7di9nm": {
+      "count": 3,
+      "p50": 2008,
+      "p95": 2091,
+      "max": 2091,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5ptzhd-vmo2q2xvms": {
+      "count": 3,
+      "p50": 1861,
+      "p95": 1922,
+      "max": 1922,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pub1f-r55xm8igri": {
+      "count": 3,
+      "p50": 1870,
+      "p95": 1992,
+      "max": 1992,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pungb-gbhc00vkgt": {
+      "count": 3,
+      "p50": 1831,
+      "p95": 1878,
+      "max": 1878,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5puz55-ssqosylb7u": {
+      "count": 3,
+      "p50": 1844,
+      "p95": 1861,
+      "max": 1861,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pvap4-a7vx0nmoq4": {
+      "count": 3,
+      "p50": 1909,
+      "p95": 1918,
+      "max": 1918,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pvmq4-cn5epjpjde": {
+      "count": 3,
+      "p50": 1770,
+      "p95": 1851,
+      "max": 1851,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pvy1r-dy2tepzwnt": {
+      "count": 3,
+      "p50": 1991,
+      "p95": 2008,
+      "max": 2008,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pwa01-rpngu7dy8a": {
+      "count": 3,
+      "p50": 1788,
+      "p95": 5769,
+      "max": 5769,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pwo8c-idvlbhrmtu": {
+      "count": 3,
+      "p50": 1865,
+      "p95": 1877,
+      "max": 1877,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pwzue-0eycwg0lk5": {
+      "count": 3,
+      "p50": 1898,
+      "p95": 2002,
+      "max": 2002,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pwzue-0eycwg0lk5/payment": {
+      "count": 1,
+      "p50": 2115,
+      "p95": 2115,
+      "max": 2115,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pxapu-ulqzjqo2jt": {
+      "count": 3,
+      "p50": 1959,
+      "p95": 1970,
+      "max": 1970,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pxapu-ulqzjqo2jt/payment": {
+      "count": 1,
+      "p50": 2084,
+      "p95": 2084,
+      "max": 2084,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pxlru-4ieul6ni7b": {
+      "count": 3,
+      "p50": 2868,
+      "p95": 4048,
+      "max": 4048,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pxlru-4ieul6ni7b/payment": {
+      "count": 1,
+      "p50": 1913,
+      "p95": 1913,
+      "max": 1913,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pxyta-ibieklshls": {
+      "count": 3,
+      "p50": 1806,
+      "p95": 1888,
+      "max": 1888,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pxyta-ibieklshls/payment": {
+      "count": 1,
+      "p50": 2066,
+      "p95": 2066,
+      "max": 2066,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5py9tm-mx251ng4sf": {
+      "count": 3,
+      "p50": 1947,
+      "p95": 2008,
+      "max": 2008,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5py9tm-mx251ng4sf/payment": {
+      "count": 1,
+      "p50": 2164,
+      "p95": 2164,
+      "max": 2164,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pyl3t-low0h3zxzl": {
+      "count": 3,
+      "p50": 1805,
+      "p95": 1917,
+      "max": 1917,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pyl3t-low0h3zxzl/payment": {
+      "count": 1,
+      "p50": 2047,
+      "p95": 2047,
+      "max": 2047,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pyvsr-d6k9cy074g": {
+      "count": 3,
+      "p50": 1920,
+      "p95": 1982,
+      "max": 1982,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pyvsr-d6k9cy074g/payment": {
+      "count": 1,
+      "p50": 2140,
+      "p95": 2140,
+      "max": 2140,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pz6rn-jk8bxrn7n3": {
+      "count": 3,
+      "p50": 1852,
+      "p95": 1929,
+      "max": 1929,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pz6rn-jk8bxrn7n3/payment": {
+      "count": 1,
+      "p50": 2038,
+      "p95": 2038,
+      "max": 2038,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pzho9-tx0itaawe5": {
+      "count": 3,
+      "p50": 1857,
+      "p95": 1966,
+      "max": 1966,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pzho9-tx0itaawe5/payment": {
+      "count": 1,
+      "p50": 2174,
+      "p95": 2174,
+      "max": 2174,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pzt2u-y347bf9h1l": {
+      "count": 2,
+      "p50": 1746,
+      "p95": 2085,
+      "max": 2085,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5pzt2u-y347bf9h1l/payment": {
+      "count": 1,
+      "p50": 2063,
+      "p95": 2063,
+      "max": 2063,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q01fu-tl4dedfobp": {
+      "count": 2,
+      "p50": 1794,
+      "p95": 1900,
+      "max": 1900,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q01fu-tl4dedfobp/payment": {
+      "count": 1,
+      "p50": 2148,
+      "p95": 2148,
+      "max": 2148,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q09ig-vclcmggggx": {
+      "count": 2,
+      "p50": 1886,
+      "p95": 1974,
+      "max": 1974,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q09ig-vclcmggggx/payment": {
+      "count": 1,
+      "p50": 2094,
+      "p95": 2094,
+      "max": 2094,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q0i3t-3rv75gw2zu": {
+      "count": 2,
+      "p50": 1869,
+      "p95": 1876,
+      "max": 1876,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q0i3t-3rv75gw2zu/payment": {
+      "count": 1,
+      "p50": 2003,
+      "p95": 2003,
+      "max": 2003,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q0q5u-e4otldtanp": {
+      "count": 2,
+      "p50": 1700,
+      "p95": 1897,
+      "max": 1897,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q0q5u-e4otldtanp/payment": {
+      "count": 1,
+      "p50": 2059,
+      "p95": 2059,
+      "max": 2059,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q0y4l-qvmikaw93s": {
+      "count": 2,
+      "p50": 1719,
+      "p95": 1835,
+      "max": 1835,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q0y4l-qvmikaw93s/payment": {
+      "count": 1,
+      "p50": 1861,
+      "p95": 1861,
+      "max": 1861,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q1695-qcxfmtuzsr": {
+      "count": 2,
+      "p50": 1802,
+      "p95": 1920,
+      "max": 1920,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q1695-qcxfmtuzsr/payment": {
+      "count": 1,
+      "p50": 1986,
+      "p95": 1986,
+      "max": 1986,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q1e7q-1enk5ukxkw": {
+      "count": 2,
+      "p50": 1714,
+      "p95": 1917,
+      "max": 1917,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q1e7q-1enk5ukxkw/payment": {
+      "count": 1,
+      "p50": 6988,
+      "p95": 6988,
+      "max": 6988,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q1pxv-uslfqpqfzc": {
+      "count": 3,
+      "p50": 1939,
+      "p95": 2035,
+      "max": 2035,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q1pxv-uslfqpqfzc/payment": {
+      "count": 2,
+      "p50": 2240,
+      "p95": 2265,
+      "max": 2265,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q1zr3-tydl9rbgpy": {
+      "count": 3,
+      "p50": 1834,
+      "p95": 1895,
+      "max": 1895,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q1zr3-tydl9rbgpy/payment": {
+      "count": 2,
+      "p50": 1954,
+      "p95": 2007,
+      "max": 2007,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q28yu-ncox5hkicf": {
+      "count": 3,
+      "p50": 1753,
+      "p95": 1944,
+      "max": 1944,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q28yu-ncox5hkicf/payment": {
+      "count": 2,
+      "p50": 2051,
+      "p95": 2074,
+      "max": 2074,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q2ibl-cc6mzpuqd6": {
+      "count": 3,
+      "p50": 1784,
+      "p95": 1906,
+      "max": 1906,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q2ibl-cc6mzpuqd6/payment": {
+      "count": 2,
+      "p50": 2032,
+      "p95": 2116,
+      "max": 2116,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q2rh5-oqnvudjr5v": {
+      "count": 3,
+      "p50": 1808,
+      "p95": 1830,
+      "max": 1830,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q2rh5-oqnvudjr5v/payment": {
+      "count": 2,
+      "p50": 1965,
+      "p95": 2090,
+      "max": 2090,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q30hk-rttzzig3r8": {
+      "count": 3,
+      "p50": 1828,
+      "p95": 1830,
+      "max": 1830,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q30hk-rttzzig3r8/payment": {
+      "count": 2,
+      "p50": 2139,
+      "p95": 2192,
+      "max": 2192,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q39qg-4wkxbp0au8": {
+      "count": 3,
+      "p50": 1647,
+      "p95": 1871,
+      "max": 1871,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q39qg-4wkxbp0au8/payment": {
+      "count": 2,
+      "p50": 2107,
+      "p95": 2131,
+      "max": 2131,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q3imh-riayxqoneg": {
+      "count": 3,
+      "p50": 1879,
+      "p95": 1972,
+      "max": 1972,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q3imh-riayxqoneg/payment": {
+      "count": 2,
+      "p50": 2166,
+      "p95": 2498,
+      "max": 2498,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q3seu-dukfgkuc70": {
+      "count": 3,
+      "p50": 1803,
+      "p95": 1861,
+      "max": 1861,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q3seu-dukfgkuc70/payment": {
+      "count": 2,
+      "p50": 1624,
+      "p95": 2054,
+      "max": 2054,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q41fv-avdbrtpn9o": {
+      "count": 3,
+      "p50": 1753,
+      "p95": 1929,
+      "max": 1929,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q41fv-avdbrtpn9o/payment": {
+      "count": 2,
+      "p50": 1720,
+      "p95": 2116,
+      "max": 2116,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q4ahm-kd2ehcxpuw": {
+      "count": 3,
+      "p50": 1773,
+      "p95": 1880,
+      "max": 1880,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q4ahm-kd2ehcxpuw/payment": {
+      "count": 2,
+      "p50": 1673,
+      "p95": 1935,
+      "max": 1935,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q4jfy-fqrotefsry": {
+      "count": 3,
+      "p50": 1795,
+      "p95": 1836,
+      "max": 1836,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q4jfy-fqrotefsry/payment": {
+      "count": 2,
+      "p50": 1725,
+      "p95": 2096,
+      "max": 2096,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q4sck-hldwbvhvtb": {
+      "count": 3,
+      "p50": 1675,
+      "p95": 1826,
+      "max": 1826,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q4sck-hldwbvhvtb/payment": {
+      "count": 2,
+      "p50": 1663,
+      "p95": 2038,
+      "max": 2038,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST /api/open-accounts": {
+      "count": 3,
+      "p50": 1493,
+      "p95": 1552,
+      "max": 1552,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q52tg-guc7fihxiw": {
+      "count": 2,
+      "p50": 1798,
+      "p95": 1977,
+      "max": 1977,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH open-account pay": {
+      "count": 3,
+      "p50": 5701,
+      "p95": 5799,
+      "max": 5799,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q5h60-mse9ysjmta": {
+      "count": 2,
+      "p50": 1661,
+      "p95": 1730,
+      "max": 1730,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q5upf-8zjvq3b9u8": {
+      "count": 2,
+      "p50": 1907,
+      "p95": 2143,
+      "max": 2143,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q67no-xbaleynr6l": {
+      "count": 3,
+      "p50": 1835,
+      "p95": 1854,
+      "max": 1854,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q6goh-fl165ypq4n": {
+      "count": 3,
+      "p50": 2027,
+      "p95": 2244,
+      "max": 2244,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q6qla-o8d6cwzbpt": {
+      "count": 3,
+      "p50": 1819,
+      "p95": 1874,
+      "max": 1874,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q6zmy-cebrprllkk": {
+      "count": 3,
+      "p50": 1852,
+      "p95": 1861,
+      "max": 1861,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q78t5-sfyovp33kf": {
+      "count": 3,
+      "p50": 1752,
+      "p95": 1803,
+      "max": 1803,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q7hjx-ob22scsouo": {
+      "count": 3,
+      "p50": 1849,
+      "p95": 1864,
+      "max": 1864,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q7qic-mll52c0kdz": {
+      "count": 3,
+      "p50": 1782,
+      "p95": 1806,
+      "max": 1806,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q7zdd-hetwwdasp2": {
+      "count": 3,
+      "p50": 1740,
+      "p95": 1846,
+      "max": 1846,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q87uw-qwhova0nt5": {
+      "count": 3,
+      "p50": 1832,
+      "p95": 1857,
+      "max": 1857,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q8gm1-4cdkweo4gl": {
+      "count": 3,
+      "p50": 1788,
+      "p95": 1894,
+      "max": 1894,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q8pt0-k9ubx3l0b8": {
+      "count": 3,
+      "p50": 1774,
+      "p95": 1835,
+      "max": 1835,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q8ylt-atqgv8t6jr": {
+      "count": 3,
+      "p50": 1821,
+      "p95": 1944,
+      "max": 1944,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "PATCH /api/orders/ord-ms5q97kv-ag514byh7m": {
+      "count": 3,
+      "p50": 1961,
+      "p95": 2425,
+      "max": 2425,
+      "errors": 0,
+      "timeouts": 0
+    },
+    "POST day-close": {
+      "count": 2,
+      "p50": 2205,
+      "p95": 3165,
+      "max": 3165,
+      "errors": 0,
+      "timeouts": 0
+    }
   }
 }
