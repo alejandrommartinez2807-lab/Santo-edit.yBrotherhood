@@ -192,9 +192,61 @@ async function applyPurchaseStock(
     expense_id: "",
     note: `Compra del ${info.purchaseDate}`,
   })
-  if (movementError) throw new Error(movementError.message)
+  if (movementError) {
+    // Operación a medias (§18): el stock ya subió pero el movimiento no se
+    // pudo escribir — sin compensar quedaría stock SIN rastro, el mismo
+    // agujero de trazabilidad de BH-SIM-004 pero al revés. Se revierte el
+    // stock (solo si nadie lo tocó en el medio) y se propaga el error.
+    await supabase
+      .from("inventory_items")
+      .update({ quantity: previousQuantity, updated_at: new Date().toISOString() })
+      .eq("id", itemId)
+      .eq("quantity", finalQuantity)
+      .then(() => undefined, () => undefined)
+    throw new Error(movementError.message)
+  }
 
   return movementId
+}
+
+// Compensación de saveSupplierPurchase: la factura no se pudo guardar pero el
+// stock y su movimiento YA se aplicaron. Sin esto, el inventario queda
+// inflado con un movimiento que referencia una compra inexistente. Mejor
+// esfuerzo: si la reversa falla, el movimiento huérfano al menos deja rastro.
+async function revertPurchaseStock(
+  itemId: string,
+  quantity: number,
+  branchId: string | null | undefined,
+  movementId: string,
+): Promise<void> {
+  const supabase = getSupabaseAdmin()
+  try {
+    let currentQuery = supabase
+      .from("inventory_items")
+      .select("quantity")
+      .eq("id", itemId)
+    if (branchId) currentQuery = currentQuery.eq("branch_id", branchId)
+    const { data: current } = await currentQuery.maybeSingle()
+    const nowQuantity = num((current as Row | null)?.quantity)
+    const revertedQuantity =
+      Math.round((nowQuantity - quantity + Number.EPSILON) * 1000) / 1000
+
+    let updateQuery = supabase
+      .from("inventory_items")
+      .update({ quantity: revertedQuantity, updated_at: new Date().toISOString() })
+      .eq("id", itemId)
+      // Lock optimista: solo revierte si nadie movió el stock en el medio.
+      .eq("quantity", nowQuantity)
+    if (branchId) updateQuery = updateQuery.eq("branch_id", branchId)
+    const { error: updateError } = await updateQuery
+    if (updateError) return
+
+    // El movimiento nació en ESTA compra fallida: se elimina para no dejar
+    // una "Compra" apuntando a una factura que nunca existió.
+    await supabase.from("inventory_movements").delete().eq("id", movementId)
+  } catch {
+    // Mejor esfuerzo: el error original de la compra es el que debe verse.
+  }
 }
 
 export async function getSupplierPurchases(
@@ -291,7 +343,15 @@ export async function saveSupplierPurchase(
     .select("*")
     .single()
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    // Operación a medias (§18): el stock ya subió pero la FACTURA no se
+    // guardó. Se compensa (reversa del stock + movimiento) y se propaga el
+    // error para que quien compró vea que la compra NO quedó.
+    if (linksInventory && inventoryMovementId) {
+      await revertPurchaseStock(inventoryItemId, inventoryQuantity, branchId, inventoryMovementId)
+    }
+    throw new Error(error.message)
+  }
   return mapPurchase(data as Row)
 }
 
