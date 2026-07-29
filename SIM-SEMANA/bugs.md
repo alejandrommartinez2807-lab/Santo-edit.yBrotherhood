@@ -93,3 +93,80 @@
   comporta igual que antes. El siguiente paso (fuera del alcance de esta
   semana) es que la UI de caja envíe siempre el candado; hoy lo envían las
   cuentas abiertas y la revisión de comprobantes.
+
+---
+
+## Falsos positivos de la simulación (corregidos en el guion, NO son bugs del sistema)
+
+Se documentan para que nadie los persiga como si fueran defectos.
+
+### D5-EVT-4 — "el reporte por vendedor está vacío"
+
+**No es un bug.** La atribución de ventas por vendedor y por registrador vive
+en el **cierre de caja** (`salesBySeller` / `ordersByRegistrar` en
+`/api/day-close`), no en `/api/reports`. Mi check buscaba la clave en el
+endpoint equivocado.
+
+Verificado correctamente después: un cierre con
+`salesBySeller: [{Vanessa, 2 ventas, $26}, {Anthony, 1 venta, $14}]` se guarda
+y se relee **intacto** (incluido el desglose de combos y delivery). La
+atribución individual del pedido también está: `charged_by_name = "Vanessa"`
+en las ventas que ella cobró (check D5-EVT-3 en verde).
+
+Lo que sí queda como observación para el dueño: el motor de la simulación arma
+sus cierres con métodos y totales, sin enviar `salesBySeller`. Por eso los 14
+cierres de la semana lo tienen vacío. En la app real ese arreglo lo compone la
+pantalla de cierre, que sí lo llena.
+
+### D1-CX-1 — "el mesonero no pudo cancelar"
+
+**No es un bug, es el diseño correcto.** `canRoleUpdateStatus` reserva la
+anulación a dueño, encargado y cajero; el mesonero solo entrega. Mi guion del
+Día 1 hacía cancelar a Anthony (mesonero). Corregido: cancela la encargada, y
+el intento del mesonero quedó documentado como prueba negativa de permisos.
+
+### D1-ADV-7 — "el comprobante con 9.648,99 fue rechazado"
+
+**No es un bug, es el escudo P-1 funcionando.** La referencia que envié
+(`SIM-D1-9648`) tenía menos de 6 dígitos y el servidor la rechaza — esa regla
+se blindó en la ronda del 2026-07-28 precisamente para que no viviera solo en
+el navegador. Con una referencia válida (`004521998877`) el comprobante entra
+a revisión con el monto `9.648,99` correcto (check D1R-ADV-7 en verde).
+
+---
+
+## BH-SIM-004 · MEDIO-ALTO · La venta con el stock ya en cero desaparecía del historial de inventario
+
+- **E (Error)**: cuando el stock de un insumo llega a 0 y se siguen vendiendo
+  productos que lo consumen, el sistema **no registraba ningún movimiento**: la
+  venta era invisible en el historial de inventario. El faltante PARCIAL sí se
+  registraba ("faltaron 2 unidades"), pero el TOTAL no.
+- **Evidencia**: check `dia-6-NOCHE-inventario` (Refresco 1.5L en San Diego:
+  libro esperado −15, sistema 0) + repro aislada con un insumo de prueba:
+  vender 5 unidades con stock 0 dejó **0 movimientos**, y el pedido se creó y
+  se pudo cobrar igual ($25).
+- **Impacto**: el dueño no puede reconciliar. Salieron 15 refrescos de la
+  nevera y el historial no lo menciona; un conteo físico no cuadra con nada y
+  no hay rastro de cuánto se vendió sin stock. No pierde dinero (la venta se
+  cobra), pero corrompe la trazabilidad del inventario, que es justo lo que
+  §24 del Prompt Maestro exige buscar ("inventario sin historial").
+- **C (Causa raíz)**: `src/lib/ordersInventory.ts`, bucle de consumo:
+  `const moved = Math.min(previousQuantity, line.quantity); if (moved <= 0) break`
+  — con `previousQuantity = 0` el `break` salía ANTES de insertar el
+  movimiento. La corrección anterior del faltante (el comentario decía "antes
+  se clampaba a 0 sin rastro") solo cubrió el caso parcial: quedó a medias.
+- **F (Fix)**: nueva lib `src/lib/inventoryShortage.ts` con
+  `buildConsumptionMovement()`, que decide por caso: consumo normal, faltante
+  parcial y faltante total. Con stock 0 se registra igual un movimiento de
+  cantidad 0 con "(faltaron N unidades)" y **sin** tocar la fila del insumo
+  (no hace falta). El stock sigue sin irse a negativo — esa decisión de
+  negocio se respeta.
+- **S (Blindaje)**: `src/lib/__tests__/inventoryShortageTrace.test.ts`
+  (5 casos: normal, parcial, total, fraccionado con precisión, pedir 0).
+- **V (Verificación)**: repro tras el fix — vender 3 con stock 1 deja
+  "faltaron 2"; vender 4 más con stock 0 deja **"faltaron 4"** con
+  `0→0 mov=0`; el stock sigue en 0, nunca negativo. `tsc` OK, vitest 578/578.
+- **Mejora que NO hice (decisión tuya)**: el sistema permite vender con stock
+  en cero. Bloquearlo sería un cambio de política de negocio — hay locales que
+  quieren seguir vendiendo y ajustar después. Ahora al menos queda registrado.
+  Si quieres que se bloquee o que avise a caja, dímelo.

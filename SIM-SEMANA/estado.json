@@ -5,20 +5,23 @@
     "dia-2",
     "dia-3",
     "dia-4",
-    "dia-5"
+    "dia-5",
+    "dia-6"
   ],
   "quotas": {
-    "efectivo": 105,
-    "efectivo-cambio": 43,
-    "pagomovil": 36,
-    "mixto": 66,
-    "transferencia": 43,
-    "reintento-seguro": 1,
+    "efectivo": 132,
+    "efectivo-cambio": 48,
+    "pagomovil": 49,
+    "mixto": 85,
+    "transferencia": 45,
+    "reintento-seguro": 2,
     "pago-reportado": 3,
     "reportado-bs-formato-ve": 2,
-    "segunda-pata": 26,
-    "intento-duplicado": 1,
-    "carrera-dos-cajeros": 1
+    "segunda-pata": 34,
+    "intento-duplicado": 2,
+    "carrera-dos-cajeros": 1,
+    "cuenta-cobrada-otro-dia": 1,
+    "correccion-metodo": 1
   },
   "ids": {
     "principal": "e514be79-bb39-4050-9f27-e6c10249a1cf",
@@ -155,7 +158,9 @@
       "dia-4:Principal": "close-1785302272820-crsjpp",
       "dia-4:San Diego": "close-1785302276399-yca9a2",
       "dia-5:Principal": "close-1785303900110-mi2b89",
-      "dia-5:San Diego": "close-1785303903249-56op3j"
+      "dia-5:San Diego": "close-1785303903249-56op3j",
+      "dia-6:Principal": "close-1785305256817-aseye3",
+      "dia-6:San Diego": "close-1785305259676-9sz0r6"
     }
   },
   "bugs": [],

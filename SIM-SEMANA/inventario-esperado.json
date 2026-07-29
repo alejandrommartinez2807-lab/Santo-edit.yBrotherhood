@@ -5,7 +5,7 @@
       "unit": "unidades",
       "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
       "itemId": "inv-1785296280734-d5vsi2",
-      "expected": 609,
+      "expected": 561,
       "movements": [
         {
           "type": "Carga inicial",
@@ -826,6 +826,178 @@
         {
           "type": "Consumo",
           "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Devolución",
+          "qty": 1
+        },
+        {
+          "type": "Devolución",
+          "qty": 1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
         }
       ]
     },
@@ -834,7 +1006,7 @@
       "unit": "unidades",
       "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
       "itemId": "inv-1785296282047-7gi4sc",
-      "expected": 511,
+      "expected": 463,
       "movements": [
         {
           "type": "Carga inicial",
@@ -1343,6 +1515,126 @@
         {
           "type": "Consumo",
           "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Devolución",
+          "qty": 1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
         }
       ]
     },
@@ -1351,7 +1643,7 @@
       "unit": "kg",
       "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
       "itemId": "inv-1785296283182-unmnea",
-      "expected": 25.95,
+      "expected": 22.5,
       "movements": [
         {
           "type": "Carga inicial",
@@ -1668,6 +1960,82 @@
         {
           "type": "Consumo",
           "qty": -0.2
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.2
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.2
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.15
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.15
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.2
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.15
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.15
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.2
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.2
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.3
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.2
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.15
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.15
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.3
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.3
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.15
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.15
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.3
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.15
         }
       ]
     },
@@ -1676,7 +2044,7 @@
       "unit": "kg",
       "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
       "itemId": "inv-1785296284468-i90afw",
-      "expected": 20.35,
+      "expected": 17.38,
       "movements": [
         {
           "type": "Carga inicial",
@@ -2517,6 +2885,254 @@
         {
           "type": "Consumo",
           "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.06
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.12
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.12
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.06
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.12
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.12
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.12
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.06
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.12
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.06
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.06
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.12
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.12
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.03
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.04
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.12
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.12
         }
       ]
     },
@@ -2525,7 +3141,7 @@
       "unit": "kg",
       "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
       "itemId": "inv-1785296285658-qtpt0n",
-      "expected": 16.23,
+      "expected": 15.09,
       "movements": [
         {
           "type": "Carga inicial",
@@ -2998,6 +3614,154 @@
         {
           "type": "Consumo",
           "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.03
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
         }
       ]
     },
@@ -3006,7 +3770,7 @@
       "unit": "kg",
       "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
       "itemId": "inv-1785296286892-658eae",
-      "expected": 65.15,
+      "expected": 50.35,
       "movements": [
         {
           "type": "Carga inicial",
@@ -3707,6 +4471,194 @@
         {
           "type": "Consumo",
           "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.3
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.3
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.3
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.3
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.5
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.5
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.3
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.5
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.3
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.5
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.4
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.3
         }
       ]
     },
@@ -3715,7 +4667,7 @@
       "unit": "litros",
       "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
       "itemId": "inv-1785296288102-pblp0w",
-      "expected": 51.99,
+      "expected": 49.63,
       "movements": [
         {
           "type": "Carga inicial",
@@ -4576,6 +5528,258 @@
         {
           "type": "Consumo",
           "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.06
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.06
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.06
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.06
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.04
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.05
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
         }
       ]
     },
@@ -4584,7 +5788,7 @@
       "unit": "unidades",
       "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
       "itemId": "inv-1785296289266-3iq7ya",
-      "expected": 126,
+      "expected": 85,
       "movements": [
         {
           "type": "Carga inicial",
@@ -5133,6 +6337,174 @@
         {
           "type": "Consumo",
           "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Devolución",
+          "qty": 1
+        },
+        {
+          "type": "Devolución",
+          "qty": 1
+        },
+        {
+          "type": "Devolución",
+          "qty": 1
         }
       ]
     },
@@ -5141,7 +6513,7 @@
       "unit": "unidades",
       "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
       "itemId": "inv-1785296290573-v2m9ji",
-      "expected": 83,
+      "expected": 75,
       "movements": [
         {
           "type": "Carga inicial",
@@ -5310,6 +6682,38 @@
         {
           "type": "Consumo",
           "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
         }
       ]
     },
@@ -5318,7 +6722,7 @@
       "unit": "kg",
       "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
       "itemId": "inv-1785296291851-r1vylp",
-      "expected": 24.52,
+      "expected": 24.31,
       "movements": [
         {
           "type": "Carga inicial",
@@ -5403,6 +6807,34 @@
         {
           "type": "Consumo",
           "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
         }
       ]
     },
@@ -5411,7 +6843,7 @@
       "unit": "kg",
       "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
       "itemId": "inv-1785296293129-3snet0",
-      "expected": 23.74,
+      "expected": 23.44,
       "movements": [
         {
           "type": "Carga inicial",
@@ -5628,6 +7060,58 @@
         {
           "type": "Consumo",
           "qty": -0.02
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.02
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.02
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.02
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.02
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.02
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.02
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.02
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.02
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.02
         }
       ]
     },
@@ -5649,7 +7133,7 @@
       "unit": "kg",
       "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
       "itemId": "inv-1785296295777-9mu2pl",
-      "expected": 91.6,
+      "expected": 90.7,
       "movements": [
         {
           "type": "Carga inicial",
@@ -6066,6 +7550,66 @@
         {
           "type": "Devolución",
           "qty": 0.15
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.1
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.1
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.1
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.1
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.1
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.05
         }
       ]
     },
@@ -6187,7 +7731,7 @@
       "unit": "unidades",
       "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
       "itemId": "inv-1785296297977-3omw14",
-      "expected": 571,
+      "expected": 523,
       "movements": [
         {
           "type": "Carga inicial",
@@ -7000,6 +8544,178 @@
         {
           "type": "Consumo",
           "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Devolución",
+          "qty": 1
+        },
+        {
+          "type": "Devolución",
+          "qty": 1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
         }
       ]
     },
@@ -7021,7 +8737,7 @@
       "unit": "unidades",
       "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
       "itemId": "inv-1785296300400-br1uus",
-      "expected": 1538,
+      "expected": 1402,
       "movements": [
         {
           "type": "Carga inicial",
@@ -7418,6 +9134,118 @@
         {
           "type": "Consumo",
           "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -6
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -6
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -6
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -8
+        },
+        {
+          "type": "Consumo",
+          "qty": -6
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -6
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -8
+        },
+        {
+          "type": "Consumo",
+          "qty": -6
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -8
+        },
+        {
+          "type": "Consumo",
+          "qty": -6
+        },
+        {
+          "type": "Consumo",
+          "qty": -6
+        },
+        {
+          "type": "Consumo",
+          "qty": -8
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Devolución",
+          "qty": 6
+        },
+        {
+          "type": "Consumo",
+          "qty": -6
         }
       ]
     },
@@ -7439,7 +9267,7 @@
       "unit": "unidades",
       "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
       "itemId": "inv-1785296302788-nr0fxs",
-      "expected": 102,
+      "expected": 74,
       "movements": [
         {
           "type": "Carga inicial",
@@ -7916,6 +9744,110 @@
         {
           "type": "Consumo",
           "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Devolución",
+          "qty": 2
         }
       ]
     },
@@ -7924,7 +9856,7 @@
       "unit": "unidades",
       "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
       "itemId": "inv-1785296304066-3kolp5",
-      "expected": 96,
+      "expected": 72,
       "movements": [
         {
           "type": "Carga inicial",
@@ -8145,6 +10077,74 @@
         {
           "type": "Consumo",
           "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Devolución",
+          "qty": 2
         }
       ]
     },
@@ -8153,7 +10153,7 @@
       "unit": "kg",
       "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
       "itemId": "inv-1785296305601-gb711m",
-      "expected": 13.3,
+      "expected": 11.7,
       "movements": [
         {
           "type": "Carga inicial",
@@ -8382,6 +10382,38 @@
         {
           "type": "Consumo",
           "qty": -0.15
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.15
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.3
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.15
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.15
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.15
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.3
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.2
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.2
         }
       ]
     },
@@ -8390,7 +10422,7 @@
       "unit": "kg",
       "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
       "itemId": "inv-1785296306732-vxcdqd",
-      "expected": 12.83,
+      "expected": 11.38,
       "movements": [
         {
           "type": "Carga inicial",
@@ -8807,6 +10839,130 @@
         {
           "type": "Consumo",
           "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.06
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.12
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.06
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.12
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.12
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.06
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.12
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.06
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.04
         }
       ]
     },
@@ -8815,7 +10971,7 @@
       "unit": "kg",
       "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
       "itemId": "inv-1785296308439-2iyz8z",
-      "expected": 10.19,
+      "expected": 9.67,
       "movements": [
         {
           "type": "Carga inicial",
@@ -9044,6 +11200,74 @@
         {
           "type": "Consumo",
           "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.03
         }
       ]
     },
@@ -9052,7 +11276,7 @@
       "unit": "kg",
       "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
       "itemId": "inv-1785296336953-oynlcg",
-      "expected": 39,
+      "expected": 31.1,
       "movements": [
         {
           "type": "Carga inicial",
@@ -9465,6 +11689,118 @@
         {
           "type": "Devolución",
           "qty": 0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.3
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.5
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.3
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.3
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.3
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.5
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.4
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.3
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.25
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.3
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.4
         }
       ]
     },
@@ -9473,7 +11809,7 @@
       "unit": "litros",
       "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
       "itemId": "inv-1785296342988-o17i60",
-      "expected": 31.03,
+      "expected": 29.83,
       "movements": [
         {
           "type": "Carga inicial",
@@ -9986,6 +12322,142 @@
         {
           "type": "Devolución",
           "qty": 0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.06
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.06
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.04
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.04
         }
       ]
     },
@@ -9994,7 +12466,7 @@
       "unit": "unidades",
       "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
       "itemId": "inv-1785296344530-659cn7",
-      "expected": 7,
+      "expected": -15,
       "movements": [
         {
           "type": "Carga inicial",
@@ -10283,6 +12755,94 @@
         {
           "type": "Consumo",
           "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Devolución",
+          "qty": 2
         }
       ]
     },
@@ -10291,11 +12851,27 @@
       "unit": "unidades",
       "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
       "itemId": "inv-1785296346138-zq35v2",
-      "expected": 41,
+      "expected": 37,
       "movements": [
         {
           "type": "Carga inicial",
           "qty": 72
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
         },
         {
           "type": "Consumo",
@@ -10428,7 +13004,7 @@
       "unit": "kg",
       "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
       "itemId": "inv-1785296347640-aml8y4",
-      "expected": 14.7,
+      "expected": 14.58,
       "movements": [
         {
           "type": "Carga inicial",
@@ -10481,6 +13057,30 @@
         {
           "type": "Consumo",
           "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.03
         }
       ]
     },
@@ -10489,7 +13089,7 @@
       "unit": "kg",
       "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
       "itemId": "inv-1785296348829-f2ozgx",
-      "expected": 13.92,
+      "expected": 13.76,
       "movements": [
         {
           "type": "Carga inicial",
@@ -10666,6 +13266,30 @@
         {
           "type": "Consumo",
           "qty": -0.02
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.02
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.02
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.02
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.02
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.04
         }
       ]
     },
@@ -10691,7 +13315,7 @@
       "unit": "kg",
       "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
       "itemId": "inv-1785296351080-1jslqv",
-      "expected": 24.85,
+      "expected": 23.9,
       "movements": [
         {
           "type": "Carga inicial",
@@ -10920,6 +13544,58 @@
         {
           "type": "Consumo",
           "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.1
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.1
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.15
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.05
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.1
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.15
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.15
+        },
+        {
+          "type": "Devolución",
+          "qty": 0.1
         }
       ]
     },
@@ -10928,7 +13604,7 @@
       "unit": "kg",
       "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
       "itemId": "inv-1785296352208-dasxzo",
-      "expected": 23.43,
+      "expected": 23.34,
       "movements": [
         {
           "type": "Carga inicial",
@@ -11017,6 +13693,18 @@
         {
           "type": "Devolución",
           "qty": 0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
+        },
+        {
+          "type": "Consumo",
+          "qty": -0.03
         }
       ]
     },
@@ -11025,7 +13713,7 @@
       "unit": "unidades",
       "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
       "itemId": "inv-1785296353341-tmeepv",
-      "expected": 162,
+      "expected": 134,
       "movements": [
         {
           "type": "Carga inicial",
@@ -11502,6 +14190,110 @@
         {
           "type": "Consumo",
           "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -2
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Consumo",
+          "qty": -1
+        },
+        {
+          "type": "Devolución",
+          "qty": 2
         }
       ]
     },
@@ -11523,7 +14315,7 @@
       "unit": "unidades",
       "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6",
       "itemId": "inv-1785296355794-5ceh2l",
-      "expected": 872,
+      "expected": 792,
       "movements": [
         {
           "type": "Carga inicial",
@@ -11788,6 +14580,70 @@
         {
           "type": "Devolución",
           "qty": 4
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -8
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -6
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -6
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -8
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -6
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -4
+        },
+        {
+          "type": "Consumo",
+          "qty": -6
         }
       ]
     },
