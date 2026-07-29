@@ -75,8 +75,10 @@ que faltaba y ahora existe es la línea aparte del dinero que "se quedó".
 5. **Bloqueos de terceros**: ~~Playwright~~ → **RESUELTO 2026-07-29 tarde**
    (instalado gratis como devDependency; suite `e2e/` 15/15: PWA, SW, offline
    real, multipestaña, sesión expirada, rol, axe sin críticas, teclado,
-   responsive, doble-envío; receta en `pendientes.md`). Siguen BLOCKED: VAPID
-   (push real), WhatsApp/Meta de prueba, impresora 80mm.
+   responsive, doble-envío; receta en `pendientes.md`). ~~VAPID~~ → RESUELTO
+   la misma noche: `probar-push.mjs` 7/7 con claves de simulación propias y
+   PRODUCCIÓN ya venía configurada (enabled:true comprobado). Siguen BLOCKED:
+   WhatsApp/Meta de prueba e impresora 80mm.
    ~~Rendimiento producción~~ → lecturas medidas (p95 ≤ 1 s); escritura solo
    con tu autorización.
 6. **Observación §9 a decidir** (producto, no bug): el filtro por fechas del

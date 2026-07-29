@@ -84,9 +84,18 @@ dejarlos pasar por buenos.
   el envío. Receta: `cp .env.simulacion .env.local && npx next build && npx
   next start -p 3181 && npx playwright test`. Quedan 2 nodos de CONTRASTE
   ("serious", 1 por página) anotados como decisión de marca del dueño.
-- **Entrega real de notificaciones push**: sin VAPID en el entorno de
-  simulación. Se verificó que el evento interno se genera; la entrega externa
-  queda `BLOCKED`.
+- **Entrega real de notificaciones push**: ~~sin VAPID~~ → **RESUELTO
+  2026-07-29 (noche)**: claves VAPID propias generadas para la simulación
+  (gratis, `web-push generateVAPIDKeys`) y entrega probada de punta a punta
+  con `scripts/sim/probar-push.mjs` (**7/7 PASS**): receptor Web Push HTTPS
+  propio + claves ECDH del "navegador" (RFC 8291) — el backend FIRMA con
+  VAPID, CIFRA aes128gcm y el payload descifrado es el aviso real de cocina/
+  listo. Además se comprobó que PRODUCCIÓN ya tenía VAPID configurado desde
+  hace 18 días (`/api/public/push` → enabled:true en brotherhood-xi): el
+  bloqueo era solo del entorno de prueba. La única milla no automatizable es
+  la PANTALLA del dispositivo (los navegadores de automatización no traen
+  push service): eso se ve con el teléfono real del dueño (guía iOS del
+  commit a602b12).
 - **Impresión física (comanda y recibo 80mm)**: sin hardware. El modo de
   impresión se configuró (`printFlowMode`), el disparo no se puede observar.
 - **WhatsApp / Meta**: sin credenciales de simulación (y prohibido usar las de

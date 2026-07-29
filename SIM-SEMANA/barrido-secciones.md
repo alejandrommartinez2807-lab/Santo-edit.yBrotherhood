@@ -86,5 +86,9 @@ Analizado en el código y blindado donde hacía falta:
 ## Estado de los bloqueos que dependen del usuario
 
 - ~~Playwright~~ → **RESUELTO** (ver arriba).
-- VAPID (push real) · WhatsApp/Meta de prueba (envíos) · Impresora física
-  (80mm) · caída real de la base gestionada: siguen **BLOCKED**.
+- ~~VAPID (push real)~~ → **RESUELTO** (2026-07-29 noche): claves de
+  simulación generadas + `probar-push.mjs` 7/7 (firma VAPID, cifrado RFC
+  8291, payload real descifrado); producción YA tenía VAPID (comprobado
+  enabled:true). Última milla (pantalla del dispositivo) = teléfono real.
+- WhatsApp/Meta de prueba (envíos) · Impresora física (80mm) · caída real de
+  la base gestionada: siguen **BLOCKED**.
