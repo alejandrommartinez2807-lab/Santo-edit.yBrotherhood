@@ -4,19 +4,21 @@
     "dia-1",
     "dia-2",
     "dia-3",
-    "dia-4"
+    "dia-4",
+    "dia-5"
   ],
   "quotas": {
-    "efectivo": 72,
-    "efectivo-cambio": 33,
-    "pagomovil": 29,
-    "mixto": 45,
-    "transferencia": 30,
+    "efectivo": 105,
+    "efectivo-cambio": 43,
+    "pagomovil": 36,
+    "mixto": 66,
+    "transferencia": 43,
     "reintento-seguro": 1,
     "pago-reportado": 3,
     "reportado-bs-formato-ve": 2,
-    "segunda-pata": 17,
-    "intento-duplicado": 1
+    "segunda-pata": 26,
+    "intento-duplicado": 1,
+    "carrera-dos-cajeros": 1
   },
   "ids": {
     "principal": "e514be79-bb39-4050-9f27-e6c10249a1cf",
@@ -151,7 +153,9 @@
       "dia-3:Principal": "close-1785301149865-x84zw0",
       "dia-3:San Diego": "close-1785301153307-yffpze",
       "dia-4:Principal": "close-1785302272820-crsjpp",
-      "dia-4:San Diego": "close-1785302276399-yca9a2"
+      "dia-4:San Diego": "close-1785302276399-yca9a2",
+      "dia-5:Principal": "close-1785303900110-mi2b89",
+      "dia-5:San Diego": "close-1785303903249-56op3j"
     }
   },
   "bugs": [],
@@ -166,5 +170,16 @@
       "branchId": "395e3b33-cda3-4111-8dd5-a5ee52d43cd6"
     },
     "priceManipulationOrderId": "ord-ms5k7igt-uz0ogl9bl0"
+  },
+  "day5": {
+    "carryAccount": {
+      "id": "e19da554-7aea-4d01-9914-ed79e5fc4a59",
+      "branchId": "e514be79-bb39-4050-9f27-e6c10249a1cf",
+      "total": 15.5,
+      "orders": [
+        "ord-ms5n45ty-udiuqlaxos",
+        "ord-ms5n4b9d-ckcgs1vsgi"
+      ]
+    }
   }
 }

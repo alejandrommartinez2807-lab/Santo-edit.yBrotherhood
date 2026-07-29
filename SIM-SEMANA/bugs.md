@@ -54,3 +54,42 @@
   `exchangeRateMode=manual, manualExchangeRate=40`.
 - **Nota para producción**: Brotherhood usa tasa BCV automática — evaluar
   extender el clamp al último valor cacheado de BCV antes del deploy.
+
+## BH-SIM-003 · ALTO · El cobro directo ignoraba el candado optimista que caja le enviaba
+
+- **E (Error)**: `PATCH /api/orders/:id/payment` nunca propagaba
+  `expectedPrevious` al store. Reproducción real del Día 5: María Fernanda
+  cobró $10 en efectivo (primera pata de un pedido de $19); Kelvin, con la
+  tarjeta de caja desactualizada, cobró $19 por Zelle **enviando
+  `expectedPrevious: {amountReceivedUSD: 0}`**. El servidor respondió 200 y
+  el pedido quedó en "$19 Zelle": **los $10 en efectivo desaparecieron del
+  registro**. El cliente pedía protección y se le ignoraba en silencio.
+- **Evidencia**: check D5-CONC-1 (dos cajeros cobrando el mismo pedido:
+  `ganadores=2`) + reproducción dirigida sobre el pedido
+  `ord-ms5o13ee-pcwx8plyvq`.
+- **Impacto**: el arqueo no cuadra — la gaveta tiene $10 en efectivo que
+  ningún registro respalda, y el cierre reporta un método que no se cobró.
+  Afecta a cualquier local con dos cajas abiertas sobre los mismos pedidos.
+- **C (Causa raíz)**: el candado SÍ existe en
+  `src/lib/ordersStorePayments.ts` (`expectedPrevious` → UPDATE condicional) y
+  lo usan `/api/open-accounts/[accountId]` y la revisión de comprobantes; el
+  endpoint de cobro directo se quedó fuera al añadirse el candado. `getPaymentInput`
+  no leía el campo y el spread lo perdía. Ningún test cubría el cobro directo
+  concurrente (los de concurrencia existentes iban por cuentas abiertas).
+- **F (Fix)**: nueva lib `src/lib/orderPaymentInput.ts` con
+  `readExpectedPrevious()` (acepta el candado en la raíz o dentro de
+  `body.payment`, normaliza montos sucios) y su propagación en la ruta de
+  cobro. Además, `OrderPaymentConflictError` ahora responde **409** en vez de
+  un 500 opaco, para que la tarjeta de caja se refresque y quien pierde la
+  carrera vea los montos frescos.
+- **S (Blindaje)**: `src/lib/__tests__/orderPaymentOptimisticLock.test.ts`
+  (5 casos: candado presente, candado en cero, dentro de `payment`, ausente
+  —compatibilidad—, y montos sucios).
+- **V (Verificación)**: tras el fix, el mismo escenario da **409** y el
+  efectivo de María sobrevive; la segunda pata legítima (candado con montos
+  frescos) pasa con 200; el cobro normal sin candado sigue funcionando.
+  `tsc` OK, vitest 573/573.
+- **Nota**: el fix es **compatible hacia atrás** — un cobro sin candado se
+  comporta igual que antes. El siguiente paso (fuera del alcance de esta
+  semana) es que la UI de caja envíe siempre el candado; hoy lo envían las
+  cuentas abiertas y la revisión de comprobantes.

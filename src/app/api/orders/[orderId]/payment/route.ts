@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import {
   getBusinessConfig,
+  OrderPaymentConflictError,
   updateOrderPayment,
 } from "@/lib/orders"
+import { readExpectedPrevious } from "@/lib/orderPaymentInput"
 import {
   canLocalAccessUseModule,
   getLocalAccessAuditActor,
@@ -338,11 +340,18 @@ export async function PATCH(
     const payment = getPaymentInput(body)
     const actor = getLocalAccessAuditActor(access.access)
 
+    // BH-SIM-003: si caja manda el candado optimista (los montos que tenía a
+    // la vista al pulsar Cobrar), se propaga al store. Sin esto, dos cajeros
+    // con tarjetas desactualizadas se pisaban el cobro y el pago ya registrado
+    // desaparecía del pedido — el cliente pedía protección y se ignoraba.
+    const expectedPrevious = readExpectedPrevious(body)
+
     const order = await updateOrderPayment(
       orderId,
       {
         ...(payment as Parameters<typeof updateOrderPayment>[1]),
         chargedBy: { id: actor.id, name: actor.label, role: actor.role },
+        ...(expectedPrevious ? { expectedPrevious } : {}),
       },
       branchId
     )
@@ -384,6 +393,12 @@ export async function PATCH(
       },
     })
   } catch (error) {
+    // Otro cajero cobró primero: 409 para que la tarjeta se refresque y quien
+    // perdió la carrera vea los montos frescos, en vez de un 500 opaco.
+    if (error instanceof OrderPaymentConflictError) {
+      return NextResponse.json({ error: error.message }, { status: 409 })
+    }
+
     return NextResponse.json(
       {
         error:

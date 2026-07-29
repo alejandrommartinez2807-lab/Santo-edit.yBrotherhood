@@ -458,6 +458,113 @@
           "staff": 15
         }
       }
+    },
+    "dia-5": {
+      "e514be79-bb39-4050-9f27-e6c10249a1cf": {
+        "ordersCreated": 78,
+        "equivalentCustomers": 139,
+        "grossSalesUSD": 905,
+        "collectedUSD": 889.5,
+        "collectedByMethodUSD": {
+          "Efectivo divisas": {
+            "count": 34,
+            "totalUSD": 419.5
+          },
+          "Zelle": {
+            "count": 5,
+            "totalUSD": 64
+          }
+        },
+        "collectedByMethodVES": {
+          "Pago móvil": {
+            "count": 12,
+            "totalVES": 8360,
+            "totalUSD": 209
+          },
+          "Transferencia": {
+            "count": 8,
+            "totalVES": 4580,
+            "totalUSD": 114.5
+          },
+          "Punto": {
+            "count": 7,
+            "totalVES": 3300,
+            "totalUSD": 82.5
+          }
+        },
+        "cashUSD": 419.5,
+        "changeGivenUSD": 0,
+        "pendingUSD": 15.5,
+        "cancellations": 5,
+        "cancelledUSD": 51.5,
+        "expensesUSD": 13,
+        "purchasesPaidUSD": 0,
+        "bySeller": {
+          "anthony": 864.5,
+          "público": 40,
+          "vanessa": 52
+        },
+        "byChannel": {
+          "mesa-cuenta": 267,
+          "mesa": 261.5,
+          "pickup": 202.5,
+          "delivery": 185.5,
+          "qr": 40
+        }
+      },
+      "395e3b33-cda3-4111-8dd5-a5ee52d43cd6": {
+        "ordersCreated": 44,
+        "equivalentCustomers": 85,
+        "grossSalesUSD": 465.5,
+        "collectedUSD": 465.5,
+        "collectedByMethodUSD": {
+          "Efectivo divisas": {
+            "count": 20,
+            "totalUSD": 144
+          },
+          "Zelle": {
+            "count": 2,
+            "totalUSD": 14.5
+          }
+        },
+        "collectedByMethodVES": {
+          "Transferencia": {
+            "count": 5,
+            "totalVES": 4280,
+            "totalUSD": 107
+          },
+          "Pago móvil": {
+            "count": 16,
+            "totalVES": 4200,
+            "totalUSD": 105
+          },
+          "Punto": {
+            "count": 7,
+            "totalVES": 3800,
+            "totalUSD": 95
+          }
+        },
+        "cashUSD": 144,
+        "changeGivenUSD": 0,
+        "pendingUSD": 0,
+        "cancellations": 3,
+        "cancelledUSD": 30.5,
+        "expensesUSD": 10,
+        "purchasesPaidUSD": 0,
+        "bySeller": {
+          "daniela": 199.5,
+          "público": 266.5,
+          "luis": 30
+        },
+        "byChannel": {
+          "mesa-cuenta": 67,
+          "mesa": 45.5,
+          "pickup": 40,
+          "delivery": 47,
+          "qr": 266.5,
+          "staff": 30
+        }
+      }
     }
   },
   "suppliers": {
