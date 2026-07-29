@@ -1,3 +1,4 @@
+import { buildConsumptionMovement } from "@/lib/inventoryShortage"
 import { getSupabaseAdmin } from "./supabaseServer"
 import type { ConsumptionLine } from "./inventoryConsumption"
 
@@ -329,27 +330,33 @@ export async function applyInventoryConsumption(
       let updated = false
 
       for (let attempt = 0; attempt < 2 && !updated; attempt += 1) {
-        const moved = Math.min(previousQuantity, line.quantity)
-        if (moved <= 0) break
+        const plan = buildConsumptionMovement({
+          previousQuantity,
+          requested: line.quantity,
+          unit: stock.unit || line.unit,
+          reason,
+        })
 
-        const finalQuantity =
-          Math.round((previousQuantity - moved + Number.EPSILON) * 10000) / 10000
+        if (!plan.shouldRecord) break
 
-        const { data: updatedRows, error: updateError } = await supabase
-          .from("inventory_items")
-          .update({ quantity: finalQuantity, updated_at: new Date().toISOString() })
-          .eq("id", line.itemId)
-          .eq("quantity", previousQuantity)
-          .select("id")
+        // Stock ya en 0: no hay fila que actualizar, pero la venta NO puede
+        // desaparecer del historial (BH-SIM-004) — se registra el movimiento
+        // con cantidad 0 y el faltante completo en el motivo.
+        let stockWritten = !plan.needsStockUpdate
 
-        if (updateError) throw new Error(updateError.message)
+        if (plan.needsStockUpdate) {
+          const { data: updatedRows, error: updateError } = await supabase
+            .from("inventory_items")
+            .update({ quantity: plan.finalQuantity, updated_at: new Date().toISOString() })
+            .eq("id", line.itemId)
+            .eq("quantity", previousQuantity)
+            .select("id")
 
-        if (updatedRows?.length) {
-          const shortage =
-            line.quantity > moved
-              ? Math.round((line.quantity - moved + Number.EPSILON) * 10000) / 10000
-              : 0
+          if (updateError) throw new Error(updateError.message)
+          stockWritten = Boolean(updatedRows?.length)
+        }
 
+        if (stockWritten) {
           const { error: movementError } = await supabase.from("inventory_movements").insert({
             id: `mov-${Date.now()}-${randomSuffix()}`,
             branch_id: branchId ?? null,
@@ -358,11 +365,12 @@ export async function applyInventoryConsumption(
             item_name: stock.name || line.itemName,
             movement_type: "Consumo",
             previous_quantity: previousQuantity,
-            quantity_moved: -moved,
-            final_quantity: finalQuantity,
+            quantity_moved: -plan.moved,
+            final_quantity: plan.finalQuantity,
             unit: stock.unit || line.unit,
-            // El faltante queda en el motivo (antes se clampaba a 0 sin rastro).
-            reason: shortage > 0 ? `${reason} (faltaron ${shortage} ${stock.unit || line.unit})` : reason,
+            // El faltante queda en el motivo, tanto si fue parcial como si el
+            // stock ya estaba en cero (antes ese caso no dejaba rastro).
+            reason: plan.reason,
             related_expense: false,
             expense_id: "",
             // El pedido queda vinculado en la nota: permite REVERTIR el consumo
@@ -371,7 +379,7 @@ export async function applyInventoryConsumption(
           })
           if (movementError) throw new Error(movementError.message)
 
-          applied.push({ ...line, quantity: moved })
+          applied.push({ ...line, quantity: plan.moved })
           updated = true
           break
         }

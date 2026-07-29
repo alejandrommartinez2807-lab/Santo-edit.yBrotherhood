@@ -33,7 +33,16 @@ import {
   type LocalRole,
 } from "@/lib/localAccess"
 import { getModulePlanAccess, type LocalModuleKey } from "@/lib/localPlans"
-import { resolveBranchId, resolveScopedBranchId } from "@/lib/branch"
+import { getBranchConfig, resolveBranchId, resolveScopedBranchId } from "@/lib/branch"
+import { getPublicMenuProductsForBranch } from "@/lib/publicBranchMenu"
+import {
+  repricePublicOrderItems,
+  resolvePublicExchangeRate,
+} from "@/lib/publicOrderGuards"
+import {
+  getRawBusinessConfig,
+  normalizeBusinessConfig,
+} from "@/lib/ordersBusinessConfig"
 import { maybeDispatchPostSaleSurveys } from "@/lib/surveyAutoSend"
 import { maybeDispatchRestockAlerts } from "@/lib/inventoryRestockAlerts"
 import { maybeDispatchPayablesReminders } from "@/lib/payablesReminderAlerts"
@@ -446,8 +455,8 @@ export async function POST(request: NextRequest) {
     }
 
     const customerNote = cleanText(body.customerNote)
-    const items = normalizeItems(body.items)
-    const exchangeRate = cleanNumber(body.exchangeRate)
+    let items = normalizeItems(body.items)
+    let exchangeRate = cleanNumber(body.exchangeRate)
     const exchangeSource = cleanText(body.exchangeSource)
     const exchangeValueDate = cleanText(body.exchangeValueDate)
 
@@ -480,6 +489,54 @@ export async function POST(request: NextRequest) {
         { error: "El pedido tiene demasiados productos" },
         { status: 400 }
       )
+    }
+
+    // Tasa manual del negocio (global o de la sede). 0 = no configurada: en
+    // modo automático la tasa del cliente sobrevive (viene del mismo endpoint
+    // público /api/exchange-rate) — el blindaje fuerte es la tasa manual.
+    const getManualExchangeRateForBranch = async (branchId: string | null) => {
+      try {
+        const rawConfig = await getRawBusinessConfig()
+        const businessConfig = normalizeBusinessConfig(rawConfig)
+        let mode: string = businessConfig.exchangeRateMode
+        let manualRate = Number(businessConfig.manualExchangeRate)
+
+        if (branchId) {
+          const branchConfig = getBranchConfig(rawConfig, branchId) as Record<string, unknown>
+          const branchMode = String(branchConfig.exchangeRateMode || "")
+          if (branchMode) mode = branchMode
+          const branchRate = Number(branchConfig.manualExchangeRate)
+          if (Number.isFinite(branchRate) && branchRate > 0) manualRate = branchRate
+        }
+
+        if (mode === "manual" && Number.isFinite(manualRate) && manualRate > 0) {
+          return manualRate
+        }
+      } catch {
+        // sin config legible no hay tasa del servidor: gana la del cliente
+      }
+      return 0
+    }
+
+    // Blindaje BH-SIM-001/002 (semana real 2026-07): una petición SIN identidad
+    // de staff no decide precios ni tasa. El precio unitario se recalcula del
+    // menú real de la sede (variaciones y adicionales incluidos) y, si el
+    // negocio tiene tasa manual configurada, esa tasa manda sobre la del
+    // cliente. El staff conserva su flexibilidad (ítems manuales, ajustes).
+    const staffAccessForPricing = getAccess(request)
+    if (!staffAccessForPricing.ok) {
+      const pricingBranchId = await resolveBranchId(request)
+      const publicMenu = await getPublicMenuProductsForBranch(pricingBranchId)
+      const repriced = repricePublicOrderItems(items, publicMenu)
+
+      if (!repriced.ok) {
+        return NextResponse.json({ error: repriced.error }, { status: 400 })
+      }
+
+      items = normalizeItems(repriced.items)
+
+      const serverRate = await getManualExchangeRateForBranch(pricingBranchId)
+      exchangeRate = resolvePublicExchangeRate(exchangeRate, serverRate)
     }
 
     const attachmentDataUrl = cleanText(body.attachmentDataUrl)
