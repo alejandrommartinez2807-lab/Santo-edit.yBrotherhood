@@ -248,3 +248,51 @@ a revisión con el monto `9.648,99` correcto (check D1R-ADV-7 en verde).
 - **Lección**: el riesgo estaba anotado en `TE-TOCA-A-TI.md` como "probar antes
   de fusionar". Probarlo costó una hora; no probarlo habría costado un día de
   ventas.
+
+---
+
+## BH-SIM-002 (2ª parte) · CRÍTICO · La tasa solo se blindaba en modo manual — y en producción estaba en automático
+
+- **E (Error)**: el primer fix imponía la tasa del servidor **solo** cuando el
+  negocio la tenía en MANUAL. Brotherhood usa tasa automática, así que en
+  producción el hueco seguía abierto. **Verificado en el sitio en vivo** tras el
+  primer deploy: un pedido público con `exchangeRate: 4` se guardó con tasa 4.
+- **Impacto**: el cobro convierte `Bs recibidos / tasa_del_pedido`. Con tasa 4,
+  reportar Bs 32 por una burger de $8 la daba por **PAGADA**. Lo único que lo
+  frenaba era que la cajera notara el monto raro.
+- **F (Fix)**: `src/lib/serverExchangeRate.ts` — la tasa la pone el servidor en
+  los **tres** modos (manual, dólar BCV y **euro BCV**), reutilizando la misma
+  caché que sirve `/api/exchange-rate` (no añade una llamada al BCV por
+  pedido). Si la fuente falla devuelve 0 y sobrevive la del cliente: nunca deja
+  al negocio sin poder cobrar en bolívares.
+- **S (Blindaje)**: `serverExchangeRate.test.ts` (7 casos: los tres modos,
+  manual inválido, fuente caída en dólar y en euro, tasa absurda).
+- **V (Verificación)**: `probar-tasa.mjs` 7/7 — con la tasa impuesta, pagar los
+  Bs que bastaban con tasa 4 deja el pedido en "Pago parcial" ($0,04 de $8) en
+  vez de Pagado. El staff conserva su tasa propia.
+
+## BH-SIM-007 · ALTO · La opción "Tasa BCV (euro)" de Configuración no se guardaba
+
+- **E (Error)**: la pantalla de Configuración ofrece los tres modos, pero
+  `POST /api/business-config` solo reconocía `manual` y `automatic`: elegir
+  **euro** se guardaba como **dólar** sin avisar. El dueño veía la opción
+  marcada en su navegador y el negocio seguía cobrando con la tasa del dólar.
+- **Evidencia**: se envió `exchangeRateMode: "automaticEur"` y la base quedó en
+  `"automatic"`. `/api/exchange-rate` devolvía `currency: "USD"`.
+- **Impacto directo en Brotherhood**: cobra con la tasa EURO. Con el euro a
+  846,07 y el dólar a 744,23, cobrar con la tasa equivocada es un **12% menos
+  de bolívares por cada venta**.
+- **C (Causa raíz)**: `readExchangeRateMode()` en la ruta hacía
+  `normalized === "manual" ? "manual" : "automatic"`. La config **por sede**
+  (`normalizeBranchScopedConfig`) sí manejaba el euro — la global se quedó
+  atrás, y nadie lo notó porque el guardado responde 200.
+- **F (Fix)**: `src/lib/exchangeRateModeInput.ts` con la regla única de los tres
+  modos, usada por la ruta.
+- **S (Blindaje)**: `exchangeRateModeInput.test.ts` (6 casos, incluidas las
+  variantes de escritura y la basura que debe caer al dólar).
+- **V (Verificación)**: `probar-tasa.mjs` TASA-3/TASA-4 — el modo euro guarda,
+  `/api/exchange-rate` devuelve `currency: "EUR"` con 846,07 (≠ 744,23 del
+  dólar) y el pedido público se guarda con esa tasa.
+- **TE TOCA A TI**: el modo sigue en **dólar** en la configuración de
+  Brotherhood. Ahora que el guardado funciona, entra en Configuración →
+  "Tasa BCV (euro)" y actívalo.

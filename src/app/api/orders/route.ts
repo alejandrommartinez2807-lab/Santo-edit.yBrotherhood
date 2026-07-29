@@ -43,6 +43,9 @@ import {
   getRawBusinessConfig,
   normalizeBusinessConfig,
 } from "@/lib/ordersBusinessConfig"
+import { resolveServerExchangeRate } from "@/lib/serverExchangeRate"
+import { getCachedExchangeRate, setCachedExchangeRate } from "@/lib/exchangeRateCache"
+import { getBcvEurRate, getBcvUsdRate } from "@/app/api/exchange-rate/route"
 import { maybeDispatchPostSaleSurveys } from "@/lib/surveyAutoSend"
 import { maybeDispatchRestockAlerts } from "@/lib/inventoryRestockAlerts"
 import { maybeDispatchPayablesReminders } from "@/lib/payablesReminderAlerts"
@@ -493,8 +496,11 @@ export async function POST(request: NextRequest) {
 
     // Tasa manual del negocio (global o de la sede). 0 = no configurada: en
     // modo automático la tasa del cliente sobrevive (viene del mismo endpoint
-    // público /api/exchange-rate) — el blindaje fuerte es la tasa manual.
-    const getManualExchangeRateForBranch = async (branchId: string | null) => {
+    // público /api/exchange-rate). Cubre los TRES modos: manual, dólar BCV y
+    // EURO BCV — este último es el que usa Brotherhood cuando el dueño lo
+    // activa en Configuración. Se apoya en la MISMA caché que sirve
+    // /api/exchange-rate, así que no añade una llamada al BCV por pedido.
+    const getServerExchangeRateForBranch = async (branchId: string | null) => {
       try {
         const rawConfig = await getRawBusinessConfig()
         const businessConfig = normalizeBusinessConfig(rawConfig)
@@ -509,20 +515,32 @@ export async function POST(request: NextRequest) {
           if (Number.isFinite(branchRate) && branchRate > 0) manualRate = branchRate
         }
 
-        if (mode === "manual" && Number.isFinite(manualRate) && manualRate > 0) {
-          return manualRate
-        }
+        const fromCacheOrSource =
+          (currency: "USD" | "EUR", fetchRate: typeof getBcvUsdRate) => async () => {
+            const cached = getCachedExchangeRate(Date.now(), currency)
+            if (cached) return { rate: Number(cached.rate), currency }
+            const fresh = await fetchRate()
+            setCachedExchangeRate(fresh)
+            return { rate: Number(fresh.rate), currency }
+          }
+
+        return await resolveServerExchangeRate({
+          mode: mode === "automaticEur" || mode === "manual" ? mode : "automatic",
+          manualRate,
+          getUsd: fromCacheOrSource("USD", getBcvUsdRate),
+          getEur: fromCacheOrSource("EUR", getBcvEurRate),
+        })
       } catch {
         // sin config legible no hay tasa del servidor: gana la del cliente
+        return 0
       }
-      return 0
     }
 
     // Blindaje BH-SIM-001/002 (semana real 2026-07): una petición SIN identidad
     // de staff no decide precios ni tasa. El precio unitario se recalcula del
     // menú real de la sede (variaciones y adicionales incluidos) y, si el
-    // negocio tiene tasa manual configurada, esa tasa manda sobre la del
-    // cliente. El staff conserva su flexibilidad (ítems manuales, ajustes).
+    // negocio tiene tasa propia (manual, dólar BCV o euro BCV), esa manda sobre
+    // la del cliente. El staff conserva su flexibilidad (ítems manuales).
     const staffAccessForPricing = getAccess(request)
     if (!staffAccessForPricing.ok) {
       const pricingBranchId = await resolveBranchId(request)
@@ -535,7 +553,7 @@ export async function POST(request: NextRequest) {
 
       items = normalizeItems(repriced.items)
 
-      const serverRate = await getManualExchangeRateForBranch(pricingBranchId)
+      const serverRate = await getServerExchangeRateForBranch(pricingBranchId)
       exchangeRate = resolvePublicExchangeRate(exchangeRate, serverRate)
     }
 

@@ -1,3 +1,4 @@
+import { readExchangeRateModeValue } from "@/lib/exchangeRateModeInput"
 import { NextRequest, NextResponse } from "next/server"
 import {
   getBusinessConfig,
@@ -218,9 +219,10 @@ function readExchangeRateMode(
   source: Record<string, unknown>,
   key: string
 ): ExchangeRateMode {
-  const normalized = readString(source, key).toLowerCase()
-
-  return normalized === "manual" ? "manual" : "automatic"
+  // BH-SIM-007: aquí se perdía el modo EURO — la pantalla lo ofrece y el
+  // guardado lo convertía en dólar en silencio. Regla única en
+  // `lib/exchangeRateModeInput`, la misma que usa la config por sede.
+  return readExchangeRateModeValue(readString(source, key))
 }
 
 function readViewMode(source: Record<string, unknown>, key: string): BusinessViewMode {
