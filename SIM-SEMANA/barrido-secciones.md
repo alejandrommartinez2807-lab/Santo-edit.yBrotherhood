@@ -75,11 +75,16 @@ Analizado en el código y blindado donde hacía falta:
   cerca. El propio guion exige documentar que Vercel producción tiene otro
   perfil — medirlo allá queda **PENDIENTE**, no se marca PASS por fe. Señal
   real a vigilar: `PATCH open-account pay` es siempre lo más pesado.
-- **Accesibilidad (§20)**: **BLOCKED** — depende de Playwright, que sigue sin
-  instalar (decisión del usuario pendiente, regla §11.4: BLOCKED, nunca PASS).
+- **Accesibilidad (§20)**: ~~BLOCKED~~ → **PASS (2026-07-29 tarde)** con
+  Playwright + axe instalados por orden del usuario: suite `e2e/` 15/15
+  contra el build de producción local (base de PRUEBA). Cubre PWA, SW,
+  offline real, multipestaña, sesión expirada, rol, axe WCAG A/AA (0
+  críticas tras arreglar las etiquetas del login), teclado, responsive y
+  doble-envío. Pendiente de decisión del dueño: 2 nodos de contraste
+  ("serious") — es la paleta de la marca, no se cambia desde un test.
 
-## Estado de los 4 bloqueos que dependen del usuario (sin cambios)
+## Estado de los bloqueos que dependen del usuario
 
-Playwright (accesibilidad/PWA/offline real) · VAPID (push real) ·
-WhatsApp/Meta de prueba (envíos) · Impresora física (80mm). Todos siguen
-**BLOCKED**.
+- ~~Playwright~~ → **RESUELTO** (ver arriba).
+- VAPID (push real) · WhatsApp/Meta de prueba (envíos) · Impresora física
+  (80mm) · caída real de la base gestionada: siguen **BLOCKED**.

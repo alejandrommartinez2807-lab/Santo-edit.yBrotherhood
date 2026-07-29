@@ -72,10 +72,18 @@ dejarlos pasar por buenos.
 
 ## No cubierto por decisión explícita
 
-- **Pruebas de navegador (Playwright)**: NO instalado en el repo. Por la regla
-  del Prompt Maestro (§11.4) las pruebas de PWA/Service Worker/multipestaña
-  quedan `BLOCKED`, no `PASS`. Lo verificable por API (multi-sesión, doble
-  pestaña con dos tokens, idempotencia del reenvío offline) SÍ se probó.
+- **Pruebas de navegador (Playwright)**: ~~NO instalado~~ → **RESUELTO
+  2026-07-29 (tarde)**: instalado como devDependency (@playwright/test +
+  @axe-core/playwright + Chromium, gratis/MIT) y la suite `e2e/` corre contra
+  el build de producción local con la base de PRUEBA: **15/15 PASS** — PWA
+  (manifest instalable), Service Worker activo, caché y RECARGA OFFLINE real,
+  multipestaña con persistencia local, sesión expirada, navegación según rol
+  (la clave de cocina redirige a su pantalla, no al panel), accesibilidad axe
+  WCAG A/AA sin violaciones críticas (fix real: labels del login sin asociar),
+  teclado, responsive 375/768/1280 sin desborde, botón deshabilitado durante
+  el envío. Receta: `cp .env.simulacion .env.local && npx next build && npx
+  next start -p 3181 && npx playwright test`. Quedan 2 nodos de CONTRASTE
+  ("serious", 1 por página) anotados como decisión de marca del dueño.
 - **Entrega real de notificaciones push**: sin VAPID en el entorno de
   simulación. Se verificó que el evento interno se genera; la entrega externa
   queda `BLOCKED`.

@@ -41,3 +41,9 @@ scripts/_*.mjs
 
 # Notas de desarrollo que no hacen falta en el servidor
 *.log
+
+# Playwright: artefactos y specs no viajan al deploy
+test-results
+playwright-report
+e2e
+playwright.config.ts

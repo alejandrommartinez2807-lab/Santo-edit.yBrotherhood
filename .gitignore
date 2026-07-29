@@ -53,3 +53,7 @@ next-env.d.ts
 /scripts/_*.mjs
 
 .vercel
+
+# Playwright (artefactos de corridas E2E)
+/test-results
+/playwright-report

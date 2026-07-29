@@ -114,10 +114,16 @@ export default function AccesoPage() {
         ) : (
           <form onSubmit={handleLogin} className="mt-6 space-y-4">
             <div>
-              <label className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+              {/* htmlFor+id: sin la asociación, el lector de pantalla anuncia
+                  un campo sin nombre (hallazgo axe §20, E2E 2026-07-29). */}
+              <label
+                htmlFor="acceso-usuario"
+                className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+              >
                 Usuario
               </label>
               <input
+                id="acceso-usuario"
                 type="text"
                 autoComplete="username"
                 value={loginUser}
@@ -128,10 +134,14 @@ export default function AccesoPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+              <label
+                htmlFor="acceso-clave"
+                className="text-xs font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]"
+              >
                 Contraseña
               </label>
               <input
+                id="acceso-clave"
                 type="password"
                 autoComplete="current-password"
                 value={password}

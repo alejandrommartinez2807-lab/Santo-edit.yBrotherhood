@@ -11,6 +11,7 @@ export default defineConfig({
     environment: "node",
     // Los worktrees en .claude/ son otras ramas (marca/tema distintos); sus
     // tests corren en su propio worktree, no desde el repo principal.
-    exclude: ["**/node_modules/**", "**/.claude/**"],
+    // e2e/ es de Playwright (otro runner): vitest no debe recogerlo.
+    exclude: ["**/node_modules/**", "**/.claude/**", "e2e/**"],
   },
 })
