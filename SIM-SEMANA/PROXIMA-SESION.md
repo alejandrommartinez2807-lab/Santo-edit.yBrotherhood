@@ -58,10 +58,17 @@ que faltaba y ahora existe es la línea aparte del dinero que "se quedó".
    846,07 sirviendo). Medición read-only contra producción anexada a
    `rendimiento-vs-umbrales.md`: p95 ≤ 1 s, los FAIL del dev server eran del
    entorno. Ramas empujadas a GitHub (`main` y `brotherhood-publico`).
-3. ~~Merge del porte a main~~ — **HECHO**: `main` = `affec30` (fusionado y
-   empujado). El push NO disparó deploy (el proyecto `santo-edit` no tiene
-   conexión git): se publicó manual desde un worktree enlazado con el
-   `project.json` de `.vercel-santoperrito-backup/` — ver resultado abajo.
+3. ~~Merge del porte a main~~ — **HECHO Y PUBLICADO**: `main` = `affec30`
+   (fusionado, empujado y desplegado manual a `santo-edit.vercel.app`,
+   deployment `santo-edit-gjqxf4ydo`, Ready — el push NO dispara deploy: el
+   proyecto no tiene conexión git, al contrario de lo que dice
+   `docs/DESPLIEGUE.md`). **HALLAZGO al verificar**: Santo Perrito producción
+   está SIN base de datos — `NEXT_PUBLIC_SUPABASE_URL` vacía en el env de
+   Vercel y el Supabase viejo (`ocwplizdueirdjjuruix`) ya ni resuelve DNS
+   (borrado). Todos los endpoints con base fallaban DESDE ANTES de este
+   deploy (la home y la tasa BCV sí sirven). Decisión del usuario: reconectar
+   un Supabase (y aplicar TODAS las migraciones) o dejar la marca congelada
+   como está.
 4. **El default de anulación sigue siendo SUPUESTO** ("devuelto") — cuando
    el dueño confirme, es una línea en `orderCancellationInfo.ts`
    (`CANCEL_REFUND_DEFAULT`) + actualizar su test.

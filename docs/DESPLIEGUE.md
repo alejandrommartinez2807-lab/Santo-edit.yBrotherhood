@@ -13,12 +13,25 @@ Cómo publicar cada marca, cómo revertir, y cómo automatizar el deploy de Brot
 
 ## Santo Perrito (rama `main`)
 
-Deploy por git en Vercel: al hacer `git push origin main`, Vercel publica. (Confirmar en Vercel → Project → Settings → Git que el auto-deploy de `main` está activo.)
+⚠️ **Comprobado el 2026-07-29: el push NO publica.** El proyecto Vercel
+`santo-edit` no tiene conexión git (coincide con
+[`separacion-brotherhood-santo-perrito.md`](separacion-brotherhood-santo-perrito.md);
+lo que decía antes esta sección era aspiracional). La vía que funciona:
 
-Si necesitas forzarlo manual desde la carpeta enlazada al proyecto de Santo Perrito:
 ```bash
-npx vercel --prod
+cd "D:/Santo edit"
+git worktree add .claude/worktrees/santo-deploy main
+mkdir .claude/worktrees/santo-deploy/.vercel
+cp .vercel-santoperrito-backup/project.json .claude/worktrees/santo-deploy/.vercel/
+cd .claude/worktrees/santo-deploy && npx vercel --prod
+# al terminar: git worktree remove .claude/worktrees/santo-deploy --force
 ```
+
+⚠️ **Estado de la base (2026-07-29)**: producción de Santo Perrito está SIN
+Supabase — `NEXT_PUBLIC_SUPABASE_URL` vacía en el env del proyecto y la base
+vieja (`ocwplizdueirdjjuruix`) ya no existe (DNS muerto). La home y la tasa
+BCV sirven; todo endpoint con base falla. Antes de "revivir" la marca hay
+que crear/conectar un Supabase y aplicarle TODAS las migraciones.
 
 ## Brotherhood (rama `brotherhood-publico`) — MANUAL
 
