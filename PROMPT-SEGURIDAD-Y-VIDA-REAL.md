@@ -284,6 +284,26 @@ los números que el propio cierre guardó.
 
 ## 3 · Parte A — Revisión de SEGURIDAD módulo por módulo
 
+### Ya hay una batería ejecutable: `npm run qa:seguridad`
+
+`scripts/qa-seguridad-ataques.mjs` corre en vivo los ataques 🔴 que no tenían
+suite propia, con snapshot + limpieza verificada. Cubre: S1 la fuga de cuentas
+de mesa (H-1, lectura), S2 precio manipulado, S3 tasa manipulada, S4 y S5 el
+fraude de cargar comida a la cuenta ajena (H-4, por `attachToTableOpenAccount` y
+por `openAccountId` directo). Por defecto pega a producción; con
+`BASE=http://localhost:3177` va contra el dev. **Referencia del 2026-07-30: 6/6**
+— S2 y S3 bloqueados, S1/S4/S5 confirmados abiertos.
+
+⚠️ **S1, S4 y S5 son hallazgos ABIERTOS**: su "✓" significa "confirmado que el
+hueco existe hoy". **El día que se cierren (quitar el nombre del cliente en H-1,
+camino B en H-4), hay que INVERTIR esos checks** para que verifiquen que ya no se
+puede. Ese es el trabajo, no dejarlos en verde como están.
+
+Lo que `qa:seguridad` **no** cubre y hay que correr aparte: `qa:roles`
+(suplantación de rol/sede por el proxy), `qa:branch-isolation` (aislamiento entre
+sedes), `qa:usuarios` (permisos por rol y custom), `qa:payments` (comprobantes).
+Y todo lo de solo-código (el barrido A.99) va a mano.
+
 **Método:** cada ataque se **ejecuta**, no se razona. Se lanza la petición, se
 mira la respuesta Y se mira la base de datos (porque un 200 que no escribió y un
 403 que sí escribió son dos mentiras distintas). De cada ataque se anota:

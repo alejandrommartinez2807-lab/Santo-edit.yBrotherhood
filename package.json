@@ -33,7 +33,8 @@
     "qa:mesa-prefill": "node scripts/qa-mesa-prefill.mjs",
     "qa:usuarios": "node scripts/qa-usuarios-permisos.mjs",
     "qa:desactivacion": "node scripts/qa-desactivacion.mjs",
-    "qa:migraciones": "node scripts/qa-migraciones-aplicadas.mjs"
+    "qa:migraciones": "node scripts/qa-migraciones-aplicadas.mjs",
+    "qa:seguridad": "node scripts/qa-seguridad-ataques.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
