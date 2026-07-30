@@ -15,6 +15,8 @@ import {
 import { normalizeStaffUsername } from "@/lib/staffIdentity"
 import { writeAuditLog } from "@/lib/audit"
 
+import { getMissingBranchError } from "../branchAssignment"
+
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
@@ -134,6 +136,13 @@ export async function PATCH(
     }
     patch.role = role
     nextRole = role
+  }
+
+  // Misma regla que al crear (QA 2026-07-30): restringir sedes sin tildar
+  // ninguna dejaba al usuario operando en la sede por defecto.
+  const branchError = getMissingBranchError(nextRole, body)
+  if (branchError) {
+    return NextResponse.json({ error: branchError }, { status: 400 })
   }
 
   if (body.is_active !== undefined) {

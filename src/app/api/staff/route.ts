@@ -18,6 +18,8 @@ import {
 } from "@/lib/staffIdentity"
 import { writeAuditLog } from "@/lib/audit"
 
+import { getMissingBranchError } from "./branchAssignment"
+
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
@@ -70,6 +72,7 @@ function resolveCreateEmail(body: Record<string, unknown>) {
   if (rawEmail && rawEmail.includes("@") && !body.username) return rawEmail
   return createInternalStaffEmail(username)
 }
+
 
 export async function GET(request: NextRequest) {
   const auth = requireStaffAdmin(request)
@@ -153,6 +156,16 @@ export async function POST(request: NextRequest) {
   }
   if (password.length < 6) {
     return NextResponse.json({ error: "La contraseña debe tener al menos 6 caracteres" }, { status: 400 })
+  }
+
+  // Sede obligatoria cuando se restringe (QA 2026-07-30): un usuario con
+  // "todas las sedes" desmarcado y NINGUNA sucursal tildada se guardaba igual,
+  // el selector de sedes le salía vacío… y operaba en la sede por defecto. Sus
+  // ventas y cobros caían en una sucursal que nadie le asignó. Dueño y soporte
+  // no aplican: su acceso es a todas por definición.
+  const branchError = getMissingBranchError(role, body)
+  if (branchError) {
+    return NextResponse.json({ error: branchError }, { status: 400 })
   }
 
   const supabase = getSupabaseAdmin()

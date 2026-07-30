@@ -126,6 +126,28 @@ console.log("── U1 · creación y validaciones")
   )
   check("U1 · usuario duplicado se rechaza", dup.status === 400, `status=${dup.status} "${dup.json?.error}"`)
 
+  // U1b (hallazgo 2026-07-30): restringir las sedes sin tildar NINGUNA dejaba
+  // al usuario operando en la sede por DEFECTO — sus ventas se atribuían a una
+  // sucursal que nadie le asignó.
+  const sinSede = await post(
+    "/api/staff",
+    {
+      username: `zztest-sinsede-${Date.now()}`.toLowerCase(),
+      password: PASSWORD,
+      role: "cashier",
+      fullName: `${RUN} sin sede`,
+      allBranches: false,
+      allowedBranchIds: [],
+    },
+    { "x-branch-id": A },
+  )
+  if (sinSede.json?.staff?.id) staffCreated.push(sinSede.json.staff.id)
+  check(
+    "U1b · restringir sedes sin tildar ninguna se rechaza (400)",
+    sinSede.status === 400,
+    `status=${sinSede.status} "${sinSede.json?.error || ""}"`,
+  )
+
   const list = await get("/api/staff", { "x-branch-id": A })
   const names = JSON.stringify(list.json || {})
   const allListed = ROLES.every((role) => names.includes(users[role].username))
