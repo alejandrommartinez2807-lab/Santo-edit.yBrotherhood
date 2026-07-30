@@ -108,9 +108,15 @@ console.log("\n── reportes")
   check("reportes · A y B no dan el mismo número (de verdad filtran)", money(repA) !== money(repAll) || money(repB) === 0, `A=${money(repA)} all=${money(repAll)}`)
 
   const hasByBranch = Boolean(repAll?.byBranch || repAll?.summary?.byBranch || repAll?.branches)
-  check("reportes · [R1] el consolidado trae desglose por sede (byBranch)", hasByBranch, hasByBranch ? "" : "sigue sin byBranch: el dueño ve el total pero no sabe cuánto puso cada sede")
+  check(
+    "reportes · [R1] el consolidado trae el desglose por sede en UNA llamada (byBranch)",
+    hasByBranch,
+    hasByBranch
+      ? ""
+      : "el consolidado no trae byBranch. OJO: NO es que el dueño no lo vea — la pantalla de reportes lo arma pidiendo /api/reports una vez POR SEDE (page.tsx:210-233). Es un N+1 evitable, no un dato faltante.",
+  )
 
-  row("Reportes", true, true, identity, null, hasByBranch ? "" : "R1 sigue vivo: sin byBranch")
+  row("Reportes", true, true, identity, null, hasByBranch ? "" : "R1: sin byBranch en la API (la pantalla lo suple con N+1)")
 }
 
 // ───────────────────────────────────────────────────────────────────────────

@@ -1,11 +1,38 @@
 #!/usr/bin/env node
 
-const baseUrl = process.env.E2E_BASE_URL || "http://localhost:3000";
+import { readFileSync } from "node:fs";
+import { assertBrotherhoodAt } from "./qa-lib.mjs";
+
+// 3177 por defecto (antes 3000, donde llegó a vivir el dev server de otro
+// cliente y este script le habría escrito).
+const baseUrl = process.env.E2E_BASE_URL || process.env.BASE || "http://localhost:3177";
+
+// La clave salía SOLO de process.env, así que sin exportarla a mano el script
+// corría sin autenticar y fallaba sin decir por qué. Ahora cae a .env.local,
+// que es donde vive de verdad.
+function ownerPasswordFromEnvFile() {
+  try {
+    const text = readFileSync(".env.local", "utf8");
+    for (const line of text.split(/\r?\n/)) {
+      const clean = line.trim();
+      if (!clean || clean.startsWith("#") || !clean.includes("=")) continue;
+      const index = clean.indexOf("=");
+      if (clean.slice(0, index).trim() !== "ORDERS_OWNER_PASSWORD") continue;
+      return clean.slice(index + 1).trim().replace(/^["']|["']$/g, "");
+    }
+  } catch {
+    // sin .env.local se sigue con lo que haya en process.env
+  }
+  return "";
+}
+
 const ownerPassword =
   process.env.E2E_OWNER_PASSWORD ||
   process.env.ORDERS_OWNER_PASSWORD ||
   process.env.OWNER_PASSWORD ||
-  "";
+  ownerPasswordFromEnvFile();
+
+await assertBrotherhoodAt(baseUrl);
 
 const requiredPublicKeys = [
   "publicAllowOrdering",

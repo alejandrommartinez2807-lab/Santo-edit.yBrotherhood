@@ -8,8 +8,11 @@
 
 import { readFileSync } from "node:fs"
 import { createClient } from "@supabase/supabase-js"
+import { assertBrotherhoodAt } from "./qa-lib.mjs"
 
-const BASE = process.env.BASE || "http://localhost:3000"
+// 3177 por defecto (antes 3000): en esa máquina el 3000 llegó a tener el dev
+// server de OTRO cliente y este script le escribió pedidos.
+const BASE = process.env.BASE || "http://localhost:3177"
 
 function loadEnvFile() {
   const text = readFileSync(".env.local", "utf8")
@@ -46,6 +49,9 @@ if (!ownerPassword) {
 const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false },
 })
+
+// Nadie escribe hasta confirmar que el server de BASE es esta app.
+await assertBrotherhoodAt(BASE)
 
 let pass = 0
 let fail = 0

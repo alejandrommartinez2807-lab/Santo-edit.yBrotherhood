@@ -40,18 +40,31 @@ export const BRANCH_VINEDO = "04fb974d-bd2d-4086-ae9e-c74653309b04"
 // las de staff aceptan texto libre.
 export const REAL_TABLES = ["Mesa 1", "Mesa 2", "Mesa 3", "Mesa 4", "Barra", "Afuera"]
 
-// El server respondiendo en BASE tiene que ser Brotherhood. Si no, ningún
-// script debe escribir.
-export async function assertBrotherhood() {
-  const res = await fetch(BASE + "/", { headers: { accept: "text/html" } })
-  const html = await res.text()
-  const title = (html.match(/<title>([^<]*)<\/title>/i)?.[1] || "").trim()
+// El server respondiendo en `base` tiene que ser Brotherhood. Si no, ningún
+// script debe escribir. Se exporta con parámetro porque los scripts e2e:*
+// traen su propia BASE (y durante años apuntaron por defecto al 3000, donde
+// llegó a vivir el dev server de OTRO cliente).
+export async function assertBrotherhoodAt(base) {
+  let title = ""
+  try {
+    const res = await fetch(base + "/", { headers: { accept: "text/html" } })
+    const html = await res.text()
+    title = (html.match(/<title>([^<]*)<\/title>/i)?.[1] || "").trim()
+  } catch (error) {
+    console.error(`✗ ABORTADO: no hay servidor respondiendo en ${base} (${error.message}).`)
+    console.error("  Levanta el dev server:  npx next dev -p 3177")
+    process.exit(2)
+  }
   if (!/brotherhood/i.test(title)) {
-    console.error(`✗ ABORTADO: el server en ${BASE} no es Brotherhood (title: "${title}").`)
+    console.error(`✗ ABORTADO: el server en ${base} no es Brotherhood (title: "${title}").`)
     console.error("  Revisa el puerto — en esta máquina conviven dev servers de varios clientes.")
     process.exit(2)
   }
   return title
+}
+
+export async function assertBrotherhood() {
+  return assertBrotherhoodAt(BASE)
 }
 
 let pass = 0

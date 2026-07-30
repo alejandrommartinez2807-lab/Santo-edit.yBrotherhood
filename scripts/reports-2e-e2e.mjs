@@ -3,8 +3,11 @@
 // (proveedores/compras/cuentas por pagar/inventario) y los restaura al final,
 // igual que smoke hace con lo fiscal. No borra datos del negocio.
 import { readFileSync } from "node:fs"
+import { assertBrotherhoodAt } from "./qa-lib.mjs"
 
-const BASE = process.env.BASE || "http://localhost:3000"
+// 3177 por defecto (antes 3000, donde llegó a vivir otro cliente).
+const BASE = process.env.BASE || "http://localhost:3177"
+await assertBrotherhoodAt(BASE)
 const env = Object.fromEntries(
   readFileSync(".env.local", "utf8").split(/\r?\n/)
     .filter((l) => l.includes("=") && !l.trim().startsWith("#"))

@@ -8,8 +8,11 @@
 
 import { readFileSync } from "node:fs"
 import { createClient } from "@supabase/supabase-js"
+import { assertBrotherhoodAt } from "./qa-lib.mjs"
 
-const BASE = process.env.BASE || "http://localhost:3000"
+// 3177 por defecto (antes 3000, donde llegó a vivir otro cliente).
+const BASE = process.env.BASE || "http://localhost:3177"
+await assertBrotherhoodAt(BASE)
 
 function loadEnvFile() {
   const text = readFileSync(".env.local", "utf8")
