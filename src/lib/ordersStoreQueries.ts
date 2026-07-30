@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
+import { OrderNotFoundError } from "@/lib/orderConflicts"
 import type { LocalOrder, OrderItem } from "@/types/localOrders"
 import {
   itemRowToOrderItem,
@@ -18,8 +19,13 @@ export async function loadOrderWithItems(
   if (branchId) orderQuery = orderQuery.eq("branch_id", branchId)
   const { data: orderRow, error } = await orderQuery.single()
 
-  if (error || !orderRow) {
-    throw new Error(error?.message || "Pedido no encontrado")
+  // PGRST116 = .single() sin filas: el pedido no existe (o es de OTRA sede).
+  // Eso es un 404 para las rutas, no un fallo del servidor (QA 2026-07-30).
+  if (error && error.code !== "PGRST116") {
+    throw new Error(error.message)
+  }
+  if (!orderRow) {
+    throw new OrderNotFoundError("Pedido no encontrado en esta sucursal")
   }
 
   const { data: itemRows } = await supabase

@@ -2,7 +2,12 @@ import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { canTransitionOrderStatus, getRoleTransitionError } from "@/lib/orderStatusPermissions"
 import type { LocalRole } from "@/lib/localAccess"
 import { isMissingColumnError } from "@/lib/ordersStoreMappers"
-import { OrderActionConflictError } from "@/lib/orderConflicts"
+import {
+  OrderActionConflictError,
+  OrderInvalidTransitionError,
+  OrderNotFoundError,
+  OrderPermissionError,
+} from "@/lib/orderConflicts"
 import { recomputeOpenAccountTotals } from "@/lib/ordersStoreOpenAccounts"
 import type { LocalOrder, OrderStatus } from "@/types/localOrders"
 
@@ -28,7 +33,7 @@ export async function updateOrderStatusInStore(
   if (branchId) currentQuery = currentQuery.eq("branch_id", branchId)
   const { data: currentRows, error: currentError } = await currentQuery.limit(1)
   if (currentError) throw new Error(currentError.message)
-  if (!currentRows?.length) throw new Error("Pedido no encontrado en esta sucursal")
+  if (!currentRows?.length) throw new OrderNotFoundError("Pedido no encontrado en esta sucursal")
 
   const currentStatus = String(currentRows[0]?.status || "")
 
@@ -43,14 +48,14 @@ export async function updateOrderStatusInStore(
   // /api/orders/[id] y /api/open-accounts/[id] — apliquen la misma regla.
   if (actorRole) {
     const roleError = getRoleTransitionError(actorRole, currentStatus, status)
-    if (roleError) throw new Error(roleError)
+    if (roleError) throw new OrderPermissionError(roleError)
   }
 
   // Máquina de estados (H1): Cancelado es terminal — un pedido anulado ya
   // devolvió inventario y no puede revivir para cobrarse; Entregado solo se
   // reabre a Listo o se anula.
   if (!canTransitionOrderStatus(currentStatus, status)) {
-    throw new Error(
+    throw new OrderInvalidTransitionError(
       currentStatus === "Cancelado"
         ? "Este pedido está ANULADO y no puede cambiar de estado."
         : `Un pedido "${currentStatus}" no puede pasar directo a "${status}".`,
@@ -174,7 +179,7 @@ export async function deleteOrderInStore(
   if (branchId) query = query.eq("branch_id", branchId)
   const { data, error } = await query.select("id")
   if (error) throw new Error(error.message)
-  if (!data?.length) throw new Error("Pedido no encontrado en esta sucursal")
+  if (!data?.length) throw new OrderNotFoundError("Pedido no encontrado en esta sucursal")
   return { ok: true }
 }
 

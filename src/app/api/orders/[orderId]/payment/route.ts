@@ -4,6 +4,7 @@ import {
   OrderPaymentConflictError,
   updateOrderPayment,
 } from "@/lib/orders"
+import { getOrderErrorHttpStatus } from "@/lib/orderConflicts"
 import { readExpectedPrevious } from "@/lib/orderPaymentInput"
 import {
   canLocalAccessUseModule,
@@ -397,6 +398,13 @@ export async function PATCH(
     // perdió la carrera vea los montos frescos, en vez de un 500 opaco.
     if (error instanceof OrderPaymentConflictError) {
       return NextResponse.json({ error: error.message }, { status: 409 })
+    }
+
+    // 404/403 tipados: cobrar un pedido de OTRA sede (o inexistente) era un
+    // bloqueo correcto que salía como 500 opaco (QA 2026-07-30).
+    const typedStatus = getOrderErrorHttpStatus(error)
+    if (typedStatus && error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: typedStatus })
     }
 
     return NextResponse.json(

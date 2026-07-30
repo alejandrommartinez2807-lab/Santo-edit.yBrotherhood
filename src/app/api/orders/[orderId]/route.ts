@@ -20,7 +20,7 @@ import { getModulePlanAccess } from "@/lib/localPlans"
 import { canRoleUpdateStatus } from "@/lib/orderStatusPermissions"
 import { resolveBranchId } from "@/lib/branch"
 import { writeAuditLog } from "@/lib/audit"
-import { OrderActionConflictError } from "@/lib/orderConflicts"
+import { OrderActionConflictError, getOrderErrorHttpStatus } from "@/lib/orderConflicts"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 import {
   sendOrderCancelledStaffPush,
@@ -794,6 +794,13 @@ export async function PATCH(
       )
     }
 
+    // 403/404/400 tipados (permiso, otra sede, transición inválida): el
+    // bloqueo era correcto pero salía como 500 opaco (QA 2026-07-30).
+    const typedStatus = getOrderErrorHttpStatus(error)
+    if (typedStatus && error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: typedStatus })
+    }
+
     return NextResponse.json(
       {
         error:
@@ -859,6 +866,11 @@ export async function DELETE(
       },
     })
   } catch (error) {
+    const typedStatus = getOrderErrorHttpStatus(error)
+    if (typedStatus && error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: typedStatus })
+    }
+
     return NextResponse.json(
       {
         error:

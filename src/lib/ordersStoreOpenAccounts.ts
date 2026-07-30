@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
 import { cleanText } from "@/lib/localOrderHelpers"
+import { OrderNotFoundError } from "@/lib/orderConflicts"
 import { normalizePaymentStatus, roundMoney } from "@/lib/localOrderMoney"
 import type {
   CreateOpenAccountInput,
@@ -35,8 +36,12 @@ async function loadOrderWithItems(
   if (branchId) orderQuery = orderQuery.eq("branch_id", branchId)
   const { data: orderRow, error } = await orderQuery.single()
 
-  if (error || !orderRow) {
-    throw new Error(error?.message || "Pedido no encontrado")
+  // PGRST116 = .single() sin filas: no existe (o es de otra sede) → 404.
+  if (error && error.code !== "PGRST116") {
+    throw new Error(error.message)
+  }
+  if (!orderRow) {
+    throw new OrderNotFoundError("Pedido no encontrado en esta sucursal")
   }
 
   const { data: itemRows } = await supabase

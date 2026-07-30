@@ -22,7 +22,7 @@ import { getModulePlanAccess } from "@/lib/localPlans";
 import { canRoleUpdateStatus } from "@/lib/orderStatusPermissions";
 import { resolveBranchId } from "@/lib/branch";
 import { writeAuditLog } from "@/lib/audit";
-import { OrderActionConflictError } from "@/lib/orderConflicts";
+import { OrderActionConflictError, getOrderErrorHttpStatus } from "@/lib/orderConflicts";
 
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards";
 
@@ -737,6 +737,13 @@ export async function PATCH(
         { error: error.message, conflict: true },
         { status: 409 },
       );
+    }
+
+    // 403/404 tipados (permiso del rol, pedido de otra sede): mismo código
+    // que la puerta de /api/orders para la misma regla (QA 2026-07-30).
+    const typedStatus = getOrderErrorHttpStatus(error);
+    if (typedStatus && error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: typedStatus });
     }
 
     return NextResponse.json(

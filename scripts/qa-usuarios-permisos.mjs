@@ -237,7 +237,7 @@ console.log("\n── U4 · estados y cobros")
 
   // Mesonero: NO entrega lo que no está LISTO (o2 sigue Nuevo)…
   const wSkip = await asStaff(users.waiter.token, "PATCH", `/api/orders/${o2.id}`, { status: "Entregado" })
-  check("U4 · el mesonero NO entrega un pedido Nuevo", wSkip.status !== 200 && (await orderStatus(o2.id)) === "Nuevo", `status=${wSkip.status}`)
+  check("U4 · el mesonero NO entrega un pedido Nuevo (403 claro, no 500)", wSkip.status === 403 && (await orderStatus(o2.id)) === "Nuevo", `status=${wSkip.status}`)
   // …sí entrega lo LISTO (o1) y puede des-entregar.
   const wDeliver = await asStaff(users.waiter.token, "PATCH", `/api/orders/${o1.id}`, { status: "Entregado" })
   check("U4 · el mesonero SÍ entrega lo LISTO", wDeliver.status === 200 && (await orderStatus(o1.id)) === "Entregado", `status=${wDeliver.status}`)
@@ -291,7 +291,7 @@ console.log("\n── U5 · aislamiento de sede")
 
   const crossPay = await asStaff(users.cashier.token, "PATCH", `/api/orders/${orderB?.id}/payment`, { amountReceivedUSD: 7, paymentMethodUSD: "Efectivo divisas", deliveryPaymentIn: "Divisas" }, { "x-branch-id": B })
   const { data: rowB } = await supabase.from("orders").select("payment_status").eq("id", orderB?.id || "").maybeSingle()
-  check("U5 · tampoco puede COBRAR el pedido de Viñedo", crossPay.status !== 200 && rowB?.payment_status !== "paid", `status=${crossPay.status} payment_status=${rowB?.payment_status}`)
+  check("U5 · tampoco puede COBRAR el pedido de Viñedo (404 claro, no 500)", crossPay.status === 404 && rowB?.payment_status !== "paid", `status=${crossPay.status} payment_status=${rowB?.payment_status}`)
 }
 
 // ───────────────────────────────────────────────────────────────────────────
