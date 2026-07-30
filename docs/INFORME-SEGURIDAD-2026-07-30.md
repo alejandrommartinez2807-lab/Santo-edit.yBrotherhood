@@ -133,19 +133,45 @@ comida a una mesa.
 Se confirmó también que **ninguna otra vía pública puede mover una cuenta de
 mesa**: la de los pedidos era la única, y ya está cerrada.
 
-**Pruebas corridas, todas en verde:**
+**Pruebas corridas DESPUÉS de publicar, contra el sistema en vivo:**
 
 | Prueba | Resultado |
 |---|---|
-| Ataques de seguridad en vivo | 8 de 8 |
-| Roles y suplantación de identidad | 18 de 18 |
-| Aislamiento entre sedes | 28 de 28 |
+| Ataques de seguridad | 8 de 8 |
+| Cuentas abiertas atacadas (concurrencia, aislamiento) | 43 de 43 |
 | Usuarios y permisos | 63 de 63 |
+| Aislamiento entre sedes | 28 de 28 |
 | Cobros y comprobantes | 28 de 28 |
+| Despido real: el desactivado no vuelve a entrar | 25 de 25 |
+| Inventario, alertas y cuentas por pagar | 20 de 20 |
+| Roles y suplantación de identidad | 18 de 18 |
+| Sedes, QR y correlativos | 15 de 16 ⚠️ |
+| Precarga del cobro en mesa | 7 de 7 |
+| Estado real de la base (migraciones, RLS, bucket privado) | 8 de 8 · 0 pendientes |
 | Navegador real (accesibilidad, PWA sin internet, móvil, sesión) | 15 de 15 |
 | Pruebas internas del código | 639 de 639 |
 
-**160 comprobaciones + 639 pruebas internas, sin una sola falla.**
+**279 comprobaciones + 639 pruebas internas. Una sola falla, y es suya:**
+
+> ⚠️ **Ninguna de las dos sedes tiene cargado un número de WhatsApp.** El botón
+> "Enviar por WhatsApp" existe, el número no. Es un dato que se carga en
+> Configuración → Sedes; no hay nada que arreglar en el código. Ya venía
+> anotada como la única falla conocida antes de esta ronda.
+
+**Seis pruebas NO se corrieron contra el sistema real, a propósito**, porque
+harían daño de verdad y su sitio es la base de simulación:
+
+- *Cierre del día*, *cobros por origen* y *métodos de cobro*: los tres ejecutan
+  un cierre real, que **borra todos los comprobantes de la sede** y escribe una
+  fila en su historial. El propio código lo advierte: *"en una base de
+  producción eso no es una prueba, es un daño"*.
+- *Día completo*: crea productos en el **menú real**, que es intocable.
+- *Descuento automático de inventario*: cambia la **configuración** del negocio.
+- *Modo entrenamiento*: mientras está activo, **cualquier pedido de un cliente
+  real nacería marcado como pedido de práctica**.
+
+Al terminar: **0 restos de prueba** en la base y el **menú real intacto**
+(62 productos por sede).
 
 Se mantienen bloqueados los ataques al dinero que ya se habían tapado antes:
 pedir una hamburguesa de $9,50 diciendo que cuesta $0,01 (se guardó a $9,50) y
@@ -180,6 +206,11 @@ pagar a una tasa inventada de 1 (el servidor impuso 848,83).
    Mi recomendación: quedarse como está por ahora. Ya no se filtra ningún dato
    personal; lo que queda visible son los montos de la mesa, que es justo lo que
    esa pantalla existe para mostrar.
-2. **Las 518 pruebas del checklist de módulos** siguen sin empezar.
-3. **Las dos semanas de operación simulada** (§5 del plan) siguen pendientes;
+2. **Cargar el WhatsApp de cada sede** (Configuración → Sedes). Es lo único que
+   falla hoy, y es de un minuto.
+3. **Las seis pruebas que no se pueden correr contra el sistema real** (cierre
+   del día, día completo, modo entrenamiento…): correrlas en la base de
+   simulación.
+4. **Las 518 pruebas del checklist de módulos** siguen sin empezar.
+5. **Las dos semanas de operación simulada** (§5 del plan) siguen pendientes;
    conviene correrlas contra la base de simulación, no contra la de verdad.
