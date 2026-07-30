@@ -32,6 +32,8 @@ const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE
 const H = { "Content-Type": "application/json", "x-branch-id": VINEDO, Origin: BASE, Referer: `${BASE}/` }
 const cleanup = { orders: new Set(), accounts: new Set() }
 
+const cleanId = (value) => String(value ?? "").trim()
+
 let pass = 0, fail = 0
 function check(name, ok, detail = "") {
   console.log(`${ok ? "✓" : "✗ FALLA"} ${name}${detail ? ` — ${detail}` : ""}`)
@@ -108,10 +110,14 @@ console.log("── S1 · fuga de datos: estado de cuentas de mesa sin clave")
   }
   console.log(`   barridas ${barridas} mesas sin ninguna clave · ${conNombre} exponen NOMBRE de cliente · ${conMontos} exponen montos`)
   if (ejemplos.length) console.log(`   ejemplos: ${ejemplos.slice(0, 4).join(" · ")}`)
-  // Es un hallazgo ABIERTO: hoy "pasa" (expone). El check documenta el estado.
-  check("S1 · [H-1 ABIERTO] el endpoint público expone datos de la cuenta sin clave",
-    conNombre > 0 || conMontos > 0,
-    conNombre > 0 ? `🔴 filtra nombre del cliente desde internet (decisión del dueño pendiente)` : "solo montos")
+  // CERRADO el 2026-07-30 (H-1): el nombre del cliente ya no viaja en la
+  // respuesta pública. Los montos SÍ siguen: son los que la propia mesa ve al
+  // pedir su cuenta desde el teléfono (decisión de diseño, no un descuido).
+  check("S1 · [H-1 CERRADO] el endpoint público YA NO expone el nombre del cliente",
+    conNombre === 0,
+    conNombre === 0
+      ? `barridas ${barridas} mesas sin clave y 0 nombres · ${conMontos} con montos (aceptado: es la cuenta de la propia mesa)`
+      : `🔴 TODAVÍA filtra ${conNombre} nombre(s) desde internet`)
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -177,16 +183,47 @@ console.log("\n── S4 · [H-4] cargar comida a la cuenta de otra mesa")
   if (ordId) cleanup.orders.add(ordId)
   const { data: despues } = await supabase.from("open_accounts").select("pending_usd").eq("id", accId).maybeSingle()
   const subio = Number(despues?.pending_usd ?? 0) - Number(antes?.pending_usd ?? 0)
-  const { data: row } = ordId ? await supabase.from("orders").select("open_account_id").eq("id", ordId).maybeSingle() : { data: null }
-  const atado = row?.open_account_id === accId
+  const { data: row } = ordId
+    ? await supabase.from("orders").select("open_account_id,status").eq("id", ordId).maybeSingle()
+    : { data: null }
+  const atado = Boolean(cleanId(row?.open_account_id))
 
-  // ABIERTO hoy: el pedido se ata y el pendiente sube SIN que nadie confirme.
-  // Cuando se implemente el camino B este check debe invertirse.
-  const fraudeVivo = atado && subio > 0
-  check("S4 · [H-4 ABIERTO] un desconocido carga comida a la cuenta ajena sin confirmación",
-    fraudeVivo,
-    fraudeVivo ? `🔴 pendiente +$${subio.toFixed(2)} sin que el local confirme — pendiente el camino B`
-      : `parece cerrado (atado=${atado}, subió $${subio.toFixed(2)}) — ¿ya se implementó el camino B?`)
+  // CERRADO el 2026-07-30 con el camino B: el pedido entra igual (la cocina lo
+  // ve de una vez) pero NO se ata a la cuenta ni mueve el pendiente hasta que
+  // alguien del local lo confirme desde el panel.
+  const bloqueado = !atado && Math.abs(subio) < 0.005
+  check("S4 · [H-4 CERRADO] un desconocido YA NO puede cargar comida a la cuenta ajena",
+    bloqueado,
+    bloqueado
+      ? `pendiente intacto ($${subio.toFixed(2)}) y el pedido quedó SIN atar — lo tiene que sumar el personal`
+      : `🔴 el fraude sigue vivo (atado=${atado}, pendiente +$${subio.toFixed(2)})`)
+
+  // La otra mitad del trato con el dueño: atrasar la comida para tapar un
+  // fraude poco frecuente sería peor que el fraude. El pedido TIENE que entrar.
+  const enCocina = row?.status === "Nuevo"
+  check("S4b · …pero el pedido SÍ entra y la cocina lo ve (no se atrasa el servicio)",
+    Boolean(ordId) && enCocina,
+    `status HTTP ${ataque.status} · pedido ${ordId ? "creado" : "NO creado"} · estado en base "${row?.status ?? "—"}" · avisa al cliente=${ataque.json?.openAccountAwaitingStaff === true}`)
+
+  // S4c · El reverso, y la prueba de que el arreglo no rompió el negocio: con
+  // la confirmación del PERSONAL el mismo pedido sí entra en la cuenta. Sin
+  // esto, "bloqueado" podría significar simplemente que la función se rompió.
+  if (ordId && accId) {
+    const clave = env.ORDERS_CASHIER_PASSWORD || env.ORDERS_ADMIN_PASSWORD || env.ORDERS_OWNER_PASSWORD || ""
+    const res = await fetch(`${BASE}/api/open-accounts/${encodeURIComponent(accId)}`, {
+      method: "PATCH",
+      headers: { ...H, "x-admin-password": clave },
+      body: JSON.stringify({ action: "attachOrder", orderId: ordId }),
+    })
+    let json = null; try { json = await res.json() } catch {}
+    const { data: tras } = await supabase.from("open_accounts").select("pending_usd").eq("id", accId).maybeSingle()
+    const subioConPersonal = Number(tras?.pending_usd ?? 0) - Number(antes?.pending_usd ?? 0)
+    check("S4c · con la confirmación del personal SÍ se suma (no se pierde la venta)",
+      res.status === 200 && subioConPersonal > 0,
+      res.status === 200
+        ? `caja confirmó y el pendiente subió $${subioConPersonal.toFixed(2)}`
+        : `status ${res.status}${json?.error ? ` · ${json.error}` : ""}`)
+  }
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -204,13 +241,23 @@ console.log("\n── S5 · [H-4] adjuntar por openAccountId directo")
   const { data: antes } = await supabase.from("open_accounts").select("pending_usd").eq("id", accId).maybeSingle()
 
   const ataque = await pedidoValido({ customerName: `${RUN}-atacante2`, tableNumber: "Mesa 3", openAccountId: accId })
-  if (ataque.json?.order?.id) cleanup.orders.add(ataque.json.order.id)
+  const ordId2 = ataque.json?.order?.id
+  if (ordId2) cleanup.orders.add(ordId2)
   const { data: despues } = await supabase.from("open_accounts").select("pending_usd").eq("id", accId).maybeSingle()
   const subio = Number(despues?.pending_usd ?? 0) - Number(antes?.pending_usd ?? 0)
-  const fraudeVivo = subio > 0
-  check("S5 · [H-4 ABIERTO] mandar el openAccountId directo también carga a la cuenta",
-    fraudeVivo,
-    fraudeVivo ? `🔴 pendiente +$${subio.toFixed(2)} con el id en la mano` : `no movió la cuenta ($${subio.toFixed(2)})`)
+  const { data: row2 } = ordId2
+    ? await supabase.from("orders").select("open_account_id").eq("id", ordId2).maybeSingle()
+    : { data: null }
+  const atado2 = Boolean(cleanId(row2?.open_account_id))
+
+  // Tener el id de la cuenta en la mano (se saca del S1) tampoco sirve: el
+  // camino B no distingue cómo pediste sumarte, solo QUIÉN lo confirma.
+  const bloqueado = !atado2 && Math.abs(subio) < 0.005
+  check("S5 · [H-4 CERRADO] mandar el openAccountId directo TAMPOCO carga a la cuenta",
+    bloqueado,
+    bloqueado
+      ? `pendiente intacto ($${subio.toFixed(2)}) con el id de la cuenta en la mano`
+      : `🔴 movió la cuenta (atado=${atado2}, +$${subio.toFixed(2)})`)
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -235,7 +282,8 @@ console.log("\n── limpieza")
 }
 
 console.log(`\n==== seguridad: ${pass} OK, ${fail} fallas ====`)
-console.log("Nota: S1, S4 y S5 son hallazgos ABIERTOS — su '✓' significa 'confirmado que")
-console.log("el hueco existe HOY'. Cuando se cierren (quitar el nombre / camino B), estos")
-console.log("checks hay que INVERTIRLOS para que verifiquen que ya no se puede.")
+console.log("Nota: los checks están en positivo — un '✓' significa 'el ataque NO pasa'.")
+console.log("H-1 (nombre del cliente) y H-4 (cargar comida a la cuenta ajena) se cerraron")
+console.log("el 2026-07-30; S4b y S4c son la otra mitad del trato: el pedido igual entra a")
+console.log("cocina, y con la confirmación del personal la venta sí se suma a la cuenta.")
 process.exit(fail > 0 ? 1 : 0)
