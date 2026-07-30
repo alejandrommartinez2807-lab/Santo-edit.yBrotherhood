@@ -60,6 +60,7 @@ export type AuditLogQuery = {
   fromDate?: string | null;
   toDate?: string | null;
   limit?: number;
+  offset?: number;
 };
 
 function mapAuditRow(raw: Record<string, unknown>): AuditLogEntry {
@@ -88,12 +89,14 @@ function mapAuditRow(raw: Record<string, unknown>): AuditLogEntry {
 export async function getAuditLogs(query: AuditLogQuery = {}): Promise<AuditLogEntry[]> {
   const supabase = getSupabaseAdmin();
   const limit = Math.min(Math.max(Number(query.limit) || 100, 1), 500);
+  // Paginación para "cargar más" en la bitácora: offset en filas, mismo tope.
+  const offset = Math.max(Number(query.offset) || 0, 0);
 
   let request = supabase
     .from("audit_logs")
     .select("*")
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .range(offset, offset + limit - 1);
 
   const branchId = cleanText(query.branchId);
   if (branchId) request = request.eq("branch_id", branchId);

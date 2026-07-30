@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
       fromDate: params.get("fromDate"),
       toDate: params.get("toDate"),
       limit: Number(params.get("limit")) || 100,
+      offset: Number(params.get("offset")) || 0,
     })
 
     return NextResponse.json({ ok: true, logs })
