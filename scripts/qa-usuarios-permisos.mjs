@@ -316,6 +316,47 @@ console.log("\n── U6 · permisos custom")
   const blocked = await asStaff(users.cashier.token, "PATCH", `/api/open-accounts/${accountId}`, { action: "close" })
   check("U6 · con el recorte, cerrar la cuenta se bloquea (403)", blocked.status === 403, `status=${blocked.status}`)
 
+  // U6b (fuga encontrada el 2026-07-30): el recorte tiene que valer en la API,
+  // no solo en el menú. Se prueba con el ENCARGADO, que por rol sí abre estas
+  // puertas: al dejarlo en "mainPanel" las tres deben cerrarse. Antes del
+  // arreglo, gastos/cierres/comprobantes seguían respondiendo 200.
+  const PUERTAS_CUSTOM = [
+    ["gastos del día", "/api/day-expenses"],
+    ["historial de cierres", "/api/day-closes"],
+    ["comprobantes", "/api/payment-proofs"],
+  ]
+
+  const abiertasAntes = []
+  for (const [nombre, path] of PUERTAS_CUSTOM) {
+    const { status } = await asStaff(users.manager.token, "GET", path)
+    if (status === 200) abiertasAntes.push([nombre, path])
+  }
+  check("U6b · el encargado por rol abre gastos, cierres y comprobantes", abiertasAntes.length === 3, `abre ${abiertasAntes.length}/3`)
+
+  const recorteManager = await patch(
+    `/api/staff/${users.manager.staff.id}`,
+    { permissionsMode: "custom", allowedModules: ["mainPanel"] },
+    { "x-branch-id": A },
+  )
+  check("U6b · el dueño lo deja solo con el panel principal", recorteManager.status === 200, `status=${recorteManager.status}`)
+
+  const fugas = []
+  for (const [nombre, path] of abiertasAntes) {
+    const { status } = await asStaff(users.manager.token, "GET", path)
+    if (status !== 403 && status !== 401) fugas.push(`${nombre}=${status}`)
+  }
+  check(
+    "U6b · recortado, la API TAMBIÉN se las cierra (no solo el menú)",
+    fugas.length === 0,
+    fugas.length ? `siguen abiertas: ${fugas.join(", ")}` : "las 3 cerradas con 403",
+  )
+
+  await patch(
+    `/api/staff/${users.manager.staff.id}`,
+    { permissionsMode: "role", allowedModules: [] },
+    { "x-branch-id": A },
+  )
+
   const restore = await patch(
     `/api/staff/${users.cashier.staff.id}`,
     { permissionsMode: "role", allowedModules: [] },

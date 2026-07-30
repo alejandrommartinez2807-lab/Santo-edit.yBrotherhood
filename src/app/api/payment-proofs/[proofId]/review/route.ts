@@ -9,7 +9,12 @@ import {
 import { buildPaymentFromProof, type OrderPaymentSnapshot } from "@/lib/paymentProofRegistration"
 import { sendOrderPaymentReviewedPush } from "@/lib/orderPushNotifications"
 import { getSupabaseAdmin } from "@/lib/supabaseServer"
-import { getLocalAccessAuditActor, getRequestAccess, type LocalRole } from "@/lib/localAccess"
+import {
+  canLocalAccessUseModule,
+  getLocalAccessAuditActor,
+  getRequestAccess,
+  type LocalRole,
+} from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import { writeAuditLog } from "@/lib/audit"
@@ -56,6 +61,17 @@ function checkRole(request: NextRequest, allowedRoles: LocalRole[]) {
     return {
       ok: false as const,
       response: forbiddenResponse("Esta clave no puede revisar comprobantes"),
+      role: access.role,
+      roleLabel: access.roleLabel,
+    }
+  }
+
+  // Permisos PERSONALIZADOS además del rol (QA 2026-07-30): aprobar o rechazar
+  // el pago de un cliente es justo lo que el dueño quiere poder quitar.
+  if (!canLocalAccessUseModule(access, "paymentProofs")) {
+    return {
+      ok: false as const,
+      response: forbiddenResponse("Este usuario no tiene permiso para Comprobantes"),
       role: access.role,
       roleLabel: access.roleLabel,
     }

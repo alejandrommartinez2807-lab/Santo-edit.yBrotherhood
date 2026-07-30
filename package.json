@@ -31,7 +31,9 @@
     "qa:dia-completo": "node scripts/qa-dia-completo.mjs",
     "qa:cobros-origen": "node scripts/qa-cobros-origen.mjs",
     "qa:mesa-prefill": "node scripts/qa-mesa-prefill.mjs",
-    "qa:usuarios": "node scripts/qa-usuarios-permisos.mjs"
+    "qa:usuarios": "node scripts/qa-usuarios-permisos.mjs",
+    "qa:desactivacion": "node scripts/qa-desactivacion.mjs",
+    "qa:migraciones": "node scripts/qa-migraciones-aplicadas.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

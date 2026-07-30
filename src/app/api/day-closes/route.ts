@@ -4,7 +4,7 @@ import {
   getBusinessConfig,
   getDayCloses,
 } from "@/lib/orders"
-import { getRequestAccess, type LocalRole } from "@/lib/localAccess"
+import { canLocalAccessUseModule, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId, resolveScopedBranchId } from "@/lib/branch"
 import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
@@ -62,6 +62,16 @@ function checkRole(request: NextRequest, allowedRoles: LocalRole[]) {
     return {
       ok: false as const,
       response: forbiddenResponse(),
+      role: access.role,
+    }
+  }
+
+  // Permisos PERSONALIZADOS, no solo el rol (QA 2026-07-30): quitarle
+  // "Historial" a alguien lo sacaba del menú pero la API seguía sirviéndoselo.
+  if (!canLocalAccessUseModule(access, "history")) {
+    return {
+      ok: false as const,
+      response: forbiddenResponse("Este usuario no tiene permiso para el historial de cierres"),
       role: access.role,
     }
   }

@@ -6,7 +6,7 @@ import {
   getPaymentProofs,
   type CreatePaymentProofInput,
 } from "@/lib/orders"
-import { getRequestAccess, type LocalRole } from "@/lib/localAccess"
+import { canLocalAccessUseModule, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import {
@@ -80,6 +80,18 @@ function checkRole(request: NextRequest, allowedRoles: LocalRole[]) {
     return {
       ok: false as const,
       response: forbiddenResponse("Esta clave no puede revisar comprobantes"),
+      role: access.role,
+      roleLabel: access.roleLabel,
+    }
+  }
+
+  // Permisos PERSONALIZADOS, no solo el rol (QA 2026-07-30): al quitarle
+  // "Comprobantes" a un encargado desaparecía del menú pero la API seguía
+  // entregándole los comprobantes (con sus capturas y referencias).
+  if (!canLocalAccessUseModule(access, "paymentProofs")) {
+    return {
+      ok: false as const,
+      response: forbiddenResponse("Este usuario no tiene permiso para Comprobantes"),
       role: access.role,
       roleLabel: access.roleLabel,
     }

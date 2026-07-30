@@ -6,7 +6,7 @@ import {
   saveDayExpense,
   type SaveDayExpenseInput,
 } from "@/lib/orders"
-import { getRequestAccess, type LocalRole } from "@/lib/localAccess"
+import { canLocalAccessUseModule, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId, resolveScopedBranchId } from "@/lib/branch"
 
@@ -64,6 +64,17 @@ function checkRole(request: NextRequest, allowedRoles: LocalRole[]) {
     return {
       ok: false as const,
       response: forbiddenResponse(),
+      role: access.role,
+    }
+  }
+
+  // Permisos PERSONALIZADOS del usuario, no solo su rol (QA 2026-07-30): sin
+  // esto, el dueño le quitaba "Gastos" a un encargado, el módulo desaparecía
+  // de su menú… y la API se lo seguía sirviendo. El recorte era cosmético.
+  if (!canLocalAccessUseModule(access, "expenses")) {
+    return {
+      ok: false as const,
+      response: forbiddenResponse("Este usuario no tiene permiso para Gastos"),
       role: access.role,
     }
   }

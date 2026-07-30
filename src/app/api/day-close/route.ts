@@ -17,7 +17,12 @@ import {
   inferCancelOriginFromNote,
   parseCancelNote,
 } from "@/lib/orderCancellationInfo"
-import { getLocalAccessAuditActor, getRequestAccess, type LocalRole } from "@/lib/localAccess"
+import {
+  canLocalAccessUseModule,
+  getLocalAccessAuditActor,
+  getRequestAccess,
+  type LocalRole,
+} from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { resolveBranchId } from "@/lib/branch"
 import { writeAuditLog } from "@/lib/audit"
@@ -81,6 +86,17 @@ function checkRole(request: NextRequest, allowedRoles: LocalRole[]) {
     return {
       ok: false as const,
       response: forbiddenResponse(),
+      role: access.role,
+    }
+  }
+
+  // Permisos PERSONALIZADOS además del rol (QA 2026-07-30): cerrar la caja del
+  // día es de las cosas que el dueño quiere poder quitarle a alguien sin
+  // cambiarle el rol entero.
+  if (!canLocalAccessUseModule(access, "cashier")) {
+    return {
+      ok: false as const,
+      response: forbiddenResponse("Este usuario no tiene permiso para Caja"),
       role: access.role,
     }
   }
