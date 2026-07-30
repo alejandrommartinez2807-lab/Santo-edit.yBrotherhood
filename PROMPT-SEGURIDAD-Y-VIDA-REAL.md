@@ -37,6 +37,18 @@ tal como está el repo, cualquier `npm run qa:*` o script suelto le pega a la ba
 real del cliente. Por eso el intercambio de arriba es el paso cero, no una
 sugerencia.
 
+📌 **Matiz importante mientras el sistema NO se ha entregado (dicho por el dueño
+el 2026-07-30):** los **datos transaccionales** de esa producción —pedidos,
+cuentas, comprobantes, gastos, cierres, incluidas las cuentas de "Carlos"— son
+**de PRUEBA y se borran en la entrega**. O sea que un ataque de escritura que
+crea su pedido y lo ataca no rompe nada irreversible. Aun así, la simulación
+sigue siendo lo preferido para las 2 semanas (candados + reconciliación + no
+contamina lo que se le mostrará al cliente). Lo que **NO** se puede tocar aunque
+sea producción de prueba: el **menú real** (62 productos con fotos), la
+**configuración**, las **sucursales/mesas/claves** y las **4 compras de insumos
+precargadas** — eso el cliente lo hereda. **El día que se entregue, esta nota
+caduca: los datos pasan a ser reales y producción vuelve a ser intocable.**
+
 El motor de simulación ya trae candados propios en
 `scripts/sim/lib/simulation-guard.mjs`: **no los desactives ni los rodees**. Si
 un candado te frena, el candado tiene razón.
