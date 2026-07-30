@@ -14,6 +14,7 @@ import {
 import { formatPublicUSD as formatUSD, formatVES } from "@/utils/formatCurrency";
 import { usePublicCurrencySymbol } from "@/hooks/usePublicCurrencySymbol";
 import { DEFAULT_PUBLIC_PAYMENT_METHODS } from "@/lib/publicPageConfig";
+import { isDineInOrderType } from "@/lib/publicOrderPaymentFlow";
 
 // Sección "Pagos" de la página pública de seguimiento (/pedido/[orderId]):
 // - El cliente que salió sin subir su captura puede reportar el pago DESPUÉS
@@ -49,6 +50,9 @@ type OrderPaymentInfo = {
   paymentRegistered: boolean;
   createdAt: string;
   orderStatus: string;
+  // Tipo del pedido: en mesa ("Comer aquí") el prepago es opcional y toda la
+  // sección habla en tono de invitación, no imperativo.
+  orderType: string;
   // El servidor decide si a este pedido le aplica la anulación automática
   // (Pick up/Delivery con método electrónico): solo ahí van el contador y
   // los recordatorios escalonados — en mesa o efectivo serían amenazas falsas.
@@ -312,6 +316,7 @@ export default function PublicOrderPaymentSection({
           paymentRegistered: data.paymentRegistered === true,
           createdAt: String(data.createdAt || ""),
           orderStatus: String(data.orderStatus || ""),
+          orderType: String(data.orderType || ""),
           autoCancelApplies: data.autoCancelApplies === true,
           expectedPayments: Array.isArray(data.expectedPayments)
             ? data.expectedPayments
@@ -449,6 +454,11 @@ export default function PublicOrderPaymentSection({
   // donde significan otra cosa ("¿cuánto pagas en bolívares?" / "¿cuánto en
   // divisas?"). En mixto manda la numeración por pago ("Pago 1 de 2").
   const showStepChips = !serverSentLegs && !isMixedReport;
+  // Pedido de mesa: pagar por adelantado es OPCIONAL (puede pagar en el local
+  // al final), así que los textos invitan en vez de exigir. Si la info no
+  // cargó no se suaviza nada: decirle "paga al final" a un delivery es peor
+  // que exigirle de más a una mesa (ronda QA 2026-07-29).
+  const prepayOptional = isDineInOrderType(info?.orderType);
 
   // Minutos desde que se registró el pedido (para el recordatorio escalonado
   // 5/10/15/20 min y el contador de anulación automática). SOLO aplica a los
@@ -1073,6 +1083,16 @@ export default function PublicOrderPaymentSection({
         Pago del pedido
       </p>
 
+      {/* En mesa el prepago es opcional y hay que decirlo de entrada: sin esta
+          línea, los pasos de abajo se leen como si hubiera que transferir
+          antes de comer (ronda QA 2026-07-29). */}
+      {prepayOptional && !hasConfirmedPayment && !awaitingProofSync ? (
+        <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
+          Puedes pagar de una vez con estos datos o pagar en el local al final,
+          como prefieras.
+        </p>
+      ) : null}
+
       {hasConfirmedPayment ? (
         <p className="mt-4 inline-flex w-full items-center gap-2 rounded-2xl border-2 border-green-600 bg-green-600/15 px-4 py-3 text-sm font-black leading-5 text-green-400">
           <CheckCircle2 size={17} className="shrink-0" />
@@ -1238,7 +1258,11 @@ export default function PublicOrderPaymentSection({
                     <>
                       {/* Sin datos que mostrar (efectivo) "Paga con estos datos"
                           era una promesa vacía. */}
-                      {hasDetails ? "Paga con estos datos" : "Tu pago es en efectivo"}
+                      {hasDetails
+                        ? prepayOptional
+                          ? "Si quieres pagar ya, usa estos datos"
+                          : "Paga con estos datos"
+                        : "Tu pago es en efectivo"}
                       {/* El método solo si hay VARIOS: con uno, el desplegable
                           de abajo ya dice "Ver datos de Pago móvil" y la fila
                           del método lo repite — el nombre salía tres veces y el
@@ -1287,12 +1311,18 @@ export default function PublicOrderPaymentSection({
                   // transfería el doble (2026-07-26). Este reparto lo decide
                   // planPaymentHero: la versión anterior miraba unas patas que
                   // el servidor ya había filtrado, así que NUNCA se ejecutaba.
+                  // En mesa nada es imperativo: el monto se presenta como
+                  // total del pedido, no como una orden de transferir.
                   const eyebrow =
                     legsPlan.kind === "mixto-con-efectivo"
-                      ? "Tienes que transferir ahora"
+                      ? prepayOptional
+                        ? "Parte electrónica de tu pedido"
+                        : "Tienes que transferir ahora"
                       : legsPlan.kind === "solo-efectivo"
                         ? "Pagas en efectivo"
-                        : "Tienes que pagar";
+                        : prepayOptional
+                          ? "Total de tu pedido"
+                          : "Tienes que pagar";
                   const main =
                     legsPlan.kind === "mixto-con-efectivo"
                       ? legsLabel(electronicLegs)
@@ -1301,7 +1331,9 @@ export default function PublicOrderPaymentSection({
                     legsPlan.kind === "mixto-con-efectivo"
                       ? `El resto (${legsLabel(cashLegs)}) lo entregas en efectivo, no lo transfieras.`
                       : legsPlan.kind === "solo-efectivo"
-                        ? "Lo entregas en efectivo al recibir tu pedido."
+                        ? prepayOptional
+                          ? "Lo pagas en efectivo en el local cuando termines."
+                          : "Lo entregas en efectivo al recibir tu pedido."
                         : // Dos patas electrónicas: el total es correcto (todo
                           // se transfiere), pero sin el reparto la tarjeta no
                           // dice cuánto va por cada método y el cliente tiene
@@ -1467,7 +1499,11 @@ export default function PublicOrderPaymentSection({
               un "Paso 2" naranja flotando encima del primer campo, sin decir
               de qué paso se trataba (2026-07-26). */}
           <p className="mt-1.5 text-sm font-black text-[var(--brand-ink-3)]">
-            {isFormOpen ? "Cuéntanos cómo pagaste" : "Repórtalo aquí"}
+            {isFormOpen
+              ? "Cuéntanos cómo pagaste"
+              : prepayOptional
+                ? "Si ya pagaste, repórtalo aquí"
+                : "Repórtalo aquí"}
           </p>
         </div>
       ) : null}

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest"
-import { isDestinationOrderType, needsPaymentReport } from "@/lib/publicOrderPaymentFlow"
+import {
+  isDestinationOrderType,
+  isDineInOrderType,
+  needsPaymentReport,
+} from "@/lib/publicOrderPaymentFlow"
 
 // Regresión del reporte del dueño (2026-07-25): en PICK UP, un pedido con
 // método electrónico y sin captura/referencia mostraba "¡Pedido enviado!" y
@@ -17,6 +21,18 @@ describe("isDestinationOrderType", () => {
     expect(isDestinationOrderType("Delivery")).toBe(true)
     expect(isDestinationOrderType("Comer aquí")).toBe(false)
     expect(isDestinationOrderType(undefined)).toBe(false)
+  })
+})
+
+describe("isDineInOrderType", () => {
+  it("solo la mesa cuenta; vacío o desconocido NO suavizan el tono de pago", () => {
+    expect(isDineInOrderType("Comer aquí")).toBe(true)
+    expect(isDineInOrderType("Para llevar")).toBe(false)
+    expect(isDineInOrderType("Delivery")).toBe(false)
+    // Un pedido sin tipo (respuesta vieja o caída) mantiene el tono imperativo:
+    // sugerirle "paga al final" a un delivery sería peor que exigir de más.
+    expect(isDineInOrderType("")).toBe(false)
+    expect(isDineInOrderType(undefined)).toBe(false)
   })
 })
 

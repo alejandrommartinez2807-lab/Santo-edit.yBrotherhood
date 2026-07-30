@@ -24,6 +24,14 @@ export function isDestinationOrderType(orderType: unknown): boolean {
   return orderType === "Para llevar" || orderType === "Delivery"
 }
 
+// Pedido de mesa: el cliente puede pagar al final en el local, así que las
+// pantallas de pago hablan en tono OPCIONAL ("puedes pagar ya o al final"),
+// nunca imperativo ("tienes que pagar") — ese tono es del prepago de
+// pick up/delivery (ronda QA 2026-07-29).
+export function isDineInOrderType(orderType: unknown): boolean {
+  return orderType === "Comer aquí"
+}
+
 export type PostRegisterPaymentInput = {
   orderType: unknown
   // Métodos elegidos por el cliente (2 si el pago es mixto).
