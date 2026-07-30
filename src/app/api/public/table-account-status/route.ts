@@ -152,7 +152,16 @@ export async function GET(request: NextRequest) {
         ? {
             id: openAccount.id,
             tableNumber: openAccount.tableNumber,
-            customerName: openAccount.customerName,
+            // H-1 (2026-07-30): el NOMBRE del cliente ya no sale de aquí. Este
+            // endpoint es público y sin clave, y los nombres de mesa se
+            // adivinan solos ("Mesa 1", "Mesa 2", "Barra"), así que cualquiera
+            // desde internet barría el local y sacaba quién está sentado en
+            // cada mesa y cuánto debe. La pantalla del cliente NUNCA pintó este
+            // dato —lo recibía y lo guardaba en una variable sin usar
+            // (OpenAccountInfo.tsx)—, así que quitarlo no cambia nada de lo que
+            // ve el comensal y elimina el dato más personal de la respuesta.
+            // Los montos SÍ se quedan: son los que la mesa ve al pedir su
+            // propia cuenta desde el teléfono.
             status: openAccount.status,
             // "" = nadie ha pedido la cuenta; ISO = desde cuándo está pedida.
             billRequestedAt: getBillRequestedAt(openAccount.note),
