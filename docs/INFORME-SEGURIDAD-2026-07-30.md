@@ -158,37 +158,39 @@ mesa**: la de los pedidos era la única, y ya está cerrada.
 > Configuración → Sedes; no hay nada que arreglar en el código. Ya venía
 > anotada como la única falla conocida antes de esta ronda.
 
-### 🔴 Hallazgo NUEVO · Los reportes se caen cuando se acumulan pedidos
+### 🔴 Hallazgo NUEVO · El detector de actualizaciones pendientes mentía
 
 Al intentar correr esas seis pruebas fuera de producción salió algo que no
-buscábamos, y es lo más importante de esta ronda.
+buscábamos, y es lo más importante de esta ronda. **Su sistema NO está
+afectado** — pero el problema es serio igual, y ahora está arreglado.
 
-**Con el MISMO programa, cambiando solo los datos:**
+**Cómo empezó.** En la base de prueba, la pantalla de reportes se caía por
+completo. Primero pensé que era por acumulación de pedidos y así se lo dije;
+**me equivoqué**. Al ver el error de verdad, la causa era otra: a esa base le
+faltaban **tres columnas** que una actualización debía haber creado.
 
-| Base de datos | Pedidos guardados | ¿Responden los reportes? |
-|---|---|---|
-| La suya, hoy | 105 pedidos · 287 líneas | ✅ Sí, normal |
-| La de prueba, con más movimiento | 675 pedidos · 1.143 líneas | ❌ **Se cae** |
+**Lo grave no es eso, es esto.** Existe un chequeo cuyo único trabajo es
+responder *"¿me falta correr alguna actualización antes de entregar?"*. Sobre
+esa misma base decía **"TODO APLICADO"**. Estaba fallando por dos motivos, los
+dos arreglados:
 
-No es que dé números malos: **no responde nada**. Se cae con cualquier período
-(hoy, semana, mes) y en las dos sedes, también con el servidor recién
-arrancado, así que no es un tropiezo pasajero. Y no le falta ninguna
-actualización a esa base: se comprobó.
+1. **No sabía leer** la actualización que crea esas columnas, porque las crea en
+   grupo con una instrucción distinta a las demás. Justo la que reparte los
+   datos por sucursal — la que sostiene que una sede no vea la caja de la otra.
+2. **Le preguntaba mal a la base**: usaba una consulta que, si la columna no
+   existe, **no devuelve ningún error**. Y cualquier respuesta que no fuera el
+   error exacto que esperaba, la contaba como "existe". O sea que fallaba
+   diciendo que sí.
 
-**Por qué importa.** Hoy usted tiene 105 pedidos y todo va bien. La base donde
-falla es la misma aplicación con el movimiento de unas semanas de trabajo. Ya
-estaba anotado como riesgo (§H-2: *"pasados unos cientos de pedidos el sistema
-lee un pedazo de la realidad"*), pero se esperaba que **mostrara números
-incompletos en silencio** — resultó peor: **la pantalla de reportes deja de
-funcionar**.
+**Por qué le importa a usted.** Su sistema está bien: se comprobó y tiene las
+26 tablas y las 56 columnas. Pero ese chequeo es el que da luz verde antes de
+entregar, y con esa luz verde se podía entregar un sistema al que le faltaran
+columnas — con los reportes cayéndose el primer día. Ahora comprueba **11
+columnas más** que antes y, sobre la base rota, la delata nombrando el archivo
+exacto que falta correr.
 
-**Qué falta.** No está diagnosticado a fondo: sé que lo dispara **el volumen de
-datos** y no el equipo ni la configuración, pero no cuál es la línea exacta que
-revienta. Es el primer trabajo de la próxima sesión, y conviene resolverlo
-**antes** de que el local acumule ese movimiento.
-
-**Mientras tanto no le afecta**: el cierre del día reinicia los pedidos y eso lo
-mantiene lejos del límite. El riesgo aparece si pasan varios días sin cerrar.
+**Comprobado en las dos bases:** delata las 3 columnas ausentes donde faltan, y
+sigue dando verde donde está todo, sin inventarse problemas.
 
 ---
 
@@ -229,8 +231,13 @@ pagar a una tasa inventada de 1 (el servidor impuso 848,83).
 > fantasma — el manual de la casa dice que "un error sin mensaje es el servidor,
 > no el programa". Se reinició el servidor y volvió a caerse; se probó con los
 > datos suyos en el mismo servidor y funcionó perfecto. Ahí dejó de ser un
-> fantasma y pasó a ser el hallazgo de arriba. **Descartar por la regla habría
-> tapado un problema real.**
+> fantasma. **Descartarlo por la regla habría tapado el problema de arriba.**
+>
+> **Y una equivocación mía, para que quede escrita:** con esa evidencia dije que
+> lo causaba el volumen de pedidos. Era la explicación cómoda y encajaba con un
+> riesgo que ya teníamos anotado. Al leer el error real no era eso: eran tres
+> columnas que faltaban. **Tener una hipótesis que encaja no es haberla
+> comprobado**, y por poco se va al informe como si lo fuera.
 
 ---
 
@@ -247,9 +254,7 @@ pagar a una tasa inventada de 1 (el servidor impuso 848,83).
    Mi recomendación: quedarse como está por ahora. Ya no se filtra ningún dato
    personal; lo que queda visible son los montos de la mesa, que es justo lo que
    esa pantalla existe para mostrar.
-2. **🔴 Arreglar la caída de los reportes con muchos pedidos** (el hallazgo
-   nuevo de arriba). Es lo primero de la próxima sesión.
-3. **Cargar el WhatsApp de cada sede** (Configuración → Sedes). Es lo único que
+2. **Cargar el WhatsApp de cada sede** (Configuración → Sedes). Es lo único que
    falla hoy en el sistema en vivo, y es de un minuto.
 4. **Terminar de correr las seis pruebas destructivas** en la base de
    simulación. Se destrabó el amarre que las ataba a producción, pero varias

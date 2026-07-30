@@ -47,6 +47,38 @@ for (const file of files) {
       if (!declaredColumns.has(key)) declaredColumns.set(key, file)
     }
   }
+
+  // Columnas añadidas a VARIAS tablas dentro de un bucle PL/pgSQL
+  // (`foreach t in array tables loop … execute format('alter table %I add
+  // column …', t)`). El patrón de arriba NO las ve: ahí el nombre de la tabla
+  // es un `%I`, no un literal.
+  //
+  // No es teórico: por este hueco este script cantó "TODO APLICADO" sobre una
+  // base a la que le faltaba `branch_id` en las tres tablas de inventario, y
+  // los reportes se caían con un 500 sin cuerpo (2026-07-30). Justo la columna
+  // que sostiene el aislamiento entre sedes, y en el único script que responde
+  // "¿me falta correr algún .sql antes de entregar?".
+  for (const block of clean.matchAll(/do\s+\$\$([\s\S]*?)\$\$/gi)) {
+    const body = block[1] || ""
+    const arrayMatch = body.match(/array\s*\[([^\]]+)\]/i)
+    if (!arrayMatch) continue
+
+    // Solo se expanden los nombres que YA son tablas declaradas: así un arreglo
+    // de textos cualquiera no fabrica comprobaciones inventadas.
+    const loopTables = [...arrayMatch[1].matchAll(/'([a-z0-9_]+)'/g)]
+      .map((m) => m[1].toLowerCase())
+      .filter((name) => declaredTables.has(name))
+    if (!loopTables.length) continue
+
+    for (const col of body.matchAll(
+      /add\s+column\s+(?:if\s+not\s+exists\s+)?["']?([a-z0-9_]+)["']?/gi,
+    )) {
+      for (const table of loopTables) {
+        const key = `${table}.${col[1].toLowerCase()}`
+        if (!declaredColumns.has(key)) declaredColumns.set(key, file)
+      }
+    }
+  }
 }
 
 console.log(`Migraciones revisadas: ${files.length} archivos (${files[0]} … ${files[files.length - 1]})`)
@@ -59,13 +91,19 @@ const MISSING_COLUMN = "42703"
 
 const faltanTablas = []
 const faltanColumnas = []
+const erroresRaros = []
 let tablasOk = 0
 let columnasOk = 0
 
 for (const [table, file] of declaredTables) {
-  const { error } = await supabase.from(table).select("*", { head: true, count: "exact" }).limit(1)
-  if (error && String(error.code || "").toLowerCase() === MISSING_TABLE) {
+  const { error } = await supabase.from(table).select("*", { count: "exact" }).limit(1)
+  const code = String(error?.code || "").toLowerCase()
+  if (code === MISSING_TABLE) {
     faltanTablas.push({ table, file })
+  } else if (error) {
+    // Fallar en ABIERTO era el problema: cualquier error que no fuera el
+    // esperado se contaba como "existe". Ahora se dice en voz alta.
+    erroresRaros.push({ what: table, file, message: error.message })
   } else {
     tablasOk += 1
   }
@@ -76,20 +114,41 @@ for (const [key, file] of declaredColumns) {
   // Si la tabla entera falta, no cuentes también sus columnas (ruido).
   if (faltanTablas.some((item) => item.table === table)) continue
 
-  const { error } = await supabase.from(table).select(column, { head: true }).limit(1)
+  // SIN `head: true`. Con HEAD, PostgREST no devuelve cuerpo y una columna
+  // inexistente responde SIN error: la sonda daba por buena una columna que no
+  // existe. Comprobado el 2026-07-30 contra una base a la que le faltaba
+  // `branch_id` en las 3 tablas de inventario — este script decía "TODO
+  // APLICADO" mientras los reportes se caían con un 500.
+  const { error } = await supabase.from(table).select(column).limit(1)
   const code = String(error?.code || "").toLowerCase()
   if (code === MISSING_COLUMN) {
     faltanColumnas.push({ table, column, file })
+  } else if (error) {
+    erroresRaros.push({ what: `${table}.${column}`, file, message: error.message })
   } else {
     columnasOk += 1
   }
 }
 
 // ── 3. Informe
-if (faltanTablas.length === 0 && faltanColumnas.length === 0) {
+if (erroresRaros.length) {
+  console.log("⚠ No se pudo comprobar todo (esto NO es un 'todo aplicado'):\n")
+  for (const item of erroresRaros.slice(0, 15)) {
+    console.log(`  · ${item.what} — ${item.message}`)
+  }
+  if (erroresRaros.length > 15) console.log(`  … y ${erroresRaros.length - 15} más`)
+  console.log("")
+}
+
+if (faltanTablas.length === 0 && faltanColumnas.length === 0 && erroresRaros.length === 0) {
   console.log(`✓ TODO APLICADO — ${tablasOk} tablas y ${columnasOk} columnas existen en la base.`)
   console.log("  No falta correr ningún .sql en Supabase.")
   process.exit(0)
+}
+
+if (faltanTablas.length === 0 && faltanColumnas.length === 0) {
+  console.log("✗ Sin faltantes confirmados, pero quedaron comprobaciones sin respuesta (arriba).")
+  process.exit(1)
 }
 
 console.log("✗ FALTA APLICAR EN SUPABASE:\n")
