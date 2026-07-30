@@ -7,6 +7,23 @@
 > con lo único pendiente siendo el montaje de WhatsApp en Meta (que depende del
 > cliente, no de nosotros).**
 
+## Arranque rápido (si solo tienes una hora)
+
+En este orden, sin saltarse el paso 1:
+
+1. `npm run backup` y reiniciar el dev server en 3177 (§1 explica por qué).
+2. `npm run qa:migraciones` — 10 segundos y descarta el problema más caro
+   (que falte un `.sql` por aplicar).
+3. `npx tsc --noEmit && npx vitest run` — la línea base del código.
+4. `npm run qa:dia-completo` — un día entero de operación en una sola suite: si
+   esta pasa, el circuito del dinero está sano.
+5. `npm run qa:usuarios` y `npm run qa:desactivacion` — que cada quien pueda
+   solo lo suyo y que sacar a alguien funcione.
+6. Leer el **anexo** de `CHECKLIST-MODULOS-ENTREGA.md` (las 30 cosas que no
+   estaban en la lista de módulos). Ahí están las sorpresas caras.
+
+Con eso sabes en qué estado real está el sistema. El resto es cobertura.
+
 ---
 
 ## 0 · Contexto que no hay que volver a descubrir
@@ -114,7 +131,9 @@ cp .env.local .env.local.produccion.bak && cp .env.simulacion .env.local && npx 
 ```
 
 Referencia: **15/15** (accesibilidad, PWA/offline, formularios responsive,
-sesión y roles). **Al terminar hay que restaurar `.env.local` desde
+sesión y roles) — pero **es del 2026-07-29: no se volvió a correr el 30**, así
+que ese número hay que confirmarlo, no darlo por bueno.
+**Al terminar hay que restaurar `.env.local` desde
 `.env.local.produccion.bak`** — si te olvidas, todas las suites `qa:*` quedan
 apuntando a la base de prueba y vas a "verificar" el sistema equivocado.
 Comprobación rápida de en qué base estás:
@@ -130,8 +149,14 @@ siguiente del lote leería la base equivocada.
 ## 4 · Fase 2 — módulo por módulo, en vivo
 
 El guion completo está en **[`CHECKLIST-MODULOS-ENTREGA.md`](CHECKLIST-MODULOS-ENTREGA.md)**:
-**61 módulos** con **369 pruebas** concretas (qué hacer y qué debe pasar),
-levantadas leyendo el código el 2026-07-30. Ábrelo y trabájalo de arriba hacia abajo,
+**61 módulos con 369 pruebas**, más un **anexo de 30 cosas que la lista de
+módulos NO cubría** (Stripe, cupones, IVA/IGTF, anulación automática, propina
+marcada "comingSoon", exportes, integraciones con terceros y que **los trabajos
+de fondo no tienen cron: viven de que alguien tenga el panel abierto**) con 149
+pruebas más. **518 pruebas en total**, todas con su resultado esperado.
+El anexo es corto y es lo primero que conviene leer: ahí están las promesas que
+pueden explotar el día de la entrega.
+Levantado leyendo el código el 2026-07-30. Ábrelo y trabájalo de arriba hacia abajo,
 marcando cada casilla solo cuando la compruebes de verdad.
 
 Los módulos que cubre, en el orden en que conviene probarlos:
@@ -362,6 +387,23 @@ Confirmar que al momento de entregar esté cargado y visible:
 - [ ] Informe final con números: checks OK, qué se arregló, qué queda pendiente
       y **de quién depende cada pendiente**.
 
+### Formato del informe final
+
+Escríbelo para el dueño, no para un técnico. Cinco bloques y nada más:
+
+1. **Qué se probó** — número total de checks y las suites que corrieron, con la
+   frase honesta de qué NO cubren (lo automático no prueba cobrar de verdad ni
+   imprimir; eso es el checklist en vivo).
+2. **Qué se arregló** — en lenguaje del negocio: no "se añadió
+   `canLocalAccessUseModule`", sino "quitarle un permiso a alguien ahora
+   también se lo cierra por dentro, no solo en el menú".
+3. **Qué encontramos y NO se arregló** — con el motivo (decisión del dueño,
+   depende de un tercero, o se decidió dejarlo).
+4. **Qué depende del cliente** — Meta, precios, datos de Zelle, WhatsApp de las
+   sedes: con nombre y apellido de quién tiene que hacer cada cosa.
+5. **Cómo queda el sistema el día de la entrega** — qué está en vivo, con qué
+   datos, y qué respaldo se dejó guardado.
+
 ---
 
 ## 9 · Reglas que no se negocian
@@ -373,3 +415,24 @@ Confirmar que al momento de entregar esté cargado y visible:
 - No borres ni vacíes `.vercelignore`.
 - No verifiques por navegador salvo pedido explícito.
 - Al terminar: commit por fases y actualizar la memoria del proyecto.
+
+---
+
+## 10 · Qué quedó pendiente de la sesión del 2026-07-30
+
+Lo que esa sesión NO alcanzó a hacer, para que no se pierda:
+
+- [ ] **Correr Playwright** (los 15 checks de navegador). No se re-corrió porque
+      exige intercambiar el `.env.local` a la base de simulación y había suites
+      corriendo contra producción. Receta y trampa en §3.
+- [ ] **Repetir dos revisiones de seguridad** que se cayeron por sobrecarga del
+      servicio: la de las **claves compartidas** (analizada a mano, ver A-1) y la
+      de **cliente-vs-servidor** (inventario de rutas de mutación sin guard).
+      Esta última es la que más vale la pena: busca endpoints que escriban sin
+      validar el rol.
+- [ ] **Decidir qué hacer con `/previa`, `/previa/idea-3`, `idea-4` e `idea-5`**:
+      son borradores internos de diseño, públicos en el dominio del cliente.
+- [ ] **Trabajar el checklist de los 61 módulos** — es la fase grande que queda:
+      518 pruebas en vivo, ninguna hecha todavía.
+- [ ] **Conversar con el dueño los puntos de §6** (sobre todo A-1, las claves
+      compartidas) y cargar los datos que dependen de él.
