@@ -158,6 +158,40 @@ mesa**: la de los pedidos era la única, y ya está cerrada.
 > Configuración → Sedes; no hay nada que arreglar en el código. Ya venía
 > anotada como la única falla conocida antes de esta ronda.
 
+### 🔴 Hallazgo NUEVO · Los reportes se caen cuando se acumulan pedidos
+
+Al intentar correr esas seis pruebas fuera de producción salió algo que no
+buscábamos, y es lo más importante de esta ronda.
+
+**Con el MISMO programa, cambiando solo los datos:**
+
+| Base de datos | Pedidos guardados | ¿Responden los reportes? |
+|---|---|---|
+| La suya, hoy | 105 pedidos · 287 líneas | ✅ Sí, normal |
+| La de prueba, con más movimiento | 675 pedidos · 1.143 líneas | ❌ **Se cae** |
+
+No es que dé números malos: **no responde nada**. Se cae con cualquier período
+(hoy, semana, mes) y en las dos sedes, también con el servidor recién
+arrancado, así que no es un tropiezo pasajero. Y no le falta ninguna
+actualización a esa base: se comprobó.
+
+**Por qué importa.** Hoy usted tiene 105 pedidos y todo va bien. La base donde
+falla es la misma aplicación con el movimiento de unas semanas de trabajo. Ya
+estaba anotado como riesgo (§H-2: *"pasados unos cientos de pedidos el sistema
+lee un pedazo de la realidad"*), pero se esperaba que **mostrara números
+incompletos en silencio** — resultó peor: **la pantalla de reportes deja de
+funcionar**.
+
+**Qué falta.** No está diagnosticado a fondo: sé que lo dispara **el volumen de
+datos** y no el equipo ni la configuración, pero no cuál es la línea exacta que
+revienta. Es el primer trabajo de la próxima sesión, y conviene resolverlo
+**antes** de que el local acumule ese movimiento.
+
+**Mientras tanto no le afecta**: el cierre del día reinicia los pedidos y eso lo
+mantiene lejos del límite. El riesgo aparece si pasan varios días sin cerrar.
+
+---
+
 **Seis pruebas NO se corrieron contra el sistema real, a propósito**, porque
 harían daño de verdad y su sitio es la base de simulación:
 
@@ -190,6 +224,13 @@ pagar a una tasa inventada de 1 (el servidor impuso 848,83).
 >    donde corresponde: **15 de 15**.
 >
 > Queda anotado porque perseguir esos fantasmas habría costado horas.
+>
+> **Y al revés:** la caída de los reportes tenía la pinta EXACTA de un tercer
+> fantasma — el manual de la casa dice que "un error sin mensaje es el servidor,
+> no el programa". Se reinició el servidor y volvió a caerse; se probó con los
+> datos suyos en el mismo servidor y funcionó perfecto. Ahí dejó de ser un
+> fantasma y pasó a ser el hallazgo de arriba. **Descartar por la regla habría
+> tapado un problema real.**
 
 ---
 
@@ -206,11 +247,14 @@ pagar a una tasa inventada de 1 (el servidor impuso 848,83).
    Mi recomendación: quedarse como está por ahora. Ya no se filtra ningún dato
    personal; lo que queda visible son los montos de la mesa, que es justo lo que
    esa pantalla existe para mostrar.
-2. **Cargar el WhatsApp de cada sede** (Configuración → Sedes). Es lo único que
-   falla hoy, y es de un minuto.
-3. **Las seis pruebas que no se pueden correr contra el sistema real** (cierre
-   del día, día completo, modo entrenamiento…): correrlas en la base de
-   simulación.
+2. **🔴 Arreglar la caída de los reportes con muchos pedidos** (el hallazgo
+   nuevo de arriba). Es lo primero de la próxima sesión.
+3. **Cargar el WhatsApp de cada sede** (Configuración → Sedes). Es lo único que
+   falla hoy en el sistema en vivo, y es de un minuto.
+4. **Terminar de correr las seis pruebas destructivas** en la base de
+   simulación. Se destrabó el amarre que las ataba a producción, pero varias
+   dependen de los reportes: hasta que no se arregle la caída de arriba, sus
+   resultados no valen.
 4. **Las 518 pruebas del checklist de módulos** siguen sin empezar.
 5. **Las dos semanas de operación simulada** (§5 del plan) siguen pendientes;
    conviene correrlas contra la base de simulación, no contra la de verdad.

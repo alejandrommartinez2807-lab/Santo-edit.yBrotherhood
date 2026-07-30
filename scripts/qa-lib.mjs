@@ -32,8 +32,38 @@ export const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_
   auth: { persistSession: false },
 })
 
-export const BRANCH_SAN_DIEGO = "3d8a8527-4b0b-4c81-aeb7-0c69454c63f6"
-export const BRANCH_VINEDO = "04fb974d-bd2d-4086-ae9e-c74653309b04"
+// Las dos sedes de trabajo ya NO van grabadas a fuego. Iban, y el efecto era
+// que TODA suite qa:* solo sabía correr contra la base del cliente — incluidas
+// las destructivas (cierre del día, día completo, modo entrenamiento), que
+// justamente son las que NO deberían tocar producción nunca. Ahora se resuelven
+// de la base CONECTADA: si están las de producción se usan esas (nada cambia);
+// si no, se toman las dos primeras sedes que existan (base de simulación).
+// Se pueden forzar con QA_BRANCH_A / QA_BRANCH_B.
+const BRANCH_A_PROD = "3d8a8527-4b0b-4c81-aeb7-0c69454c63f6" // San Diego
+const BRANCH_B_PROD = "04fb974d-bd2d-4086-ae9e-c74653309b04" // Viñedo
+
+async function resolveWorkBranches() {
+  const forcedA = String(process.env.QA_BRANCH_A || "").trim()
+  const forcedB = String(process.env.QA_BRANCH_B || "").trim()
+  if (forcedA && forcedB) return [forcedA, forcedB]
+
+  try {
+    const { data } = await supabase.from("branches").select("id").order("created_at", { ascending: true })
+    const ids = (data ?? []).map((row) => String(row.id))
+    if (ids.includes(BRANCH_A_PROD) && ids.includes(BRANCH_B_PROD)) {
+      return [BRANCH_A_PROD, BRANCH_B_PROD]
+    }
+    if (ids.length >= 2) return [ids[0], ids[1]]
+  } catch {
+    // base ilegible: se cae al valor de siempre y el script fallará solo
+  }
+
+  return [BRANCH_A_PROD, BRANCH_B_PROD]
+}
+
+// Los nombres se conservan porque los usan 18 scripts; en una base que no es la
+// del cliente significan simplemente "sede A" y "sede B".
+export const [BRANCH_SAN_DIEGO, BRANCH_VINEDO] = await resolveWorkBranches()
 
 // Mesas configuradas (globales, heredadas por las dos sedes). Las pruebas que
 // pasan por endpoints PÚBLICOS necesitan un nombre que exista en la config;
