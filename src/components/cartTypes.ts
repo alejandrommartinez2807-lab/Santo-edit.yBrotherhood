@@ -61,6 +61,10 @@ export type CreatedOrderSummary = {
   staffConfirmationProductNames?: string[];
   offline?: boolean;
   attachedToOpenAccount?: boolean;
+  // H-4 camino B: pidió sumarse a la cuenta de la mesa, pero todavía no está
+  // sumada — la confirma el personal desde el panel. El pedido ya está en
+  // cocina igual.
+  openAccountAwaitingStaff?: boolean;
   openAccountTable?: string;
   // Métodos con los que va a pagar (2 si fue mixto): filtra los "Datos
   // para pagar" de la confirmación a lo que realmente eligió.

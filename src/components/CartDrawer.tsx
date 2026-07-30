@@ -2787,6 +2787,12 @@ export default function CartDrawer({
         orderPayload.attachToOpenAccountByTable ||
         cleanText(data.order?.openAccountId),
       );
+      // H-4 camino B: el pedido pidió sumarse a la cuenta pero el servidor NO
+      // lo ató — lo confirma el personal desde el panel. Sigue siendo un pedido
+      // "de la cuenta" para el cliente (no se le cobra aparte ahora, cocina ya
+      // lo tiene); lo único que cambia es que la pantalla no le miente
+      // diciéndole que ya quedó cargado.
+      const openAccountAwaitingStaff = Boolean(data.openAccountAwaitingStaff);
       const createdOrder: CreatedOrderSummary = {
         id: orderId,
         customerName:
@@ -2802,6 +2808,7 @@ export default function CartDrawer({
         hasStaffConfirmationItems,
         staffConfirmationProductNames,
         attachedToOpenAccount,
+        openAccountAwaitingStaff,
         openAccountTable:
           cleanText(data.order?.openAccountTable) || tableNumber.trim(),
         paymentMethods: selectedPaymentMethods,
@@ -3108,6 +3115,12 @@ export default function CartDrawer({
     : ["Comer aquí", "Para llevar"];
   const lastOrderAttachedToOpenAccount = Boolean(
     lastCreatedOrder?.attachedToOpenAccount,
+  );
+  // H-4 camino B: pidió ir a la cuenta de la mesa y falta que el personal lo
+  // sume. Cambia solo los textos de la confirmación (el pedido ya está en
+  // cocina y el cobro lo sigue manejando el local, no esta pantalla).
+  const lastOrderAwaitingAccountConfirmation = Boolean(
+    lastCreatedOrder?.openAccountAwaitingStaff,
   );
   const lastOrderCanReportPayment = Boolean(
     lastCreatedOrder && !lastOrderAttachedToOpenAccount,
@@ -3602,7 +3615,9 @@ export default function CartDrawer({
                   >
                     {lastOrderCancelled
                       ? "Pedido cancelado"
-                      : lastOrderAttachedToOpenAccount
+                      : lastOrderAwaitingAccountConfirmation
+                        ? "Va a la cuenta de la mesa"
+                        : lastOrderAttachedToOpenAccount
                         ? "Agregado a la cuenta"
                         : lastOrderPaymentPending
                           ? "Pedido sin pagar"
@@ -3614,7 +3629,9 @@ export default function CartDrawer({
                   <h4 className="mt-2 text-3xl font-black text-[var(--brand-ink-3)]">
                     {lastOrderCancelled
                       ? "Este pedido fue cancelado"
-                      : lastOrderAttachedToOpenAccount
+                      : lastOrderAwaitingAccountConfirmation
+                        ? "Pedido enviado a la mesa"
+                        : lastOrderAttachedToOpenAccount
                         ? "Cuenta actualizada"
                         : lastCreatedOrder.offline
                           ? "Guardado sin conexión"
@@ -3635,7 +3652,9 @@ export default function CartDrawer({
                   <p className="mx-auto mt-4 max-w-sm text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
                     {lastOrderCancelled
                       ? "Ya NO pagues este pedido. Si aún lo quieres, vuelve a pedirlo o escríbenos por WhatsApp y te ayudamos."
-                      : lastOrderAttachedToOpenAccount
+                      : lastOrderAwaitingAccountConfirmation
+                        ? `Tu pedido ya entró a cocina para ${lastCreatedOrder.openAccountTable || "la mesa"}. El mesonero lo suma a la cuenta de la mesa al confirmarlo; si no, se cobra aparte al final.`
+                        : lastOrderAttachedToOpenAccount
                         ? `Este pedido se sumó a la cuenta abierta de ${lastCreatedOrder.openAccountTable || "la mesa"}. Caja lo verá junto con el resto de consumos cuando se cierre la cuenta.`
                         : lastCreatedOrder.offline
                           ? "Tu pedido quedó guardado en este teléfono y se enviará solo apenas vuelva el internet. No hace falta repetirlo."
@@ -3892,9 +3911,9 @@ export default function CartDrawer({
                       Cuenta abierta
                     </p>
                     <p className="mt-2 text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
-                      Esto no registra ningún cobro individual. El pago se
-                      maneja desde Caja cuando el personal cierre o cobre la
-                      cuenta de la mesa.
+                      {lastOrderAwaitingAccountConfirmation
+                        ? "Esto no registra ningún cobro individual. El personal de la mesa confirma que este pedido entra en la cuenta, y el pago se maneja desde Caja al cerrarla."
+                        : "Esto no registra ningún cobro individual. El pago se maneja desde Caja cuando el personal cierre o cobre la cuenta de la mesa."}
                     </p>
                   </div>
                 ) : null}

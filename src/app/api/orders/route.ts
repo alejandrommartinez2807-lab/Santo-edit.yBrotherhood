@@ -340,6 +340,9 @@ export async function POST(request: NextRequest) {
       explicitOpenAccountId || shouldAttachToOpenAccountByTable
     )
     let openAccountId = explicitOpenAccountId
+    // H-4 · camino B: el pedido pidió sumarse a la cuenta de la mesa pero lo
+    // tiene que confirmar el personal (ver el bloque de más abajo).
+    let openAccountAwaitingStaff = false
 
     // La heurística por datos (teléfono/dirección/zona) solo aplica cuando el
     // pedido llega SIN un tipo explícito válido (flujos viejos por WhatsApp).
@@ -455,6 +458,28 @@ export async function POST(request: NextRequest) {
       }
 
       openAccountId = openAccount.id
+
+      // H-4 · camino B (decisión del dueño, 2026-07-30). Antes, CUALQUIERA
+      // desde internet le cargaba comida a la cuenta de una mesa ocupada: el
+      // servidor solo comprobaba que el módulo estuviera activo y que el pedido
+      // fuera "Comer aquí", nunca que quien pedía estuviera en esa mesa (el
+      // `mesa_qr=1` del QR no es un secreto, se escribe a mano). Comprobado en
+      // vivo: el pendiente de una mesa ajena subía sin que nadie del local
+      // tocara nada.
+      //
+      // Ahora un pedido SIN identidad de staff entra como pedido normal de la
+      // mesa —la COCINA LO VE DE UNA VEZ, la comida no espera a nadie— pero no
+      // se ata a la cuenta: el pendiente no se mueve hasta que alguien del
+      // local lo confirme desde el panel ("Sumar a la cuenta", la acción
+      // attachOrder que ya existía). Si nadie confirma, se cobra por su cuenta
+      // como cualquier pedido de mesa: nunca se pierde una venta.
+      //
+      // El staff conserva el atajo: cuando el pedido lo registra el panel con
+      // su sesión, el que lo está creando YA es la confirmación.
+      if (!getAccess(request).ok) {
+        openAccountAwaitingStaff = true
+        openAccountId = ""
+      }
     }
 
     const customerNote = cleanText(body.customerNote)
@@ -717,6 +742,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       order,
+      // H-4 · camino B: el pedido pidió sumarse a la cuenta de la mesa y está
+      // esperando que el personal lo confirme. El carrito lo usa para decirle
+      // al cliente algo honesto ("va a la mesa; el mesonero lo suma"), en vez
+      // de darle por hecho que ya quedó cargado.
+      openAccountAwaitingStaff,
     })
   } catch (error) {
     if (error instanceof DataUrlImageError) {

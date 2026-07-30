@@ -72,6 +72,11 @@ import {
 } from "./openAccountsComponents";
 import { SepararCuentaModal } from "./SepararCuentaModal";
 
+// Pedidos que el personal decidió NO sumar a la cuenta ("Dejarlo aparte").
+// Solo esconde la sugerencia en ESTE equipo; el pedido sigue vivo y se cobra
+// por su cuenta.
+const DISMISSED_ATTACH_STORAGE_KEY = "caja_open_accounts_attach_dismissed";
+
 type OpenAccountsPanelProps = {
   adminPassword: string;
   orders: LocalOrder[];
@@ -207,6 +212,50 @@ export function OpenAccountsPanel({
     () => eligibleOrders.filter((order) => !getOrderAccountId(order)),
     [eligibleOrders],
   );
+  // H-4 camino B: un pedido del cliente ya NO se suma solo a la cuenta de la
+  // mesa (cualquiera desde internet podía cargarle comida a una mesa ajena).
+  // Entra a cocina igual y aquí se pregunta "¿Sumar a la cuenta?".
+  // "Dejarlo aparte" es una preferencia de PANTALLA, no un estado del negocio:
+  // vive en este equipo, no toca la base, y solo esconde la sugerencia — el
+  // pedido se cobra por su cuenta como cualquier pedido de mesa.
+  const [dismissedAttachOrderIds, setDismissedAttachOrderIds] = useState<
+    string[]
+  >([]);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(DISMISSED_ATTACH_STORAGE_KEY);
+      const parsed = stored ? JSON.parse(stored) : [];
+
+      if (Array.isArray(parsed)) {
+        setDismissedAttachOrderIds(
+          parsed.filter((id): id is string => typeof id === "string"),
+        );
+      }
+    } catch {
+      // localStorage bloqueado (modo privado): la sugerencia sigue saliendo.
+    }
+  }, []);
+
+  function dismissAttachSuggestion(orderId: string) {
+    setDismissedAttachOrderIds((current) => {
+      if (current.includes(orderId)) return current;
+
+      // Tope: es una lista de descartes, no un historial.
+      const next = [...current, orderId].slice(-200);
+
+      try {
+        window.localStorage.setItem(
+          DISMISSED_ATTACH_STORAGE_KEY,
+          JSON.stringify(next),
+        );
+      } catch {
+        // idem
+      }
+
+      return next;
+    });
+  }
   const knownTableOptions = useMemo(() => {
     const options = [
       ...tableOptions,
@@ -402,10 +451,12 @@ export function OpenAccountsPanel({
     }
   }
 
-  async function attachOrder(accountId: string) {
+  // orderIdArg: lo manda el botón "Sumar a la cuenta" de la sugerencia (H-4
+  // camino B). Sin él se usa el pedido elegido en el desplegable de siempre.
+  async function attachOrder(accountId: string, orderIdArg?: string) {
     if (!canManage || isScopeSaving(accountId)) return;
 
-    const orderId = selectedOrderByAccount[accountId];
+    const orderId = orderIdArg || selectedOrderByAccount[accountId];
 
     if (!orderId) {
       showMessage("Selecciona un pedido local para asociar a la cuenta.");
@@ -1107,6 +1158,11 @@ export function OpenAccountsPanel({
             const suggestedOrders = unlinkedEligibleOrders.filter((order) =>
               isSameTable(account, order),
             );
+            // H-4 camino B: los pedidos de ESTA mesa que están esperando el
+            // visto bueno del personal para entrar en la cuenta.
+            const pendingAttachOrders = suggestedOrders.filter(
+              (order) => !dismissedAttachOrderIds.includes(order.id),
+            );
             const otherAttachableOrders = unlinkedEligibleOrders.filter(
               (order) => !isSameTable(account, order),
             );
@@ -1366,10 +1422,64 @@ export function OpenAccountsPanel({
                   </div>
                 )}
 
+                {/* H-4 camino B (decisión del dueño 2026-07-30): el pedido del
+                    cliente ya no se suma solo a la cuenta — antes cualquiera
+                    desde internet le cargaba comida a la mesa de otro. Entra a
+                    cocina igual y aquí el personal decide. Sin esta tarjeta el
+                    consumo se cobraría aparte sin que nadie se entere. */}
+                {canManage && !isClosed && pendingAttachOrders.length > 0 && (
+                  <div className="mt-4 rounded-2xl border-2 border-amber-400 bg-amber-50 p-3">
+                    <p className="text-[0.66rem] font-black uppercase tracking-[0.14em] text-amber-700">
+                      ⏳ ¿Sumar {pendingAttachOrders.length === 1 ? "este pedido" : "estos pedidos"} a la cuenta de {account.tableNumber}?
+                    </p>
+                    <p className="mt-1 text-xs font-bold text-amber-900/80">
+                      Ya están en cocina. NO entran en el pendiente de la cuenta
+                      hasta que los sumes; si los dejas aparte, se cobran solos.
+                    </p>
+                    <div className="mt-2 flex flex-col gap-2">
+                      {pendingAttachOrders.map((order) => {
+                        const suggestedTotals = getOrderTotals(order);
+
+                        return (
+                          <div
+                            key={order.id}
+                            className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-3 py-2"
+                          >
+                            <span className="min-w-0 text-xs font-black text-[var(--brand-ink-2)]">
+                              {getDisplayOrderNumber(order)} ·{" "}
+                              {order.customerName} ·{" "}
+                              {formatUSD(suggestedTotals.totalUSD)}
+                            </span>
+                            <span className="flex shrink-0 flex-wrap items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => attachOrder(account.id, order.id)}
+                                disabled={isCardSaving}
+                                className="inline-flex items-center gap-1.5 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-3 py-1.5 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+                              >
+                                <Plus size={13} />
+                                Sumar a la cuenta
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => dismissAttachSuggestion(order.id)}
+                                className="rounded-2xl px-2.5 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/55 transition hover:text-[var(--brand-ink-2)]"
+                              >
+                                Dejarlo aparte
+                              </button>
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {canManage && !isClosed && (
                   <div className="mt-4 flex flex-wrap items-stretch gap-2">
-                    {/* Camino principal para sumar consumo: el menú se abre
-                        con la mesa puesta y el pedido llega ya asociado. */}
+                    {/* Camino principal para sumar consumo: el menú se abre con
+                        la mesa puesta. El pedido llega a la mesa y se confirma
+                        arriba con "Sumar a la cuenta" (H-4 camino B). */}
                     <button
                       type="button"
                       onClick={() => openMenuForAccount(account)}
