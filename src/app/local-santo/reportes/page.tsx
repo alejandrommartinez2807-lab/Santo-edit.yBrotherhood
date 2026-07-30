@@ -19,6 +19,8 @@ type Report = {
   }
   delivery?: { orders: number; revenueUSD: number; deliveryCostUSD: number; avgDeliveryUSD: number }
   byPaymentMethod?: { method: string; count: number; totalUSD: number }[]
+  // Cuánto puso cada sede en el mismo rango (viene en la misma respuesta).
+  byBranch?: { id: string; name: string; orders: number; totalUSD: number; collectedUSD: number; pendingUSD: number }[]
   collectionByOrigin?: {
     openAccounts: { accounts: number; orders: number; totalUSD: number; collectedUSD: number; pendingUSD: number }
     direct: { orders: number; totalUSD: number; collectedUSD: number; pendingUSD: number }
@@ -196,6 +198,26 @@ function ReportesPageContent() {
         return
       }
 
+      // El consolidado ya trae el desglose por sede en la MISMA respuesta:
+      // se usa tal cual en vez de volver a preguntar una vez por sede.
+      const fromReport = report?.byBranch
+      if (Array.isArray(fromReport) && fromReport.length > 1) {
+        if (!cancelled) {
+          setByBranch(
+            fromReport
+              .map((b) => ({
+                id: b.id,
+                name: b.name,
+                orders: b.orders,
+                totalUSD: b.totalUSD,
+                pendingUSD: b.pendingUSD,
+              }))
+              .sort((a, b) => b.totalUSD - a.totalUSD),
+          )
+        }
+        return
+      }
+
       let query: string
       if (period === "custom") {
         if (!fromDate || !toDate || fromDate > toDate) {
@@ -238,7 +260,7 @@ function ReportesPageContent() {
     return () => {
       cancelled = true
     }
-  }, [period, fromDate, toDate, branches, multiBranch])
+  }, [period, fromDate, toDate, branches, multiBranch, report])
 
   function exportCsv() {
     if (!report) return

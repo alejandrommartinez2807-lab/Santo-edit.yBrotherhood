@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
   const branchId = consolidated ? null : await resolveBranchId(request)
 
   const SELECT_COLS =
-    "id, created_at, status, order_type, total_usd, payment_status, payment_received_equiv_usd, payment_pending_usd, payment_method_usd, payment_method_ves, amount_received_usd, amount_received_ves, exchange_rate, delivery_cost_usd, is_training, open_account_id"
+    "id, created_at, status, order_type, total_usd, payment_status, payment_received_equiv_usd, payment_pending_usd, payment_method_usd, payment_method_ves, amount_received_usd, amount_received_ves, exchange_rate, delivery_cost_usd, is_training, open_account_id, branch_id"
 
   let query = supabase
     .from("orders")
@@ -183,6 +183,13 @@ export async function GET(request: NextRequest) {
   // de la cuenta completa se reparte FIFO entre ellos) vs pedidos directos.
   const accountOrigin = { orders: 0, totalUSD: 0, collectedUSD: 0, pendingUSD: 0, accounts: new Set<string>() }
   const directOrigin = { orders: 0, totalUSD: 0, collectedUSD: 0, pendingUSD: 0 }
+  // Desglose por sede del CONSOLIDADO (R1 de qa:isolation): el dueño veía el
+  // total de las dos sedes sin saber cuánto puso cada una en la misma
+  // respuesta — la pantalla lo suplía pidiendo /api/reports una vez POR SEDE.
+  const byBranchMap = new Map<
+    string,
+    { id: string; orders: number; totalUSD: number; collectedUSD: number; pendingUSD: number }
+  >()
 
   for (const raw of orders) {
     const o = raw as Record<string, unknown>
@@ -203,6 +210,22 @@ export async function GET(request: NextRequest) {
     origin.collectedUSD += num(o.payment_received_equiv_usd)
     origin.pendingUSD += num(o.payment_pending_usd)
     if (accountId) accountOrigin.accounts.add(accountId)
+
+    const orderBranchId = String(o.branch_id || "").trim()
+    if (orderBranchId) {
+      const branchRow = byBranchMap.get(orderBranchId) || {
+        id: orderBranchId,
+        orders: 0,
+        totalUSD: 0,
+        collectedUSD: 0,
+        pendingUSD: 0,
+      }
+      branchRow.orders += 1
+      branchRow.totalUSD += t
+      branchRow.collectedUSD += num(o.payment_received_equiv_usd)
+      branchRow.pendingUSD += num(o.payment_pending_usd)
+      byBranchMap.set(orderBranchId, branchRow)
+    }
 
     const pay = String(o.payment_status || "Pendiente")
     byPayment[pay] = (byPayment[pay] || 0) + 1
@@ -383,6 +406,30 @@ export async function GET(request: NextRequest) {
     inventoryHealth = buildInventoryHealthReport({ inventoryItems, recipes })
   }
 
+  // Nombres de las sedes para el desglose (una sola consulta). Si falla, el
+  // desglose sale con el id como nombre en vez de perderse.
+  let branchNames = new Map<string, string>()
+  if (byBranchMap.size > 0) {
+    const { data: branchRows } = await supabase.from("branches").select("id, name")
+    branchNames = new Map(
+      (branchRows ?? []).map((row) => {
+        const branch = row as { id: string; name?: string }
+        return [String(branch.id), String(branch.name || "")]
+      }),
+    )
+  }
+
+  const byBranch = [...byBranchMap.values()]
+    .map((branch) => ({
+      id: branch.id,
+      name: branchNames.get(branch.id) || branch.id,
+      orders: branch.orders,
+      totalUSD: round2(branch.totalUSD),
+      collectedUSD: round2(branch.collectedUSD),
+      pendingUSD: round2(branch.pendingUSD),
+    }))
+    .sort((a, b) => b.totalUSD - a.totalUSD)
+
   const managerAlerts = buildManagerAlerts({
     payables: supplierPayables ?? buildSupplierPayablesReport([]),
     margins: productMargins ?? buildProductMarginsReport({ products: [], recipes: [], inventoryItems: [] }),
@@ -422,6 +469,10 @@ export async function GET(request: NextRequest) {
         pendingUSD: round2(directOrigin.pendingUSD),
       },
     },
+    // Cuánto puso cada sede en este mismo rango. En el consolidado trae las
+    // dos; pidiendo una sola sede trae esa. Evita que la pantalla tenga que
+    // preguntar sede por sede (N+1).
+    byBranch,
     byPaymentMethod: Object.entries(byMethod)
       .map(([method, v]) => ({ method, count: v.count, totalUSD: round2(v.totalUSD) }))
       .sort((a, b) => b.totalUSD - a.totalUSD),
