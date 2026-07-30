@@ -100,12 +100,30 @@ console.log("── S1 · fuga de datos: estado de cuentas de mesa sin clave")
   const mesas = ["Mesa 1", "Mesa 2", "Mesa 3", "Mesa 4", "Mesa 5", "Mesa 6", "Barra", "Afuera"]
   let conNombre = 0, conMontos = 0, barridas = 0
   const ejemplos = []
+  // Los nombres REALES que la base tiene abiertos ahora mismo. Se buscan en el
+  // cuerpo COMPLETO de la respuesta, no en un campo concreto: la primera
+  // versión de este check solo miraba openAccount.customerName y dio el
+  // hallazgo por cerrado cuando el nombre seguía saliendo repetido dentro de
+  // cada pedido de la cuenta. Un ataque no se da por bloqueado mirando el
+  // campo que uno espera, sino todo lo que el servidor manda.
+  const { data: abiertas } = await supabase.from("open_accounts")
+    .select("table_number,customer_name").eq("status", "Abierta")
+  const nombresReales = [...new Set((abiertas || [])
+    .map((a) => String(a.customer_name || "").trim())
+    .filter((n) => n.length >= 3))]
+
   for (const mesa of mesas) {
-    const r = await get(`/api/public/table-account-status?mesa=${encodeURIComponent(mesa)}`)
-    if (r.status !== 200) continue
+    const res = await fetch(BASE + `/api/public/table-account-status?mesa=${encodeURIComponent(mesa)}`, { headers: H })
+    if (res.status !== 200) continue
+    const cuerpo = await res.text()
+    let json = null; try { json = JSON.parse(cuerpo) } catch {}
     barridas += 1
-    const acc = r.json?.openAccount
-    if (acc?.customerName) { conNombre += 1; ejemplos.push(`${mesa}→"${acc.customerName}" $${acc.pendingUSD}`) }
+    const filtrados = nombresReales.filter((n) => cuerpo.includes(n))
+    if (filtrados.length) {
+      conNombre += 1
+      ejemplos.push(`${mesa}→"${filtrados.join("/")}"`)
+    }
+    const acc = json?.openAccount
     if (acc && (acc.pendingUSD != null || acc.totalEstimatedUSD != null)) conMontos += 1
   }
   console.log(`   barridas ${barridas} mesas sin ninguna clave · ${conNombre} exponen NOMBRE de cliente · ${conMontos} exponen montos`)
@@ -113,11 +131,11 @@ console.log("── S1 · fuga de datos: estado de cuentas de mesa sin clave")
   // CERRADO el 2026-07-30 (H-1): el nombre del cliente ya no viaja en la
   // respuesta pública. Los montos SÍ siguen: son los que la propia mesa ve al
   // pedir su cuenta desde el teléfono (decisión de diseño, no un descuido).
-  check("S1 · [H-1 CERRADO] el endpoint público YA NO expone el nombre del cliente",
+  check("S1 · [H-1 CERRADO] el nombre del cliente NO aparece en NINGUNA parte de la respuesta",
     conNombre === 0,
     conNombre === 0
-      ? `barridas ${barridas} mesas sin clave y 0 nombres · ${conMontos} con montos (aceptado: es la cuenta de la propia mesa)`
-      : `🔴 TODAVÍA filtra ${conNombre} nombre(s) desde internet`)
+      ? `barridas ${barridas} mesas sin clave · 0 de ${nombresReales.length} nombres abiertos aparecen · ${conMontos} con montos (aceptado: es la cuenta de la propia mesa)`
+      : `🔴 TODAVÍA filtra en ${conNombre} mesa(s): ${ejemplos.slice(0, 3).join(" · ")}`)
 }
 
 // ───────────────────────────────────────────────────────────────────────────

@@ -170,7 +170,28 @@ export async function GET(request: NextRequest) {
             pendingUSD: openAccount.pendingUSD,
             createdAt: openAccount.createdAt,
             updatedAt: openAccount.updatedAt,
-            orders: Array.isArray(openAccount.orders) ? openAccount.orders : [],
+            // …y tampoco en CADA PEDIDO. Quitar solo el nombre de la cuenta no
+            // cerraba nada: la respuesta seguía trayendo el nombre repetido en
+            // los 8 pedidos de la mesa (medido el 2026-07-30, "Carlos" en cada
+            // uno). Se manda exactamente lo que la pantalla del cliente usa
+            // para ver su propia cuenta —número, estado, montos y qué se
+            // pidió— y nada más. `tableNumber` sobra: es la mesa que preguntó.
+            orders: (Array.isArray(openAccount.orders) ? openAccount.orders : []).map(
+              (order) => ({
+                id: order.id,
+                displayNumber: order.displayNumber,
+                status: order.status,
+                paymentStatus: order.paymentStatus,
+                totalUSD: order.totalUSD,
+                totalVES: order.totalVES,
+                exchangeRate: order.exchangeRate,
+                receivedEquivalentUSD: order.receivedEquivalentUSD,
+                pendingUSD: order.pendingUSD,
+                createdAt: order.createdAt,
+                itemsText: order.itemsText,
+                items: order.items,
+              })
+            ),
           }
         : null,
     })
