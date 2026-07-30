@@ -32,9 +32,30 @@ node -e "console.log(require('fs').readFileSync('.env.local','utf8').match(/SUPA
 - Producción es `fpujezdaauedjvnhjzws` → **si ves esto, PARA**.
 - Simulación es `gnyvdlxlrjwbsdctincy` → correcto, sigue.
 
+⚠️ **De fábrica el `.env.local` apunta a PRODUCCIÓN.** Comprobado el 2026-07-30:
+tal como está el repo, cualquier `npm run qa:*` o script suelto le pega a la base
+real del cliente. Por eso el intercambio de arriba es el paso cero, no una
+sugerencia.
+
 El motor de simulación ya trae candados propios en
 `scripts/sim/lib/simulation-guard.mjs`: **no los desactives ni los rodees**. Si
 un candado te frena, el candado tiene razón.
+
+### La excepción: los ataques de solo-lectura y los de escritura-con-limpieza
+
+Hay dos casos en que probar contra producción es legítimo, y solo dos:
+
+- **Lecturas puras** (un `GET` público, medir el alcance de la fuga H-1): no
+  escriben nada. Se pueden hacer contra producción para ver qué expone de verdad.
+- **Ataques de escritura que crean su propio objeto `ZZTEST-`, lo atacan y lo
+  borran** (como se comprobó el H-4): solo cuando el dueño confirmó que los datos
+  no son de clientes reales. Aun así, **nunca toques cuentas o pedidos que ya
+  existen** — crea los tuyos. La simulación es más segura porque no depende de esa
+  confianza; usa producción solo cuando necesites probar que el bug existe *en
+  vivo* y el dueño lo autorizó.
+
+Todo lo demás —los 14 días, anular ventas, desactivar usuarios, saturar el
+inventario— va **siempre** contra simulación.
 
 **Al terminar la sesión, restaura producción:**
 `cp .env.local.produccion.bak .env.local` y vuelve a confirmar la URL.
@@ -130,12 +151,35 @@ Mesa 2, Barra…), así que se puede barrer el local completo desde afuera.
 cliente **usa esos montos de verdad**, porque es como la mesa ve su propia
 cuenta al pedirla desde el teléfono. Y la única prueba de "yo estoy en esta
 mesa" es el QR, que es público y estático.
-**Qué hacer en la ronda:** medir el alcance real (¿cuántas mesas se pueden
-barrer?, ¿aparecen teléfonos?) y llevarle al dueño las tres salidas: quitar el
-nombre del cliente y dejar solo los montos; exigir algo más que el nombre de la
-mesa (un código en el QR); o dejarlo como está sabiendo lo que expone.
-Ojo: `POST /api/public/open-accounts` **sí** recorta los datos por privacidad,
-así que este endpoint es el que quedó fuera de ese blindaje.
+Ojo: `POST /api/public/open-accounts` **sí** recorta los datos por privacidad
+(`toPublicAccount`, blindaje H16), así que este endpoint es el que quedó fuera.
+
+**Qué hacer en la ronda:** medir el alcance real —cuántas mesas se pueden barrer,
+si aparecen teléfonos, si se filtra el detalle de los pedidos— y llevarle al
+dueño estas tres salidas:
+
+1. **Quitar el nombre del cliente y dejar solo los montos.** ⚡ **Ya está
+   verificado que esto no cuesta nada**: el `customerName` **se envía pero nunca
+   se muestra en pantalla** — `OpenAccountInfo.tsx:275` lo recibe y lo guarda en
+   una variable, y no se renderiza en ningún lado (el título de la tarjeta usa
+   `tableNumber`, no el nombre). Sacarlo del payload público no cambia nada de lo
+   que ve el cliente y elimina el dato más personal: hoy cualquiera sabe que
+   **Carlos** está en la Mesa 1 debiendo $485. **Es ganancia pura y se puede
+   hacer en cinco minutos.**
+2. **Exigir un código secreto en el QR.** Cierra el problema de raíz pero obliga
+   a **reimprimir todas las mesas**, y tiene una debilidad de fondo: el QR es un
+   papel pegado en una mesa pública — se fotografía y el secreto deja de serlo.
+   (Es la misma razón por la que se descartó para el H-4.)
+3. **Atar la consulta al pedido en vez de a la mesa.** El que pidió tiene el
+   enlace de su pedido, con un id imposible de adivinar. La consulta por nombre
+   de mesa devolvería solo "esta mesa tiene cuenta: sí/no" —lo único que el
+   carrito necesita— y los montos se verían por el enlace del pedido. **La
+   contra:** hoy existe una pantalla donde el cliente consulta su cuenta
+   escribiendo el número de mesa, y el que llegó y aún no ha pedido se quedaría
+   sin ver el total.
+
+**Recomendación:** hacer la 1 de una vez (no tiene contra), y elegir entre la 2 y
+la 3 según si conviene reimprimir los QR.
 
 **H-2 🟠 · Pasados unos cientos de pedidos vivos, el sistema lee un pedazo de la
 realidad.** Las consultas de Supabase se cortan en 1000 filas y en todo
@@ -241,6 +285,40 @@ mira la respuesta Y se mira la base de datos (porque un 200 que no escribió y u
 
 Un ataque **BLOQUEADO** también se anota: es la evidencia de que la defensa
 existe, y el día que alguien la rompa sin querer, este informe lo delata.
+
+### Dos lecciones que ya costaron caro (léelas antes de atacar)
+
+**1. Un bloqueo por el motivo equivocado parece una defensa que funciona.** El
+2026-07-30, el ataque de cargar comida a la cuenta ajena (H-4) devolvió **400 al
+primer intento** y estuvo a punto de darse por defendido. Pero el 400 no venía de
+la defensa de la cuenta: venía del **guard de precio**, porque el ataque usaba un
+id de producto inventado y el servidor mató el pedido antes de llegar a la lógica
+de la cuenta. Con un producto real del menú, el ataque pasó limpio y cargó $30.
+**Regla:** cuando un ataque de escritura te dé un error, confirma que el error
+viene de la defensa que estás probando y no de otra puerta anterior. Un ataque
+tiene que **llegar** hasta donde vive la defensa para probar que la defensa
+funciona. Usa datos que pasen todas las validaciones previas (producto real,
+precio real, tasa real) y varía solo el campo del ataque.
+
+**2. Ataque de escritura = snapshot + limpieza verificada.** Aquí se escribe en
+la base (crear pedidos, mover cuentas, desactivar usuarios). Antes de cada ataque
+que escribe: fotografía el estado que vas a tocar (el pendiente de la cuenta, el
+stock del insumo, la fila del usuario). Después: **borra lo que creaste y
+verifica que la base quedó igual** (0 filas `ZZTEST-` restantes). Nunca ataques
+las cuentas o los pedidos que ya existen: crea los tuyos, atácalos, bórralos. La
+plantilla que funcionó:
+
+```
+try {
+  1. abrir/crear el objeto víctima con nombre ZZTEST-…
+  2. fotografiar su estado ANTES (consulta a Supabase)
+  3. lanzar el ataque
+  4. leer el estado DESPUÉS y comparar → veredicto
+} finally {
+  5. borrar order_items, orders y open_accounts con ese prefijo ZZTEST-
+  6. verificar: 0 filas restantes (si no, arreglar antes de seguir)
+}
+```
 
 ### Los cinco atacantes
 

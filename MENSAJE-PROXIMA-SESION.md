@@ -30,10 +30,12 @@ ORDEN DE TRABAJO:
    Primero deja probado que el fraude funciona hoy, después lo implementas, y
    después vuelves a atacarlo (ataques 1.6 y 1.7). Con su prueba automática.
 
-2. Los otros tres hallazgos del §2. En el H-1 (la fuga de las cuentas de mesa)
-   quiero que primero midas el alcance real —cuántas mesas se pueden barrer
-   desde afuera, qué datos salen exactamente— y recién después hablamos del
-   arreglo. NO cambies el comportamiento público sin decírmelo.
+2. Los otros tres hallazgos del §2. Para el H-1 (la fuga de las cuentas de mesa)
+   ya está identificado que quitar el nombre del cliente NO cuesta nada (se
+   envía pero no se muestra en pantalla): eso lo puedes dejar hecho. Para lo
+   demás —exigir un código en el QR o atar la consulta al pedido— primero mide
+   el alcance real y me consultas. NO cambies el resto del comportamiento
+   público sin decírmelo.
 
 3. El barrido de rutas de mutación sin guard (§3, A.99). Es el pendiente que
    más vale: lista todo endpoint POST/PATCH/DELETE bajo src/app/api que no
