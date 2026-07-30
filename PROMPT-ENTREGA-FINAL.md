@@ -313,6 +313,19 @@ Auditoría del 2026-07-30 sobre la cadena de acceso. Cada punto se comprobó
   cliente. No filtran marcas ajenas, pero son trabajo interno a la vista. Se
   pueden borrar o dejar; decidirlo antes de entregar.
 
+### ⚠️ Dos hallazgos abiertos que viven en el otro prompt
+
+Salieron de la auditoría de seguridad y **se trabajan en
+[`PROMPT-SEGURIDAD-Y-VIDA-REAL.md`](PROMPT-SEGURIDAD-Y-VIDA-REAL.md)**, pero se
+listan aquí para que nadie entregue el sistema sin saberlo:
+
+- 🔴 **Cualquiera en internet ve quién está en cada mesa y cuánto debe**
+  (`GET /api/public/table-account-status`). Probado contra producción.
+- 🔴 **Se le puede cargar comida a la cuenta de otra mesa** sin estar en el
+  local: el servidor no comprueba que quien pide esté en esa mesa. **Ya tiene
+  decisión del dueño**: que el personal confirme desde el panel antes de sumar
+  el pedido a la cuenta (el "camino B"), sin atrasar a la cocina.
+
 ### Endurecimiento recomendado (hoy no abre puertas, pero conviene)
 
 Sale de la misma auditoría, a nivel de código. **Ninguno de estos se logró

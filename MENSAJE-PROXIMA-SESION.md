@@ -23,20 +23,27 @@ ANTES DE ESCRIBIR NADA EN LA BASE:
 
 ORDEN DE TRABAJO:
 
-1. Los tres hallazgos ya confirmados del §2. Empieza por H-1 (la fuga de las
-   cuentas de mesa): quiero que primero midas el alcance real —cuántas mesas se
-   pueden barrer desde afuera, qué datos salen exactamente— y recién después
-   hablamos del arreglo. NO cambies el comportamiento público sin decírmelo.
+1. IMPLEMENTA EL H-4 (§2), que ya tiene mi decisión tomada: hoy cualquiera puede
+   cargarle comida a la cuenta de otra mesa sin estar en el local. Va el "camino
+   B": el pedido entra normal y la COCINA LO VE DE UNA VEZ, pero no toca la
+   cuenta hasta que alguien del local toque "Sumar a la cuenta" en el panel.
+   Primero deja probado que el fraude funciona hoy, después lo implementas, y
+   después vuelves a atacarlo (ataques 1.6 y 1.7). Con su prueba automática.
 
-2. El barrido de rutas de mutación sin guard (§3, A.99). Es el pendiente que
+2. Los otros tres hallazgos del §2. En el H-1 (la fuga de las cuentas de mesa)
+   quiero que primero midas el alcance real —cuántas mesas se pueden barrer
+   desde afuera, qué datos salen exactamente— y recién después hablamos del
+   arreglo. NO cambies el comportamiento público sin decírmelo.
+
+3. El barrido de rutas de mutación sin guard (§3, A.99). Es el pendiente que
    más vale: lista todo endpoint POST/PATCH/DELETE bajo src/app/api que no
    valide rol o sede, separando a propósito los que son públicos por diseño y
    diciéndome cuáles consideraste públicos.
 
-3. Playwright (los 15 checks de navegador), que ya se puede correr porque
+4. Playwright (los 15 checks de navegador), que ya se puede correr porque
    estamos en la base de simulación.
 
-4. Recién ahí arranca la simulación de los 14 días (§5), día por día, cerrando
+5. Recién ahí arranca la simulación de los 14 días (§5), día por día, cerrando
    el cuadre de cada día antes de pasar al siguiente.
 
 REGLAS QUE NO SE NEGOCIAN:

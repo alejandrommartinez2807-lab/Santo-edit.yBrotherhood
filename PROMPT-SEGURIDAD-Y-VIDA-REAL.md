@@ -111,9 +111,14 @@ Esta sesión hereda lo que la del 2026-07-30 no alcanzó a hacer:
       permisos, permisos custom de un segundo dueño, y bajar de rol
       conservando módulos viejos).
 
-### Tres hallazgos ya CONFIRMADOS el 2026-07-30 que esta ronda debe cerrar
+### Cuatro hallazgos ya CONFIRMADOS el 2026-07-30 que esta ronda debe cerrar
 
 No son sospechas: se comprobaron ejecutándolos. Están al principio a propósito.
+
+> **El H-4 ya tiene decisión tomada del dueño y es trabajo de esta sesión:
+> implementar el "camino B" (que el personal confirme antes de sumar un pedido a
+> la cuenta de una mesa), con su prueba automática, y dejarlo verificado dentro
+> de la simulación.** Los otros tres se miden y se llevan a decisión.
 
 **H-1 🔴 · Cualquiera en internet ve quién está sentado en cada mesa y cuánto
 debe.** `GET /api/public/table-account-status?mesa=Mesa%201` no pide clave y
@@ -145,6 +150,57 @@ cerrar, o unos días acumulados, entra en zona de corte **sin ningún aviso**.
 **Qué hacer en la ronda:** el día 5 (rush) y el 8 (sin internet) son los que más
 acumulan; al pasar de 400 pedidos vivos, comprobar que el panel, el cierre y los
 reportes siguen viendo TODO. Si no, hay que paginar del lado del servidor.
+
+**H-4 🔴 · Se le puede cargar comida a la cuenta de OTRA mesa — y ya está
+decidido cómo se arregla.** Al adjuntar un pedido público a la cuenta de una
+mesa, el servidor solo valida dos cosas: que el módulo de cuentas abiertas esté
+activo y que el pedido sea "Comer aquí" (`src/app/api/orders/route.ts:366-381`).
+**Nunca comprueba que quien pide esté en esa mesa.** Y el cliente elige la mesa
+de una lista: el QR solo la preselecciona, no es obligatorio. La marca de "vine
+del QR" es el parámetro `mesa_qr=1` (`src/app/mesa/[mesa]/page.tsx:29`), que
+cualquiera escribe a mano: **no es un secreto**.
+
+Encadenado con H-1 sale el fraude completo: preguntar qué mesas tienen cuenta
+abierta y cuánto deben → elegir una → pedir comida cargándosela a esa cuenta,
+desde cualquier lado. No es robo silencioso (al pagar, el cliente reclama que no
+pidió eso), pero te deja el problema en la mesa, delante del comensal, y en un
+local lleno alguien se sale con la suya.
+
+**DECISIÓN DEL DUEÑO (2026-07-30): se implementa el "camino B" — que el
+personal confirme.** Se descartó a propósito la alternativa de meter un código
+secreto en el QR, porque **el QR es un papel pegado en una mesa pública: se
+fotografía y el secreto deja de serlo**, y además obligaría a reimprimir todas
+las mesas y a que cada comensal escanee para cada ronda.
+
+Cómo debe quedar:
+
+1. Un pedido público con `attachToTableOpenAccount` / `attachToOpenAccountByTable`
+   **ya no se suma solo a la cuenta**: entra como pedido normal de esa mesa,
+   marcado como *"pide sumarse a la cuenta de Mesa X"*.
+2. **La cocina lo ve de una vez**: la comida NO espera la confirmación. Esto no
+   se negocia — atrasar el servicio para tapar un fraude poco frecuente es peor
+   que el fraude.
+3. En el panel (caja, mesonero o cuentas abiertas) aparece *"¿Sumar este pedido
+   a la cuenta de Mesa 1?"* con **Sumar / Dejarlo aparte**. Confirmar es la
+   acción `attachOrder` que **ya existe**
+   (`src/app/api/open-accounts/[accountId]/route.ts:342`, roles dueño, encargado,
+   caja y mesonero): hay que invertir el flujo, no construirlo.
+4. Si nadie confirma, el pedido se cobra por su cuenta, como cualquier pedido de
+   mesa. Nunca se pierde una venta.
+5. El cliente ve algo honesto en su confirmación: *"tu pedido va a la mesa; el
+   mesonero lo suma a la cuenta"*.
+
+⚠️ **Trampa conocida al implementarlo:** este sistema ya usa marcadores dentro de
+notas (`[CUENTA_PEDIDA:…]`) y eso destapó un bug — el cliente podía **escribir el
+marcador a mano en su nota** y fingir la petición. Si la marca de "pide sumarse"
+se guarda en un campo de texto que el cliente controla, hay que **limpiarla de
+todo lo que venga del cliente**, igual que se hizo en
+`stripBillRequestMarker`. Si en cambio se prefiere una columna nueva, la
+migración la aplica el dueño.
+
+**Además hay que revisarlo en esta ronda** (Parte A, ataques 1.6 y 1.7, y el Día
+9 de la simulación): primero comprobando que el fraude funciona HOY, y después
+que con el cambio ya no.
 
 **H-3 🟡 · El total del cierre lo manda el navegador, no lo calcula el
 servidor.** `realCollectedUSD` y el desglose por método entran desde el cuerpo de
@@ -209,6 +265,37 @@ Superficie anónima: cualquiera con el link del sitio o del QR. Todo `POST` púb
 - Ataque: `GET /api/public/table-account-status?mesa=Mesa 1` y barrer `Mesa 2`, `Mesa 3`… (los nombres son triviales).
 - Qué debe pasar: debería devolver solo si la mesa está ocupada, sin datos personales. Pero HOY devuelve `openAccount.customerName`, `totalEstimatedUSD`, `totalCollectedUSD`, `pendingUSD` y el arreglo `orders` completo (`src/app/api/public/table-account-status/route.ts:151-166`). Compárese con `POST /api/public/open-accounts`, que sí aplica proyección mínima por privacidad (`toPublicAccount`, `src/app/api/public/open-accounts/route.ts:128-138`, blindaje H16).
 - Cómo saber que falló: ya "falla" — la respuesta trae nombre del cliente, montos consumidos y pedidos de una mesa que no es la del que pregunta. Sin `same-origin` (solo rate-limit 90/min), se barre con `curl`. **Hallazgo abierto.**
+
+**1.6 🔴 Cargarle la comida a la cuenta de otra mesa** *(ver H-4 en el §2)*
+- Quién: cualquiera con el link, desde su casa. No necesita haber escaneado nada.
+- Ataque: `POST /api/orders` con `orderType: "Comer aquí"`, `tableNumber: "Mesa 1"`
+  (una mesa que tenga cuenta abierta, se averigua con el ataque 1.3) y
+  `attachToTableOpenAccount: true`.
+- Qué debe pasar **hoy**: el pedido se suma a la cuenta ajena. El servidor solo
+  valida que el módulo esté activo y que sea "Comer aquí"
+  (`src/app/api/orders/route.ts:366-381`); no comprueba que estés en la mesa.
+  **Empieza confirmando que el ataque funciona**, con la prueba en la mano.
+- Qué debe pasar **después del camino B**: el pedido entra como pedido de esa
+  mesa y la cocina lo ve, pero el **pendiente de la cuenta NO se mueve** hasta
+  que alguien del local lo confirme desde el panel.
+- Cómo saber que falló: `open_accounts.pending_usd` de la Mesa 1 subió sin que
+  nadie del local confirmara nada, y el pedido quedó con `open_account_id`
+  apuntando a esa cuenta.
+
+**1.7 🔴 Fingir que el local ya confirmó (después del camino B)**
+- Quién: cliente cualquiera, una vez implementado el cambio.
+- Ataque: intentar saltarse la confirmación por tres vías: (a) mandar
+  `openAccountId` directo con el id de la cuenta (que se obtiene del ataque 1.3);
+  (b) si la marca de "pide sumarse" se guarda en un campo de texto, **escribirla
+  a mano en la nota del pedido**; (c) repetir la petición muchas veces a ver si
+  alguna entra.
+- Qué debe pasar: ninguna de las tres mueve el pendiente de la cuenta. La (b) es
+  la más importante: este sistema **ya se comió ese bug** con el marcador
+  `[CUENTA_PEDIDA:…]`, que el cliente podía escribir en su nota para fingir que
+  había pedido la cuenta; se arregló limpiando el marcador de todo texto que
+  venga del cliente (`stripBillRequestMarker`).
+- Cómo saber que falló: la cuenta suma el pedido sin que exista un registro de
+  quién lo confirmó.
 
 **1.4 🟡 Cancelar pedidos ajenos recién creados**
 - Quién: cliente cualquiera (necesita el `orderId`).
@@ -549,9 +636,13 @@ dos pedidos; otro escribe un monto mayor al que transfirió; otro copia el monto
 con formato raro (`Bs 9.648,99`) a ver si el sistema lo lee como cero. Y alguien
 intenta pedir una hamburguesa de $12,50 mandando que cuesta $0,01, y otro
 intenta pagar en bolívares a una tasa inventada.
+Y el ataque nuevo del día: **alguien que no está en el local le carga su comida
+a la cuenta de una mesa ocupada** (el H-4 del §2). Se ejecuta primero **contra el
+sistema actual, para dejar probado que hoy funciona**, y después contra el
+camino B ya implementado, para dejar probado que ya no.
 *Prueba clave:* **ninguno de esos pedidos puede terminar cobrado por menos de lo
-que vale.** Los dos últimos ataques ya se corrigieron una vez; hay que confirmar
-que la corrección sigue viva.
+que vale, ni cargado a una mesa que no lo pidió.** Los ataques de precio y tasa
+ya se corrigieron una vez; hay que confirmar que la corrección sigue viva.
 
 **Día 10 · El personal se equivoca (o hace trampa).** Un cajero cobra dos veces
 el mismo pedido desde dos pantallas distintas; otro cobra con el método
@@ -708,6 +799,15 @@ Si falla: cocina cancelando o mesonero saltándose la cocina — el famoso falso
 ---
 
 ### 4 · Cuentas abiertas
+
+**4.0 · Nada entra a una cuenta sin que alguien del local lo haya aprobado.**
+*(invariante nuevo del camino B, ver H-4 en el §2)*
+Todo pedido con `open_account_id` tiene que tener detrás una confirmación hecha
+por personal identificado: o lo asoció el panel, o alguien tocó "Sumar a la
+cuenta". Se comprueba cruzando los pedidos de cada cuenta contra `audit_logs`
+(`action = 'open_account.order.attached'`) — cada pedido adjuntado debe tener su
+registro con actor. **Un pedido dentro de una cuenta sin ese registro significa
+que entró solo, y eso es exactamente el fraude que el camino B viene a cerrar.**
 
 **4.1 · El pendiente de la cuenta = suma del pendiente de sus pedidos.**
 `total_estimated_usd = Σ total_usd`, `total_collected_usd = Σ payment_received_equiv_usd`, `pending_usd = max(total − cobrado, 0)` sobre los pedidos con `open_account_id = X` **y `status != 'Cancelado'`** (`src/lib/ordersStoreOpenAccounts.ts:183-207`).
