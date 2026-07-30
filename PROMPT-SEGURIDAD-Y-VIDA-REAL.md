@@ -151,14 +151,28 @@ cerrar, o unos días acumulados, entra en zona de corte **sin ningún aviso**.
 acumulan; al pasar de 400 pedidos vivos, comprobar que el panel, el cierre y los
 reportes siguen viendo TODO. Si no, hay que paginar del lado del servidor.
 
-**H-4 🔴 · Se le puede cargar comida a la cuenta de OTRA mesa — y ya está
-decidido cómo se arregla.** Al adjuntar un pedido público a la cuenta de una
-mesa, el servidor solo valida dos cosas: que el módulo de cuentas abiertas esté
-activo y que el pedido sea "Comer aquí" (`src/app/api/orders/route.ts:366-381`).
-**Nunca comprueba que quien pide esté en esa mesa.** Y el cliente elige la mesa
-de una lista: el QR solo la preselecciona, no es obligatorio. La marca de "vine
-del QR" es el parámetro `mesa_qr=1` (`src/app/mesa/[mesa]/page.tsx:29`), que
-cualquiera escribe a mano: **no es un secreto**.
+**H-4 🔴 · Se le puede cargar comida a la cuenta de OTRA mesa — EJECUTADO CON
+ÉXITO contra producción, y ya está decidido cómo se arregla.** Al adjuntar un
+pedido público a la cuenta de una mesa, el servidor solo valida dos cosas: que el
+módulo de cuentas abiertas esté activo y que el pedido sea "Comer aquí"
+(`src/app/api/orders/route.ts:366-381`). **Nunca comprueba que quien pide esté en
+esa mesa.** Y el cliente elige la mesa de una lista: el QR solo la preselecciona,
+no es obligatorio. La marca de "vine del QR" es el parámetro `mesa_qr=1`
+(`src/app/mesa/[mesa]/page.tsx:29`), que cualquiera escribe a mano: **no es un
+secreto**.
+
+> **Prueba del 2026-07-30 (con datos de prueba, limpiada al terminar):** se abrió
+> una cuenta en Mesa 2, y desde afuera —sin escanear ningún QR— se mandó un
+> `POST /api/orders` con `tableNumber: "Mesa 2"` y
+> `attachToTableOpenAccount: true`. Respuesta **200**, el pedido quedó con
+> `open_account_id` apuntando a esa cuenta y **el pendiente pasó de $0 a $30**,
+> sin que nadie del local confirmara nada. El fraude funciona.
+>
+> Detalle importante para quien lo repita: **con un id de producto inventado el
+> ataque devuelve 400 y parece bloqueado** — pero eso es el guard de precio
+> matando el pedido antes de llegar a la lógica de la cuenta. Hay que atacar con
+> un **producto real del menú y su precio correcto**, o te llevas un falso
+> negativo.
 
 Encadenado con H-1 sale el fraude completo: preguntar qué mesas tienen cuenta
 abierta y cuánto deben → elegir una → pedir comida cargándosela a esa cuenta,
@@ -271,10 +285,11 @@ Superficie anónima: cualquiera con el link del sitio o del QR. Todo `POST` púb
 - Ataque: `POST /api/orders` con `orderType: "Comer aquí"`, `tableNumber: "Mesa 1"`
   (una mesa que tenga cuenta abierta, se averigua con el ataque 1.3) y
   `attachToTableOpenAccount: true`.
-- Qué debe pasar **hoy**: el pedido se suma a la cuenta ajena. El servidor solo
-  valida que el módulo esté activo y que sea "Comer aquí"
-  (`src/app/api/orders/route.ts:366-381`); no comprueba que estés en la mesa.
-  **Empieza confirmando que el ataque funciona**, con la prueba en la mano.
+- Qué pasa **hoy**: el pedido se suma a la cuenta ajena. **Ya está comprobado
+  contra producción el 2026-07-30**: 200, `open_account_id` apuntando a la cuenta
+  ajena y el pendiente de $0 a $30. ⚠️ **Ataca con un producto REAL del menú y su
+  precio correcto**: con un id inventado te devuelve 400 y parece bloqueado, pero
+  eso es el guard de precio, no la defensa de la cuenta (falso negativo).
 - Qué debe pasar **después del camino B**: el pedido entra como pedido de esa
   mesa y la cocina lo ve, pero el **pendiente de la cuenta NO se mueve** hasta
   que alguien del local lo confirme desde el panel.
