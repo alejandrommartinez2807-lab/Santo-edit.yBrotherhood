@@ -313,15 +313,11 @@ export function CartLineItem({
                 </div>
               ) : null}
 
-              <p
-                className={`mt-2 rounded-2xl px-3 py-2 text-[0.68rem] font-black uppercase leading-4 tracking-[0.1em] ${
-                  itemSupportsOrderType(item, orderType)
-                    ? "bg-[var(--brand-surface-2)]/75 text-[var(--product-card-text)]/70"
-                    : "bg-red-500/15 text-red-300"
-                }`}
-              >
-                {availabilityLabel || "Disponible"}: {formatItemSalesChannels(item)}
-              </p>
+              {!itemSupportsOrderType(item, orderType) ? (
+                <p className="mt-2 rounded-2xl bg-red-500/15 px-3 py-2 text-[0.68rem] font-black uppercase leading-4 tracking-[0.1em] text-red-300">
+                  {availabilityLabel || "Disponible"}: {formatItemSalesChannels(item)}
+                </p>
+              ) : null}
             </div>
 
             <button
