@@ -11,9 +11,12 @@
 
 Se encontraron y se **cerraron dos agujeros graves**: cualquiera desde internet
 podía (1) ver quién está sentado en cada mesa y cuánto debe, y (2) cargarle
-comida a la cuenta de una mesa ocupada. Los dos están arreglados y probados.
-**Falta publicarlo** — hasta que se despliegue, el sistema en vivo sigue con
-los agujeros abiertos.
+comida a la cuenta de una mesa ocupada.
+
+**Ya está publicado y comprobado EN VIVO.** Después de subirlo se repitieron
+los mismos ataques contra brotherhood-xi.vercel.app: **8 de 8 bloqueados**.
+Antes del despliegue, esa misma dirección devolvía "Carlos" al preguntar por la
+Mesa 1; ahora no devuelve ningún nombre.
 
 ---
 
@@ -166,9 +169,7 @@ pagar a una tasa inventada de 1 (el servidor impuso 848,83).
 
 ## Lo que falta
 
-1. **Publicar los cambios.** Están probados y guardados, pero **el sistema en
-   vivo todavía tiene los dos agujeros abiertos** hasta que se despliegue.
-2. **Decisión suya sobre el agujero 1.** Lo barato ya está hecho (quitar el
+1. **Decisión suya sobre el agujero 1.** Lo barato ya está hecho (quitar el
    nombre). Cerrarlo de raíz tiene dos caminos y los dos cuestan:
    - *Código secreto en el QR:* obliga a **reimprimir todas las mesas**, y el QR
      es un papel pegado en una mesa pública — se fotografía y el secreto deja de
@@ -179,6 +180,6 @@ pagar a una tasa inventada de 1 (el servidor impuso 848,83).
    Mi recomendación: quedarse como está por ahora. Ya no se filtra ningún dato
    personal; lo que queda visible son los montos de la mesa, que es justo lo que
    esa pantalla existe para mostrar.
-3. **Las 518 pruebas del checklist de módulos** siguen sin empezar.
-4. **Las dos semanas de operación simulada** (§5 del plan) siguen pendientes;
+2. **Las 518 pruebas del checklist de módulos** siguen sin empezar.
+3. **Las dos semanas de operación simulada** (§5 del plan) siguen pendientes;
    conviene correrlas contra la base de simulación, no contra la de verdad.
