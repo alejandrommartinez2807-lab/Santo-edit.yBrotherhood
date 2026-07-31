@@ -4996,7 +4996,9 @@ export default function CartDrawer({
               {/* Barra fija inferior: total y acción SIEMPRE a la vista —
                   el motivo del rediseño (la gente no quería bajar tanto
                   para encontrar el botón). */}
-              <div className="sticky bottom-0 z-30 border-t border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 sm:px-6">
+              {/* pb con env(safe-area-inset-bottom): en iPhone la barra del
+                  sistema no debe tapar el botón. */}
+              <div className="sticky bottom-0 z-30 border-t border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-6">
                 <div className="flex items-center justify-between gap-3">
                   {/* En el paso 3 el total NO se repite aquí (está en la caja
                       "Tienes que pagar", justo arriba): con dos botones no
