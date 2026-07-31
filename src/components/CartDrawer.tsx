@@ -2680,9 +2680,52 @@ export default function CartDrawer({
     let pendingPayload: unknown = null;
 
     try {
+      // Cada sede tiene su copia del menú con IDS PROPIOS. Si el carrito se
+      // armó antes de elegir la sede (lo normal: la vitrina carga con la sede
+      // por defecto), esos ids no existen en la sede del checkout y el
+      // servidor rechaza el pedido con "el menú cambió". Antes de enviar,
+      // cada ítem se re-ancla POR NOMBRE al menú real de la sede elegida; el
+      // precio no importa aquí porque el servidor reprecia siempre del menú.
+      let branchMenuIds: Set<number> | null = null;
+      const branchMenuIdByName = new Map<string, number>();
+      if (branchSelection.selectedBranchId) {
+        try {
+          const menuResponse = await fetch("/api/public/products", {
+            cache: "no-store",
+            headers: { "x-branch-id": branchSelection.selectedBranchId },
+          });
+          const menuData = await menuResponse.json().catch(() => null);
+          const branchProducts = Array.isArray(menuData?.products)
+            ? (menuData.products as { id?: unknown; name?: unknown }[])
+            : [];
+          if (menuResponse.ok && branchProducts.length > 0) {
+            branchMenuIds = new Set(
+              branchProducts.map((product) => Math.round(Number(product?.id) || 0)),
+            );
+            for (const product of branchProducts) {
+              const nameKey = String(product?.name || "").trim().toLowerCase();
+              const productId = Math.round(Number(product?.id) || 0);
+              if (nameKey && productId && !branchMenuIdByName.has(nameKey)) {
+                branchMenuIdByName.set(nameKey, productId);
+              }
+            }
+          }
+        } catch {
+          // Sin la lista de la sede el pedido viaja tal cual (decide el servidor).
+        }
+      }
+      const resolveBranchItemId = (item: { id: number; name?: string }) => {
+        const currentId = Math.round(Number(item.id) || 0);
+        if (!branchMenuIds || branchMenuIds.has(currentId)) return item.id;
+        const remapped = branchMenuIdByName.get(
+          String(item.name || "").trim().toLowerCase(),
+        );
+        return remapped || item.id;
+      };
+
       const normalizedItems = effectiveItems.map((item) => ({
         cartLineId: getCartLineId(item),
-        id: item.id,
+        id: resolveBranchItemId(item),
         name: item.name,
         category: item.category,
         price: item.price,
