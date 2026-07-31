@@ -159,6 +159,21 @@ function getOrderTypePublicLabel(type: OrderType) {
   return ORDER_TYPE_PUBLIC_LABELS[type] || type;
 }
 
+// Checkout por pasos (pick up / delivery): requisitos que pertenecen al paso
+// 1 "Tus datos". Todo lo demás (pago, comprobantes, vuelto) es del paso 2.
+const WIZARD_STEP1_TARGET_IDS = new Set([
+  "checkout-nombre",
+  "checkout-telefono",
+  "checkout-ubicacion",
+]);
+
+// Rótulos del indicador de pasos del checkout.
+const WIZARD_STEPS: { step: 1 | 2 | 3; label: string }[] = [
+  { step: 1, label: "Tus datos" },
+  { step: 2, label: "Pago" },
+  { step: 3, label: "Confirmar" },
+];
+
 
 function formatAccountOrderDate(value: string | undefined) {
   if (!value) return "";
@@ -461,9 +476,13 @@ export default function CartDrawer({
   const [recentOrderLive, setRecentOrderLive] = useState<
     Record<string, RecentOrderLiveInfo>
   >({});
-  // Confirmación de dirección antes de registrar (estilo apps grandes):
-  // mapa de solo lectura + "Ajustar" que abre el mapa interactivo.
-  const [isAddressConfirmOpen, setIsAddressConfirmOpen] = useState(false);
+  // Checkout por pasos para Para llevar y Delivery (1 datos → 2 pago →
+  // 3 confirmación): pantallas cortas con el botón siempre a la vista, en
+  // vez de una sola columna larga. El paso 3 absorbe el viejo modal de
+  // "confirma tu dirección" (el mapa vive en la confirmación).
+  const [checkoutStep, setCheckoutStep] = useState<1 | 2 | 3>(1);
+  // Contenedor con scroll del modal: al cambiar de paso se vuelve arriba.
+  const modalScrollRef = useRef<HTMLDivElement | null>(null);
   const [isAdjustMapOpen, setIsAdjustMapOpen] = useState(false);
   // Pago mixto: una parte en bolívares y otra en divisas, cada una con su
   // método y monto (los botones "Completar" rellenan lo que falta).
@@ -1380,6 +1399,17 @@ export default function CartDrawer({
     missingOrderChecks.length === 0 &&
     !isTableReservedNow;
   const missingOrderFields = missingOrderChecks.map((check) => check.label);
+
+  // Wizard (pick up / delivery): reparte los requisitos entre el paso 1
+  // (datos y ubicación) y el paso 2 (todo lo del pago), para que "Continuar"
+  // valide solo lo que el cliente tiene delante.
+  const isWizardCheckout = isTakeawayOrder || isDeliveryOrder;
+  const step1MissingChecks = missingOrderChecks.filter((check) =>
+    WIZARD_STEP1_TARGET_IDS.has(check.targetId),
+  );
+  const step2MissingChecks = missingOrderChecks.filter(
+    (check) => !WIZARD_STEP1_TARGET_IDS.has(check.targetId),
+  );
 
   // El aviso grande de validación se apaga solo cuando el cliente completa
   // lo que faltaba (para no dejar un regaño viejo en pantalla).
@@ -2298,7 +2328,12 @@ export default function CartDrawer({
 
         {renderMixedPaymentSection()}
 
-        {Object.keys(checkoutPaymentMethodDetails).length > 0 && (
+        {/* Los "Datos para pagar" solo se adelantan cuando el negocio exige
+            pagar ANTES de registrar (ahí el cliente los necesita ya). En el
+            flujo normal salen al final, en la pantalla de "reporta tu pago"
+            (junto al formulario de reporte), para que este paso sea corto. */}
+        {requiresProofBeforeRegister &&
+          Object.keys(checkoutPaymentMethodDetails).length > 0 && (
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
               Datos para pagar
@@ -2936,6 +2971,7 @@ export default function CartDrawer({
         ),
       );
       setIsPaymentPickerOpen(false);
+      setCheckoutStep(1);
     } catch (error) {
       const isNetwork =
         (typeof navigator !== "undefined" && !navigator.onLine) ||
@@ -2983,6 +3019,7 @@ export default function CartDrawer({
         setCouponError("");
         clearOrderAttachment();
         setOrderType("Comer aquí");
+        setCheckoutStep(1);
       } else {
         setOrderError(
           error instanceof Error
@@ -3025,6 +3062,8 @@ export default function CartDrawer({
     setLastCreatedOrder(null);
     setOrderError(null);
     setIsPaymentPickerOpen(false);
+    setCheckoutStep(1);
+    setValidationAlert(null);
   }
 
   function finishCreatedOrderFlow() {
@@ -3039,6 +3078,9 @@ export default function CartDrawer({
 
     setOrderType(type);
     setIsPaymentPickerOpen(false);
+    // Cambiar de tipo reinicia el wizard: cada tipo tiene su paso 1.
+    setCheckoutStep(1);
+    setValidationAlert(null);
 
     if (type === "Para llevar") {
       setTableNumber("Para llevar");
@@ -3056,6 +3098,101 @@ export default function CartDrawer({
     ) {
       setTableNumber("");
     }
+  }
+
+  // ——— Checkout por pasos (pick up / delivery) ———
+
+  function goToCheckoutStep(step: 1 | 2 | 3) {
+    setCheckoutStep(step);
+    setValidationAlert(null);
+    // El scroll vuelve arriba para que cada paso arranque desde su título.
+    window.setTimeout(() => {
+      modalScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }, 30);
+  }
+
+  function scrollToMissingTarget(targetId: string) {
+    // Diferido: si acabamos de cambiar de paso, el campo debe montarse antes.
+    window.setTimeout(() => {
+      document
+        .getElementById(targetId)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 80);
+  }
+
+  function handleWizardContinue() {
+    if (checkoutStep === 1) {
+      if (needsBranchSelection) {
+        setValidationAlert(
+          "Elige la sede donde estás pidiendo (arriba en este formulario).",
+        );
+        return;
+      }
+      if (hasUnavailableItemsForOrderType) {
+        setValidationAlert(unavailableItemsMessage);
+        return;
+      }
+      if (step1MissingChecks.length > 0) {
+        setValidationAlert(
+          `Para continuar te falta: ${step1MissingChecks
+            .map((check) => check.label)
+            .join(", ")}.`,
+        );
+        scrollToMissingTarget(step1MissingChecks[0].targetId);
+        return;
+      }
+      goToCheckoutStep(2);
+      return;
+    }
+
+    if (checkoutStep === 2) {
+      if (step2MissingChecks.length > 0) {
+        setValidationAlert(
+          `Para continuar te falta: ${step2MissingChecks
+            .map((check) => check.label)
+            .join(", ")}.`,
+        );
+        scrollToMissingTarget(step2MissingChecks[0].targetId);
+        return;
+      }
+      goToCheckoutStep(3);
+    }
+  }
+
+  // Botón final (paso 3 del wizard y pantalla única de "Comer aquí"): con
+  // datos pendientes NO se bloquea en gris — se explica en grande qué falta,
+  // se salta al paso correspondiente y se baja a esa sección (dueño
+  // 2026-07-21). La confirmación de dirección ya no necesita modal aparte:
+  // el paso 3 muestra el mapa antes de este botón.
+  function handleRegisterButtonClick() {
+    if (!canRegisterLocalOrder) {
+      const firstMissing = missingOrderChecks[0];
+      setValidationAlert(
+        missingOrderChecks.length > 0
+          ? `Para registrar tu pedido te falta: ${missingOrderFields.join(", ")}.`
+          : hasUnavailableItemsForOrderType
+            ? unavailableItemsMessage
+            : needsBranchSelection
+              ? "Elige la sede donde estás pidiendo (arriba en este formulario)."
+              : isTableReservedNow
+                ? "Esa mesa está reservada en este horario. Pide apoyo al personal."
+                : "Revisa los datos del pedido e intenta de nuevo.",
+      );
+      if (firstMissing) {
+        if (isWizardCheckout) {
+          setCheckoutStep(
+            WIZARD_STEP1_TARGET_IDS.has(firstMissing.targetId) ? 1 : 2,
+          );
+        }
+        scrollToMissingTarget(firstMissing.targetId);
+      } else if (isWizardCheckout && (needsBranchSelection || hasUnavailableItemsForOrderType)) {
+        setCheckoutStep(1);
+      }
+      return;
+    }
+
+    setValidationAlert(null);
+    void handleRegisterLocalOrder();
   }
 
   const businessName = publicConfig.businessName || BRAND.name;
@@ -3514,7 +3651,10 @@ export default function CartDrawer({
         // En el teléfono el formulario ocupa toda la pantalla (como una página
         // más, estilo apps grandes); la tarjeta flotante queda para escritorio.
         <div className="fixed inset-0 z-[110] flex items-stretch justify-center bg-black/75 backdrop-blur-sm sm:items-center sm:px-4 sm:py-4">
-          <div className="h-full max-h-full w-full overflow-y-auto bg-[var(--brand-cream)] text-[var(--brand-ink-3)] shadow-none sm:h-auto sm:max-h-[94vh] sm:max-w-lg sm:rounded-[2rem] sm:border sm:border-[var(--brand-primary)] sm:shadow-2xl sm:shadow-black/45">
+          <div
+            ref={modalScrollRef}
+            className="h-full max-h-full w-full overflow-y-auto bg-[var(--brand-cream)] text-[var(--brand-ink-3)] shadow-none sm:h-auto sm:max-h-[94vh] sm:max-w-lg sm:rounded-[2rem] sm:border sm:border-[var(--brand-primary)] sm:shadow-2xl sm:shadow-black/45"
+          >
             <div className="hidden h-1.5 shrink-0 bg-[linear-gradient(90deg,var(--brand-primary),var(--brand-accent))] sm:block" />
 
             {/* Barra superior tipo app: fija arriba, COMPACTA (sin el eyebrow
@@ -3958,15 +4098,79 @@ export default function CartDrawer({
                 </p>
               </div>
             ) : (
+              <>
               <div className="space-y-5 px-4 py-6 sm:space-y-4 sm:px-6">
-                <PublicBranchPicker
-                  selection={branchSelection}
-                  label="¿En qué sede estás pidiendo?"
-                />
+                {/* Indicador de pasos (solo pick up / delivery): pantallas
+                    cortas en vez de una columna larga; los pasos ya pasados
+                    se pueden volver a abrir tocándolos. */}
+                {isWizardCheckout && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {WIZARD_STEPS.map(({ step, label }) => (
+                      <button
+                        key={step}
+                        type="button"
+                        disabled={step >= checkoutStep}
+                        onClick={() => goToCheckoutStep(step)}
+                        className={`rounded-xl border px-2 py-2 text-center transition ${
+                          step === checkoutStep
+                            ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
+                            : step < checkoutStep
+                              ? "border-[var(--brand-primary)]/45 bg-[var(--brand-surface-2)] text-[var(--brand-primary)]"
+                              : "border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-ink-2)]/40"
+                        }`}
+                      >
+                        <span className="block text-[0.6rem] font-black uppercase tracking-[0.14em]">
+                          Paso {step}
+                        </span>
+                        <span className="block text-[0.72rem] font-black uppercase leading-tight">
+                          {step < checkoutStep ? "✓ " : ""}
+                          {label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Tipo de pedido PRIMERO: define qué campos siguen (antes
+                    vivía a mitad del formulario). */}
+                {(!isWizardCheckout || checkoutStep === 1) && (
+                  <div>
+                    <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                      Tipo de pedido
+                    </label>
+
+                    {/* Las tres opciones lado a lado también en el teléfono:
+                        aprovecha el ancho y se ve de un vistazo. */}
+                    <div className="mt-2 grid grid-cols-3 gap-2 sm:gap-3">
+                      {orderTypes.map((type) => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => selectOrderType(type)}
+                          className={`rounded-2xl border px-1.5 py-4 text-[0.72rem] font-black uppercase leading-tight transition sm:px-4 sm:text-sm ${
+                            orderType === type
+                              ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
+                              : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)]"
+                          }`}
+                        >
+                          {getOrderTypePublicLabel(type)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {(!isWizardCheckout || checkoutStep === 1) && (
+                  <PublicBranchPicker
+                    selection={branchSelection}
+                    label="¿En qué sede estás pidiendo?"
+                  />
+                )}
 
                 {/* Guía paso a paso del pedido (configurable por el dueño):
-                    qué botón tocar y qué sigue, según el tipo de pedido. */}
-                {publicConfig.publicOrderStepsEnabled && (
+                    solo en "Comer aquí" — en pick up/delivery el propio
+                    wizard ya hace de guía y esto solo alargaba la pantalla. */}
+                {!isWizardCheckout && publicConfig.publicOrderStepsEnabled && (
                   <PublicCheckoutSteps
                     orderType={orderType}
                     submitLabel={
@@ -4004,29 +4208,31 @@ export default function CartDrawer({
                     </div>
                   ))}
 
-                <div id="checkout-nombre">
-                  <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                    Nombre del cliente{" "}
-                    {requiresCustomerName ? (
-                      <span className="font-black text-red-400">* obligatorio</span>
-                    ) : (
-                      <span className="text-[var(--brand-ink-2)]/45">(opcional)</span>
-                    )}
-                  </label>
+                {(!isWizardCheckout || checkoutStep === 1) && (
+                  <div id="checkout-nombre">
+                    <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                      Nombre del cliente{" "}
+                      {requiresCustomerName ? (
+                        <span className="font-black text-red-400">* obligatorio</span>
+                      ) : (
+                        <span className="text-[var(--brand-ink-2)]/45">(opcional)</span>
+                      )}
+                    </label>
 
-                  <input
-                    value={customerName}
-                    onChange={(event) => setCustomerName(event.target.value)}
-                    placeholder="Ejemplo: Carlos"
-                    autoComplete="name"
-                    className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
-                  />
-                </div>
+                    <input
+                      value={customerName}
+                      onChange={(event) => setCustomerName(event.target.value)}
+                      placeholder="Ejemplo: Carlos"
+                      autoComplete="name"
+                      className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-4 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
+                    />
+                  </div>
+                )}
 
-                {/* Teléfono para mesa y para llevar (Delivery tiene el suyo en
-                    su sección): obligatorio en Para llevar para poder avisar;
-                    en mesa ayuda a diferenciar clientes pero es opcional. */}
-                {!isDeliveryOrder && (
+                {/* Teléfono: en el wizard vive en el paso 1 para TODOS los
+                    destinos (en pick up y delivery es obligatorio); en mesa
+                    ayuda a diferenciar clientes pero es opcional. */}
+                {(!isWizardCheckout || checkoutStep === 1) && (
                   <div id="checkout-telefono">
                     <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Teléfono{" "}
@@ -4048,31 +4254,6 @@ export default function CartDrawer({
                     />
                   </div>
                 )}
-
-                <div>
-                  <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                    Tipo de pedido
-                  </label>
-
-                  {/* Las tres opciones lado a lado también en el teléfono:
-                      aprovecha el ancho y se ve de un vistazo. */}
-                  <div className="mt-2 grid grid-cols-3 gap-2 sm:gap-3">
-                    {orderTypes.map((type) => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => selectOrderType(type)}
-                        className={`rounded-2xl border px-1.5 py-4 text-[0.72rem] font-black uppercase leading-tight transition sm:px-4 sm:text-sm ${
-                          orderType === type
-                            ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
-                            : "border-[var(--brand-primary)] bg-[var(--brand-surface-2)] text-[var(--brand-primary)]"
-                        }`}
-                      >
-                        {getOrderTypePublicLabel(type)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
 
                 {orderType === "Comer aquí" && needsBranchSelection && (
                   <div className="rounded-2xl border border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.08)] px-4 py-3">
@@ -4276,10 +4457,10 @@ export default function CartDrawer({
                   </div>
                 )}
 
-                {/* Pick up: igual que Delivery, se pide el método de pago
-                    (obligatorio) con pago mixto y "Completar"; el reporte de
-                    pago luego pre-carga ese método. */}
-                {isTakeawayOrder && (
+                {/* Paso 2 (pick up y delivery): SOLO el pago — método,
+                    mixto, vuelto y comprobantes; el reporte de pago luego
+                    pre-carga ese método. */}
+                {isWizardCheckout && checkoutStep === 2 && (
                   <div className="space-y-5 sm:space-y-4">
                     {publicConfig.publicPrepayNoticeEnabled && (
                       <PublicPrepayNotice
@@ -4290,17 +4471,11 @@ export default function CartDrawer({
                   </div>
                 )}
 
-                {isDeliveryOrder && (
-                  // Sin caja envolvente: las tarjetas internas (ubicación,
-                  // pago mixto, costo) son el único nivel de borde para que
-                  // el formulario respire y no se vea comprimido.
+                {isDeliveryOrder && checkoutStep === 1 && (
+                  // Sin caja envolvente: las tarjetas internas son el único
+                  // nivel de borde para que el formulario respire.
                   <div className="space-y-5 sm:space-y-4">
-                    {publicConfig.publicPrepayNoticeEnabled && (
-                      <PublicPrepayNotice
-                        text={publicConfig.publicPrepayNoticeText}
-                      />
-                    )}
-                    {/* 1. Ubicación primero (como las apps grandes): define el
+                    {/* Ubicación primero (como las apps grandes): define el
                         costo del envío y la cobertura antes de pedir datos. */}
                     {isDistancePricingEnabled && (
                       <div
@@ -4466,103 +4641,164 @@ export default function CartDrawer({
                       )}
                     </div>
 
-                    <div id="checkout-pago" className="grid gap-4 sm:grid-cols-2">
-                      <div id="checkout-telefono">
-                        <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                          Teléfono{" "}
-                          <span className="font-black text-red-400">
-                            * obligatorio
-                          </span>
-                        </label>
-                        <input
-                          type="tel"
-                          inputMode="tel"
-                          autoComplete="tel"
-                          value={customerPhone}
-                          onChange={(event) =>
-                            setCustomerPhone(event.target.value)
-                          }
-                          placeholder="Ejemplo: 0412-0000000"
-                          className="mt-2 w-full rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3.5 text-base font-bold text-[var(--brand-ink)] outline-none placeholder:text-[var(--brand-ink)]/45 focus:border-[var(--brand-primary)]"
-                        />
-                      </div>
+                  </div>
+                )}
 
-                      <OptionPicker
-                        label={
-                          <>
-                            Método de pago{" "}
-                            <span className="font-black text-red-400">
-                              * obligatorio
+                {/* Paso 3 (pick up / delivery): confirmación de solo lectura
+                    — lo que pides, tus datos, la entrega con su mapa (esto
+                    absorbe el viejo modal de "¿es esta tu ubicación?") y el
+                    pago. Cada tarjeta trae su botón para volver a corregir. */}
+                {isWizardCheckout && checkoutStep === 3 && (
+                  <div className="space-y-5 sm:space-y-4">
+                    <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
+                      <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                        Tu pedido
+                      </p>
+                      <div className="mt-2 space-y-2">
+                        {effectiveItems.map((item) => (
+                          <div
+                            key={getCartLineId(item)}
+                            className="flex items-start justify-between gap-3"
+                          >
+                            <span className="min-w-0 text-sm font-bold leading-5 text-[var(--brand-ink)]">
+                              {item.name}{" "}
+                              <span className="text-[var(--brand-ink-2)]/55">
+                                ×{item.quantity}
+                              </span>
+                              {getSelectionSummary(item) ? (
+                                <span className="block text-[0.66rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
+                                  {getSelectionSummary(item)}
+                                </span>
+                              ) : null}
                             </span>
-                          </>
-                        }
-                        value={paymentMethod}
-                        placeholder="Selecciona método"
-                        options={paymentMethodOptions}
-                        isOpen={isPaymentPickerOpen}
-                        onToggle={() => {
-                          setIsPaymentPickerOpen((current) => !current);
-                        }}
-                        onSelect={(value) => {
-                          setPaymentMethod(value);
-                          setIsPaymentPickerOpen(false);
-                        }}
-                      />
+                            <span className="shrink-0 text-sm font-black text-[var(--brand-ink-3)]">
+                              {formatUSD(item.price * item.quantity)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
-                    {renderPrepayFlowNotice()}
-
-                    {renderDivisaPhotoNotice(isCashDivisaMethod)}
-
-                    {renderCashChangeSection()}
-
-                    {renderCheckoutProofSection()}
-
-                    {renderCashDivisaPhotoSection()}
-
-                    {renderMixedPaymentSection()}
-
-                    {Object.keys(checkoutPaymentMethodDetails).length > 0 && (
-                      <div>
+                    <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
+                      <div className="flex items-center justify-between gap-3">
                         <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                          Datos para pagar
-                          {selectedPaymentMethods.length > 0 && (
-                            <span className="text-[var(--brand-ink-2)]/45">
-                              {" "}
-                              ({selectedPaymentMethods.join(" + ")})
-                            </span>
-                          )}
+                          Tus datos
                         </p>
-                        <div className="mt-2">
-                          <PaymentMethodDetailsList
-                            details={checkoutPaymentMethodDetails}
-                          />
+                        <button
+                          type="button"
+                          onClick={() => goToCheckoutStep(1)}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black"
+                        >
+                          <Pencil size={11} />
+                          Cambiar
+                        </button>
+                      </div>
+                      <p className="mt-2 text-sm font-black leading-5 text-[var(--brand-ink)]">
+                        {customerName.trim() || "Sin nombre"}
+                        <span className="font-bold text-[var(--brand-ink-2)]/60">
+                          {customerPhone.trim()
+                            ? ` · ${customerPhone.trim()}`
+                            : ""}
+                        </span>
+                      </p>
+                      <p className="mt-1 text-[0.72rem] font-bold text-[var(--brand-ink-2)]/60">
+                        {getOrderTypePublicLabel(orderType)}
+                      </p>
+                    </div>
+
+                    {isDeliveryOrder && (
+                      <div className="overflow-hidden rounded-2xl border border-[var(--brand-primary)]/40 bg-[var(--brand-cream)]">
+                        <div className="flex items-center justify-between gap-3 border-b border-[var(--brand-primary)]/15 bg-[rgba(var(--brand-primary-rgb),0.09)] px-4 py-3">
+                          <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-[var(--brand-primary)]">
+                            <MapPin size={15} />
+                            ¿Tu pedido llega aquí?
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => goToCheckoutStep(1)}
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black"
+                          >
+                            <Pencil size={11} />
+                            Cambiar
+                          </button>
+                        </div>
+                        <div className="px-4 py-4">
+                          {deliveryPointCoords ? (
+                            <div className="relative isolate">
+                              <DeliveryPointPreviewMap
+                                lat={deliveryPointCoords.lat}
+                                lng={deliveryPointCoords.lng}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setIsAdjustMapOpen(true)}
+                                className="absolute right-2 top-2 z-[600] flex items-center gap-1.5 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-cream)] px-3 py-1.5 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] shadow-md transition hover:bg-[var(--brand-accent)] hover:text-black"
+                              >
+                                <Pencil size={12} />
+                                Ajustar
+                              </button>
+                            </div>
+                          ) : null}
+
+                          <p className="mt-3 text-sm font-bold leading-5 text-[var(--brand-ink-2)]/75">
+                            {isQuotingDistance ? (
+                              <span className="inline-flex items-center gap-2">
+                                <Loader2 size={15} className="animate-spin" />
+                                Recalculando el envío…
+                              </span>
+                            ) : distanceQuote ? (
+                              <>
+                                Estás a ~{distanceQuote.distanceKm.toFixed(1)}{" "}
+                                km · Envío {formatUSD(distanceQuote.costUSD)}{" "}
+                                (incluido en el total)
+                              </>
+                            ) : (
+                              "El costo del envío se confirma por WhatsApp al recibir tu pedido."
+                            )}
+                          </p>
+
+                          {deliveryReference.trim() ? (
+                            <p className="mt-2 text-[0.72rem] font-bold leading-4 text-[var(--brand-ink-2)]/60">
+                              Referencia: {deliveryReference.trim()}
+                            </p>
+                          ) : null}
                         </div>
                       </div>
                     )}
 
-                    <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3">
-                      <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
-                        Costo de delivery
+                    <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                          Pago
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => goToCheckoutStep(2)}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black"
+                        >
+                          <Pencil size={11} />
+                          Cambiar
+                        </button>
+                      </div>
+                      <p className="mt-2 text-sm font-black leading-5 text-[var(--brand-ink)]">
+                        {effectivePaymentMethod || "Sin método elegido"}
                       </p>
-                      <p className="mt-1 text-2xl font-black text-[var(--brand-ink-3)]">
-                        {distanceQuote
-                          ? `${formatUSD(deliveryCostValue)} · ~${distanceQuote.distanceKm.toFixed(1)} km`
-                          : isDistancePricingEnabled
-                            ? distanceTiers.length > 0
-                              ? `Referencia: hasta ${distanceTiers[distanceTiers.length - 1].upToKm} km ${formatUSD(distanceTiers[distanceTiers.length - 1].costUSD)}`
-                              : "Comparte tu ubicación arriba"
-                            : "Se confirma por WhatsApp"}
-                      </p>
-                      <p className="mt-2 text-[0.68rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
-                        {isDistancePricingEnabled
-                          ? "Se calcula solo con tu ubicación y ya queda incluido en el total del pedido."
-                          : "Te confirmamos el costo del envío por WhatsApp al recibir tu pedido."}
-                      </p>
+                      {cashMethodName && cashGivenValue > 0 ? (
+                        <p className="mt-1 text-[0.72rem] font-bold text-[var(--brand-ink-2)]/60">
+                          Pagas con{" "}
+                          {cashIsVes
+                            ? `Bs ${formatVES(cashGivenValue)}`
+                            : formatUSD(cashGivenValue)}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                 )}
 
+                {/* Total, nota e imagen: en el wizard viven en el paso 3
+                    (confirmación); en "Comer aquí" salen como siempre. */}
+                {(!isWizardCheckout || checkoutStep === 3) && (
+                <>
                 <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                     Tienes que pagar lo siguiente:
@@ -4679,6 +4915,8 @@ export default function CartDrawer({
                     </p>
                   ) : null}
                 </div>
+                </>
+                )}
 
                 {hasUnavailableItemsForOrderType && (
                   <div className="rounded-2xl border border-red-500/35 bg-red-500/15 px-4 py-3">
@@ -4697,7 +4935,8 @@ export default function CartDrawer({
                   </div>
                 )}
 
-                {hasStaffConfirmationItems && (
+                {(!isWizardCheckout || checkoutStep === 3) &&
+                  hasStaffConfirmationItems && (
                   <div className="rounded-2xl border border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3">
                     <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
                       Confirmación del personal
@@ -4717,7 +4956,12 @@ export default function CartDrawer({
                   </div>
                 )}
 
-                {hasItems && missingOrderFields.length > 0 && (
+                {/* El repaso de "falta X" completo solo tiene sentido donde
+                    está el botón final; a mitad del wizard confundía con
+                    campos de otros pasos. */}
+                {(!isWizardCheckout || checkoutStep === 3) &&
+                  hasItems &&
+                  missingOrderFields.length > 0 && (
                   <div className="rounded-2xl border border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3">
                     <p className="text-sm font-bold leading-6 text-[var(--brand-ink)]/80">
                       Para registrar el pedido falta:{" "}
@@ -4747,125 +4991,97 @@ export default function CartDrawer({
                   </div>
                 )}
 
-                <button
-                  type="button"
-                  disabled={isSubmittingOrder || !hasItems}
-                  onClick={() => {
-                    // Con datos pendientes NO se bloquea el botón en gris:
-                    // se explica en grande qué falta y se lleva al cliente a
-                    // esa sección (pedido del dueño 2026-07-21).
-                    if (!canRegisterLocalOrder) {
-                      const firstMissing = missingOrderChecks[0];
-                      setValidationAlert(
-                        missingOrderChecks.length > 0
-                          ? `Para registrar tu pedido te falta: ${missingOrderFields.join(", ")}.`
-                          : hasUnavailableItemsForOrderType
-                            ? unavailableItemsMessage
-                            : needsBranchSelection
-                              ? "Elige la sede donde estás pidiendo (arriba en este formulario)."
-                              : isTableReservedNow
-                                ? "Esa mesa está reservada en este horario. Pide apoyo al personal."
-                                : "Revisa los datos del pedido e intenta de nuevo.",
-                      );
-                      if (firstMissing) {
-                        document
-                          .getElementById(firstMissing.targetId)
-                          ?.scrollIntoView({ behavior: "smooth", block: "center" });
-                      }
-                      return;
-                    }
-
-                    setValidationAlert(null);
-                    // Con ubicación elegida, primero se confirma la dirección
-                    // en el mapa (estilo apps grandes); sin ubicación va
-                    // directo.
-                    if (isDeliveryOrder && distanceQuote && deliveryPointCoords) {
-                      setIsAddressConfirmOpen(true);
-                      return;
-                    }
-                    void handleRegisterLocalOrder();
-                  }}
-                  className={`mt-2 flex w-full items-center justify-center gap-3 rounded-full border px-6 py-4 text-sm font-black uppercase tracking-[0.12em] shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition active:translate-y-1 active:shadow-none disabled:cursor-not-allowed ${
-                    hasItems && !isSubmittingOrder
-                      ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
-                      : "border-[var(--brand-border)] bg-[#ddd3c4] text-[var(--brand-ink-2)]/35"
-                  }`}
-                >
-                  <ClipboardList size={21} />
-                  Registrar pedido
-                </button>
-
               </div>
+
+              {/* Barra fija inferior: total y acción SIEMPRE a la vista —
+                  el motivo del rediseño (la gente no quería bajar tanto
+                  para encontrar el botón). */}
+              <div className="sticky bottom-0 z-30 border-t border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3 sm:px-6">
+                <div className="flex items-center justify-between gap-3">
+                  {/* En el paso 3 el total NO se repite aquí (está en la caja
+                      "Tienes que pagar", justo arriba): con dos botones no
+                      cabía y salía aplastado. */}
+                  {(!isWizardCheckout || checkoutStep < 3) && (
+                    <div className="min-w-0">
+                      <p className="whitespace-nowrap text-[0.6rem] font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/55">
+                        {isWizardCheckout
+                          ? `Paso ${checkoutStep} de 3 · Total`
+                          : "Total"}
+                      </p>
+                      {exchangeRate > 0 && totalVES > 0 ? (
+                        <p className="truncate text-base font-black leading-tight text-[var(--brand-ink-3)]">
+                          Bs {formatVES(totalVES)}
+                          <span className="ml-1.5 hidden text-xs font-bold text-[var(--brand-ink-2)]/60 sm:inline">
+                            · {formatUSD(totalUSD)}
+                          </span>
+                        </p>
+                      ) : (
+                        <p className="truncate text-base font-black leading-tight text-[var(--brand-ink-3)]">
+                          {formatUSD(totalUSD)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <div
+                    className={`flex shrink-0 items-center gap-2 ${
+                      isWizardCheckout && checkoutStep === 3 ? "w-full" : ""
+                    }`}
+                  >
+                    {isWizardCheckout && checkoutStep > 1 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          goToCheckoutStep((checkoutStep - 1) as 1 | 2)
+                        }
+                        disabled={isSubmittingOrder}
+                        className="rounded-full border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3.5 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/70 transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] disabled:opacity-50"
+                      >
+                        Atrás
+                      </button>
+                    )}
+
+                    {isWizardCheckout && checkoutStep < 3 ? (
+                      <button
+                        type="button"
+                        onClick={handleWizardContinue}
+                        disabled={isSubmittingOrder || !hasItems}
+                        className={`flex items-center justify-center gap-2 rounded-full border px-6 py-3.5 text-sm font-black uppercase tracking-[0.12em] shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition active:translate-y-1 active:shadow-none disabled:cursor-not-allowed ${
+                          hasItems && !isSubmittingOrder
+                            ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
+                            : "border-[var(--brand-border)] bg-[#ddd3c4] text-[var(--brand-ink-2)]/35"
+                        }`}
+                      >
+                        Continuar →
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleRegisterButtonClick}
+                        disabled={isSubmittingOrder || !hasItems}
+                        className={`flex items-center justify-center gap-2 rounded-full border px-6 py-3.5 text-sm font-black uppercase tracking-[0.12em] shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition active:translate-y-1 active:shadow-none disabled:cursor-not-allowed ${
+                          isWizardCheckout && checkoutStep === 3 ? "flex-1" : ""
+                        } ${
+                          hasItems && !isSubmittingOrder
+                            ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
+                            : "border-[var(--brand-border)] bg-[#ddd3c4] text-[var(--brand-ink-2)]/35"
+                        }`}
+                      >
+                        <ClipboardList size={19} />
+                        Registrar pedido
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              </>
             )}
           </div>
         </div>
       )}
 
-      {/* Confirmación de dirección antes de registrar: mapa de solo lectura
-          con el pin en el punto elegido, "Ajustar" para moverlo y el botón
-          que registra de verdad. */}
-      {isAddressConfirmOpen && deliveryPointCoords && (
-        <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/80 p-4 backdrop-blur-sm sm:items-center">
-          <div className="w-full max-w-md rounded-[1.8rem] border border-[var(--brand-primary)] bg-[var(--brand-cream)] p-5 text-[var(--brand-ink-3)]">
-            <h4 className="text-center text-lg font-black leading-6 text-[var(--brand-ink-3)]">
-              Antes de continuar, ¿es esta la ubicación donde quieres que
-              llegue tu pedido?
-            </h4>
-
-            <div className="relative isolate mt-4">
-              <DeliveryPointPreviewMap
-                lat={deliveryPointCoords.lat}
-                lng={deliveryPointCoords.lng}
-                heightClassName="h-52"
-              />
-              <button
-                type="button"
-                onClick={() => setIsAdjustMapOpen(true)}
-                className="absolute right-2 top-2 z-[600] flex items-center gap-1.5 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-cream)] px-3 py-1.5 text-[0.66rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] shadow-md transition hover:bg-[var(--brand-accent)] hover:text-black"
-              >
-                <Pencil size={12} />
-                Ajustar
-              </button>
-            </div>
-
-            <p className="mt-3 text-center text-sm font-bold text-[var(--brand-ink-2)]/70">
-              {isQuotingDistance ? (
-                <span className="inline-flex items-center gap-2">
-                  <Loader2 size={15} className="animate-spin" />
-                  Recalculando el envío…
-                </span>
-              ) : distanceQuote ? (
-                <>
-                  Estás a ~{distanceQuote.distanceKm.toFixed(1)} km · Envío{" "}
-                  {formatUSD(distanceQuote.costUSD)}
-                </>
-              ) : (
-                "Confirma tu punto de entrega."
-              )}
-            </p>
-
-            <button
-              type="button"
-              disabled={isQuotingDistance || !distanceQuote}
-              onClick={() => {
-                setIsAddressConfirmOpen(false);
-                void handleRegisterLocalOrder();
-              }}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-4 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition active:translate-y-1 active:shadow-none disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              La ubicación es correcta →
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsAddressConfirmOpen(false)}
-              className="mt-2 w-full rounded-full px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/60 transition hover:text-[var(--brand-primary)]"
-            >
-              Volver y revisar mis datos
-            </button>
-          </div>
-        </div>
-      )}
+      {/* El viejo modal de "¿es esta tu ubicación?" se retiró: el paso 3 del
+          wizard muestra el mismo mapa (con "Ajustar") antes del botón. */}
 
       {/* Ventana emergente post-registro: lo PRIMERO que ve el cliente si su
           pago quedó pendiente (pedido del dueño 2026-07-21). */}

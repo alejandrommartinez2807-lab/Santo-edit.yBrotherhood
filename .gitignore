@@ -57,3 +57,6 @@ next-env.d.ts
 # Playwright (artefactos de corridas E2E)
 /test-results
 /playwright-report
+
+# Respaldos locales (bundles de git)
+respaldos/
