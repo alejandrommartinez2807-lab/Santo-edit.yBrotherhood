@@ -5074,15 +5074,19 @@ export default function CartDrawer({
                     }`}
                   >
                     {isWizardCheckout && checkoutStep > 1 && (
+                      // Solo la flecha: con la palabra "Atrás" el botón se
+                      // comía el espacio del total y lo tapaba en teléfonos
+                      // (dueño 2026-07-31).
                       <button
                         type="button"
                         onClick={() =>
                           goToCheckoutStep((checkoutStep - 1) as 1 | 2)
                         }
                         disabled={isSubmittingOrder}
-                        className="rounded-full border border-[var(--brand-border)] bg-[var(--brand-cream)] px-4 py-3.5 text-xs font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/70 transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] disabled:opacity-50"
+                        aria-label="Volver al paso anterior"
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[var(--brand-border)] bg-[var(--brand-cream)] text-[var(--brand-ink-2)]/70 transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] disabled:opacity-50"
                       >
-                        Atrás
+                        <ArrowLeft size={19} />
                       </button>
                     )}
 
@@ -5091,7 +5095,7 @@ export default function CartDrawer({
                         type="button"
                         onClick={handleWizardContinue}
                         disabled={isSubmittingOrder || !hasItems}
-                        className={`flex items-center justify-center gap-2 rounded-full border px-6 py-3.5 text-sm font-black uppercase tracking-[0.12em] shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition active:translate-y-1 active:shadow-none disabled:cursor-not-allowed ${
+                        className={`flex items-center justify-center gap-2 rounded-full border px-5 py-3.5 text-sm font-black uppercase tracking-[0.12em] shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition active:translate-y-1 active:shadow-none disabled:cursor-not-allowed ${
                           hasItems && !isSubmittingOrder
                             ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"
                             : "border-[var(--brand-border)] bg-[#ddd3c4] text-[var(--brand-ink-2)]/35"
