@@ -355,14 +355,29 @@ export async function PATCH(
         branchId,
       );
 
+      // "Mesa equivocada": si el pedido venía de otra cuenta, esto fue un
+      // MOVER y la bitácora guarda de dónde salió, a dónde llegó y por qué
+      // (el motivo es opcional; quién y con qué rol va en el actor).
+      const moveReason = cleanText(body.moveReason).slice(0, 200);
+
       await writeAuditLog({
-        action: "open_account.order.attached",
+        action: result.movedFromAccountId
+          ? "open_account.order.moved"
+          : "open_account.order.attached",
         branchId,
         entityType: "open_account",
         entityId: cleanAccountId,
         actor: getLocalAccessAuditActor(access.access),
         request,
-        metadata: { orderId },
+        metadata: result.movedFromAccountId
+          ? {
+              orderId,
+              fromAccountId: result.movedFromAccountId,
+              fromTable: result.movedFromTable,
+              toTable: result.openAccount?.tableNumber ?? null,
+              ...(moveReason ? { reason: moveReason } : {}),
+            }
+          : { orderId },
       });
 
       return NextResponse.json({ ok: true, ...result });

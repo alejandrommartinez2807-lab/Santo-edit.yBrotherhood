@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
+  ArrowRightLeft,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -223,18 +224,23 @@ export function OpenAccountsPanel({
   >([]);
 
   useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(DISMISSED_ATTACH_STORAGE_KEY);
-      const parsed = stored ? JSON.parse(stored) : [];
+    // Diferido un tick para no hacer setState síncrono dentro del efecto
+    // (react-hooks/set-state-in-effect, mismo patrón que el resto del repo).
+    const timer = setTimeout(() => {
+      try {
+        const stored = window.localStorage.getItem(DISMISSED_ATTACH_STORAGE_KEY);
+        const parsed = stored ? JSON.parse(stored) : [];
 
-      if (Array.isArray(parsed)) {
-        setDismissedAttachOrderIds(
-          parsed.filter((id): id is string => typeof id === "string"),
-        );
+        if (Array.isArray(parsed)) {
+          setDismissedAttachOrderIds(
+            parsed.filter((id): id is string => typeof id === "string"),
+          );
+        }
+      } catch {
+        // localStorage bloqueado (modo privado): la sugerencia sigue saliendo.
       }
-    } catch {
-      // localStorage bloqueado (modo privado): la sugerencia sigue saliendo.
-    }
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   function dismissAttachSuggestion(orderId: string) {
@@ -497,6 +503,70 @@ export function OpenAccountsPanel({
       );
     } finally {
       stopSaving(accountId);
+    }
+  }
+
+  // «Mesa equivocada» (pedido del dueño 2026-07-31): mover un pedido de esta
+  // cuenta a OTRA cuenta abierta. Es el mismo attachOrder del servidor, que
+  // recalcula las dos cuentas y deja el movimiento en la bitácora (con motivo
+  // opcional). Si la cuenta de origen ya se cobró/cerró, el servidor lo
+  // rechaza: ahí el camino sigue siendo cancelar con el código del dueño.
+  const [movingOrderId, setMovingOrderId] = useState<string | null>(null);
+  const [moveTargetAccountId, setMoveTargetAccountId] = useState("");
+  const [moveReason, setMoveReason] = useState("");
+
+  async function moveOrderToAccount(fromAccountId: string, orderId: string) {
+    if (!canManage || isScopeSaving(fromAccountId)) return;
+
+    if (!moveTargetAccountId) {
+      showMessage("Elige la mesa a la que se mueve el pedido.");
+      return;
+    }
+
+    startSaving(fromAccountId);
+    showMessage(null);
+
+    try {
+      const response = await fetch(
+        `/api/open-accounts/${encodeURIComponent(moveTargetAccountId)}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-password": adminPassword,
+          },
+          body: JSON.stringify({
+            action: "attachOrder",
+            orderId,
+            moveReason: moveReason.trim(),
+          }),
+        },
+      );
+      const data = await readApiResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || data.message || "No se pudo mover el pedido",
+        );
+      }
+
+      const targetId = moveTargetAccountId;
+      setMovingOrderId(null);
+      setMoveTargetAccountId("");
+      setMoveReason("");
+      setExpandedAccounts((current) => ({ ...current, [targetId]: true }));
+      showMessage(
+        `Pedido movido a la cuenta de ${data.openAccount?.tableNumber || "la otra mesa"}.`,
+        true,
+      );
+      await refreshAccountsAfterAction();
+      onOrdersShouldRefresh?.();
+    } catch (error) {
+      showMessage(
+        error instanceof Error ? error.message : "No se pudo mover el pedido",
+      );
+    } finally {
+      stopSaving(fromAccountId);
     }
   }
 
@@ -1158,6 +1228,11 @@ export function OpenAccountsPanel({
             const suggestedOrders = unlinkedEligibleOrders.filter((order) =>
               isSameTable(account, order),
             );
+            // «Mesa equivocada»: cuentas ABIERTAS de esta sede a las que se
+            // puede mover un pedido de esta cuenta.
+            const moveDestinations = activeAccounts.filter(
+              (candidate) => candidate.id !== account.id,
+            );
             // H-4 camino B: los pedidos de ESTA mesa que están esperando el
             // visto bueno del personal para entrar en la cuenta.
             const pendingAttachOrders = suggestedOrders.filter(
@@ -1370,6 +1445,7 @@ export function OpenAccountsPanel({
                           {canManage &&
                           !isClosed &&
                           order.status !== "Cancelado" ? (
+                            <>
                             <div className="mt-3 flex flex-wrap gap-2">
                               {order.status !== "Entregado" ? (
                                 <button
@@ -1414,7 +1490,88 @@ export function OpenAccountsPanel({
                                   No entregado
                                 </button>
                               )}
+
+                              {/* «Mesa equivocada»: solo aparece si hay otra
+                                  cuenta abierta a la cual mover el pedido. */}
+                              {moveDestinations.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setMovingOrderId((current) =>
+                                      current === order.id ? null : order.id,
+                                    );
+                                    setMoveTargetAccountId("");
+                                    setMoveReason("");
+                                  }}
+                                  disabled={isCardSaving}
+                                  className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)]/40 bg-white px-3 py-2 text-[0.65rem] font-black uppercase tracking-[0.10em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent-100)] disabled:opacity-50"
+                                >
+                                  <ArrowRightLeft size={14} />
+                                  {movingOrderId === order.id
+                                    ? "Cancelar mover"
+                                    : "Mover de mesa"}
+                                </button>
+                              )}
                             </div>
+
+                            {movingOrderId === order.id &&
+                              moveDestinations.length > 0 && (
+                              <div className="mt-2 rounded-2xl border-2 border-[var(--brand-primary)]/30 bg-white p-3">
+                                <p className="text-[0.66rem] font-black uppercase tracking-[0.14em] text-[var(--brand-primary)]">
+                                  ¿Mesa equivocada? Mover este pedido a:
+                                </p>
+                                <select
+                                  value={moveTargetAccountId}
+                                  onChange={(event) =>
+                                    setMoveTargetAccountId(event.target.value)
+                                  }
+                                  className="mt-2 w-full rounded-xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-3 py-2.5 text-xs font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                                >
+                                  <option value="">
+                                    Elige la cuenta correcta…
+                                  </option>
+                                  {moveDestinations.map((candidate) => (
+                                    <option key={candidate.id} value={candidate.id}>
+                                      {candidate.tableNumber}
+                                      {candidate.customerName
+                                        ? ` · ${candidate.customerName}`
+                                        : ""}
+                                    </option>
+                                  ))}
+                                </select>
+                                <input
+                                  value={moveReason}
+                                  onChange={(event) =>
+                                    setMoveReason(event.target.value)
+                                  }
+                                  maxLength={200}
+                                  placeholder="Motivo (opcional): el cliente dijo mesa 4 pero era la 7…"
+                                  className="mt-2 w-full rounded-xl border-2 border-[var(--brand-primary)]/25 bg-[var(--brand-cream)] px-3 py-2.5 text-xs font-bold text-[var(--brand-ink)] outline-none focus:border-[var(--brand-primary)]"
+                                />
+                                <div className="mt-2 flex flex-wrap items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      moveOrderToAccount(account.id, order.id)
+                                    }
+                                    disabled={isCardSaving || !moveTargetAccountId}
+                                    className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-4 py-2 text-[0.65rem] font-black uppercase tracking-[0.10em] text-[var(--brand-ink)] transition hover:bg-[var(--brand-accent-200)] disabled:opacity-50"
+                                  >
+                                    {isCardSaving ? (
+                                      <Loader2 size={14} className="animate-spin" />
+                                    ) : (
+                                      <ArrowRightLeft size={14} />
+                                    )}
+                                    Mover pedido
+                                  </button>
+                                  <p className="text-[0.62rem] font-bold leading-4 text-[var(--brand-ink-2)]/55">
+                                    Las dos cuentas se recalculan solas y el
+                                    movimiento queda en la bitácora.
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                            </>
                           ) : null}
                         </div>
                       ))

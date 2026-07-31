@@ -453,6 +453,94 @@ console.log("\n── A10 · aislamiento por sede de las cuentas")
 }
 
 // ───────────────────────────────────────────────────────────────────────────
+// A11 · «MESA EQUIVOCADA»: mover un pedido entre cuentas (2026-07-31)
+// attachOrder sobre un pedido YA atado = mover: recalcula las DOS cuentas,
+// audita open_account.order.moved, y se niega si el origen está cerrado o
+// si el destino es de otra sede.
+// ───────────────────────────────────────────────────────────────────────────
+console.log("\n── A11 · mover pedido entre cuentas (mesa equivocada)")
+{
+  const { account: wrong } = await openAccount(A, t("A11-mala"))
+  const { account: right } = await openAccount(A, t("A11-buena"))
+  if (!wrong || !right) {
+    check("A11 setup: dos cuentas abiertas", false)
+  } else {
+    const { order } = await createOrder(A, t("A11-mala"), 35, { openAccountId: wrong.id })
+    await createOrder(A, t("A11-buena"), 10, { openAccountId: right.id })
+    check("A11 setup · pedido de $35 en la mesa equivocada", Boolean(order?.id))
+
+    const move = await patch(
+      `/api/open-accounts/${right.id}`,
+      { action: "attachOrder", orderId: order.id, moveReason: "el cliente dijo la mesa mala (QA)" },
+      { "x-branch-id": A },
+    )
+    check("A11 · mover el pedido responde 200", move.status === 200, `status=${move.status}`)
+    check(
+      "A11 · la respuesta trae de dónde salió (movedFromAccountId)",
+      move.json?.movedFromAccountId === wrong.id,
+      `movedFrom=${move.json?.movedFromAccountId}`,
+    )
+
+    const wrongAfter = await accountRow(wrong.id)
+    const rightAfter = await accountRow(right.id)
+    check(
+      "A11 · la cuenta equivocada queda en $0 (recalculada)",
+      Math.abs(Number(wrongAfter?.total_estimated_usd || 0)) < 0.02,
+      `origen=${wrongAfter?.total_estimated_usd}`,
+    )
+    check(
+      "A11 · la cuenta correcta queda en $45 (10 + 35 movido)",
+      Math.abs(Number(rightAfter?.total_estimated_usd || 0) - 45) < 0.02,
+      `destino=${rightAfter?.total_estimated_usd}`,
+    )
+
+    const { data: auditRows } = await supabase
+      .from("audit_logs")
+      .select("id, action, metadata")
+      .eq("action", "open_account.order.moved")
+      .order("created_at", { ascending: false })
+      .limit(5)
+    const auditHit = (auditRows || []).find(
+      (row) => row.metadata?.orderId === order.id && row.metadata?.fromAccountId === wrong.id,
+    )
+    check(
+      "A11 · el movimiento queda en la bitácora con origen y motivo",
+      Boolean(auditHit && auditHit.metadata?.reason),
+      auditHit ? `reason="${auditHit.metadata?.reason}"` : "sin registro",
+    )
+
+    // Origen cerrado: mover fuera ya no se permite (dinero registrado).
+    const closeRight = await patch(`/api/open-accounts/${right.id}`, { action: "close" }, { "x-branch-id": A })
+    check("A11 setup · cuenta destino cerrada para la contraprueba", closeRight.status === 200, `status=${closeRight.status}`)
+    const moveOut = await patch(
+      `/api/open-accounts/${wrong.id}`,
+      { action: "attachOrder", orderId: order.id },
+      { "x-branch-id": A },
+    )
+    check(
+      "A11 · sacar un pedido de una cuenta CERRADA se rechaza",
+      [400, 409, 500].includes(moveOut.status) && moveOut.status !== 200,
+      `status=${moveOut.status} ${moveOut.json?.error || ""}`,
+    )
+
+    // Cruce de sede: mover a una cuenta de la otra sucursal se rechaza.
+    const { account: foreign } = await openAccount(B, t("A11-B"))
+    if (foreign) {
+      const crossMove = await patch(
+        `/api/open-accounts/${foreign.id}`,
+        { action: "attachOrder", orderId: order.id },
+        { "x-branch-id": B },
+      )
+      check(
+        "A11 · mover a una cuenta de OTRA sede se rechaza",
+        crossMove.status !== 200,
+        `status=${crossMove.status} ${crossMove.json?.error || ""}`,
+      )
+    }
+  }
+}
+
+// ───────────────────────────────────────────────────────────────────────────
 // LIMPIEZA
 // ───────────────────────────────────────────────────────────────────────────
 console.log("\n── limpieza")

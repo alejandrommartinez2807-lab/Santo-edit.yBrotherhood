@@ -297,7 +297,14 @@ export async function attachOrderToOpenAccount(
   accountId: string,
   orderId: string,
   branchId?: string | null,
-): Promise<{ openAccount: OpenAccount; order: LocalOrder | undefined }> {
+): Promise<{
+  openAccount: OpenAccount
+  order: LocalOrder | undefined
+  // "Mover a otra mesa": si el pedido venía de OTRA cuenta, aquí viaja de
+  // cuál (para la auditoría) — null cuando fue una asociación normal.
+  movedFromAccountId: string | null
+  movedFromTable: string | null
+}> {
   const supabase = getSupabaseAdmin()
 
   let accountQuery = supabase
@@ -320,6 +327,44 @@ export async function attachOrderToOpenAccount(
     )
   }
 
+  // Mesa equivocada: si el pedido YA está en otra cuenta, esto es un MOVER.
+  // Solo se permite mientras la cuenta de origen siga Abierta — si ya se
+  // cobró o cerró, ese dinero está registrado y el camino es la cancelación
+  // con el código del dueño, no un movimiento silencioso.
+  let previousOrderQuery = supabase
+    .from("orders")
+    .select("id, open_account_id")
+    .eq("id", orderId)
+  if (branchId) previousOrderQuery = previousOrderQuery.eq("branch_id", branchId)
+  const { data: previousOrderRow, error: previousOrderError } =
+    await previousOrderQuery.maybeSingle()
+  if (previousOrderError) throw new Error(previousOrderError.message)
+  if (!previousOrderRow) throw new Error("El pedido no pertenece a esta sucursal")
+
+  const previousAccountId = cleanText((previousOrderRow as Row).open_account_id)
+  const isMove = Boolean(previousAccountId) && previousAccountId !== accountId
+  let movedFromTable: string | null = null
+
+  if (isMove) {
+    let previousAccountQuery = supabase
+      .from("open_accounts")
+      .select("id, status, table_number")
+      .eq("id", previousAccountId)
+    if (branchId) previousAccountQuery = previousAccountQuery.eq("branch_id", branchId)
+    const { data: previousAccountRow, error: previousAccountError } =
+      await previousAccountQuery.maybeSingle()
+    if (previousAccountError) throw new Error(previousAccountError.message)
+    if (!previousAccountRow) {
+      throw new Error("No se encontró la cuenta de origen del pedido")
+    }
+    if (cleanText((previousAccountRow as Row).status) !== "Abierta") {
+      throw new Error(
+        "La cuenta de origen ya está cerrada o cobrada: ese pedido solo se ajusta cancelándolo con el código del dueño.",
+      )
+    }
+    movedFromTable = cleanText((previousAccountRow as Row).table_number) || null
+  }
+
   let orderQuery = supabase
     .from("orders")
     .update({
@@ -335,6 +380,12 @@ export async function attachOrderToOpenAccount(
 
   await recomputeOpenAccountTotals(accountId, branchId)
 
+  // Al mover, la cuenta de ORIGEN también debe quedar cuadrada al instante
+  // (si no, la mesa equivocada seguiría mostrando plata que ya no es suya).
+  if (isMove) {
+    await recomputeOpenAccountTotals(previousAccountId, branchId)
+  }
+
   const orders = await loadAccountOrderSummaries(accountId, branchId)
   let refreshedQuery = supabase
     .from("open_accounts")
@@ -346,6 +397,8 @@ export async function attachOrderToOpenAccount(
   return {
     openAccount: openAccountRowToOpenAccount((refreshed ?? accountRow) as Row, orders),
     order: await loadOrderWithItems(orderId, branchId).catch(() => undefined),
+    movedFromAccountId: isMove ? previousAccountId : null,
+    movedFromTable: isMove ? movedFromTable : null,
   }
 }
 
