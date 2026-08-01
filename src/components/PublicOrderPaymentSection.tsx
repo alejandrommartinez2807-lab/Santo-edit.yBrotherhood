@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ArrowLeft,
   BadgeCheck,
   CheckCircle2,
   Clock3,
@@ -204,6 +205,7 @@ export default function PublicOrderPaymentSection({
   uploadingProofs = false,
   livePaymentConfirmed = false,
   variant = "card",
+  formAsScreen = false,
 }: {
   orderId: string;
   // Abre el formulario de reporte de una vez (confirmación con pago
@@ -253,6 +255,12 @@ export default function PublicOrderPaymentSection({
   // anidación en el formulario, para que respire (dueño 2026-07-31: "todo se
   // ve muy encerrado, amontonado y pequeño").
   variant?: "card" | "screen";
+  // Página de seguimiento (dueño 2026-07-31): al tocar "Reportar mi pago" el
+  // FORMULARIO se abre como pantalla completa (overlay con flecha Atrás y la
+  // presentación "screen"), y al enviarse o cerrarse se vuelve a la vista
+  // del pedido con sus estados. La tarjeta inline (estados, datos, chips)
+  // sigue igual mientras el formulario está cerrado.
+  formAsScreen?: boolean;
 }) {
   usePublicCurrencySymbol();
   const [info, setInfo] = useState<OrderPaymentInfo | null>(null);
@@ -1085,16 +1093,34 @@ export default function PublicOrderPaymentSection({
   const allLegsSent = sentLegFlags.length > 0 && sentLegFlags.every(Boolean);
 
   const isScreen = variant === "screen";
+  // Presentación "pantalla": fija por variant (carrito) o mientras el
+  // formulario está abierto como overlay (página de seguimiento).
+  const screenMode = isScreen || (formAsScreen && isFormOpen);
 
-  return (
+  // Bloqueo del reparto (dueño 2026-07-31): con el método y el monto ya
+  // decididos por el pedido (patas del servidor, o método único elegido al
+  // pedir + total), el cliente NO los puede cambiar al reportar — solo pone
+  // su comprobante. Si no se sabe nada (fetch caído, link abierto en otro
+  // teléfono sin patas), el formulario sigue editable: reportar pago nunca
+  // es un callejón sin salida.
+  const nonCashExpectedLegs = (info?.expectedPayments || []).filter(
+    (leg) => !leg.isCash,
+  );
+  const lockMethods =
+    nonCashExpectedLegs.length > 0 || chosenMethods.length > 0;
+  const lockAmounts =
+    nonCashExpectedLegs.length > 0 ||
+    (chosenMethods.length === 1 && Number(info?.totalUSD || 0) > 0);
+
+  const sectionBody = (
     <div
       className={
-        isScreen
+        screenMode
           ? "mt-1"
           : "mt-4 rounded-[2rem] border-4 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-6"
       }
     >
-      {!isScreen ? (
+      {!screenMode ? (
         <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-[var(--brand-primary)]">
           <ReceiptText size={15} />
           Pago del pedido
@@ -1250,7 +1276,7 @@ export default function PublicOrderPaymentSection({
             <div
               role={isPartialPending ? "alert" : undefined}
               className={`mt-4 rounded-2xl border-2 text-left ${
-                isScreen ? "px-4 py-5" : "px-4 py-4"
+                screenMode ? "px-4 py-5" : "px-4 py-4"
               } ${
                 isPartialPending
                   ? "border-amber-500 bg-amber-500/10"
@@ -1371,7 +1397,7 @@ export default function PublicOrderPaymentSection({
                           más grande que en la tarjeta del seguimiento. */}
                       <p
                         className={`mt-0.5 font-black leading-none text-[var(--brand-primary)] ${
-                          isScreen ? "text-4xl" : "text-2xl"
+                          screenMode ? "text-4xl" : "text-2xl"
                         }`}
                       >
                         {main}
@@ -1379,7 +1405,7 @@ export default function PublicOrderPaymentSection({
                       {secondary ? (
                         <p
                           className={`mt-1 font-bold text-[var(--brand-ink-2)]/55 ${
-                            isScreen ? "text-[0.8rem]" : "text-[0.72rem]"
+                            screenMode ? "text-[0.8rem]" : "text-[0.72rem]"
                           }`}
                         >
                           {secondary}
@@ -1499,9 +1525,15 @@ export default function PublicOrderPaymentSection({
               electrónica, el botón que sigue es el de reportarla (abajo) —
               mandarlo al seguimiento aquí confundía (dueño 2026-07-23). */}
           {showTrackingLink && reportCovered ? (
+            // En la pantalla dedicada este es EL siguiente paso (dueño
+            // 2026-07-31): más grande y con sombra, nada compite con él.
             <a
               href={`/pedido/${orderId}`}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3.5 text-xs font-black uppercase tracking-[0.12em] text-black transition hover:opacity-90"
+              className={`mt-3 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 font-black uppercase tracking-[0.12em] text-black transition hover:opacity-90 ${
+                isScreen
+                  ? "py-4 text-sm shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] active:scale-95"
+                  : "py-3.5 text-xs"
+              }`}
             >
               <CheckCircle2 size={16} />
               Ver el avance de mi pedido
@@ -1540,7 +1572,10 @@ export default function PublicOrderPaymentSection({
 
       {!hasConfirmedPayment && !awaitingProofSync && !isFormOpen && !orderIsCashOnly ? (
         hasActiveProof && !needsCorrection && reportCovered ? (
-          requiredElectronicUSD <= 0 ? null : (
+          // En la PANTALLA dedicada del carrito no va ni el enlace discreto:
+          // reportado el pago, la única acción es "Ver el avance" (dueño
+          // 2026-07-31). El enlace sigue en la página de seguimiento.
+          requiredElectronicUSD <= 0 || isScreen ? null : (
           // Reportado y en revisión: nada que hacer. Solo un enlace discreto
           // por si adjuntó la captura equivocada. En efectivo PURO ni eso:
           // no hay captura electrónica que corregir (dueño 2026-07-23).
@@ -1601,7 +1636,7 @@ export default function PublicOrderPaymentSection({
               // directo sobre la página (una caja menos de anidación). En
               // mixto las tarjetas numeradas se quedan — ahí sí agrupan.
               className={
-                isScreen && !isMixedReport
+                screenMode && !isMixedReport
                   ? ""
                   : "rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/25 p-3"
               }
@@ -1629,6 +1664,7 @@ export default function PublicOrderPaymentSection({
                     quitarle una al reporte deja el pedido a medio pagar. */}
                 {payments.length > 1 &&
                   !serverSentLegs &&
+                  !lockMethods &&
                   (allowMethodChange || chosenMethods.length === 0) && (
                     <button
                       type="button"
@@ -1644,12 +1680,12 @@ export default function PublicOrderPaymentSection({
                   )}
               </div>
 
-              {/* Método fijado por el dueño: antes se pintaba un <select>
-                  deshabilitado CONSERVANDO su flecha ˅ — un control muerto que
-                  invitaba a tocarlo y no hacía nada, y por eso la pantalla se
-                  sentía rota. Ahora es texto plano que dice por qué está fijo
-                  (2026-07-26). Cuando SÍ se puede cambiar, sigue el select. */}
-              {!allowMethodChange && chosenMethods.length > 0 ? (
+              {/* Método FIJO siempre que el pedido lo conozca (dueño
+                  2026-07-31: el método y las cantidades no se editan al
+                  reportar). El texto plano dice por qué está fijo; el select
+                  solo queda para el caso sin datos (fetch caído / link en
+                  otro teléfono), donde reportar debe seguir siendo posible. */}
+              {lockMethods || (!allowMethodChange && chosenMethods.length > 0) ? (
                 // Una sola fila: es un dato de lectura, no merece tres líneas
                 // (con los datos de pago ya abiertos arriba, cada línea de más
                 // empuja el botón de enviar fuera de pantalla).
@@ -1680,6 +1716,33 @@ export default function PublicOrderPaymentSection({
               )}
 
               {(() => {
+                // Monto FIJO (dueño 2026-07-31): la cantidad que decide el
+                // pedido no se edita al reportar — se muestra como dato. Solo
+                // si no hay monto conocido (sin patas ni total) queda el
+                // campo editable de siempre.
+                const lockedUSD = normalizeMoneyInput(entry.amountUSD);
+                const lockedVES = normalizeMoneyInput(entry.amountVES);
+                if (lockAmounts && (lockedUSD > 0 || lockedVES > 0)) {
+                  const rate = Number(info?.exchangeRate || 0);
+                  return (
+                    <div className="mt-2 flex flex-wrap items-baseline gap-x-2 rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/50 px-4 py-2.5">
+                      <p className="text-base font-black text-[var(--brand-ink-3)]">
+                        {lockedVES > 0
+                          ? `Bs ${formatVES(lockedVES)}`
+                          : formatUSD(lockedUSD)}
+                        {lockedVES > 0 && rate > 0 ? (
+                          <span className="ml-1.5 text-[0.72rem] font-bold text-[var(--brand-ink-2)]/55">
+                            ≈ {formatUSD(lockedVES / rate)}
+                          </span>
+                        ) : null}
+                      </p>
+                      <p className="text-[0.7rem] font-bold text-[var(--brand-ink-2)]/55">
+                        — el monto de tu pedido, no se cambia
+                      </p>
+                    </div>
+                  );
+                }
+
                 // Muestra el monto en la moneda del método: bolívares → solo Bs,
                 // divisas → solo $. Sin método elegido aún, muestra ambos.
                 const methodChosen = entry.method.trim() !== "";
@@ -1905,6 +1968,7 @@ export default function PublicOrderPaymentSection({
               método: el reparto ya está decidido en el pedido. */}
           {payments.length < 3 &&
             !serverSentLegs &&
+            !lockMethods &&
             (allowMethodChange || chosenMethods.length === 0) && (
               <button
                 type="button"
@@ -2035,4 +2099,38 @@ export default function PublicOrderPaymentSection({
       )}
     </div>
   );
+
+  // Overlay de pantalla completa para el formulario (página de seguimiento,
+  // formAsScreen): flecha Atrás para volver a la vista del pedido sin
+  // enviar; al reportar, el formulario se cierra solo y se vuelve al pedido
+  // con sus estados. El mismo componente sigue montado: no se pierde nada.
+  if (formAsScreen && isFormOpen) {
+    return (
+      <div className="fixed inset-0 z-[95] overflow-y-auto bg-[var(--brand-cream)] text-[var(--brand-ink-3)]">
+        <div className="mx-auto w-full max-w-lg px-5 py-6">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setIsFormOpen(false);
+                setFormError(null);
+                setDuplicateWarning(null);
+                setCoverageWarning(null);
+              }}
+              aria-label="Volver a mi pedido"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-ink-2)]/75 transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+            >
+              <ArrowLeft size={19} />
+            </button>
+            <h4 className="text-2xl font-black leading-tight text-[var(--brand-ink-3)]">
+              Reporta tu pago
+            </h4>
+          </div>
+          {sectionBody}
+        </div>
+      </div>
+    );
+  }
+
+  return sectionBody;
 }

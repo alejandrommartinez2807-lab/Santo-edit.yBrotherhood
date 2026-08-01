@@ -1172,6 +1172,16 @@ export default function CartDrawer({
     mixedUsdMethod.trim().length > 0 &&
     mixedBsValue > 0 &&
     mixedUsdValue > 0;
+  // El MIXTO además debe CUBRIR el total (dueño 2026-07-31): con las dos
+  // patas escritas pero cortas se podía avanzar y registrar un pedido pagado
+  // a medias. Sin tasa (caída) la parte en Bs no se puede convertir y no se
+  // bloquea: mejor dejar registrar que trancar el checkout por la tasa.
+  const mixedCoveredUSD =
+    mixedUsdValue + (exchangeRate > 0 ? mixedBsValue / exchangeRate : 0);
+  const mixedPaymentShortUSD =
+    isMixedPayment && isMixedPaymentComplete && exchangeRate > 0
+      ? Math.max(0, Math.round((totalUSD - mixedCoveredUSD) * 100) / 100)
+      : 0;
   const effectivePaymentMethod = isMixedPayment
     ? `Mixto: ${mixedBsMethod} Bs ${formatVES(mixedBsValue)} + ${mixedUsdMethod} ${formatUSD(mixedUsdValue)}`
     : paymentMethod.trim();
@@ -1357,6 +1367,13 @@ export default function CartDrawer({
             missing: isMixedPayment && !isMixedPaymentComplete,
           },
         ]),
+    {
+      // Mixto corto: las dos patas están escritas pero no suman el total.
+      // Aplica a los tres tipos de pedido (en mesa también se elige mixto).
+      label: `completar el total del pago mixto (faltan ${formatUSD(mixedPaymentShortUSD)} para cubrir ${formatUSD(totalUSD)})`,
+      targetId: "checkout-pago-mixto",
+      missing: mixedPaymentShortUSD > 0.05,
+    },
     {
       // Con dos patas, el aviso dice CUÁL falta y el scroll lleva a ESA.
       label:
@@ -4065,12 +4082,24 @@ export default function CartDrawer({
                             Reportar mi pago
                           </button>
                         ) : null}
+                        {/* Con el pago YA reportado, este es EL botón de la
+                            confirmación (la pantalla de reporte se ve antes
+                            que esta): naranja sólido y grande. En mesa sin
+                            reportar sigue discreto para no competir con
+                            "Reportar mi pago" (dueño 2026-07-31). */}
                         <a
                           href={`/pedido/${encodeURIComponent(lastCreatedOrder.id)}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] bg-transparent px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:opacity-80"
+                          className={
+                            lastOrderProofReported ||
+                            lastOrderPaymentReportedLive ||
+                            lastOrderPaymentConfirmed
+                              ? "mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-4 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition hover:bg-[var(--brand-accent)] active:scale-95"
+                              : "mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] bg-transparent px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] transition hover:opacity-80"
+                          }
                         >
+                          <CheckCircle2 size={17} />
                           Ver el avance de mi pedido
                         </a>
                       </>

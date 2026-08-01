@@ -173,12 +173,9 @@ export default function PedidoSeguimientoPage({
     : baseStep;
 
   function openPaymentReport() {
+    // La señal abre el formulario, que con formAsScreen sale como pantalla
+    // completa: ya no hace falta el scroll a la sección.
     setOpenReportSignal((current) => current + 1);
-    window.setTimeout(() => {
-      document
-        .getElementById("reporte-pago-seccion")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 60);
   }
 
   useEffect(() => {
@@ -485,9 +482,13 @@ export default function PedidoSeguimientoPage({
             <PublicOrderPaymentSection
               orderId={orderId}
               proofsEnabled={paymentProofsEnabled}
-              autoOpenForm={needsPaymentReport}
               forceOpenSignal={openReportSignal}
               livePaymentConfirmed={paymentConfirmed}
+              // El formulario se abre como PANTALLA completa (dueño
+              // 2026-07-31) y al enviar se vuelve a esta vista con los
+              // estados. Ya no se auto-abre al cargar: abrirlo es tocar
+              // "Reportar mi pago" (arriba o en la tarjeta de pagos).
+              formAsScreen
             />
           </div>
         ) : null}
