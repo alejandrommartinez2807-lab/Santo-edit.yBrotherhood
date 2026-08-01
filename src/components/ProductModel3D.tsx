@@ -111,7 +111,10 @@ export default function ProductModel3D({
   return (
     <div className={`relative ${className}`}>
       {/* touch-action="pan-y": el dedo sigue pudiendo desplazar la ficha hacia
-          abajo; el giro del plato se toma solo en horizontal. */}
+          abajo; el giro del plato se toma solo en horizontal.
+          camera-orbit: un poco por encima del horizonte, así se ve la tapa de
+          la lata y las papas asomando; y max-camera-orbit impide mirar desde
+          abajo del piso, que se ve feo en todos los platos. */}
       <model-viewer
         src={modelUrl}
         ios-src={iosModelUrl || undefined}
@@ -130,25 +133,32 @@ export default function ProductModel3D({
         exposure="1"
         reveal="auto"
         loading="eager"
+        camera-orbit="0deg 68deg auto"
+        max-camera-orbit="auto 88deg auto"
         className="h-full w-full bg-black"
       >
         {canOfferAR ? (
-          // Sin posicionamiento propio: <model-viewer> ya coloca este slot
-          // abajo y centrado. Solo le damos el look de la marca.
+          // El slot `ar-button` de <model-viewer> NO trae posición propia (la
+          // posición vive en su botón por defecto, que acá se reemplaza), así
+          // que si no se le pone, el botón cae arriba a la izquierda y choca
+          // con la categoría de la ficha. Se posiciona contra el propio
+          // <model-viewer>, que es `position: relative`.
+          // Quién lo MUESTRA sigue siendo la librería: esconde el slot solo
+          // cuando el teléfono no puede abrir AR.
           <button
             slot="ar-button"
             type="button"
-            className="flex items-center gap-2 whitespace-nowrap rounded-full bg-[var(--brand-primary)] px-4 py-2.5 text-[0.7rem] font-black uppercase tracking-[0.1em] text-black shadow-[0_12px_30px_-12px_rgba(var(--brand-primary-rgb),0.9)] transition hover:brightness-110 active:scale-[0.98]"
+            className="absolute bottom-3 right-3 flex items-center gap-2 whitespace-nowrap rounded-full bg-[var(--brand-primary)] px-3.5 py-2 text-[0.62rem] font-black uppercase tracking-[0.08em] text-black shadow-[0_12px_30px_-12px_rgba(var(--brand-primary-rgb),0.9)] transition hover:brightness-110 active:scale-[0.98]"
           >
-            <Smartphone size={14} />
+            <Smartphone size={13} />
             Ver en tu mesa
           </button>
         ) : null}
       </model-viewer>
 
-      {/* Arriba al centro: no choca con la categoría (izquierda) ni con la X
-          de cerrar (derecha) de la ficha. */}
-      <span className="pointer-events-none absolute left-1/2 top-4 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-3 py-1.5 text-[0.6rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)] backdrop-blur-sm">
+      {/* Abajo a la izquierda: arriba están la categoría y la X de cerrar de
+          la ficha, y a la derecha el botón de AR. */}
+      <span className="pointer-events-none absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-2.5 py-2 text-[0.58rem] font-black uppercase tracking-[0.06em] text-[var(--brand-primary)] backdrop-blur-sm">
         <Rotate3d size={12} />
         Gíralo con el dedo
       </span>

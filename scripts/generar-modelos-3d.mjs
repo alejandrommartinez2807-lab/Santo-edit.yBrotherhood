@@ -686,16 +686,26 @@ function buildPapas() {
   })
 
   // Papas asomando, cada una con su inclinación (semilla fija).
-  for (let i = 0; i < 16; i += 1) {
-    const lean = (random() - 0.5) * 26
-    const height = 1.5 + random() * 0.8
+  //
+  // El cartón es un prisma de 4 caras: su "radio" útil no es el de las
+  // esquinas sino el de las CARAS (radio × cos 45° ≈ 0,707). Si una papa se
+  // pasa de ahí, atraviesa la pared y se ve pegada por fuera — pasaba con la
+  // primera versión. Por eso las bases arrancan arriba (donde el cartón es más
+  // ancho), el desplazamiento va acotado y la inclinación es corta.
+  const BASE_Y = 1.25
+  const DESPLAZAMIENTO = 0.3
+  const INCLINACION = 12
+
+  for (let i = 0; i < 18; i += 1) {
+    const lean = (random() - 0.5) * 2 * INCLINACION
+    const height = 1.5 + random() * 0.85
     addPart(groups, {
       geom: box({ width: 0.11, height, depth: 0.11 }),
       material: "papa",
       position: [
-        (random() - 0.5) * 0.9,
-        1.1 + height / 2 - 0.35,
-        (random() - 0.5) * 0.9,
+        (random() - 0.5) * 2 * DESPLAZAMIENTO,
+        BASE_Y + height / 2,
+        (random() - 0.5) * 2 * DESPLAZAMIENTO,
       ],
       rotation: { axis: random() > 0.5 ? "x" : "z", degrees: lean },
     })
