@@ -1188,6 +1188,13 @@ export default function CartDrawer({
     : paymentMethod.trim() && paymentMethod !== "Mixto"
       ? [paymentMethod.trim()]
       : [];
+  // Método(s) elegido(s) SOLO en divisas (Zelle, efectivo en $…): los
+  // totales grandes se muestran en $, no en Bs (dueño 2026-08-01: "elegí
+  // Zelle y veo el monto en bolívares").
+  const selectedMethodsAreUsdOnly =
+    !isMixedPayment &&
+    selectedPaymentMethods.length > 0 &&
+    selectedPaymentMethods.every((method) => !isVesPaymentMethod(method));
   const allPaymentMethodDetails = publicConfig.publicPaymentMethodDetails || {};
   const checkoutPaymentMethodDetails = selectedPaymentMethods.length
     ? Object.fromEntries(
@@ -4982,6 +4989,26 @@ export default function CartDrawer({
                           </span>
                         </p>
                       </>
+                    ) : selectedMethodsAreUsdOnly ? (
+                      // Método en DIVISAS (Zelle, efectivo en $…): el monto
+                      // grande va en dólares — mostrarlo en Bs confundía
+                      // (dueño 2026-08-01). El equivalente queda de detalle.
+                      <>
+                        <p className="text-sm font-black leading-tight text-[var(--brand-ink-3)]">
+                          Con {selectedPaymentMethods.join(" + ")}:
+                          <span className="mt-0.5 block text-2xl font-black leading-none text-[var(--brand-primary)]">
+                            {formatUSD(totalUSD)}
+                          </span>
+                        </p>
+                        {exchangeRate > 0 && totalVES > 0 ? (
+                          <p className="text-sm font-black leading-tight text-[var(--brand-ink-2)]">
+                            Equivale a:
+                            <span className="ml-1.5 text-lg font-black text-[var(--brand-ink-3)]">
+                              Bs {formatVES(totalVES)}
+                            </span>
+                          </p>
+                        ) : null}
+                      </>
                     ) : exchangeRate > 0 && totalVES > 0 ? (
                       <>
                         <p className="text-sm font-black leading-tight text-[var(--brand-ink-3)]">
@@ -5184,7 +5211,18 @@ export default function CartDrawer({
                           ? `Paso ${checkoutStep} de ${totalWizardSteps} · Total`
                           : "Total"}
                       </p>
-                      {exchangeRate > 0 && totalVES > 0 ? (
+                      {/* Con método SOLO en divisas ya elegido, el total de
+                          la barra también va en $ (dueño 2026-08-01). */}
+                      {selectedMethodsAreUsdOnly ? (
+                        <p className="truncate text-base font-black leading-tight text-[var(--brand-ink-3)]">
+                          {formatUSD(totalUSD)}
+                          {exchangeRate > 0 && totalVES > 0 ? (
+                            <span className="ml-1.5 hidden text-xs font-bold text-[var(--brand-ink-2)]/60 sm:inline">
+                              · Bs {formatVES(totalVES)}
+                            </span>
+                          ) : null}
+                        </p>
+                      ) : exchangeRate > 0 && totalVES > 0 ? (
                         <p className="truncate text-base font-black leading-tight text-[var(--brand-ink-3)]">
                           Bs {formatVES(totalVES)}
                           <span className="ml-1.5 hidden text-xs font-bold text-[var(--brand-ink-2)]/60 sm:inline">
