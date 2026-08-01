@@ -589,7 +589,9 @@ const MATERIALS = {
   pan: { color: "#D9A05B", roughness: 0.82 },
   panDorado: { color: "#C98443", roughness: 0.8 },
   ajonjoli: { color: "#F3E2BE", roughness: 0.6 },
-  carne: { color: "#4E2A17", roughness: 0.85 },
+  // Más oscura que el pan y que el queso: si no, la carne no se distingue en
+  // la miniatura de la ficha.
+  carne: { color: "#3E2012", roughness: 0.85 },
   pollo: { color: "#C98C3C", roughness: 0.78 },
   veggie: { color: "#6B5B32", roughness: 0.8 },
   queso: { color: "#F0A81E", roughness: 0.55 },
@@ -606,7 +608,7 @@ const MATERIALS = {
   pepinillo: { color: "#6E8F3A", roughness: 0.45 },
   papa: { color: "#EDBB52", roughness: 0.7 },
   nugget: { color: "#D89F45", roughness: 0.75 },
-  nuggetPicante: { color: "#B33417", roughness: 0.5 },
+  nuggetPicante: { color: "#C4551F", roughness: 0.45 },
   cartonRojo: { color: "#C62828", roughness: 0.7 },
   bowl: { color: "#2E2E2E", roughness: 0.6 },
   bandeja: { color: "#3A2A20", roughness: 0.7 },
@@ -616,7 +618,7 @@ const MATERIALS = {
   lata: { color: "#C8102E", roughness: 0.28, metallic: 0.25 },
   aluminio: { color: "#C9CCD1", roughness: 0.22, metallic: 0.85 },
   botella: { color: "#8A5A2B", roughness: 0.2 },
-  botellaAgua: { color: "#BFD9E8", roughness: 0.15 },
+  botellaAgua: { color: "#DCEAF2", roughness: 0.4 },
   etiqueta: { color: "#C8102E", roughness: 0.55 },
   tapaBotella: { color: "#B3121E", roughness: 0.5 },
 }
@@ -637,9 +639,13 @@ const CARNES = {
   veggie: { alto: 0.26, radio: 1.02, material: "veggie" },
 }
 
+// La loncha mide 1,58 y no 1,95: con el pan en radio ~1,03, a 1,95 las
+// esquinas llegaban a 1,38 y sobresalían un 34%. Con UNA loncha pasaba por
+// queso derretido; con 2 a 5 apiladas quedaban unas alas amarillas que tapaban
+// la carne y el pan. A 1,58 la esquina llega a 1,12: asoma lo justo.
 function apilarQueso(groups, y, material, giro) {
   addPart(groups, {
-    geom: box({ width: 1.95, height: 0.05, depth: 1.95 }),
+    geom: box({ width: 1.58, height: 0.05, depth: 1.58 }),
     material,
     position: [0, y, 0],
     rotation: { axis: "y", degrees: giro },
@@ -662,7 +668,7 @@ function apilarTocineta(groups, y, random) {
 function apilarChorizo(groups, y, random) {
   for (let i = 0; i < 5; i += 1) {
     const angulo = random() * 360
-    const distancia = 0.2 + random() * 0.45
+    const distancia = 0.42 + random() * 0.36
     addPart(groups, {
       geom: cylinder({ radiusTop: 0.15, radiusBottom: 0.15, height: 0.44, segments: 14 }),
       material: "chorizo",
@@ -684,7 +690,7 @@ function apilarChorizo(groups, y, random) {
 function apilarChampi(groups, y, random) {
   for (let i = 0; i < 6; i += 1) {
     const angulo = random() * Math.PI * 2
-    const distancia = 0.25 + random() * 0.5
+    const distancia = 0.42 + random() * 0.42
     addPart(groups, {
       geom: cylinder({ radiusTop: 0.21, radiusBottom: 0.24, height: 0.09, segments: 16 }),
       material: "champi",
@@ -697,7 +703,7 @@ function apilarChampi(groups, y, random) {
 function apilarJalapeno(groups, y, random) {
   for (let i = 0; i < 7; i += 1) {
     const angulo = random() * Math.PI * 2
-    const distancia = 0.25 + random() * 0.5
+    const distancia = 0.45 + random() * 0.45
     addPart(groups, {
       geom: cylinder({
         radiusTop: 0.12,
@@ -717,7 +723,7 @@ function apilarJalapeno(groups, y, random) {
 function apilarPepinillo(groups, y, random) {
   for (let i = 0; i < 4; i += 1) {
     const angulo = random() * Math.PI * 2
-    const distancia = 0.3 + random() * 0.42
+    const distancia = 0.45 + random() * 0.4
     addPart(groups, {
       geom: cylinder({ radiusTop: 0.23, radiusBottom: 0.23, height: 0.055, segments: 16 }),
       material: "pepinillo",
@@ -860,7 +866,7 @@ function buildBurger({
     geom: sphere({ radius: 1.03, thetaLength: Math.PI / 2, widthSegments: SEG, heightSegments: 12 }),
     material: "panDorado",
     position: [0, y + 0.06, 0],
-    scale: [1, 0.72, 1],
+    scale: [1, 0.5, 1],
   })
 
   for (let i = 0; i < 14; i += 1) {
@@ -871,7 +877,7 @@ function buildBurger({
       material: "ajonjoli",
       position: [
         1.02 * Math.sin(theta) * Math.cos(phi),
-        y + 0.06 + 1.02 * Math.cos(theta) * 0.72,
+        y + 0.06 + 1.02 * Math.cos(theta) * 0.5,
         1.02 * Math.sin(theta) * Math.sin(phi),
       ],
       scale: [1.5, 0.7, 1],
@@ -890,14 +896,14 @@ function buildPapas({ cheddar = false, tocineta = false, semilla = 77712 } = {})
 
   addPart(groups, {
     geom: cylinder({
-      radiusTop: 0.85,
-      radiusBottom: 0.55,
-      height: 1.5,
+      radiusTop: 0.98,
+      radiusBottom: 0.64,
+      height: 1.7,
       segments: 4,
       capTop: false,
     }),
     material: "cartonRojo",
-    position: [0, 0.75, 0],
+    position: [0, 0.85, 0],
     rotation: { axis: "y", degrees: 45 },
   })
 
@@ -905,10 +911,10 @@ function buildPapas({ cheddar = false, tocineta = false, semilla = 77712 } = {})
   // (radio × cos 45 ≈ 0,707), no el de las esquinas. Si una papa se pasa de
   // ahí, atraviesa la pared y se ve pegada por fuera.
   const BASE_Y = 1.25
-  const DESPLAZAMIENTO = 0.3
+  const DESPLAZAMIENTO = 0.32
 
   for (let i = 0; i < 18; i += 1) {
-    const alto = 1.5 + random() * 0.85
+    const alto = 1.05 + random() * 0.6
     addPart(groups, {
       geom: box({ width: 0.11, height: alto, depth: 0.11 }),
       material: "papa",
@@ -930,7 +936,7 @@ function buildPapas({ cheddar = false, tocineta = false, semilla = 77712 } = {})
         material: "cheddarSalsa",
         position: [
           Math.cos(angulo) * distancia,
-          1.45 + random() * 0.75,
+          2.05 + random() * 0.55,
           Math.sin(angulo) * distancia,
         ],
         scale: [1.3, 0.5, 1.3],
@@ -947,7 +953,7 @@ function buildPapas({ cheddar = false, tocineta = false, semilla = 77712 } = {})
         material: "tocineta",
         position: [
           Math.cos(angulo) * distancia,
-          1.75 + random() * 0.7,
+          2.25 + random() * 0.5,
           Math.sin(angulo) * distancia,
         ],
         rotation: { axis: "y", degrees: random() * 90 },
@@ -965,30 +971,35 @@ function buildBites({ picante = false, semilla = 5150 } = {}) {
 
   addPart(groups, {
     geom: cylinder({
-      radiusTop: 1.1,
+      radiusTop: 1.05,
       radiusBottom: 0.8,
-      height: 0.85,
+      height: 0.8,
       segments: 4,
       capTop: false,
     }),
     material: "cartonRojo",
-    position: [0, 0.42, 0],
+    position: [0, 0.4, 0],
     rotation: { axis: "y", degrees: 45 },
   })
 
+  // Bien achatados y alargados: una esfera poco deformada parecía una bolita
+  // (y en la versión picante, cerezas).
   for (let i = 0; i < 11; i += 1) {
     const angulo = random() * Math.PI * 2
-    const distancia = random() * 0.42
+    const distancia = random() * 0.4
     addPart(groups, {
-      geom: sphere({ radius: 0.27, widthSegments: 12, heightSegments: 8 }),
+      geom: sphere({ radius: 0.26, widthSegments: 12, heightSegments: 8 }),
       material,
       position: [
         Math.cos(angulo) * distancia,
-        0.62 + random() * 0.55,
+        0.66 + random() * 0.5,
         Math.sin(angulo) * distancia,
       ],
-      scale: [1.25, 0.72, 0.95],
-      rotation: { axis: "y", degrees: random() * 180 },
+      scale: [1.5, 0.5, 0.85],
+      rotation: [
+        { axis: "z", degrees: (random() - 0.5) * 40 },
+        { axis: "y", degrees: random() * 180 },
+      ],
     })
   }
 
@@ -1147,7 +1158,7 @@ function buildBotella({ agua = false } = {}) {
     geom: cylinder({
       radiusTop: 0.435,
       radiusBottom: 0.435,
-      height: 0.78,
+      height: 1.05,
       segments: SEG,
       capTop: false,
       capBottom: false,
