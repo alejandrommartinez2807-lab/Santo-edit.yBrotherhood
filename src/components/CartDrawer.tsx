@@ -495,6 +495,11 @@ export default function CartDrawer({
   // Billete con el que paga la pata en EFECTIVO del mixto (lote v6): viaja en
   // la nota para que caja tenga el vuelto listo.
   const [mixedUsdGivenAmount, setMixedUsdGivenAmount] = useState("");
+  // true si el "Monto en $" del mixto lo propuso un CHIP de billete (no lo
+  // escribió el cliente): tocar otro billete lo re-propone. Antes el monto
+  // viejo se quedaba ("no se pisa") y los números no cuadraban hasta
+  // corregirlos a mano (dueño 2026-08-01: "marco 20, luego 10, me dice 16").
+  const mixedUsdAmountFromChipRef = useRef(false);
   const [distanceQuote, setDistanceQuote] = useState<{
     distanceKm: number;
     costUSD: number;
@@ -1709,6 +1714,8 @@ export default function CartDrawer({
       0,
       totalUSD - (exchangeRate > 0 ? bsPart / exchangeRate : 0),
     );
+    // Completar es una decisión del cliente: los chips ya no lo pisan.
+    mixedUsdAmountFromChipRef.current = false;
     setMixedUsdAmount(remainingUSD.toFixed(2));
   }
 
@@ -2253,12 +2260,25 @@ export default function CartDrawer({
                     // la otra pata. Con un monto ya escrito NO se pisa.
                     onClick={() => {
                       setMixedUsdGivenAmount(String(bill));
-                      if (mixedUsdValue <= 0) {
+                      // Propone la pata con el billete como tope. Si el
+                      // monto actual vino de OTRO chip (no escrito a mano),
+                      // se re-propone con el billete nuevo para que los
+                      // números cuadren solos (dueño 2026-08-01).
+                      if (
+                        mixedUsdValue <= 0 ||
+                        mixedUsdAmountFromChipRef.current
+                      ) {
+                        const available =
+                          Math.max(missingUSD, 0) +
+                          (mixedUsdAmountFromChipRef.current
+                            ? mixedUsdValue
+                            : 0);
                         const cap =
-                          Math.round(
-                            Math.min(bill, Math.max(missingUSD, 0)) * 100,
-                          ) / 100;
-                        if (cap > 0) setMixedUsdAmount(String(cap));
+                          Math.round(Math.min(bill, available) * 100) / 100;
+                        if (cap > 0) {
+                          setMixedUsdAmount(String(cap));
+                          mixedUsdAmountFromChipRef.current = true;
+                        }
                       }
                     }}
                     className={`min-w-0 rounded-full border px-1 py-2 text-center text-[0.66rem] font-black tracking-[0.02em] shadow-sm transition active:scale-95 ${
@@ -2307,7 +2327,11 @@ export default function CartDrawer({
             <input
               inputMode="decimal"
               value={mixedUsdAmount}
-              onChange={(event) => setMixedUsdAmount(event.target.value)}
+              onChange={(event) => {
+                // Escrito a mano: desde aquí los chips NO lo pisan.
+                mixedUsdAmountFromChipRef.current = false;
+                setMixedUsdAmount(event.target.value);
+              }}
               placeholder="Monto en $"
               className="min-w-0 flex-1 rounded-2xl border border-[var(--brand-primary)]/45 bg-white px-4 py-3 text-sm font-bold text-[#1a1a1a] outline-none placeholder:text-[#1a1a1a]/45 focus:border-[var(--brand-primary)]"
             />
