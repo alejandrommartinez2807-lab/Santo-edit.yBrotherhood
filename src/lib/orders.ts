@@ -60,6 +60,8 @@ export type {
   SaveMenuProductInput,
   UploadedMenuProductImage,
   UploadMenuProductImageInput,
+  UploadedMenuProductModel,
+  UploadMenuProductModelInput,
 } from "./ordersMenu"
 
 export {
@@ -67,6 +69,7 @@ export {
   getMenuProducts,
   saveMenuProduct,
   uploadMenuProductImage,
+  uploadMenuProductModel,
 } from "./ordersMenu"
 
 export type {

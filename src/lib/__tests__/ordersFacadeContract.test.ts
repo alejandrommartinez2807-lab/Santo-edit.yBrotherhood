@@ -32,6 +32,7 @@ const FUNCTION_EXPORTS = [
   "getMenuProducts",
   "saveMenuProduct",
   "uploadMenuProductImage",
+  "uploadMenuProductModel",
   "clearOrders",
   "confirmOrderStaffItems",
   "createOrder",

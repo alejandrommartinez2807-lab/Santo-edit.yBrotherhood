@@ -14,6 +14,7 @@ import {
   PackageCheck,
   Plus,
   RefreshCw,
+  Rotate3d,
   Search,
   SlidersHorizontal,
   Star,
@@ -78,6 +79,9 @@ const EMPTY_FORM = {
   requiresWaiterConfirmation: false,
   inventoryDiscountEnabled: true,
   ivaRate: "" as string, // "" = usa el IVA por defecto del negocio
+  // Carta en 3D / Realidad Aumentada. Ambos opcionales: "" = producto normal.
+  model3dUrl: "", // .glb — habilita girar el plato (y AR en Android)
+  model3dIosUrl: "", // .usdz — es el único que habilita el AR en iPhone
 }
 
 type MenuProduct = Product & {
@@ -112,6 +116,13 @@ type ApiResponse = {
     viewUrl?: string
     fileName?: string
     fileId?: string
+    uploadedAt?: string
+  }
+  model?: {
+    modelUrl?: string
+    fileName?: string
+    fileId?: string
+    mimeType?: string
     uploadedAt?: string
   }
 }
@@ -440,6 +451,10 @@ function normalizeMenuProduct(value: unknown): MenuProduct | null {
     requiresWaiterConfirmation: source.requiresWaiterConfirmation === true,
     inventoryDiscountEnabled: source.inventoryDiscountEnabled !== false,
     premiumSummary: String(source.premiumSummary || "").trim(),
+    // Mismo motivo que comboItems/ivaRate arriba: si este normalizador no copia
+    // el modelo 3D, abrir el producto y guardarlo lo borraría.
+    model3dUrl: String(source.model3dUrl || "").trim(),
+    model3dIosUrl: String(source.model3dIosUrl || "").trim(),
   }
 }
 
@@ -489,6 +504,8 @@ function buildFormFromProduct(product: MenuProduct, categoryOptions: string[]): 
     requiresWaiterConfirmation: product.requiresWaiterConfirmation === true,
     inventoryDiscountEnabled: product.inventoryDiscountEnabled !== false,
     ivaRate: product.ivaRate != null ? String(product.ivaRate) : "",
+    model3dUrl: String(product.model3dUrl || "").trim(),
+    model3dIosUrl: String(product.model3dIosUrl || "").trim(),
   }
 }
 
@@ -583,6 +600,55 @@ async function prepareMenuImageForUpload(file: File) {
   }
 }
 
+// Carta en 3D / AR. Dos archivos por producto, ambos opcionales:
+//   .glb  → gira el plato en el navegador y da AR en Android
+//   .usdz → único formato que acepta el AR de iPhone (AR Quick Look)
+type MenuModelKind = "glb" | "usdz"
+
+const MENU_MODEL_KINDS: Record<
+  MenuModelKind,
+  { extension: string; mimeType: string; field: "model3dUrl" | "model3dIosUrl"; label: string }
+> = {
+  glb: {
+    extension: ".glb",
+    mimeType: "model/gltf-binary",
+    field: "model3dUrl",
+    label: "modelo 3D (.glb)",
+  },
+  usdz: {
+    extension: ".usdz",
+    mimeType: "model/vnd.usdz+zip",
+    field: "model3dIosUrl",
+    label: "modelo para iPhone (.usdz)",
+  },
+}
+
+const MENU_MODEL_MAX_BYTES = 12_000_000
+// Aviso honesto: en Vercel las funciones cortan la petición cerca de 4,5 MB.
+// Por encima de eso la subida falla por plataforma, sin llegar al código; la
+// salida es comprimir el modelo o pegar directamente su URL.
+const MENU_MODEL_SAFE_BYTES = 4_000_000
+
+async function prepareMenuModelForUpload(file: File, kind: MenuModelKind) {
+  const { extension, mimeType } = MENU_MODEL_KINDS[kind]
+
+  if (!file.name.toLowerCase().endsWith(extension)) {
+    throw new Error(`Selecciona un archivo ${extension} válido.`)
+  }
+
+  if (file.size > MENU_MODEL_MAX_BYTES) {
+    throw new Error(
+      `El archivo pesa ${(file.size / 1_000_000).toFixed(1)} MB y el máximo es 12 MB. Comprime el modelo antes de subirlo.`,
+    )
+  }
+
+  return {
+    dataUrl: await readFileAsDataUrl(file),
+    mimeType,
+    fileName: file.name,
+  }
+}
+
 export default function LocalMenuPage() {
   const [adminPassword, setAdminPassword] = useState("")
   const [passwordInput, setPasswordInput] = useState("")
@@ -606,7 +672,10 @@ export default function LocalMenuPage() {
   const [deletingProductId, setDeletingProductId] = useState<number | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [uploadingModelKind, setUploadingModelKind] = useState<MenuModelKind | "">("")
   const imageInputRef = useRef<HTMLInputElement | null>(null)
+  const glbInputRef = useRef<HTMLInputElement | null>(null)
+  const usdzInputRef = useRef<HTMLInputElement | null>(null)
   // Snapshot del texto simple al cargar un producto para editar: en modo
   // SIMPLE (sin módulo avanzado) solo se envían al guardar las estructuras
   // cuyo texto realmente cambió — las demás las conserva el servidor. Antes
@@ -1106,6 +1175,73 @@ export default function LocalMenuPage() {
     }
   }
 
+  async function handleModelUpload(kind: MenuModelKind, file?: File) {
+    const { field, label } = MENU_MODEL_KINDS[kind]
+
+    if (!adminPassword) {
+      setErrorMessage("Debes iniciar sesión antes de subir un modelo 3D.")
+      return
+    }
+
+    if (!file) {
+      setErrorMessage("No se seleccionó ningún archivo.")
+      return
+    }
+
+    try {
+      setUploadingModelKind(kind)
+      setErrorMessage(null)
+      setSuccessMessage(`Preparando el ${label} para subir...`)
+
+      const preparedModel = await prepareMenuModelForUpload(file, kind)
+      setSuccessMessage(`Subiendo el ${label}. Puede tardar según el peso del archivo.`)
+
+      const response = await fetch("/api/menu-products/upload-model", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": adminPassword,
+        },
+        body: JSON.stringify({
+          ...preparedModel,
+          productName: form.name || "modelo-producto",
+        }),
+      })
+
+      const data = await readApiResponse(response)
+
+      if (!response.ok) {
+        // Vercel corta el cuerpo de la petición antes de que llegue a la ruta:
+        // el 413 sin mensaje propio se traduce a algo que se pueda accionar.
+        if (response.status === 413 && file.size > MENU_MODEL_SAFE_BYTES) {
+          throw new Error(
+            `El servidor rechazó el archivo por peso (${(file.size / 1_000_000).toFixed(1)} MB). Comprime el modelo por debajo de 4 MB o súbelo a otro lado y pega su URL aquí.`,
+          )
+        }
+
+        throw new Error(data.error || "No se pudo subir el modelo 3D")
+      }
+
+      const modelUrl = String(data.model?.modelUrl || "").trim()
+
+      if (!modelUrl) {
+        throw new Error("El modelo subió, pero el servidor no devolvió un enlace válido")
+      }
+
+      updateForm(field, modelUrl)
+      setSuccessMessage(
+        `${label.charAt(0).toUpperCase()}${label.slice(1)} subido. Ahora guarda el producto para que se vea en la carta.`,
+      )
+    } catch (error) {
+      setSuccessMessage(null)
+      setErrorMessage(
+        error instanceof Error ? error.message : "No se pudo subir el modelo 3D",
+      )
+    } finally {
+      setUploadingModelKind("")
+    }
+  }
+
   async function saveProduct(customInput?: Partial<MenuProduct>) {
     if (!adminPassword) return null
 
@@ -1216,6 +1352,8 @@ export default function LocalMenuPage() {
       requiresWaiterConfirmation: form.requiresWaiterConfirmation,
       inventoryDiscountEnabled: form.inventoryDiscountEnabled,
       ivaRate: form.ivaRate === "" ? null : Number(form.ivaRate),
+      model3dUrl: form.model3dUrl.trim(),
+      model3dIosUrl: form.model3dIosUrl.trim(),
     }
 
     if (!input.name) {
@@ -1973,6 +2111,113 @@ export default function LocalMenuPage() {
                 </div>
               </div>
 
+              <div className="lg:col-span-2 rounded-[1.25rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
+                      <Rotate3d size={15} />
+                      Plato en 3D y realidad aumentada
+                    </p>
+                    <p className="mt-1 max-w-[46rem] text-sm font-bold leading-6 text-[var(--brand-ink-2)]/65">
+                      Opcional. Si subes un modelo 3D, el cliente puede girar el plato con el dedo y verlo sobre su mesa. El <span className="font-black text-[var(--brand-primary)]">.usdz</span> es el que habilita la vista en iPhone. Sin modelo, el producto se ve exactamente igual que hoy.
+                    </p>
+                  </div>
+
+                  <p className="max-w-[240px] text-[0.68rem] font-bold leading-4 text-[var(--brand-ink)]/55 lg:text-right">
+                    Máximo 12 MB por archivo. Si el servidor lo rechaza por peso, comprime el modelo o pega aquí su URL.
+                  </p>
+                </div>
+
+                <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                  {(["glb", "usdz"] as MenuModelKind[]).map((kind) => {
+                    const { extension, field } = MENU_MODEL_KINDS[kind]
+                    const inputRef = kind === "glb" ? glbInputRef : usdzInputRef
+                    const value = form[field]
+                    const isUploading = uploadingModelKind === kind
+
+                    return (
+                      <div
+                        key={kind}
+                        className="rounded-2xl border-2 border-[var(--brand-primary)]/20 bg-white p-3"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-[0.68rem] font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
+                            {kind === "glb" ? `Modelo 3D (${extension})` : `Vista iPhone (${extension})`}
+                          </p>
+
+                          <div className="flex items-center gap-2">
+                            <input
+                              ref={inputRef}
+                              type="file"
+                              accept={extension}
+                              disabled={Boolean(uploadingModelKind)}
+                              onChange={(event) => {
+                                const file = event.target.files?.[0]
+                                event.target.value = ""
+                                handleModelUpload(kind, file)
+                              }}
+                              className="hidden"
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => inputRef.current?.click()}
+                              disabled={Boolean(uploadingModelKind)}
+                              className={`inline-flex min-h-[38px] items-center justify-center gap-2 rounded-xl border-2 border-[var(--brand-primary)] px-3 py-2 text-[0.64rem] font-black uppercase tracking-[0.1em] transition disabled:cursor-not-allowed ${
+                                isUploading
+                                  ? "bg-[var(--brand-accent-100)] text-[var(--brand-primary)]/60"
+                                  : "bg-[var(--brand-accent)] text-[var(--brand-ink)] hover:bg-[var(--brand-accent-200)]"
+                              }`}
+                            >
+                              {isUploading ? (
+                                <Loader2 size={14} className="animate-spin" />
+                              ) : (
+                                <UploadCloud size={14} />
+                              )}
+                              {isUploading ? "Subiendo" : `Subir ${extension}`}
+                            </button>
+
+                            {/* Sin este botón el dueño queda atrapado con un
+                                modelo feo y sin forma de volver a la foto. */}
+                            {value ? (
+                              <button
+                                type="button"
+                                onClick={() => updateForm(field, "")}
+                                disabled={Boolean(uploadingModelKind)}
+                                className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-xl border-2 border-[var(--brand-primary)]/30 bg-white px-3 py-2 text-[0.64rem] font-black uppercase tracking-[0.1em] text-[var(--brand-ink-2)]/70 transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] disabled:cursor-not-allowed"
+                              >
+                                <Trash2 size={14} />
+                                Quitar
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <div className="mt-3">
+                          <InputField
+                            label={kind === "glb" ? "Archivo .glb (URL)" : "Archivo .usdz (URL)"}
+                            value={value}
+                            onChange={(newValue) => updateForm(field, newValue)}
+                            placeholder={`Sube el archivo o pega https://...${extension}`}
+                            full
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                <p className="mt-3 text-[0.72rem] font-bold leading-5 text-[var(--brand-ink-2)]/70">
+                  {form.model3dUrl
+                    ? form.model3dIosUrl
+                      ? "Listo: este plato se gira en 3D y ofrece «Ver en tu mesa» en Android y en iPhone."
+                      : "Este plato ya se gira en 3D y ofrece «Ver en tu mesa» en Android. En iPhone se verá en 3D, pero sin el botón de realidad aumentada hasta que subas el .usdz."
+                    : form.model3dIosUrl
+                      ? "Falta el .glb: sin él el plato no se muestra en 3D en la carta (el .usdz solo sirve para el AR de iPhone)."
+                      : "Sin modelo cargado: este producto se muestra con su foto de siempre."}
+                </p>
+              </div>
+
               <div className="lg:col-span-2">
                 <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                   Descripción
@@ -2012,7 +2257,7 @@ export default function LocalMenuPage() {
                 <button
                   type="button"
                   onClick={() => saveProduct()}
-                  disabled={isSaving || isUploadingImage}
+                  disabled={isSaving || isUploadingImage || Boolean(uploadingModelKind)}
                   className="inline-flex min-h-[48px] w-full max-w-[280px] items-center justify-center gap-2 rounded-2xl border-2 border-[var(--brand-primary)] bg-[var(--brand-accent)] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-ink)] disabled:opacity-50"
                 >
                   {isSaving ? <Loader2 size={18} className="animate-spin" /> : <PackageCheck size={18} />}

@@ -38,6 +38,8 @@ export function menuProductToPublicProduct(product: MenuProduct): Product {
     inventoryDiscountEnabled: product.inventoryDiscountEnabled,
     premiumSummary: product.premiumSummary,
     ivaRate: product.ivaRate,
+    model3dUrl: product.model3dUrl,
+    model3dIosUrl: product.model3dIosUrl,
   }
 }
 
