@@ -4948,8 +4948,26 @@ export default function CartDrawer({
                   {/* Redacción fácil de entender (mismo cálculo que antes): se
                       dice en cristiano cuánto y en qué moneda. El desglose queda
                       como detalle chico debajo. */}
+                  {/* MIXTO elegido y completo: se muestra EL REPARTO, no el
+                      total "en Bs o en $" — eso ignoraba lo que el cliente
+                      acababa de repartir y confundía (dueño 2026-07-31). */}
                   <div className="mt-3 space-y-1.5">
-                    {exchangeRate > 0 && totalVES > 0 ? (
+                    {isMixedPayment && isMixedPaymentComplete ? (
+                      <>
+                        <p className="text-sm font-black leading-tight text-[var(--brand-ink-3)]">
+                          Con {mixedBsMethod || "tu método en Bs"}:
+                          <span className="mt-0.5 block text-2xl font-black leading-none text-[var(--brand-primary)]">
+                            Bs {formatVES(mixedBsValue)}
+                          </span>
+                        </p>
+                        <p className="text-sm font-black leading-tight text-[var(--brand-ink-2)]">
+                          Más con {mixedUsdMethod || "tu método en $"}:
+                          <span className="ml-1.5 text-lg font-black text-[var(--brand-ink-3)]">
+                            {formatUSD(mixedUsdValue)}
+                          </span>
+                        </p>
+                      </>
+                    ) : exchangeRate > 0 && totalVES > 0 ? (
                       <>
                         <p className="text-sm font-black leading-tight text-[var(--brand-ink-3)]">
                           Tienes que pagar esta cantidad en bolívares:

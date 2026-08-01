@@ -1303,12 +1303,18 @@ export default function PublicOrderPaymentSection({
                   : (
                     <>
                       {/* Sin datos que mostrar (efectivo) "Paga con estos datos"
-                          era una promesa vacía. */}
+                          era una promesa vacía. Pero "Tu pago es en efectivo"
+                          solo vale si TODO es efectivo: en un mixto o un pago
+                          móvil sin datos configurados era falso (se veía
+                          "TU PAGO ES EN EFECTIVO (Pago móvil + …)", dueño
+                          2026-07-31). */}
                       {hasDetails
                         ? prepayOptional
                           ? "Si quieres pagar ya, usa estos datos"
                           : "Paga con estos datos"
-                        : "Tu pago es en efectivo"}
+                        : onlyCashChosen
+                          ? "Tu pago es en efectivo"
+                          : "Así pagas tu pedido"}
                       {/* El método solo si hay VARIOS: con uno, el desplegable
                           de abajo ya dice "Ver datos de Pago móvil" y la fila
                           del método lo repite — el nombre salía tres veces y el
@@ -1736,8 +1742,10 @@ export default function PublicOrderPaymentSection({
                           </span>
                         ) : null}
                       </p>
+                      {/* "de tu pedido" a secas confundía en mixto: esta cifra
+                          es LA PATA de este método, no el total. */}
                       <p className="text-[0.7rem] font-bold text-[var(--brand-ink-2)]/55">
-                        — el monto de tu pedido, no se cambia
+                        — lo que va por este método, no se cambia
                       </p>
                     </div>
                   );
