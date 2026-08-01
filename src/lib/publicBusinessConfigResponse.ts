@@ -270,6 +270,7 @@ export function buildPublicBusinessConfigResponse(
         promotionPriceUSD > 0
     )
   const featuredProductsAccess = getModulePlanAccess(config, "featuredProducts")
+  const menu3dAccess = getModulePlanAccess(config, "menu3d")
   const paymentProofsAccess = getModulePlanAccess(config, "paymentProofs")
   const openAccountsAccess = getModulePlanAccess(config, "openAccounts")
   const splitBillAccess = getModulePlanAccess(config, "splitBill")
@@ -362,6 +363,11 @@ export function buildPublicBusinessConfigResponse(
     publicProductCardSize: normalizePublicProductCardSize(
       config.publicProductCardSize,
     ),
+    // Módulo "Platos en 3D": si el plan no lo incluye o el dueño lo apaga, la
+    // carta no muestra el distintivo 3D ni el visor, aunque los productos
+    // tengan su modelo guardado. Se usa effectiveEnabled (plan Y interruptor)
+    // porque acá puede llegar una config SIN normalizar.
+    menu3dModuleEnabled: menu3dAccess.effectiveEnabled,
     publicAvailabilityLabel:
       cleanText(config.publicAvailabilityLabel) || "Disponible",
     locationButtonText: cleanText(config.locationButtonText),

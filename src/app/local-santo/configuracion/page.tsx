@@ -39,6 +39,7 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
+  Rotate3d,
   Store,
   Table2,
   Truck,
@@ -233,6 +234,7 @@ type BusinessConfig = {
   inventoryModuleEnabled: boolean;
   inventoryAlertsModuleEnabled: boolean;
   advancedMenuModuleEnabled: boolean;
+  menu3dModuleEnabled: boolean;
   productVariationsModuleEnabled: boolean;
   productAddonsModuleEnabled: boolean;
   productBuilderModuleEnabled: boolean;
@@ -422,6 +424,7 @@ const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   inventoryModuleEnabled: true,
   inventoryAlertsModuleEnabled: true,
   advancedMenuModuleEnabled: true,
+  menu3dModuleEnabled: true,
   productVariationsModuleEnabled: true,
   productAddonsModuleEnabled: true,
   productBuilderModuleEnabled: true,
@@ -472,6 +475,7 @@ const AVAILABLE_MODULES_PATCH: Partial<BusinessConfig> = {
   inventoryModuleEnabled: true,
   inventoryAlertsModuleEnabled: true,
   advancedMenuModuleEnabled: true,
+  menu3dModuleEnabled: true,
   productVariationsModuleEnabled: true,
   productAddonsModuleEnabled: true,
   productBuilderModuleEnabled: true,
@@ -557,6 +561,7 @@ const MODULE_ICON_BY_KEY: Partial<Record<LocalModuleKey, ReactNode>> = {
   promotions: <Grid2X2 size={18} />,
   menuProducts: <Store size={18} />,
   featuredProducts: <Store size={18} />,
+  menu3d: <Rotate3d size={18} />,
   customers: <Phone size={18} />,
   inventory: <Store size={18} />,
   advancedReports: <BarChart3 size={18} />,
@@ -1277,6 +1282,10 @@ function normalizeBusinessConfig(value: unknown): BusinessConfig {
     advancedMenuModuleEnabled: normalizeBoolean(
       source.advancedMenuModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.advancedMenuModuleEnabled,
+    ),
+    menu3dModuleEnabled: normalizeBoolean(
+      source.menu3dModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.menu3dModuleEnabled,
     ),
     productVariationsModuleEnabled: normalizeBoolean(
       source.productVariationsModuleEnabled,

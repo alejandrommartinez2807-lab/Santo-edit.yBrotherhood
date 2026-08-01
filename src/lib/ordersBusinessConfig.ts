@@ -220,6 +220,8 @@ export type BusinessConfig = {
   inventoryModuleEnabled: boolean
   inventoryAlertsModuleEnabled: boolean
   advancedMenuModuleEnabled: boolean
+  /** Módulo "Platos en 3D y realidad aumentada". Apagado = la carta se ve como antes del 3D. */
+  menu3dModuleEnabled: boolean
   productVariationsModuleEnabled: boolean
   productAddonsModuleEnabled: boolean
   productBuilderModuleEnabled: boolean
@@ -395,6 +397,7 @@ export const DEFAULT_BUSINESS_CONFIG: BusinessConfig = {
   inventoryModuleEnabled: true,
   inventoryAlertsModuleEnabled: true,
   advancedMenuModuleEnabled: true,
+  menu3dModuleEnabled: true,
   productVariationsModuleEnabled: true,
   productAddonsModuleEnabled: true,
   productBuilderModuleEnabled: true,
@@ -961,6 +964,10 @@ export function normalizeBusinessConfig(value: unknown): BusinessConfig {
       source.advancedMenuModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.advancedMenuModuleEnabled
     ),
+    menu3dModuleEnabled: normalizeBooleanConfig(
+      source.menu3dModuleEnabled,
+      DEFAULT_BUSINESS_CONFIG.menu3dModuleEnabled
+    ),
     productVariationsModuleEnabled: normalizeBooleanConfig(
       source.productVariationsModuleEnabled,
       DEFAULT_BUSINESS_CONFIG.productVariationsModuleEnabled
@@ -1105,6 +1112,7 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
   const inventoryAccess = getModulePlanAccess(config, "inventory")
   const inventoryAlertsAccess = getModulePlanAccess(config, "inventoryAlerts")
   const advancedMenuAccess = getModulePlanAccess(config, "advancedMenu")
+  const menu3dAccess = getModulePlanAccess(config, "menu3d")
   const productVariationsAccess = getModulePlanAccess(config, "productVariations")
   const productAddonsAccess = getModulePlanAccess(config, "productAddons")
   const productBuilderAccess = getModulePlanAccess(config, "productBuilder")
@@ -1179,6 +1187,7 @@ function applyPlanLocksToBusinessConfig(config: BusinessConfig): BusinessConfig 
     advancedMenuModuleEnabled: advancedMenuAccess.includedInPlan
       ? config.advancedMenuModuleEnabled
       : false,
+    menu3dModuleEnabled: menu3dAccess.includedInPlan ? config.menu3dModuleEnabled : false,
     productVariationsModuleEnabled: productVariationsAccess.includedInPlan
       ? config.productVariationsModuleEnabled
       : false,

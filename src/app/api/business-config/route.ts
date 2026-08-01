@@ -61,6 +61,7 @@ const MODULE_KEY_BY_CONFIG_KEY: Record<string, LocalModuleKey> = {
   inventoryModuleEnabled: "inventory",
   inventoryAlertsModuleEnabled: "inventoryAlerts",
   advancedMenuModuleEnabled: "advancedMenu",
+  menu3dModuleEnabled: "menu3d",
   productVariationsModuleEnabled: "productVariations",
   productAddonsModuleEnabled: "productAddons",
   productBuilderModuleEnabled: "productBuilder",
@@ -504,6 +505,7 @@ function normalizeBusinessConfigPayload(
   setBooleanConfig(config, source, "inventoryModuleEnabled", currentBusinessConfig, role)
   setBooleanConfig(config, source, "inventoryAlertsModuleEnabled", currentBusinessConfig, role)
   setBooleanConfig(config, source, "advancedMenuModuleEnabled", currentBusinessConfig, role)
+  setBooleanConfig(config, source, "menu3dModuleEnabled", currentBusinessConfig, role)
   setBooleanConfig(config, source, "productVariationsModuleEnabled", currentBusinessConfig, role)
   setBooleanConfig(config, source, "productAddonsModuleEnabled", currentBusinessConfig, role)
   setBooleanConfig(config, source, "productBuilderModuleEnabled", currentBusinessConfig, role)

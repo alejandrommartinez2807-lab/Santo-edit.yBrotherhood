@@ -31,6 +31,7 @@ export type LocalModuleKey =
   | "inventory"
   | "inventoryAlerts"
   | "advancedMenu"
+  | "menu3d"
   | "productVariations"
   | "productAddons"
   | "productBuilder"
@@ -109,6 +110,7 @@ export type LocalPlanConfigLike = {
   inventoryModuleEnabled?: unknown
   inventoryAlertsModuleEnabled?: unknown
   advancedMenuModuleEnabled?: unknown
+  menu3dModuleEnabled?: unknown
   productVariationsModuleEnabled?: unknown
   productAddonsModuleEnabled?: unknown
   productBuilderModuleEnabled?: unknown
@@ -190,6 +192,7 @@ export const LOCAL_MODULE_KEYS: LocalModuleKey[] = [
   "inventory",
   "inventoryAlerts",
   "advancedMenu",
+  "menu3d",
   "productVariations",
   "productAddons",
   "productBuilder",
@@ -319,6 +322,7 @@ export const LOCAL_PLAN_DEFINITIONS: LocalPlanDefinition[] = [
       "menuProducts",
       "customers",
       "inventory",
+      "menu3d",
     ],
   },
   {
@@ -354,6 +358,7 @@ export const LOCAL_PLAN_DEFINITIONS: LocalPlanDefinition[] = [
       "inventory",
       "inventoryAlerts",
       "advancedMenu",
+      "menu3d",
       "productVariations",
       "productAddons",
       "productBuilder",
@@ -562,6 +567,17 @@ export const LOCAL_MODULE_DEFINITIONS: LocalModuleDefinition[] = [
     category: "growth",
     minimumPlan: "pro",
     ownerConfigKey: "featuredProductsModuleEnabled",
+    visibleForOwnerSettings: true,
+    visibleForSupport: true,
+  },
+  {
+    key: "menu3d",
+    label: "Platos en 3D y realidad aumentada",
+    description:
+      "El cliente gira el plato con el dedo en la ficha del producto y puede verlo a tamaño real sobre su mesa. Cada producto lleva su modelo; sin modelo, el producto se ve con su foto de siempre.",
+    category: "growth",
+    minimumPlan: "pro",
+    ownerConfigKey: "menu3dModuleEnabled",
     visibleForOwnerSettings: true,
     visibleForSupport: true,
   },
@@ -1086,6 +1102,10 @@ export function getModuleEnabledByOwner(
 
   if (moduleKey === "expenses") {
     return normalizeBoolean(config.expensesModuleEnabled, true)
+  }
+
+  if (moduleKey === "menu3d") {
+    return normalizeBoolean(config.menu3dModuleEnabled, true)
   }
 
   if (moduleKey === "promotions") {

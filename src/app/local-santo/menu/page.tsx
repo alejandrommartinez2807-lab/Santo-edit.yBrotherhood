@@ -692,6 +692,10 @@ export default function LocalMenuPage() {
   // producto en edición + disponibilidad del módulo advancedMenu por plan.
   const [advancedForm, setAdvancedForm] = useState<AdvancedForm>(ADVANCED_EMPTY_FORM)
   const [isAdvancedAvailable, setIsAdvancedAvailable] = useState(false)
+  // Módulo "Platos en 3D y realidad aumentada": si no está incluido en el plan
+  // o el dueño lo apagó, el bloque de subir modelos no aparece. Lo YA guardado
+  // en cada producto se conserva igual (buildFormFromProduct lo sigue leyendo).
+  const [isMenu3dAvailable, setIsMenu3dAvailable] = useState(false)
   const [isAdvancedExpanded, setIsAdvancedExpanded] = useState(false)
   const [inventoryOptions, setInventoryOptions] = useState<InventoryOption[]>([])
   // El módulo Inventario respondió OK: se puede crear un insumo nuevo desde la
@@ -856,6 +860,21 @@ export default function LocalMenuPage() {
     }
   }
 
+  async function loadMenu3dSupport(password = adminPassword) {
+    if (!password) return
+
+    try {
+      const response = await fetch("/api/local-auth?moduleKey=menu3d", {
+        headers: { "x-admin-password": password },
+        cache: "no-store",
+      })
+      const data = await readApiResponse(response)
+      setIsMenu3dAvailable(Boolean(response.ok && data.ok))
+    } catch {
+      setIsMenu3dAvailable(false)
+    }
+  }
+
   // ¿El plan incluye el menú avanzado? Si sí, la sección "Opciones avanzadas"
   // aparece en el formulario y se cargan los insumos para vincular inventario.
   // Si no (o falla la consulta), el editor sigue con los campos simples.
@@ -997,6 +1016,7 @@ export default function LocalMenuPage() {
       setPasswordInput(password)
       await loadMenuProducts(password)
       void loadAdvancedSupport(password)
+      void loadMenu3dSupport(password)
     } catch (error) {
       window.localStorage.removeItem(ADMIN_STORAGE_KEY)
       setAdminPassword("")
@@ -1050,6 +1070,7 @@ export default function LocalMenuPage() {
         setPasswordInput(savedPassword)
         await loadMenuProducts(savedPassword)
         void loadAdvancedSupport(savedPassword)
+        void loadMenu3dSupport(savedPassword)
       } catch (error) {
         window.localStorage.removeItem(ADMIN_STORAGE_KEY)
         setAdminPassword("")
@@ -2111,6 +2132,7 @@ export default function LocalMenuPage() {
                 </div>
               </div>
 
+              {isMenu3dAvailable ? (
               <div className="lg:col-span-2 rounded-[1.25rem] border-2 border-[var(--brand-primary)]/20 bg-[var(--brand-cream)] p-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div>
@@ -2217,6 +2239,7 @@ export default function LocalMenuPage() {
                       : "Sin modelo cargado: este producto se muestra con su foto de siempre."}
                 </p>
               </div>
+              ) : null}
 
               <div className="lg:col-span-2">
                 <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">

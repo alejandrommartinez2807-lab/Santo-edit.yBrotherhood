@@ -23,6 +23,7 @@ type PublicBusinessConfig = {
   featuredProductsText?: string
   featuredProductIds?: number[]
   publicCustomizeButtonText?: string
+  menu3dModuleEnabled?: boolean
   publicCustomizerTitle?: string
   productCardBackgroundColor?: string
   productCardTextColor?: string
@@ -73,6 +74,7 @@ export default function FeaturedProducts({
             featuredProductIds: normalizeProductIds(
               businessConfig.featuredProductIds
             ),
+            menu3dModuleEnabled: businessConfig.menu3dModuleEnabled !== false,
             publicCustomizeButtonText: String(
               businessConfig.publicCustomizeButtonText || ""
             ).trim(),
@@ -199,6 +201,7 @@ export default function FeaturedProducts({
               index={index}
               onAddToCart={onAddToCart}
               deepLinkEnabled={false}
+              model3dEnabled={config.menu3dModuleEnabled}
               publicLabels={{
                 customizeAction: config.publicCustomizeButtonText || "Elige tus ingredientes",
                 customizerTitle:

@@ -54,6 +54,9 @@ type PublicMenuConfig = {
   // Tamaño de las tarjetas (grande | media | compacta): define cuántos
   // productos caben por fila, sobre todo en el teléfono.
   publicProductCardSize?: string
+  // Módulo "Platos en 3D": si el dueño lo apaga, la carta se ve igual que
+  // antes del 3D aunque los productos tengan modelo guardado.
+  menu3dModuleEnabled?: boolean
 }
 
 type PublicBusinessConfigResponse = {
@@ -89,6 +92,7 @@ const DEFAULT_PUBLIC_MENU_CONFIG: Required<PublicMenuConfig> = {
   publicCategoryOrder: DEFAULT_PUBLIC_CATEGORY_ORDER,
   publicHiddenCategories: [],
   publicProductCardSize: "grande",
+  menu3dModuleEnabled: true,
 }
 
 function cleanPublicText(value: unknown, fallback: string) {
@@ -166,6 +170,7 @@ function normalizePublicMenuConfig(value: unknown): Required<PublicMenuConfig> {
     )
       ? String(source.publicProductCardSize).trim().toLowerCase()
       : DEFAULT_PUBLIC_MENU_CONFIG.publicProductCardSize,
+    menu3dModuleEnabled: source.menu3dModuleEnabled !== false,
   }
 }
 
@@ -685,6 +690,7 @@ export default function Products({ exchangeRate, onAddToCart, onProductsLoaded }
                 key={product.id}
                 {...product}
                 cardSize={publicMenuConfig.publicProductCardSize}
+                model3dEnabled={publicMenuConfig.menu3dModuleEnabled}
                 exchangeRate={exchangeRate}
                 index={index}
                 onAddToCart={onAddToCart}

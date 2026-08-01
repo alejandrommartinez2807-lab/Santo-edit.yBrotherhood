@@ -53,6 +53,9 @@ type ProductCardProps = Product & {
   // Tamaño elegido en Configuración: "grande" (original), "media" (2 por
   // fila en móvil) o "compacta" (3 por fila, estilo catálogo).
   cardSize?: string;
+  // Módulo "Platos en 3D y realidad aumentada". Apagado = ni distintivo 3D ni
+  // visor, aunque el producto tenga modelo guardado.
+  model3dEnabled?: boolean;
 };
 
 // Clases por tamaño: media y compacta encogen foto, textos y botón para que
@@ -316,6 +319,7 @@ export default function ProductCard({
   onToggleFavorite,
   deepLinkEnabled = true,
   cardSize,
+  model3dEnabled = true,
 }: ProductCardProps) {
   usePublicCurrencySymbol();
   const sizeStyles = getCardSizeStyles(cardSize);
@@ -323,7 +327,7 @@ export default function ProductCard({
   // plato, es exclusivo del AR de iPhone. Sin .glb todo se ve como siempre.
   const model3dSrc = String(model3dUrl || "").trim();
   const model3dIosSrc = String(model3dIosUrl || "").trim();
-  const has3dModel = Boolean(model3dSrc);
+  const has3dModel = model3dEnabled !== false && Boolean(model3dSrc);
   const [added, setAdded] = useState(false);
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
   // Ficha del producto: se abre al tocar la foto o el título (imagen grande +
