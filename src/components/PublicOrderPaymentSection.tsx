@@ -1389,6 +1389,62 @@ export default function PublicOrderPaymentSection({
                   // el servidor ya había filtrado, así que NUNCA se ejecutaba.
                   // En mesa nada es imperativo: el monto se presenta como
                   // total del pedido, no como una orden de transferir.
+                  // MIXTO (2+ patas, con o sin efectivo): una LÍNEA POR PATA
+                  // con su monto y su método — el total único ("$7.00" con
+                  // un "repartido así" chiquito) no dejaba claro cuánto va
+                  // en Bs y cuánto en $ (dueño 2026-08-01).
+                  if (electronicLegs.length + cashLegs.length > 1) {
+                    const legAmount = (leg: ExpectedPayment) =>
+                      leg.currency === "VES"
+                        ? `Bs ${formatVES(leg.amount)}`
+                        : formatUSD(leg.amount);
+                    return (
+                      <div className="mt-2">
+                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/55">
+                          {prepayOptional
+                            ? "Así se paga tu pedido"
+                            : "Tienes que pagar así"}
+                        </p>
+                        <div className="mt-1.5 space-y-1.5">
+                          {electronicLegs.map((leg) => (
+                            <p key={`hero-leg-${leg.method}`} className="leading-none">
+                              <span
+                                className={`font-black text-[var(--brand-primary)] ${
+                                  screenMode ? "text-3xl" : "text-xl"
+                                }`}
+                              >
+                                {legAmount(leg)}
+                              </span>
+                              <span className="ml-2 text-sm font-bold text-[var(--brand-ink-2)]/75">
+                                con {leg.method}
+                              </span>
+                            </p>
+                          ))}
+                          {cashLegs.map((leg) => (
+                            <p key={`hero-cash-${leg.method}`} className="leading-none">
+                              <span
+                                className={`font-black text-[var(--brand-ink-3)] ${
+                                  screenMode ? "text-2xl" : "text-lg"
+                                }`}
+                              >
+                                {legAmount(leg)}
+                              </span>
+                              <span className="ml-2 text-sm font-bold text-[var(--brand-ink-2)]/75">
+                                en efectivo
+                              </span>
+                            </p>
+                          ))}
+                        </div>
+                        {cashLegs.length > 0 ? (
+                          <p className="mt-1.5 text-[0.72rem] font-bold text-[var(--brand-ink-2)]/55">
+                            Lo del efectivo lo entregas en mano: no lo
+                            transfieras.
+                          </p>
+                        ) : null}
+                      </div>
+                    );
+                  }
+
                   const eyebrow =
                     legsPlan.kind === "mixto-con-efectivo"
                       ? prepayOptional
@@ -1659,17 +1715,18 @@ export default function PublicOrderPaymentSection({
             </p>
           ) : null}
           {payments.map((entry, index) => {
-            // Variante COMPACTA (pantalla dedicada, un solo pago, todo
-            // bloqueado): método y monto CENTRADOS en una sola tarjeta, sin
-            // rótulos ni coletillas — el dueño pidió no sobrecargar
-            // visualmente (2026-07-31). En mixto o con campos editables se
-            // queda la presentación de siempre.
+            // Variante COMPACTA (pantalla dedicada, todo bloqueado): método
+            // y monto CENTRADOS, sin rótulos ni coletillas — el dueño pidió
+            // no sobrecargar visualmente (2026-07-31; el 2026-08-01 pidió lo
+            // MISMO para el mixto, que seguía con la presentación vieja).
+            // Con un solo pago va en tarjeta propia; en mixto va dentro de
+            // la tarjeta numerada de cada pago (sin doble borde). Solo con
+            // campos editables queda la presentación de siempre.
             const entryLockedUSD = normalizeMoneyInput(entry.amountUSD);
             const entryLockedVES = normalizeMoneyInput(entry.amountVES);
             const entryRate = Number(info?.exchangeRate || 0);
             const compactLockedHero =
               screenMode &&
-              !isMixedReport &&
               lockMethods &&
               lockAmounts &&
               entry.method.trim() !== "" &&
@@ -1689,21 +1746,36 @@ export default function PublicOrderPaymentSection({
               }
             >
               {compactLockedHero ? (
-                <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/40 px-4 py-4 text-center">
-                  <p className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-[var(--brand-ink-2)]/60">
-                    {entry.method}
-                  </p>
-                  <p className="mt-1 text-2xl font-black leading-none text-[var(--brand-ink-3)]">
-                    {entryLockedVES > 0
-                      ? `Bs ${formatVES(entryLockedVES)}`
-                      : formatUSD(entryLockedUSD)}
-                  </p>
-                  {entryLockedVES > 0 && entryRate > 0 ? (
-                    <p className="mt-1 text-[0.72rem] font-bold text-[var(--brand-ink-2)]/55">
-                      ≈ {formatUSD(entryLockedVES / entryRate)}
-                    </p>
+                <>
+                  {/* En mixto se conserva la pastilla "Pago X de N": sin
+                      ella no se sabe cuál tarjeta es cuál. */}
+                  {isMixedReport ? (
+                    <span className="inline-flex rounded-full bg-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.14em] text-black">
+                      Pago {index + 1} de {payments.length}
+                    </span>
                   ) : null}
-                </div>
+                  <div
+                    className={
+                      isMixedReport
+                        ? "mt-2 px-2 py-2 text-center"
+                        : "rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/40 px-4 py-4 text-center"
+                    }
+                  >
+                    <p className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-[var(--brand-ink-2)]/60">
+                      {entry.method}
+                    </p>
+                    <p className="mt-1 text-2xl font-black leading-none text-[var(--brand-ink-3)]">
+                      {entryLockedVES > 0
+                        ? `Bs ${formatVES(entryLockedVES)}`
+                        : formatUSD(entryLockedUSD)}
+                    </p>
+                    {entryLockedVES > 0 && entryRate > 0 ? (
+                      <p className="mt-1 text-[0.72rem] font-bold text-[var(--brand-ink-2)]/55">
+                        ≈ {formatUSD(entryLockedVES / entryRate)}
+                      </p>
+                    ) : null}
+                  </div>
+                </>
               ) : (
               <>
               <div className="flex flex-wrap items-center justify-between gap-2">
