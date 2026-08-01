@@ -427,6 +427,12 @@ export default function CartDrawer({
   // Señal para abrir el formulario de reporte de pago desde el botón grande
   // "Reportar pago" de la confirmación (cada toque sube el número).
   const [openReportSignal, setOpenReportSignal] = useState(0);
+  // Pantalla dedicada de "Reportar pago" (misma lógica del wizard: una
+  // pantalla por tarea). Antes el botón solo hacía scroll hacia abajo dentro
+  // de la confirmación y el cliente aterrizaba en una columna de tarjetas
+  // apretadas; ahora abre una vista propia con el monto y los datos de pago
+  // arriba, sin buscar nada (dueño 2026-07-31).
+  const [isReportScreenOpen, setIsReportScreenOpen] = useState(false);
   // Modo "antes": el comprobante del checkout se está reportando solo; no
   // auto-abrir el formulario manual mientras tanto (evita duplicados).
   const [lastOrderUsedCheckoutProof, setLastOrderUsedCheckoutProof] =
@@ -3015,6 +3021,7 @@ export default function CartDrawer({
       );
       setIsPaymentPickerOpen(false);
       setCheckoutStep(1);
+      setIsReportScreenOpen(false);
     } catch (error) {
       const isNetwork =
         (typeof navigator !== "undefined" && !navigator.onLine) ||
@@ -3107,6 +3114,25 @@ export default function CartDrawer({
     setIsPaymentPickerOpen(false);
     setCheckoutStep(1);
     setValidationAlert(null);
+    setIsReportScreenOpen(false);
+  }
+
+  // Abre la pantalla dedicada de reporte de pago (y el formulario dentro de
+  // ella, vía señal). El scroll vuelve arriba: la pantalla arranca por el
+  // monto, no por donde iba la confirmación.
+  function openReportScreen() {
+    setOpenReportSignal((current) => current + 1);
+    setIsReportScreenOpen(true);
+    window.setTimeout(() => {
+      modalScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }, 30);
+  }
+
+  function closeReportScreen() {
+    setIsReportScreenOpen(false);
+    window.setTimeout(() => {
+      modalScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    }, 30);
   }
 
   function finishCreatedOrderFlow() {
@@ -3346,6 +3372,22 @@ export default function CartDrawer({
       lastOrderPaymentReportedLive ||
       lastOrderUsedElectronicProof,
   });
+  // La pantalla dedicada solo existe donde existe la sección de pago: con el
+  // pedido cancelado, en cuenta abierta u offline no hay nada que reportar
+  // (si el pedido se cancela con la pantalla abierta, se vuelve solo a la
+  // confirmación, que muestra el aviso rojo).
+  const showReportScreen =
+    isReportScreenOpen &&
+    Boolean(lastCreatedOrder) &&
+    !lastOrderCancelled &&
+    !lastOrderAttachedToOpenAccount &&
+    !lastCreatedOrder?.offline;
+  // Con el pago pendiente (o el reporte a medias), la sección NO se pinta en
+  // la confirmación: vive en la pantalla dedicada que abre «Reportar pago».
+  // Sigue MONTADA (oculta) para que sus recordatorios, el contador de
+  // anulación y el sondeo no se apaguen.
+  const hidePaymentSectionInline =
+    !showReportScreen && (lastOrderPaymentPending || lastOrderReportIncomplete);
   // Defaults alineados al tema oscuro Brotherhood (rediseño); la config del
   // dueño (business_config) sigue mandando si trae valores propios.
   const productCardStyle = {
@@ -3707,7 +3749,11 @@ export default function CartDrawer({
               <div className="flex items-center justify-between gap-3">
                 <button
                   type="button"
-                  onClick={closeOrderModal}
+                  // Con la pantalla de reporte abierta, Volver regresa a la
+                  // confirmación (no cierra todo el modal).
+                  onClick={() =>
+                    showReportScreen ? closeReportScreen() : closeOrderModal()
+                  }
                   disabled={isSubmittingOrder}
                   aria-label="Volver"
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--brand-border)] bg-[var(--brand-cream)] text-[var(--brand-ink)] disabled:opacity-50 sm:hidden"
@@ -3722,13 +3768,15 @@ export default function CartDrawer({
                       2026-07-26). */}
                   {lastOrderCancelled
                     ? "Pedido cancelado"
-                    : lastOrderPaymentPending
-                      ? "Pedido sin pagar"
-                      : lastCreatedOrder
-                        ? "Pedido confirmado"
-                        : isSubmittingOrder
-                          ? "Enviando pedido"
-                          : "Confirma tu pedido"}
+                    : showReportScreen
+                      ? "Reporta tu pago"
+                      : lastOrderPaymentPending
+                        ? "Pedido sin pagar"
+                        : lastCreatedOrder
+                          ? "Pedido confirmado"
+                          : isSubmittingOrder
+                            ? "Enviando pedido"
+                            : "Confirma tu pedido"}
                 </h3>
 
                 <button
@@ -3756,6 +3804,34 @@ export default function CartDrawer({
 
             {lastCreatedOrder ? (
               <div className="space-y-5 px-6 py-7">
+                {showReportScreen ? (
+                  // Encabezado de la pantalla dedicada de pago: flecha para
+                  // volver a la confirmación + título. El contenido (monto,
+                  // datos y formulario) lo pone la sección de pago de abajo.
+                  <div className="text-left">
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={closeReportScreen}
+                        aria-label="Volver a la confirmación"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[var(--brand-border)] bg-[var(--brand-surface-2)] text-[var(--brand-ink-2)]/75 transition hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+                      >
+                        <ArrowLeft size={19} />
+                      </button>
+                      <div className="min-w-0">
+                        {createdOrderLive.displayNumber ? (
+                          <p className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-[var(--brand-ink-2)]/55">
+                            Pedido {createdOrderLive.displayNumber}
+                          </p>
+                        ) : null}
+                        <h4 className="text-2xl font-black leading-tight text-[var(--brand-ink-3)]">
+                          Reporta tu pago
+                        </h4>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
                 <div className="text-center">
                   {/* El check grande SOLO cuando no falta nada: con el reporte
                       a medias también va la alerta (dueño 2026-07-23).
@@ -3842,7 +3918,7 @@ export default function CartDrawer({
                         : lastCreatedOrder.offline
                           ? "Tu pedido quedó guardado en este teléfono y se enviará solo apenas vuelva el internet. No hace falta repetirlo."
                           : lastOrderPaymentPending
-                            ? "Cancela (paga) con los datos de abajo y reporta tu captura o referencia. Apenas caja lo confirme, tu pedido entra a cocina."
+                            ? "Toca «Reportar pago» para ver cuánto pagar, los datos y reportar tu captura o referencia. Apenas caja lo confirme, tu pedido entra a cocina."
                             : lastCreatedOrder.hasStaffConfirmationItems
                               ? `El pedido fue enviado al local. El personal debe confirmar ${cleanStaffConfirmationProductLabel(lastCreatedOrder.staffConfirmationProductNames || [])} antes de prepararlo.`
                               : lastOrderReportIncomplete
@@ -3876,7 +3952,8 @@ export default function CartDrawer({
                     ) : !lastOrderCancelled && lastOrderReportIncomplete ? (
                       <p className="mt-4 rounded-2xl border border-amber-500 bg-amber-500/10 px-4 py-2.5 text-[0.8rem] font-black leading-5 text-amber-600">
                         📸 Foto del efectivo recibida. Falta la captura o
-                        referencia de la parte electrónica — repórtala abajo.
+                        referencia de la parte electrónica — repórtala con el
+                        botón de abajo.
                       </p>
                     ) : !lastOrderCancelled &&
                       lastOrderCanReportPayment &&
@@ -3907,8 +3984,8 @@ export default function CartDrawer({
                       // el cliente solo ve el avance una vez que reporta/paga
                       // (pedido del dueño 2026-07-22).
                       <p className="mt-4 rounded-2xl border border-amber-500 bg-amber-500/10 px-4 py-3 text-sm font-black leading-5 text-amber-700">
-                        Aún sin pagar. Reporta tu pago aquí abajo; verás el
-                        avance de tu pedido apenas caja confirme tu pago.
+                        Aún sin pagar. Toca «Reportar pago»; verás el avance
+                        de tu pedido apenas caja confirme tu pago.
                       </p>
                     ) : createdOrderLive.status === "Listo" ? (
                       <p className="mt-4 rounded-2xl bg-[var(--brand-primary)] px-4 py-3 text-sm font-black uppercase leading-tight text-black">
@@ -3954,23 +4031,12 @@ export default function CartDrawer({
 
                     {lastOrderPaymentPending || lastOrderReportIncomplete ? (
                       // Sin pagar O con el reporte a medias: NO mandar al
-                      // seguimiento — el botón lleva al formulario de reporte
-                      // de este mismo modal (la gente veía "Ver el avance"
-                      // primero y se iba sin subir la otra parte, 2026-07-23).
+                      // seguimiento — el botón abre la pantalla dedicada de
+                      // pago (la gente veía "Ver el avance" primero y se iba
+                      // sin subir la otra parte, 2026-07-23).
                       <button
                         type="button"
-                        onClick={() => {
-                          // Abre el formulario de reporte (señal) y baja a él.
-                          setOpenReportSignal((current) => current + 1);
-                          window.setTimeout(() => {
-                            document
-                              .getElementById("reporte-pago-seccion")
-                              ?.scrollIntoView({
-                                behavior: "smooth",
-                                block: "start",
-                              });
-                          }, 60);
-                        }}
+                        onClick={openReportScreen}
                         className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3.5 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition hover:bg-[var(--brand-accent)] active:scale-95"
                       >
                         <ImagePlus size={17} />
@@ -3980,12 +4046,11 @@ export default function CartDrawer({
                       </button>
                     ) : (
                       <>
-                        {/* MESA sin cuenta (pedido del dueño 2026-07-28): las
-                            formas de pago y el reporte SÍ viven más abajo en
-                            este mismo modal, pero el cliente ve "¡Pedido
-                            enviado!" y no baja. Este botón lo lleva directo.
-                            El flujo de mesa no cambia (también puede pagar en
-                            persona); pick up y delivery quedan igual. */}
+                        {/* MESA sin cuenta (pedido del dueño 2026-07-28): el
+                            cliente ve "¡Pedido enviado!" y no baja a las
+                            formas de pago. Este botón abre la pantalla
+                            dedicada de pago. El flujo de mesa no cambia
+                            (también puede pagar en persona). */}
                         {lastCreatedOrder.orderType === "Comer aquí" &&
                         !lastOrderAttachedToOpenAccount &&
                         !lastOrderCancelled &&
@@ -3993,17 +4058,7 @@ export default function CartDrawer({
                         !lastOrderPaymentReportedLive ? (
                           <button
                             type="button"
-                            onClick={() => {
-                              setOpenReportSignal((current) => current + 1);
-                              window.setTimeout(() => {
-                                document
-                                  .getElementById("reporte-pago-seccion")
-                                  ?.scrollIntoView({
-                                    behavior: "smooth",
-                                    block: "start",
-                                  });
-                              }, 60);
-                            }}
+                            onClick={openReportScreen}
                             className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-primary)] px-5 py-3.5 text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition hover:bg-[var(--brand-accent)] active:scale-95"
                           >
                             <ImagePlus size={17} />
@@ -4053,6 +4108,8 @@ export default function CartDrawer({
                       ) : null}
                     </div>
                   )}
+                  </>
+                )}
 
                 {/* El "Importante antes de pedir" se retiró de la CONFIRMACIÓN
                     (dueño 2026-07-23: a este punto ya está sobreentendido y el
@@ -4064,12 +4121,20 @@ export default function CartDrawer({
                     métodos elegidos y mismo formulario de reporte (métodos
                     precargados en su moneda, montos por método, Completar,
                     aviso de cobertura y envío solo con referencia). */}
+                {/* La sección queda MONTADA siempre (sondeo, recordatorios y
+                    contador de anulación siguen vivos), pero con el pago
+                    pendiente se oculta de la confirmación: vive en la
+                    pantalla dedicada que abre «Reportar pago». */}
                 {!lastOrderAttachedToOpenAccount &&
                   !lastOrderCancelled &&
                   !lastCreatedOrder.offline && (
-                  <div id="reporte-pago-seccion" className="text-left">
+                  <div
+                    id="reporte-pago-seccion"
+                    className={`text-left${hidePaymentSectionInline ? " hidden" : ""}`}
+                  >
                     <PublicOrderPaymentSection
                       orderId={lastCreatedOrder.id}
+                      variant={showReportScreen ? "screen" : "card"}
                       autoOpenForm={lastOrderPaymentPending && !lastOrderUsedCheckoutProof}
                       forceOpenSignal={openReportSignal}
                       proofsEnabled={isPaymentProofPublicAvailable}
@@ -4111,15 +4176,19 @@ export default function CartDrawer({
                     </div>
                   )}
 
-                <button
-                  type="button"
-                  onClick={finishCreatedOrderFlow}
-                  className="flex w-full items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-center text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition active:translate-y-1 active:shadow-none disabled:opacity-50"
-                >
-                  {lastOrderPaymentPending
-                    ? "Entiendo que no registré mi pago — volver al menú"
-                    : "Listo, volver al menú"}
-                </button>
+                {/* En la pantalla de reporte no va el "volver al menú": la
+                    salida es la flecha Atrás (o enviar el comprobante). */}
+                {showReportScreen ? null : (
+                  <button
+                    type="button"
+                    onClick={finishCreatedOrderFlow}
+                    className="flex w-full items-center justify-center gap-3 rounded-full border border-[var(--brand-primary)] bg-[var(--brand-accent)] px-6 py-4 text-center text-sm font-black uppercase tracking-[0.12em] text-black shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition active:translate-y-1 active:shadow-none disabled:opacity-50"
+                  >
+                    {lastOrderPaymentPending
+                      ? "Entiendo que no registré mi pago — volver al menú"
+                      : "Listo, volver al menú"}
+                  </button>
+                )}
               </div>
             ) : isSubmittingOrder ? (
               <div className="px-6 py-12 text-center">
@@ -5157,7 +5226,13 @@ export default function CartDrawer({
             ) : null}
             <button
               type="button"
-              onClick={() => setShowPostRegisterPaymentModal(false)}
+              onClick={() => {
+                // Directo a la pantalla dedicada de pago: antes solo cerraba
+                // la ventana y el cliente quedaba en la confirmación buscando
+                // dónde pagar.
+                setShowPostRegisterPaymentModal(false);
+                openReportScreen();
+              }}
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-amber-600 bg-amber-500 px-5 py-4 text-sm font-black uppercase tracking-[0.1em] text-black transition hover:opacity-90 active:scale-[0.98]"
             >
               Reportar mi pago ahora

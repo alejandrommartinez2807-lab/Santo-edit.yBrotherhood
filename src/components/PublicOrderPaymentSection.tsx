@@ -203,6 +203,7 @@ export default function PublicOrderPaymentSection({
   expectProofPending = false,
   uploadingProofs = false,
   livePaymentConfirmed = false,
+  variant = "card",
 }: {
   orderId: string;
   // Abre el formulario de reporte de una vez (confirmación con pago
@@ -245,6 +246,13 @@ export default function PublicOrderPaymentSection({
   // el "En revisión" se quedaba pegado hasta 45s tras el cobro de caja y el
   // cliente terminaba refrescando a mano (dueño 2026-07-26).
   livePaymentConfirmed?: boolean;
+  // "card" (por defecto): tarjeta gorda con borde, como vive en la página de
+  // seguimiento. "screen": la PANTALLA dedicada de "Reportar pago" del
+  // carrito — sin la tarjeta contenedora ni el eyebrow (el encabezado de la
+  // pantalla ya dice qué es), con el monto más grande y una tarjeta menos de
+  // anidación en el formulario, para que respire (dueño 2026-07-31: "todo se
+  // ve muy encerrado, amontonado y pequeño").
+  variant?: "card" | "screen";
 }) {
   usePublicCurrencySymbol();
   const [info, setInfo] = useState<OrderPaymentInfo | null>(null);
@@ -1076,12 +1084,22 @@ export default function PublicOrderPaymentSection({
   const sentLegFlags = payments.map((entry) => isLegAlreadyReported(entry.method));
   const allLegsSent = sentLegFlags.length > 0 && sentLegFlags.every(Boolean);
 
+  const isScreen = variant === "screen";
+
   return (
-    <div className="mt-4 rounded-[2rem] border-4 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-6">
-      <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-[var(--brand-primary)]">
-        <ReceiptText size={15} />
-        Pago del pedido
-      </p>
+    <div
+      className={
+        isScreen
+          ? "mt-1"
+          : "mt-4 rounded-[2rem] border-4 border-[var(--brand-border)] bg-[var(--brand-surface-2)] p-6"
+      }
+    >
+      {!isScreen ? (
+        <p className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-[var(--brand-primary)]">
+          <ReceiptText size={15} />
+          Pago del pedido
+        </p>
+      ) : null}
 
       {/* En mesa el prepago es opcional y hay que decirlo de entrada: sin esta
           línea, los pasos de abajo se leen como si hubiera que transferir
@@ -1231,7 +1249,9 @@ export default function PublicOrderPaymentSection({
           return (
             <div
               role={isPartialPending ? "alert" : undefined}
-              className={`mt-4 rounded-2xl border-2 px-4 py-4 text-left ${
+              className={`mt-4 rounded-2xl border-2 text-left ${
+                isScreen ? "px-4 py-5" : "px-4 py-4"
+              } ${
                 isPartialPending
                   ? "border-amber-500 bg-amber-500/10"
                   : "border-[var(--brand-border)] bg-[var(--brand-cream)]/40"
@@ -1347,11 +1367,21 @@ export default function PublicOrderPaymentSection({
                       <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/55">
                         {eyebrow}
                       </p>
-                      <p className="mt-0.5 text-2xl font-black leading-none text-[var(--brand-primary)]">
+                      {/* En la pantalla dedicada el monto es el protagonista:
+                          más grande que en la tarjeta del seguimiento. */}
+                      <p
+                        className={`mt-0.5 font-black leading-none text-[var(--brand-primary)] ${
+                          isScreen ? "text-4xl" : "text-2xl"
+                        }`}
+                      >
                         {main}
                       </p>
                       {secondary ? (
-                        <p className="mt-1 text-[0.72rem] font-bold text-[var(--brand-ink-2)]/55">
+                        <p
+                          className={`mt-1 font-bold text-[var(--brand-ink-2)]/55 ${
+                            isScreen ? "text-[0.8rem]" : "text-[0.72rem]"
+                          }`}
+                        >
                           {secondary}
                         </p>
                       ) : null}
@@ -1566,7 +1596,15 @@ export default function PublicOrderPaymentSection({
           {payments.map((entry, index) => (
             <div
               key={`payment-entry-${index}`}
-              className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/25 p-3"
+              // En la pantalla dedicada con UN solo pago, el bloque va SIN
+              // tarjeta contenedora: método, monto y comprobante respiran
+              // directo sobre la página (una caja menos de anidación). En
+              // mixto las tarjetas numeradas se quedan — ahí sí agrupan.
+              className={
+                isScreen && !isMixedReport
+                  ? ""
+                  : "rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/25 p-3"
+              }
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 {/* En mixto, cada pago es su propia tarjeta numerada: antes
