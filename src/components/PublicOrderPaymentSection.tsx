@@ -315,6 +315,11 @@ export default function PublicOrderPaymentSection({
   const [coverageWarning, setCoverageWarning] = useState<string | null>(null);
   // Contenedor de los mensajes de error/aviso, para traerlos a la vista.
   const messagesRef = useRef<HTMLDivElement | null>(null);
+  // Sube en CADA intento de envío fallido: el scroll al mensaje disparaba
+  // solo cuando el TEXTO cambiaba, así que con el mismo error fuera de
+  // pantalla los toques siguientes en "Enviar comprobante" parecían no hacer
+  // nada (reporte del dueño 2026-07-31).
+  const [errorSignal, setErrorSignal] = useState(0);
 
   const loadInfo = useCallback(async () => {
     try {
@@ -549,7 +554,9 @@ export default function PublicOrderPaymentSection({
       node.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 0);
     return () => clearTimeout(timer);
-  }, [formError, duplicateWarning, coverageWarning]);
+    // errorSignal: re-traer el mensaje a la vista aunque sea EL MISMO error
+    // (cada toque fallido en Enviar lo sube).
+  }, [formError, duplicateWarning, coverageWarning, errorSignal]);
 
   useEffect(() => {
     if (!refreshSignal) return;
@@ -931,6 +938,7 @@ export default function PublicOrderPaymentSection({
                 ? `La referencia de ${legName(method)} está incompleta: escribe todos los dígitos de la operación.`
                 : "Escribe la referencia completa de la operación (todos los dígitos, no solo los últimos).",
       );
+      setErrorSignal((current) => current + 1);
       return;
     }
 
@@ -954,6 +962,7 @@ export default function PublicOrderPaymentSection({
             rate > 0 ? ` (Bs ${formatVES(missingUSD * rate)})` : ""
           } para completar ${formatUSD(requiredBaseUSD)}. Corrige el monto de arriba: no se puede enviar incompleto.`,
         );
+        setErrorSignal((current) => current + 1);
         return;
       }
 
@@ -962,6 +971,7 @@ export default function PublicOrderPaymentSection({
         setCoverageWarning(
           `Estás reportando ${formatUSD(Math.abs(missingUSD))} de MÁS de lo que corresponde (${formatUSD(requiredBaseUSD)}). Revisa el monto; si de verdad pagaste eso, confírmalo abajo.`,
         );
+        setErrorSignal((current) => current + 1);
         return;
       }
     }
@@ -997,9 +1007,16 @@ export default function PublicOrderPaymentSection({
             : entry.method
           : amountParts.join(" + ");
 
+        // Timeout duro de 45s: sin él, un fetch colgado (señal mala, red del
+        // local caída) dejaba isSubmitting en true PARA SIEMPRE y el botón
+        // "Enviar comprobante" quedaba muerto sin decir nada — el cliente
+        // tocaba y tocaba y nada respondía (reporte del dueño 2026-07-31).
+        const abortController = new AbortController();
+        const abortTimer = window.setTimeout(() => abortController.abort(), 45_000);
         const response = await fetch("/api/payment-proofs", {
           method: "POST",
           headers,
+          signal: abortController.signal,
           body: JSON.stringify({
             orderId,
             reportedMethod,
@@ -1013,6 +1030,9 @@ export default function PublicOrderPaymentSection({
             confirmDuplicate,
           }),
         });
+        // Apenas responde se apaga el timer: un abort tardío cortaría la
+        // LECTURA del body aunque el envío ya hubiera entrado.
+        window.clearTimeout(abortTimer);
         const data = await response.json();
 
         if (response.status === 409 && data.duplicate) {
@@ -1020,6 +1040,7 @@ export default function PublicOrderPaymentSection({
             data.error ||
               "Ya reportaste un pago para este pedido. ¿Quieres enviar otro de todas formas?",
           );
+          setErrorSignal((current) => current + 1);
           return;
         }
 
@@ -1053,10 +1074,13 @@ export default function PublicOrderPaymentSection({
       await loadInfo();
     } catch (error) {
       setFormError(
-        error instanceof Error
-          ? error.message
-          : "No se pudo enviar el comprobante",
+        error instanceof Error && error.name === "AbortError"
+          ? "El envío tardó demasiado (¿mala señal?). Revisa tu conexión e intenta otra vez."
+          : error instanceof Error
+            ? error.message
+            : "No se pudo enviar el comprobante",
       );
+      setErrorSignal((current) => current + 1);
       // Si una pata SÍ entró antes del fallo, refrescamos ya: la pantalla
       // necesita saberlo para no volver a pedir su captura si el cliente
       // cierra y reabre el formulario (el sondeo normal tarda hasta 45s y en
