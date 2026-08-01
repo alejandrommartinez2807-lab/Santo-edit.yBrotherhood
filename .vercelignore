@@ -33,6 +33,11 @@ coverage/
 .vercel-*-backup/
 
 # Backups y artefactos locales
+# respaldos/ está en .gitignore, pero Vercel NO lee .gitignore cuando existe
+# este archivo: sin esta entrada los bundles viajaban y el deploy moría con
+# "File size limit exceeded (100 MB)" (pasó el 1 ago 2026, ya pesaban 254 MB).
+respaldos/
+*.bundle
 *.zip
 .git-desconectado-original/
 src/**/*.bak-*
