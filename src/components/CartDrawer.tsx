@@ -161,18 +161,13 @@ function getOrderTypePublicLabel(type: OrderType) {
 
 // Checkout por pasos (pick up / delivery): requisitos que pertenecen al paso
 // 1 "Tus datos". Todo lo demás (pago, comprobantes, vuelto) es del paso 2.
-const WIZARD_STEP1_TARGET_IDS = new Set([
+// Requisitos que viven en el paso "Tus datos" del wizard. La ubicación NO
+// está aquí: en delivery tiene paso propio (se resuelve por tipo de pedido
+// en wizardStepForTarget).
+const WIZARD_DATOS_TARGET_IDS = new Set([
   "checkout-nombre",
   "checkout-telefono",
-  "checkout-ubicacion",
 ]);
-
-// Rótulos del indicador de pasos del checkout.
-const WIZARD_STEPS: { step: 1 | 2 | 3; label: string }[] = [
-  { step: 1, label: "Tus datos" },
-  { step: 2, label: "Pago" },
-  { step: 3, label: "Confirmar" },
-];
 
 
 function formatAccountOrderDate(value: string | undefined) {
@@ -482,11 +477,12 @@ export default function CartDrawer({
   const [recentOrderLive, setRecentOrderLive] = useState<
     Record<string, RecentOrderLiveInfo>
   >({});
-  // Checkout por pasos para Para llevar y Delivery (1 datos → 2 pago →
-  // 3 confirmación): pantallas cortas con el botón siempre a la vista, en
-  // vez de una sola columna larga. El paso 3 absorbe el viejo modal de
-  // "confirma tu dirección" (el mapa vive en la confirmación).
-  const [checkoutStep, setCheckoutStep] = useState<1 | 2 | 3>(1);
+  // Checkout por pasos para Para llevar (datos → pago → confirmación) y
+  // Delivery (datos → ubicación → pago → confirmación): pantallas cortas con
+  // el botón siempre a la vista, en vez de una sola columna larga. La
+  // confirmación absorbe el viejo modal de "confirma tu dirección" (el mapa
+  // vive ahí).
+  const [checkoutStep, setCheckoutStep] = useState<number>(1);
   // Contenedor con scroll del modal: al cambiar de paso se vuelve arriba.
   const modalScrollRef = useRef<HTMLDivElement | null>(null);
   const [isAdjustMapOpen, setIsAdjustMapOpen] = useState(false);
@@ -1423,15 +1419,41 @@ export default function CartDrawer({
     !isTableReservedNow;
   const missingOrderFields = missingOrderChecks.map((check) => check.label);
 
-  // Wizard (pick up / delivery): reparte los requisitos entre el paso 1
-  // (datos y ubicación) y el paso 2 (todo lo del pago), para que "Continuar"
-  // valide solo lo que el cliente tiene delante.
+  // Wizard (pick up / delivery). Pick up: 3 pasos (datos, pago, confirmar).
+  // Delivery: 4 pasos — la UBICACIÓN tiene paso propio (dueño 2026-07-31):
+  // la pantalla de datos era la más larga del wizard y la ubicación es lo
+  // que más fricción tiene (permiso de GPS, cotización, cobertura); con
+  // pantalla propia se ve grande y sus rebotes no contaminan los datos.
   const isWizardCheckout = isTakeawayOrder || isDeliveryOrder;
-  const step1MissingChecks = missingOrderChecks.filter((check) =>
-    WIZARD_STEP1_TARGET_IDS.has(check.targetId),
-  );
-  const step2MissingChecks = missingOrderChecks.filter(
-    (check) => !WIZARD_STEP1_TARGET_IDS.has(check.targetId),
+  const wizardSteps: { step: number; label: string }[] = isDeliveryOrder
+    ? [
+        { step: 1, label: "Datos" },
+        { step: 2, label: "Ubicación" },
+        { step: 3, label: "Pago" },
+        { step: 4, label: "Confirmar" },
+      ]
+    : [
+        { step: 1, label: "Tus datos" },
+        { step: 2, label: "Pago" },
+        { step: 3, label: "Confirmar" },
+      ];
+  const totalWizardSteps = wizardSteps.length;
+  const wizardConfirmStep = totalWizardSteps;
+  const wizardPayStep = isDeliveryOrder ? 3 : 2;
+  const isDatosStep = checkoutStep === 1;
+  const isLocationStep = isDeliveryOrder && checkoutStep === 2;
+  const isPayStep = checkoutStep === wizardPayStep;
+  const isConfirmStep = checkoutStep === wizardConfirmStep;
+  // A qué paso pertenece cada requisito pendiente: datos → 1; ubicación → su
+  // paso (2 en delivery); todo lo demás es del paso de pago.
+  const wizardStepForTarget = (targetId: string): number => {
+    if (WIZARD_DATOS_TARGET_IDS.has(targetId)) return 1;
+    if (targetId === "checkout-ubicacion") return isDeliveryOrder ? 2 : 1;
+    return wizardPayStep;
+  };
+  // "Continuar" valida SOLO lo que el cliente tiene delante en este paso.
+  const currentStepMissingChecks = missingOrderChecks.filter(
+    (check) => wizardStepForTarget(check.targetId) === checkoutStep,
   );
 
   // El aviso grande de validación se apaga solo cuando el cliente completa
@@ -3188,7 +3210,7 @@ export default function CartDrawer({
 
   // ——— Checkout por pasos (pick up / delivery) ———
 
-  function goToCheckoutStep(step: 1 | 2 | 3) {
+  function goToCheckoutStep(step: number) {
     setCheckoutStep(step);
     setValidationAlert(null);
     // El scroll vuelve arriba para que cada paso arranque desde su título.
@@ -3218,31 +3240,19 @@ export default function CartDrawer({
         setValidationAlert(unavailableItemsMessage);
         return;
       }
-      if (step1MissingChecks.length > 0) {
-        setValidationAlert(
-          `Para continuar te falta: ${step1MissingChecks
-            .map((check) => check.label)
-            .join(", ")}.`,
-        );
-        scrollToMissingTarget(step1MissingChecks[0].targetId);
-        return;
-      }
-      goToCheckoutStep(2);
+    }
+
+    if (currentStepMissingChecks.length > 0) {
+      setValidationAlert(
+        `Para continuar te falta: ${currentStepMissingChecks
+          .map((check) => check.label)
+          .join(", ")}.`,
+      );
+      scrollToMissingTarget(currentStepMissingChecks[0].targetId);
       return;
     }
 
-    if (checkoutStep === 2) {
-      if (step2MissingChecks.length > 0) {
-        setValidationAlert(
-          `Para continuar te falta: ${step2MissingChecks
-            .map((check) => check.label)
-            .join(", ")}.`,
-        );
-        scrollToMissingTarget(step2MissingChecks[0].targetId);
-        return;
-      }
-      goToCheckoutStep(3);
-    }
+    goToCheckoutStep(Math.min(checkoutStep + 1, wizardConfirmStep));
   }
 
   // Botón final (paso 3 del wizard y pantalla única de "Comer aquí"): con
@@ -3266,9 +3276,7 @@ export default function CartDrawer({
       );
       if (firstMissing) {
         if (isWizardCheckout) {
-          setCheckoutStep(
-            WIZARD_STEP1_TARGET_IDS.has(firstMissing.targetId) ? 1 : 2,
-          );
+          setCheckoutStep(wizardStepForTarget(firstMissing.targetId));
         }
         scrollToMissingTarget(firstMissing.targetId);
       } else if (isWizardCheckout && (needsBranchSelection || hasUnavailableItemsForOrderType)) {
@@ -4245,8 +4253,14 @@ export default function CartDrawer({
                     cortas en vez de una columna larga; los pasos ya pasados
                     se pueden volver a abrir tocándolos. */}
                 {isWizardCheckout && (
-                  <div className="grid grid-cols-3 gap-2">
-                    {WIZARD_STEPS.map(({ step, label }) => (
+                  <div
+                    className={
+                      totalWizardSteps === 4
+                        ? "grid grid-cols-4 gap-1.5"
+                        : "grid grid-cols-3 gap-2"
+                    }
+                  >
+                    {wizardSteps.map(({ step, label }) => (
                       <button
                         key={step}
                         type="button"
@@ -4274,7 +4288,7 @@ export default function CartDrawer({
 
                 {/* Tipo de pedido PRIMERO: define qué campos siguen (antes
                     vivía a mitad del formulario). */}
-                {(!isWizardCheckout || checkoutStep === 1) && (
+                {(!isWizardCheckout || isDatosStep) && (
                   <div>
                     <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Tipo de pedido
@@ -4301,7 +4315,7 @@ export default function CartDrawer({
                   </div>
                 )}
 
-                {(!isWizardCheckout || checkoutStep === 1) && (
+                {(!isWizardCheckout || isDatosStep) && (
                   <PublicBranchPicker
                     selection={branchSelection}
                     label="¿En qué sede estás pidiendo?"
@@ -4349,7 +4363,7 @@ export default function CartDrawer({
                     </div>
                   ))}
 
-                {(!isWizardCheckout || checkoutStep === 1) && (
+                {(!isWizardCheckout || isDatosStep) && (
                   <div id="checkout-nombre">
                     <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Nombre del cliente{" "}
@@ -4373,7 +4387,7 @@ export default function CartDrawer({
                 {/* Teléfono: en el wizard vive en el paso 1 para TODOS los
                     destinos (en pick up y delivery es obligatorio); en mesa
                     ayuda a diferenciar clientes pero es opcional. */}
-                {(!isWizardCheckout || checkoutStep === 1) && (
+                {(!isWizardCheckout || isDatosStep) && (
                   <div id="checkout-telefono">
                     <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
                       Teléfono{" "}
@@ -4601,7 +4615,7 @@ export default function CartDrawer({
                 {/* Paso 2 (pick up y delivery): SOLO el pago — método,
                     mixto, vuelto y comprobantes; el reporte de pago luego
                     pre-carga ese método. */}
-                {isWizardCheckout && checkoutStep === 2 && (
+                {isWizardCheckout && isPayStep && (
                   <div className="space-y-5 sm:space-y-4">
                     {publicConfig.publicPrepayNoticeEnabled && (
                       <PublicPrepayNotice
@@ -4612,7 +4626,7 @@ export default function CartDrawer({
                   </div>
                 )}
 
-                {isDeliveryOrder && checkoutStep === 1 && (
+                {isLocationStep && (
                   // Sin caja envolvente: las tarjetas internas son el único
                   // nivel de borde para que el formulario respire.
                   <div className="space-y-5 sm:space-y-4">
@@ -4789,7 +4803,7 @@ export default function CartDrawer({
                     — lo que pides, tus datos, la entrega con su mapa (esto
                     absorbe el viejo modal de "¿es esta tu ubicación?") y el
                     pago. Cada tarjeta trae su botón para volver a corregir. */}
-                {isWizardCheckout && checkoutStep === 3 && (
+                {isWizardCheckout && isConfirmStep && (
                   <div className="space-y-5 sm:space-y-4">
                     <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
                       <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
@@ -4856,7 +4870,8 @@ export default function CartDrawer({
                           </p>
                           <button
                             type="button"
-                            onClick={() => goToCheckoutStep(1)}
+                            // La ubicación ahora vive en su propio paso (2).
+                            onClick={() => goToCheckoutStep(2)}
                             className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black"
                           >
                             <Pencil size={11} />
@@ -4914,7 +4929,7 @@ export default function CartDrawer({
                         </p>
                         <button
                           type="button"
-                          onClick={() => goToCheckoutStep(2)}
+                          onClick={() => goToCheckoutStep(wizardPayStep)}
                           className="inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-primary)] px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.1em] text-[var(--brand-primary)] transition hover:bg-[var(--brand-accent)] hover:text-black"
                         >
                           <Pencil size={11} />
@@ -4938,7 +4953,7 @@ export default function CartDrawer({
 
                 {/* Total, nota e imagen: en el wizard viven en el paso 3
                     (confirmación); en "Comer aquí" salen como siempre. */}
-                {(!isWizardCheckout || checkoutStep === 3) && (
+                {(!isWizardCheckout || isConfirmStep) && (
                 <>
                 <div className="rounded-2xl border border-[var(--brand-border)] bg-[var(--brand-surface-2)] px-4 py-3">
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">
@@ -5094,7 +5109,7 @@ export default function CartDrawer({
                   </div>
                 )}
 
-                {(!isWizardCheckout || checkoutStep === 3) &&
+                {(!isWizardCheckout || isConfirmStep) &&
                   hasStaffConfirmationItems && (
                   <div className="rounded-2xl border border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3">
                     <p className="text-xs font-black uppercase tracking-[0.12em] text-[var(--brand-primary)]">
@@ -5118,7 +5133,7 @@ export default function CartDrawer({
                 {/* El repaso de "falta X" completo solo tiene sentido donde
                     está el botón final; a mitad del wizard confundía con
                     campos de otros pasos. */}
-                {(!isWizardCheckout || checkoutStep === 3) &&
+                {(!isWizardCheckout || isConfirmStep) &&
                   hasItems &&
                   missingOrderFields.length > 0 && (
                   <div className="rounded-2xl border border-[var(--brand-border)] bg-[rgba(var(--brand-primary-rgb),0.12)] px-4 py-3">
@@ -5162,11 +5177,11 @@ export default function CartDrawer({
                   {/* En el paso 3 el total NO se repite aquí (está en la caja
                       "Tienes que pagar", justo arriba): con dos botones no
                       cabía y salía aplastado. */}
-                  {(!isWizardCheckout || checkoutStep < 3) && (
+                  {(!isWizardCheckout || !isConfirmStep) && (
                     <div className="min-w-0">
                       <p className="whitespace-nowrap text-[0.6rem] font-black uppercase tracking-[0.14em] text-[var(--brand-ink-2)]/55">
                         {isWizardCheckout
-                          ? `Paso ${checkoutStep} de 3 · Total`
+                          ? `Paso ${checkoutStep} de ${totalWizardSteps} · Total`
                           : "Total"}
                       </p>
                       {exchangeRate > 0 && totalVES > 0 ? (
@@ -5186,7 +5201,7 @@ export default function CartDrawer({
 
                   <div
                     className={`flex shrink-0 items-center gap-2 ${
-                      isWizardCheckout && checkoutStep === 3 ? "w-full" : ""
+                      isWizardCheckout && isConfirmStep ? "w-full" : ""
                     }`}
                   >
                     {isWizardCheckout && checkoutStep > 1 && (
@@ -5196,7 +5211,7 @@ export default function CartDrawer({
                       <button
                         type="button"
                         onClick={() =>
-                          goToCheckoutStep((checkoutStep - 1) as 1 | 2)
+                          goToCheckoutStep(checkoutStep - 1)
                         }
                         disabled={isSubmittingOrder}
                         aria-label="Volver al paso anterior"
@@ -5206,7 +5221,7 @@ export default function CartDrawer({
                       </button>
                     )}
 
-                    {isWizardCheckout && checkoutStep < 3 ? (
+                    {isWizardCheckout && !isConfirmStep ? (
                       <button
                         type="button"
                         onClick={handleWizardContinue}
@@ -5225,7 +5240,7 @@ export default function CartDrawer({
                         onClick={handleRegisterButtonClick}
                         disabled={isSubmittingOrder || !hasItems}
                         className={`flex items-center justify-center gap-2 rounded-full border px-6 py-3.5 text-sm font-black uppercase tracking-[0.12em] shadow-[0_14px_30px_-14px_rgba(var(--brand-primary-rgb),0.55)] transition active:translate-y-1 active:shadow-none disabled:cursor-not-allowed ${
-                          isWizardCheckout && checkoutStep === 3 ? "flex-1" : ""
+                          isWizardCheckout && isConfirmStep ? "flex-1" : ""
                         } ${
                           hasItems && !isSubmittingOrder
                             ? "border-[var(--brand-primary)] bg-[var(--brand-accent)] text-black"

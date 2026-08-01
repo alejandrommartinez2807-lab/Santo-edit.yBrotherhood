@@ -1658,7 +1658,24 @@ export default function PublicOrderPaymentSection({
               pedido.
             </p>
           ) : null}
-          {payments.map((entry, index) => (
+          {payments.map((entry, index) => {
+            // Variante COMPACTA (pantalla dedicada, un solo pago, todo
+            // bloqueado): método y monto CENTRADOS en una sola tarjeta, sin
+            // rótulos ni coletillas — el dueño pidió no sobrecargar
+            // visualmente (2026-07-31). En mixto o con campos editables se
+            // queda la presentación de siempre.
+            const entryLockedUSD = normalizeMoneyInput(entry.amountUSD);
+            const entryLockedVES = normalizeMoneyInput(entry.amountVES);
+            const entryRate = Number(info?.exchangeRate || 0);
+            const compactLockedHero =
+              screenMode &&
+              !isMixedReport &&
+              lockMethods &&
+              lockAmounts &&
+              entry.method.trim() !== "" &&
+              (entryLockedUSD > 0 || entryLockedVES > 0);
+
+            return (
             <div
               key={`payment-entry-${index}`}
               // En la pantalla dedicada con UN solo pago, el bloque va SIN
@@ -1671,6 +1688,24 @@ export default function PublicOrderPaymentSection({
                   : "rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/25 p-3"
               }
             >
+              {compactLockedHero ? (
+                <div className="rounded-2xl border-2 border-[var(--brand-border)] bg-[var(--brand-cream)]/40 px-4 py-4 text-center">
+                  <p className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-[var(--brand-ink-2)]/60">
+                    {entry.method}
+                  </p>
+                  <p className="mt-1 text-2xl font-black leading-none text-[var(--brand-ink-3)]">
+                    {entryLockedVES > 0
+                      ? `Bs ${formatVES(entryLockedVES)}`
+                      : formatUSD(entryLockedUSD)}
+                  </p>
+                  {entryLockedVES > 0 && entryRate > 0 ? (
+                    <p className="mt-1 text-[0.72rem] font-bold text-[var(--brand-ink-2)]/55">
+                      ≈ {formatUSD(entryLockedVES / entryRate)}
+                    </p>
+                  ) : null}
+                </div>
+              ) : (
+              <>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 {/* En mixto, cada pago es su propia tarjeta numerada: antes
                     había UN bloque de método, UN bloque de captura y un parche
@@ -1847,6 +1882,8 @@ export default function PublicOrderPaymentSection({
                   </div>
                 );
               })()}
+              </>
+              )}
 
               {/* El botón "Completar lo que falta" se retiró: el monto ya
                   viene precargado con la pata exacta y no se puede pagar
@@ -1994,7 +2031,8 @@ export default function PublicOrderPaymentSection({
                 );
               })()}
             </div>
-          ))}
+            );
+          })}
 
           {/* Con las patas que manda el servidor no se ofrece agregar otro
               método: el reparto ya está decidido en el pedido. */}
