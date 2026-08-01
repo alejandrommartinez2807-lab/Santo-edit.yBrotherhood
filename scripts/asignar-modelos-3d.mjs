@@ -24,20 +24,23 @@ const MODELOS_DIR = resolve(HERE, "..", "public", "modelos")
 const APLICAR = process.argv.includes("--aplicar")
 const QUITAR = process.argv.includes("--quitar")
 
+// Los marcados con ★ tienen modelo PROPIO: son los 7 más vendidos según
+// order_items de producción (77% de las unidades). El resto comparte modelo
+// de familia.
 const MAPA = {
   // ── ANTOJOS ───────────────────────────────────────────────────────────
   "PAPAS SENCILLAS": "papas",
-  "FRENCH FRIES PARTY": "papas-jumbo", // ración de 1 kg
-  "PAPAS AMERICANAS": "papas-cheddar",
+  "FRENCH FRIES PARTY": "fries-party", // ★ propio · ración de 1 kg
+  "PAPAS AMERICANAS": "papas-americanas", // ★ propio
   "HOT-CHEESEFRIES": "papas-cheddar",
   "WURST (cheddar+chorizo)": "papas-cheddar",
-  "CHEDDAR BOWL": "bowl-cheddar",
+  "CHEDDAR BOWL": "cheddar-bowl", // ★ propio · el más vendido
   "HOLY BITES": "bites",
-  "HOLY DRAGON´S": "bites-picante", // bites crispy en reducción de sriracha
+  "HOLY DRAGON´S": "holy-dragons", // ★ propio · bites en reducción de sriracha
 
   // ── BROTHERHOOD BASIC (smash de 75 g) ─────────────────────────────────
   "AMERICAN O.G SMASH": "burger-smash",
-  "AMERICAN BASIC": "burger-smash",
+  "AMERICAN BASIC": "american-basic", // ★ propio · pan de batata
   "TIA BASIC": "burger-smash",
   "HOT-SWEET SMASH": "burger-smash-picante", // jalapeños + cebolla caramelizada
   "LIL HAZE !NUEVO¡": "burger-pollo", // pollo mini crispy
@@ -79,12 +82,12 @@ const MAPA = {
   "TIA VEGGIE !NUEVO¡": "burger-veggie",
   "CHAMPI VEGGIE !NUEVO¡": "burger-veggie",
   "AMERICAN KID": "burger-kids",
-  BOMBASTYC: "burger-smash",
+  BOMBASTYC: "bombastyc", // ★ propio · burger + holy
 
   // ── EPA BRO (promos: van con la bandeja completa) ──────────────────────
   "¡PROMO! 2PAC The G.O.A.T": "combo",
   "BIG BANG": "combo",
-  "EL BARCO + REFRESCO": "combo",
+  "EL BARCO + REFRESCO": "barco", // ★ propio
   "PROMO BIG FAMILY + (Delivery Gratis)": "combo",
   "PROMO PARA DOS PREMIUM + COCA-COLA": "combo",
 

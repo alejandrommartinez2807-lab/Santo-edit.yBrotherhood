@@ -612,6 +612,14 @@ const MATERIALS = {
   cartonRojo: { color: "#C62828", roughness: 0.7 },
   bowl: { color: "#2E2E2E", roughness: 0.6 },
   bandeja: { color: "#3A2A20", roughness: 0.7 },
+  tabla: { color: "#6B4B2E", roughness: 0.75 },
+  bbq: { color: "#3B1D12", roughness: 0.35 },
+  // El glaseado de sriracha va brillante: es lo que dice "caramelizado".
+  sriracha: { color: "#C4441C", roughness: 0.32 },
+  // Pan de batata: más anaranjado que el brioche, que es lo que distingue
+  // a la AMERICAN BASIC en la foto.
+  panBatata: { color: "#D98F45", roughness: 0.82 },
+  panBatataDorado: { color: "#C0702C", roughness: 0.8 },
   vaso: { color: "#F5F2EC", roughness: 0.35 },
   tapaRoja: { color: "#C62828", roughness: 0.5 },
   pitillo: { color: "#E23B3B", roughness: 0.4 },
@@ -1235,6 +1243,336 @@ function buildCombo() {
   return groups
 }
 
+// ------------------------------------------------- los 7 más vendidos
+// Ranking sacado de `order_items` de producción (1 ago 2026): estos 7 platos
+// son el 77% de todas las unidades vendidas. Por eso llevan modelo PROPIO y
+// con más detalle, en vez de compartir uno de familia como el resto del menú.
+
+// 1º · CHEDDAR BOWL — 23,2% de las ventas.
+// "300grs de papas importadas, bañadas en queso cheddar con topping de
+//  nuggets, tocineta y BBQ."
+function buildCheddarBowl() {
+  const groups = new Map()
+  const random = makeRandom(99001)
+
+  addPart(groups, {
+    geom: cylinder({ radiusTop: 1.5, radiusBottom: 0.98, height: 0.66, segments: SEG + 8, capTop: false }),
+    material: "bowl",
+    position: [0, 0.33, 0],
+  })
+  addPart(groups, {
+    geom: cylinder({
+      radiusTop: 1.55,
+      radiusBottom: 1.5,
+      height: 0.07,
+      segments: SEG + 8,
+      capTop: false,
+      capBottom: false,
+    }),
+    material: "bowl",
+    position: [0, 0.66, 0],
+  })
+
+  // Papas apretadas, llenando el bowl (300 g es bastante).
+  for (let i = 0; i < 30; i += 1) {
+    const angulo = random() * Math.PI * 2
+    const distancia = random() * 1.05
+    addPart(groups, {
+      geom: box({ width: 0.115, height: 0.62 + random() * 0.4, depth: 0.115 }),
+      material: "papa",
+      position: [Math.cos(angulo) * distancia, 0.5 + random() * 0.32, Math.sin(angulo) * distancia],
+      rotation: [
+        { axis: "z", degrees: (random() - 0.5) * 120 },
+        { axis: "y", degrees: random() * 360 },
+      ],
+    })
+  }
+
+  // Cheddar: una capa que cae por encima y chorrea por el borde.
+  addPart(groups, {
+    geom: cylinder({ radiusTop: 1.28, radiusBottom: 1.34, height: 0.13, segments: SEG + 8 }),
+    material: "cheddarSalsa",
+    position: [0, 0.86, 0],
+  })
+  for (let i = 0; i < 9; i += 1) {
+    const angulo = (i / 9) * Math.PI * 2
+    addPart(groups, {
+      geom: sphere({ radius: 0.12, widthSegments: 10, heightSegments: 7 }),
+      material: "cheddarSalsa",
+      position: [Math.cos(angulo) * 1.4, 0.62 - random() * 0.14, Math.sin(angulo) * 1.4],
+      scale: [0.9, 1.25, 0.9],
+    })
+  }
+
+  // Topping: nuggets, tocineta y el hilo de BBQ.
+  for (let i = 0; i < 6; i += 1) {
+    const angulo = random() * Math.PI * 2
+    const distancia = random() * 0.85
+    addPart(groups, {
+      geom: sphere({ radius: 0.27, widthSegments: 12, heightSegments: 8 }),
+      material: "nugget",
+      position: [Math.cos(angulo) * distancia, 1.0, Math.sin(angulo) * distancia],
+      scale: [1.4, 0.55, 0.9],
+      rotation: { axis: "y", degrees: random() * 180 },
+    })
+  }
+  for (let i = 0; i < 12; i += 1) {
+    const angulo = random() * Math.PI * 2
+    const distancia = random() * 1.05
+    addPart(groups, {
+      geom: box({ width: 0.2, height: 0.06, depth: 0.13 }),
+      material: "tocineta",
+      position: [Math.cos(angulo) * distancia, 1.03 + random() * 0.08, Math.sin(angulo) * distancia],
+      rotation: { axis: "y", degrees: random() * 180 },
+    })
+  }
+  // BBQ: manchas oscuras y aplastadas. Con cilindros salían unas brochetas
+  // metálicas atravesando el plato.
+  for (let i = 0; i < 16; i += 1) {
+    const angulo = random() * Math.PI * 2
+    const distancia = random() * 1.1
+    addPart(groups, {
+      geom: sphere({ radius: 0.12, widthSegments: 8, heightSegments: 6 }),
+      material: "bbq",
+      position: [Math.cos(angulo) * distancia, 1.02 + random() * 0.06, Math.sin(angulo) * distancia],
+      scale: [1.7, 0.22, 1.2],
+      rotation: { axis: "y", degrees: random() * 180 },
+    })
+  }
+
+  return groups
+}
+
+// 2º · BOMBASTYC — 20,2%. Es promo: burger smash + tu "holy" al lado.
+function buildBombastyc() {
+  const groups = new Map()
+  const random = makeRandom(99002)
+  const ALTO_TABLA = 0.011
+
+  addPart(groups, {
+    geom: box({ width: 0.34, height: ALTO_TABLA, depth: 0.21 }),
+    material: "tabla",
+    position: [0, ALTO_TABLA / 2, 0],
+  })
+
+  fusionar(
+    groups,
+    enMetros(
+      buildBurger({ carnes: 1, quesos: 1, extras: ["tocineta", "pepinillo"], semilla: 99012 }),
+      0.105,
+    ),
+    { desplazamiento: [-0.075, ALTO_TABLA, 0] },
+  )
+
+  // El "holy" al lado, en su bandejita.
+  addPart(groups, {
+    geom: cylinder({ radiusTop: 0.075, radiusBottom: 0.058, height: 0.05, segments: 4, capTop: false }),
+    material: "cartonRojo",
+    position: [0.085, ALTO_TABLA + 0.025, 0],
+    rotation: { axis: "y", degrees: 45 },
+  })
+  for (let i = 0; i < 7; i += 1) {
+    const angulo = random() * Math.PI * 2
+    const distancia = random() * 0.035
+    addPart(groups, {
+      geom: sphere({ radius: 0.019, widthSegments: 10, heightSegments: 7 }),
+      material: "nugget",
+      position: [
+        0.085 + Math.cos(angulo) * distancia,
+        ALTO_TABLA + 0.05 + random() * 0.022,
+        Math.sin(angulo) * distancia,
+      ],
+      scale: [1.5, 0.55, 0.9],
+      rotation: { axis: "y", degrees: random() * 180 },
+    })
+  }
+
+  return groups
+}
+
+// 3º · HOLY DRAGON´S — 8,2%.
+// "Bites de pechuga Crispy Spice caramelizados en nuestra reducción de Sriracha."
+function buildHolyDragons() {
+  const groups = new Map()
+  const random = makeRandom(99003)
+
+  addPart(groups, {
+    geom: cylinder({ radiusTop: 1.0, radiusBottom: 0.8, height: 0.88, segments: 4, capTop: false }),
+    material: "cartonRojo",
+    position: [0, 0.44, 0],
+    rotation: { axis: "y", degrees: 45 },
+  })
+
+  // Caramelizados: el glaseado va brillante (roughness baja) y bien apilados.
+  for (let i = 0; i < 14; i += 1) {
+    const angulo = random() * Math.PI * 2
+    const distancia = random() * 0.5
+    addPart(groups, {
+      geom: sphere({ radius: 0.27, widthSegments: 12, heightSegments: 8 }),
+      material: "sriracha",
+      position: [
+        Math.cos(angulo) * distancia,
+        0.72 + random() * 0.48,
+        Math.sin(angulo) * distancia,
+      ],
+      scale: [1.2, 0.62, 0.92],
+      rotation: [
+        { axis: "z", degrees: (random() - 0.5) * 45 },
+        { axis: "y", degrees: random() * 180 },
+      ],
+    })
+  }
+
+  // Ajonjolí encima, como sale el plato.
+  for (let i = 0; i < 16; i += 1) {
+    const angulo = random() * Math.PI * 2
+    const distancia = random() * 0.55
+    addPart(groups, {
+      geom: sphere({ radius: 0.042, widthSegments: 6, heightSegments: 5 }),
+      material: "ajonjoli",
+      position: [
+        Math.cos(angulo) * distancia,
+        1.08 + random() * 0.16,
+        Math.sin(angulo) * distancia,
+      ],
+      scale: [1.4, 0.6, 1],
+    })
+  }
+
+  return groups
+}
+
+// 4º · FRENCH FRIES PARTY — 7,0%. "Ración de 1 kg": es una cesta para compartir.
+function buildFriesParty() {
+  const groups = new Map()
+  const random = makeRandom(99004)
+
+  addPart(groups, {
+    geom: cylinder({ radiusTop: 1.6, radiusBottom: 1.25, height: 0.98, segments: SEG, capTop: false }),
+    material: "cartonRojo",
+    position: [0, 0.49, 0],
+  })
+  addPart(groups, {
+    geom: cylinder({
+      radiusTop: 1.67,
+      radiusBottom: 1.6,
+      height: 0.08,
+      segments: SEG,
+      capTop: false,
+      capBottom: false,
+    }),
+    material: "cartonRojo",
+    position: [0, 0.98, 0],
+  })
+
+  // Un kilo: montaña de papas, unas paradas y otras acostadas.
+  for (let i = 0; i < 46; i += 1) {
+    const angulo = random() * Math.PI * 2
+    const distancia = random() * 1.35
+    const acostada = random() > 0.78
+    addPart(groups, {
+      geom: box({ width: 0.115, height: 0.85 + random() * 0.65, depth: 0.115 }),
+      material: "papa",
+      position: [
+        Math.cos(angulo) * distancia,
+        0.78 + random() * 0.6,
+        Math.sin(angulo) * distancia,
+      ],
+      rotation: [
+        { axis: "z", degrees: acostada ? 62 + random() * 34 : (random() - 0.5) * 30 },
+        { axis: "y", degrees: random() * 360 },
+      ],
+    })
+  }
+
+  return groups
+}
+
+// 5º · AMERICAN BASIC — 6,6%.
+// "Pan brioche de BATATA, smash de 75grs, queso americano, tocineta crujiente,
+//  pepinillos." El pan de batata es más anaranjado: es lo que la distingue.
+function buildAmericanBasic() {
+  const groups = buildBurger({
+    carnes: 1,
+    quesos: 1,
+    extras: ["tocineta", "pepinillo"],
+    semilla: 99005,
+  })
+
+  // Se repinta el pan: el generador lo deja en los materiales `pan` y
+  // `panDorado`, y acá van los de batata.
+  for (const [origen, destino] of [["pan", "panBatata"], ["panDorado", "panBatataDorado"]]) {
+    const grupo = groups.get(origen)
+    if (grupo) {
+      groups.set(destino, grupo)
+      groups.delete(origen)
+    }
+  }
+
+  return groups
+}
+
+// 6º · PAPAS AMERICANAS — 6,1%.
+// "300grs de papas importadas grandes con cheddar y tocineta."
+function buildPapasAmericanas() {
+  const groups = buildPapas({ cheddar: true, tocineta: true, semilla: 99006 })
+  const random = makeRandom(99016)
+
+  // Más cheddar que la versión de familia: acá el queso es el protagonista.
+  for (let i = 0; i < 10; i += 1) {
+    const angulo = random() * Math.PI * 2
+    addPart(groups, {
+      geom: sphere({ radius: 0.16, widthSegments: 10, heightSegments: 7 }),
+      material: "cheddarSalsa",
+      position: [
+        Math.cos(angulo) * (0.1 + random() * 0.32),
+        2.32 + random() * 0.36,
+        Math.sin(angulo) * (0.1 + random() * 0.32),
+      ],
+      scale: [1.45, 0.42, 1.45],
+    })
+  }
+
+  return groups
+}
+
+// 7º · EL BARCO + REFRESCO — 6,1%. "(2) Hamburguesas DOBLE + …": es el barco.
+function buildBarco() {
+  const groups = new Map()
+  const ALTO = 0.014
+
+  // El "barco": bandeja alargada con paredes inclinadas.
+  addPart(groups, {
+    geom: box({ width: 0.5, height: ALTO, depth: 0.26 }),
+    material: "bandeja",
+    position: [0, ALTO / 2, 0],
+  })
+  addPart(groups, {
+    geom: cylinder({ radiusTop: 0.2, radiusBottom: 0.16, height: 0.05, segments: 4, capTop: false, capBottom: false }),
+    material: "bandeja",
+    position: [0, ALTO + 0.025, 0],
+    rotation: { axis: "y", degrees: 45 },
+    scale: [1.85, 1, 1],
+  })
+
+  fusionar(
+    groups,
+    enMetros(buildBurger({ carnes: 2, quesos: 2, extras: ["tocineta", "pepinillo"], semilla: 99007 }), 0.125),
+    { desplazamiento: [-0.155, ALTO, -0.005] },
+  )
+  fusionar(
+    groups,
+    enMetros(buildBurger({ carnes: 2, quesos: 2, extras: ["tocineta", "cebollaCaramelizada"], semilla: 99017 }), 0.125),
+    { desplazamiento: [-0.03, ALTO, 0.035] },
+  )
+  fusionar(groups, enMetros(buildPapas({ cheddar: true, semilla: 99027 }), 0.15), {
+    desplazamiento: [0.115, ALTO, -0.03],
+  })
+  fusionar(groups, enMetros(buildLata(), 0.123), { desplazamiento: [0.205, ALTO, 0.05] })
+
+  return groups
+}
+
 // --------------------------------------------------------------------- main
 // `altura` = alto real en metros. `null` = el modelo ya viene en metros
 // (los combos, que se arman juntando sub-modelos ya escalados).
@@ -1319,6 +1657,14 @@ const MODELOS = [
   { nombre: "refresco", prim: "Refresco", altura: 0.18, build: () => buildRefresco() },
   // Combos
   { nombre: "combo", prim: "Combo", altura: null, build: () => buildCombo() },
+  // Los 7 más vendidos, con modelo propio (77% de las unidades)
+  { nombre: "cheddar-bowl", prim: "CheddarBowl", altura: 0.13, build: () => buildCheddarBowl() },
+  { nombre: "bombastyc", prim: "Bombastyc", altura: null, build: () => buildBombastyc() },
+  { nombre: "holy-dragons", prim: "HolyDragons", altura: 0.105, build: () => buildHolyDragons() },
+  { nombre: "fries-party", prim: "FriesParty", altura: 0.2, build: () => buildFriesParty() },
+  { nombre: "american-basic", prim: "AmericanBasic", altura: 0.105, build: () => buildAmericanBasic() },
+  { nombre: "papas-americanas", prim: "PapasAmericanas", altura: 0.17, build: () => buildPapasAmericanas() },
+  { nombre: "barco", prim: "Barco", altura: null, build: () => buildBarco() },
 ]
 
 mkdirSync(OUT_DIR, { recursive: true })
