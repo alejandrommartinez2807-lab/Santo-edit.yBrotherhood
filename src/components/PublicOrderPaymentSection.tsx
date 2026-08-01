@@ -1270,6 +1270,26 @@ export default function PublicOrderPaymentSection({
 
           // Patas en efectivo: se entregan en mano, NO se transfieren.
           const cashLegs = legsPlan.cashLegs;
+          // Con el formulario abierto en la pantalla dedicada y los montos
+          // BLOQUEADOS, cada tarjeta de pago ya dice su método y su monto:
+          // repetir el reparto aquí era ver "lo que tienes que pagar" DOS
+          // veces (dueño 2026-08-01). El héroe conserva solo lo que las
+          // tarjetas no cubren: la parte en EFECTIVO.
+          const cardsShowAmounts =
+            screenMode && isFormOpen && lockMethods && lockAmounts;
+          // Mixto SIN efectivo con el formulario abierto: los montos viven
+          // en las tarjetas y los datos también (regla de abajo) — esta
+          // tarjeta quedaba vacía repitiendo cosas. Fuera entera. En el
+          // reporte parcial ("falta la parte de X") sí se queda: ahí ES el
+          // aviso.
+          if (
+            cardsShowAmounts &&
+            isMixedReport &&
+            cashLegs.length === 0 &&
+            !isPartialPending
+          ) {
+            return null;
+          }
           const legsLabel = (legs: ExpectedPayment[]) =>
             legs
               .map((payment) =>
@@ -1398,28 +1418,38 @@ export default function PublicOrderPaymentSection({
                       leg.currency === "VES"
                         ? `Bs ${formatVES(leg.amount)}`
                         : formatUSD(leg.amount);
+                    // Las tarjetas ya muestran cada pago electrónico: aquí
+                    // solo queda el efectivo (sin repetir montos).
+                    const showElectronicLines = !cardsShowAmounts;
+                    if (!showElectronicLines && cashLegs.length === 0) {
+                      return null;
+                    }
                     return (
                       <div className="mt-2">
                         <p className="text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--brand-ink-2)]/55">
-                          {prepayOptional
-                            ? "Así se paga tu pedido"
-                            : "Tienes que pagar así"}
+                          {showElectronicLines
+                            ? prepayOptional
+                              ? "Así se paga tu pedido"
+                              : "Tienes que pagar así"
+                            : "Aparte, EN EFECTIVO al entregar"}
                         </p>
                         <div className="mt-1.5 space-y-1.5">
-                          {electronicLegs.map((leg) => (
-                            <p key={`hero-leg-${leg.method}`} className="leading-none">
-                              <span
-                                className={`font-black text-[var(--brand-primary)] ${
-                                  screenMode ? "text-3xl" : "text-xl"
-                                }`}
-                              >
-                                {legAmount(leg)}
-                              </span>
-                              <span className="ml-2 text-sm font-bold text-[var(--brand-ink-2)]/75">
-                                con {leg.method}
-                              </span>
-                            </p>
-                          ))}
+                          {showElectronicLines
+                            ? electronicLegs.map((leg) => (
+                                <p key={`hero-leg-${leg.method}`} className="leading-none">
+                                  <span
+                                    className={`font-black text-[var(--brand-primary)] ${
+                                      screenMode ? "text-3xl" : "text-xl"
+                                    }`}
+                                  >
+                                    {legAmount(leg)}
+                                  </span>
+                                  <span className="ml-2 text-sm font-bold text-[var(--brand-ink-2)]/75">
+                                    con {leg.method}
+                                  </span>
+                                </p>
+                              ))
+                            : null}
                           {cashLegs.map((leg) => (
                             <p key={`hero-cash-${leg.method}`} className="leading-none">
                               <span
@@ -1429,9 +1459,11 @@ export default function PublicOrderPaymentSection({
                               >
                                 {legAmount(leg)}
                               </span>
-                              <span className="ml-2 text-sm font-bold text-[var(--brand-ink-2)]/75">
-                                en efectivo
-                              </span>
+                              {showElectronicLines ? (
+                                <span className="ml-2 text-sm font-bold text-[var(--brand-ink-2)]/75">
+                                  en efectivo
+                                </span>
+                              ) : null}
                             </p>
                           ))}
                         </div>

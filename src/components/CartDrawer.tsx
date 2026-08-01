@@ -4983,11 +4983,26 @@ export default function CartDrawer({
                           </span>
                         </p>
                         <p className="text-sm font-black leading-tight text-[var(--brand-ink-2)]">
-                          Más con {mixedUsdMethod || "tu método en $"}:
+                          {isMixedDivisaCash
+                            ? "Más EN EFECTIVO:"
+                            : `Más con ${mixedUsdMethod || "tu método en $"}:`}
                           <span className="ml-1.5 text-lg font-black text-[var(--brand-ink-3)]">
                             {formatUSD(mixedUsdValue)}
                           </span>
                         </p>
+                        {/* La pata en efectivo con TODA su historia junta:
+                            se entrega en mano, con qué billete y el vuelto
+                            (el dato existía pero nunca se decía aquí — dueño
+                            2026-08-01: "el efectivo en divisas confunde"). */}
+                        {isMixedDivisaCash ? (
+                          <p className="text-[0.72rem] font-bold leading-4 text-[var(--brand-ink-2)]/60">
+                            La parte en efectivo la entregas al recibir
+                            {normalizeFormMoney(mixedUsdGivenAmount) > mixedUsdValue
+                              ? ` — pagas con ${formatUSD(normalizeFormMoney(mixedUsdGivenAmount))} y tu vuelto es ${formatUSD(normalizeFormMoney(mixedUsdGivenAmount) - mixedUsdValue)}`
+                              : ""}
+                            . No la transfieras.
+                          </p>
+                        ) : null}
                       </>
                     ) : selectedMethodsAreUsdOnly ? (
                       // Método en DIVISAS (Zelle, efectivo en $…): el monto
@@ -5006,6 +5021,18 @@ export default function CartDrawer({
                             <span className="ml-1.5 text-lg font-black text-[var(--brand-ink-3)]">
                               Bs {formatVES(totalVES)}
                             </span>
+                          </p>
+                        ) : null}
+                        {/* Efectivo en divisas: en mano, con qué billete y
+                            el vuelto — todo junto (dueño 2026-08-01). */}
+                        {isCashDivisaMethod && cashGivenValue >= totalUSD ? (
+                          <p className="text-[0.72rem] font-bold leading-4 text-[var(--brand-ink-2)]/60">
+                            Lo entregas en efectivo al recibir — pagas con{" "}
+                            {formatUSD(cashGivenValue)}
+                            {cashGivenValue > totalUSD
+                              ? ` y tu vuelto es ${formatUSD(cashGivenValue - totalUSD)}`
+                              : ""}
+                            .
                           </p>
                         ) : null}
                       </>
