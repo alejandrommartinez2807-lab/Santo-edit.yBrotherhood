@@ -95,6 +95,16 @@ export function normalizePublicProductBoolean(value: unknown, defaultValue = fal
   return defaultValue
 }
 
+// Mismo criterio que en el guardado (ordersMenu): el valor va al atributo `src`
+// de <model-viewer>, así que solo rutas del sitio o http(s).
+function normalizeModelUrl(value: unknown) {
+  const rawValue = String(value || "").trim()
+
+  if (!rawValue) return ""
+
+  return rawValue.startsWith("/") || /^https?:\/\//i.test(rawValue) ? rawValue : ""
+}
+
 function normalizeNumber(value: unknown, defaultValue = 0) {
   const numberValue = Number(value)
 
@@ -143,6 +153,8 @@ export function normalizePublicProduct(
       const n = Number(raw)
       return Number.isFinite(n) ? n : null
     })(),
+    model3dUrl: normalizeModelUrl(source.model3dUrl),
+    model3dIosUrl: normalizeModelUrl(source.model3dIosUrl),
   }
 }
 

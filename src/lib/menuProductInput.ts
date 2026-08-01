@@ -118,6 +118,20 @@ function normalizePositiveInteger(value: unknown) {
   return Math.round(numberValue)
 }
 
+// Devuelve `undefined` cuando el cliente NO mandó la clave. Es lo que deja que
+// `configValue` (saveMenuProduct) conserve el modelo 3D guardado al editar
+// cualquier otro campo del producto. Mandar "" sí borra el modelo (es el botón
+// "Quitar modelo" del editor).
+function normalizeOptionalModelUrl(value: unknown) {
+  if (value === undefined) return undefined
+
+  const rawValue = String(value || "").trim()
+
+  if (!rawValue) return ""
+
+  return rawValue.startsWith("/") || /^https?:\/\//i.test(rawValue) ? rawValue : ""
+}
+
 export { normalizeProductIds } from "@/lib/productIdList"
 
 export function normalizeMenuProductInput(value: unknown): SaveMenuProductInput {
@@ -152,5 +166,7 @@ export function normalizeMenuProductInput(value: unknown): SaveMenuProductInput 
       const n = Number(raw)
       return Number.isFinite(n) && n >= 0 && n <= 100 ? n : null
     })(),
+    model3dUrl: normalizeOptionalModelUrl(source.model3dUrl),
+    model3dIosUrl: normalizeOptionalModelUrl(source.model3dIosUrl),
   }
 }

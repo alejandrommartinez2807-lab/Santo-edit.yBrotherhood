@@ -10,10 +10,14 @@ import {
   Heart,
   Minus,
   Plus,
+  Rotate3d,
   ShoppingCart,
   SlidersHorizontal,
   X,
 } from "lucide-react";
+// Solo el envoltorio: la librería 3D (~300 KB) la carga él por dentro y nada
+// más cuando el cliente abre la ficha de un producto con modelo.
+import ProductModel3D from "@/components/ProductModel3D";
 import { formatPublicUSD as formatUSD, formatVES } from "@/utils/formatCurrency";
 import { usePublicCurrencySymbol } from "@/hooks/usePublicCurrencySymbol";
 import type { ProductToAdd } from "@/hooks/useCart";
@@ -305,6 +309,8 @@ export default function ProductCard({
   selectionRules,
   requiresWaiterConfirmation,
   ivaRate,
+  model3dUrl,
+  model3dIosUrl,
   publicLabels,
   isFavorite = false,
   onToggleFavorite,
@@ -313,6 +319,11 @@ export default function ProductCard({
 }: ProductCardProps) {
   usePublicCurrencySymbol();
   const sizeStyles = getCardSizeStyles(cardSize);
+  // El producto tiene 3D solo si hay .glb: el .usdz por sí solo no gira el
+  // plato, es exclusivo del AR de iPhone. Sin .glb todo se ve como siempre.
+  const model3dSrc = String(model3dUrl || "").trim();
+  const model3dIosSrc = String(model3dIosUrl || "").trim();
+  const has3dModel = Boolean(model3dSrc);
   const [added, setAdded] = useState(false);
   const [isCustomizerOpen, setIsCustomizerOpen] = useState(false);
   // Ficha del producto: se abre al tocar la foto o el título (imagen grande +
@@ -843,6 +854,26 @@ export default function ProductCard({
             </>
           ) : null}
 
+          {/* Distintivo "3D": abajo a la izquierda queda libre en los tres
+              tamaños de tarjeta (arriba van categoría/Top ventas, abajo a la
+              derecha el corazón). Es lo que le avisa al cliente que ese plato
+              se puede tocar y girar. */}
+          {has3dModel ? (
+            <button
+              type="button"
+              onClick={openDetail}
+              className={`absolute inline-flex items-center gap-1 rounded-full border border-[rgba(var(--brand-primary-rgb),0.6)] bg-black/70 font-black uppercase text-[var(--product-card-button)] backdrop-blur-sm transition hover:border-[var(--brand-primary)] active:scale-95 ${
+                sizeStyles.compactBadges
+                  ? "bottom-2 left-2 px-2 py-1 text-[0.52rem] tracking-[0.08em]"
+                  : "bottom-3 left-4 px-2.5 py-1.5 text-[0.6rem] tracking-[0.12em]"
+              }`}
+              aria-label={`Ver ${name} en 3D`}
+            >
+              <Rotate3d size={sizeStyles.compactBadges ? 10 : 12} />
+              3D
+            </button>
+          ) : null}
+
           {onToggleFavorite && sizeStyles.showBadges ? (
             <button
               type="button"
@@ -982,17 +1013,29 @@ export default function ProductCard({
 
             <div className="overflow-y-auto">
               <div className="relative bg-black">
-                <Image
-                  src={image || BRAND.logoUrl || "/logoremovebg.png"}
-                  alt={name}
-                  width={960}
-                  height={640}
-                  unoptimized
-                  className="h-64 w-full object-cover sm:h-96"
-                  onError={(event) => {
-                    event.currentTarget.src = "/logoremovebg.png";
-                  }}
-                />
+                {/* Con modelo 3D el plato se gira con el dedo y se puede ver en
+                    AR sobre la mesa. Sin modelo: la foto de siempre, idéntica. */}
+                {has3dModel ? (
+                  <ProductModel3D
+                    modelUrl={model3dSrc}
+                    iosModelUrl={model3dIosSrc || undefined}
+                    posterUrl={image || BRAND.logoUrl || "/logoremovebg.png"}
+                    name={name}
+                    className="h-64 w-full sm:h-96"
+                  />
+                ) : (
+                  <Image
+                    src={image || BRAND.logoUrl || "/logoremovebg.png"}
+                    alt={name}
+                    width={960}
+                    height={640}
+                    unoptimized
+                    className="h-64 w-full object-cover sm:h-96"
+                    onError={(event) => {
+                      event.currentTarget.src = "/logoremovebg.png";
+                    }}
+                  />
+                )}
                 <span className="absolute left-4 top-4 rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] bg-black/70 px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.16em] text-[var(--brand-primary)] backdrop-blur-sm">
                   {category}
                 </span>

@@ -30,6 +30,10 @@ export type Product = {
   premiumSummary?: string
   /** Tasa de IVA del producto (16 / 8 / 0 = exento). null = usa la default del negocio. */
   ivaRate?: number | null
+  /** Modelo 3D `.glb`: si está vacío el producto se muestra exactamente como siempre. */
+  model3dUrl?: string
+  /** Modelo `.usdz`: es el único que habilita el botón "Ver en tu mesa" en iPhone. */
+  model3dIosUrl?: string
 }
 
 export const categories = [

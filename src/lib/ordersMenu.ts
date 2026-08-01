@@ -1,6 +1,7 @@
 import type { ProductPaymentMode } from "@/types/localOrders"
 
 import { decodeDataUrlImage, sanitizeUploadedImageFileName } from "@/lib/dataUrlImages"
+import { decodeDataUrlModel, sanitizeUploadedModelFileName } from "@/lib/dataUrlModels"
 import { getSupabaseAdmin } from "./supabaseServer"
 
 function cleanId(value: unknown): string {
@@ -98,6 +99,10 @@ export type MenuProduct = {
   premiumSummary?: string
   /** Tasa de IVA del producto (16 / 8 / 0 = exento). Si es null/undefined, usa la default del negocio. */
   ivaRate?: number | null
+  /** Modelo 3D `.glb` del plato. "" = el producto se ve como siempre (sin 3D). */
+  model3dUrl?: string
+  /** Modelo `.usdz`: es el único que habilita el botón AR en iPhone. */
+  model3dIosUrl?: string
 }
 
 export type SaveMenuProductInput = {
@@ -123,6 +128,8 @@ export type SaveMenuProductInput = {
   requiresWaiterConfirmation?: boolean
   inventoryDiscountEnabled?: boolean
   ivaRate?: number | null
+  model3dUrl?: string
+  model3dIosUrl?: string
 }
 
 export type UploadMenuProductImageInput = {
@@ -138,6 +145,21 @@ export type UploadedMenuProductImage = {
   viewUrl: string
   fileId: string
   fileName: string
+  uploadedAt: string
+}
+
+export type UploadMenuProductModelInput = {
+  dataUrl: string
+  fileName: string
+  mimeType: string
+  productName?: string
+}
+
+export type UploadedMenuProductModel = {
+  modelUrl: string
+  fileId: string
+  fileName: string
+  mimeType: string
   uploadedAt: string
 }
 
@@ -220,6 +242,21 @@ function normalizeMenuProductRecord(value: unknown): MenuProductSelectionRules {
   } catch {
     return {}
   }
+}
+
+// El valor termina en el atributo `src`/`ios-src` de <model-viewer> en la carta
+// pública, así que solo se aceptan rutas del propio sitio o URLs http(s).
+// Cualquier otra cosa (javascript:, data:…) se guarda como "" = sin modelo.
+function normalizeMenuProductModelUrl(value: unknown) {
+  const rawValue = String(value || "").trim()
+
+  if (!rawValue) return ""
+
+  const isSafeUrl =
+    rawValue.startsWith("/") ||
+    /^https?:\/\//i.test(rawValue)
+
+  return isSafeUrl ? rawValue : ""
 }
 
 function normalizeMenuProductPositiveInteger(value: unknown) {
@@ -309,6 +346,8 @@ function normalizeMenuProduct(value: unknown): MenuProduct {
       const n = Number(raw)
       return Number.isFinite(n) && n >= 0 && n <= 100 ? n : null
     })(),
+    model3dUrl: normalizeMenuProductModelUrl(source.model3dUrl),
+    model3dIosUrl: normalizeMenuProductModelUrl(source.model3dIosUrl),
   }
 
   return {
@@ -487,6 +526,8 @@ export async function saveMenuProduct(
       isFeatured: normalized.isFeatured === true,
       premiumSummary: configValue("premiumSummary", normalized.premiumSummary, ""),
       ivaRate: configValue("ivaRate", normalized.ivaRate ?? null, null),
+      model3dUrl: configValue("model3dUrl", normalized.model3dUrl, ""),
+      model3dIosUrl: configValue("model3dIosUrl", normalized.model3dIosUrl, ""),
     },
   }
 
@@ -544,6 +585,50 @@ export async function uploadMenuProductImage(
     fileName: safeName,
     uploadedAt: new Date().toISOString(),
   })
+}
+
+// Los modelos 3D van al MISMO bucket público `menu-images`, en la carpeta
+// `models/`: así no hay que crear ni configurar nada a mano en Supabase.
+export async function uploadMenuProductModel(
+  input: UploadMenuProductModelInput,
+): Promise<UploadedMenuProductModel> {
+  const supabase = getSupabaseAdmin()
+
+  const model = decodeDataUrlModel(input.dataUrl, {
+    label: "El modelo 3D del producto",
+    maxBytes: 12_000_000,
+    fallbackMimeType: input.mimeType || "model/gltf-binary",
+    fileName: input.fileName,
+  })
+  const safeName = sanitizeUploadedModelFileName(
+    input.fileName,
+    input.productName || "modelo",
+    model.mimeType,
+  )
+  const path = `models/${Date.now()}-${safeName}`
+
+  const { error: uploadError } = await supabase.storage
+    .from(MENU_IMAGES_BUCKET)
+    .upload(path, model.buffer, { contentType: model.mimeType, upsert: true })
+
+  if (uploadError) {
+    throw new Error(uploadError.message || "No se pudo subir el modelo 3D del producto")
+  }
+
+  const { data: publicData } = supabase.storage.from(MENU_IMAGES_BUCKET).getPublicUrl(path)
+  const modelUrl = publicData?.publicUrl || ""
+
+  if (!modelUrl) {
+    throw new Error("El modelo 3D se subió, pero no se recibió un enlace válido")
+  }
+
+  return {
+    modelUrl,
+    fileId: path,
+    fileName: safeName,
+    mimeType: model.mimeType,
+    uploadedAt: new Date().toISOString(),
+  }
 }
 
 export async function deleteMenuProduct(
