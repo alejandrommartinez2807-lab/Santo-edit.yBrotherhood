@@ -474,15 +474,46 @@ export async function revertInventoryConsumptionForOrder(
     const item = itemRows?.[0] as Record<string, unknown> | undefined
     if (!item) continue
 
-    const previousQuantity = Number(item.quantity ?? 0) || 0
-    const finalQuantity =
+    let previousQuantity = Number(item.quantity ?? 0) || 0
+    let finalQuantity =
       Math.round((previousQuantity + quantityBack + Number.EPSILON) * 10000) / 10000
 
-    const { error: updateError } = await supabase
-      .from("inventory_items")
-      .update({ quantity: finalQuantity, updated_at: new Date().toISOString() })
-      .eq("id", itemId)
-    if (updateError) throw new Error(updateError.message)
+    // Candado optimista (auditoría 2026-08-02). Anular un pedido en pleno
+    // servicio devolvía los ingredientes escribiendo el total a pelo: si entre
+    // la lectura y la escritura entraba otra venta que consumía ese insumo, la
+    // reversión pisaba el descuento y esa mercancía vendida reaparecía en el
+    // stock. Ante un choque se relee y se recalcula: la devolución no se pierde.
+    let stockWritten = false
+
+    for (let attempt = 0; attempt < 4 && !stockWritten; attempt += 1) {
+      let updateQuery = supabase
+        .from("inventory_items")
+        .update({ quantity: finalQuantity, updated_at: new Date().toISOString() })
+        .eq("id", itemId)
+        .eq("quantity", previousQuantity)
+      if (branchId) updateQuery = updateQuery.eq("branch_id", branchId)
+      const { data: updatedRows, error: updateError } = await updateQuery.select("id")
+      if (updateError) throw new Error(updateError.message)
+
+      stockWritten = Boolean(updatedRows?.length)
+
+      if (stockWritten) break
+
+      let freshQuery = supabase
+        .from("inventory_items")
+        .select("quantity")
+        .eq("id", itemId)
+      if (branchId) freshQuery = freshQuery.eq("branch_id", branchId)
+      const { data: fresh } = await freshQuery.maybeSingle()
+
+      if (!fresh) break
+
+      previousQuantity = Number((fresh as Record<string, unknown>).quantity ?? 0) || 0
+      finalQuantity =
+        Math.round((previousQuantity + quantityBack + Number.EPSILON) * 10000) / 10000
+    }
+
+    if (!stockWritten) continue
 
     const { error: insertError } = await supabase.from("inventory_movements").insert({
       id: `mov-${Date.now()}-${randomSuffix()}`,

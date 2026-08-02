@@ -62,6 +62,47 @@ export function parseMoneyInput(value: string) {
   return roundMoney(numberValue)
 }
 
+// Detecta el clásico "Bs 9.648" tecleado a mano (auditoría 2026-08-02).
+//
+// El punto se lee como decimal —la regla es UNA en todo el sistema y no se
+// toca—, así que "9.648" son 9,65 bolívares y no 9.648. El cobro queda mil
+// veces menor: el pedido se marca "Pago parcial" y esos bolívares faltan en el
+// arqueo hasta que alguien lo note. Pasa en hora punta, escribiendo rápido el
+// monto que se ve en pantalla con separador de miles.
+//
+// Devuelve el monto que el cajero probablemente quiso poner, o 0 si no aplica.
+export function detectThousandsTypo(rawInput: string, expectedAmount: number) {
+  // Misma limpieza de prefijos/espacios que parseMoneyInput.
+  const input = String(rawInput || "")
+    .trim()
+    .replace(/\s/g, "")
+    .replace(/^(?:bs\.?|\$|€)+|(?:bs\.?|\$|€)+$/gi, "")
+
+  if (!input || expectedAmount <= 0) return 0
+
+  // Solo el patrón de miles: grupos de EXACTAMENTE tres cifras separados por
+  // punto y sin coma decimal ("9.648", "12.500"). "9.6" o "9,65" son decimales
+  // de verdad y no se tocan.
+  if (!/^\d{1,3}(?:\.\d{3})+$/.test(input)) return 0
+
+  const parsed = parseMoneyInput(input)
+
+  if (parsed <= 0) return 0
+
+  // El valor sale del texto, no de `parsed`: este ya viene redondeado a dos
+  // decimales ("9.648" → 9,65) y multiplicarlo daría 9650 en vez de 9648.
+  const asThousands = Number(input.replace(/\./g, ""))
+
+  if (!Number.isFinite(asThousands) || asThousands <= 0) return 0
+
+  // Solo se avisa si lo tecleado se queda MUY corto y la lectura como miles
+  // encaja con lo que falta por cobrar.
+  if (parsed >= expectedAmount * 0.5) return 0
+  if (asThousands < expectedAmount * 0.5 || asThousands > expectedAmount * 1.5) return 0
+
+  return asThousands
+}
+
 export function formatMoneyForInput(value: number) {
   const moneyValue = roundMoney(value)
 

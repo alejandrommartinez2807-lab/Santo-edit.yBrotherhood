@@ -186,6 +186,7 @@ export {
 export {
   clearDayCloses,
   deleteDayExpense,
+  findRecentDayClose,
   getDayCloses,
   getDayExpenses,
   markDayExpensesClosed,

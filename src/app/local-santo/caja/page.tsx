@@ -63,6 +63,7 @@ import {
   getPendingPaymentProofs,
   isDeliveryOrder,
   isDeliveryReported,
+  detectThousandsTypo,
   normalizeKitchenFlowMode,
   parseMoneyInput,
   readApiResponse,
@@ -101,6 +102,10 @@ function CajaPageContent() {
   const [orders, setOrders] = useState<LocalOrder[]>([])
   const [openAccounts, setOpenAccounts] = useState<OpenAccount[]>([])
   const [localTables, setLocalTables] = useState<LocalTableMapItem[]>(DEFAULT_LOCAL_TABLES)
+  // No se pudo leer la configuración del negocio: el mapa de mesas y los
+  // interruptores (separar cuenta, flujo de cocina, impresión) pueden no ser
+  // los reales. Se avisa en vez de degradar en silencio.
+  const [configLoadFailed, setConfigLoadFailed] = useState(false)
   const [activeFilter, setActiveFilter] = useState<CashFilter>("Por confirmar")
   const [searchText, setSearchText] = useState("")
   const [selectedCashTableName, setSelectedCashTableName] = useState("")
@@ -158,16 +163,39 @@ function CajaPageContent() {
     onNewProof: () => void soundControls.playSound("paymentProof"),
   })
 
-  async function loadLocalTables() {
+  // Degradación silenciosa (auditoría 2026-08-02): si esta llamada fallaba
+  // —hora pico, todo el local saliendo por la misma IP y el rate limit de
+  // /api/public/business-config saturado— el catch metía MESAS DE EJEMPLO
+  // ("Mesa 1..4, Barra, Afuera") en lugar de las reales, desaparecía "Separar
+  // cuenta", el flujo volvía a "con cocina" aunque el negocio esté configurado
+  // sin ella y se apagaba la impresión de comandas. Sin un solo aviso, y sin
+  // reintentar. El cajero cobraba a mano en el peor momento sin saber por qué.
+  //
+  // Ahora: lo que ya estaba cargado NO se pisa, se avisa, y se reintenta solo.
+  async function loadLocalTables(attempt = 0) {
+    const retryLater = () => {
+      setConfigLoadFailed(true)
+      if (attempt < 3) {
+        window.setTimeout(() => void loadLocalTables(attempt + 1), 4000 * (attempt + 1))
+      }
+    }
+
     try {
       const response = await fetch("/api/public/business-config", {
         cache: "no-store",
       })
+
+      if (!response.ok) {
+        retryLater()
+        return
+      }
+
       const data = await readApiResponse(response)
       const businessConfig = data.businessConfig && typeof data.businessConfig === "object"
         ? data.businessConfig
         : data
 
+      setConfigLoadFailed(false)
       setLocalTables(normalizeLocalTablesForMap(businessConfig.localTables))
       setCanSplitBill(Boolean(businessConfig.splitBillEnabled))
       setKitchenFlowMode(normalizeKitchenFlowMode(businessConfig.kitchenFlowMode))
@@ -181,7 +209,10 @@ function CajaPageContent() {
         businessConfig.cashierDeliveryPaymentInEnabled === true
       )
     } catch {
-      setLocalTables(DEFAULT_LOCAL_TABLES)
+      // Solo se cae a las mesas de ejemplo si NUNCA se llegó a cargar la
+      // configuración real; si ya había una buena, se conserva.
+      setLocalTables((current) => (current.length ? current : DEFAULT_LOCAL_TABLES))
+      retryLater()
     }
   }
 
@@ -861,6 +892,11 @@ function CajaPageContent() {
   const currentPaymentUSD = parseMoneyInput(paymentForm.amountReceivedUSD)
   const paymentExchangeRate = Number(paymentModalOrder?.exchangeRate || 0)
   const pendingVESForPayment = paymentDraft && paymentExchangeRate > 0 ? roundMoney(paymentDraft.pendingUSD * paymentExchangeRate) : 0
+  // "Bs 9.648" tecleado a mano entra como 9,65: se avisa antes de guardar.
+  const thousandsTypoVES = detectThousandsTypo(
+    paymentForm.amountReceivedVES,
+    pendingVESForPayment,
+  )
 
   function completePaymentPendingInVES() {
     if (!paymentDraft || !paymentExchangeRate) return
@@ -1177,6 +1213,26 @@ function CajaPageContent() {
               <p className="text-sm font-bold leading-6 text-red-800">{errorMessage}</p>
             </div>
           )}
+
+          {/* La configuración del negocio no cargó: el mapa de mesas y los
+              interruptores pueden no ser los reales. Antes esto pasaba en
+              silencio y el cajero se quedaba con mesas de ejemplo. */}
+          {configLoadFailed && (
+            <div className="mt-3 rounded-2xl border-2 border-amber-500/40 bg-amber-100 px-4 py-3">
+              <p className="text-sm font-bold leading-6 text-amber-800">
+                No se pudo leer la configuración del negocio (mesas, separar cuenta,
+                impresión). Se está reintentando: si el mapa de mesas no es el tuyo,
+                recarga la página antes de cobrar por mesa.
+              </p>
+              <button
+                type="button"
+                onClick={() => void loadLocalTables()}
+                className="mt-2 rounded-full border-2 border-amber-600 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-amber-700"
+              >
+                Reintentar ahora
+              </button>
+            </div>
+          )}
         </section>
 
         {filteredOrders.length === 0 ? (
@@ -1303,6 +1359,33 @@ function CajaPageContent() {
               <InputBox label="Monto recibido en bolívares reales" value={paymentForm.amountReceivedVES} onChange={(value) => updatePaymentForm("amountReceivedVES", value)} placeholder="Ej: 1569.25 o 1569,25" helper="Escribe el monto real en bolívares, no el equivalente en dólares." />
               <SelectBox label="Método en bolívares" value={paymentForm.paymentMethodVES} onChange={(value) => updatePaymentForm("paymentMethodVES", value)} options={PAYMENT_METHOD_VES_OPTIONS} emptyLabel="Sin registrar" />
             </div>
+
+            {/* "Bs 9.648" tecleado a mano se lee como 9,65 (el punto es
+                decimal en toda la app). El cobro entraba mil veces menor y el
+                descuadre solo aparecía al cuadrar la caja. El aviso no
+                bloquea: pregunta y ofrece el monto correcto de un toque.
+                Auditoría 2026-08-02. */}
+            {thousandsTypoVES > 0 && (
+              <div className="rounded-2xl border-2 border-amber-500/50 bg-amber-500/10 p-4">
+                <p className="text-sm font-black uppercase text-amber-700">
+                  ¿Querías decir Bs {formatVES(thousandsTypoVES)}?
+                </p>
+                <p className="mt-1 text-xs font-bold leading-5 text-amber-700/80">
+                  Escribiste <strong>Bs {formatVES(currentPaymentVES)}</strong> y el
+                  pendiente es <strong>Bs {formatVES(pendingVESForPayment)}</strong>. En
+                  este campo el punto separa los decimales, no los miles.
+                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    updatePaymentForm("amountReceivedVES", formatMoneyForInput(thousandsTypoVES))
+                  }
+                  className="mt-3 rounded-full border-2 border-amber-600 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-amber-700"
+                >
+                  Usar Bs {formatVES(thousandsTypoVES)}
+                </button>
+              </div>
+            )}
 
             {/* Solo en pedidos DE DELIVERY (en pick up/mesa la palabra
                 "Delivery" confundía) y solo si el dueño no lo apagó en

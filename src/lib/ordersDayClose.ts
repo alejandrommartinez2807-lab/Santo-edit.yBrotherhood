@@ -276,6 +276,50 @@ export type DayExpenseFilters = {
   includeClosed?: boolean // true = incluir gastos ya archivados en un cierre
 }
 
+// Busca un cierre RECIÉN guardado para la misma jornada y sede.
+//
+// El id del cierre se genera nuevo en cada intento, así que el upsert nunca
+// choca: si el POST se repetía —la cajera recarga tras un fallo del reinicio, o
+// el dueño repite desde otro equipo, donde el guard de la pantalla no existe—
+// se creaba una SEGUNDA fila con el mismo dinero y el historial duplicaba la
+// venta del día. Los gastos sí estaban protegidos, así que el descuadre era
+// asimétrico y costaba de ver. Auditoría 2026-08-02.
+//
+// La ventana es corta a propósito: un doble turno legítimo se cierra horas
+// después, no en los minutos siguientes.
+export async function findRecentDayClose(
+  dateLabel: string,
+  branchId?: string | null,
+  withinMs = 10 * 60 * 1000,
+): Promise<SavedDayClose | null> {
+  const cleanLabel = cleanText(dateLabel)
+
+  if (!cleanLabel) return null
+
+  const supabase = getSupabaseAdmin()
+  const since = new Date(Date.now() - withinMs).toISOString()
+
+  let query = supabase
+    .from("day_closes")
+    .select("*")
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(20)
+  if (branchId) query = query.eq("branch_id", branchId)
+
+  const { data, error } = await query
+
+  // Ante un fallo de lectura NO se bloquea el cierre: se sigue como antes.
+  if (error || !data?.length) return null
+
+  for (const row of data as Record<string, unknown>[]) {
+    const saved = (row.data || null) as SavedDayClose | null
+    if (saved && cleanText(saved.dateLabel) === cleanLabel) return saved
+  }
+
+  return null
+}
+
 // Caja (cierres y gastos) en Supabase. Cierres y gastos guardan
 // todo su contenido en la columna JSONB `data`.
 export async function saveDayClose(input: SaveDayCloseInput, branchId?: string | null) {

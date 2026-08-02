@@ -144,13 +144,27 @@ export async function transferInventoryToBranch(input: {
     const sourceFinal = roundQty(sourcePrevious - requested.quantity)
 
     // 1) Descuenta en la sede origen.
-    const { error: decrementError } = await supabase
+    //    Con candado optimista (auditoría 2026-08-02): si entre que se leyó el
+    //    stock y se escribe entra una venta que consume ese insumo, sin el
+    //    candado la transferencia pisaba el descuento y la mercancía vendida
+    //    reaparecía. Aquí SÍ se aborta —a diferencia de la entrada de compra—
+    //    porque mover insumos es una acción explícita del dueño: mejor decirle
+    //    "vuelve a intentarlo" que moverle una cantidad que ya no existe.
+    const { data: decrementedRows, error: decrementError } = await supabase
       .from("inventory_items")
       .update({ quantity: sourceFinal, updated_at: nowIso })
       .eq("id", requested.itemId)
       .eq("branch_id", sourceBranchId)
+      .eq("quantity", sourcePrevious)
+      .select("id")
 
     if (decrementError) throw new Error(decrementError.message)
+
+    if (!decrementedRows?.length) {
+      throw new Error(
+        `El stock de "${itemName}" cambió mientras se preparaba el traslado (una venta o un ajuste entró entremedio). Vuelve a abrir el traslado para ver las cantidades reales.`,
+      )
+    }
 
     // 2) Suma (o crea) en la sede destino. Si esto falla, se restaura el
     //    stock de origen para no perder inventario.
@@ -162,13 +176,23 @@ export async function transferInventoryToBranch(input: {
         const targetPrevious = Number(targetRow.quantity ?? 0) || 0
         const targetFinal = roundQty(targetPrevious + requested.quantity)
 
-        const { error: incrementError } = await supabase
+        const { data: incrementedRows, error: incrementError } = await supabase
           .from("inventory_items")
           .update({ quantity: targetFinal, updated_at: nowIso })
           .eq("id", String(targetRow.id))
           .eq("branch_id", targetBranchId)
+          .eq("quantity", targetPrevious)
+          .select("id")
 
         if (incrementError) throw new Error(incrementError.message)
+
+        // Mismo candado en el destino. El catch de fuera devuelve el stock a la
+        // sede origen, así que no se pierde inventario.
+        if (!incrementedRows?.length) {
+          throw new Error(
+            `El stock de "${itemName}" en la sede destino cambió mientras se hacía el traslado. Vuelve a intentarlo.`,
+          )
+        }
 
         targetRow.quantity = targetFinal
 

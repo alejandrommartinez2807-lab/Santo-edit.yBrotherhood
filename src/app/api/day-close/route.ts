@@ -6,6 +6,7 @@ import {
   getPaymentProofs,
   isTrainingModeActive,
   markDayExpensesClosed,
+  findRecentDayClose,
   saveDayClose,
   type SaveDayCloseInput,
 } from "@/lib/orders"
@@ -30,6 +31,10 @@ import { enforceApiMutationGuards } from "@/lib/apiMutationGuards"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
+
+// Tope de pedidos que caben en la fotografía del cierre. Existe para que la
+// fila JSONB de day_closes no crezca sin control.
+const SNAPSHOT_ORDERS_LIMIT = 500
 
 type SaveDayCloseInputWithDeliveryAudit = SaveDayCloseInput & {
   deliveryTotalRegisteredUSD?: number
@@ -426,6 +431,9 @@ export async function POST(request: NextRequest) {
     // el reinicio que sigue al cierre borra los pedidos vivos. No-fatal: si
     // la fotografía falla, el cierre con los totales se guarda igual.
     let snapshotWarning = ""
+    // Pedidos que NO cupieron en la fotografía. Si es > 0, el panel no debe
+    // dejar reiniciar: se borrarían sin quedar registrados en ninguna parte.
+    let snapshotTruncated = 0
     try {
       const [ordersToday, proofsToday] = await Promise.all([
         getOrders(branchId),
@@ -437,7 +445,17 @@ export async function POST(request: NextRequest) {
         realOrders.map((order) => [order.id, getDisplayOrderNumber(order)]),
       )
 
-      dayClose.orders = realOrders.slice(0, 500).map((order) => {
+      // El tope existe para que la fila JSONB del cierre no crezca sin control,
+      // pero recortaba EN SILENCIO: si el local llevaba dos días sin reiniciar
+      // (o hizo doble turno) y había 640 pedidos vivos, la fotografía guardaba
+      // 500 y el reinicio posterior borraba los 640. Esos 140 pedidos no
+      // quedaban ni en `orders` ni en el cierre. Ahora se avisa, y el panel
+      // bloquea el reinicio cuando pasa (auditoría 2026-08-02).
+      if (realOrders.length > SNAPSHOT_ORDERS_LIMIT) {
+        snapshotTruncated = realOrders.length - SNAPSHOT_ORDERS_LIMIT
+      }
+
+      dayClose.orders = realOrders.slice(0, SNAPSHOT_ORDERS_LIMIT).map((order) => {
         const payment = getOrderPayment(order)
         const orderTotals = getOrderTotals(order)
         // Detalle de anulación: columnas 0036 primero; pedidos anteriores a
@@ -555,6 +573,32 @@ export async function POST(request: NextRequest) {
         "El cierre se guardó sin la lista de pedidos/comprobantes del día (falló la fotografía)."
     }
 
+    if (snapshotTruncated > 0) {
+      snapshotWarning = `${snapshotTruncated} pedido${
+        snapshotTruncated === 1 ? "" : "s"
+      } no cabe${snapshotTruncated === 1 ? "" : "n"} en la lista guardada del cierre (el tope es ${SNAPSHOT_ORDERS_LIMIT}). NO reinicies los pedidos: se borrarían sin quedar registrados. Cierra primero los días atrasados.`
+    }
+
+    // Idempotencia: si esta misma jornada y sede ya se cerró hace un momento,
+    // se devuelve ESE cierre en vez de crear otro con el mismo dinero. Cubre el
+    // reintento tras un fallo del reinicio, la recarga de la pantalla y al
+    // dueño repitiendo desde otro equipo. El doble turno legítimo (horas
+    // después) sigue funcionando. Se puede forzar con allowDuplicate.
+    const allowDuplicate = body?.allowDuplicate === true
+    const existingClose = allowDuplicate
+      ? null
+      : await findRecentDayClose(dayClose.dateLabel, branchId)
+
+    if (existingClose) {
+      return NextResponse.json({
+        ok: true,
+        dayClose: existingClose,
+        message: "Este día ya estaba cerrado: se devolvió el cierre guardado.",
+        alreadyClosed: true,
+        access: { role: access.role, moduleKey: "history" },
+      })
+    }
+
     const savedDayClose = await saveDayClose(dayClose, branchId)
 
     // P0 #5: los gastos incluidos quedan marcados como CERRADOS — un segundo
@@ -614,6 +658,9 @@ export async function POST(request: NextRequest) {
       dayClose: savedDayClose,
       message: "Cierre guardado correctamente.",
       ...(snapshotWarning ? { warning: snapshotWarning } : {}),
+      // El panel lo usa para BLOQUEAR el reinicio: por encima del tope, borrar
+      // los pedidos los haría desaparecer del todo.
+      ...(snapshotTruncated > 0 ? { snapshotTruncated } : {}),
       access: {
         role: access.role,
         moduleKey: "history",

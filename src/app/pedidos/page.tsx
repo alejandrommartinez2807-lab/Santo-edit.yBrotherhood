@@ -2524,6 +2524,17 @@ export default function PedidosPage() {
           )
         }
 
+        // La fotografía no cupo entera: borrar ahora haría desaparecer del todo
+        // los pedidos que quedaron fuera. El cierre YA está guardado con sus
+        // totales; lo que se aborta es el borrado (auditoría 2026-08-02).
+        if (Number(closeData.snapshotTruncated || 0) > 0) {
+          dayCloseSavedForRef.current = dayStats.dateLabel
+          throw new Error(
+            closeData.warning ||
+              "El cierre se guardó, pero hay pedidos que no caben en la lista guardada. No se reiniciaron los pedidos para no perderlos.",
+          )
+        }
+
         dayCloseSavedForRef.current = dayStats.dateLabel
       }
 

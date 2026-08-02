@@ -430,6 +430,30 @@ export async function POST(request: NextRequest) {
 
         deliveryZone = selectedDeliveryZone?.name || rawDeliveryZone
         deliveryCostUSD = Number(selectedDeliveryZone?.costUSD || 0)
+
+        // El negocio cobra el envío POR DISTANCIA, la cotización de ahora no
+        // salió y no hay zonas viejas que sirvan de red: caer a $0 en silencio
+        // significa que el cliente vio y aceptó "Envío $4,00", el pedido se
+        // guarda con envío gratis y el repartidor sale sin que ese dinero
+        // aparezca en la caja ni en el cierre. Nadie se entera nunca.
+        //
+        // Pasa cuando la primera cotización (/api/public/delivery-quote)
+        // expandió el link corto de Maps en una instancia y este POST cae en
+        // otra, donde la segunda expansión falla o tarda. Auditoría 2026-08-02.
+        //
+        // Mejor pedir la ubicación otra vez que regalar el envío. La cola
+        // offline ya no descarta los 4xx reintentables, así que un pedido
+        // guardado sin señal no se pierde por esto.
+        if (isDeliveryDistanceReady(distanceSettings) && deliveryCostUSD <= 0) {
+          return NextResponse.json(
+            {
+              error:
+                "No pudimos calcular el costo del envío con esa ubicación. Vuelve a marcar tu ubicación en el mapa e intenta de nuevo.",
+              code: "DELIVERY_QUOTE_REQUIRED",
+            },
+            { status: 409 },
+          )
+        }
       }
     }
 

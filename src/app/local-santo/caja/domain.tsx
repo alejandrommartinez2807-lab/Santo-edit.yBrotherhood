@@ -3,7 +3,12 @@ import { BRAND } from "@/lib/brand"
 import { formatUSD, formatVES } from "@/utils/formatCurrency"
 import type { OpenAccount } from "@/types/localOrders"
 import { normalizeLocalTableText } from "@/components/local/LocalTablesMap"
-import { formatMoneyForInput, parseMoneyInput, roundMoney } from "@/lib/localOrderMoney"
+import {
+  detectThousandsTypo,
+  formatMoneyForInput,
+  parseMoneyInput,
+  roundMoney,
+} from "@/lib/localOrderMoney"
 import { getOrderPaymentLegs } from "@/lib/orderPaymentLegs"
 
 export const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
@@ -264,7 +269,7 @@ export function formatPaymentProofDate(value: string) {
 }
 
 // Aritmética de dinero compartida: la implementación vive en localOrderMoney.
-export { formatMoneyForInput, parseMoneyInput, roundMoney }
+export { detectThousandsTypo, formatMoneyForInput, parseMoneyInput, roundMoney }
 
 // Texto para pasarle el pedido al repartidor con UN solo copiado: teléfono
 // del cliente, link de la dirección y resumen corto de qué lleva. Sin montos

@@ -85,8 +85,9 @@ describe("saveSupplierPurchase — operación a medias (§18)", () => {
     responders = [
       // 1. stock actual
       () => ({ data: { quantity: 10, unit: "kg" } }),
-      // 2. stock 10 → 15
-      () => ({ error: null }),
+      // 2. stock 10 → 15. Con el candado optimista el UPDATE pide la fila
+      //    tocada: si vuelve vacío es que alguien cambió el stock entremedio.
+      () => ({ data: [{ id: "inv-carne" }], error: null }),
       // 3. movimiento "Compra" OK
       () => ({ error: null }),
       // 4. LA FACTURA FALLA
@@ -122,8 +123,8 @@ describe("saveSupplierPurchase — operación a medias (§18)", () => {
     responders = [
       // 1. stock actual
       () => ({ data: { quantity: 10, unit: "kg" } }),
-      // 2. stock 10 → 15
-      () => ({ error: null }),
+      // 2. stock 10 → 15 (con candado: devuelve la fila tocada)
+      () => ({ data: [{ id: "inv-carne" }], error: null }),
       // 3. EL MOVIMIENTO FALLA
       () => ({ error: { message: "insert de movimiento reventó" } }),
       // 4. compensación: stock de vuelta a 10
@@ -145,7 +146,7 @@ describe("saveSupplierPurchase — operación a medias (§18)", () => {
   it("el camino feliz no cambia: stock, movimiento y factura en ese orden", async () => {
     responders = [
       () => ({ data: { quantity: 10, unit: "kg" } }),
-      () => ({ error: null }),
+      () => ({ data: [{ id: "inv-carne" }], error: null }),
       () => ({ error: null }),
       (call) => ({ data: { id: "compra-1", ...call.payload }, error: null }),
     ]

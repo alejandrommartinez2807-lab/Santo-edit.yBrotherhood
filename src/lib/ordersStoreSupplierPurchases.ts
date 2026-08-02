@@ -161,18 +161,50 @@ async function applyPurchaseStock(
   if (branchId) currentQuery = currentQuery.eq("branch_id", branchId)
   const { data: current } = await currentQuery.maybeSingle()
 
-  const previousQuantity = num((current as Row | null)?.quantity)
+  let previousQuantity = num((current as Row | null)?.quantity)
   const unit = info.unit || cleanText((current as Row | null)?.unit) || "unidades"
-  const finalQuantity = Math.round((previousQuantity + quantity + Number.EPSILON) * 1000) / 1000
+  let finalQuantity = Math.round((previousQuantity + quantity + Number.EPSILON) * 1000) / 1000
 
-  // Actualiza el stock (fila concreta, acotada a la sucursal).
-  let updateQuery = supabase
-    .from("inventory_items")
-    .update({ quantity: finalQuantity, updated_at: new Date().toISOString() })
-    .eq("id", itemId)
-  if (branchId) updateQuery = updateQuery.eq("branch_id", branchId)
-  const { error: updateError } = await updateQuery
-  if (updateError) throw new Error(updateError.message)
+  // Candado optimista, igual que el consumo de las ventas (auditoría
+  // 2026-08-02). Antes se escribía el total calculado a pelo: si entre la
+  // lectura y la escritura entraba un pedido que consumía ese insumo, la compra
+  // pisaba el descuento y la mercancía vendida REAPARECÍA en el stock. Se
+  // inflaba justo en las horas de más venta, las alertas de reposición no
+  // saltaban a tiempo y el conteo físico nunca cuadraba.
+  //
+  // Ante un choque se RELEE y se recalcula: la entrada de mercancía no se
+  // rechaza nunca, solo se vuelve a sumar sobre el saldo bueno.
+  let stockWritten = false
+
+  for (let attempt = 0; attempt < 4 && !stockWritten; attempt += 1) {
+    let updateQuery = supabase
+      .from("inventory_items")
+      .update({ quantity: finalQuantity, updated_at: new Date().toISOString() })
+      .eq("id", itemId)
+      .eq("quantity", previousQuantity)
+    if (branchId) updateQuery = updateQuery.eq("branch_id", branchId)
+    const { data: updatedRows, error: updateError } = await updateQuery.select("id")
+    if (updateError) throw new Error(updateError.message)
+
+    stockWritten = Boolean(updatedRows?.length)
+
+    if (stockWritten) break
+
+    // Alguien tocó el stock entremedio: releer y recalcular sobre lo que hay.
+    let freshQuery = supabase
+      .from("inventory_items")
+      .select("quantity")
+      .eq("id", itemId)
+    if (branchId) freshQuery = freshQuery.eq("branch_id", branchId)
+    const { data: fresh } = await freshQuery.maybeSingle()
+
+    // El insumo ya no existe (lo borraron): no hay fila que actualizar.
+    if (!fresh) break
+
+    previousQuantity = num((fresh as Row).quantity)
+    finalQuantity =
+      Math.round((previousQuantity + quantity + Number.EPSILON) * 1000) / 1000
+  }
 
   // Movimiento de auditoría. branch-exempt: la fila incluye branch_id.
   const movementId = `mov-${Date.now()}-${randomSuffix()}`
