@@ -9,12 +9,11 @@ import {
 } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { captureError } from "@/lib/monitoring"
+import { buildRateLimitResponse, enforceRateLimit, getClientIp } from "@/lib/rateLimit"
 import {
-  buildRateLimitResponse,
-  enforceRateLimit,
-  peekRateLimit,
-  registerRateLimitHit,
-} from "@/lib/rateLimit"
+  peekSharedRateLimit,
+  registerSharedRateLimitHit,
+} from "@/lib/sharedRateLimit"
 import { enforceSameOriginRequest } from "@/lib/requestGuards"
 import { recordSecurityEvent } from "@/lib/securityEvents"
 import { touchStaffLastAccess } from "@/lib/staffUsers"
@@ -75,9 +74,10 @@ async function handleLocalAuth(request: NextRequest) {
   // es INCORRECTA: quien la sabe entra siempre, quien la adivina se queda fuera
   // 15 minutos tras 12 fallos.
   //
-  // Sigue viviendo en RAM (una instancia serverless no ve los fallos de otra):
-  // frena el ataque casero, NO uno distribuido. El blindaje definitivo es un
-  // contador compartido en base — pendiente, requiere migración.
+  // El contador es COMPARTIDO entre instancias (migración 0037): antes vivía en
+  // la memoria de cada proceso, así que bastaba repartir los intentos para que
+  // cada uno cayera en una instancia con el contador en cero. Si la migración
+  // aún no está aplicada, degrada al contador en memoria de siempre.
   const failedLoginLimit = {
     id: "api-local-auth-fallos",
     limit: 12,
@@ -86,7 +86,8 @@ async function handleLocalAuth(request: NextRequest) {
       "Demasiados intentos con clave incorrecta. Espera unos minutos antes de volver a intentar.",
   }
 
-  const lockedOut = peekRateLimit(request, failedLoginLimit)
+  const clientIp = getClientIp(request)
+  const lockedOut = await peekSharedRateLimit(request, failedLoginLimit, clientIp)
 
   if (!lockedOut.allowed) {
     recordSecurityEvent({
@@ -109,7 +110,7 @@ async function handleLocalAuth(request: NextRequest) {
     const localAccess = getRequestAccess(request, password)
 
     if (!localAccess.ok) {
-      registerRateLimitHit(request, failedLoginLimit)
+      await registerSharedRateLimitHit(request, failedLoginLimit, clientIp)
 
       return localAuthResponse(
         {

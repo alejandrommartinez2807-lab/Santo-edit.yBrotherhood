@@ -19,7 +19,13 @@ const MIGRATIONS_DIR = join(ROOT, "supabase", "migrations")
 const BACKUP_SCRIPT = join(ROOT, "scripts", "backup.mjs")
 
 // Tablas que a propósito NO se respaldan.
-const EXCLUIDAS = new Set<string>([])
+const EXCLUIDAS = new Set<string>([
+  // Contadores del rate limit (migración 0037). Son efímeros: cada fila vive lo
+  // que dura su ventana y se purgan solas. Restaurar contadores viejos no
+  // recupera nada y hasta podría dejar bloqueada una IP por intentos de hace
+  // meses.
+  "rate_limit_hits",
+])
 
 function tablasDelEsquema(): string[] {
   const sql = readdirSync(MIGRATIONS_DIR)
