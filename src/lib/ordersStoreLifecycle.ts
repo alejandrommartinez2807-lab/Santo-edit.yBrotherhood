@@ -185,6 +185,7 @@ export async function deleteOrderInStore(
 
 export async function clearOrdersInStore(
   branchId?: string | null,
+  options?: { createdFrom?: string | null },
 ): Promise<{ ok: boolean; deleted: number; message: string }> {
   // Fail-closed (auditoría 2026-07-24, B): sin sede resuelta el `neq("id","")`
   // borraba los pedidos de TODAS las sucursales.
@@ -197,13 +198,24 @@ export async function clearOrdersInStore(
   // huérfana. Se conservan hasta que la cuenta se cierre. Los de cuentas ya
   // Cerradas/Canceladas y los sueltos sí se limpian.
   const keepOpenAccounts = "open_account_status.is.null,open_account_status.neq.Abierta"
+  // Red de seguridad R3 (auditoría 2026-08-02): el reinicio SOLO puede borrar
+  // los pedidos que el cierre acaba de fotografiar. El cierre resume el día
+  // calendario de Caracas, pero el borrado no filtraba por fecha: un local que
+  // apaga a la 1:00 AM cerraba un día VACÍO (sus 40 pedidos ya eran "de ayer")
+  // y aun así borraba la noche entera. Con `createdFrom` lo de fuera de la
+  // jornada cerrada se conserva: podrá perderse una limpieza, nunca una venta.
+  const createdFrom = String(options?.createdFrom || "").trim()
+  const applyCreatedFrom = <T extends { gte(column: string, value: string): T }>(query: T): T =>
+    createdFrom ? query.gte("created_at", createdFrom) : query
+
   let countQ = supabase.from("orders").select("id", { count: "exact", head: true })
-  if (branchId) countQ = countQ.eq("branch_id", branchId)
+  countQ = countQ.eq("branch_id", branchId)
+  countQ = applyCreatedFrom(countQ)
   countQ = countQ.or(keepOpenAccounts)
   const { count } = await countQ
   // Borra SOLO los pedidos de esta sucursal (order_items cae por cascade).
-  let delQ = supabase.from("orders").delete()
-  delQ = branchId ? delQ.eq("branch_id", branchId) : delQ.neq("id", "")
+  let delQ = supabase.from("orders").delete().eq("branch_id", branchId)
+  delQ = applyCreatedFrom(delQ)
   delQ = delQ.or(keepOpenAccounts)
   const { error } = await delQ
   if (error) throw new Error(error.message)

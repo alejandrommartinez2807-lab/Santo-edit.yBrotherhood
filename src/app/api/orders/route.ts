@@ -566,8 +566,20 @@ export async function POST(request: NextRequest) {
     // menú real de la sede (variaciones y adicionales incluidos) y, si el
     // negocio tiene tasa propia (manual, dólar BCV o euro BCV), esa manda sobre
     // la del cliente. El staff conserva su flexibilidad (ítems manuales).
+    //
+    // Ampliado en la auditoría 2026-08-02: la flexibilidad es para quien VENDE.
+    // Cocina y Delivery no registran pedidos desde ninguna pantalla (solo leen
+    // y cambian estados), pero su clave —compartida, colgada en el .env— servía
+    // para crear por API un pedido de $40 con precio 0,01 y tasa 1: el cierre
+    // cuadraba porque el total nacía falseado. A esos roles se les aplica el
+    // mismo reprecio contra el menú real que a un cliente de la calle.
     const staffAccessForPricing = getAccess(request)
-    if (!staffAccessForPricing.ok) {
+    const ROLES_WITHOUT_FREE_PRICING: LocalRole[] = ["kitchen", "delivery"]
+    const canSetOwnPrices =
+      staffAccessForPricing.ok &&
+      !ROLES_WITHOUT_FREE_PRICING.includes(staffAccessForPricing.role)
+
+    if (!canSetOwnPrices) {
       const pricingBranchId = await resolveBranchId(request)
       const publicMenu = await getPublicMenuProductsForBranch(pricingBranchId)
       const repriced = repricePublicOrderItems(items, publicMenu)
@@ -799,7 +811,26 @@ export async function DELETE(request: NextRequest) {
       return moduleCheck.response
     }
 
-    const data = await clearOrders(await resolveBranchId(request))
+    // Acotar el borrado a la jornada que el cierre acaba de guardar (auditoría
+    // 2026-08-02). El panel manda el inicio del día de Caracas; sin el
+    // parámetro se conserva el comportamiento anterior (borrar todo), porque
+    // hay clientes viejos y scripts que llaman a este DELETE sin él.
+    const rawCreatedFrom = String(
+      request.nextUrl.searchParams.get("createdFrom") || "",
+    ).trim()
+    const createdFrom =
+      rawCreatedFrom && !Number.isNaN(Date.parse(rawCreatedFrom))
+        ? new Date(rawCreatedFrom).toISOString()
+        : null
+
+    if (rawCreatedFrom && !createdFrom) {
+      return NextResponse.json(
+        { error: "El parámetro createdFrom no es una fecha válida" },
+        { status: 400 },
+      )
+    }
+
+    const data = await clearOrders(await resolveBranchId(request), { createdFrom })
 
     return NextResponse.json({
       ok: true,

@@ -113,6 +113,7 @@ export async function deleteOrder(
 
 export async function clearOrders(
   branchId?: string | null,
+  options?: { createdFrom?: string | null },
 ): Promise<{ ok: boolean; deleted: number; message: string }> {
-  return clearOrdersInStore(branchId)
+  return clearOrdersInStore(branchId, options)
 }

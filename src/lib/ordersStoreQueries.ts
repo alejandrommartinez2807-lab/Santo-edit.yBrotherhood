@@ -58,39 +58,94 @@ export async function findOrderByClientOrderId(
   return loadOrderWithItems((data as Row).id as string, branchId)
 }
 
+// PostgREST devuelve como mucho 1000 filas por petición. Sin paginar, una sede
+// con muchos pedidos recibía SOLO las primeras 1000 líneas de `order_items`:
+// del pedido 60 en adelante todo llegaba sin productos, en silencio, y así se
+// mostraba en el panel, en cocina y en la fotografía del cierre.
+// (Auditoría 2026-08-02, hallazgo crítico.)
+const SUPABASE_PAGE_SIZE = 1000
+
+// `in(...)` viaja en la URL: con miles de ids la petición revienta por longitud.
+const ORDER_IDS_PER_QUERY = 200
+
+// Tope de seguridad del panel. Con el reinicio ya acotado a la jornada, pasar
+// de aquí significa que hay días sin cerrar acumulados.
+const MAX_ORDERS = 5000
+
+async function fetchAllRows(
+  buildQuery: (from: number, to: number) => PromiseLike<{
+    data: unknown[] | null
+    error: { message: string } | null
+  }>,
+  limit = Number.POSITIVE_INFINITY,
+): Promise<Row[]> {
+  const rows: Row[] = []
+  let from = 0
+
+  for (;;) {
+    const { data, error } = await buildQuery(from, from + SUPABASE_PAGE_SIZE - 1)
+
+    // El error NO se traga (antes se descartaba): un fallo leyendo las líneas
+    // dejaba todos los pedidos vacíos sin avisar a nadie.
+    if (error) throw new Error(error.message)
+
+    const page = (data ?? []) as Row[]
+    rows.push(...page)
+
+    if (page.length < SUPABASE_PAGE_SIZE || rows.length >= limit) break
+    from += SUPABASE_PAGE_SIZE
+  }
+
+  return Number.isFinite(limit) ? rows.slice(0, limit) : rows
+}
+
 export async function getOrdersFromStore(
   branchId?: string | null,
 ): Promise<LocalOrder[]> {
   const supabase = getSupabaseAdmin()
-  let ordersQuery = supabase
-    .from("orders")
-    .select("*")
-    .order("created_at", { ascending: false })
-  if (branchId) ordersQuery = ordersQuery.eq("branch_id", branchId)
-  const { data: orderRows, error } = await ordersQuery
 
-  if (error) throw new Error(error.message)
-  if (!orderRows?.length) return []
+  const orderRows = await fetchAllRows((from, to) => {
+    let query = supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false })
+      // Desempate estable: sin él, dos pedidos con el mismo created_at pueden
+      // repetirse o perderse entre páginas.
+      .order("id", { ascending: false })
+      .range(from, to)
+    if (branchId) query = query.eq("branch_id", branchId)
+    return query
+  }, MAX_ORDERS)
 
-  const ids = orderRows.map((r) => (r as Row).id as string)
-  const { data: itemRows } = await supabase
-    .from("order_items")
-    .select("*")
-    .in("order_id", ids)
-    .order("sort_order", { ascending: true })
+  if (!orderRows.length) return []
+
+  const ids = orderRows.map((row) => row.id as string)
+  const itemRows: Row[] = []
+
+  for (let start = 0; start < ids.length; start += ORDER_IDS_PER_QUERY) {
+    const chunk = ids.slice(start, start + ORDER_IDS_PER_QUERY)
+
+    itemRows.push(
+      ...(await fetchAllRows((from, to) =>
+        supabase
+          .from("order_items")
+          .select("*")
+          .in("order_id", chunk)
+          .order("order_id", { ascending: true })
+          .order("sort_order", { ascending: true })
+          .range(from, to),
+      )),
+    )
+  }
 
   const itemsByOrder = new Map<string, OrderItem[]>()
-  for (const raw of itemRows ?? []) {
-    const row = raw as Row
+  for (const row of itemRows) {
     const key = row.order_id as string
     if (!itemsByOrder.has(key)) itemsByOrder.set(key, [])
     itemsByOrder.get(key)!.push(itemRowToOrderItem(row))
   }
 
   return orderRows.map((row) =>
-    orderRowToLocalOrder(
-      row as Row,
-      itemsByOrder.get((row as Row).id as string) ?? [],
-    ),
+    orderRowToLocalOrder(row, itemsByOrder.get(row.id as string) ?? []),
   )
 }

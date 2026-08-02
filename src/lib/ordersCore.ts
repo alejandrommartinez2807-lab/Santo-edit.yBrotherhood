@@ -160,6 +160,9 @@ export async function deleteOrder(orderId: string, branchId?: string | null) {
   return ordersStore.deleteOrder(orderId, branchId)
 }
 
-export async function clearOrders(branchId?: string | null) {
-  return ordersStore.clearOrders(branchId)
+export async function clearOrders(
+  branchId?: string | null,
+  options?: { createdFrom?: string | null },
+) {
+  return ordersStore.clearOrders(branchId, options)
 }

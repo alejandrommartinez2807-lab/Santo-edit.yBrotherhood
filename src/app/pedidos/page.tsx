@@ -132,7 +132,8 @@ import {
   getPendingPaymentProofs,
   formatPaymentProofDate,
   formatDate,
-  getDateKeyInCaracas,
+  getBusinessDayKeyInCaracas,
+  getBusinessDayStartIso,
   formatCaracasLongDate,
   getDisplayOrderNumber,
   getStatusStyle,
@@ -284,6 +285,12 @@ export default function PedidosPage() {
   const knownOrderStatusRef = useRef<Map<string, OrderStatus>>(new Map())
   const hasLoadedOnceRef = useRef(false)
   const pendingStatusRef = useRef<Map<string, OrderStatus>>(new Map())
+  // Montos cobrados que tenía el pedido al abrir el modal de cobro (candado
+  // optimista contra cobros simultáneos).
+  const paymentBaselineRef = useRef<{
+    amountReceivedUSD: number
+    amountReceivedVES: number
+  } | null>(null)
   // Día (dateLabel) cuyo cierre YA se guardó en un intento de reinicio que
   // falló a medias: el reintento no debe duplicar el cierre (§18).
   const dayCloseSavedForRef = useRef("")
@@ -683,7 +690,9 @@ export default function PedidosPage() {
     }
 
     try {
-      const todayKey = getDateKeyInCaracas(new Date())
+      // Misma jornada que el cierre: a las 2 AM se siguen viendo los pagos de
+      // la noche que se está cerrando, no los de un día nuevo aún vacío.
+      const todayKey = getBusinessDayKeyInCaracas(new Date())
       const response = await fetch(
         `/api/supplier-purchases/payments?dateValue=${todayKey}`,
         { headers: { "x-admin-password": password }, cache: "no-store" },
@@ -723,7 +732,8 @@ export default function PedidosPage() {
     }
 
     try {
-      const todayKey = getDateKeyInCaracas(new Date())
+      // Jornada de negocio (corte 5:00), igual que los pedidos del cierre.
+      const todayKey = getBusinessDayKeyInCaracas(new Date())
       const response = await fetch(`/api/day-expenses?dateValue=${todayKey}`, {
         headers: {
           "x-admin-password": password,
@@ -1497,9 +1507,12 @@ export default function PedidosPage() {
 
   const dayStats = useMemo(() => {
     const today = new Date()
-    const todayKey = getDateKeyInCaracas(today)
+    // JORNADA de negocio, no día calendario: el corte son las 5:00 de Caracas,
+    // así que lo vendido a las 00:30 sigue perteneciendo a la noche que se está
+    // cerrando (auditoría 2026-08-02).
+    const todayKey = getBusinessDayKeyInCaracas(today)
     const ordersToday = orders.filter(
-      (order) => getDateKeyInCaracas(order.createdAt) === todayKey
+      (order) => getBusinessDayKeyInCaracas(order.createdAt) === todayKey
     )
 
     const deliveredToday = ordersToday.filter(
@@ -1793,7 +1806,18 @@ export default function PedidosPage() {
     const topProduct = productsSold[0]
 
     return {
-      dateLabel: formatCaracasLongDate(today),
+      // La etiqueta sigue a la JORNADA: a las 2 AM el cierre se titula con la
+      // fecha de la noche que se está cerrando, no con la del calendario.
+      dateLabel: formatCaracasLongDate(
+        new Date(getBusinessDayStartIso(todayKey) || today)
+      ),
+      // Inicio de la jornada y pedidos que NO entran en este cierre por ser de
+      // otra jornada (quedan de un día que nadie cerró). El reinicio los
+      // respeta en vez de borrarlos sin registro.
+      dayStartIso: getBusinessDayStartIso(todayKey),
+      ordersOutsideToday: orders.filter(
+        (order) => getBusinessDayKeyInCaracas(order.createdAt) !== todayKey
+      ),
       ordersToday,
       deliveredToday,
       canceledToday,
@@ -1995,7 +2019,10 @@ export default function PedidosPage() {
     )
 
     return [
-      "CIERRE DEL DÍA - SANTO PERRITO",
+      // El nombre sale de la configuración: estaba fijo como "SANTO PERRITO" y
+      // el cierre que el dueño de Brotherhood copia y manda por WhatsApp salía
+      // con el nombre de otro restaurante (auditoría 2026-08-02).
+      `CIERRE DEL DÍA - ${(businessConfig.businessName || BRAND.name).toUpperCase()}`,
       `Fecha: ${dayStats.dateLabel}`,
       "",
       `Pedidos registrados: ${dayStats.ordersToday.length}`,
@@ -2113,7 +2140,10 @@ export default function PedidosPage() {
       "PRODUCTOS VENDIDOS",
       ...productLines,
     ].join("\n")
-  }, [dayExpenseTotals, dayExpenses, dayStats])
+    // businessName entra en la lista: el texto se arma antes de que llegue la
+    // configuración, y sin la dependencia el cierre se quedaba con el nombre
+    // por defecto aunque la config ya hubiera cargado.
+  }, [dayExpenseTotals, dayExpenses, dayStats, businessConfig.businessName])
 
 
   const closeReviewItems = useMemo<CloseReviewItem[]>(() => {
@@ -2497,7 +2527,16 @@ export default function PedidosPage() {
         dayCloseSavedForRef.current = dayStats.dateLabel
       }
 
-      const response = await fetch("/api/orders", {
+      // El reinicio borra SOLO la jornada que acaba de quedar en el cierre
+      // (auditoría 2026-08-02). Antes vaciaba la tabla completa: el local que
+      // apaga a la 1:00 AM cerraba un día vacío —sus pedidos ya contaban como
+      // "de ayer"— y aun así perdía la noche entera, sin cierre y sin pedidos.
+      const outsideCount = dayStats.ordersOutsideToday.length
+      const resetUrl = dayStats.dayStartIso
+        ? `/api/orders?createdFrom=${encodeURIComponent(dayStats.dayStartIso)}`
+        : "/api/orders"
+
+      const response = await fetch(resetUrl, {
         method: "DELETE",
         headers: {
           "x-admin-password": adminPassword,
@@ -2526,12 +2565,19 @@ export default function PedidosPage() {
       setResetConfirmationText("")
       setIsResetModalOpen(false)
       setIsCloseModalOpen(false)
+      const pendingNotice =
+        outsideCount > 0
+          ? ` Quedan ${outsideCount} pedido${
+              outsideCount === 1 ? "" : "s"
+            } de otra fecha SIN borrar: no entraron en este cierre. Ciérralos aparte antes de reiniciar de nuevo.`
+          : ""
+
       setCloseSummaryMessage(
-        shouldSaveDayClose
+        (shouldSaveDayClose
           ? `Cierre guardado y ${
               data.message || "pedidos reiniciados correctamente."
             }`
-          : data.message || "Pedidos reiniciados correctamente."
+          : data.message || "Pedidos reiniciados correctamente.") + pendingNotice
       )
 
       await loadOrders(adminPassword, true)
@@ -2754,6 +2800,12 @@ export default function PedidosPage() {
   }
 
   function openPaymentModal(order: LocalOrder) {
+    // Foto de lo ya cobrado al abrir el modal: es el candado que impide que
+    // este cobro pise el de otro cajero o el de un comprobante confirmado.
+    paymentBaselineRef.current = {
+      amountReceivedUSD: order.amountReceivedUSD || 0,
+      amountReceivedVES: order.amountReceivedVES || 0,
+    }
     setSelectedPaymentOrder(order)
     setPaymentForm(
       createPaymentFormFromOrder(
@@ -2805,6 +2857,13 @@ export default function PedidosPage() {
               ? paymentForm.deliveryPaymentIn
               : "Sin registrar",
             paymentNote: paymentForm.paymentNote,
+            // Candado optimista: los montos que el pedido tenía al abrir el
+            // modal. Si otro cobro (o la confirmación de un comprobante) entró
+            // entremedio, el servidor responde 409 en vez de borrar ese dinero
+            // (auditoría 2026-08-02).
+            ...(paymentBaselineRef.current
+              ? { expectedPrevious: paymentBaselineRef.current }
+              : {}),
           }),
         }
       )
@@ -2812,10 +2871,19 @@ export default function PedidosPage() {
       const data = await readApiResponse(response)
 
       if (!response.ok) {
+        if (response.status === 409) {
+          await loadOrders(adminPassword, true)
+        }
+
         throw new Error(data.error || "No se pudo registrar el cobro")
       }
 
       const updatedOrder = data.order as LocalOrder
+
+      paymentBaselineRef.current = {
+        amountReceivedUSD: updatedOrder.amountReceivedUSD || 0,
+        amountReceivedVES: updatedOrder.amountReceivedVES || 0,
+      }
 
       setOrders((currentOrders) =>
         currentOrders.map((order) =>
@@ -3269,8 +3337,11 @@ export default function PedidosPage() {
           inventoryItemName: inventoryItemNameForExpense,
           inventoryQuantity,
           inventoryUnit: inventoryUnitForExpense,
-          dateValue: getDateKeyInCaracas(new Date()),
-          dateLabel: formatCaracasLongDate(new Date()),
+          // Se guarda con la JORNADA, no con el día calendario: un gasto
+          // anotado a las 2 AM pertenece a la noche que se está cerrando, y si
+          // se guardaba con la fecha nueva no aparecía en ese cierre.
+          dateValue: getBusinessDayKeyInCaracas(new Date()),
+          dateLabel: dayStats.dateLabel,
         }),
       })
 
@@ -5470,6 +5541,26 @@ export default function PedidosPage() {
                 </div>
               </div>
             </div>
+
+            {dayStats.ordersOutsideToday.length > 0 && (
+              <div className="rounded-[1.4rem] border-2 border-amber-500/40 bg-amber-500/10 p-4">
+                <div className="flex gap-3">
+                  <AlertTriangle className="mt-1 shrink-0 text-amber-500" size={26} />
+                  <div>
+                    <p className="text-sm font-black uppercase text-amber-300">
+                      Hay {dayStats.ordersOutsideToday.length} pedido
+                      {dayStats.ordersOutsideToday.length === 1 ? "" : "s"} de otra fecha
+                    </p>
+                    <p className="mt-2 text-sm font-bold leading-6 text-amber-300/80">
+                      Este cierre resume solo {dayStats.dateLabel}, así que esos pedidos
+                      NO entran en los totales. Tampoco se van a borrar: quedan en el
+                      panel para que los cierres aparte. Pasa a menudo cuando el local
+                      apaga después de la medianoche.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="text-xs font-black uppercase tracking-[0.18em] text-[var(--brand-primary)]">

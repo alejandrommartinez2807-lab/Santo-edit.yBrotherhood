@@ -1486,6 +1486,116 @@ export function getDateKeyInCaracas(value: string | Date) {
   return `${year}-${month}-${day}`
 }
 
+// Cuánto hay que sumarle a la hora local de Caracas para llegar a UTC (+4 h
+// mientras Venezuela siga en UTC-4). Se deriva del propio Intl en vez de fijar
+// el número, para que no haya que tocar código si el país vuelve a cambiar de
+// huso.
+function getCaracasOffsetMs(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Caracas",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(date)
+
+  const get = (type: string) =>
+    Number(parts.find((part) => part.type === type)?.value || 0)
+
+  const localAsUtc = Date.UTC(
+    get("year"),
+    get("month") - 1,
+    get("day"),
+    get("hour") % 24,
+    get("minute"),
+    get("second"),
+  )
+
+  return date.getTime() - localAsUtc
+}
+
+// Instante exacto (ISO/UTC) en que empezó el día de Caracas indicado.
+// El reinicio del día lo usa para borrar SOLO los pedidos que el cierre acaba
+// de resumir, en vez de vaciar la tabla entera (auditoría 2026-08-02).
+export function getCaracasDayStartIso(dateKey: string) {
+  const [year, month, day] = String(dateKey || "").split("-").map(Number)
+
+  if (!year || !month || !day) return ""
+
+  const localMidnight = Date.UTC(year, month - 1, day, 0, 0, 0, 0)
+  let instant = localMidnight
+
+  // Dos pasadas bastan: la primera estima el huso, la segunda lo confirma.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    instant = localMidnight + getCaracasOffsetMs(new Date(instant))
+  }
+
+  return new Date(instant).toISOString()
+}
+
+// Hora a la que empieza la JORNADA de negocio (hora Caracas).
+//
+// El local cierra de madrugada. Con el día calendario, un pedido de las 23:50 y
+// otro de las 00:10 caían en jornadas distintas: al cerrar a la 1:00 AM el
+// sistema resumía un día vacío —lo de la noche ya contaba como "de ayer"— y el
+// dueño se quedaba sin los totales de su propia noche. Con el corte a las 5:00,
+// todo lo vendido desde las 5:00 de un día hasta las 5:00 del siguiente es UNA
+// sola jornada. (Decisión de Alejandro, auditoría 2026-08-02.)
+export const BUSINESS_DAY_START_HOUR = 5
+
+function getCaracasHour(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Caracas",
+    hour: "2-digit",
+    hour12: false,
+  }).formatToParts(date)
+
+  return Number(parts.find((part) => part.type === "hour")?.value || 0) % 24
+}
+
+function shiftDateKey(dateKey: string, days: number) {
+  const [year, month, day] = String(dateKey || "").split("-").map(Number)
+
+  if (!year || !month || !day) return dateKey
+
+  const moved = new Date(Date.UTC(year, month - 1, day))
+  moved.setUTCDate(moved.getUTCDate() + days)
+
+  return moved.toISOString().slice(0, 10)
+}
+
+// Jornada de negocio a la que pertenece un instante. Antes de las 5:00 de la
+// mañana todavía es la jornada del día anterior.
+export function getBusinessDayKeyInCaracas(value: string | Date) {
+  const date = typeof value === "string" ? new Date(value) : value
+
+  if (Number.isNaN(date.getTime())) return ""
+
+  const calendarKey = getDateKeyInCaracas(date)
+
+  if (!calendarKey) return ""
+
+  return getCaracasHour(date) >= BUSINESS_DAY_START_HOUR
+    ? calendarKey
+    : shiftDateKey(calendarKey, -1)
+}
+
+// Instante (ISO/UTC) en que empezó la jornada indicada: las 5:00 de Caracas de
+// ese día. El reinicio borra SOLO desde aquí, así que nunca se lleva por
+// delante la noche de una jornada que no se cerró.
+export function getBusinessDayStartIso(dayKey: string) {
+  const midnight = getCaracasDayStartIso(dayKey)
+
+  if (!midnight) return ""
+
+  return new Date(
+    Date.parse(midnight) + BUSINESS_DAY_START_HOUR * 60 * 60 * 1000,
+  ).toISOString()
+}
+
 export function formatCaracasLongDate(value: Date) {
   try {
     return new Intl.DateTimeFormat("es-VE", {
