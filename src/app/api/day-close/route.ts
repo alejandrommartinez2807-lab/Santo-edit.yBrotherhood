@@ -576,7 +576,17 @@ export async function POST(request: NextRequest) {
     // Storage se conservan y los links del historial siguen funcionando).
     if (Array.isArray(dayClose.paymentProofs)) {
       try {
-        await clearPaymentProofs(branchId)
+        // Se limpia solo HASTA el comprobante más nuevo que entró en la
+        // fotografía. Lo que llegó después (mientras se guardaba el cierre, o
+        // lo que quedó fuera del tope del snapshot) sigue en el panel al día
+        // siguiente en vez de desaparecer sin registro (auditoría 2026-08-02).
+        const archivedUntil = dayClose.paymentProofs
+          .map((proof) => String(proof?.createdAt || ""))
+          .filter(Boolean)
+          .sort()
+          .at(-1)
+
+        await clearPaymentProofs(branchId, { createdUntil: archivedUntil || null })
       } catch (clearError) {
         // Si la limpieza falla, los comprobantes siguen visibles en el panel;
         // nada se pierde — pero queda registrado (antes catch vacío).

@@ -133,6 +133,14 @@ function lookupOption(deltas: Map<string, number>, option: SelectionOptionLike):
 const MENU_CHANGED_ERROR =
   "El menú cambió mientras armabas tu pedido. Actualiza la página e intenta de nuevo."
 
+// Tope de unidades por línea en un pedido del público. Nadie pide cien
+// hamburguesas iguales desde el móvil: un pedido así se habla por teléfono, y
+// el personal sí puede registrarlo a mano desde el panel.
+const MAX_PUBLIC_ITEM_QUANTITY = 99
+
+const INVALID_QUANTITY_ERROR =
+  "La cantidad de algún producto no es válida. Revisa tu pedido e intenta de nuevo."
+
 export function repricePublicOrderItems(
   items: PublicOrderItemLike[],
   menuProducts: MenuProduct[],
@@ -145,6 +153,22 @@ export function repricePublicOrderItems(
     const entry = index.get(productId)
     if (!entry || !entry.isActive) {
       return { ok: false, error: MENU_CHANGED_ERROR }
+    }
+
+    // El precio ya se recalcula contra el menú, pero la CANTIDAD viajaba
+    // intacta desde el cliente (auditoría 2026-08-02). Con 0,05 se creaba la
+    // cabecera del pedido y reventaba el insert de las líneas: quedaba un
+    // pedido fantasma, con total inventado y sin productos, que había que
+    // anular a mano antes de poder cerrar el día. Con 500000 entraba entero un
+    // pedido de seis millones a la cola de cocina.
+    const quantity = cleanNumber(item.quantity)
+
+    if (
+      !Number.isInteger(quantity) ||
+      quantity < 1 ||
+      quantity > MAX_PUBLIC_ITEM_QUANTITY
+    ) {
+      return { ok: false, error: INVALID_QUANTITY_ERROR }
     }
 
     let unit = entry.price

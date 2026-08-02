@@ -151,15 +151,26 @@ export async function getPaymentProofs(
 // del cierre guardado, así que las filas se borran para que el panel de
 // comprobantes arranque limpio. Las imágenes en Storage se conservan (los
 // links del historial siguen funcionando).
-export async function clearPaymentProofs(branchId?: string | null) {
+export async function clearPaymentProofs(
+  branchId?: string | null,
+  options?: { createdUntil?: string | null },
+) {
   // Fail-closed (auditoría 2026-07-24, B): sin sede resuelta el `neq("id","")`
   // vaciaba el buzón de comprobantes de TODAS las sucursales.
   if (!branchId) {
     throw new Error("No se pudo resolver la sucursal: no se archivan los comprobantes")
   }
+
+  // Solo se limpia hasta donde llegó la FOTOGRAFÍA del cierre (auditoría
+  // 2026-08-02). Antes se vaciaba el buzón entero de la sede: el comprobante
+  // que un cliente subía mientras se guardaba el cierre, o los que quedaban
+  // fuera del tope del snapshot, se borraban sin haber quedado registrados en
+  // ninguna parte — el cliente pagó y su prueba desapareció.
+  const createdUntil = String(options?.createdUntil || "").trim()
+
   const supabase = getSupabaseAdmin()
-  let query = supabase.from("payment_proofs").delete()
-  query = branchId ? query.eq("branch_id", branchId) : query.neq("id", "")
+  let query = supabase.from("payment_proofs").delete().eq("branch_id", branchId)
+  if (createdUntil) query = query.lte("created_at", createdUntil)
   const { error } = await query
   if (error) {
     throw new Error(error.message || "No se pudieron archivar los comprobantes")

@@ -126,6 +126,29 @@ export function computeFiscalTotals(
     .sort((a, b) => b.rate - a.rate)
     .map((b) => ({ rate: b.rate, baseUSD: round2(b.baseUSD), ivaUSD: round2(b.ivaUSD) }))
 
+  // ⚠️ PENDIENTE DE DECISIÓN DEL DUEÑO (auditoría 2026-08-02).
+  //
+  // Este `totalUSD` incluye el IGTF, pero NADIE lo exige al cobrar: el estado
+  // del pago se decide comparando lo recibido contra `orders.total_usd`, que
+  // NO lo lleva. Con la facturación fiscal encendida, un pedido de $50 pagado
+  // con $50 en divisas queda "Pagado" y el IGTF ($1,50) nunca se le cobra al
+  // cliente… pero el cierre del día sí imprime "IGTF cobrado". El negocio
+  // declararía un impuesto que no trasladó y acabaría asumiéndolo (~3% de toda
+  // la venta en divisas). Además, el snapshot se calcula solo sobre los ítems:
+  // con delivery, el "Total" de este recuadro no cuadra con el total del pedido
+  // que se ve en la misma pantalla.
+  //
+  // HOY NO CUESTA DINERO en Brotherhood: `fiscalEnabled` está en false, así que
+  // nada de esto se muestra ni se declara. Es una bomba de relojería para el
+  // día que se active.
+  //
+  // Hay que elegir UN modelo antes de encender la facturación:
+  //   (a) el IGTF se traslada al cliente → el pendiente del pedido tiene que
+  //       recalcularse cuando el pago es en divisas, para que no se marque
+  //       "Pagado" de menos. Toca todo el flujo de cobro.
+  //   (b) el IGTF lo asume el negocio → sacarlo de este "Total", etiquetarlo
+  //       "IGTF asumido" y renombrar la línea del cierre.
+  // En ambos casos, pasar el costo de delivery a buildOrderFiscalSnapshot.
   return {
     subtotalUSD: round2(subtotal),
     ivaByRate,

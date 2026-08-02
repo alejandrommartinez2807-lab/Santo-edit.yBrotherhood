@@ -58,13 +58,13 @@ const ROLES: { value: string; label: string; defaultModules: LocalModuleKey[] }[
       "openAccounts",
       "tickets",
       "tables",
-      "inventory",
-      "inventoryAlerts",
-      "suppliers",
-      "supplierPurchases",
       "expenses",
       "history",
       "reports",
+      // Inventario / Alertas / Proveedores / Compras se quitaron de la
+      // propuesta por defecto del Encargado: sus APIs solo aceptan al dueño y
+      // el rol acababa con cinco módulos en el menú que respondían 403
+      // (auditoría 2026-08-02). Ver ROLE_ACCESS en src/lib/localAccess.ts.
     ],
   },
   { value: "cashier", label: "Caja", defaultModules: ["mainPanel", "cashier", "paymentProofs", "tickets", "openAccounts"] },

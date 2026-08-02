@@ -73,12 +73,16 @@ const ROLE_ACCESS: Record<LocalRole, LocalModuleKey[]> = {
     "kitchenItems",
     "tickets",
     "customers",
-    "inventory",
-    "inventoryAlerts",
-    "suppliers",
-    "supplierPurchases",
-    "accountsPayable",
     "sounds",
+    // Inventario, Alertas, Proveedores, Compras y Cuentas por pagar SALEN de
+    // aquí (auditoría 2026-08-02). Estaban en el menú del Encargado, pero sus
+    // APIs solo aceptan al dueño: entraba, veía cinco módulos y todos
+    // respondían 403. La contradicción se resuelve del lado del menú, no
+    // abriendo las APIs, porque el servidor decidió a propósito que los costes
+    // de compra y la deuda con proveedores son solo del dueño.
+    // Si el negocio prefiere lo contrario, hay que añadir "manager" a los
+    // allowedRoles de inventory, inventory-recipes, suppliers y
+    // supplier-purchases: el test roleModuleCoherence.fitness lo vigila.
   ],
   cashier: ["mainPanel", "cashier", "paymentProofs", "openAccounts", "tickets"],
   waiter: [

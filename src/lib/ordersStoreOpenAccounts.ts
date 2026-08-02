@@ -83,9 +83,15 @@ function openAccountRowToOpenAccount(row: Row, orders: OpenAccountOrderSummary[]
 // Antes getOpenAccounts hacía 2 queries POR cuenta en un bucle secuencial, y
 // caja + mesonero lo sondean cada 2.5s: con 10 mesas abiertas eran ~20
 // consultas por tick por pantalla.
+// `throwOnError`: quien va a ESCRIBIR totales a partir de esta lectura tiene
+// que enterarse si la lectura falló. Una consulta caída devolvía [] en silencio
+// y el recálculo persistía "esta cuenta no debe nada" (auditoría 2026-08-02).
+// Las pantallas siguen leyendo en modo tolerante: un hipo de la base no debe
+// tumbar la vista de mesas, que se refresca sola cada 2,5 s.
 async function loadOrderSummariesByAccount(
   accountIds: string[],
   branchId?: string | null,
+  options?: { throwOnError?: boolean },
 ): Promise<Map<string, OpenAccountOrderSummary[]>> {
   const byAccount = new Map<string, OpenAccountOrderSummary[]>()
   const cleanIds = accountIds.map((id) => cleanText(id)).filter(Boolean)
@@ -100,7 +106,9 @@ async function loadOrderSummariesByAccount(
     )
     .in("open_account_id", cleanIds)
   if (branchId) query = query.eq("branch_id", branchId)
-  const { data } = await query.order("created_at", { ascending: true })
+  const { data, error } = await query.order("created_at", { ascending: true })
+
+  if (error && options?.throwOnError) throw new Error(error.message)
 
   const orderRows = (data ?? []) as Row[]
   const orderIds = orderRows
@@ -109,11 +117,13 @@ async function loadOrderSummariesByAccount(
   const itemsByOrderId = new Map<string, ReturnType<typeof itemRowToOrderItem>[]>()
 
   if (orderIds.length > 0) {
-    const { data: itemRows } = await supabase
+    const { data: itemRows, error: itemsError } = await supabase
       .from("order_items")
       .select("*")
       .in("order_id", orderIds)
       .order("sort_order", { ascending: true })
+
+    if (itemsError && options?.throwOnError) throw new Error(itemsError.message)
 
     for (const rawItem of (itemRows ?? []) as Row[]) {
       const itemRow = rawItem
@@ -138,8 +148,9 @@ async function loadOrderSummariesByAccount(
 async function loadAccountOrderSummaries(
   accountId: string,
   branchId?: string | null,
+  options?: { throwOnError?: boolean },
 ): Promise<OpenAccountOrderSummary[]> {
-  const byAccount = await loadOrderSummariesByAccount([accountId], branchId)
+  const byAccount = await loadOrderSummariesByAccount([accountId], branchId, options)
   return byAccount.get(cleanText(accountId)) ?? []
 }
 
@@ -187,9 +198,15 @@ export async function recomputeOpenAccountTotals(
   const supabase = getSupabaseAdmin()
   // Los pedidos CANCELADOS no cuentan en el total de la cuenta (antes inflaban
   // total_estimated/pending y bloqueaban el auto-cierre) — auditoría R3.
-  const orders = (await loadAccountOrderSummaries(accountId, branchId)).filter(
-    (o) => o.status !== "Cancelado",
-  )
+  //
+  // throwOnError (auditoría 2026-08-02): si la lectura de pedidos falla, aquí
+  // se ABORTA. Antes devolvía [] en silencio y se escribía pendiente = 0 en la
+  // base; acto seguido el endpoint releía la cuenta, la veía saldada y la
+  // cerraba sola. Esa comida se iba sin cobrar y no se recuperaba refrescando.
+  // Mejor dejar el saldo anterior —aunque esté viejo— que grabar un cero falso.
+  const orders = (
+    await loadAccountOrderSummaries(accountId, branchId, { throwOnError: true })
+  ).filter((o) => o.status !== "Cancelado")
   const totalEstimated = roundMoney(orders.reduce((s, o) => s + o.totalUSD, 0))
   const totalCollected = roundMoney(orders.reduce((s, o) => s + o.receivedEquivalentUSD, 0))
   const pending = roundMoney(Math.max(totalEstimated - totalCollected, 0))

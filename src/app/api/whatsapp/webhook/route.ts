@@ -15,6 +15,7 @@ import {
   parseFlowSurveyResponse,
 } from "@/lib/surveyFlow"
 import { sendWhatsAppBusinessText } from "@/lib/whatsappBusiness"
+import { enforceRateLimit } from "@/lib/rateLimit"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -48,10 +49,17 @@ export function GET(request: NextRequest) {
 }
 
 // Valida la firma X-Hub-Signature-256 (HMAC-SHA256 del cuerpo crudo con el
-// App Secret). Si no hay App Secret configurado, no se puede validar.
+// App Secret).
+//
+// FAIL-CLOSED desde la auditoría 2026-08-02: sin App Secret esto devolvía
+// `true`, o sea que la ruta aceptaba CUALQUIER POST de internet. Con eso se
+// podían inventar respuestas de encuesta a nombre de pedidos reales (ensuciando
+// la única métrica de satisfacción del dueño) y, de paso, hacer que el sistema
+// mandara mensajes de WhatsApp —que se pagan— a números elegidos por quien
+// llamara. Si falta el secreto, el webhook no procesa nada.
 function isValidSignature(rawBody: string, header: string | null): boolean {
   const appSecret = String(process.env.WHATSAPP_APP_SECRET || "").trim()
-  if (!appSecret) return true // sin secreto no hay validación posible
+  if (!appSecret) return false
 
   const signature = String(header || "")
   if (!signature.startsWith("sha256=")) return false
@@ -82,6 +90,17 @@ async function thankCustomer(to: string): Promise<void> {
 // guardamos la calificación y (best-effort) agradecemos. SIEMPRE respondemos
 // 200 rápido para que Meta no reintente en bucle.
 export async function POST(request: NextRequest) {
+  // La ruta es pública por diseño (la llama Meta), así que necesita su propio
+  // freno: sin él, cualquiera podía martillearla gratis (auditoría 2026-08-02).
+  // El tope es holgado para no perder avisos legítimos en una ráfaga.
+  const rateLimitResponse = enforceRateLimit(request, {
+    id: "api-whatsapp-webhook-post",
+    limit: 120,
+    windowMs: 60_000,
+  })
+
+  if (rateLimitResponse) return rateLimitResponse
+
   const rawBody = await request.text()
 
   if (!isValidSignature(rawBody, request.headers.get("x-hub-signature-256"))) {
