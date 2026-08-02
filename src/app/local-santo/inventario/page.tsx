@@ -2425,7 +2425,10 @@ function InventoryPageContent() {
     }
 
     const textToCopy = [
-      "HISTORIAL DE INVENTARIO - SANTO PERRITO",
+      // El nombre sale de la configuración del negocio: estaba fijo como
+      // "SANTO PERRITO" y el dueño de Brotherhood exportaba documentos con el
+      // nombre de otro restaurante (auditoría 2026-08-02).
+      `HISTORIAL DE INVENTARIO - ${(businessConfig.businessName || BRAND.name).toUpperCase()}`,
       `Movimientos guardados: ${inventoryMovements.length}`,
       `Movimientos mostrados: ${filteredInventoryMovements.length}`,
       `Entradas: ${filteredMovementSummary.entries}`,

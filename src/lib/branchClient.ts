@@ -2,6 +2,8 @@
 // y se guarda aquí; el AuthBridge la adjunta como header x-branch-id a cada
 // llamada /api, de modo que toda la operación queda scopeada a esa sucursal.
 
+import { clearPublicApiCache } from "@/lib/publicApiCache"
+
 export const BRANCH_STORAGE_KEY = "santo_branch_id"
 export const BRANCH_CHANGE_EVENT = "santo:branch-change"
 
@@ -53,6 +55,9 @@ export function setSelectedBranchId(branchId: string | null) {
   try {
     if (branchId) window.localStorage.setItem(BRANCH_STORAGE_KEY, branchId)
     else window.localStorage.removeItem(BRANCH_STORAGE_KEY)
+    // Cambió la sede: lo que quedara en la caché corta de la API pública es de
+    // la sede anterior (menú, mesas, whatsapps, ubicación). Se tira.
+    clearPublicApiCache()
     window.dispatchEvent(new CustomEvent(BRANCH_CHANGE_EVENT, { detail: branchId }))
   } catch {
     /* sin acceso a storage */

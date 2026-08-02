@@ -97,6 +97,16 @@ export function usePublicOrderStatus(orderId: string) {
                 : null,
             notFound: false,
           });
+
+          // Estado final: el pedido ya se entregó o se anuló y no va a cambiar
+          // más. Antes se seguía preguntando cada 10 s para siempre —bastaba
+          // con dejar la pestaña abierta— gastando datos del cliente y
+          // peticiones del servidor sin que nadie mirara (auditoría
+          // 2026-08-02).
+          const finalStatus = String(data.status || "")
+          if (finalStatus === "Entregado" || finalStatus === "Cancelado") {
+            return;
+          }
         }
 
         // 404/400: el pedido no existe (o el link está mal). Dejar de sondear.

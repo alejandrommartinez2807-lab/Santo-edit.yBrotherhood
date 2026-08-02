@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 import { getSupabaseBrowser } from "@/lib/supabaseBrowser"
 import { getSelectedBranchId } from "@/lib/branchClient"
+import { getPublicApiCacheKey, withPublicApiCache } from "@/lib/publicApiCache"
 
 // Adjunta automáticamente el token de Supabase Auth (Authorization: Bearer) a
 // todas las llamadas a /api/* del navegador, cuando hay sesión iniciada. Así
@@ -100,6 +101,32 @@ function installAuthFetchBridge() {
         }
 
         if (touched) init = { ...init, headers }
+
+        // Una carga de la carta montaba ~25 componentes y cada uno pedía por su
+        // cuenta la configuración pública: 13 llamadas idénticas a
+        // business-config, 5 a branches y 3 a products (130 KB cada una) en el
+        // mismo instante. Aquí se colapsan en una sola petición real por sede y
+        // por ventana de 5 s; pasada la ventana todo vuelve a pedirse fresco.
+        // Se hace en el puente para no tocar los 25 componentes, que leen la
+        // respuesta cada uno a su manera (auditoría 2026-08-02).
+        const method = String(
+          init?.method ||
+            (typeof input !== "string" && !(input instanceof URL)
+              ? input.method
+              : "GET") ||
+            "GET",
+        )
+        const branchForCache =
+          headers.get("x-branch-id") ||
+          (isPublicApiRequest(url) ? getBranchIdFromUrl() : "") ||
+          getSelectedBranchId() ||
+          ""
+        const cacheKey = getPublicApiCacheKey(method, url, branchForCache)
+
+        if (cacheKey) {
+          const nextInit = init
+          return withPublicApiCache(cacheKey, () => originalFetch(input, nextInit))
+        }
       }
     } catch {
       // Si algo falla, no rompemos la petición: sigue sin token.
