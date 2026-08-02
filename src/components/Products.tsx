@@ -371,7 +371,14 @@ export default function Products({ exchangeRate, onAddToCart, onProductsLoaded }
 
         setMenuProducts(fallbackProducts)
         setMenuCategories(fallbackCategories)
-        setMenuWarning(null)
+        // El menú no cargó (señal mala, API caída). Antes se ponía el aviso a
+        // null y el cliente veía la carta vacía con un texto que le pedía
+        // limpiar una búsqueda que nunca escribió: concluía que el restaurante
+        // no tenía nada y se iba. Ahora se le dice la verdad y puede reintentar
+        // (auditoría 2026-08-02).
+        setMenuWarning(
+          "No pudimos cargar el menú. Revisa tu conexión e intenta de nuevo.",
+        )
         setPublicMenuConfig(DEFAULT_PUBLIC_MENU_CONFIG)
       }
     }
@@ -595,6 +602,16 @@ export default function Products({ exchangeRate, onAddToCart, onProductsLoaded }
         {menuWarning && (
           <div className="mt-5 rounded-2xl border border-[rgba(var(--brand-primary-rgb),0.4)] bg-[var(--brand-surface)] px-4 py-3 text-sm font-semibold leading-6 text-[var(--brand-accent)]">
             {menuWarning}
+            {/* Reintento a mano: en móvil con señal intermitente, volver a
+                cargar suele bastar y evita que el cliente se vaya creyendo que
+                el restaurante no tiene nada (auditoría 2026-08-02). */}
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="ml-3 rounded-full border border-[rgba(var(--brand-primary-rgb),0.5)] px-3 py-1 text-xs font-bold uppercase tracking-[0.1em]"
+            >
+              Reintentar
+            </button>
           </div>
         )}
 

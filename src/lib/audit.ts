@@ -98,8 +98,21 @@ export async function getAuditLogs(query: AuditLogQuery = {}): Promise<AuditLogE
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
+  // Al filtrar por sede se incluyen TAMBIÉN las acciones globales, que se
+  // guardan con branch_id nulo porque no pertenecen a ninguna sucursal: cambios
+  // de configuración del negocio (código de anulación, tasa manual) y altas,
+  // bajas y ediciones de usuarios.
+  //
+  // Con el `.eq()` a secas quedaban fuera, y como la bitácora arranca filtrando
+  // por la sede activa, el dueño abría /local-santo/auditoria y NO veía nada de
+  // eso salvo que descubriera el interruptor "Todas las sedes". Justo las
+  // acciones con más potencial de fraude eran las invisibles: creía tener
+  // trazabilidad y no la tenía. El dato siempre estuvo guardado; era el filtro
+  // el que lo escondía (auditoría 2026-08-02).
   const branchId = cleanText(query.branchId);
-  if (branchId) request = request.eq("branch_id", branchId);
+  if (branchId) {
+    request = request.or(`branch_id.eq.${branchId},branch_id.is.null`);
+  }
 
   const action = cleanText(query.action);
   if (action) request = request.eq("action", action);

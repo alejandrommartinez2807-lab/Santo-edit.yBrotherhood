@@ -134,17 +134,22 @@ export async function getPaymentProofs(
   // Bucket privado: reemplazamos la URL guardada por una URL firmada fresca,
   // generada desde la ruta del archivo (proofFileId). Cubre comprobantes
   // viejos y nuevos sin migrar datos.
-  return Promise.all(
-    proofs.map(async (proof) => ({
-      ...proof,
-      proofImageUrl: proof.proofFileId
-        ? await signProofPath(supabase, proof.proofFileId)
-        : "",
-      proofImageUrl2: proof.proofFileId2
-        ? await signProofPath(supabase, proof.proofFileId2)
-        : "",
-    })),
+  //
+  // En UNA sola llamada a Storage (auditoría 2026-08-02). Antes se firmaba de
+  // una en una: un sábado con 40 comprobantes en el buzón eran hasta 80
+  // llamadas por cada carga de la lista, y caja y la pantalla la piden cada
+  // 10 s — cerca de mil llamadas por minuto solo para firmar. El cajero que
+  // estaba validando un pago móvil veía la lista tardar o expirar. El helper
+  // por lotes ya existía en este mismo archivo, sin usar.
+  const signedByPath = await signPaymentProofPaths(
+    proofs.flatMap((proof) => [proof.proofFileId, proof.proofFileId2]),
   )
+
+  return proofs.map((proof) => ({
+    ...proof,
+    proofImageUrl: proof.proofFileId ? signedByPath.get(proof.proofFileId) || "" : "",
+    proofImageUrl2: proof.proofFileId2 ? signedByPath.get(proof.proofFileId2) || "" : "",
+  }))
 }
 
 // Limpieza al cierre del día: los comprobantes quedan fotografiados DENTRO

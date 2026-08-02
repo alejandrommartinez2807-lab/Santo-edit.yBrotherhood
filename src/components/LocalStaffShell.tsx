@@ -35,6 +35,18 @@ const BRANCH_SCOPED_MODULES = new Set([
   "inventory",
   "inventoryAlerts",
   "history",
+  // Añadidos en la auditoría 2026-08-02. Estos módulos registran DINERO por
+  // sede y no pedían elegirla: en un equipo que nunca la eligió (uno nuevo, o
+  // tras limpiar el navegador) el servidor caía a la sede principal y una
+  // compra de $800 de la sede 2 quedaba guardada en la sede 1, en silencio y
+  // sin que la pantalla dijera de qué sucursal hablaba. Desviaba a la vez el
+  // cierre de caja, el neto del dueño y las cuentas por pagar de ambas sedes, y
+  // corregirlo obliga a borrar y volver a registrar movimientos de dinero.
+  "supplierPurchases",
+  "suppliers",
+  "accountsPayable",
+  "expenses",
+  "subrecipes",
 ])
 
 function readSedeParam(): string {

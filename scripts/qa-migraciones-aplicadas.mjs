@@ -140,8 +140,38 @@ if (erroresRaros.length) {
   console.log("")
 }
 
+// Migraciones que este script NO puede comprobar: las que no crean tablas ni
+// añaden columnas (cambios de TIPO con `alter column`, índices, políticas RLS,
+// funciones, triggers, backfills). Su existencia no se puede deducir mirando si
+// una columna responde.
+//
+// Sin esto el informe cantaba "TODO APLICADO · no falta correr ningún .sql"
+// aunque faltara, por ejemplo, la 0028 —una línea que cambia el tipo de
+// order_items.product_id a bigint— y con ella rota la creación de pedidos con
+// cualquier producto del editor. El único instrumento que responde "¿me falta
+// algo antes de entregar?" daba falso verde justo en lo que cuesta dinero
+// (auditoría 2026-08-02).
+const archivosVerificados = new Set([
+  ...declaredTables.values(),
+  ...declaredColumns.values(),
+])
+const noVerificables = files.filter((file) => !archivosVerificados.has(file))
+
 if (faltanTablas.length === 0 && faltanColumnas.length === 0 && erroresRaros.length === 0) {
-  console.log(`✓ TODO APLICADO — ${tablasOk} tablas y ${columnasOk} columnas existen en la base.`)
+  console.log(`✓ Tablas y columnas OK — ${tablasOk} tablas y ${columnasOk} columnas existen en la base.`)
+
+  if (noVerificables.length) {
+    console.log("")
+    console.log(`⚠ NO es un "todo aplicado": ${noVerificables.length} migración(es) no se pueden`)
+    console.log("  comprobar por este medio (cambian tipos, crean índices, RLS o funciones).")
+    console.log("  Confírmalas a mano en el SQL Editor de Supabase:\n")
+    for (const file of noVerificables) console.log(`  · ${file}`)
+    console.log("")
+    console.log("  Atajo seguro: pega supabase/BROTHERHOOD-SETUP.sql entero (es idempotente,")
+    console.log("  correrlo de nuevo no rompe ni duplica nada).")
+    process.exit(1)
+  }
+
   console.log("  No falta correr ningún .sql en Supabase.")
   process.exit(0)
 }

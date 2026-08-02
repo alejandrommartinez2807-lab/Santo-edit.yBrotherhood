@@ -88,12 +88,20 @@ export async function POST(request: NextRequest) {
 
   // Los .glb pesan más que las fotos: el sobre (JSON + base64) es ~1,37x el
   // archivo, por eso el límite de la petición es mayor que el del modelo.
+  //
+  // El tope está por debajo de los ~4,5 MB de body que aceptan las funciones de
+  // Vercel (auditoría 2026-08-02). Antes se permitían 17 MB: la plataforma
+  // cortaba la petición en el borde y el dueño recibía un 413 opaco en vez del
+  // mensaje que le dice que comprima el modelo. Los .glb de la casa pesan
+  // 250-460 KB (están hechos a mano); los de escaneo real, 5-20 MB, y esos hay
+  // que comprimirlos sí o sí antes de subirlos.
   const sizeLimitResponse = enforceRequestSizeLimit(request, {
-    maxBytes: getEnvByteLimit("MENU_MODEL_UPLOAD_MAX_BYTES", 17_000_000, {
+    maxBytes: getEnvByteLimit("MENU_MODEL_UPLOAD_MAX_BYTES", 4_400_000, {
       minBytes: 1_000_000,
       maxBytes: 26_000_000,
     }),
-    message: "El modelo 3D es demasiado pesado. Comprime el modelo y vuelve a subirlo.",
+    message:
+      "El modelo 3D es demasiado pesado (el máximo son ~3 MB de archivo). Comprímelo —por ejemplo con gltf-transform— y vuelve a subirlo.",
     route: "api-menu-products-upload-model-post",
   })
 
@@ -111,7 +119,9 @@ export async function POST(request: NextRequest) {
 
     const uploadedModel = assertDataUrlModel(input.dataUrl, {
       label: "El modelo 3D del producto",
-      maxBytes: getEnvByteLimit("MENU_MODEL_UPLOAD_BYTES", 12_000_000, {
+      // ~3,2 MB de archivo real: es lo que cabe en el sobre base64 sin pasarse
+      // del límite de body de Vercel (ver el comentario de arriba).
+      maxBytes: getEnvByteLimit("MENU_MODEL_UPLOAD_BYTES", 3_200_000, {
         minBytes: 1_000_000,
         maxBytes: 20_000_000,
       }),

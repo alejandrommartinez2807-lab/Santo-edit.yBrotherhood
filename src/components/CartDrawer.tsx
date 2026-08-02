@@ -5240,6 +5240,26 @@ export default function CartDrawer({
                     <p className="text-sm font-bold leading-6 text-red-300">
                       {orderError}
                     </p>
+
+                    {/* "El menú cambió" dejaba al cliente en un bucle: pedir →
+                        error → actualizar → el carrito vuelve igual desde el
+                        teléfono → mismo error, sin decirle qué producto sobra.
+                        Muchos cerraban la página y la venta se perdía sin que
+                        el negocio se enterara. Con esto sale del bucle en un
+                        toque (auditoría 2026-08-02). */}
+                    {/menú cambió|menu cambio/i.test(orderError) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          items.forEach((item) => removeItem(getCartLineId(item)));
+                          setOrderError(null);
+                          setCheckoutStep(1);
+                        }}
+                        className="mt-3 rounded-full border border-red-400 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-red-200"
+                      >
+                        Vaciar carrito y volver a elegir
+                      </button>
+                    )}
                   </div>
                 )}
 
