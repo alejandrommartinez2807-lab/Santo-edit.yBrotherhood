@@ -62,6 +62,13 @@ const tables = (backup.meta?.tables || Object.keys(backup.data || {})).filter(
 
 const CHUNK = 500
 
+// Tablas cuya clave primaria NO se llama "id". El `--wipe` borraba con
+// `.not("id","is",null)` y en estas fallaba con "column id does not exist"
+// (auditoría 2026-08-02, al ampliar el respaldo).
+const PRIMARY_KEYS = {
+  order_branch_counters: "branch_key",
+}
+
 async function restoreTable(table) {
   const rows = backup.data?.[table] || []
   if (rows.length === 0) {
@@ -75,7 +82,8 @@ async function restoreTable(table) {
   }
 
   if (wipe) {
-    const { error } = await sb.from(table).delete().not("id", "is", null)
+    const primaryKey = PRIMARY_KEYS[table] || "id"
+    const { error } = await sb.from(table).delete().not(primaryKey, "is", null)
     if (error) throw new Error(`wipe ${table}: ${error.message}`)
   }
 

@@ -10,17 +10,21 @@ Receta repetible para dejar una instancia lista. Tiempo estimado: ~30–45 min.
 
 ## 2. Supabase (base de datos del cliente)
 - [ ] Crea un proyecto nuevo en https://supabase.com (plan Free).
-- [ ] **SQL Editor** → corre en orden TODOS los archivos de `supabase/migrations/`:
-  - `0001_initial_schema.sql`
-  - `0002_seed_defaults.sql`
-  - `0003_orders_seq.sql`
-  - `0004_*` (si existe)
-  - `0005_inventory.sql`
-  - `0006_caja.sql`
-  - `0007_order_attachment.sql`
-  - `0013_*` / `0014_supplier_payables.sql` / `0015_business_complexity_controls.sql` si existen en la instancia actual
-- [ ] **Storage** → crea 3 buckets **públicos**: `menu-images`, `payment-proofs`, `order-attachments`.
-      (También se crean solos al subir la primera imagen, pero mejor dejarlos listos.)
+- [ ] **SQL Editor** → pega ENTERO `supabase/BROTHERHOOD-SETUP.sql` y pulsa Run.
+      Trae TODAS las migraciones en orden y es idempotente (correrlo dos veces no
+      rompe nada). Se regenera con `npm run setup:sql`.
+      No vayas archivo por archivo: esta lista se quedaba corta y la base nacía
+      incompleta — sin la `0028`, por ejemplo, la creación de pedidos falla
+      (auditoría 2026-08-02).
+- [ ] **Storage** → crea los buckets:
+  - `menu-images` — **público**
+  - `order-attachments` — **público**
+  - `payment-proofs` — **PRIVADO** ⚠️ Son las capturas de pago del cliente, con
+    sus datos bancarios. La migración `0032` lo fuerza a privado y la app las
+    sirve firmadas; si lo creas público quedan legibles para cualquiera.
+
+      (Los buckets también se crean solos al subir la primera imagen, pero
+      entonces `payment-proofs` nace público: mejor dejarlos listos a mano.)
 - [ ] Copia de **Project Settings → API**: URL, anon key y service_role key.
 
 ## 3. Variables de entorno

@@ -37,12 +37,19 @@ coverage/
 # este archivo: sin esta entrada los bundles viajaban y el deploy moría con
 # "File size limit exceeded (100 MB)" (pasó el 1 ago 2026, ya pesaban 254 MB).
 respaldos/
+# backups/ es la salida de `npm run backup`: el VOLCADO REAL de la base del
+# cliente (pedidos, clientes, personal). La cabecera de este archivo ya decía
+# que estaba cubierto, pero la entrada nunca se escribió: 8 MB de datos reales
+# viajaban en cada deploy (auditoría 2026-08-02).
+backups/
 *.bundle
 *.zip
 .git-desconectado-original/
 src/**/*.bak-*
 scripts/fix-*.mjs
 scripts/_*.mjs
+tmp-*.mjs
+tmp-*.js
 
 # Notas de desarrollo que no hacen falta en el servidor
 *.log

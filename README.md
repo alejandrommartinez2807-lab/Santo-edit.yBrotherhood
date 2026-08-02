@@ -67,8 +67,17 @@ Dos modos (compatibles entre sí):
 ## Base de datos
 
 Las migraciones SQL están en `supabase/migrations/` (numeradas). Aplícalas en orden
-en el **SQL Editor** de Supabase. Buckets de Storage públicos necesarios:
-`menu-images`, `payment-proofs`, `order-attachments`.
+en el **SQL Editor** de Supabase, o pega de una vez `supabase/BROTHERHOOD-SETUP.sql`
+(las trae todas, en orden y es idempotente; se regenera con `npm run setup:sql`).
+
+Buckets de Storage:
+
+- `menu-images` — **público** (fotos del menú, las ve cualquiera).
+- `order-attachments` — **público**.
+- `payment-proofs` — **PRIVADO**. Son los comprobantes de pago del cliente
+  (capturas con datos bancarios). La migración `0032` lo pone en privado y la app
+  los sirve con URLs firmadas: si se crea público, esas capturas quedan legibles
+  para cualquiera que adivine la URL.
 
 ## Backups y recuperación
 

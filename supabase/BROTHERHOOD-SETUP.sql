@@ -3,6 +3,11 @@
 -- Generado a partir de supabase/migrations/*.sql
 -- Pega TODO este archivo en Supabase → SQL Editor → Run.
 -- Es idempotente: si lo corres dos veces no rompe ni duplica.
+--
+-- REGENERADO el 2026-08-02: el archivo anterior se quedó en la 0021 y le
+-- faltaban 15 migraciones (0022-0036). Un cliente nuevo que siguiera la guía
+-- levantaba una base incompleta — sin ir más lejos, sin la 0028 la creación
+-- de pedidos falla. Para regenerarlo: npm run setup:sql
 -- ============================================================
 
 
@@ -1148,4 +1153,515 @@ alter table orders
 create index if not exists idx_orders_is_training
   on orders (is_training)
   where is_training = true;
+
+
+-- ============================================================
+-- >>> 0022_order_attribution.sql
+-- ============================================================
+
+-- ============================================================
+-- Santo Edit · Atribución de ventas por persona
+-- Migración: 0022_order_attribution
+--
+-- Guarda QUIÉN registró y QUIÉN cobró cada pedido, para el reporte de
+-- ventas por vendedor/promotor y el desglose del cierre de caja/evento.
+--
+-- Columnas TEXT sin FK a propósito (mismo criterio que audit_logs y
+-- delivery_reported_by): el pedido nunca debe fallar por un staff borrado.
+-- - registered_by_*: staff que registró el pedido. NULL = pedido hecho por
+--   el cliente desde la página pública (QR/web).
+-- - charged_by_*: staff que registró el cobro (caja). Se escribe al cobrar.
+--
+-- El código escribe estas columnas de forma tolerante: si esta migración
+-- aún no está aplicada, reintenta sin atribución (no rompe venta ni cobro).
+-- ============================================================
+
+alter table orders add column if not exists registered_by_id   text;
+alter table orders add column if not exists registered_by_name text;
+alter table orders add column if not exists registered_by_role text;
+
+alter table orders add column if not exists charged_by_id   text;
+alter table orders add column if not exists charged_by_name text;
+alter table orders add column if not exists charged_by_role text;
+
+-- Reporte de ventas por vendedor: agrupa por quien cobró.
+create index if not exists idx_orders_charged_by on orders (charged_by_id);
+
+
+-- ============================================================
+-- >>> 0023_push_subscriptions.sql
+-- ============================================================
+
+-- 0023: Suscripciones web push del seguimiento de pedido público.
+-- El cliente que toca "Avisarme cuando esté listo" en su confirmación o en
+-- /pedido/<id> queda suscrito; al pasar el pedido a "Listo" el servidor le
+-- manda la notificación aunque tenga el teléfono bloqueado.
+-- Idempotente: se puede correr más de una vez.
+
+create table if not exists public.push_subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  order_id text not null,
+  endpoint text not null unique,
+  subscription jsonb not null,
+  branch_id text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists push_subscriptions_order_id_idx
+  on public.push_subscriptions (order_id);
+
+-- RLS cerrado: solo el servidor (service role) lee/escribe.
+alter table public.push_subscriptions enable row level security;
+
+
+-- ============================================================
+-- >>> 0024_delivery_distance.sql
+-- ============================================================
+
+-- ============================================================
+-- Santo Edit · Envío por distancia (Google Maps + km)
+-- Migración: 0024_delivery_distance
+--
+-- El cliente pega su link de Google Maps (o comparte su GPS) y el costo del
+-- delivery se calcula por kilómetros desde la sede, con tarifas por rango
+-- ("hasta 10 km → $6"). Una fila de configuración por sucursal; si una sede
+-- no tiene fila propia, hereda la de la sucursal principal (se resuelve en
+-- código, igual que el menú por sede).
+-- ============================================================
+
+create table if not exists delivery_distance_settings (
+  id              uuid primary key default gen_random_uuid(),
+  branch_id       uuid references branches(id) on delete cascade,
+  enabled         boolean not null default false,
+  -- Link de Google Maps del local (lo pega el dueño en Configuración).
+  origin_maps_url text not null default '',
+  origin_lat      double precision,
+  origin_lng      double precision,
+  -- La distancia se mide en línea recta; este factor compensa la ruta real.
+  road_factor     numeric not null default 1.3,
+  -- Tarifas por rango: [{"upToKm": 3, "costUSD": 2}, {"upToKm": 10, "costUSD": 6}]
+  tiers           jsonb not null default '[]'::jsonb,
+  updated_at      timestamptz not null default now()
+);
+
+alter table delivery_distance_settings enable row level security;
+
+-- Una sola fila por sucursal (branch_id null = configuración global/heredable).
+create unique index if not exists uq_delivery_distance_settings_branch
+  on delivery_distance_settings (coalesce(branch_id::text, 'global'));
+
+create index if not exists idx_delivery_distance_settings_branch
+  on delivery_distance_settings (branch_id);
+
+
+-- ============================================================
+-- >>> 0025_orders_branch_seq.sql
+-- ============================================================
+
+-- ============================================================
+-- Santo Edit · Numeración de pedidos POR SEDE (con inicial)
+-- Migración: 0025_orders_branch_seq
+--
+-- Antes el número visible del pedido salía de `orders.seq`, un identity GLOBAL:
+-- por eso el número subía a la vez en todas las sedes. Ahora cada sede lleva su
+-- propio correlativo (`branch_seq`) y guardamos la inicial de la sede
+-- (`branch_code`, primera letra del nombre en minúscula) para mostrar #40-s.
+--
+-- El código de la app cae al `seq` global si estas columnas están vacías, así
+-- que la app sigue funcionando aunque esta migración aún no se haya aplicado.
+-- ============================================================
+
+alter table orders
+  add column if not exists branch_seq bigint;
+alter table orders
+  add column if not exists branch_code text;
+
+-- Contador por sede: una fila por sede (branch_key = branch_id, con un UUID
+-- centinela para pedidos sin sede). Se incrementa de forma atómica.
+create table if not exists order_branch_counters (
+  branch_key uuid primary key,
+  last_seq   bigint not null default 0
+);
+
+-- Asigna branch_seq (correlativo por sede) y branch_code (inicial de la sede)
+-- en cada inserción. El `on conflict ... returning` bloquea la fila del contador
+-- y devuelve el nuevo valor: es seguro ante inserciones concurrentes.
+create or replace function assign_order_branch_seq()
+returns trigger as $$
+declare
+  v_key uuid := coalesce(NEW.branch_id, '00000000-0000-0000-0000-000000000000'::uuid);
+  v_seq bigint;
+begin
+  if NEW.branch_seq is null then
+    insert into order_branch_counters (branch_key, last_seq)
+    values (v_key, 1)
+    on conflict (branch_key)
+      do update set last_seq = order_branch_counters.last_seq + 1
+    returning last_seq into v_seq;
+    NEW.branch_seq := v_seq;
+  end if;
+
+  if NEW.branch_code is null or NEW.branch_code = '' then
+    NEW.branch_code := lower(left(coalesce(
+      (select name from branches where id = NEW.branch_id), ''
+    ), 1));
+  end if;
+
+  return NEW;
+end;
+$$ language plpgsql;
+
+drop trigger if exists trg_assign_order_branch_seq on orders;
+create trigger trg_assign_order_branch_seq
+  before insert on orders
+  for each row
+  execute function assign_order_branch_seq();
+
+-- ---------- Backfill de pedidos existentes (idempotente) ----------
+
+-- 1) Correlativo por sede según el orden histórico (seq global, luego fecha).
+with ranked as (
+  select
+    id,
+    row_number() over (
+      partition by coalesce(branch_id, '00000000-0000-0000-0000-000000000000'::uuid)
+      order by seq, created_at
+    ) as rn
+  from orders
+)
+update orders o
+set branch_seq = r.rn
+from ranked r
+where o.id = r.id
+  and o.branch_seq is null;
+
+-- 2) Contadores al máximo por sede, para que las próximas inserciones sigan.
+insert into order_branch_counters (branch_key, last_seq)
+select
+  coalesce(branch_id, '00000000-0000-0000-0000-000000000000'::uuid),
+  max(branch_seq)
+from orders
+group by 1
+on conflict (branch_key)
+  do update set last_seq = greatest(order_branch_counters.last_seq, excluded.last_seq);
+
+-- 3) Inicial de la sede en pedidos ya existentes.
+update orders o
+set branch_code = lower(left(b.name, 1))
+from branches b
+where o.branch_id = b.id
+  and (o.branch_code is null or o.branch_code = '');
+
+create index if not exists idx_orders_branch_seq on orders (branch_id, branch_seq);
+
+
+-- ============================================================
+-- >>> 0026_kitchen_started_and_item_delivery.sql
+-- ============================================================
+
+-- ============================================================
+-- 0026: Cronómetro real de cocina + entrega por producto
+--
+-- 1) orders.kitchen_started_at: momento en que caja envía el pedido a
+--    cocina (status → 'Preparando'). El cronómetro del módulo cocina cuenta
+--    desde aquí y no desde la creación del pedido, que podía incluir el
+--    tiempo de confirmación/pago en caja.
+--
+-- 2) order_items.delivered_at / delivered_by: en cuentas abiertas (y en
+--    cualquier pedido) el personal puede ir marcando qué productos ya se
+--    entregaron al cliente. NULL = aún no entregado.
+--
+-- Idempotente: se puede correr más de una vez. El código degrada con
+-- gracia si esta migración no está aplicada (isMissingColumnError).
+-- ============================================================
+
+alter table orders
+  add column if not exists kitchen_started_at timestamptz;
+
+alter table order_items
+  add column if not exists delivered_at timestamptz;
+
+alter table order_items
+  add column if not exists delivered_by text;
+
+
+-- ============================================================
+-- >>> 0027_surveys.sql
+-- ============================================================
+
+-- ============================================================
+-- 0027: Encuesta post-venta con estrellas + envío automático
+--
+-- 1) survey_responses: la respuesta del cliente a la encuesta pública
+--    (/encuesta/<pedido>): estrellas 1–5 por aspecto (jsonb) + sugerencia
+--    libre. UNA respuesta por pedido (índice único): responder dos veces
+--    no duplica.
+--
+-- 2) orders.survey_sent_at / survey_sent_channel: marca de que la encuesta
+--    ya se envió a ese pedido (botón manual del staff o envío automático
+--    por WhatsApp Business), para no mandarla dos veces.
+--
+-- Idempotente: se puede correr más de una vez. El código degrada con
+-- gracia si esta migración no está aplicada.
+-- ============================================================
+
+create table if not exists survey_responses (
+  id             uuid primary key default gen_random_uuid(),
+  order_id       text not null,
+  branch_id      uuid,
+  -- { "Sabor de la comida": 5, "Tiempo de entrega": 4, ... }
+  ratings        jsonb not null default '{}'::jsonb,
+  comment        text not null default '',
+  customer_name  text not null default '',
+  created_at     timestamptz not null default now()
+);
+
+create unique index if not exists uq_survey_response_per_order
+  on survey_responses (order_id);
+
+create index if not exists idx_survey_responses_created
+  on survey_responses (created_at desc);
+
+-- RLS cerrado: solo el servidor (service role) lee/escribe.
+alter table survey_responses enable row level security;
+
+alter table orders
+  add column if not exists survey_sent_at timestamptz;
+
+alter table orders
+  add column if not exists survey_sent_channel text;
+
+
+-- ============================================================
+-- >>> 0028_order_items_product_bigint.sql
+-- ============================================================
+
+-- 0028: order_items.product_id de integer a bigint.
+--
+-- Por qué: el editor de menú (saveMenuProduct), el clonado de sedes/eventos
+-- (branchProvisioning) y la carga masiva generan ids de producto con
+-- Date.now() (~1.78e12), que desbordan el rango de integer (~2.15e9).
+-- menu_products.id e inventory_recipes.product_id ya son bigint; esta era la
+-- única columna rezagada y hacía fallar la CREACIÓN de pedidos con
+-- "value ... is out of range for type integer" para cualquier producto
+-- creado por el editor o clonado (los ids 1-8 del menú semilla sí cabían,
+-- por eso no se había notado).
+
+alter table order_items
+  alter column product_id type bigint;
+
+
+-- ============================================================
+-- >>> 0029_order_cancellation_requests.sql
+-- ============================================================
+
+-- 0029: Anulación con código del dueño (Brotherhood, pedido 2026-07-21).
+--
+-- El trabajador pide anular con motivo; se genera un código de un solo uso
+-- que SOLO ve el dueño (push a sus equipos / su panel / WhatsApp cuando esté
+-- conectado). El trabajador no puede anular sin ese código.
+--
+-- El código se guarda en claro a propósito: el dueño necesita leerlo para
+-- dictarlo, la tabla es solo service-role (RLS cerrada), es de un solo uso y
+-- expira a las 2 horas.
+
+create table if not exists order_cancellation_requests (
+  id text primary key,
+  order_id text not null,
+  branch_id text,
+  display_number text not null default '',
+  reason text not null,
+  requested_by text not null default '',
+  code text not null,
+  status text not null default 'pending', -- pending | used | expired
+  -- Lo marca el trabajador al anular: ¿los ingredientes ya se usaron?
+  -- (si NO se usaron, el sistema devuelve el consumo al inventario).
+  inventory_was_used boolean,
+  inventory_reverted_count integer not null default 0,
+  attempts integer not null default 0,
+  created_at timestamptz not null default now(),
+  used_at timestamptz
+);
+
+create index if not exists idx_order_cancellation_requests_order
+  on order_cancellation_requests(order_id);
+
+-- Una sola solicitud pendiente por pedido: dos clics simultáneos no pueden
+-- crear dos códigos distintos (el segundo insert falla y el API reusa la
+-- solicitud ganadora, así el dueño siempre dicta UN solo código).
+create unique index if not exists uq_order_cancellation_pending_per_order
+  on order_cancellation_requests(order_id)
+  where status = 'pending';
+
+create index if not exists idx_order_cancellation_requests_status
+  on order_cancellation_requests(status, created_at desc);
+
+alter table order_cancellation_requests enable row level security;
+-- Sin policies: solo el service role (API del servidor) puede leer/escribir.
+
+
+-- ============================================================
+-- >>> 0030_payment_proof_second_image.sql
+-- ============================================================
+
+-- 0030: segunda captura del comprobante de pago (F8 lote v5).
+--
+-- El pago MIXTO puede llevar dos comprobantes (una imagen por cada pata, por
+-- ejemplo pago móvil + Zelle). El comprobante ya tenía UNA imagen
+-- (proof_image_url / proof_file_id / proof_file_name); aquí se agregan las
+-- columnas de la segunda, opcionales (vacías cuando el pago tiene una sola
+-- captura). Aditiva e idempotente: sin esta migración, la segunda imagen
+-- simplemente se ignora.
+
+alter table payment_proofs
+  add column if not exists proof_image_url_2 text default '',
+  add column if not exists proof_file_id_2   text default '',
+  add column if not exists proof_file_name_2 text default '';
+
+
+-- ============================================================
+-- >>> 0031_orders_payment_method.sql
+-- ============================================================
+
+-- 0031: método de pago elegido por el CLIENTE al pedir (Pago móvil, Zelle,
+-- "Mixto: X Bs … + Y $…"), distinto de payment_method_usd/ves que registra
+-- caja al cobrar. Hasta ahora esta columna solo se LEÍA (order-payment,
+-- order-status, anulación automática) pero nunca existió ni se escribía:
+-- esos selects fallaban con 500 silencioso. El código ya degrada sin ella;
+-- al aplicarla, los pedidos nuevos la llenan y se activan: precarga de
+-- montos en el reporte de pago, precarga del cobro en caja, paso "Esperando
+-- pago" y anulación automática por falta de pago.
+
+alter table orders add column if not exists payment_method text;
+
+
+-- ============================================================
+-- >>> 0032_security_rls_and_private_proofs.sql
+-- ============================================================
+
+-- 0032_security_rls_and_private_proofs.sql
+-- Auditoría de seguridad 2026-07-24.
+
+-- (1) order_branch_counters: faltaba RLS. Sin políticas, la clave anon no ve
+--     nada; el trigger que asigna el correlativo corre con service role y se
+--     salta RLS, así que la operación normal NO se ve afectada.
+alter table order_branch_counters enable row level security;
+
+-- (2) Bucket payment-proofs a PRIVADO. Los comprobantes dejan de ser legibles
+--     por URL pública; el panel los mostrará con URLs firmadas (ver Paso 2 de
+--     SEGURIDAD-RLS-Y-COMPROBANTES.md). menu-images se deja público a propósito.
+update storage.buckets
+   set public = false
+ where id = 'payment-proofs';
+
+
+-- ============================================================
+-- >>> 0033_open_account_index_per_branch.sql
+-- ============================================================
+
+-- 0033_open_account_index_per_branch.sql
+-- Auditoría 2026-07-24 (R1 cuentas abiertas): el índice único "una cuenta
+-- abierta por mesa" NO estaba separado por sede, así que si San Diego y Viñedo
+-- tienen ambas una "Mesa 1", la segunda no podía abrir cuenta (colisión entre
+-- sedes). Se recrea el índice incluyendo branch_id.
+
+drop index if exists uq_open_account_per_table;
+
+create unique index if not exists uq_open_account_per_table_branch
+  on open_accounts (branch_id, table_number)
+  where status = 'Abierta';
+
+
+-- ============================================================
+-- >>> 0034_supplier_purchase_payments_rls.sql
+-- ============================================================
+
+-- 0034 · Seguridad (auditoría 2026-07-24, hallazgo A3)
+-- supplier_purchase_payments (abonos a proveedores) era la ÚNICA tabla del
+-- esquema sin Row Level Security: quedó fuera del barrido de la migración
+-- 0032. Con RLS activo y sin políticas, el rol anon/authenticated no puede
+-- leer ni escribir; la app no se ve afectada porque el servidor usa la
+-- service key (bypasea RLS), igual que el resto de tablas.
+
+alter table supplier_purchase_payments enable row level security;
+
+
+-- ============================================================
+-- >>> 0035_open_account_index_normalized.sql
+-- ============================================================
+
+-- 0035 · Cuentas abiertas: índice único por mesa NORMALIZADO (auditoría
+-- 2026-07-24, H14). El índice de la 0033 comparaba table_number en crudo,
+-- pero la app busca la cuenta con texto normalizado (sin mayúsculas ni
+-- espacios extra): "Mesa 1" y "mesa 1" convivían como DOS cuentas Abiertas de
+-- la misma mesa y el pedido caía en la que apareciera primero.
+-- Nota: si este índice falla por duplicados existentes ("Mesa 1"/"mesa 1"
+-- abiertas a la vez), cierra una de las dos cuentas y reintenta.
+
+drop index if exists uq_open_account_per_table_branch;
+
+create unique index if not exists uq_open_account_per_table_branch
+  on open_accounts (branch_id, lower(trim(table_number)))
+  where status = 'Abierta';
+
+
+-- ============================================================
+-- >>> 0036_order_cancellation_details.sql
+-- ============================================================
+
+-- 0036: Detalle estructurado de la anulación de un pedido.
+--
+-- Política del dueño (2026-07-29, cierra BH-SIM-005):
+-- 1. Anular quita TODO el dinero del pedido, también del cierre de caja,
+--    SALVO que el cajero indique que el dinero se quedó en la gaveta
+--    (entonces cuenta en el cierre en una línea aparte, nunca como venta).
+-- 2. Los anulados se ven en todo momento con su motivo, quién anuló, si los
+--    insumos se consumieron y qué pasó con el dinero.
+-- 3. Jamás se borra ni se vacía la información de un pedido anulado.
+--
+-- Hasta ahora el motivo viajaba SOLO concatenado en customer_note
+-- ("ANULADO: … | Por: … | …") y en audit_logs: distinguir el ORIGEN exigía
+-- parsear texto libre, y quién anuló no quedaba en el pedido. Estas columnas
+-- guardan el dato estructurado; la nota se mantiene por compatibilidad con
+-- la página pública de seguimiento y con cierres viejos.
+--
+-- El código escribe estas columnas con tolerancia a migración-no-aplicada
+-- (reintento sin ellas), igual que 0022/0026/0031.
+
+-- Origen de la anulación: 'automatico' (sistema, sin pago reportado),
+-- 'personal' (staff desde caja/panel) o 'cliente' (seguimiento público).
+alter table orders add column if not exists cancel_origin text;
+
+-- Motivo tal cual se escribió. NULL en el caso "cliente que no dejó motivo":
+-- la UI lo muestra como "no dejó motivo" (eso ES la información, nunca un
+-- espacio en blanco).
+alter table orders add column if not exists cancel_reason text;
+
+-- Quién anuló (mismo trío que registered_by_* / charged_by_*, 0022).
+-- Sistema: name='Sistema', role='system'. Cliente: role='public'.
+alter table orders add column if not exists cancelled_by_id   text;
+alter table orders add column if not exists cancelled_by_name text;
+alter table orders add column if not exists cancelled_by_role text;
+
+alter table orders add column if not exists cancelled_at timestamptz;
+
+-- ¿Los insumos del pedido se consumieron? true = quedan descontados del
+-- inventario; false = se devolvieron al stock; NULL = no se preguntó
+-- (anulaciones viejas).
+alter table orders add column if not exists cancel_inventory_used boolean;
+
+-- Qué pasó con el dinero YA COBRADO al anular (NULL si no había cobro):
+-- 'devuelto' = se le devolvió al cliente (sale del cierre y de reportes);
+-- 'se_quedo' = quedó en la gaveta (cuenta en el cierre en línea aparte,
+-- nunca como venta). El default de la app es 'devuelto' (supuesto del
+-- 2026-07-29, pendiente de confirmación del dueño).
+alter table orders add column if not exists cancel_refund text;
+
+-- Monto (equivalente USD) que el pedido tenía cobrado al momento de anular:
+-- el registro de la devolución (monto + autor cancelled_by_* + fecha
+-- cancelled_at).
+alter table orders add column if not exists cancel_refund_usd numeric;
+
+-- La vista transversal de anulados del dueño filtra por estado; los lookups
+-- son por id. No hace falta índice nuevo.
 

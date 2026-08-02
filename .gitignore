@@ -60,3 +60,9 @@ next-env.d.ts
 
 # Respaldos locales (bundles de git)
 respaldos/
+
+# Scripts de diagnóstico de un rato: se escriben en la raíz para depurar algo
+# concreto (un 400 raro, un flujo del checkout) y se quedan ahí olvidados. No
+# son parte del sistema (auditoría 2026-08-02).
+/tmp-*.mjs
+/tmp-*.js

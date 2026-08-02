@@ -35,6 +35,7 @@
     "qa:desactivacion": "node scripts/qa-desactivacion.mjs",
     "qa:migraciones": "node scripts/qa-migraciones-aplicadas.mjs",
     "qa:seguridad": "node scripts/qa-seguridad-ataques.mjs",
+    "setup:sql": "node scripts/generar-setup-sql.mjs",
     "modelos:generar": "node scripts/generar-modelos-3d.mjs",
     "modelos:verificar": "node scripts/verificar-modelos-3d.mjs",
     "modelos:asignar": "node scripts/asignar-modelos-3d.mjs"

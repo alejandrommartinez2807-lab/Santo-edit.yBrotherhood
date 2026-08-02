@@ -60,6 +60,19 @@ const TABLES = [
   "day_expenses",
   "payment_proofs",
   "audit_logs",
+  // Añadidas en la auditoría 2026-08-02: existían desde las migraciones
+  // 0019-0029 y NUNCA se respaldaban. Un restore desde un respaldo viejo dejaba
+  // al negocio sin reservas, sin subrecetas, sin encuestas, sin las tarifas de
+  // delivery por distancia, sin las anulaciones pendientes y —lo más peligroso—
+  // con los contadores de numeración por sede en cero, así que los pedidos
+  // nuevos repetían números ya usados.
+  "subrecipes",
+  "reservations",
+  "delivery_distance_settings",
+  "order_branch_counters",
+  "survey_responses",
+  "order_cancellation_requests",
+  "push_subscriptions",
 ]
 
 const PAGE = 1000
