@@ -208,10 +208,17 @@ export async function queueSize(store?: OfflineStore): Promise<number> {
   return (await readQueue(store)).length
 }
 
+// 4xx que NO son un rechazo definitivo: el pedido es válido y hay que
+// reintentarlo más tarde. El 429 es el caso real que costaba ventas — al
+// volver la señal, la cola disparaba todos los pedidos de golpe, el límite de
+// 10 por minuto devolvía 429 a partir del 11.º y ESOS se borraban como si el
+// servidor los hubiera rechazado (auditoría 2026-08-02).
+const RETRYABLE_CLIENT_STATUSES = new Set([408, 425, 429])
+
 // Envía los pedidos en cola usando `submit`. Quita los que se aceptan (200) o
-// que el servidor rechaza definitivamente (4xx, ej. validación), e incrementa
-// `tries` en los que fallan por red/5xx (se reintentarán luego). Si `submit`
-// lanza (sin red), detiene el flush dejando la cola intacta.
+// que el servidor rechaza definitivamente (4xx de validación), e incrementa
+// `tries` en los que fallan por red, por 5xx o por un 4xx reintentable. Si
+// `submit` lanza (sin red), detiene el flush dejando la cola intacta.
 export async function flushQueue(
   submit: (payload: unknown) => Promise<{ ok: boolean; status: number }>,
   store?: OfflineStore,
@@ -232,6 +239,12 @@ export async function flushQueue(
     if (res.ok) {
       await target.remove(item.id)
       sent++
+    } else if (RETRYABLE_CLIENT_STATUSES.has(res.status)) {
+      // El servidor pide esperar, no rechaza el pedido. Se conserva y se corta
+      // el flush: seguir empujando contra el límite solo gasta el cupo del
+      // resto de la cola.
+      await target.update({ ...item, tries: item.tries + 1 })
+      break
     } else if (res.status >= 400 && res.status < 500) {
       // Rechazo definitivo (validación, etc.): no tiene sentido reintentar.
       await target.remove(item.id)

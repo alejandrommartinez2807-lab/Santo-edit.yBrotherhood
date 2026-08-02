@@ -112,7 +112,16 @@ async function getRestaurantJsonLd(): Promise<string> {
     }
     if (instagramUrl) jsonLd.sameAs = [instagramUrl];
 
-    return JSON.stringify(jsonLd);
+    // El JSON entra crudo en un <script> del <head>, y JSON.stringify NO escapa
+    // "</script>": bastaba con escribirlo en la descripción del negocio o en la
+    // etiqueta de ubicación (campos que el dueño edita en Configuración) para
+    // cerrar la etiqueta y ejecutar lo que viniera detrás, en TODAS las páginas
+    // del sitio. Escapar < > & como secuencias unicode es válido dentro de una
+    // cadena JSON y deja la etiqueta sin poder cerrarse (auditoría 2026-08-02).
+    return JSON.stringify(jsonLd)
+      .replace(/</g, "\\u003c")
+      .replace(/>/g, "\\u003e")
+      .replace(/&/g, "\\u0026");
   } catch {
     return "";
   }

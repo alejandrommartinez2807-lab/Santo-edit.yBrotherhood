@@ -9,8 +9,14 @@ import {
 } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
 import { captureError } from "@/lib/monitoring"
-import { enforceRateLimit } from "@/lib/rateLimit"
+import {
+  buildRateLimitResponse,
+  enforceRateLimit,
+  peekRateLimit,
+  registerRateLimitHit,
+} from "@/lib/rateLimit"
 import { enforceSameOriginRequest } from "@/lib/requestGuards"
+import { recordSecurityEvent } from "@/lib/securityEvents"
 import { touchStaffLastAccess } from "@/lib/staffUsers"
 
 export const runtime = "nodejs"
@@ -62,6 +68,37 @@ async function handleLocalAuth(request: NextRequest) {
 
   if (rateLimitResponse) return rateLimitResponse
 
+  // Candado de FALLOS (auditoría 2026-08-02). El límite de arriba cuenta todas
+  // las llamadas, así que no se puede apretar sin castigar al local entero:
+  // todos los empleados salen por el mismo wifi y el panel llama a esta ruta en
+  // cada cambio de módulo. Este segundo candado solo gasta cupo cuando la clave
+  // es INCORRECTA: quien la sabe entra siempre, quien la adivina se queda fuera
+  // 15 minutos tras 12 fallos.
+  //
+  // Sigue viviendo en RAM (una instancia serverless no ve los fallos de otra):
+  // frena el ataque casero, NO uno distribuido. El blindaje definitivo es un
+  // contador compartido en base — pendiente, requiere migración.
+  const failedLoginLimit = {
+    id: "api-local-auth-fallos",
+    limit: 12,
+    windowMs: 900_000,
+    message:
+      "Demasiados intentos con clave incorrecta. Espera unos minutos antes de volver a intentar.",
+  }
+
+  const lockedOut = peekRateLimit(request, failedLoginLimit)
+
+  if (!lockedOut.allowed) {
+    recordSecurityEvent({
+      kind: "rate_limit",
+      route: failedLoginLimit.id,
+      request,
+      metadata: { limit: lockedOut.limit, count: lockedOut.count },
+    })
+
+    return buildRateLimitResponse(lockedOut, failedLoginLimit.message)
+  }
+
   const originGuardResponse = enforceSameOriginRequest(request, undefined, "api-local-auth")
 
   if (originGuardResponse) return originGuardResponse
@@ -72,6 +109,8 @@ async function handleLocalAuth(request: NextRequest) {
     const localAccess = getRequestAccess(request, password)
 
     if (!localAccess.ok) {
+      registerRateLimitHit(request, failedLoginLimit)
+
       return localAuthResponse(
         {
           ok: false,

@@ -169,6 +169,44 @@ export function checkRateLimit(
   }
 }
 
+// Consulta el contador SIN gastar cupo. Sirve para candados que solo deben
+// contar los FALLOS (login): así el empleado que teclea bien no consume los
+// intentos del que se equivoca, y el que adivina a ciegas se queda fuera.
+export function peekRateLimit(
+  request: HeaderReadable,
+  options: RateLimitOptions,
+  now = Date.now()
+): RateLimitResult {
+  const limit = Math.max(1, Math.floor(options.limit))
+  const windowMs = Math.max(1_000, Math.floor(options.windowMs))
+  const ip = getClientIp(request)
+  const key = `${sanitizeKeyPart(options.id)}:${sanitizeKeyPart(ip)}`
+  const current = rateLimitStore.get(key)
+  const expired = !current || current.resetAt <= now
+  const count = expired ? 0 : current.count
+  const resetAt = expired ? now + windowMs : current.resetAt
+
+  return {
+    allowed: count < limit,
+    count,
+    limit,
+    remaining: Math.max(0, limit - count),
+    resetAt,
+    retryAfterSeconds: Math.max(1, Math.ceil((resetAt - now) / 1_000)),
+    key,
+  }
+}
+
+// Gasta un intento del contador indicado. Es `checkRateLimit` sin la decisión:
+// el llamador ya sabe que esto fue un fallo.
+export function registerRateLimitHit(
+  request: HeaderReadable,
+  options: RateLimitOptions,
+  now = Date.now()
+): RateLimitResult {
+  return checkRateLimit(request, options, now)
+}
+
 export function buildRateLimitResponse(result: RateLimitResult, message?: string) {
   return NextResponse.json(
     {

@@ -136,6 +136,12 @@ function CajaPageContent() {
   const [deliveryPaymentInEnabled, setDeliveryPaymentInEnabled] = useState(false)
 
   const pendingStatusRef = useRef<Map<string, OrderStatus>>(new Map())
+  // Montos que el pedido tenía cobrados cuando se abrió la tarjeta de cobro:
+  // viajan como candado optimista para no pisar un cobro que entró entremedio.
+  const paymentBaselineRef = useRef<{
+    amountReceivedUSD: number
+    amountReceivedVES: number
+  } | null>(null)
   const isLoggedIn = adminPassword.length > 0
   const soundControls = useOperationalSounds({ adminPassword })
 
@@ -583,6 +589,16 @@ function CajaPageContent() {
   }
 
   function openPaymentModal(order: LocalOrder) {
+    // Candado optimista (BH-SIM-003): se guarda lo que el pedido tenía cobrado
+    // al ABRIR la tarjeta. Si entremedio entra otro cobro —el otro cajero, o la
+    // confirmación de un comprobante desde /local-santo/comprobantes— el UPDATE
+    // no empareja y el servidor devuelve conflicto en vez de pisar el dinero ya
+    // registrado. El servidor lo soportaba desde julio; ninguna pantalla se lo
+    // mandaba, así que el blindaje estaba inerte (auditoría 2026-08-02).
+    paymentBaselineRef.current = {
+      amountReceivedUSD: order.amountReceivedUSD || 0,
+      amountReceivedVES: order.amountReceivedVES || 0,
+    }
     setSelectedPaymentOrder(order)
     // Los comprobantes del pedido precargan el modal cuando el cliente no
     // eligió método al pedir (caso mesa): caja ve el pago móvil/Zelle que el
@@ -622,12 +638,29 @@ function CajaPageContent() {
           paymentMethodVES: paymentForm.paymentMethodVES,
           deliveryPaymentIn: paymentForm.deliveryPaymentIn,
           paymentNote: paymentForm.paymentNote,
+          ...(paymentBaselineRef.current
+            ? { expectedPrevious: paymentBaselineRef.current }
+            : {}),
         }),
       })
       const data = await readApiResponse(response)
-      if (!response.ok) throw new Error(data.error || "No se pudo registrar el cobro")
+
+      if (!response.ok) {
+        // Carrera detectada: en vez de dejar al cajero con datos viejos, se
+        // recarga el pedido para que vuelva a cobrar sobre lo que hay ahora.
+        if (response.status === 409) {
+          await loadOrders(adminPassword, true)
+          await loadPaymentProofs(adminPassword, true)
+        }
+
+        throw new Error(data.error || "No se pudo registrar el cobro")
+      }
 
       const updatedOrder = data.order as LocalOrder
+      paymentBaselineRef.current = {
+        amountReceivedUSD: updatedOrder.amountReceivedUSD || 0,
+        amountReceivedVES: updatedOrder.amountReceivedVES || 0,
+      }
       setOrders((currentOrders) => currentOrders.map((order) => order.id === updatedOrder.id ? updatedOrder : order))
       setSelectedPaymentOrder(updatedOrder)
       setPaymentForm(createPaymentFormFromOrder(updatedOrder))
