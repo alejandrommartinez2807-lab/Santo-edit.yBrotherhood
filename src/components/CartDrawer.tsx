@@ -110,6 +110,7 @@ import {
   PublicPrepayNotice,
 } from "@/components/PublicCheckoutGuide";
 import { readImageFileForUpload } from "@/lib/clientImage";
+import { withTableSignature } from "@/lib/tableSignatureClient";
 import {
   doesPlanAllowLocalOrders,
   doesPlanAllowDelivery,
@@ -697,7 +698,9 @@ export default function CartDrawer({
         setTableAccountNotice(null);
 
         const response = await fetch(
-          `/api/public/table-account-status?mesa=${encodeURIComponent(cleanTable)}`,
+          withTableSignature(
+            `/api/public/table-account-status?mesa=${encodeURIComponent(cleanTable)}`,
+          ),
           { cache: "no-store" },
         );
         const data = await readApiResponse(response);

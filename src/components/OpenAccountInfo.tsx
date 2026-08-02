@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { formatPublicUSD as formatUSD } from "@/utils/formatCurrency";
 import { usePublicCurrencySymbol } from "@/hooks/usePublicCurrencySymbol";
+import { withTableSignature } from "@/lib/tableSignatureClient";
 import type {
   PublicLocalTable,
   PublicOpenAccountOrderSummary,
@@ -364,7 +365,7 @@ export default function OpenAccountInfo() {
       setLookupState(EMPTY_LOOKUP);
 
       const response = await fetch(
-        `/api/public/table-account-status?mesa=${encodeURIComponent(cleanTable)}`,
+        withTableSignature(`/api/public/table-account-status?mesa=${encodeURIComponent(cleanTable)}`),
         { cache: "no-store" },
       );
       const data = await response.json().catch(() => ({}));
@@ -400,7 +401,7 @@ export default function OpenAccountInfo() {
     const timer = window.setInterval(async () => {
       try {
         const response = await fetch(
-          `/api/public/table-account-status?mesa=${encodeURIComponent(lookupTableName)}`,
+          withTableSignature(`/api/public/table-account-status?mesa=${encodeURIComponent(lookupTableName)}`),
           { cache: "no-store" },
         );
         const data = await response.json().catch(() => ({}));

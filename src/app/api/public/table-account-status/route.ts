@@ -21,6 +21,7 @@ import {
 } from "@/lib/publicLocalTableAccounts"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
+import { isTableTokenEnabled, isValidTableToken } from "@/lib/tableAccessToken"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -106,6 +107,18 @@ export async function GET(request: NextRequest) {
     const tableId = resolvedTable?.id || ""
     const branchId = await resolveBranchId(request)
 
+    // ¿Viene del QR de ESTA mesa? El token (?t=) va firmado con el secreto del
+    // negocio y no se puede adivinar como sí se adivina "Mesa 1". Solo con él
+    // se devuelven los montos y el detalle de lo consumido.
+    //
+    // Si el negocio no tiene ORDERS_API_SECRET configurado no hay firma posible
+    // y exigirla dejaría a TODOS los comensales sin ver su cuenta, así que en
+    // ese caso se mantiene el comportamiento anterior. El chequeo de "listo para
+    // producción" avisa de que falta el secreto.
+    const tableToken = String(request.nextUrl.searchParams.get("t") || "").trim()
+    const hasTableToken =
+      !isTableTokenEnabled() || isValidTableToken(tableToken, tableName, branchId)
+
     // Reserva vigente "ahora" para esta mesa (módulo Reservas): el flujo del
     // cliente la muestra como ocupada durante su franja. Sin datos del cliente
     // que reservó — solo la franja.
@@ -160,8 +173,13 @@ export async function GET(request: NextRequest) {
       reservedNow,
       reservationStart,
       reservationEnd,
+      // Sin el token del QR, la respuesta NO lleva montos ni detalle de lo
+      // consumido: solo si la mesa tiene cuenta abierta, que es lo que necesita
+      // el comensal para unirse. Ver src/lib/tableAccessToken.ts.
+      openAccountDetail: hasTableToken,
       openAccount: openAccount
-        ? {
+        ? hasTableToken
+          ? {
             id: openAccount.id,
             tableNumber: openAccount.tableNumber,
             // H-1 (2026-07-30): el NOMBRE del cliente ya no sale de aquí. Este
@@ -205,6 +223,16 @@ export async function GET(request: NextRequest) {
               })
             ),
           }
+          : {
+              // Versión reducida (QR sin token, o barrido desde fuera): basta
+              // para que la pantalla ofrezca "unirme a la cuenta de la mesa" y
+              // no revela cuánto se lleva gastado ni qué se pidió.
+              id: openAccount.id,
+              tableNumber: openAccount.tableNumber,
+              status: openAccount.status,
+              billRequestedAt: getBillRequestedAt(openAccount.note),
+              orders: [],
+            }
         : null,
     })
   } catch (error) {

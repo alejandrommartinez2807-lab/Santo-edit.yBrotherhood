@@ -25,8 +25,16 @@ export default function MesaRedirectPage() {
   const searchParams = useSearchParams();
   const mesaToken = useMemo(() => getMesaToken(params?.mesa), [params]);
   const branch = (searchParams.get("branch") || "").trim();
+  // Firma de la mesa (auditoría 2026-08-02): se arrastra hasta la carta para
+  // que el comensal pueda ver el detalle de SU cuenta. Sin ella, la consulta
+  // pública responde sin montos ni consumo — que es lo que impide barrer las
+  // mesas del local desde fuera.
+  const tableSignature = (searchParams.get("t") || "").trim();
+  const signatureSuffix = tableSignature
+    ? `&t=${encodeURIComponent(tableSignature)}`
+    : "";
   const destination = mesaToken
-    ? `/?mesa=${encodeURIComponent(mesaToken)}&mesa_qr=1${branch ? `&branch=${encodeURIComponent(branch)}` : ""}`
+    ? `/?mesa=${encodeURIComponent(mesaToken)}&mesa_qr=1${branch ? `&branch=${encodeURIComponent(branch)}` : ""}${signatureSuffix}`
     : branch
       ? `/?branch=${encodeURIComponent(branch)}`
       : "/";

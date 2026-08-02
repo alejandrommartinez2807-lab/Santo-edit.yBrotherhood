@@ -57,14 +57,35 @@ function getTableToken(table: LocalTableMapItem) {
   return cleanText(table.id || table.name).replace(/^\/+|\/+$/g, "") || cleanText(table.name) || "mesa";
 }
 
-function buildTablePath(table: LocalTableMapItem, branchId: string | null) {
-  const suffix = branchId ? `?branch=${encodeURIComponent(branchId)}` : "";
+// `t` es la firma de la mesa: lo que permite al comensal ver el detalle de su
+// cuenta y a nadie más (auditoría 2026-08-02). Si el negocio no tiene secreto
+// configurado llega vacía y el enlace queda como antes.
+function buildTablePath(
+  table: LocalTableMapItem,
+  branchId: string | null,
+  tableTokens: Record<string, string> = {},
+) {
+  const params = new URLSearchParams();
+  if (branchId) params.set("branch", branchId);
+  const signature = tableTokens[table.name] || "";
+  if (signature) params.set("t", signature);
+  const suffix = params.toString() ? `?${params.toString()}` : "";
+
   return `/mesa/${encodeURIComponent(getTableToken(table))}${suffix}`;
 }
 
-function buildDirectMenuPath(table: LocalTableMapItem, branchId: string | null) {
-  const suffix = branchId ? `&branch=${encodeURIComponent(branchId)}` : "";
-  return `/?mesa=${encodeURIComponent(getTableToken(table))}${suffix}`;
+function buildDirectMenuPath(
+  table: LocalTableMapItem,
+  branchId: string | null,
+  tableTokens: Record<string, string> = {},
+) {
+  const params = new URLSearchParams();
+  params.set("mesa", getTableToken(table));
+  if (branchId) params.set("branch", branchId);
+  const signature = tableTokens[table.name] || "";
+  if (signature) params.set("t", signature);
+
+  return `/?${params.toString()}`;
 }
 
 function joinBaseUrl(baseUrl: string, path: string) {
@@ -87,15 +108,33 @@ function buildQrImageUrl(link: string) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=16&data=${encodeURIComponent(link)}`;
 }
 
-function buildAllLinksText(tables: LocalTableMapItem[], baseUrl: string, branchId: string | null) {
+function buildAllLinksText(
+  tables: LocalTableMapItem[],
+  baseUrl: string,
+  branchId: string | null,
+  tableTokens: Record<string, string> = {},
+) {
   return tables
-    .map((table) => `${table.name}: ${joinBaseUrl(baseUrl, buildTablePath(table, branchId))}`)
+    .map(
+      (table) =>
+        `${table.name}: ${joinBaseUrl(baseUrl, buildTablePath(table, branchId, tableTokens))}`,
+    )
     .join("\n");
 }
 
-function buildAllMessagesText(tables: LocalTableMapItem[], baseUrl: string, branchId: string | null) {
+function buildAllMessagesText(
+  tables: LocalTableMapItem[],
+  baseUrl: string,
+  branchId: string | null,
+  tableTokens: Record<string, string> = {},
+) {
   return tables
-    .map((table) => buildTableMessage(table, joinBaseUrl(baseUrl, buildTablePath(table, branchId))))
+    .map((table) =>
+      buildTableMessage(
+        table,
+        joinBaseUrl(baseUrl, buildTablePath(table, branchId, tableTokens)),
+      ),
+    )
     .join("\n\n---\n\n");
 }
 
@@ -135,6 +174,11 @@ export function LocalTableQrLinksPanel({
   const [copiedState, setCopiedState] = useState<CopiedState>(null);
   const [deviceBranchId, setDeviceBranchId] = useState<string | null>(null);
   const [branches, setBranches] = useState<StaffBranch[]>([]);
+  // Firma de cada mesa (auditoría 2026-08-02). Va en el QR y es lo que
+  // distingue a quien está sentado en la mesa de quien escribe "Mesa 1" desde
+  // fuera: sin ella, la consulta pública ya no devuelve montos ni consumo.
+  // La calcula el servidor (/api/table-tokens): el secreto no baja al navegador.
+  const [tableTokens, setTableTokens] = useState<Record<string, string>>({});
 
   // La sede la manda el contenedor si eligió una (selector de Mesas); si no, la
   // del dispositivo.
@@ -162,6 +206,31 @@ export function LocalTableQrLinksPanel({
       window.removeEventListener(BRANCH_CHANGE_EVENT, handleBranchChange);
     };
   }, []);
+
+  // Los tokens dependen de la sede: al cambiarla hay que volver a pedirlos o
+  // los QR llevarían la firma de la sucursal anterior.
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadTokens() {
+      try {
+        const response = await fetch("/api/table-tokens", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = await response.json().catch(() => null);
+        if (ignore || !data?.tokens) return;
+        setTableTokens(data.tokens as Record<string, string>);
+      } catch {
+        // Sin tokens los QR siguen funcionando: el cliente verá su cuenta sin
+        // el detalle de consumo hasta que se reimpriman.
+      }
+    }
+
+    loadTokens();
+
+    return () => {
+      ignore = true;
+    };
+  }, [branchId]);
 
   const branchName = useMemo(() => {
     if (!branchId) return "";
@@ -193,7 +262,7 @@ export function LocalTableQrLinksPanel({
   }
 
   async function handleCopy(table: LocalTableMapItem, action: "link" | "message") {
-    const link = joinBaseUrl(resolvedBaseUrl, buildTablePath(table, branchId));
+    const link = joinBaseUrl(resolvedBaseUrl, buildTablePath(table, branchId, tableTokens));
     const value = action === "message" ? buildTableMessage(table, link) : link;
 
     await copyToClipboard(value);
@@ -203,8 +272,8 @@ export function LocalTableQrLinksPanel({
   async function handleCopyAll(action: "all" | "allMessages") {
     const value =
       action === "allMessages"
-        ? buildAllMessagesText(activeTables, resolvedBaseUrl, branchId)
-        : buildAllLinksText(activeTables, resolvedBaseUrl, branchId);
+        ? buildAllMessagesText(activeTables, resolvedBaseUrl, branchId, tableTokens)
+        : buildAllLinksText(activeTables, resolvedBaseUrl, branchId, tableTokens);
 
     await copyToClipboard(value);
     resetCopyState({ tableName: "Todas", action });
@@ -302,8 +371,8 @@ export function LocalTableQrLinksPanel({
       ) : (
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3 print:grid-cols-2">
           {activeTables.map((table) => {
-            const tablePath = buildTablePath(table, branchId);
-            const directMenuPath = buildDirectMenuPath(table, branchId);
+            const tablePath = buildTablePath(table, branchId, tableTokens);
+            const directMenuPath = buildDirectMenuPath(table, branchId, tableTokens);
             const tableLink = joinBaseUrl(resolvedBaseUrl, tablePath);
             const copiedLink = copiedState?.tableName === table.name && copiedState.action === "link";
             const copiedMessage = copiedState?.tableName === table.name && copiedState.action === "message";
