@@ -117,8 +117,14 @@ export type SameOriginGuardResult = {
   allowed: boolean
   requestHost: string
   sourceHost: string
-  source: "origin" | "referer" | "none"
-  reason: "same-host" | "allowed-host" | "www-alias" | "missing-source" | "blocked"
+  source: "origin" | "referer" | "none" | "service"
+  reason:
+    | "same-host"
+    | "allowed-host"
+    | "www-alias"
+    | "missing-source"
+    | "blocked"
+    | "service-secret"
 }
 
 function firstHeaderValue(value: string | null) {
@@ -181,9 +187,43 @@ export function getRequestHost(request: HeaderReadable) {
   )
 }
 
+// Los clientes legítimos SIN navegador (scripts/qa-*.mjs, la simulación, los
+// e2e, una impresora) no mandan Origin ni Referer. En vez de dejarles el hueco
+// abierto a todo internet, pueden identificarse con un secreto propio.
+function hasServiceSecret(request: HeaderReadable) {
+  const expected = String(process.env.ORDERS_API_SECRET || "").trim()
+  if (!expected) return false
+
+  const received = firstHeaderValue(request.headers.get("x-service-secret")).trim()
+
+  return Boolean(received) && received === expected
+}
+
+// Modo estricto: sin Origin ni Referer NO se pasa. Está APAGADO por defecto a
+// propósito (auditoría 2026-08-02): encenderlo rompe de golpe todos los
+// scripts de QA y de simulación, que llaman a la API con fetch de Node. El
+// camino es: (1) añadir `x-service-secret: $ORDERS_API_SECRET` a esos scripts,
+// (2) comprobar que no haya integraciones externas dependiendo del hueco
+// (impresora, webhooks entrantes), y (3) poner REQUIRE_REQUEST_ORIGIN=1.
+// Mientras siga apagado, una petición sin cabeceras de origen entra igual que
+// antes: el freno es la autenticación y el rate limit.
+function isStrictOriginMode() {
+  return String(process.env.REQUIRE_REQUEST_ORIGIN || "").trim() === "1"
+}
+
 export function checkSameOriginRequest(request: HeaderReadable): SameOriginGuardResult {
   const requestHost = getRequestHost(request)
   const originHost = getHostFromUrl(firstHeaderValue(request.headers.get("origin")))
+
+  if (hasServiceSecret(request)) {
+    return {
+      allowed: true,
+      requestHost,
+      sourceHost: "",
+      source: "service",
+      reason: "service-secret",
+    }
+  }
 
   if (originHost) {
     const allowed = Boolean(requestHost) && isAllowedApiSourceHost(originHost, requestHost)
@@ -223,8 +263,11 @@ export function checkSameOriginRequest(request: HeaderReadable): SameOriginGuard
     }
   }
 
+  // Sin Origin ni Referer no hay navegador detrás: es un script. Hoy pasa (el
+  // freno son la autenticación y el rate limit); con REQUIRE_REQUEST_ORIGIN=1
+  // deja de pasar y los clientes de servicio tienen que mandar x-service-secret.
   return {
-    allowed: true,
+    allowed: !isStrictOriginMode(),
     requestHost,
     sourceHost: "",
     source: "none",

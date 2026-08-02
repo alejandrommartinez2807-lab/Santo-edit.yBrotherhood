@@ -467,6 +467,32 @@ export function getDeploymentReadiness(env: ReadinessEnv = process.env) {
     })
   )
 
+  // Notificaciones push al personal (auditoría 2026-08-02). Sin las claves
+  // VAPID el push queda desactivado EN SILENCIO: el aviso de "pedido nuevo" no
+  // llega al móvil de nadie y no hay ninguna señal de por qué. Es un aviso, no
+  // un error: el sistema funciona igual, solo que hay que mirar la pantalla.
+  const vapidPublic = clean(env.VAPID_PUBLIC_KEY)
+  const vapidPrivate = clean(env.VAPID_PRIVATE_KEY)
+  const vapidComplete = Boolean(vapidPublic && vapidPrivate)
+  const vapidPartial = Boolean(vapidPublic) !== Boolean(vapidPrivate)
+
+  checks.push(
+    buildCheck({
+      key: "push-vapid",
+      group: "monitoring",
+      label: "Avisos push al personal",
+      status: vapidComplete ? "ok" : vapidPartial ? "error" : "warning",
+      detail: vapidComplete
+        ? "Las claves VAPID están configuradas: el personal puede recibir avisos."
+        : vapidPartial
+          ? "Falta una de las dos claves VAPID: el push no arranca."
+          : "Sin claves VAPID: los avisos push están apagados.",
+      recommendation: vapidComplete
+        ? undefined
+        : "Genera el par con `npx web-push generate-vapid-keys` y define VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY y VAPID_SUBJECT.",
+    })
+  )
+
   const sentryDsn = getSentryDsn(env)
   const tracesSampleRate = clean(env.SENTRY_TRACES_SAMPLE_RATE)
   const parsedTracesSampleRate = tracesSampleRate ? Number(tracesSampleRate) : 0

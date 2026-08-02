@@ -36,6 +36,18 @@ function noStoreResponse(data: unknown, init?: ResponseInit) {
   })
 }
 
+// PENDIENTE DE DECISIÓN DEL DUEÑO (auditoría 2026-08-02, severidad baja).
+//
+// Sigue siendo público y sin clave, y los nombres de mesa se adivinan solos
+// ("Mesa 1", "Barra"): desde fuera del local se pueden recorrer todas las mesas
+// de las dos sedes y leer, en vivo, cuánto lleva consumido cada una y qué pidió.
+// No hay datos personales desde H-1, pero sí inteligencia comercial (ticket
+// medio, ocupación, horas pico).
+//
+// Cerrarlo del todo exige cambiar el flujo del QR —meter un código en el enlace
+// de la mesa, o atar la consulta al pedido del comensal— y Alejandro pidió
+// medir el alcance y consultarle antes de tocarlo. El rate limit de abajo es lo
+// que frena hoy el barrido sistemático.
 export async function GET(request: NextRequest) {
   const rateLimitResponse = enforceRateLimit(request, {
     id: "api-public-table-account-status-get",

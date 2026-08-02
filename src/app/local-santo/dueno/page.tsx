@@ -37,6 +37,7 @@ import type {
 } from "@/lib/orders"
 import { getOrderTotals } from "@/lib/localOrderMoney"
 import OwnerCancellationCodes from "@/components/local/OwnerCancellationCodes"
+import ModuleAccessGuard from "@/components/ModuleAccessGuard"
 
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -1416,7 +1417,21 @@ function getDisplayOrderNumber(order: LocalOrder) {
   return `#${lastPart.slice(-3)}`
 }
 
+// El interruptor "Dashboard del dueño" de Configuración solo escondía el
+// enlace de la barra: escribiendo /local-santo/dueno la página seguía
+// funcionando al 100%, y un Encargado —que no tiene ownerDashboard en su rol—
+// veía el resumen completo del negocio (ventas, cobrado real, gastos, cierres,
+// neto estimado). El dueño creía haber restringido el módulo y no lo había
+// hecho. Auditoría 2026-08-02.
 export default function OwnerDashboardPage() {
+  return (
+    <ModuleAccessGuard moduleKey="ownerDashboard" moduleName="Dashboard del dueño">
+      <OwnerDashboardPageContent />
+    </ModuleAccessGuard>
+  )
+}
+
+function OwnerDashboardPageContent() {
   const [adminPassword, setAdminPassword] = useState("")
   const [passwordInput, setPasswordInput] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -1437,6 +1452,9 @@ export default function OwnerDashboardPage() {
 
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  // Alguna sección del panel no cargó (módulo apagado o fallo pasajero) pero el
+  // resto sí: se avisa sin vaciar el dashboard.
+  const [partialLoadNotice, setPartialLoadNotice] = useState<string | null>(null)
 
   const isLoggedIn = adminPassword.length > 0
 
@@ -1483,24 +1501,44 @@ export default function OwnerDashboardPage() {
         readApiResponse(closesResponse),
       ])
 
+      // Los PEDIDOS sí son imprescindibles: sin ellos no hay dashboard.
       if (!ordersResponse.ok) {
         throw new Error(ordersData.error || "No se pudieron cargar los pedidos")
       }
 
-      if (!expensesResponse.ok) {
-        throw new Error(expensesData.error || "No se pudieron cargar los gastos")
-      }
-
-      if (!closesResponse.ok) {
-        throw new Error(closesData.error || "No se pudieron cargar los cierres")
-      }
+      // Gastos y cierres, en cambio, son secciones del panel (auditoría
+      // 2026-08-02). Antes cualquier fallo suyo tumbaba el dashboard ENTERO: el
+      // dueño apagaba "Control de gastos" en Configuración, esa API respondía
+      // 403 y se quedaba sin ver ventas, cobrado real, pedidos ni delivery, con
+      // un mensaje que hablaba de gastos y no relacionaba la causa. Igual con
+      // un 5xx o un rate-limit pasajero. Ahora esas dos secciones se muestran
+      // vacías y el resto del panel sigue en pie.
+      const expensesFailed = !expensesResponse.ok
+      const closesFailed = !closesResponse.ok
 
       setOrders(Array.isArray(ordersData.orders) ? ordersData.orders : [])
       setDayExpenses(
-        Array.isArray(expensesData.dayExpenses) ? expensesData.dayExpenses : []
+        !expensesFailed && Array.isArray(expensesData.dayExpenses)
+          ? expensesData.dayExpenses
+          : []
       )
       setDayCloses(
-        Array.isArray(closesData.dayCloses) ? closesData.dayCloses : []
+        !closesFailed && Array.isArray(closesData.dayCloses) ? closesData.dayCloses : []
+      )
+
+      const partialNotices = [
+        expensesFailed
+          ? `Gastos del día: ${expensesData.error || "no se pudieron cargar"}`
+          : "",
+        closesFailed
+          ? `Historial de cierres: ${closesData.error || "no se pudo cargar"}`
+          : "",
+      ].filter(Boolean)
+
+      setPartialLoadNotice(
+        partialNotices.length
+          ? `El resto del panel está al día. ${partialNotices.join(" · ")}`
+          : null
       )
 
       if (purchasesResponse && purchasesResponse.ok) {
@@ -1908,6 +1946,16 @@ export default function OwnerDashboardPage() {
             <div className="mt-3 rounded-2xl border-2 border-red-500/35 bg-red-100 px-4 py-3">
               <p className="text-sm font-bold leading-6 text-red-800">
                 {errorMessage}
+              </p>
+            </div>
+          )}
+
+          {/* Una sección no cargó (módulo apagado o fallo de red), pero el
+              dashboard sigue mostrando lo demás. */}
+          {partialLoadNotice && (
+            <div className="mt-3 rounded-2xl border-2 border-amber-500/40 bg-amber-100 px-4 py-3">
+              <p className="text-sm font-bold leading-6 text-amber-800">
+                {partialLoadNotice}
               </p>
             </div>
           )}

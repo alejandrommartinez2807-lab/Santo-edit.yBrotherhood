@@ -275,6 +275,18 @@ export default function LocalTablesEditor({
     // Guarda de mesas OCUPADAS: si una mesa con cuenta abierta o pedidos
     // activos desaparece de la lista (renombrada o quitada), su cuenta queda
     // colgando de un nombre que ya no existe. Se bloquea y se explica.
+    //
+    // LÍMITE CONOCIDO (auditoría 2026-08-02, severidad baja): `busyTableNames`
+    // trae solo las mesas ocupadas de la sede ACTUAL. Editando las "mesas
+    // generales" (las que heredan todas las sedes), renombrar una mesa que aquí
+    // está libre pero en la otra sede tiene cuenta abierta pasa la validación:
+    // allá la mesa desaparece del mapa y los pedidos nuevos dejan de casar por
+    // nombre con esa cuenta. El dinero NO se pierde —la cuenta sigue en "Cuentas
+    // abiertas" y se cobra normal—, pero hay que reasociar a mano.
+    // No se cerró porque la solución (unir las mesas ocupadas de TODAS las
+    // sedes) bloquearía el renombrado global siempre que cualquier sucursal
+    // tenga una mesa ocupada, o sea prácticamente todo el día de servicio.
+    // Necesita decisión del dueño sobre qué prefiere.
     const gone = getBusyTablesLost(
       loadedNames,
       cleaned.map((table) => table.name),

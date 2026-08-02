@@ -13,6 +13,7 @@ import { BRAND } from "@/lib/brand"
 import { getSupabaseBrowser } from "@/lib/supabaseBrowser"
 import { resolveStaffLoginEmail } from "@/lib/staffIdentity"
 import LocalStaffShell from "@/components/LocalStaffShell"
+import { setSelectedBranchId } from "@/lib/branchClient"
 
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session"
 
@@ -460,6 +461,26 @@ export default function ModuleAccessGuard({
   // stand): valida el acceso igual pero no envuelve con la barra del staff.
   chromeless?: boolean
 }) {
+  // La sede del enlace se fija ANTES de que los hijos monten y lancen su primer
+  // fetch (auditoría 2026-08-02). En las pantallas chromeless —el TV del stand,
+  // /local-santo/pantalla?sede=<id>— no hay barra del staff, que es donde
+  // normalmente se aplica el ?sede=. Resultado: esa tablet nunca había elegido
+  // sede, así que el televisor mostraba los números de pedido de la sede
+  // PRINCIPAL y los del stand no aparecían nunca; justo el caso de uso para el
+  // que se hizo la pantalla.
+  useState(() => {
+    if (!chromeless || typeof window === "undefined") return null
+
+    try {
+      const sede = (new URLSearchParams(window.location.search).get("sede") || "").trim()
+      if (sede) setSelectedBranchId(sede)
+    } catch {
+      /* sin acceso a la URL o al storage: se queda con la sede guardada */
+    }
+
+    return null
+  })
+
   const [state, setState] = useState<GuardState>("loading")
   const [businessName, setBusinessName] = useState<string>(BRAND.name)
   const [roleLabel, setRoleLabel] = useState("")
