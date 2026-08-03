@@ -8,13 +8,14 @@ import {
 } from "@/lib/publicProductsResponse"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
+import { NO_STORE_HEADERS, publicReadHeaders } from "@/lib/publicCacheHeaders"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-const NO_STORE_HEADERS = {
-  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-}
+// Un cambio de precio o de foto en el menú aparece en un minuto como mucho.
+const CACHE_SECONDS = 60
+const STALE_SECONDS = 3600
 
 export async function GET(request: NextRequest) {
   const rateLimitResponse = enforceRateLimit(request, {
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     )
 
     return NextResponse.json(buildPublicProductsResponse(menuProducts), {
-      headers: NO_STORE_HEADERS,
+      headers: publicReadHeaders(request, CACHE_SECONDS, STALE_SECONDS),
     })
   } catch (error) {
     captureError(error, { route: "/api/public/products", action: "GET" })

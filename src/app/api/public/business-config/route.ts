@@ -8,13 +8,16 @@ import {
 import { buildPublicBusinessConfigResponse } from "@/lib/publicBusinessConfigResponse"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
+import { NO_STORE_HEADERS, publicReadHeaders } from "@/lib/publicCacheHeaders"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-const NO_STORE_HEADERS = {
-  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-}
+// El dueño edita la configuración desde el panel y quiere verla enseguida:
+// un minuto en el borde, y hasta una hora sirviendo la copia guardada
+// mientras se refresca por detrás.
+const CACHE_SECONDS = 60
+const STALE_SECONDS = 3600
 
 export async function GET(request: NextRequest) {
   const rateLimitResponse = enforceRateLimit(request, {
@@ -77,7 +80,7 @@ export async function GET(request: NextRequest) {
         businessConfig: buildPublicBusinessConfigResponse(scopedConfig),
       },
       {
-        headers: NO_STORE_HEADERS,
+        headers: publicReadHeaders(request, CACHE_SECONDS, STALE_SECONDS),
       }
     )
   } catch (error) {

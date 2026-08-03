@@ -10,13 +10,18 @@ import {
 import { autoFinalizeExpiredEvents } from "@/lib/branchProvisioning"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
+import { NO_STORE_HEADERS, publicReadHeaders } from "@/lib/publicCacheHeaders"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-const NO_STORE_HEADERS = {
-  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-}
+// Ojo: esta ruta además finaliza sola los eventos vencidos, y hasta ahora eso
+// se intentaba en CADA visita del público. Con un minuto de caché el barrido
+// pasa a correr como mucho una vez por minuto (el refresco por detrás lo
+// sigue disparando), que es de sobra para que un evento vencido salga del
+// listado.
+const CACHE_SECONDS = 60
+const STALE_SECONDS = 3600
 
 export async function GET(request: NextRequest) {
   const rateLimitResponse = enforceRateLimit(request, {
@@ -54,7 +59,7 @@ export async function GET(request: NextRequest) {
         branchCount: publicBranches.length,
         requiresBranchSelection: publicBranches.length > 1 && !explicitBranchId,
       },
-      { headers: NO_STORE_HEADERS },
+      { headers: publicReadHeaders(request, CACHE_SECONDS, STALE_SECONDS) },
     )
   } catch (error) {
     captureError(error, { route: "/api/public/branches", action: "GET" })

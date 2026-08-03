@@ -18,6 +18,7 @@ import {
 } from "@/lib/ordersBusinessConfig"
 import { captureError } from "@/lib/monitoring"
 import { enforceRateLimit } from "@/lib/rateLimit"
+import { NO_STORE_HEADERS, publicReadHeaders } from "@/lib/publicCacheHeaders"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -247,14 +248,23 @@ async function resolveConfiguredExchangeMode(request: NextRequest): Promise<{
   }
 }
 
-const NO_STORE_HEADERS = {
-  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-}
+// La tasa del BCV cambia una vez al día: media hora en el borde sobra. Lo
+// importante es el respaldo de 24 h — si el BCV se cae, el CDN sigue
+// entregando la última tasa buena en vez de dejar la carta sin tasa.
+const CACHE_SECONDS = 1800
+const STALE_SECONDS = 86400
 
-function jsonExchangeRate(response: ExchangeRateResponse) {
-  return NextResponse.json(response, {
-    headers: NO_STORE_HEADERS,
-  })
+function jsonExchangeRate(
+  request: NextRequest,
+  response: ExchangeRateResponse
+) {
+  // Solo se cachea una tasa real. Si es de respaldo, no se guarda: así el
+  // sitio no queda pegado con una tasa inventada media hora.
+  const headers = response.fallback
+    ? NO_STORE_HEADERS
+    : publicReadHeaders(request, CACHE_SECONDS, STALE_SECONDS)
+
+  return NextResponse.json(response, { headers })
 }
 
 export async function GET(request: NextRequest) {
@@ -270,7 +280,7 @@ export async function GET(request: NextRequest) {
   const { mode, manualResponse } = await resolveConfiguredExchangeMode(request)
 
   if (manualResponse) {
-    return jsonExchangeRate(manualResponse)
+    return jsonExchangeRate(request, manualResponse)
   }
 
   // Modo euro: misma página del BCV, bloque del EUR, con su propia caché.
@@ -278,13 +288,13 @@ export async function GET(request: NextRequest) {
     const cachedEurRate = getCachedExchangeRate(Date.now(), "EUR")
 
     if (cachedEurRate) {
-      return jsonExchangeRate(cachedEurRate)
+      return jsonExchangeRate(request, cachedEurRate)
     }
 
     try {
       const bcvEurRate = await getBcvEurRate()
 
-      return jsonExchangeRate(setCachedExchangeRate(bcvEurRate))
+      return jsonExchangeRate(request, setCachedExchangeRate(bcvEurRate))
     } catch (bcvError) {
       captureError(bcvError, {
         route: "/api/exchange-rate",
@@ -292,6 +302,7 @@ export async function GET(request: NextRequest) {
       })
 
       return jsonExchangeRate(
+        request,
         setCachedExchangeRate({
           rate: FALLBACK_EUR_RATE,
           currency: "EUR",
@@ -314,13 +325,13 @@ export async function GET(request: NextRequest) {
   const cachedRate = getCachedExchangeRate()
 
   if (cachedRate) {
-    return jsonExchangeRate(cachedRate)
+    return jsonExchangeRate(request, cachedRate)
   }
 
   try {
     const bcvRate = await getBcvUsdRate()
 
-    return jsonExchangeRate(setCachedExchangeRate(bcvRate))
+    return jsonExchangeRate(request, setCachedExchangeRate(bcvRate))
   } catch (bcvError) {
     captureError(bcvError, {
       route: "/api/exchange-rate",
@@ -337,7 +348,7 @@ export async function GET(request: NextRequest) {
             : "No se pudo leer el BCV",
       }
 
-      return jsonExchangeRate(setCachedExchangeRate(fallbackRate))
+      return jsonExchangeRate(request, setCachedExchangeRate(fallbackRate))
     } catch (dolarApiError) {
       captureError(dolarApiError, {
         route: "/api/exchange-rate",
@@ -345,6 +356,7 @@ export async function GET(request: NextRequest) {
       })
 
       return jsonExchangeRate(
+        request,
         setCachedExchangeRate({
           rate: FALLBACK_USD_RATE,
           currency: "USD",

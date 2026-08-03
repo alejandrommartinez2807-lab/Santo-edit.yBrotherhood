@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { buildBrandThemeCss } from "@/lib/theme";
+import { publicApiUrl } from "@/lib/publicApiUrl";
 import { setPublicCurrencySymbol } from "@/utils/formatCurrency";
 
 type PublicThemeConfig = {
@@ -43,7 +44,9 @@ function applyThemeCss(css: string) {
 }
 
 async function syncPublicTheme() {
-  const response = await fetch(`/api/public/business-config?theme=${Date.now()}`, {
+  // Sin `?theme=${Date.now()}`: ese parámetro hacía única cada petición, así
+  // que el CDN no podía guardar la respuesta nunca.
+  const response = await fetch(publicApiUrl("/api/public/business-config"), {
     cache: "no-store",
   });
 
