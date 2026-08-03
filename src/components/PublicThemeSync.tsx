@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { buildBrandThemeCss } from "@/lib/theme";
+import { BRANCH_CHANGE_EVENT } from "@/lib/branchClient";
 import { publicApiUrl } from "@/lib/publicApiUrl";
 import { setPublicCurrencySymbol } from "@/utils/formatCurrency";
 
@@ -88,14 +89,23 @@ export default function PublicThemeSync() {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") runSync();
     };
+    // El cliente cambió de sucursal: el tema y el símbolo de moneda son parte
+    // de la configuración POR SEDE, así que hay que volver a pedirlos. Sin
+    // esto, cambiar de sede dejaba puestos los colores de la anterior hasta
+    // recargar, y con la caché del borde esa copia equivocada se queda pegada.
+    const handleBranchChange = () => {
+      runSync();
+    };
 
     window.addEventListener("focus", handleFocus);
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener(BRANCH_CHANGE_EVENT, handleBranchChange);
 
     return () => {
       isMounted = false;
       window.removeEventListener("focus", handleFocus);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener(BRANCH_CHANGE_EVENT, handleBranchChange);
     };
   }, []);
 
