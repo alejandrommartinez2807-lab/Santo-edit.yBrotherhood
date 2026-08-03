@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server"
-import { getExplicitBranchIdFromRequest } from "@/lib/branch"
+import { getActiveBranches, getExplicitBranchIdFromRequest } from "@/lib/branch"
 
 /**
  * Cabeceras de caché del CDN para las rutas públicas de lectura.
@@ -34,27 +34,58 @@ function cdnHeaders(cacheSeconds: number, staleSeconds: number) {
 /**
  * ¿La URL identifica por sí sola a qué sede corresponde la respuesta?
  *
- * Sin sede → sí (respuesta global). Con sede, solo si esa misma sede está en
- * la query. Si llegó por cabecera o por `Referer`, no: la URL sería idéntica
- * para dos sedes distintas.
+ * Con la sede en la query, sí: la clave de caché ya distingue una sede de otra.
+ *
+ * Sin sede en la query la respuesta es la global, y ahí está el detalle que
+ * costó verificar en producción: una vez guardada, el CDN le entrega esa misma
+ * copia a cualquiera que pida la URL pelada — **incluido quien mande la sede
+ * por cabecera**, porque la función ni siquiera llega a ejecutarse. Por eso la
+ * URL sin sede solo puede cachearse cuando la respuesta es igual para todos,
+ * es decir cuando el negocio tiene una sola sede.
+ *
+ * En cuanto exista una segunda sucursal, `multiSede` pasa a true y la URL
+ * pelada deja de guardarse: solo cachean las que llevan `?branch=`.
  */
-export function isBranchCacheSafe(request: NextRequest): boolean {
+export function isBranchCacheSafe(
+  request: NextRequest,
+  multiSede: boolean
+): boolean {
+  const params = request.nextUrl.searchParams
+  const enLaUrl = params.get("branch") || params.get("branchId")
   const branchId = getExplicitBranchIdFromRequest(request)
 
-  if (!branchId) return true
+  if (!branchId) return !multiSede
 
-  const params = request.nextUrl.searchParams
+  if (branchId === enLaUrl) return true
 
-  return branchId === params.get("branch") || branchId === params.get("branchId")
+  // La sede llegó por cabecera o por el Referer del QR: la URL no la refleja.
+  return false
+}
+
+/**
+ * ¿El negocio tiene más de una sede activa?
+ *
+ * Si no se puede averiguar, se responde que sí: lo conservador es no guardar
+ * la URL sin sede antes que arriesgarse a servírsela a la sucursal equivocada.
+ */
+export async function hayVariasSedes(): Promise<boolean> {
+  try {
+    const sedes = await getActiveBranches()
+
+    return sedes.length > 1
+  } catch {
+    return true
+  }
 }
 
 /** Cacheable en el borde solo si la sede no puede confundirse. */
 export function publicReadHeaders(
   request: NextRequest,
   cacheSeconds: number,
-  staleSeconds: number
+  staleSeconds: number,
+  multiSede: boolean
 ) {
-  return isBranchCacheSafe(request)
+  return isBranchCacheSafe(request, multiSede)
     ? cdnHeaders(cacheSeconds, staleSeconds)
     : NO_STORE_HEADERS
 }

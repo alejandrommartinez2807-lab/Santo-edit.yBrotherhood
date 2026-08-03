@@ -59,7 +59,14 @@ export async function GET(request: NextRequest) {
         branchCount: publicBranches.length,
         requiresBranchSelection: publicBranches.length > 1 && !explicitBranchId,
       },
-      { headers: publicReadHeaders(request, CACHE_SECONDS, STALE_SECONDS) },
+      {
+        headers: publicReadHeaders(
+          request,
+          CACHE_SECONDS,
+          STALE_SECONDS,
+          activeBranches.length > 1
+        ),
+      },
     )
   } catch (error) {
     captureError(error, { route: "/api/public/branches", action: "GET" })

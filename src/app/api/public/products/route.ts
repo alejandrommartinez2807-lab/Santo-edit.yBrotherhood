@@ -8,7 +8,11 @@ import {
 } from "@/lib/publicProductsResponse"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
-import { NO_STORE_HEADERS, publicReadHeaders } from "@/lib/publicCacheHeaders"
+import {
+  hayVariasSedes,
+  NO_STORE_HEADERS,
+  publicReadHeaders,
+} from "@/lib/publicCacheHeaders"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -35,7 +39,12 @@ export async function GET(request: NextRequest) {
     )
 
     return NextResponse.json(buildPublicProductsResponse(menuProducts), {
-      headers: publicReadHeaders(request, CACHE_SECONDS, STALE_SECONDS),
+      headers: publicReadHeaders(
+        request,
+        CACHE_SECONDS,
+        STALE_SECONDS,
+        await hayVariasSedes()
+      ),
     })
   } catch (error) {
     captureError(error, { route: "/api/public/products", action: "GET" })
