@@ -28,7 +28,11 @@ import {
   Pencil,
   Table2,
 } from "lucide-react";
-import { formatPublicUSD as formatUSD, formatVES } from "@/utils/formatCurrency";
+import {
+  formatPublicUSD as formatUSD,
+  formatVES,
+  getPublicCurrencyName,
+} from "@/utils/formatCurrency";
 import {
   isElectronicPaymentMethod,
   isVesPaymentMethod,
@@ -5072,7 +5076,7 @@ export default function CartDrawer({
                           </span>
                         </p>
                         <p className="text-sm font-black leading-tight text-[var(--brand-ink-2)]">
-                          O esta cantidad en dólares:
+                          O esta cantidad en {getPublicCurrencyName()}:
                           <span className="ml-1.5 text-lg font-black text-[var(--brand-ink-3)]">
                             {formatUSD(totalUSD)}
                           </span>

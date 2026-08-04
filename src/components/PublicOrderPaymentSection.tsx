@@ -12,7 +12,11 @@ import {
   Send,
   XCircle,
 } from "lucide-react";
-import { formatPublicUSD as formatUSD, formatVES } from "@/utils/formatCurrency";
+import {
+  formatPublicUSD as formatUSD,
+  formatVES,
+  getPublicCurrencyName,
+} from "@/utils/formatCurrency";
 import { usePublicCurrencySymbol } from "@/hooks/usePublicCurrencySymbol";
 import { DEFAULT_PUBLIC_PAYMENT_METHODS } from "@/lib/publicPageConfig";
 import { isDineInOrderType } from "@/lib/publicOrderPaymentFlow";
@@ -1977,7 +1981,8 @@ export default function PublicOrderPaymentSection({
 
                           return (
                             <p className="mt-1 text-[0.68rem] font-bold text-[var(--brand-ink-2)]/60">
-                              ≈ {formatUSD(ves / rate)} en dólares (tasa del pedido)
+                              ≈ {formatUSD(ves / rate)} en {getPublicCurrencyName()} (tasa del
+                              pedido)
                             </p>
                           );
                         })()}

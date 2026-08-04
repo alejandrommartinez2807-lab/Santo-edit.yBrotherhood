@@ -24,6 +24,13 @@ export function getPublicCurrencySymbol() {
   return publicCurrencySymbol
 }
 
+// Cómo se llama esa moneda en los textos del cliente. Sin esto, el carrito
+// decía "O esta cantidad en dólares" mientras enseñaba € al lado (Brotherhood
+// tiene el símbolo en euros), y el cliente leía una cosa y veía otra.
+export function getPublicCurrencyName() {
+  return publicCurrencySymbol === "€" ? "euros" : "dólares"
+}
+
 export function subscribePublicCurrencySymbol(listener: () => void) {
   currencySymbolListeners.add(listener)
   return () => {

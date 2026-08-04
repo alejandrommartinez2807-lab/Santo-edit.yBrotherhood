@@ -13,7 +13,11 @@ import {
   Trash2,
 } from "lucide-react";
 import { BRAND } from "@/lib/brand";
-import { formatPublicUSD as formatUSD, formatVES } from "@/utils/formatCurrency";
+import {
+  formatPublicUSD as formatUSD,
+  formatVES,
+  getPublicCurrencyName,
+} from "@/utils/formatCurrency";
 import type { CartItem, OrderType, PublicBusinessConfig } from "@/components/cartTypes";
 import FiscalBreakdown from "@/components/FiscalBreakdown";
 import {
@@ -485,7 +489,7 @@ export function CartSummaryFooter({
               </span>
             </p>
             <p className="text-sm font-black leading-tight text-[var(--brand-ink-2)]">
-              O esta cantidad en dólares:
+              O esta cantidad en {getPublicCurrencyName()}:
               <span className="ml-1.5 text-lg font-black text-[var(--brand-ink-3)]">
                 {formatUSD(totalUSD)}
               </span>
