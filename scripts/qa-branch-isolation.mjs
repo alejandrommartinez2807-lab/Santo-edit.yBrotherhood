@@ -257,6 +257,13 @@ console.log("\n── proveedores y cuentas por pagar")
 // ───────────────────────────────────────────────────────────────────────────
 console.log("\n── endpoints poco usados")
 {
+  // Una fila SIN sede (branch_id null) no pertenece a ninguna sucursal: son los
+  // hechos globales del negocio (alta/baja de usuarios, cambios de
+  // configuración). Que las vean las dos sedes no es una fuga —es el mismo
+  // motivo por el que /api/staff es global— pero una fila CON sede compartida
+  // sí lo sería. Se cuentan aparte para que el aviso no se pierda entre ruido.
+  const branchOf = (row) => row.branchId ?? row.branch_id ?? null
+
   const probe = async (path) => {
     const rA = await get(path, { "x-branch-id": A })
     const rB = await get(path, { "x-branch-id": B })
@@ -264,20 +271,41 @@ console.log("\n── endpoints poco usados")
     const arrA = key ? rA.json[key] : []
     const arrB = key ? rB.json[key] : []
     const idsA = new Set(arrA.map((x) => x.id))
-    const shared = arrB.filter((x) => idsA.has(x.id)).length
-    return { status: rA.status, key, countA: arrA.length, countB: arrB.length, shared }
+    const sharedRows = arrB.filter((x) => idsA.has(x.id))
+    const sharedGlobal = sharedRows.filter((x) => branchOf(x) === null).length
+    return {
+      status: rA.status,
+      key,
+      countA: arrA.length,
+      countB: arrB.length,
+      shared: sharedRows.length,
+      sharedGlobal,
+      sharedDeSede: sharedRows.length - sharedGlobal,
+    }
   }
 
   for (const path of ["/api/audit-logs", "/api/payment-proofs", "/api/reservations", "/api/surveys", "/api/staff"]) {
     const r = await probe(path)
     // /api/staff es global a propósito (los usuarios no son de una sede).
     const expectShared = path === "/api/staff"
+    const nota = expectShared
+      ? " (staff es global por diseño)"
+      : r.sharedGlobal
+        ? ` · ${r.sharedGlobal} son hechos GLOBALES sin sede (usuarios/config)`
+        : ""
     check(
-      `endpoint ${path} · A y B no comparten filas`,
-      expectShared ? true : r.shared === 0,
-      `status=${r.status} campo=${r.key} A=${r.countA} B=${r.countB} compartidas=${r.shared}${expectShared ? " (staff es global por diseño)" : ""}`,
+      `endpoint ${path} · A y B no comparten filas DE SEDE`,
+      expectShared ? true : r.sharedDeSede === 0,
+      `status=${r.status} campo=${r.key} A=${r.countA} B=${r.countB} compartidas=${r.shared}${nota}`,
     )
-    row(path, r.countA >= 0, r.shared === 0 || expectShared, null, null, expectShared ? "global por diseño" : "")
+    row(
+      path,
+      r.countA >= 0,
+      r.sharedDeSede === 0 || expectShared,
+      null,
+      null,
+      expectShared ? "global por diseño" : r.sharedGlobal ? `${r.sharedGlobal} filas globales sin sede` : "",
+    )
   }
 }
 

@@ -23,6 +23,10 @@ const RUN = `ZZTEST-${Date.now()}`
 const A = BRANCH_SAN_DIEGO
 const RATE = 40
 
+// Punto de entrega de prueba, a ~1 km del origen de la sede A: cae en el
+// primer tramo de la tarifa por distancia, así el servidor sí puede cotizar.
+const DELIVERY_TEST_COORDS = "10.2300000,-67.9700000"
+
 // PNG 1x1 válido (el servidor valida mime y que el base64 sea múltiplo de 4).
 const PNG_1x1 =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
@@ -47,7 +51,15 @@ async function createOrder({ total, paymentMethod, orderType = "Para llevar", ta
       exchangeRate: RATE,
       paymentMethod,
       ...(orderType === "Delivery"
-        ? { deliveryAddress: "ZZTEST calle de prueba 123", deliveryZone: "San Diego" }
+        ? {
+            deliveryAddress: "ZZTEST calle de prueba 123",
+            deliveryZone: "San Diego",
+            // Desde el 2026-08-02 (commit ed2009f) un delivery SIN ubicación se
+            // rechaza con 409 DELIVERY_QUOTE_REQUIRED: regalar el envío en
+            // silencio salía más caro que pedir el punto otra vez. El carrito
+            // real siempre manda el punto del mapa, así que el script también.
+            deliveryMapsUrl: DELIVERY_TEST_COORDS,
+          }
         : {}),
       items: [{ id: 999003, name: `${RUN}-ITEM`, price: total, quantity: 1 }],
     },
