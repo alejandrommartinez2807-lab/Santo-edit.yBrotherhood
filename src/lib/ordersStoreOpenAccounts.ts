@@ -18,6 +18,7 @@ import {
   orderRowToLocalOrder,
   type Row,
 } from "./ordersStoreMappers"
+import { ORDER_IDS_PER_QUERY, fetchAllRows } from "./ordersStoreQueries"
 import {
   addBillRequestMarker,
   getBillRequestedAt,
@@ -99,33 +100,62 @@ async function loadOrderSummariesByAccount(
   if (cleanIds.length === 0) return byAccount
 
   const supabase = getSupabaseAdmin()
-  let query = supabase
-    .from("orders")
-    .select(
-      "id, open_account_id, seq, branch_seq, branch_code, customer_name, table_number, order_type, status, payment_status, total_usd, total_ves, exchange_rate, payment_received_equiv_usd, payment_pending_usd, created_at, items_text"
-    )
-    .in("open_account_id", cleanIds)
-  if (branchId) query = query.eq("branch_id", branchId)
-  const { data, error } = await query.order("created_at", { ascending: true })
 
-  if (error && options?.throwOnError) throw new Error(error.message)
-
-  const orderRows = (data ?? []) as Row[]
+  // Paginado y en chunks (H-2, 2026-08-04): PostgREST corta en 1000 filas y
+  // el `in(...)` viaja en la URL. Una cuenta longeva con muchos pedidos (o la
+  // vista "todas" del histórico) perdía filas EN SILENCIO pasando el tope.
+  const orderRows: Row[] = []
+  for (let start = 0; start < cleanIds.length; start += ORDER_IDS_PER_QUERY) {
+    const chunk = cleanIds.slice(start, start + ORDER_IDS_PER_QUERY)
+    try {
+      orderRows.push(
+        ...(await fetchAllRows((from, to) => {
+          let query = supabase
+            .from("orders")
+            .select(
+              "id, open_account_id, seq, branch_seq, branch_code, customer_name, table_number, order_type, status, payment_status, total_usd, total_ves, exchange_rate, payment_received_equiv_usd, payment_pending_usd, created_at, items_text"
+            )
+            .in("open_account_id", chunk)
+            .order("created_at", { ascending: true })
+            // Desempate estable: sin él, la paginación puede repetir o perder
+            // filas con el mismo created_at entre páginas.
+            .order("id", { ascending: true })
+            .range(from, to)
+          if (branchId) query = query.eq("branch_id", branchId)
+          return query
+        })),
+      )
+    } catch (error) {
+      // Mismo trato que antes: quien va a ESCRIBIR totales necesita saber que
+      // la lectura falló; las pantallas siguen tolerantes (se refrescan solas).
+      if (options?.throwOnError) throw error
+    }
+  }
   const orderIds = orderRows
     .map((raw: Row) => cleanText(raw.id))
     .filter(Boolean)
   const itemsByOrderId = new Map<string, ReturnType<typeof itemRowToOrderItem>[]>()
 
-  if (orderIds.length > 0) {
-    const { data: itemRows, error: itemsError } = await supabase
-      .from("order_items")
-      .select("*")
-      .in("order_id", orderIds)
-      .order("sort_order", { ascending: true })
+  for (let start = 0; start < orderIds.length; start += ORDER_IDS_PER_QUERY) {
+    const chunk = orderIds.slice(start, start + ORDER_IDS_PER_QUERY)
+    let itemRows: Row[] = []
+    try {
+      itemRows = await fetchAllRows((from, to) =>
+        supabase
+          .from("order_items")
+          .select("*")
+          .in("order_id", chunk)
+          .order("order_id", { ascending: true })
+          .order("sort_order", { ascending: true })
+          .order("id", { ascending: true })
+          .range(from, to),
+      )
+    } catch (error) {
+      if (options?.throwOnError) throw error
+      continue
+    }
 
-    if (itemsError && options?.throwOnError) throw new Error(itemsError.message)
-
-    for (const rawItem of (itemRows ?? []) as Row[]) {
+    for (const rawItem of itemRows) {
       const itemRow = rawItem
       const itemOrderId = cleanText(itemRow.order_id)
       if (!itemOrderId) continue
@@ -280,25 +310,35 @@ export async function getOpenAccountsFreshnessFromStore(
   }
 }
 
+// Tope de seguridad de la lista de cuentas (H-2): el histórico "todas" crece
+// sin límite; pasar de aquí significa años de cuentas sin archivar.
+const MAX_OPEN_ACCOUNTS = 5000
+
 export async function getOpenAccounts(
   options: { status?: OpenAccountStatus | "all"; id?: string } = {},
   branchId?: string | null,
 ): Promise<OpenAccount[]> {
   const supabase = getSupabaseAdmin()
-  let query = supabase.from("open_accounts").select("*").order("created_at", { ascending: false })
 
-  if (options.status && options.status !== "all") {
-    query = query.eq("status", options.status)
-  }
-  // Refresco puntual de UNA cuenta (tras cobrar/entregar): antes se traían
-  // TODAS las cuentas históricas de la sede solo para encontrar una.
-  if (cleanText(options.id)) query = query.eq("id", cleanText(options.id))
-  if (branchId) query = query.eq("branch_id", branchId)
-
-  const { data, error } = await query
-  if (error) throw new Error(error.message)
-
-  const rows = (data ?? []) as Row[]
+  // Paginado (H-2, 2026-08-04): la vista histórica ("all"/Cerrada) crece cada
+  // día; sin .range, PostgREST corta en 1000 y las cuentas viejas desaparecen
+  // de la lista EN SILENCIO.
+  const rows = await fetchAllRows((from, to) => {
+    let query = supabase
+      .from("open_accounts")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, to)
+    if (options.status && options.status !== "all") {
+      query = query.eq("status", options.status)
+    }
+    // Refresco puntual de UNA cuenta (tras cobrar/entregar): antes se traían
+    // TODAS las cuentas históricas de la sede solo para encontrar una.
+    if (cleanText(options.id)) query = query.eq("id", cleanText(options.id))
+    if (branchId) query = query.eq("branch_id", branchId)
+    return query
+  }, MAX_OPEN_ACCOUNTS)
   const ordersByAccount = await loadOrderSummariesByAccount(
     rows.map((row) => cleanText(row.id)),
     branchId,

@@ -62,17 +62,19 @@ export async function findOrderByClientOrderId(
 // con muchos pedidos recibía SOLO las primeras 1000 líneas de `order_items`:
 // del pedido 60 en adelante todo llegaba sin productos, en silencio, y así se
 // mostraba en el panel, en cocina y en la fotografía del cierre.
-// (Auditoría 2026-08-02, hallazgo crítico.)
+// (Auditoría 2026-08-02, hallazgo crítico. Compartido con los stores de
+// cuentas abiertas y comprobantes desde el 2026-08-04 — hallazgo H-2: eran
+// las últimas listas operativas sin paginar.)
 const SUPABASE_PAGE_SIZE = 1000
 
 // `in(...)` viaja en la URL: con miles de ids la petición revienta por longitud.
-const ORDER_IDS_PER_QUERY = 200
+export const ORDER_IDS_PER_QUERY = 200
 
 // Tope de seguridad del panel. Con el reinicio ya acotado a la jornada, pasar
 // de aquí significa que hay días sin cerrar acumulados.
 const MAX_ORDERS = 5000
 
-async function fetchAllRows(
+export async function fetchAllRows(
   buildQuery: (from: number, to: number) => PromiseLike<{
     data: unknown[] | null
     error: { message: string } | null

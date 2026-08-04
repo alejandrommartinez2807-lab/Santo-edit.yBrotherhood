@@ -1,6 +1,7 @@
 import type { PaymentProof, PaymentProofStatus } from "@/types/localOrders"
 import { decodeDataUrlImage } from "@/lib/dataUrlImages"
 import { getSupabaseAdmin } from "./supabaseServer"
+import { fetchAllRows } from "./ordersStoreQueries"
 
 export type CreatePaymentProofInput = {
   orderId: string
@@ -165,27 +166,36 @@ export async function getPaymentProofsFreshness(
   }
 }
 
+// Tope de seguridad del buzón (H-2): el cierre lo vacía a diario, así que
+// pasar de aquí significa muchos días sin cerrar acumulados.
+const MAX_PAYMENT_PROOFS = 5000
+
 export async function getPaymentProofs(
   options: { orderId?: string; status?: string } = {},
   branchId?: string | null,
 ) {
   const supabase = getSupabaseAdmin()
-  let query = supabase.from("payment_proofs").select("*").order("created_at", { ascending: false })
 
-  if (branchId) query = query.eq("branch_id", branchId)
-  if (options.orderId) {
-    query = query.eq("order_id", options.orderId)
-  }
-  if (options.status) {
-    query = query.eq("status", options.status)
-  }
+  // Paginado (H-2, 2026-08-04): sin .range, PostgREST corta en 1000 filas y
+  // los comprobantes más viejos del buzón desaparecen EN SILENCIO.
+  const data = await fetchAllRows((from, to) => {
+    let query = supabase
+      .from("payment_proofs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, to)
+    if (branchId) query = query.eq("branch_id", branchId)
+    if (options.orderId) {
+      query = query.eq("order_id", options.orderId)
+    }
+    if (options.status) {
+      query = query.eq("status", options.status)
+    }
+    return query
+  }, MAX_PAYMENT_PROOFS)
 
-  const { data, error } = await query
-  if (error) {
-    throw new Error(error.message || "No se pudieron cargar los comprobantes")
-  }
-
-  const proofs = (data ?? []).map((row) =>
+  const proofs = data.map((row) =>
     paymentProofRowToProof(row as Record<string, unknown>),
   )
 
