@@ -13,8 +13,10 @@ import {
 import { updateOrderPaymentInStore } from "./ordersStorePayments"
 import {
   findOrderByClientOrderId as findOrderByClientOrderIdInStore,
+  getOrdersFreshnessFromStore,
   getOrdersFromStore,
   loadOrderWithItems,
+  type OrdersFreshness,
 } from "./ordersStoreQueries"
 import {
   clearOrdersInStore,
@@ -37,6 +39,13 @@ export async function getOrders(
   options?: { createdFrom?: string | null },
 ): Promise<LocalOrder[]> {
   return getOrdersFromStore(branchId, options)
+}
+
+export async function getOrdersFreshness(
+  branchId?: string | null,
+  options?: { createdFrom?: string | null; trainingActive?: boolean },
+): Promise<OrdersFreshness> {
+  return getOrdersFreshnessFromStore(branchId, options)
 }
 
 export async function findOrderByClientOrderId(

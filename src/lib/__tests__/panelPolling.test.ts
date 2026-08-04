@@ -17,6 +17,7 @@ import {
   buildLiveOrdersUrl,
   createHiddenPollGate,
   fetchWithPollEtag,
+  getLastRemoteChangeAt,
   getLiveOrdersWindowStartIso,
   HIDDEN_POLL_INTERVAL_MS,
 } from "@/lib/panelPolling"
@@ -184,6 +185,45 @@ describe("fetchWithPollEtag", () => {
     await fetchWithPollEtag("/api/orders")
     const headers = fetchMock.mock.calls[1][1].headers as Headers
     expect(headers.get("if-none-match")).toBeNull()
+  })
+
+  it("un 304 con ETag rotado se adopta (huella con cubeta de tiempo) SIN reiniciar la calma", async () => {
+    // /api/orders lleva una cubeta de tiempo dentro de la huella (su techo de
+    // seguridad): cada ~90 s el validador rota aunque el contenido no. El 304
+    // trae el ETag nuevo y hay que adoptarlo — sin adoptarlo, todos los
+    // sondeos siguientes caerían al camino caro del servidor (leer las filas
+    // completas) — pero sin tocar el reloj de calma: nada real cambió y los
+    // escalones de espaciado no deben volver a 2,5 s por esto.
+    // Reloj falso: si el 304 rotado tocara la calma, lo haría con una marca
+    // 5 s posterior y la aserción falla SIEMPRE (no solo si cambió el ms).
+    vi.useFakeTimers()
+    try {
+      vi.setSystemTime(1_800_000_000_000)
+      fetchMock.mockResolvedValueOnce(
+        fakeResponse(200, '"F1.C1"', '{"orders":[{"id":"p-1"}]}'),
+      )
+      await fetchWithPollEtag("/api/orders")
+
+      const calmaAntes = getLastRemoteChangeAt()
+      vi.setSystemTime(1_800_000_005_000)
+
+      fetchMock.mockResolvedValueOnce(fakeResponse(304, '"F2.C1"'))
+      const rotado = await fetchWithPollEtag("/api/orders")
+
+      // El caller sigue recibiendo su copia como un 200 normal…
+      expect(rotado.notModified).toBe(false)
+      expect(await rotado.response!.json()).toEqual({ orders: [{ id: "p-1" }] })
+      // …la calma no se reinició…
+      expect(getLastRemoteChangeAt()).toBe(calmaAntes)
+
+      // …y el siguiente sondeo ya viaja con el validador NUEVO.
+      fetchMock.mockResolvedValueOnce(fakeResponse(304))
+      await fetchWithPollEtag("/api/orders")
+      const headers = fetchMock.mock.calls[2][1].headers as Headers
+      expect(headers.get("if-none-match")).toBe('"F2.C1"')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it("un 304 huérfano (sin copia local) se salta el tick en vez de inventar datos", async () => {

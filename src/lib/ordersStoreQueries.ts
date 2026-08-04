@@ -99,6 +99,20 @@ async function fetchAllRows(
   return Number.isFinite(limit) ? rows.slice(0, limit) : rows
 }
 
+// Ventana de los paneles operativos: pedidos de la jornada en curso MÁS
+// cualquier pedido aún vivo de jornadas anteriores (una cuenta abierta que
+// cruzó la madrugada, un delivery sin entregar). Lo único que se queda fuera
+// es lo ya terminado (Entregado/Cancelado) de días viejos — que es justo el
+// peso muerto que crecía sin tope en cada sondeo.
+//
+// ÚNICA fuente del predicado: la usan el cuerpo (getOrdersFromStore) y la
+// huella (getOrdersFreshnessFromStore). Si divergieran, la huella respondería
+// "nada cambió" sobre un conjunto distinto del que ve el panel — congelándolo
+// sin ningún error (condición 2 del audit de la huella, 2026-08-04).
+export function liveOrdersWindowOrFilter(createdFrom: string) {
+  return `created_at.gte.${createdFrom},status.not.in.(Entregado,Cancelado)`
+}
+
 export async function getOrdersFromStore(
   branchId?: string | null,
   options?: { createdFrom?: string | null },
@@ -116,15 +130,8 @@ export async function getOrdersFromStore(
       .order("id", { ascending: false })
       .range(from, to)
     if (branchId) query = query.eq("branch_id", branchId)
-    // Ventana de los paneles operativos: pedidos de la jornada en curso MÁS
-    // cualquier pedido aún vivo de jornadas anteriores (una cuenta abierta que
-    // cruzó la madrugada, un delivery sin entregar). Lo único que se queda
-    // fuera es lo ya terminado (Entregado/Cancelado) de días viejos — que es
-    // justo el peso muerto que crecía sin tope en cada sondeo.
     if (createdFrom) {
-      query = query.or(
-        `created_at.gte.${createdFrom},status.not.in.(Entregado,Cancelado)`,
-      )
+      query = query.or(liveOrdersWindowOrFilter(createdFrom))
     }
     return query
   }, MAX_ORDERS)
@@ -160,4 +167,52 @@ export async function getOrdersFromStore(
   return orderRows.map((row) =>
     orderRowToLocalOrder(row, itemsByOrder.get(row.id as string) ?? []),
   )
+}
+
+export type OrdersFreshness = {
+  count: number
+  maxUpdatedAt: string | null
+}
+
+// La huella barata del sondeo (consumo de Supabase 2026-08-04): en vez de
+// bajar todas las filas para saber si algo cambió (626 KB medidos por sondeo),
+// se piden dos agregados (~54 bytes): cuántos pedidos hay y el updated_at más
+// reciente. Cualquier escritura los mueve: la fila del pedido por
+// trg_orders_updated (0001) y sus líneas por trg_order_items_touch_order
+// (0038) — qa:migraciones comprueba AMBOS por comportamiento en cada corrida.
+//
+// El conjunto agregado tiene que ser EXACTAMENTE el que el panel ve: misma
+// sede, misma ventana (el helper compartido de arriba) y el mismo lado de
+// is_training que aplica el filtro en memoria de la ruta (mapper:
+// isTraining = is_training === true). Un conjunto más ancho solo gasta de
+// más; uno más angosto congela el panel sin error.
+export async function getOrdersFreshnessFromStore(
+  branchId?: string | null,
+  options?: { createdFrom?: string | null; trainingActive?: boolean },
+): Promise<OrdersFreshness> {
+  const supabase = getSupabaseAdmin()
+  const createdFrom = options?.createdFrom || null
+
+  let query = supabase
+    .from("orders")
+    .select("updated_at", { count: "exact" })
+    .order("updated_at", { ascending: false })
+    .limit(1)
+  if (branchId) query = query.eq("branch_id", branchId)
+  if (createdFrom) query = query.or(liveOrdersWindowOrFilter(createdFrom))
+  // `not is true` (y no `eq false`) porque en filas viejas is_training es null.
+  query = options?.trainingActive
+    ? query.is("is_training", true)
+    : query.not("is_training", "is", true)
+
+  const { data, count, error } = await query
+
+  if (error) throw new Error(error.message)
+
+  const newest = (data?.[0] as Row | undefined)?.updated_at
+
+  return {
+    count: count ?? 0,
+    maxUpdatedAt: typeof newest === "string" && newest ? newest : null,
+  }
 }

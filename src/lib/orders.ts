@@ -121,6 +121,7 @@ export {
   deleteOrder,
   findOrderByClientOrderId,
   getOrders,
+  getOrdersFreshness,
   resetOrderStaffItems,
   setOrderItemDelivered,
   updateOrderDeliveryReport,

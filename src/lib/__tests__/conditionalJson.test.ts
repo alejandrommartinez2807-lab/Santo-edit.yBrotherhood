@@ -10,7 +10,11 @@ import { describe, expect, it } from "vitest"
 import {
   buildJsonEtag,
   evaluateConditionalJson,
+  evaluateFingerprintedJson,
+  findEtagForFingerprint,
+  hashSerializedJson,
   ifNoneMatchSatisfied,
+  parseIfNoneMatchValues,
 } from "@/lib/conditionalJson"
 
 describe("buildJsonEtag", () => {
@@ -105,5 +109,86 @@ describe("evaluateConditionalJson — el flujo del sondeo", () => {
     })
 
     expect(sedeB.notModified).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// ETag compuesto "huella.contenido" (consumo de Supabase 2026-08-04): la
+// mitad izquierda se calcula con agregados baratos y decide el 304 SIN leer
+// filas; la derecha (hash del JSON) rescata el ahorro de bytes cuando la
+// huella rotó (cubeta de tiempo) pero el contenido no.
+// ---------------------------------------------------------------------------
+
+describe("parseIfNoneMatchValues", () => {
+  it("sin cabecera, sin candidatos", () => {
+    expect(parseIfNoneMatchValues(null)).toEqual([])
+    expect(parseIfNoneMatchValues("")).toEqual([])
+  })
+
+  it("desenvuelve comillas, listas y el prefijo débil W/", () => {
+    expect(parseIfNoneMatchValues('"a.b"')).toEqual(["a.b"])
+    expect(parseIfNoneMatchValues('"uno" , W/"dos.x"')).toEqual(["uno", "dos.x"])
+  })
+
+  it("descarta lo que no es un validador entrecomillado (incluido *)", () => {
+    expect(parseIfNoneMatchValues("*")).toEqual([])
+    expect(parseIfNoneMatchValues("basura")).toEqual([])
+    expect(parseIfNoneMatchValues('""')).toEqual([])
+  })
+})
+
+describe("findEtagForFingerprint — el camino que NO lee filas", () => {
+  it("huella coincidente: devuelve el validador del cliente, entero", () => {
+    expect(findEtagForFingerprint('"F1.C1"', "F1")).toBe('"F1.C1"')
+    expect(findEtagForFingerprint('"otro", W/"F1.C9"', "F1")).toBe('"F1.C9"')
+  })
+
+  it("huella distinta o validador viejo sin punto: hay que leer", () => {
+    expect(findEtagForFingerprint('"F2.C1"', "F1")).toBeNull()
+    // ETag de un panel desplegado antes de la huella: solo hash de contenido.
+    expect(findEtagForFingerprint('"C1"', "F1")).toBeNull()
+    expect(findEtagForFingerprint(null, "F1")).toBeNull()
+  })
+
+  it("una huella vacía o un candidato que EMPIEZA por punto jamás coinciden", () => {
+    expect(findEtagForFingerprint('".C1"', "")).toBeNull()
+  })
+})
+
+describe("evaluateFingerprintedJson — el camino lento", () => {
+  const payload = { orders: [{ id: "p-1" }], trainingModeActive: false }
+  const contentHash = hashSerializedJson(JSON.stringify(payload))
+
+  it("el validador es huella.contenido, entrecomillado", () => {
+    const result = evaluateFingerprintedJson(null, payload, "F1")
+
+    expect(result.etag).toBe(`"F1.${contentHash}"`)
+    expect(result.notModified).toBe(false)
+    expect(JSON.parse(result.serialized)).toEqual(payload)
+  })
+
+  it("rotó la huella pero el contenido no: 304 con el validador NUEVO", () => {
+    // Es el caso del techo de seguridad: la cubeta de tiempo rotó, se leyeron
+    // las filas, y el cuerpo resultó idéntico al que el panel ya tiene.
+    const result = evaluateFingerprintedJson(`"F1.${contentHash}"`, payload, "F2")
+
+    expect(result.notModified).toBe(true)
+    expect(result.etag).toBe(`"F2.${contentHash}"`)
+  })
+
+  it("un validador viejo sin punto sigue valiendo como mitad de contenido", () => {
+    const result = evaluateFingerprintedJson(`"${contentHash}"`, payload, "F1")
+
+    expect(result.notModified).toBe(true)
+  })
+
+  it("contenido distinto: cuerpo completo con validador nuevo", () => {
+    const result = evaluateFingerprintedJson(
+      `"F1.${contentHash}"`,
+      { ...payload, orders: [] },
+      "F1",
+    )
+
+    expect(result.notModified).toBe(false)
   })
 })

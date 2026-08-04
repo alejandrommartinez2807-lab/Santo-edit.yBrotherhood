@@ -8,6 +8,7 @@ import {
   getDeliveryZones,
   getOpenAccounts,
   getOrders,
+  getOrdersFreshness,
   isTrainingModeActive,
 } from "@/lib/orders"
 import {
@@ -50,7 +51,15 @@ import { maybeDispatchPostSaleSurveys } from "@/lib/surveyAutoSend"
 import { maybeDispatchRestockAlerts } from "@/lib/inventoryRestockAlerts"
 import { maybeDispatchPayablesReminders } from "@/lib/payablesReminderAlerts"
 import { maybeAutoCancelStaleUnpaidOrders } from "@/lib/unpaidAutoCancel"
-import { conditionalJsonResponse } from "@/lib/conditionalJson"
+import {
+  findEtagForFingerprint,
+  fingerprintedJsonResponse,
+} from "@/lib/conditionalJson"
+import {
+  buildOrdersFingerprint,
+  getFullReadBucket,
+  getOrdersDeployId,
+} from "@/lib/ordersFingerprint"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
 import { DataUrlImageError, assertDataUrlImage, sanitizeUploadedImageFileName } from "@/lib/dataUrlImages"
@@ -276,31 +285,70 @@ export async function GET(request: NextRequest) {
       maybeAutoCancelStaleUnpaidOrders(),
     ])
 
-    const allOrders = await getOrders(
-      await resolveScopedBranchId(request, access.role),
-      { createdFrom },
+    // La huella se calcula AQUÍ y no antes: después de los guards de rol y
+    // módulo, y después del latido de arriba (el auto-cancel muta pedidos en
+    // este mismo request; si la huella se calculara antes, un 304 respondería
+    // sobre datos que este tick acaba de cambiar — y si el camino rápido se
+    // saltara el latido, nada volvería a cambiar: 304 eterno, punto fijo).
+    const scopedBranchId = await resolveScopedBranchId(request, access.role)
+
+    const freshness = await getOrdersFreshness(scopedBranchId, {
+      createdFrom,
+      trainingActive,
+    })
+
+    const fingerprint = buildOrdersFingerprint({
+      count: freshness.count,
+      maxUpdatedAt: freshness.maxUpdatedAt,
+      branchId: scopedBranchId,
+      createdFrom,
+      trainingModeActive: trainingActive,
+      trainingModeAvailable: trainingAvailable,
+      role: access.role,
+      moduleKey,
+      deployId: getOrdersDeployId(),
+      fullReadBucket: getFullReadBucket(),
+    })
+
+    // Camino rápido: el cliente ya tiene exactamente esta huella → 304 sin
+    // leer una sola fila de pedidos. Es lo que corta el egress de Supabase
+    // (626 KB → ~54 bytes por sondeo); la lectura completa queda garantizada
+    // igual, como mucho cada 90 s, por la cubeta de tiempo dentro de la huella.
+    const unchangedEtag = findEtagForFingerprint(
+      request.headers.get("if-none-match"),
+      fingerprint,
     )
+
+    if (unchangedEtag) {
+      return new NextResponse(null, {
+        status: 304,
+        headers: { etag: unchangedEtag },
+      })
+    }
+
+    const allOrders = await getOrders(scopedBranchId, { createdFrom })
 
     // Modo entrenamiento: mientras está activo, el panel ve SOLO los pedidos de
     // práctica (sandbox); si no, solo los reales. Así los pedidos de práctica
     // nunca se mezclan con la operación real (reportes/cierre/stats del panel).
+    // La huella agrega sobre este MISMO lado (getOrdersFreshnessFromStore).
     const orders = allOrders.filter((order) =>
       trainingActive ? order.isTraining === true : order.isTraining !== true,
     )
 
-    // El ETag se calcula sobre el JSON final y DESPUÉS de los despachos de
-    // arriba (el auto-cancel muta pedidos en este mismo request): un 304 jamás
-    // puede responder sobre datos que este tick acaba de cambiar, ni saltarse
-    // el latido de encuestas/alertas que vive del sondeo (qa-inventory-alerts).
-    return conditionalJsonResponse(request, {
-      orders,
-      trainingModeActive: trainingActive,
-      trainingModeAvailable: trainingAvailable,
-      access: {
-        role: access.role,
-        moduleKey,
+    return fingerprintedJsonResponse(
+      request,
+      {
+        orders,
+        trainingModeActive: trainingActive,
+        trainingModeAvailable: trainingAvailable,
+        access: {
+          role: access.role,
+          moduleKey,
+        },
       },
-    })
+      fingerprint,
+    )
   } catch (error) {
     return NextResponse.json(
       {

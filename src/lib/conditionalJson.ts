@@ -18,8 +18,12 @@ import { NextResponse } from "next/server"
 // HTTP (mezclaría sedes/roles). El If-None-Match lo manda a mano el sondeo del
 // panel (src/lib/panelPolling.ts) guardando el ETag en memoria JS.
 
+export function hashSerializedJson(serialized: string) {
+  return createHash("sha1").update(serialized).digest("base64url")
+}
+
 export function buildJsonEtag(serialized: string) {
-  return `"${createHash("sha1").update(serialized).digest("base64url")}"`
+  return `"${hashSerializedJson(serialized)}"`
 }
 
 // Comparación tolerante: acepta listas ("a", "b"), el comodín * y el prefijo
@@ -67,6 +71,98 @@ export function conditionalJsonResponse(
 
   if (notModified) {
     // 304: sin cuerpo por definición, repitiendo el validador.
+    return new NextResponse(null, { status: 304, headers: { etag } })
+  }
+
+  return new NextResponse(serialized, {
+    status: 200,
+    headers: { etag, "content-type": "application/json" },
+  })
+}
+
+// ---------------------------------------------------------------------------
+// ETag compuesto "huella.contenido" (consumo de Supabase, 2026-08-04)
+//
+// El validador de arriba exige leer las filas en CADA sondeo para hashearlas.
+// El compuesto tiene dos mitades separadas por un punto (los hashes son
+// base64url, que jamás contiene puntos):
+//
+//   · la huella (src/lib/ordersFingerprint.ts) se calcula con dos agregados
+//     baratos: si coincide con la del cliente, se responde 304 sin tocar las
+//     filas (el camino que corta el egress de Supabase);
+//   · el hash del contenido decide, cuando la huella NO coincide (rotó la
+//     cubeta de tiempo, o algo se movió), si al menos el cuerpo puede
+//     ahorrarse: mismo contenido = 304 con el validador NUEVO, que el sondeo
+//     del panel adopta para volver al camino barato.
+//
+// Un validador viejo sin punto (panel desplegado antes de la huella) sigue
+// contando como mitad de contenido: ese cliente no ahorra lecturas, pero
+// tampoco pierde el ahorro de bytes que ya tenía.
+// ---------------------------------------------------------------------------
+
+export function parseIfNoneMatchValues(headerValue: string | null): string[] {
+  if (!headerValue) return []
+
+  return headerValue
+    .split(",")
+    .map((value) => value.trim())
+    .map((value) => (value.startsWith("W/") ? value.slice(2) : value))
+    .filter((value) => value.length > 2 && value.startsWith('"') && value.endsWith('"'))
+    .map((value) => value.slice(1, -1))
+}
+
+function contentHashOf(candidate: string) {
+  const dot = candidate.indexOf(".")
+  return dot >= 0 ? candidate.slice(dot + 1) : candidate
+}
+
+// Camino rápido: ¿el cliente ya demostró tener ESTA huella? Devuelve el
+// validador a repetir en el 304 (el suyo, entero) o null si hay que leer.
+export function findEtagForFingerprint(
+  headerValue: string | null,
+  fingerprint: string,
+): string | null {
+  for (const candidate of parseIfNoneMatchValues(headerValue)) {
+    const dot = candidate.indexOf(".")
+    if (dot > 0 && candidate.slice(0, dot) === fingerprint) {
+      return `"${candidate}"`
+    }
+  }
+
+  return null
+}
+
+// Núcleo puro del camino lento (testeable sin next/server).
+export function evaluateFingerprintedJson(
+  ifNoneMatch: string | null,
+  payload: unknown,
+  fingerprint: string,
+) {
+  const serialized = JSON.stringify(payload)
+  const contentHash = hashSerializedJson(serialized)
+  const etag = `"${fingerprint}.${contentHash}"`
+  const notModified = parseIfNoneMatchValues(ifNoneMatch).some(
+    (candidate) => contentHashOf(candidate) === contentHash,
+  )
+
+  return { serialized, etag, notModified }
+}
+
+export function fingerprintedJsonResponse(
+  request: RequestWithHeaders,
+  payload: unknown,
+  fingerprint: string,
+) {
+  const { serialized, etag, notModified } = evaluateFingerprintedJson(
+    request.headers.get("if-none-match"),
+    payload,
+    fingerprint,
+  )
+
+  if (notModified) {
+    // Mismo contenido con huella nueva: el 304 lleva el validador NUEVO y el
+    // cliente lo adopta (fetchWithPollEtag), o quedaría leyendo filas por
+    // siempre tras la primera rotación de la cubeta.
     return new NextResponse(null, { status: 304, headers: { etag } })
   }
 

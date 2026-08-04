@@ -29,6 +29,13 @@ export async function getOrders(
   return ordersStore.getOrders(branchId, options)
 }
 
+export async function getOrdersFreshness(
+  branchId?: string | null,
+  options?: { createdFrom?: string | null; trainingActive?: boolean },
+) {
+  return ordersStore.getOrdersFreshness(branchId, options)
+}
+
 export async function findOrderByClientOrderId(
   clientOrderId: string,
   branchId?: string | null,

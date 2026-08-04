@@ -6,7 +6,12 @@
 // columna, si lo que declaran las migraciones existe de verdad.
 //
 // Sirve para responder de una vez "¿me falta correr algún .sql en Supabase?"
-// antes de entregar el sistema. NO escribe nada: solo lee.
+// antes de entregar el sistema. Casi todo es lectura; la ÚNICA excepción son
+// las dos sondas de triggers del final: un trigger solo se puede probar por
+// comportamiento, así que reescriben UNA fila con su propio valor, protegidas
+// con compare-and-swap (si la fila cambió bajo la sonda, no se escribe nada).
+// El único rastro que dejan es el updated_at del pedido sondeado — lo que a
+// los paneles les cuesta, como mucho, una lectura completa extra.
 //
 // Uso:  npm run qa:migraciones
 import { readFileSync, readdirSync } from "node:fs"
@@ -164,45 +169,122 @@ const archivosVerificados = new Set([
 // Por qué importa: la optimización de consumo responde "nada cambió" mirando
 // `updated_at`. Si estos triggers faltan o quedan deshabilitados, el panel se
 // congela SIN dar ningún error — el peor tipo de fallo. (2026-08-04.)
-async function comprobarTriggersDeFrescura() {
-  const { data: muestra } = await supabase
-    .from("order_items")
-    .select("id, order_id")
-    .limit(1)
+// Ambas sondas escriben con COMPARE-AND-SWAP: el UPDATE lleva en el WHERE el
+// valor recién leído, así que si la operación real del local tocó esa fila en
+// los milisegundos intermedios, el UPDATE no alcanza ninguna fila y NO puede
+// revertir un cambio legítimo (revisión adversarial 2026-08-04: sin el guard,
+// la sonda podía devolver un pedido de 'Listo' a 'Preparando' en silencio).
+// Si la fila cambió bajo la sonda, se reintenta con una muestra fresca.
+const INTENTOS_SONDA = 3
 
-  if (!muestra?.length) {
-    return { estado: "sin-datos", detalle: "no hay pedidos con líneas para probarlo" }
+async function comprobarTriggersDeFrescura() {
+  for (let intento = 0; intento < INTENTOS_SONDA; intento += 1) {
+    // Se selecciona TAMBIÉN sort_order: sin él, el update de abajo escribía un
+    // 0 real en una línea cuyo sort_order no fuera 0 (la sonda que promete
+    // "sin efecto real" mutando datos de producción, 2026-08-04).
+    const { data: muestra } = await supabase
+      .from("order_items")
+      .select("id, order_id, sort_order")
+      .limit(1)
+
+    if (!muestra?.length) {
+      return { estado: "sin-datos", detalle: "no hay pedidos con líneas para probarlo" }
+    }
+
+    const { id: itemId, order_id: orderId, sort_order: sortOrder } = muestra[0]
+    const leer = async () =>
+      (await supabase.from("orders").select("updated_at").eq("id", orderId).maybeSingle())
+        .data?.updated_at
+
+    const antes = await leer()
+    // Escritura sin efecto real: se reescribe la línea con su propio valor.
+    // Postgres dispara el trigger igual, así que basta para saber si está vivo.
+    const { data: tocadas, error } = await supabase
+      .from("order_items")
+      .update({ sort_order: sortOrder })
+      .eq("id", itemId)
+      .eq("sort_order", sortOrder)
+      .select("id")
+
+    if (error) return { estado: "error", detalle: error.message }
+    // La línea cambió (o desapareció) entre la lectura y la escritura: nada se
+    // escribió. Muestra fresca y de nuevo.
+    if (!tocadas?.length) continue
+
+    const despues = await leer()
+    return antes !== despues
+      ? { estado: "ok", detalle: "tocar una línea marca su pedido" }
+      : {
+          estado: "falta",
+          detalle:
+            "tocar order_items NO movió orders.updated_at — falta 0038 o está deshabilitado",
+        }
   }
 
-  const { id: itemId, order_id: orderId } = muestra[0]
-  const leer = async () =>
-    (await supabase.from("orders").select("updated_at").eq("id", orderId).maybeSingle())
-      .data?.updated_at
+  return {
+    estado: "carrera",
+    detalle: `la línea cambió bajo la sonda ${INTENTOS_SONDA} veces (base en plena escritura); vuelve a correr`,
+  }
+}
 
-  const antes = await leer()
-  // Escritura sin efecto real: se reescribe la línea con su propio valor.
-  // Postgres dispara el trigger igual, así que basta para saber si está vivo.
-  const { error } = await supabase
-    .from("order_items")
-    .update({ sort_order: muestra[0].sort_order ?? 0 })
-    .eq("id", itemId)
+// La sonda de 0038 NO prueba este otro: touch_order_from_items estampa
+// updated_at DIRECTO, así que pasaría aunque trg_orders_updated (0001) hubiera
+// desaparecido. Y la huella depende de los DOS: cambiar el estado de un pedido
+// (cobrar, marcar listo) solo toca la fila de `orders`.
+async function comprobarTriggerDelPedido() {
+  for (let intento = 0; intento < INTENTOS_SONDA; intento += 1) {
+    const { data: muestra } = await supabase
+      .from("orders")
+      .select("id, status, updated_at")
+      .limit(1)
 
-  if (error) return { estado: "error", detalle: error.message }
+    if (!muestra?.length) {
+      return { estado: "sin-datos", detalle: "no hay pedidos para probarlo" }
+    }
 
-  const despues = await leer()
-  return antes !== despues
-    ? { estado: "ok", detalle: "tocar una línea marca su pedido" }
-    : {
-        estado: "falta",
-        detalle:
-          "tocar order_items NO movió orders.updated_at — falta 0038 o está deshabilitado",
-      }
+    const { id, status, updated_at: antes } = muestra[0]
+    // Reescritura del pedido con su propio valor: dispara el BEFORE UPDATE
+    // (único trigger de UPDATE en orders junto con el estampado) sin cambiar
+    // nada. El .eq("status", ...) es el compare-and-swap: si caja o cocina
+    // movieron el pedido entre la lectura y esta línea, no se escribe nada.
+    const { data: tocadas, error } = await supabase
+      .from("orders")
+      .update({ status })
+      .eq("id", id)
+      .eq("status", status)
+      .select("id")
+
+    if (error) return { estado: "error", detalle: error.message }
+    if (!tocadas?.length) continue
+
+    const despues = (
+      await supabase.from("orders").select("updated_at").eq("id", id).maybeSingle()
+    ).data?.updated_at
+
+    return antes !== despues
+      ? { estado: "ok", detalle: "reescribir el pedido lo marca" }
+      : {
+          estado: "falta",
+          detalle:
+            "reescribir orders NO movió updated_at — falta trg_orders_updated (0001) o está deshabilitado",
+        }
+  }
+
+  return {
+    estado: "carrera",
+    detalle: `el pedido cambió bajo la sonda ${INTENTOS_SONDA} veces (base en plena escritura); vuelve a correr`,
+  }
 }
 
 const triggerFrescura = await comprobarTriggersDeFrescura()
 console.log(
   `${triggerFrescura.estado === "ok" ? "✓" : triggerFrescura.estado === "falta" ? "✗" : "⚠"}` +
     ` Trigger de frescura (0038) — ${triggerFrescura.detalle}`,
+)
+const triggerPedido = await comprobarTriggerDelPedido()
+console.log(
+  `${triggerPedido.estado === "ok" ? "✓" : triggerPedido.estado === "falta" ? "✗" : "⚠"}` +
+    ` Trigger de frescura (0001) — ${triggerPedido.detalle}`,
 )
 console.log("")
 
@@ -216,6 +298,16 @@ if (triggerFrescura.estado === "falta") {
   console.log("  Sin él, marcar un producto entregado no marca su pedido: la")
   console.log("  optimización que responde 'nada cambió' se volvería CIEGA a eso")
   console.log("  y el panel se congelaría sin avisar. Aplícalo antes de seguir.")
+  process.exit(1)
+}
+
+if (triggerPedido.estado === "falta") {
+  console.log("✗ FALTA trg_orders_updated (0001_initial_schema.sql).")
+  console.log("  Sin él, cobrar o cambiar el estado de un pedido no mueve su")
+  console.log("  updated_at: la huella que responde 'nada cambió' se congelaría")
+  console.log("  sin avisar. Restáuralo antes de seguir:")
+  console.log("    create trigger trg_orders_updated before update on orders")
+  console.log("      for each row execute function set_updated_at();")
   process.exit(1)
 }
 

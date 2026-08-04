@@ -79,7 +79,22 @@ export async function fetchWithPollEtag(
   if (response.status === 304) {
     // Nada cambió: el caller recibe la copia local como si fuera el 200 real.
     if (cached) {
-      return { notModified: false, response: syntheticJsonResponse(cached) }
+      // El validador puede rotar aunque el contenido no: la huella de
+      // /api/orders lleva dentro una cubeta de tiempo (su techo de seguridad)
+      // y tras rotar, el 304 trae el ETag NUEVO con el mismo contenido. Se
+      // adopta conservando la copia — sin adoptarlo, todos los sondeos
+      // siguientes caerían al camino caro del servidor (leer las filas) — y
+      // SIN tocar el reloj de calma: no pasó nada real, los escalones de
+      // espaciado no deben reiniciarse por esto.
+      const rotatedEtag = response.headers.get("etag")
+      const entry =
+        rotatedEtag && rotatedEtag !== cached.etag
+          ? { etag: rotatedEtag, bodyText: cached.bodyText }
+          : cached
+
+      if (entry !== cached) cacheByUrl.set(url, entry)
+
+      return { notModified: false, response: syntheticJsonResponse(entry) }
     }
 
     // 304 sin copia local (no debería pasar: solo mandamos If-None-Match
