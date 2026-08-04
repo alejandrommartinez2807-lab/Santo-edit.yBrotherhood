@@ -562,9 +562,17 @@ export async function uploadMenuProductImage(
   )
   const path = `products/${Date.now()}-${safeName}`
 
+  // Caché de 1 año: la ruta lleva timestamp único, así que reemplazar la foto
+  // de un producto SIEMPRE genera URL nueva y la caché larga jamás sirve una
+  // versión vieja. Sin esto salía el default del bucket (1 h) y el menú
+  // completo (~11 MB de fotos) se re-bajaba a cada rato (2026-08-04).
   const { error: uploadError } = await supabase.storage
     .from(MENU_IMAGES_BUCKET)
-    .upload(path, image.buffer, { contentType: image.mimeType, upsert: true })
+    .upload(path, image.buffer, {
+      contentType: image.mimeType,
+      upsert: true,
+      cacheControl: "31536000",
+    })
 
   if (uploadError) {
     throw new Error(uploadError.message || "No se pudo subir la imagen del producto")
@@ -607,9 +615,14 @@ export async function uploadMenuProductModel(
   )
   const path = `models/${Date.now()}-${safeName}`
 
+  // Misma regla que las imágenes: ruta única por subida → caché de 1 año.
   const { error: uploadError } = await supabase.storage
     .from(MENU_IMAGES_BUCKET)
-    .upload(path, model.buffer, { contentType: model.mimeType, upsert: true })
+    .upload(path, model.buffer, {
+      contentType: model.mimeType,
+      upsert: true,
+      cacheControl: "31536000",
+    })
 
   if (uploadError) {
     throw new Error(uploadError.message || "No se pudo subir el modelo 3D del producto")
