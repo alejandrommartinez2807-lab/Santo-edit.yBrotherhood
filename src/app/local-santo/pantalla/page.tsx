@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { BRAND } from "@/lib/brand"
+import { buildLiveOrdersUrl, createHiddenPollGate, fetchWithPollEtag } from "@/lib/panelPolling"
 import { CookingPot, Expand, Loader2 } from "lucide-react"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
 import { getDisplayOrderNumber } from "@/lib/localOrderHelpers"
@@ -105,10 +106,12 @@ function PantallaContent() {
 
     try {
       const password = getStoredPassword()
-      const response = await fetch("/api/orders", {
+      const { notModified, response } = await fetchWithPollEtag(buildLiveOrdersUrl(), {
         cache: "no-store",
         headers: { "x-local-password": password },
       })
+      // 304: nada cambió desde el último sondeo — no hay nada que actualizar.
+      if (notModified) return
       const data = (await response.json().catch(() => ({}))) as OrdersResponse
       if (!response.ok) throw new Error(data.error || "No se pudieron cargar los pedidos")
       setOrders(Array.isArray(data.orders) ? data.orders : [])
@@ -123,7 +126,16 @@ function PantallaContent() {
 
   useEffect(() => {
     const start = setTimeout(loadOrders, 0)
-    const poll = window.setInterval(loadOrders, 5000)
+    // Pestaña oculta = 1 tick por minuto (una tablet olvidada no puede costar
+    // como una en uso); al volver a visible se refresca de inmediato.
+    const gate = createHiddenPollGate()
+    const poll = window.setInterval(() => {
+      if (gate.shouldPoll()) loadOrders()
+    }, 5000)
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && gate.shouldPoll()) loadOrders()
+    }
+    document.addEventListener("visibilitychange", onVisibility)
     const tick = window.setInterval(
       () =>
         setClock(
@@ -139,6 +151,7 @@ function PantallaContent() {
     return () => {
       clearTimeout(start)
       window.clearInterval(poll)
+      document.removeEventListener("visibilitychange", onVisibility)
       window.clearInterval(tick)
     }
   }, [])

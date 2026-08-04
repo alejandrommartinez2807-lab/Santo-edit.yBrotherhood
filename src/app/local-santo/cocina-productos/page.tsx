@@ -26,6 +26,7 @@ import {
   isStaffConfirmationItemRequired,
   normalizeComparableText,
 } from "@/lib/localOrderHelpers";
+import { buildLiveOrdersUrl, createHiddenPollGate, fetchWithPollEtag } from "@/lib/panelPolling";
 
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session";
 
@@ -527,13 +528,15 @@ function KitchenItemsPageContent() {
     setMessage(null);
 
     try {
-      const response = await fetch("/api/orders", {
+      const { notModified, response } = await fetchWithPollEtag(buildLiveOrdersUrl(), {
         headers: {
           "x-admin-password": adminPassword,
           "x-local-password": adminPassword,
         },
         cache: "no-store",
       });
+      // 304: nada cambió desde el último sondeo — no hay nada que actualizar.
+      if (notModified) return;
       const data = (await readApiResponse(response)) as OrdersApiResponse;
 
       if (!response.ok) {
@@ -609,11 +612,20 @@ function KitchenItemsPageContent() {
   useEffect(() => {
     if (!adminPassword.trim()) return;
 
+    // Pestaña oculta = 1 tick por minuto (una tablet olvidada no puede costar
+    // como una en uso); al volver a visible se refresca de inmediato.
+    const gate = createHiddenPollGate();
     const interval = window.setInterval(() => {
-      loadOrders(false);
+      if (gate.shouldPoll()) loadOrders(false);
     }, 3500);
-
-    return () => window.clearInterval(interval);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && gate.shouldPoll()) loadOrders(false);
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminPassword]);
 

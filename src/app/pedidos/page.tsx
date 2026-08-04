@@ -4,6 +4,7 @@ import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { BRAND } from "@/lib/brand"
+import { createHiddenPollGate, fetchWithPollEtag } from "@/lib/panelPolling"
 import {
   AlertTriangle,
   ArrowLeft,
@@ -603,13 +604,14 @@ export default function PedidosPage() {
     }
 
     try {
-      const response = await fetch("/api/payment-proofs", {
+      const { notModified, response } = await fetchWithPollEtag("/api/payment-proofs", {
         headers: {
           "x-admin-password": password,
         },
         cache: "no-store",
       })
-
+      // 304: nada cambió desde el último sondeo — no hay nada que actualizar.
+      if (notModified) return
       const data = await readApiResponse(response)
 
       if (!response.ok) {
@@ -645,13 +647,14 @@ export default function PedidosPage() {
     }
 
     try {
-      const response = await fetch("/api/open-accounts?status=all", {
+      const { notModified, response } = await fetchWithPollEtag("/api/open-accounts?status=all", {
         headers: {
           "x-admin-password": password,
         },
         cache: "no-store",
       })
-
+      // 304: nada cambió desde el último sondeo — no hay nada que actualizar.
+      if (notModified) return
       const data = (await readApiResponse(response)) as OpenAccountsApiResponse
 
       if (!response.ok) {
@@ -816,13 +819,14 @@ export default function PedidosPage() {
     setErrorMessage(null)
 
     try {
-      const response = await fetch("/api/orders", {
+      const { notModified, response } = await fetchWithPollEtag("/api/orders", {
         headers: {
           "x-admin-password": password,
         },
         cache: "no-store",
       })
-
+      // 304: nada cambió desde el último sondeo — no hay nada que actualizar.
+      if (notModified) return
       const data = await readApiResponse(response)
 
       if (!response.ok) {
@@ -1212,10 +1216,20 @@ export default function PedidosPage() {
   useEffect(() => {
     if (!adminPassword) return
 
-    const interval = window.setInterval(refreshOrdersTick, 2500)
+    // Pestaña oculta = 1 tick por minuto (una tablet olvidada no puede costar
+    // como una en uso); al volver a visible se refresca de inmediato.
+    const gate = createHiddenPollGate()
+    const interval = window.setInterval(() => {
+      if (gate.shouldPoll()) refreshOrdersTick()
+    }, 2500)
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && gate.shouldPoll()) refreshOrdersTick()
+    }
+    document.addEventListener("visibilitychange", onVisibility)
 
     return () => {
       window.clearInterval(interval)
+      document.removeEventListener("visibilitychange", onVisibility)
     }
   }, [adminPassword])
 
@@ -1226,10 +1240,18 @@ export default function PedidosPage() {
   useEffect(() => {
     if (!adminPassword) return
 
-    const interval = window.setInterval(refreshOpenAccountsTick, 8000)
+    const gate = createHiddenPollGate()
+    const interval = window.setInterval(() => {
+      if (gate.shouldPoll()) refreshOpenAccountsTick()
+    }, 8000)
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && gate.shouldPoll()) refreshOpenAccountsTick()
+    }
+    document.addEventListener("visibilitychange", onVisibility)
 
     return () => {
       window.clearInterval(interval)
+      document.removeEventListener("visibilitychange", onVisibility)
     }
   }, [adminPassword])
 
@@ -1240,10 +1262,18 @@ export default function PedidosPage() {
   useEffect(() => {
     if (!adminPassword) return
 
-    const interval = window.setInterval(refreshProofsTick, 10000)
+    const gate = createHiddenPollGate()
+    const interval = window.setInterval(() => {
+      if (gate.shouldPoll()) refreshProofsTick()
+    }, 10000)
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && gate.shouldPoll()) refreshProofsTick()
+    }
+    document.addEventListener("visibilitychange", onVisibility)
 
     return () => {
       window.clearInterval(interval)
+      document.removeEventListener("visibilitychange", onVisibility)
     }
   }, [adminPassword])
 

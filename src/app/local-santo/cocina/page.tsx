@@ -3,6 +3,11 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import { BRAND } from "@/lib/brand"
+import {
+  buildLiveOrdersUrl,
+  createHiddenPollGate,
+  fetchWithPollEtag,
+} from "@/lib/panelPolling"
 import { signOutLocalStaff } from "@/lib/staffSession"
 import {
   ArrowLeft,
@@ -422,13 +427,14 @@ export default function CocinaPage() {
     setErrorMessage(null)
 
     try {
-      const response = await fetch("/api/orders", {
+      const { notModified, response } = await fetchWithPollEtag(buildLiveOrdersUrl(), {
         headers: {
           "x-admin-password": password,
         },
         cache: "no-store",
       })
-
+      // 304: nada cambió desde el último sondeo — no hay nada que actualizar.
+      if (notModified) return
       const data = await readApiResponse(response)
 
       if (!response.ok) {
@@ -568,10 +574,20 @@ export default function CocinaPage() {
   useEffect(() => {
     if (!adminPassword) return
 
-    const interval = window.setInterval(refreshOrdersTick, 2500)
+    // Pestaña oculta = 1 tick por minuto (una tablet olvidada no puede costar
+    // como una en uso); al volver a visible se refresca de inmediato.
+    const gate = createHiddenPollGate()
+    const interval = window.setInterval(() => {
+      if (gate.shouldPoll()) refreshOrdersTick()
+    }, 2500)
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && gate.shouldPoll()) refreshOrdersTick()
+    }
+    document.addEventListener("visibilitychange", onVisibility)
 
     return () => {
       window.clearInterval(interval)
+      document.removeEventListener("visibilitychange", onVisibility)
     }
   }, [adminPassword])
 

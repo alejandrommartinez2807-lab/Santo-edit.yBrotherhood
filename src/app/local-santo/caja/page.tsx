@@ -3,6 +3,7 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import { BRAND } from "@/lib/brand"
+import { createHiddenPollGate, fetchWithPollEtag } from "@/lib/panelPolling"
 import { signOutLocalStaff } from "@/lib/staffSession"
 import {
   ArrowLeft,
@@ -236,10 +237,12 @@ function CajaPageContent() {
     }
 
     try {
-      const response = await fetch("/api/open-accounts?status=Abierta", {
+      const { notModified, response } = await fetchWithPollEtag("/api/open-accounts?status=Abierta", {
         headers: { "x-admin-password": password },
         cache: "no-store",
       })
+      // 304: nada cambió desde el último sondeo — no hay nada que actualizar.
+      if (notModified) return
       const data = await readApiResponse(response)
 
       if (!response.ok) throw new Error(data.error || "No se pudieron cargar las cuentas abiertas")
@@ -259,10 +262,12 @@ function CajaPageContent() {
     setErrorMessage(null)
 
     try {
-      const response = await fetch("/api/orders", {
+      const { notModified, response } = await fetchWithPollEtag("/api/orders", {
         headers: { "x-admin-password": password },
         cache: "no-store",
       })
+      // 304: nada cambió desde el último sondeo — no hay nada que actualizar.
+      if (notModified) return
       const data = await readApiResponse(response)
       if (!response.ok) throw new Error(data.error || "No se pudieron cargar los pedidos de caja")
 
@@ -290,10 +295,12 @@ function CajaPageContent() {
     setPaymentProofsMessage(null)
 
     try {
-      const response = await fetch("/api/payment-proofs", {
+      const { notModified, response } = await fetchWithPollEtag("/api/payment-proofs", {
         headers: { "x-admin-password": password },
         cache: "no-store",
       })
+      // 304: nada cambió desde el último sondeo — no hay nada que actualizar.
+      if (notModified) return
       const data = await readApiResponse(response)
 
       if (!response.ok) {
@@ -739,16 +746,38 @@ function CajaPageContent() {
 
   useEffect(() => {
     if (!adminPassword) return
-    const interval = window.setInterval(refreshOrdersTick, 2500)
-    return () => window.clearInterval(interval)
+    // Pestaña oculta = 1 tick por minuto (una tablet olvidada no puede costar
+    // como una en uso); al volver a visible se refresca de inmediato.
+    const gate = createHiddenPollGate()
+    const interval = window.setInterval(() => {
+      if (gate.shouldPoll()) refreshOrdersTick()
+    }, 2500)
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && gate.shouldPoll()) refreshOrdersTick()
+    }
+    document.addEventListener("visibilitychange", onVisibility)
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener("visibilitychange", onVisibility)
+    }
   }, [adminPassword])
 
   const refreshProofsTick = useEffectEvent(() => loadPaymentProofs(adminPassword, true))
 
   useEffect(() => {
     if (!adminPassword) return
-    const interval = window.setInterval(refreshProofsTick, 10000)
-    return () => window.clearInterval(interval)
+    const gate = createHiddenPollGate()
+    const interval = window.setInterval(() => {
+      if (gate.shouldPoll()) refreshProofsTick()
+    }, 10000)
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && gate.shouldPoll()) refreshProofsTick()
+    }
+    document.addEventListener("visibilitychange", onVisibility)
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener("visibilitychange", onVisibility)
+    }
   }, [adminPassword])
 
   const selectedCashTableKey = useMemo(

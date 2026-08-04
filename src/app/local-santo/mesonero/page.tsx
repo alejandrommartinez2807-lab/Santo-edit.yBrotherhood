@@ -38,6 +38,11 @@ import {
   isDeliveryOrder,
 } from "@/lib/localOrderHelpers";
 import { getOrderPayment, getOrderTotals } from "@/lib/localOrderMoney";
+import {
+  buildLiveOrdersUrl,
+  createHiddenPollGate,
+  fetchWithPollEtag,
+} from "@/lib/panelPolling";
 
 const ADMIN_STORAGE_KEY = "santo_perrito_owner_session";
 
@@ -224,12 +229,14 @@ function MesoneroContent() {
     }
 
     try {
-      const response = await fetch("/api/open-accounts?status=Abierta", {
+      const { notModified, response } = await fetchWithPollEtag("/api/open-accounts?status=Abierta", {
         headers: {
           "x-admin-password": cleanPassword,
         },
         cache: "no-store",
       });
+      // 304: nada cambió desde el último sondeo — no hay nada que actualizar.
+      if (notModified) return;
       const data = await readApiResponse(response);
 
       if (!response.ok) {
@@ -259,12 +266,14 @@ function MesoneroContent() {
     setMessage(null);
 
     try {
-      const response = await fetch("/api/orders", {
+      const { notModified, response } = await fetchWithPollEtag(buildLiveOrdersUrl(), {
         headers: {
           "x-admin-password": cleanPassword,
         },
         cache: "no-store",
       });
+      // 304: nada cambió desde el último sondeo — no hay nada que actualizar.
+      if (notModified) return;
       const data = await readApiResponse(response);
 
       if (!response.ok) {
@@ -527,12 +536,25 @@ function MesoneroContent() {
   useEffect(() => {
     if (!adminPassword) return;
 
-    const timer = window.setInterval(() => {
+    // Pestaña oculta = 1 tick por minuto (una tablet olvidada no puede costar
+    // como una en uso); al volver a visible se refresca de inmediato.
+    const gate = createHiddenPollGate();
+    const refreshTick = () => {
       loadOrders(adminPassword, true);
       loadOpenAccounts(adminPassword, true);
+    };
+    const timer = window.setInterval(() => {
+      if (gate.shouldPoll()) refreshTick();
     }, 2500);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && gate.shouldPoll()) refreshTick();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
 
-    return () => window.clearInterval(timer);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminPassword]);
 
