@@ -5,6 +5,7 @@ import { BRAND } from "@/lib/brand"
 import { buildLiveOrdersUrl, createHiddenPollGate, fetchWithPollEtag } from "@/lib/panelPolling"
 import { CookingPot, Expand, Loader2 } from "lucide-react"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
+import BranchBadge from "@/components/local/BranchBadge"
 import { getDisplayOrderNumber } from "@/lib/localOrderHelpers"
 import type { LocalOrder } from "@/types/localOrders"
 
@@ -204,6 +205,10 @@ function PantallaContent() {
               Estado de tu pedido
             </p>
           </div>
+          {/* La TV es chromeless (sin barra de módulos): este es su único
+              rótulo de sede — clave para no montar la pantalla de la otra
+              sucursal. */}
+          <BranchBadge tone="dark" />
         </div>
 
         <div className="flex items-center gap-3">

@@ -20,6 +20,7 @@ import {
 import { formatUSD, formatVES } from "@/utils/formatCurrency"
 import type { LocalOrder as StoredLocalOrder, OpenAccount } from "@/types/localOrders"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
+import BranchBadge from "@/components/local/BranchBadge"
 import { LocalTableQrLinksPanel } from "@/components/local/LocalTableQrLinksPanel"
 import { OpenAccountsPanel } from "@/components/local/OpenAccountsPanel"
 import {
@@ -1009,6 +1010,7 @@ function CajaPageContent() {
                 <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
                   Caja confirma pedidos, registra pagos y decide cuándo enviar a cocina. Cuando cocina marca listo, caja puede avisar la salida y cerrar la entrega.
                 </p>
+                <BranchBadge className="mt-3" />
               </div>
 
               <div className="grid gap-2 sm:grid-cols-6 lg:w-[900px]">

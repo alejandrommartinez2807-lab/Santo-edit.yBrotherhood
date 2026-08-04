@@ -15,6 +15,7 @@ import {
   Truck,
 } from "lucide-react";
 import ModuleAccessGuard from "@/components/ModuleAccessGuard";
+import BranchBadge from "@/components/local/BranchBadge";
 import type { LocalOrder, OrderItem, OrderStatus } from "@/types/localOrders";
 import {
   formatDate,
@@ -669,6 +670,7 @@ function KitchenItemsPageContent() {
                 <p className="mt-3 max-w-3xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/75">
                   Agrupa los productos de los pedidos activos para que cocina prepare por cantidad, mesa y notas. En esta fase se marca listo el pedido completo; todavía no guarda estados individuales por producto.
                 </p>
+                <BranchBadge className="mt-3" />
               </div>
 
               <div className="flex flex-wrap gap-3">

@@ -16,6 +16,7 @@ import {
   Utensils,
 } from "lucide-react";
 import ModuleAccessGuard from "@/components/ModuleAccessGuard";
+import BranchBadge from "@/components/local/BranchBadge";
 import { OpenAccountsPanel } from "@/components/local/OpenAccountsPanel";
 import { LocalTableQrLinksPanel } from "@/components/local/LocalTableQrLinksPanel";
 import {
@@ -579,6 +580,7 @@ function MesoneroContent() {
                   pedidos a la cuenta correcta. Caja sigue siendo quien confirma
                   cobros y cierra cuentas.
                 </p>
+                <BranchBadge className="mt-3" />
               </div>
 
               <div className="flex flex-wrap gap-2">

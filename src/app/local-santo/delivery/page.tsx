@@ -36,6 +36,7 @@ import {
 import { getOrderTotals as getCanonicalOrderTotals } from "@/lib/localOrderMoney"
 import type { LocalOrder as CanonicalLocalOrder } from "@/types/localOrders"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
+import BranchBadge from "@/components/local/BranchBadge"
 
 type ProductPaymentMode = "divisa" | "mixto"
 type StaffConfirmationStatus = "pending" | "confirmed"
@@ -1127,6 +1128,7 @@ function DeliveryPageContent() {
                   Aquí solo aparecen pedidos delivery. Coordina datos del cliente,
                   WhatsApp y ruta sin acceso a caja, cocina ni panel general.
                 </p>
+                <BranchBadge className="mt-3" />
               </div>
 
               <div className="grid gap-2 sm:grid-cols-4 lg:w-[650px]">

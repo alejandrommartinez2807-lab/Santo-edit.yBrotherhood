@@ -35,6 +35,7 @@ import {
   isStaffConfirmationItemRequired,
 } from "@/lib/localOrderHelpers"
 import ModuleAccessGuard from "@/components/ModuleAccessGuard"
+import BranchBadge from "@/components/local/BranchBadge"
 import {
   useOperationalSounds,
   useOrderSoundAlerts,
@@ -777,6 +778,7 @@ export default function CocinaPage() {
                   <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[var(--brand-ink-2)]/70">
                     Aquí aparecen los pedidos cuando caja los confirma y los envía a cocina. Cocina puede revisar preparación, listos y completos sin cerrar ventas.
                   </p>
+                  <BranchBadge className="mt-3" />
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-4 lg:w-[680px]">
