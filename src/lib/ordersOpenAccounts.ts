@@ -13,6 +13,13 @@ export async function getOpenAccounts(
   return openAccountStore.getOpenAccounts(options, branchId)
 }
 
+export async function getOpenAccountsFreshness(
+  options: { status?: OpenAccountStatus | "all" } = {},
+  branchId?: string | null,
+) {
+  return openAccountStore.getOpenAccountsFreshnessFromStore(options, branchId)
+}
+
 export async function createOpenAccount(
   input: CreateOpenAccountInput,
   branchId?: string | null,

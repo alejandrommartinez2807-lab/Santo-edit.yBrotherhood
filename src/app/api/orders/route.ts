@@ -59,8 +59,8 @@ import {
 import {
   buildOrdersFingerprint,
   getFullReadBucket,
-  getOrdersDeployId,
-} from "@/lib/ordersFingerprint"
+  getPollDeployId,
+} from "@/lib/pollFingerprint"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
 import { DataUrlImageError, assertDataUrlImage, sanitizeUploadedImageFileName } from "@/lib/dataUrlImages"
@@ -307,7 +307,7 @@ export async function GET(request: NextRequest) {
       trainingModeAvailable: trainingAvailable,
       role: access.role,
       moduleKey,
-      deployId: getOrdersDeployId(),
+      deployId: getPollDeployId(),
       fullReadBucket: getFullReadBucket(),
     })
 

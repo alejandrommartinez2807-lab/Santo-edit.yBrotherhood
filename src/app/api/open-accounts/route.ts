@@ -3,12 +3,22 @@ import {
   createOpenAccount,
   getBusinessConfig,
   getOpenAccounts,
+  getOpenAccountsFreshness,
   type CreateOpenAccountInput,
   type OpenAccountStatus,
 } from "@/lib/orders"
+import {
+  buildOpenAccountsFingerprint,
+  getFullReadBucket,
+  getPollDeployId,
+} from "@/lib/pollFingerprint"
 import { canLocalAccessUseModule, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
-import { conditionalJsonResponse } from "@/lib/conditionalJson"
+import {
+  findEtagForFingerprint,
+  fingerprintedJsonResponse,
+  getPollValidator,
+} from "@/lib/conditionalJson"
 import { resolveBranchId } from "@/lib/branch"
 import { getLocalTablesForBranch } from "@/lib/branchLocalTables"
 import { stripBillRequestMarker } from "@/lib/openAccountBillRequest"
@@ -131,15 +141,45 @@ export async function GET(request: NextRequest) {
     if (!moduleCheck.ok) return moduleCheck.response
 
     const status = normalizeStatus(request.nextUrl.searchParams.get("status") || "Abierta")
-    const openAccounts = await getOpenAccounts({ status }, await resolveBranchId(request))
+    const branchId = await resolveBranchId(request)
 
-    // Los paneles sondean esta lista cada 8 s: si nada cambió, 304 sin cuerpo
-    // (el ETag es el hash del JSON final; ver src/lib/conditionalJson.ts).
-    return conditionalJsonResponse(request, {
-      ok: true,
-      openAccounts,
-      access: { role: access.role, roleLabel: access.roleLabel },
+    // Huella barata (2026-08-04): los paneles sondean esta lista cada 8 s y
+    // casi siempre nada cambió. Dos pares de agregados (~54 bytes) — cuentas
+    // filtradas Y pedidos anclados, porque el payload incluye los pedidos de
+    // cada cuenta — deciden el 304 SIN leer las filas. El validador viaja en
+    // x-poll-etag (el If-None-Match no llega: se lo come la capa de Vercel).
+    const freshness = await getOpenAccountsFreshness({ status }, branchId)
+
+    const fingerprint = buildOpenAccountsFingerprint({
+      accountsCount: freshness.accountsCount,
+      accountsMaxUpdatedAt: freshness.accountsMaxUpdatedAt,
+      attachedOrdersCount: freshness.attachedOrdersCount,
+      attachedOrdersMaxUpdatedAt: freshness.attachedOrdersMaxUpdatedAt,
+      branchId: branchId ?? null,
+      status: status ?? null,
+      role: access.role || "",
+      roleLabel: access.roleLabel || "",
+      deployId: getPollDeployId(),
+      fullReadBucket: getFullReadBucket(),
     })
+
+    const unchangedEtag = findEtagForFingerprint(getPollValidator(request), fingerprint)
+
+    if (unchangedEtag) {
+      return new NextResponse(null, { status: 304, headers: { etag: unchangedEtag } })
+    }
+
+    const openAccounts = await getOpenAccounts({ status }, branchId)
+
+    return fingerprintedJsonResponse(
+      request,
+      {
+        ok: true,
+        openAccounts,
+        access: { role: access.role, roleLabel: access.roleLabel },
+      },
+      fingerprint,
+    )
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "No se pudieron cargar las cuentas abiertas" },

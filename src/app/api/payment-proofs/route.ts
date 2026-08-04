@@ -4,11 +4,21 @@ import {
   getBusinessConfig,
   getOrders,
   getPaymentProofs,
+  getPaymentProofsFreshness,
   type CreatePaymentProofInput,
 } from "@/lib/orders"
 import { canLocalAccessUseModule, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
-import { conditionalJsonResponse } from "@/lib/conditionalJson"
+import {
+  findEtagForFingerprint,
+  fingerprintedJsonResponse,
+  getPollValidator,
+} from "@/lib/conditionalJson"
+import {
+  buildPaymentProofsFingerprint,
+  getFullReadBucket,
+  getPollDeployId,
+} from "@/lib/pollFingerprint"
 import { resolveBranchId } from "@/lib/branch"
 import {
   computePendingElectronicUSD,
@@ -249,15 +259,47 @@ export async function GET(request: NextRequest) {
 
     const orderId = request.nextUrl.searchParams.get("orderId") || undefined
     const status = request.nextUrl.searchParams.get("status") || undefined
-    const paymentProofs = await getPaymentProofs({ orderId, status }, await resolveBranchId(request))
+    const branchId = await resolveBranchId(request)
 
-    // Los paneles sondean esta lista cada 10 s: si nada cambió, 304 sin cuerpo
-    // (el ETag es el hash del JSON final; ver src/lib/conditionalJson.ts).
-    return conditionalJsonResponse(request, {
-      ok: true,
-      paymentProofs,
-      access: { role: access.role, roleLabel: access.roleLabel },
+    // Huella barata (2026-08-04). Esta ruta NI SIQUIERA se beneficiaba del
+    // 304 por contenido: el bucket es privado y cada lectura re-firma las
+    // URLs, así que el JSON cambiaba en TODAS las respuestas y cada sondeo de
+    // 10 s bajaba la lista completa. Los agregados (count + max created_at +
+    // max reviewed_at: la revisión siempre lo estampa) deciden el 304 sin
+    // leer ni re-firmar nada. El validador viaja en x-poll-etag (el
+    // If-None-Match no llega: se lo come la capa de Vercel).
+    const freshness = await getPaymentProofsFreshness({ orderId, status }, branchId)
+
+    const fingerprint = buildPaymentProofsFingerprint({
+      count: freshness.count,
+      maxCreatedAt: freshness.maxCreatedAt,
+      maxReviewedAt: freshness.maxReviewedAt,
+      branchId: branchId ?? null,
+      orderId: orderId ?? null,
+      status: status ?? null,
+      role: access.role || "",
+      roleLabel: access.roleLabel || "",
+      deployId: getPollDeployId(),
+      fullReadBucket: getFullReadBucket(),
     })
+
+    const unchangedEtag = findEtagForFingerprint(getPollValidator(request), fingerprint)
+
+    if (unchangedEtag) {
+      return new NextResponse(null, { status: 304, headers: { etag: unchangedEtag } })
+    }
+
+    const paymentProofs = await getPaymentProofs({ orderId, status }, branchId)
+
+    return fingerprintedJsonResponse(
+      request,
+      {
+        ok: true,
+        paymentProofs,
+        access: { role: access.role, roleLabel: access.roleLabel },
+      },
+      fingerprint,
+    )
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "No se pudieron cargar los comprobantes" },

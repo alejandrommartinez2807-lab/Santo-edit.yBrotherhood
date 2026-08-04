@@ -181,6 +181,7 @@ export {
   createOpenAccount,
   getOpenAccountStatus,
   getOpenAccounts,
+  getOpenAccountsFreshness,
   setOpenAccountBillRequested,
 } from "./ordersOpenAccounts"
 
@@ -209,5 +210,6 @@ export {
   clearPaymentProofs,
   createPaymentProof,
   getPaymentProofs,
+  getPaymentProofsFreshness,
   reviewPaymentProof,
 } from "./ordersPaymentProofs"

@@ -107,6 +107,64 @@ function paymentProofRowToProof(row: Record<string, unknown>): PaymentProof {
   }
 }
 
+export type PaymentProofsFreshness = {
+  count: number
+  maxCreatedAt: string | null
+  maxReviewedAt: string | null
+}
+
+// La huella barata del sondeo de comprobantes (2026-08-04). Esta ruta ni
+// siquiera se beneficiaba del ETag por contenido: el bucket es privado y cada
+// lectura re-firma las URLs, así que el JSON cambia en TODAS las respuestas y
+// el hash nunca coincidía — cada sondeo de 10 s bajaba la lista completa.
+// payment_proofs no tiene updated_at y no hace falta: sus únicas escrituras
+// son INSERT (count y max created_at), el DELETE del cierre (count) y la
+// revisión, que SIEMPRE estampa reviewed_at = now(). Mismos filtros que el
+// cuerpo (getPaymentProofs).
+export async function getPaymentProofsFreshness(
+  options: { orderId?: string; status?: string } = {},
+  branchId?: string | null,
+): Promise<PaymentProofsFreshness> {
+  const supabase = getSupabaseAdmin()
+
+  let createdQuery = supabase
+    .from("payment_proofs")
+    .select("created_at", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .limit(1)
+  if (branchId) createdQuery = createdQuery.eq("branch_id", branchId)
+  if (options.orderId) createdQuery = createdQuery.eq("order_id", options.orderId)
+  if (options.status) createdQuery = createdQuery.eq("status", options.status)
+
+  // Sin el not-null, Postgres ordena NULLS FIRST en desc y el máximo real
+  // quedaría escondido detrás de los comprobantes sin revisar.
+  let reviewedQuery = supabase
+    .from("payment_proofs")
+    .select("reviewed_at")
+    .not("reviewed_at", "is", null)
+    .order("reviewed_at", { ascending: false })
+    .limit(1)
+  if (branchId) reviewedQuery = reviewedQuery.eq("branch_id", branchId)
+  if (options.orderId) reviewedQuery = reviewedQuery.eq("order_id", options.orderId)
+  if (options.status) reviewedQuery = reviewedQuery.eq("status", options.status)
+
+  const [created, reviewed] = await Promise.all([createdQuery, reviewedQuery])
+
+  if (created.error) throw new Error(created.error.message)
+  if (reviewed.error) throw new Error(reviewed.error.message)
+
+  const maxOf = (data: unknown[] | null, column: string) => {
+    const value = (data?.[0] as Record<string, unknown> | undefined)?.[column]
+    return typeof value === "string" && value ? value : null
+  }
+
+  return {
+    count: created.count ?? 0,
+    maxCreatedAt: maxOf(created.data, "created_at"),
+    maxReviewedAt: maxOf(reviewed.data, "reviewed_at"),
+  }
+}
+
 export async function getPaymentProofs(
   options: { orderId?: string; status?: string } = {},
   branchId?: string | null,

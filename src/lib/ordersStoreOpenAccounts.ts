@@ -223,6 +223,63 @@ export async function recomputeOpenAccountTotals(
   await query
 }
 
+export type OpenAccountsFreshness = {
+  accountsCount: number
+  accountsMaxUpdatedAt: string | null
+  attachedOrdersCount: number
+  attachedOrdersMaxUpdatedAt: string | null
+}
+
+// La huella barata del sondeo de cuentas (2026-08-04): agregados de ~54 bytes
+// en vez de leer todas las filas. Van DOS pares porque el payload de
+// getOpenAccounts incluye los pedidos de cada cuenta (y sus líneas): un
+// cambio de estado o una línea marcada entregada no toca open_accounts, pero
+// SÍ mueve orders.updated_at (triggers 0001 y 0038, vigilados por
+// qa:migraciones). El de cuentas repite EXACTO el filtro del cuerpo; el de
+// pedidos usa el superconjunto "anclado a alguna cuenta" — más ancho solo
+// cuesta una lectura de más, más angosto congelaría el panel sin error.
+export async function getOpenAccountsFreshnessFromStore(
+  options: { status?: OpenAccountStatus | "all" } = {},
+  branchId?: string | null,
+): Promise<OpenAccountsFreshness> {
+  const supabase = getSupabaseAdmin()
+
+  let accountsQuery = supabase
+    .from("open_accounts")
+    .select("updated_at", { count: "exact" })
+    .order("updated_at", { ascending: false })
+    .limit(1)
+  if (options.status && options.status !== "all") {
+    accountsQuery = accountsQuery.eq("status", options.status)
+  }
+  if (branchId) accountsQuery = accountsQuery.eq("branch_id", branchId)
+
+  let ordersQuery = supabase
+    .from("orders")
+    .select("updated_at", { count: "exact" })
+    .not("open_account_id", "is", null)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+  if (branchId) ordersQuery = ordersQuery.eq("branch_id", branchId)
+
+  const [accounts, orders] = await Promise.all([accountsQuery, ordersQuery])
+
+  if (accounts.error) throw new Error(accounts.error.message)
+  if (orders.error) throw new Error(orders.error.message)
+
+  const maxOf = (data: unknown[] | null) => {
+    const value = (data?.[0] as Row | undefined)?.updated_at
+    return typeof value === "string" && value ? value : null
+  }
+
+  return {
+    accountsCount: accounts.count ?? 0,
+    accountsMaxUpdatedAt: maxOf(accounts.data),
+    attachedOrdersCount: orders.count ?? 0,
+    attachedOrdersMaxUpdatedAt: maxOf(orders.data),
+  }
+}
+
 export async function getOpenAccounts(
   options: { status?: OpenAccountStatus | "all"; id?: string } = {},
   branchId?: string | null,

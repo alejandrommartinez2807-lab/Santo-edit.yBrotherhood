@@ -276,6 +276,51 @@ async function comprobarTriggerDelPedido() {
   }
 }
 
+// De este depende la huella de /api/open-accounts (2026-08-04): cambiar el
+// estado de una cuenta, sus totales o su nota tiene que mover updated_at.
+// (payment_proofs no necesita trigger: su huella usa created_at/reviewed_at,
+// que las propias escrituras estampan.)
+async function comprobarTriggerDeCuentas() {
+  for (let intento = 0; intento < INTENTOS_SONDA; intento += 1) {
+    const { data: muestra } = await supabase
+      .from("open_accounts")
+      .select("id, customer_name, updated_at")
+      .limit(1)
+
+    if (!muestra?.length) {
+      return { estado: "sin-datos", detalle: "no hay cuentas para probarlo" }
+    }
+
+    const { id, customer_name: customerName, updated_at: antes } = muestra[0]
+    const { data: tocadas, error } = await supabase
+      .from("open_accounts")
+      .update({ customer_name: customerName })
+      .eq("id", id)
+      .eq("customer_name", customerName)
+      .select("id")
+
+    if (error) return { estado: "error", detalle: error.message }
+    if (!tocadas?.length) continue
+
+    const despues = (
+      await supabase.from("open_accounts").select("updated_at").eq("id", id).maybeSingle()
+    ).data?.updated_at
+
+    return antes !== despues
+      ? { estado: "ok", detalle: "reescribir la cuenta la marca" }
+      : {
+          estado: "falta",
+          detalle:
+            "reescribir open_accounts NO movió updated_at — falta trg_open_accounts_updated (0001) o está deshabilitado",
+        }
+  }
+
+  return {
+    estado: "carrera",
+    detalle: `la cuenta cambió bajo la sonda ${INTENTOS_SONDA} veces (base en plena escritura); vuelve a correr`,
+  }
+}
+
 const triggerFrescura = await comprobarTriggersDeFrescura()
 console.log(
   `${triggerFrescura.estado === "ok" ? "✓" : triggerFrescura.estado === "falta" ? "✗" : "⚠"}` +
@@ -285,6 +330,11 @@ const triggerPedido = await comprobarTriggerDelPedido()
 console.log(
   `${triggerPedido.estado === "ok" ? "✓" : triggerPedido.estado === "falta" ? "✗" : "⚠"}` +
     ` Trigger de frescura (0001) — ${triggerPedido.detalle}`,
+)
+const triggerCuentas = await comprobarTriggerDeCuentas()
+console.log(
+  `${triggerCuentas.estado === "ok" ? "✓" : triggerCuentas.estado === "falta" ? "✗" : "⚠"}` +
+    ` Trigger de frescura (0001·cuentas) — ${triggerCuentas.detalle}`,
 )
 console.log("")
 
@@ -307,6 +357,16 @@ if (triggerPedido.estado === "falta") {
   console.log("  updated_at: la huella que responde 'nada cambió' se congelaría")
   console.log("  sin avisar. Restáuralo antes de seguir:")
   console.log("    create trigger trg_orders_updated before update on orders")
+  console.log("      for each row execute function set_updated_at();")
+  process.exit(1)
+}
+
+if (triggerCuentas.estado === "falta") {
+  console.log("✗ FALTA trg_open_accounts_updated (0001_initial_schema.sql).")
+  console.log("  Sin él, cerrar una cuenta o actualizar sus totales no mueve su")
+  console.log("  updated_at: la huella de /api/open-accounts se congelaría sin")
+  console.log("  avisar. Restáuralo antes de seguir:")
+  console.log("    create trigger trg_open_accounts_updated before update on open_accounts")
   console.log("      for each row execute function set_updated_at();")
   process.exit(1)
 }
