@@ -2,7 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // Optimización de consumo 2026-08-03. Tres piezas del lado del panel:
 // 1. fetchWithPollEtag: manda If-None-Match a mano (todo /api/* es no-store,
-//    el navegador jamás revalida solo) y traduce el 304 a "no cambió nada".
+//    el navegador jamás revalida solo) y ante un 304 entrega la COPIA LOCAL
+//    como un 200 normal: el panel se comporta igual que siempre, solo los
+//    bytes dejan de viajar. La copia es obligatoria (revisión adversarial
+//    2026-08-03): sin ella, un panel que remontaba con estado vacío recibía
+//    304 y se quedaba en blanco sin error.
 // 2. createHiddenPollGate: pestaña oculta = 1 tick por minuto, no cero (el
 //    latido de encuestas/auto-anulaciones y los sonidos de cocina siguen).
 // 3. getLiveOrdersWindowStartIso: inicio de la jornada (5:00 Caracas) — se
@@ -21,7 +25,7 @@ import {
   getBusinessDayStartIso,
 } from "@/app/pedidos/domain"
 
-function fakeResponse(status: number, etag?: string) {
+function fakeResponse(status: number, etag?: string, body = "{}") {
   return {
     status,
     ok: status >= 200 && status < 300,
@@ -29,6 +33,19 @@ function fakeResponse(status: number, etag?: string) {
       get: (name: string) =>
         name.toLowerCase() === "etag" && etag ? etag : null,
     },
+    text: () => Promise.resolve(body),
+  } as unknown as Response
+}
+
+function truncatedResponse(etag: string) {
+  return {
+    status: 200,
+    ok: true,
+    headers: {
+      get: (name: string) => (name.toLowerCase() === "etag" ? etag : null),
+    },
+    // El stream se corta a mitad de descarga (wifi inestable).
+    text: () => Promise.reject(new Error("network stream interrupted")),
   } as unknown as Response
 }
 
@@ -45,55 +62,109 @@ describe("fetchWithPollEtag", () => {
     vi.unstubAllGlobals()
   })
 
-  it("la primera petición va sin If-None-Match y guarda el ETag", async () => {
-    fetchMock.mockResolvedValueOnce(fakeResponse(200, '"v1"'))
+  it("la primera petición va sin If-None-Match y el caller lee el cuerpo normal", async () => {
+    fetchMock.mockResolvedValueOnce(
+      fakeResponse(200, '"v1"', '{"orders":[{"id":"p-1"}]}'),
+    )
 
     const result = await fetchWithPollEtag("/api/orders", {
       headers: { "x-admin-password": "clave" },
     })
 
     expect(result.notModified).toBe(false)
+    expect(await result.response!.json()).toEqual({ orders: [{ id: "p-1" }] })
     const headers = fetchMock.mock.calls[0][1].headers as Headers
     expect(headers.get("if-none-match")).toBeNull()
     expect(headers.get("x-admin-password")).toBe("clave")
   })
 
-  it("la segunda petición manda el ETag y un 304 se traduce a notModified", async () => {
-    fetchMock.mockResolvedValueOnce(fakeResponse(200, '"v1"'))
+  it("la segunda petición manda el ETag y un 304 entrega la copia local como un 200", async () => {
+    fetchMock.mockResolvedValueOnce(
+      fakeResponse(200, '"v1"', '{"orders":[{"id":"p-1"}]}'),
+    )
     await fetchWithPollEtag("/api/orders")
 
     fetchMock.mockResolvedValueOnce(fakeResponse(304))
     const result = await fetchWithPollEtag("/api/orders")
 
-    expect(result.notModified).toBe(true)
-    expect(result.response).toBeNull()
+    // El caller no distingue este camino de un 200 real: mismo status, mismo
+    // cuerpo. Solo los bytes no viajaron.
+    expect(result.notModified).toBe(false)
+    expect(result.response!.status).toBe(200)
+    expect(await result.response!.json()).toEqual({ orders: [{ id: "p-1" }] })
     const headers = fetchMock.mock.calls[1][1].headers as Headers
     expect(headers.get("if-none-match")).toBe('"v1"')
   })
 
-  it("cada URL guarda su propio validador (orders vs cuentas vs comprobantes)", async () => {
-    fetchMock.mockResolvedValueOnce(fakeResponse(200, '"orders"'))
+  it("REGRESIÓN remontaje: un panel que vuelve con estado vacío recibe la copia, no un vacío", async () => {
+    // Hallazgo de la revisión adversarial 2026-08-03: mesonero → Link "Menú"
+    // → Atrás. El componente remonta con orders=[], pero el módulo JS (y el
+    // validador) sobreviven. El primer sondeo del remontaje recibía 304 y el
+    // panel quedaba EN BLANCO sin error. Con la copia local, ese primer
+    // sondeo pinta los datos aunque el servidor responda 304.
+    fetchMock.mockResolvedValueOnce(
+      fakeResponse(200, '"v1"', '{"openAccounts":[{"id":"cuenta-1"}]}'),
+    )
+    await fetchWithPollEtag("/api/open-accounts?status=Abierta")
+
+    // (remontaje: el estado del componente se pierde, el módulo no)
+
+    fetchMock.mockResolvedValueOnce(fakeResponse(304))
+    const primerSondeoTrasRemontar = await fetchWithPollEtag(
+      "/api/open-accounts?status=Abierta",
+    )
+
+    expect(primerSondeoTrasRemontar.notModified).toBe(false)
+    expect(await primerSondeoTrasRemontar.response!.json()).toEqual({
+      openAccounts: [{ id: "cuenta-1" }],
+    })
+  })
+
+  it("REGRESIÓN cuerpo truncado: si el stream se corta, NO queda validador registrado", async () => {
+    // Hallazgo de la revisión adversarial 2026-08-03: registrar el ETag al
+    // llegar las cabeceras, antes de leer el cuerpo, dejaba un 304 fijado
+    // sobre datos que el panel nunca pintó (y silenciaba el aviso sonoro del
+    // pedido que venía en ese cuerpo perdido).
+    fetchMock.mockResolvedValueOnce(truncatedResponse('"v1"'))
+    await expect(fetchWithPollEtag("/api/orders")).rejects.toThrow(
+      /interrupted/,
+    )
+
+    // El siguiente sondeo pide el cuerpo completo, sin If-None-Match.
+    fetchMock.mockResolvedValueOnce(fakeResponse(200, '"v1"', '{"orders":[]}'))
+    await fetchWithPollEtag("/api/orders")
+    const headers = fetchMock.mock.calls[1][1].headers as Headers
+    expect(headers.get("if-none-match")).toBeNull()
+  })
+
+  it("cada URL guarda su propio validador y su propia copia", async () => {
+    fetchMock.mockResolvedValueOnce(fakeResponse(200, '"orders"', '{"orders":[]}'))
     await fetchWithPollEtag("/api/orders")
 
-    fetchMock.mockResolvedValueOnce(fakeResponse(200, '"cuentas"'))
+    fetchMock.mockResolvedValueOnce(
+      fakeResponse(200, '"cuentas"', '{"openAccounts":[]}'),
+    )
     await fetchWithPollEtag("/api/open-accounts?status=Abierta")
 
     fetchMock.mockResolvedValueOnce(fakeResponse(304))
-    await fetchWithPollEtag("/api/orders")
+    const result = await fetchWithPollEtag("/api/orders")
 
     const headers = fetchMock.mock.calls[2][1].headers as Headers
     expect(headers.get("if-none-match")).toBe('"orders"')
+    expect(await result.response!.json()).toEqual({ orders: [] })
   })
 
-  it("un error olvida el validador: el siguiente sondeo pide el cuerpo completo", async () => {
+  it("un error olvida la copia: el siguiente sondeo pide el cuerpo completo", async () => {
     fetchMock.mockResolvedValueOnce(fakeResponse(200, '"v1"'))
     await fetchWithPollEtag("/api/orders")
 
-    // 500 (o 401/403/429): la respuesta de error se entrega al caller como
-    // siempre, pero el ETag guardado se descarta.
-    fetchMock.mockResolvedValueOnce(fakeResponse(500))
+    // 500 (o 401/403/429): la respuesta de error se entrega al caller tal
+    // cual (sus mensajes se leen como siempre), pero la copia se descarta.
+    const errorResponse = fakeResponse(500)
+    fetchMock.mockResolvedValueOnce(errorResponse)
     const conError = await fetchWithPollEtag("/api/orders")
     expect(conError.notModified).toBe(false)
+    expect(conError.response).toBe(errorResponse)
 
     fetchMock.mockResolvedValueOnce(fakeResponse(200, '"v2"'))
     await fetchWithPollEtag("/api/orders")
@@ -101,16 +172,28 @@ describe("fetchWithPollEtag", () => {
     expect(headers.get("if-none-match")).toBeNull()
   })
 
-  it("un 200 sin ETag no envenena el estado", async () => {
-    fetchMock.mockResolvedValueOnce(fakeResponse(200))
+  it("un 200 sin ETag pasa intacto y no envenena el estado", async () => {
+    const plain = fakeResponse(200)
+    fetchMock.mockResolvedValueOnce(plain)
     const result = await fetchWithPollEtag("/api/orders")
 
     expect(result.notModified).toBe(false)
+    expect(result.response).toBe(plain)
 
     fetchMock.mockResolvedValueOnce(fakeResponse(200, '"v1"'))
     await fetchWithPollEtag("/api/orders")
     const headers = fetchMock.mock.calls[1][1].headers as Headers
     expect(headers.get("if-none-match")).toBeNull()
+  })
+
+  it("un 304 huérfano (sin copia local) se salta el tick en vez de inventar datos", async () => {
+    // Solo puede pasar si el servidor responde 304 sin que mandáramos
+    // If-None-Match (mal proxy): no hay nada que entregar, el caller salta.
+    fetchMock.mockResolvedValueOnce(fakeResponse(304))
+    const result = await fetchWithPollEtag("/api/orders")
+
+    expect(result.notModified).toBe(true)
+    expect(result.response).toBeNull()
   })
 })
 

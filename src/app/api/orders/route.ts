@@ -236,7 +236,7 @@ export async function GET(request: NextRequest) {
     const rawCreatedFrom = String(
       request.nextUrl.searchParams.get("createdFrom") || "",
     ).trim()
-    const createdFrom =
+    let createdFrom =
       rawCreatedFrom && !Number.isNaN(Date.parse(rawCreatedFrom))
         ? new Date(rawCreatedFrom).toISOString()
         : null
@@ -246,6 +246,14 @@ export async function GET(request: NextRequest) {
         { error: "El parámetro createdFrom no es una fecha válida" },
         { status: 400 },
       )
+    }
+
+    // La ventana la calcula el RELOJ del dispositivo. Una tablet con la fecha
+    // adelantada mandaría un createdFrom futuro y la jornada real desaparecería
+    // del panel sin ningún error visible (revisión adversarial 2026-08-03).
+    // Mejor perder la optimización en ese aparato que esconder las entregas.
+    if (createdFrom && Date.parse(createdFrom) > Date.now() + 5 * 60_000) {
+      createdFrom = null
     }
 
     const trainingConfig = await getBusinessConfig()

@@ -28,47 +28,79 @@ export type ConditionalFetchResult =
   | { notModified: true; response: null }
   | { notModified: false; response: Response }
 
-const etagsByUrl = new Map<string, string>()
+// El validador viaja SIEMPRE con su cuerpo: ante un 304 se le entrega al
+// caller una respuesta 200 sintetizada desde esta copia, así el panel se
+// comporta EXACTAMENTE igual que antes de la optimización (mismo parse, mismo
+// estado en cada tick) y solo los bytes dejan de viajar. Guardar el ETag solo,
+// sin cuerpo, tenía dos fallos reales (revisión adversarial 2026-08-03): un
+// panel que REMONTA con estado vacío (Link + Atrás del App Router) recibía
+// 304 y se quedaba en blanco sin error; y un cuerpo que fallaba al parsear
+// dejaba un validador registrado sobre datos que nunca se pintaron.
+const cacheByUrl = new Map<string, { etag: string; bodyText: string }>()
 
 // La URL con createdFrom cambia una vez al día (rota la jornada): se poda el
-// mapa para que las claves viejas no se acumulen para siempre.
-const MAX_TRACKED_URLS = 24
+// mapa para que las copias viejas no se acumulen para siempre.
+const MAX_TRACKED_URLS = 8
+
+function syntheticJsonResponse(entry: { etag: string; bodyText: string }) {
+  return new Response(entry.bodyText, {
+    status: 200,
+    headers: { "content-type": "application/json", etag: entry.etag },
+  })
+}
 
 export async function fetchWithPollEtag(
   url: string,
   init: RequestInit = {},
 ): Promise<ConditionalFetchResult> {
   const headers = new Headers(init.headers)
-  const knownEtag = etagsByUrl.get(url)
+  const cached = cacheByUrl.get(url)
 
-  if (knownEtag) headers.set("if-none-match", knownEtag)
+  if (cached) headers.set("if-none-match", cached.etag)
 
   const response = await fetch(url, { ...init, headers })
 
   if (response.status === 304) {
+    // Nada cambió: el caller recibe la copia local como si fuera el 200 real.
+    if (cached) {
+      return { notModified: false, response: syntheticJsonResponse(cached) }
+    }
+
+    // 304 sin copia local (no debería pasar: solo mandamos If-None-Match
+    // cuando la hay): no hay nada que entregar, el caller salta este tick.
     return { notModified: true, response: null }
   }
 
   const etag = response.headers.get("etag")
 
   if (response.ok && etag) {
-    if (!etagsByUrl.has(url) && etagsByUrl.size >= MAX_TRACKED_URLS) {
-      const oldest = etagsByUrl.keys().next().value
-      if (oldest !== undefined) etagsByUrl.delete(oldest)
+    // Se lee el cuerpo ENTERO antes de registrar el validador: si el stream
+    // se corta a mitad, esto lanza y no queda ningún ETag apuntando a un
+    // cuerpo que el panel nunca recibió.
+    const bodyText = await response.text()
+
+    if (!cacheByUrl.has(url) && cacheByUrl.size >= MAX_TRACKED_URLS) {
+      const oldest = cacheByUrl.keys().next().value
+      if (oldest !== undefined) cacheByUrl.delete(oldest)
     }
-    etagsByUrl.set(url, etag)
-  } else {
-    // Sin ETag o con error: se olvida el validador para no quedar pegados
-    // pidiendo un 304 sobre un estado que ya no sabemos reproducir.
-    etagsByUrl.delete(url)
+    const entry = { etag, bodyText }
+    cacheByUrl.set(url, entry)
+
+    // El cuerpo ya se consumió aquí: se le entrega al caller uno equivalente.
+    return { notModified: false, response: syntheticJsonResponse(entry) }
   }
+
+  // Sin ETag o con error: se olvida la copia para no quedar pegados pidiendo
+  // un 304 sobre un estado que ya no sabemos reproducir. La respuesta de
+  // error pasa intacta (el caller lee sus mensajes como siempre).
+  cacheByUrl.delete(url)
 
   return { notModified: false, response }
 }
 
 // Solo para pruebas: deja el estado como recién cargado.
 export function __resetPollEtagsForTests() {
-  etagsByUrl.clear()
+  cacheByUrl.clear()
 }
 
 // Con la pestaña oculta el sondeo no se corta: se espacia a este ritmo.
