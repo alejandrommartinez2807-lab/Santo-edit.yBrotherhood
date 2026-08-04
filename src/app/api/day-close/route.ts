@@ -10,6 +10,10 @@ import {
   saveDayClose,
   type SaveDayCloseInput,
 } from "@/lib/orders"
+import { buildDayCloseServerAudit } from "@/lib/ordersDayClose"
+// Jornada 5:00 Caracas — el MISMO corte que usa el panel para el cierre
+// (cruzado contra los helpers canónicos por el test de panelPolling).
+import { getLiveOrdersWindowStartIso } from "@/lib/panelPolling"
 import { captureError } from "@/lib/monitoring"
 import { getDisplayOrderNumber } from "@/lib/localOrderHelpers"
 import { getOrderPayment, getOrderTotals } from "@/lib/localOrderMoney"
@@ -550,6 +554,43 @@ export async function POST(request: NextRequest) {
             totalUSD: round2(direct.totalUSD),
           },
         ]
+
+        // H-3 (2026-08-04): realCollectedUSD entra del navegador; el servidor
+        // deja su esperado y la brecha. CLAVE (revisión adversarial del mismo
+        // día): el panel lo calcula SOLO sobre la jornada en curso y sin
+        // cancelados (billableToday, pedidos/page.tsx), así que el esperado
+        // filtra IGUAL — con días sin cerrar acumulados, sumar todos los
+        // vivos guardaría brechas falsas para siempre. Ambos lados excluyen
+        // cancelados y pedidos de días previos: una brecha legítima solo
+        // puede venir de redondeos o de un cobro registrado en los segundos
+        // entre la foto del panel y esta lectura; el resto es discrepancia
+        // real. Solo informa: no bloquea el cierre ni cambia lo que se ve.
+        const windowStartMs = Date.parse(getLiveOrdersWindowStartIso() || "")
+        if (Number.isFinite(windowStartMs)) {
+          let jornadaAccountUSD = 0
+          let jornadaDirectUSD = 0
+          for (const order of realOrders) {
+            if (order.status === "Cancelado") continue
+            const createdMs = Date.parse(String(order.createdAt || ""))
+            if (!Number.isFinite(createdMs) || createdMs < windowStartMs) continue
+            const received = getOrderPayment(order).receivedEquivalentUSD
+            if (!(received > 0)) continue
+            if (String(order.openAccountId || "").trim()) {
+              jornadaAccountUSD += received
+            } else {
+              jornadaDirectUSD += received
+            }
+          }
+
+          dayClose.serverAudit = {
+            ...buildDayCloseServerAudit({
+              accountCollectedUSD: jornadaAccountUSD,
+              directCollectedUSD: jornadaDirectUSD,
+              reportedCollectedUSD: dayClose.realCollectedUSD ?? 0,
+            }),
+            windowStartIso: new Date(windowStartMs).toISOString(),
+          }
+        }
       }
 
       dayClose.paymentProofs = proofsToday.slice(0, 500).map((proof) => ({

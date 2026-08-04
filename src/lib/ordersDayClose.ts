@@ -206,12 +206,51 @@ export type SaveDayCloseInput = {
   // FIFO entre sus pedidos) vs pedido directo. Lo calcula el SERVIDOR al
   // guardar el cierre a partir de los pedidos reales del día.
   collectionByOrigin?: DayCloseSummaryItem[]
+  // H-3 (2026-08-04): el total "real cobrado" del cierre lo manda el
+  // NAVEGADOR; sin esto, un cierre que cuadra consigo mismo no prueba nada.
+  // El servidor deja aquí su propio esperado (la misma suma de pedidos
+  // reales de collectionByOrigin) y la brecha contra lo reportado. Solo
+  // informa — una brecha puede ser legítima (anulados cuyo dinero se quedó,
+  // redondeos) — pero convierte el cuadre en algo CRUZABLE.
+  serverAudit?: DayCloseServerAudit
   productsSold: DayCloseProductSold[]
 
   // Fotografía pedido por pedido + comprobantes del día (las llena el
   // servidor al guardar el cierre; ver /api/day-close).
   orders?: DayCloseOrder[]
   paymentProofs?: DayCloseProof[]
+}
+
+export type DayCloseServerAudit = {
+  // Suma de payment_received_equiv_usd de los pedidos reales de LA JORNADA
+  // EN CURSO (creados desde windowStartIso, sin cancelados) — la MISMA
+  // población que el panel usa para realCollectedUSD; con otra población la
+  // brecha guardada sería falsa (revisión adversarial 2026-08-04).
+  expectedCollectedUSD: number
+  // Lo que el navegador reportó como realCollectedUSD en ese momento.
+  reportedCollectedUSD: number
+  // reportado − esperado: positivo = se reportó de MÁS; negativo = de MENOS.
+  gapUSD: number
+  // Inicio de la jornada (5:00 Caracas) sobre la que se comparó.
+  windowStartIso?: string
+}
+
+export function buildDayCloseServerAudit(input: {
+  accountCollectedUSD: number
+  directCollectedUSD: number
+  reportedCollectedUSD: number
+}): DayCloseServerAudit {
+  const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100
+  const expectedCollectedUSD = round2(
+    input.accountCollectedUSD + input.directCollectedUSD,
+  )
+  const reportedCollectedUSD = round2(input.reportedCollectedUSD)
+
+  return {
+    expectedCollectedUSD,
+    reportedCollectedUSD,
+    gapUSD: round2(reportedCollectedUSD - expectedCollectedUSD),
+  }
 }
 
 export type SavedDayClose = SaveDayCloseInput & {
