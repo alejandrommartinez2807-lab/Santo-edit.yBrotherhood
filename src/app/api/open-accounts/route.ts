@@ -8,6 +8,7 @@ import {
 } from "@/lib/orders"
 import { canLocalAccessUseModule, getRequestAccess, type LocalRole } from "@/lib/localAccess"
 import { getModulePlanAccess } from "@/lib/localPlans"
+import { conditionalJsonResponse } from "@/lib/conditionalJson"
 import { resolveBranchId } from "@/lib/branch"
 import { getLocalTablesForBranch } from "@/lib/branchLocalTables"
 import { stripBillRequestMarker } from "@/lib/openAccountBillRequest"
@@ -132,7 +133,9 @@ export async function GET(request: NextRequest) {
     const status = normalizeStatus(request.nextUrl.searchParams.get("status") || "Abierta")
     const openAccounts = await getOpenAccounts({ status }, await resolveBranchId(request))
 
-    return NextResponse.json({
+    // Los paneles sondean esta lista cada 8 s: si nada cambió, 304 sin cuerpo
+    // (el ETag es el hash del JSON final; ver src/lib/conditionalJson.ts).
+    return conditionalJsonResponse(request, {
       ok: true,
       openAccounts,
       access: { role: access.role, roleLabel: access.roleLabel },

@@ -50,6 +50,7 @@ import { maybeDispatchPostSaleSurveys } from "@/lib/surveyAutoSend"
 import { maybeDispatchRestockAlerts } from "@/lib/inventoryRestockAlerts"
 import { maybeDispatchPayablesReminders } from "@/lib/payablesReminderAlerts"
 import { maybeAutoCancelStaleUnpaidOrders } from "@/lib/unpaidAutoCancel"
+import { conditionalJsonResponse } from "@/lib/conditionalJson"
 import { enforceRateLimit } from "@/lib/rateLimit"
 import { captureError } from "@/lib/monitoring"
 import { DataUrlImageError, assertDataUrlImage, sanitizeUploadedImageFileName } from "@/lib/dataUrlImages"
@@ -227,6 +228,26 @@ export async function GET(request: NextRequest) {
       return forbiddenResponse("Este usuario no tiene permiso para este módulo")
     }
 
+    // Ventana opt-in (2026-08-03, consumo de Vercel): los paneles operativos
+    // (cocina, delivery, mesonero, pantalla) piden solo la jornada en curso.
+    // Mismo nombre y validación que el createdFrom del DELETE de esta ruta.
+    // Sin el parámetro no cambia nada: /pedidos, caja, el dashboard del dueño,
+    // clientes, tickets y comprobantes siguen recibiendo el histórico completo.
+    const rawCreatedFrom = String(
+      request.nextUrl.searchParams.get("createdFrom") || "",
+    ).trim()
+    const createdFrom =
+      rawCreatedFrom && !Number.isNaN(Date.parse(rawCreatedFrom))
+        ? new Date(rawCreatedFrom).toISOString()
+        : null
+
+    if (rawCreatedFrom && !createdFrom) {
+      return NextResponse.json(
+        { error: "El parámetro createdFrom no es una fecha válida" },
+        { status: 400 },
+      )
+    }
+
     const trainingConfig = await getBusinessConfig()
     const trainingActive = isTrainingModeActive(trainingConfig)
     const trainingAvailable = getModulePlanAccess(
@@ -249,6 +270,7 @@ export async function GET(request: NextRequest) {
 
     const allOrders = await getOrders(
       await resolveScopedBranchId(request, access.role),
+      { createdFrom },
     )
 
     // Modo entrenamiento: mientras está activo, el panel ve SOLO los pedidos de
@@ -258,7 +280,11 @@ export async function GET(request: NextRequest) {
       trainingActive ? order.isTraining === true : order.isTraining !== true,
     )
 
-    return NextResponse.json({
+    // El ETag se calcula sobre el JSON final y DESPUÉS de los despachos de
+    // arriba (el auto-cancel muta pedidos en este mismo request): un 304 jamás
+    // puede responder sobre datos que este tick acaba de cambiar, ni saltarse
+    // el latido de encuestas/alertas que vive del sondeo (qa-inventory-alerts).
+    return conditionalJsonResponse(request, {
       orders,
       trainingModeActive: trainingActive,
       trainingModeAvailable: trainingAvailable,

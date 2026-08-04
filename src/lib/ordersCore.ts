@@ -22,8 +22,11 @@ export type {
   UpdateOrderPaymentInput,
 } from "./ordersCoreTypes"
 
-export async function getOrders(branchId?: string | null) {
-  return ordersStore.getOrders(branchId)
+export async function getOrders(
+  branchId?: string | null,
+  options?: { createdFrom?: string | null },
+) {
+  return ordersStore.getOrders(branchId, options)
 }
 
 export async function findOrderByClientOrderId(

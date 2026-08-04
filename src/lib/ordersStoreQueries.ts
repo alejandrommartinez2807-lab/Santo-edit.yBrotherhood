@@ -101,8 +101,10 @@ async function fetchAllRows(
 
 export async function getOrdersFromStore(
   branchId?: string | null,
+  options?: { createdFrom?: string | null },
 ): Promise<LocalOrder[]> {
   const supabase = getSupabaseAdmin()
+  const createdFrom = options?.createdFrom || null
 
   const orderRows = await fetchAllRows((from, to) => {
     let query = supabase
@@ -114,6 +116,16 @@ export async function getOrdersFromStore(
       .order("id", { ascending: false })
       .range(from, to)
     if (branchId) query = query.eq("branch_id", branchId)
+    // Ventana de los paneles operativos: pedidos de la jornada en curso MÁS
+    // cualquier pedido aún vivo de jornadas anteriores (una cuenta abierta que
+    // cruzó la madrugada, un delivery sin entregar). Lo único que se queda
+    // fuera es lo ya terminado (Entregado/Cancelado) de días viejos — que es
+    // justo el peso muerto que crecía sin tope en cada sondeo.
+    if (createdFrom) {
+      query = query.or(
+        `created_at.gte.${createdFrom},status.not.in.(Entregado,Cancelado)`,
+      )
+    }
     return query
   }, MAX_ORDERS)
 

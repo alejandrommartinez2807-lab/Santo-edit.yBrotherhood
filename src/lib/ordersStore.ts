@@ -32,8 +32,11 @@ import {
 // PEDIDOS
 // ============================================================
 
-export async function getOrders(branchId?: string | null): Promise<LocalOrder[]> {
-  return getOrdersFromStore(branchId)
+export async function getOrders(
+  branchId?: string | null,
+  options?: { createdFrom?: string | null },
+): Promise<LocalOrder[]> {
+  return getOrdersFromStore(branchId, options)
 }
 
 export async function findOrderByClientOrderId(
