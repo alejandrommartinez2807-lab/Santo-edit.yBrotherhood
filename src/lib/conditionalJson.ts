@@ -100,6 +100,22 @@ export function conditionalJsonResponse(
 // tampoco pierde el ahorro de bytes que ya tenía.
 // ---------------------------------------------------------------------------
 
+// Confirmado EN PRODUCCIÓN (2026-08-04, sondas contra brotherhood-xi): el
+// If-None-Match NO llega a la función — la capa de Vercel lo intercepta y
+// fabrica sus propios 304 comparando cadenas en el borde. Con un validador
+// que rota (la cubeta de la huella), ese borde falla cada 90 s y el camino
+// rápido del origen jamás corría. El sondeo del panel manda el validador
+// DUPLICADO en esta cabecera propia, que ninguna capa toca; el If-None-Match
+// se sigue mandando para que el borde regale su 304 cuando las cadenas
+// coinciden (ahorra los bytes al navegador dentro de la misma cubeta).
+export const POLL_ETAG_HEADER = "x-poll-etag"
+
+export function getPollValidator(request: RequestWithHeaders) {
+  return (
+    request.headers.get(POLL_ETAG_HEADER) || request.headers.get("if-none-match")
+  )
+}
+
 export function parseIfNoneMatchValues(headerValue: string | null): string[] {
   if (!headerValue) return []
 
@@ -154,7 +170,7 @@ export function fingerprintedJsonResponse(
   fingerprint: string,
 ) {
   const { serialized, etag, notModified } = evaluateFingerprintedJson(
-    request.headers.get("if-none-match"),
+    getPollValidator(request),
     payload,
     fingerprint,
   )

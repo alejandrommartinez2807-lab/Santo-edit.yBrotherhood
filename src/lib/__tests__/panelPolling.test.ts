@@ -95,6 +95,9 @@ describe("fetchWithPollEtag", () => {
     expect(await result.response!.json()).toEqual({ orders: [{ id: "p-1" }] })
     const headers = fetchMock.mock.calls[1][1].headers as Headers
     expect(headers.get("if-none-match")).toBe('"v1"')
+    // Y por duplicado en x-poll-etag: el If-None-Match no llega a la función
+    // (la capa de Vercel lo intercepta — confirmado en producción 2026-08-04).
+    expect(headers.get("x-poll-etag")).toBe('"v1"')
   })
 
   it("REGRESIÓN remontaje: un panel que vuelve con estado vacío recibe la copia, no un vacío", async () => {
@@ -216,11 +219,13 @@ describe("fetchWithPollEtag", () => {
       // …la calma no se reinició…
       expect(getLastRemoteChangeAt()).toBe(calmaAntes)
 
-      // …y el siguiente sondeo ya viaja con el validador NUEVO.
+      // …y el siguiente sondeo ya viaja con el validador NUEVO, en las DOS
+      // cabeceras (x-poll-etag es la que de verdad llega a la función).
       fetchMock.mockResolvedValueOnce(fakeResponse(304))
       await fetchWithPollEtag("/api/orders")
       const headers = fetchMock.mock.calls[2][1].headers as Headers
       expect(headers.get("if-none-match")).toBe('"F2.C1"')
+      expect(headers.get("x-poll-etag")).toBe('"F2.C1"')
     } finally {
       vi.useRealTimers()
     }

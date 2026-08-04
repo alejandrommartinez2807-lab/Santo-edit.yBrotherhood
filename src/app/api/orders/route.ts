@@ -54,6 +54,7 @@ import { maybeAutoCancelStaleUnpaidOrders } from "@/lib/unpaidAutoCancel"
 import {
   findEtagForFingerprint,
   fingerprintedJsonResponse,
+  getPollValidator,
 } from "@/lib/conditionalJson"
 import {
   buildOrdersFingerprint,
@@ -314,8 +315,10 @@ export async function GET(request: NextRequest) {
     // leer una sola fila de pedidos. Es lo que corta el egress de Supabase
     // (626 KB → ~54 bytes por sondeo); la lectura completa queda garantizada
     // igual, como mucho cada 90 s, por la cubeta de tiempo dentro de la huella.
+    // El validador se lee de x-poll-etag (el If-None-Match no llega: se lo
+    // come la capa de Vercel — ver POLL_ETAG_HEADER en conditionalJson).
     const unchangedEtag = findEtagForFingerprint(
-      request.headers.get("if-none-match"),
+      getPollValidator(request),
       fingerprint,
     )
 

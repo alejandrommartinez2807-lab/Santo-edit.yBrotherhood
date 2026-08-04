@@ -12,6 +12,7 @@ import {
   evaluateConditionalJson,
   evaluateFingerprintedJson,
   findEtagForFingerprint,
+  getPollValidator,
   hashSerializedJson,
   ifNoneMatchSatisfied,
   parseIfNoneMatchValues,
@@ -118,6 +119,27 @@ describe("evaluateConditionalJson — el flujo del sondeo", () => {
 // filas; la derecha (hash del JSON) rescata el ahorro de bytes cuando la
 // huella rotó (cubeta de tiempo) pero el contenido no.
 // ---------------------------------------------------------------------------
+
+describe("getPollValidator", () => {
+  const requestWith = (headers: Record<string, string>) => ({
+    headers: { get: (name: string) => headers[name.toLowerCase()] ?? null },
+  })
+
+  it("prefiere x-poll-etag: es la copia que la capa de Vercel NO intercepta", () => {
+    // Confirmado en producción 2026-08-04: el If-None-Match no llega a la
+    // función. Sin esta cabecera propia, el camino rápido jamás corre.
+    expect(
+      getPollValidator(
+        requestWith({ "x-poll-etag": '"F.C"', "if-none-match": '"otro"' }),
+      ),
+    ).toBe('"F.C"')
+  })
+
+  it("sin x-poll-etag cae a If-None-Match (curl, QA, clientes viejos en local)", () => {
+    expect(getPollValidator(requestWith({ "if-none-match": '"F.C"' }))).toBe('"F.C"')
+    expect(getPollValidator(requestWith({}))).toBeNull()
+  })
+})
 
 describe("parseIfNoneMatchValues", () => {
   it("sin cabecera, sin candidatos", () => {

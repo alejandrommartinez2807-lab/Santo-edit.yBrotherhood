@@ -72,7 +72,16 @@ export async function fetchWithPollEtag(
   const headers = new Headers(init.headers)
   const cached = cacheByUrl.get(url)
 
-  if (cached) headers.set("if-none-match", cached.etag)
+  // El validador viaja POR DUPLICADO (confirmado en producción 2026-08-04):
+  // el If-None-Match no llega a la función — la capa de Vercel lo intercepta
+  // y fabrica su propio 304 comparando cadenas en el borde, que sigue siendo
+  // útil (0 bytes al navegador cuando las cadenas coinciden). x-poll-etag es
+  // la copia que SÍ llega al origen, y es la que le permite responder sin
+  // leer las filas de la base (la huella barata de /api/orders).
+  if (cached) {
+    headers.set("if-none-match", cached.etag)
+    headers.set("x-poll-etag", cached.etag)
+  }
 
   const response = await fetch(url, { ...init, headers })
 
