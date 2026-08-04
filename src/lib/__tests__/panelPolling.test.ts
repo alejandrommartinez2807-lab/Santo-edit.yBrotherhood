@@ -198,17 +198,78 @@ describe("fetchWithPollEtag", () => {
 })
 
 describe("createHiddenPollGate", () => {
-  it("con la pestaña visible cada tick trabaja", () => {
-    const gate = createHiddenPollGate(() => false)
+  // Reloj de "último cambio" que los tests mueven a mano. Arrancarlo muy alto
+  // equivale a "acaba de pasar algo", que es lo normal durante el servicio.
+  let ultimoCambioSimulado = Number.MAX_SAFE_INTEGER
+  const activo = () => ultimoCambioSimulado
+
+  it("con la pestaña visible y actividad reciente, cada tick trabaja", () => {
+    const gate = createHiddenPollGate(() => false, activo)
 
     expect(gate.shouldPoll(0)).toBe(true)
     expect(gate.shouldPoll(2_500)).toBe(true)
     expect(gate.shouldPoll(5_000)).toBe(true)
   })
 
+  it("durante el servicio NO se espacia: cualquier cambio reinicia el reloj", () => {
+    // Simula una noche de trabajo: algo cambia cada 30 s (entra un pedido,
+    // cocina marca listo, caja cobra). El sondeo nunca debe frenarse.
+    let ultimoCambio = 0
+    const gate = createHiddenPollGate(() => false, () => ultimoCambio)
+
+    for (let t = 0; t <= 10 * 60_000; t += 2_500) {
+      if (t % 30_000 === 0) ultimoCambio = t
+      expect(gate.shouldPoll(t)).toBe(true)
+    }
+  })
+
+  it("con el local quieto 3 min baja a 1 sondeo cada 10 s", () => {
+    const gate = createHiddenPollGate(() => false, () => 0)
+
+    expect(gate.shouldPoll(3 * 60_000)).toBe(true)
+    // Los ticks de 2,5 s siguientes no trabajan hasta cumplir los 10 s.
+    expect(gate.shouldPoll(3 * 60_000 + 2_500)).toBe(false)
+    expect(gate.shouldPoll(3 * 60_000 + 7_500)).toBe(false)
+    expect(gate.shouldPoll(3 * 60_000 + 10_001)).toBe(true)
+  })
+
+  it("con el local quieto 15 min baja a 1 sondeo cada 30 s", () => {
+    const gate = createHiddenPollGate(() => false, () => 0)
+
+    expect(gate.shouldPoll(15 * 60_000)).toBe(true)
+    expect(gate.shouldPoll(15 * 60_000 + 10_001)).toBe(false)
+    expect(gate.shouldPoll(15 * 60_000 + 30_001)).toBe(true)
+  })
+
+  it("en cuanto algo cambia, vuelve al ritmo rápido de inmediato", () => {
+    let ultimoCambio = 0
+    const gate = createHiddenPollGate(() => false, () => ultimoCambio)
+
+    const dormido = 20 * 60_000
+    expect(gate.shouldPoll(dormido)).toBe(true)
+    expect(gate.shouldPoll(dormido + 2_500)).toBe(false)
+
+    // Entra un pedido (o alguien toca la pantalla).
+    ultimoCambio = dormido + 3_000
+    expect(gate.shouldPoll(dormido + 5_000)).toBe(true)
+    expect(gate.shouldPoll(dormido + 7_500)).toBe(true)
+  })
+
+  it("la pestaña oculta manda sobre los escalones de calma", () => {
+    // Con actividad recientísima (que si no habría escalón de calma) pero la
+    // pestaña oculta, gana el minuto de la regla de visibilidad.
+    const t0 = 1_800_000_000_000
+    ultimoCambioSimulado = t0
+    const gate = createHiddenPollGate(() => true, activo)
+
+    expect(gate.shouldPoll(t0)).toBe(true)
+    expect(gate.shouldPoll(t0 + 30_000)).toBe(false)
+    expect(gate.shouldPoll(t0 + 60_001)).toBe(true)
+  })
+
   it("oculta: los ticks se espacian a 1 por minuto, sin pararse del todo", () => {
     let hidden = false
-    const gate = createHiddenPollGate(() => hidden)
+    const gate = createHiddenPollGate(() => hidden, activo)
 
     expect(gate.shouldPoll(0)).toBe(true)
 
@@ -223,7 +284,7 @@ describe("createHiddenPollGate", () => {
 
   it("al volver a visible se sondea de inmediato aunque no pasara el minuto", () => {
     let hidden = false
-    const gate = createHiddenPollGate(() => hidden)
+    const gate = createHiddenPollGate(() => hidden, activo)
 
     expect(gate.shouldPoll(0)).toBe(true)
     hidden = true

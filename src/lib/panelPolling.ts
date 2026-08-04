@@ -38,6 +38,22 @@ export type ConditionalFetchResult =
 // dejaba un validador registrado sobre datos que nunca se pintaron.
 const cacheByUrl = new Map<string, { etag: string; bodyText: string }>()
 
+// Momento del último cambio REAL visto por cualquier sondeo de esta pestaña.
+// Lo usa la compuerta de abajo para espaciar los sondeos cuando no pasa nada:
+// el 304 ahorra los bytes que van al navegador, pero la función igual lee la
+// base entera en cada tick (626 KB medidos el 2026-08-04), y eso es lo que
+// agotó la cuota de egress de Supabase. Un panel abierto de madrugada, con el
+// local cerrado, sondeaba 1.440 veces por hora para no traer nada.
+let lastChangeAt = Date.now()
+
+export function noteRemoteChange(now = Date.now()) {
+  lastChangeAt = now
+}
+
+export function getLastRemoteChangeAt() {
+  return lastChangeAt
+}
+
 // La URL con createdFrom cambia una vez al día (rota la jornada): se poda el
 // mapa para que las copias viejas no se acumulen para siempre.
 const MAX_TRACKED_URLS = 8
@@ -79,6 +95,10 @@ export async function fetchWithPollEtag(
     // cuerpo que el panel nunca recibió.
     const bodyText = await response.text()
 
+    // Contenido distinto al que ya teníamos = pasó algo de verdad. Vuelve el
+    // sondeo rápido (ver createHiddenPollGate).
+    if (!cached || cached.etag !== etag) noteRemoteChange()
+
     if (!cacheByUrl.has(url) && cacheByUrl.size >= MAX_TRACKED_URLS) {
       const oldest = cacheByUrl.keys().next().value
       if (oldest !== undefined) cacheByUrl.delete(oldest)
@@ -106,11 +126,54 @@ export function __resetPollEtagsForTests() {
 // Con la pestaña oculta el sondeo no se corta: se espacia a este ritmo.
 export const HIDDEN_POLL_INTERVAL_MS = 60_000
 
+// Escalones de calma. Durante el servicio SIEMPRE está pasando algo (un pedido
+// entra, cocina marca listo, caja cobra), así que el reloj de calma se reinicia
+// constantemente y el sondeo se queda en su ritmo normal de 2,5 s: el cajero no
+// nota ninguna diferencia. Los escalones solo entran cuando de verdad no pasa
+// nada hace rato — que es justo cuando el sondeo no sirve para nada y sí
+// consume. El umbral de 3 minutos es deliberadamente generoso: entre pedido y
+// pedido de una noche floja no puede activarse, o cocina vería tarde la comanda.
+export const QUIET_STEPS = [
+  { afterQuietMs: 3 * 60_000, everyMs: 10_000 },
+  { afterQuietMs: 15 * 60_000, everyMs: 30_000 },
+]
+
 function defaultIsHidden() {
   return typeof document !== "undefined" && document.visibilityState === "hidden"
 }
 
-export function createHiddenPollGate(isHidden: () => boolean = defaultIsHidden) {
+function quietIntervalFor(quietMs: number) {
+  let chosen = 0
+  for (const step of QUIET_STEPS) {
+    if (quietMs >= step.afterQuietMs) chosen = step.everyMs
+  }
+  return chosen
+}
+
+// Si hay alguien usando el panel, el sondeo tiene que estar rápido aunque el
+// local lleve horas quieto: tocar la pantalla o volver a la pestaña reinicia el
+// reloj de calma. Se instala una sola vez por pestaña y no se quita.
+let interactionListenerInstalled = false
+
+function installInteractionReset() {
+  if (interactionListenerInstalled) return
+  if (typeof window === "undefined" || typeof document === "undefined") return
+
+  interactionListenerInstalled = true
+  const wake = () => noteRemoteChange()
+
+  window.addEventListener("pointerdown", wake, { passive: true })
+  window.addEventListener("keydown", wake, { passive: true })
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") wake()
+  })
+}
+
+export function createHiddenPollGate(
+  isHidden: () => boolean = defaultIsHidden,
+  lastChange: () => number = getLastRemoteChangeAt,
+) {
+  installInteractionReset()
   let lastRunAt = 0
 
   return {
@@ -119,6 +182,13 @@ export function createHiddenPollGate(isHidden: () => boolean = defaultIsHidden) 
       if (isHidden() && now - lastRunAt < HIDDEN_POLL_INTERVAL_MS) {
         return false
       }
+
+      // Pestaña a la vista pero sin novedades hace rato: se espacia.
+      if (!isHidden()) {
+        const minGap = quietIntervalFor(now - lastChange())
+        if (minGap && now - lastRunAt < minGap) return false
+      }
+
       lastRunAt = now
       return true
     },
