@@ -155,7 +155,69 @@ const archivosVerificados = new Set([
   ...declaredTables.values(),
   ...declaredColumns.values(),
 ])
-const noVerificables = files.filter((file) => !archivosVerificados.has(file))
+
+// ── Triggers que NO se pueden deducir mirando columnas, pero de los que
+// depende que el panel muestre datos frescos. Se comprueban por COMPORTAMIENTO
+// (es lo único que prueba que el trigger está vivo, no solo declarado):
+// se toca una fila y se mira si `orders.updated_at` se movió.
+//
+// Por qué importa: la optimización de consumo responde "nada cambió" mirando
+// `updated_at`. Si estos triggers faltan o quedan deshabilitados, el panel se
+// congela SIN dar ningún error — el peor tipo de fallo. (2026-08-04.)
+async function comprobarTriggersDeFrescura() {
+  const { data: muestra } = await supabase
+    .from("order_items")
+    .select("id, order_id")
+    .limit(1)
+
+  if (!muestra?.length) {
+    return { estado: "sin-datos", detalle: "no hay pedidos con líneas para probarlo" }
+  }
+
+  const { id: itemId, order_id: orderId } = muestra[0]
+  const leer = async () =>
+    (await supabase.from("orders").select("updated_at").eq("id", orderId).maybeSingle())
+      .data?.updated_at
+
+  const antes = await leer()
+  // Escritura sin efecto real: se reescribe la línea con su propio valor.
+  // Postgres dispara el trigger igual, así que basta para saber si está vivo.
+  const { error } = await supabase
+    .from("order_items")
+    .update({ sort_order: muestra[0].sort_order ?? 0 })
+    .eq("id", itemId)
+
+  if (error) return { estado: "error", detalle: error.message }
+
+  const despues = await leer()
+  return antes !== despues
+    ? { estado: "ok", detalle: "tocar una línea marca su pedido" }
+    : {
+        estado: "falta",
+        detalle:
+          "tocar order_items NO movió orders.updated_at — falta 0038 o está deshabilitado",
+      }
+}
+
+const triggerFrescura = await comprobarTriggersDeFrescura()
+console.log(
+  `${triggerFrescura.estado === "ok" ? "✓" : triggerFrescura.estado === "falta" ? "✗" : "⚠"}` +
+    ` Trigger de frescura (0038) — ${triggerFrescura.detalle}`,
+)
+console.log("")
+
+const noVerificables = files
+  .filter((file) => !archivosVerificados.has(file))
+  // 0038 sí se acaba de comprobar, por comportamiento.
+  .filter((file) => !(triggerFrescura.estado === "ok" && file.includes("0038")))
+
+if (triggerFrescura.estado === "falta") {
+  console.log("✗ FALTA el trigger de 0038_order_items_touch_order.sql.")
+  console.log("  Sin él, marcar un producto entregado no marca su pedido: la")
+  console.log("  optimización que responde 'nada cambió' se volvería CIEGA a eso")
+  console.log("  y el panel se congelaría sin avisar. Aplícalo antes de seguir.")
+  process.exit(1)
+}
 
 if (faltanTablas.length === 0 && faltanColumnas.length === 0 && erroresRaros.length === 0) {
   console.log(`✓ Tablas y columnas OK — ${tablasOk} tablas y ${columnasOk} columnas existen en la base.`)
